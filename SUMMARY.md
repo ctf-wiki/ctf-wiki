@@ -7,6 +7,8 @@
 	* [基本搜索技巧](misc/recon.md#基本搜索技巧)
 	* [地图和街景搜索](misc/recon.md#地图和街景搜索)
   * [1.2 Encoding Analysis 编码分析技术](misc/encode.md)
+	* [通信领域常见编码](misc/encode.md#通信领域常见编码)
+	* [计算机领域常见编码](misc/encode.md#计算机领域常见编码)
   * [1.3 Forensic Analysis 取证分析技术](misc/forensic.md)
   * [1.4 Steganalysis 隐写分析技术](misc/steganalysis.md)
 * [2 Crypto](crypto/README.md)
