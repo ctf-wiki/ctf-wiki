@@ -2,6 +2,10 @@
 
 * [Introduction](README.md)
 * [1 MISC](misc/README.md)
+  * [1.1 Recon 信息搜集技术](misc/recon.md)
+  * [1.2 Encoding Analysis 编码分析技术](misc/encode.md)
+  * [1.3 Forensic Analysis 取证分析技术](misc/forensic.md)
+  * [1.4 Steganalysis 隐写分析技术](misc/steganalysis.md)
 * [2 Crypto](crypto/README.md)
 * [3 WEB](web/README.md)
 * [4 Reverse Engineering](reverse_engineering/README.md)
