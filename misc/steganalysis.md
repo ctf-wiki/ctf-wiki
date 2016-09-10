@@ -24,10 +24,28 @@
 ### 隐写识别工具
 
 * Stegdetect
+
+  ```shell
+  stegdetect -s 1.5 xxx.jpg
+  stegdetect -tF xxx.jpg
+  ```
+
 * StegSolve
+
 * Mp3Stego
+
+  ```shell
+  decode -X -P pass sound.mp3
+  ```
+
 * outguess
+
+  ```shell
+  outguess -e -k "ddtek" -r xxxx
+  ```
+
 * StegSecret
+
 * GFE Stealth
 
 ## 扩展阅读
