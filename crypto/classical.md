@@ -104,14 +104,12 @@ I R E X M
 B C D G H
 K N O Q S
 T U V W Z
-
 ```
 
 要加密的讯息为 Hide the gold in the tree stump：
 
 ```
 HI DE TH EG OL DI NT HE TR EX ES TU MP
-
 ```
 
 就会得到
