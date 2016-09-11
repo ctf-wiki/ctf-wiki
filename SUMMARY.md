@@ -21,6 +21,8 @@
 	* [隐写分析](misc/steganalysis.md#隐写分析)
 	* [扩展阅读](misc/steganalysis.md#扩展阅读)
 * [2 Crypto](crypto/README.md)
+	* [2.1 古典密码学](crypto/classical.md)
+	* [2.2 现代密码学](crypto/modern.md)
 * [3 WEB](web/README.md)
 * [4 Reverse Engineering](reverse_engineering/README.md)
 * [5 Mobile](mobile/README.md)
