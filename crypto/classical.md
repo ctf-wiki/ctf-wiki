@@ -136,7 +136,13 @@ BM OD ZB XD NA BE KU DM UI XM MO UV IF
 
 另一种密码表
 
-![](http://7xry4x.com1.z0.glb.clouddn.com/16-9-11/48970260.jpg)
+|      | A    | D    | F    | G    | X    |
+| ---- | ---- | ---- | ---- | ---- | ---- |
+| A    | b    | t    | a    | l    | p    |
+| D    | d    | h    | o    | z    | k    |
+| F    | q    | f    | v    | s    | n    |
+| G    | g    | j    | c    | u    | x    |
+| X    | m    | r    | e    | w    | y    |
 
 注意，这里字母的顺序被打乱了哦。
 
