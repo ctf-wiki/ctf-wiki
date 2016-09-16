@@ -27,6 +27,12 @@ npm install gitbook-cli -g
 gitbook init
 ```
 
+安装插件
+
+```bash
+gitbook install
+```
+
 预览
 
 ```bash
