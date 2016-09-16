@@ -1,6 +1,5 @@
 # Summary
 
-* [Introduction](README.md)
 * [Introduction](INTRODUCTION.md)
 * [1 MISC](misc/README.md)
     * [1.1 Recon 信息搜集技术](misc/recon.md)
