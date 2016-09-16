@@ -1,4 +1,4 @@
-# Classical Cipher 古典密码
+# 古典密码
 
 ## 单表代换密码
 
@@ -67,12 +67,12 @@
 
 仿射密码是一种替换密码。它是一个字母对一个字母的。
 
-它的加密函数是![](http://latex.codecogs.com/gif.latex?e%28x%29%3Dax&plus;b%5C%20%28mod%5C%20m%29)，其中
+它的加密函数是 $$e(x)=ax+b\ (mod\ m)$$，其中
 
-* ![](http://latex.codecogs.com/gif.latex?a)和![](http://latex.codecogs.com/gif.latex?m)互质；
-* ![](http://latex.codecogs.com/gif.latex?m)是字母的数目。
+* $$a$$ 和 $$m$$ 互质；
+* $$m$$ 是字母的数目。
 
-解码函数是![](http://latex.codecogs.com/gif.latex?d%28x%29%3Da%5E%7B-1%7D%28x-b%29%5C%20%28mod%5C%20m%29)，其中![](http://latex.codecogs.com/gif.latex?a%5E%7B-1%7D)是![](http://latex.codecogs.com/gif.latex?a)在![](http://latex.codecogs.com/gif.latex?%5Cmathbb%7BZ%7D_m)群的乘法逆元。
+解码函数是 $$d(x)=a^{-1}(x-b)\ (mod\ m)$$，其中 $$a^{-1}$$ 是 $$a$$ 在 $$\mathbb{Z}_{m}$$ 群的乘法逆元。
 
 ## 多表代换密码
 
