@@ -62,8 +62,10 @@ $$
 
   设两个用户的公钥分别为 $$e_1$$ 和 $$e_2$$，且两者互质。明文消息为 $$m$$ ，密文分别为：
   $$
-  c_1 = m^{e_1}\bmod N\\
-  c_2 = m^{e_2}\bmod N
+  \begin{align*}
+  c_1 &= m^{e_1}\bmod N\\
+  c_2 &= m^{e_2}\bmod N
+  \end{align*}
   $$
   当攻击者截获 $$c_1$$ 和 $$c_2$$ 后，就可以恢复出明文。用扩展欧几里得算法求出 $$re_1+se_2=1\bmod n$$ 的两个整数 $$r$$ 和 $$s$$，由此可得：
   $$
@@ -155,10 +157,10 @@ c\equiv m^3 \bmod N
 $$
 则：
 $$
-\begin{align}
+\begin{align*}
 m^3 &= c+k\times N\\
 m &= \sqrt[3]{c+k\times n}
-\end{align}
+\end{align*}
 $$
 攻击者可以从小到大枚举 $$n$$，依次开三次根，直到开出整数为止。
 
@@ -300,8 +302,10 @@ $$
 
 1. 计算出 $$m_p$$ 和 $$m_q$$：
 $$
-m_p = \sqrt{c} \bmod p\\
-m_q = \sqrt{c} \bmod q
+\begin{align*}
+m_p &= \sqrt{c} \bmod p\\
+m_q &= \sqrt{c} \bmod q
+\end{align*}
 $$
 
 2. 用扩展欧几里得计算出 $$y_p$$ 和 $$y_q$$：
@@ -311,19 +315,19 @@ $$
 
 3. 解出四个明文：
 $$
-\begin{align}
+\begin{align*}
 a &= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\
 b &= n - a\\
 c &= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\
 d &= n - c
-\end{align}
+\end{align*}
 $$
 注意：如果 $$p \equiv q \equiv 3 \pmod 4$$，则
 $$
-\begin{align}
+\begin{align*}
 m_p &= c^{\frac{1}{4}(p + 1)} \bmod p\\
 m_q &= c^{\frac{1}{4}(q + 1)} \bmod q
-\end{align}
+\end{align*}
 $$
 
 
