@@ -67,12 +67,12 @@
 
 仿射密码是一种替换密码。它是一个字母对一个字母的。
 
-它的加密函数是 $$E(x)=(ax+b)\pmod m$$，其中
+它的加密函数是 $$E(x)=(ax+b)\ (mod\ m)$$，其中
 
 * $$a$$ 和 $$m$$ 互质；
 * $$m$$ 是字母的数目。
 
-解码函数是 $$D(x)=a^{-1}(x-b)\pmod m$$，其中 $$a^{-1}$$ 是 $$a$$ 在 $$\mathbb{Z}_{m}$$ 群的乘法逆元。
+解码函数是 $$D(x)=a^{-1}(x-b)\ (mod\ m)$$，其中 $$a^{-1}$$ 是 $$a$$ 在 $$\mathbb{Z}_{m}$$ 群的乘法逆元。
 
 ## 多表代换密码
 
@@ -275,16 +275,49 @@ A D F G X 的由来：
 
 将明文化为矩阵。
 
-![](http://latex.codecogs.com/gif.latex?%5Cbegin%7Bbmatrix%7D%200%5C%5C%202%5C%5C%2019%20%5Cend%7Bbmatrix%7D)
-
+$$
+\begin{bmatrix}
+0\\ 
+2\\ 
+19
+\end{bmatrix}
+$$
 假设密钥为：
 
-![](http://latex.codecogs.com/gif.latex?%5Cbegin%7Bbmatrix%7D%206%20%26%2024%20%26%201%5C%5C%2013%20%26%2016%20%26%2010%5C%5C%2020%20%26%2017%20%26%2015%20%5Cend%7Bbmatrix%7D)
-
+$$
+\begin{bmatrix}
+6 & 24 & 1\\ 
+13 & 16 & 10\\ 
+20 & 17 & 15
+\end{bmatrix}
+$$
 加密过程为：
 
-![](http://latex.codecogs.com/gif.latex?%5Cbegin%7Bbmatrix%7D%206%20%26%2024%20%26%201%5C%5C%2013%20%26%2016%20%26%2010%5C%5C%2020%20%26%2017%20%26%2015%20%5Cend%7Bbmatrix%7D%20%5Cbegin%7Bbmatrix%7D%200%5C%5C%202%5C%5C%2019%20%5Cend%7Bbmatrix%7D%20%5Cequiv%20%5Cbegin%7Bbmatrix%7D%2067%5C%5C%20222%5C%5C%20319%20%5Cend%7Bbmatrix%7D%20%5Cequiv%20%5Cbegin%7Bbmatrix%7D%2015%5C%5C%2014%5C%5C%207%20%5Cend%7Bbmatrix%7D%20%5C%20mod%5C%2026)
-
+$$
+\begin{bmatrix}
+6 & 24 & 1\\ 
+13 & 16 & 10\\ 
+20 & 17 & 15
+\end{bmatrix}
+\begin{bmatrix}
+0\\ 
+2\\ 
+19
+\end{bmatrix}
+\equiv
+\begin{bmatrix}
+67\\ 
+222\\ 
+319
+\end{bmatrix}
+\equiv
+\begin{bmatrix}
+15\\ 
+14\\ 
+7
+\end{bmatrix}
+\ mod\ 26
+$$
 密文即为
 
 ```
