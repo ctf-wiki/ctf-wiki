@@ -526,7 +526,6 @@ flag{Rab1n_i5_c00l}
 
   ```python
   #!/usr/bin/python
-
   import gmpy
   from Crypto.Util.number import *
   from Crypto.PublicKey import RSA
@@ -571,12 +570,10 @@ flag{Rab1n_i5_c00l}
 
   ```python
   #!/usr/bin/python
-
   import gmpy
   from Crypto.Util.number import *
   from Crypto.PublicKey import RSA
   from Crypto.Cipher import PKCS1_v1_5
-
 
   def ext_rsa_decrypt(p, q, e, msg):
       m = bytes_to_long(msg)
@@ -617,3 +614,104 @@ flag{Rab1n_i5_c00l}
 
 ## Hash 函数
 
+[散列函数 - 维基百科](https://zh.wikipedia.org/wiki/%E6%95%A3%E5%88%97%E5%87%BD%E6%95%B8)
+
+散列函数（或散列算法，又称哈希函数，英语：Hash Function）是一种从任何一种数据中创建小的数字“指纹”的方法。散列函数把消息或数据压缩成摘要，使得数据量变小，将数据的格式固定下来。该函数将数据打乱混合，重新创建一个叫做散列值（hash values，hash codes，hash sums，或 hashes）的指纹。散列值通常用来代表一个短的随机字母和数字组成的字符串。好的散列函数在输入域中很少出现散列冲突。在散列表和数据处理中，不抑制冲突来区别数据，会使得数据库记录更难找到。
+
+* 单向性：对于任意消息 $$x$$，计算 $$H(x)$$ 很容易，相反则很难实现。
+* 破解方式：通常只能暴力破解。
+
+#### Hash 算法分类
+
+| 算法类型   | 输出 Hash 值长度       |
+| ------ | ----------------- |
+| MD5    | 128 bit / 256 bit |
+| SHA1   | 160 bit           |
+| SHA256 | 256 bit           |
+| SHA512 | 512 bit           |
+
+#### HashCat 工具
+
+目前最好的基于 CPU 和 GPU 破解 Hash 的软件。
+
+[HashCat 官网](http://www.hashcat.net/hashcat/)
+
+[HashCat 简单使用](http://www.freebuf.com/sectool/112479.html)
+
+## Base64 编码
+
+[Base64 - 维基百科](https://zh.wikipedia.org/wiki/Base64)
+
+Base64 是一种基于 64 个可打印字符来表示二进制数据的表示方法。由于 2 的 6 次方等于 64，所以每 6 个比特为一个单元，对应某个可打印字符。三个字节有 24 个比特，对应于 4 个 Base64 单元，即 3 个字节需要用 4 个可打印字符来表示。它可用来作为电子邮件的传输编码。在 Base64 中的可打印字符包括字母 A-Z、a-z、数字 0-9，这样共有 62 个字符，此外两个可打印符号在不同的系统中而不同。一些如 uuencode 的其他编码方法，和之后 binhex 的版本使用不同的 64 字符集来代表 6 个二进制数字，但是它们不叫 Base64。
+
+![base64 编码表](images/base64.png)
+
+* 范例
+
+  编码 `Man`
+
+  ![base64 编码 MAN](images/base64_man.png)
+
+如果要编码的字节数不能被 3 整除，最后会多出 1 个或 2 个字节，那么可以使用下面的方法进行处理：先使用 0 值在末尾补足，使其能够被 3 整除，然后再进行 base64 的编码。在编码后的 base64 文本后加上一个或两个 `=` 号，代表补足的字节数。也就是说，当最后剩余一个八位字节（一个 byte）时，最后一个 6 位的 base64 字节块有四位是 0 值，最后附加上两个等号；如果最后剩余两个八位字节（2个 byte）时，最后一个 6 位的 base 字节块有两位是 0 值，最后附加一个等号。 参考下表：
+
+![base64 补 0](images/base64_0.png)
+
+由于解码时补位的 0 并不参与运算，可以在该处隐藏信息。
+
+* 范例
+
+  题目描述：[附件下载](http://xman.xctf.org.cn/media/task/0d309f94-8485-4a21-bf6d-76e5fcf4e6f0.txt)
+
+  一大串 Base64 密文，试试补 0 位的数据。
+
+  ```python
+  # coding=utf-8
+  import base64
+  import re
+
+  result = []
+  with open('text.txt', 'r') as f:
+      for line in f.readlines():
+          if len(re.findall(r'=', line)) == 2:
+              last = line[-4]
+              if last.isupper():
+                  num = ord(last) - ord('A')
+              elif last.islower():
+                  num = ord(last) - ord('a') + 26
+              elif last.isdigit():
+                  num = int(last) + 52
+              elif last == '+':
+                  num = 62
+              elif last == '/':
+                  num = 63
+              elem = '{0:06b}'.format(num)
+              result.append(elem[2:])
+
+          elif len(re.findall(r'=', line)) == 1:
+              last = line[-3]
+              if last.isupper():
+                  num = ord(last) - ord('A')
+              elif last.islower():
+                  num = ord(last) - ord('a') + 26
+              elif last.isdigit():
+                  num = int(last) + 52
+              elif last == '+':
+                  num = 62
+              elif last == '/':
+                  num = 63
+              elem = '{0:06b}'.format(num)
+              result.append(elem[4:])
+
+  flag_b = ''.join(result)
+  split = re.findall(r'.{8}', flag_b)
+  for i in split:
+      print chr(int(i, 2)),
+  ```
+
+  感觉像是程序有点毛病，不过还是能看出来 flag。
+
+  ```
+  flag{BASE64_i5_amaz1ng~
+  ```
+
+  ​
