@@ -8,7 +8,8 @@
 
 ## 常用工具
 
-* Burp Suite
+* Burp Suite: [Burp Suite 使用介绍](http://static.hx99.net/static/drops/tools-1548.html)
 * Tamper Data (Firefox addon)
 * HackBar (Firefox addon)
-* sqlmap
+* sqlmap: [sqlmap 用户手册](http://static.hx99.net/static/drops/tips-143.html)
+
