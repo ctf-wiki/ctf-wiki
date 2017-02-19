@@ -9,7 +9,23 @@
 ## 常用工具
 
 * Burp Suite: [Burp Suite 使用介绍](http://static.hx99.net/static/drops/tools-1548.html)
-* Tamper Data (Firefox addon)
-* HackBar (Firefox addon)
+* Tamper Data \(Firefox addon\)
+* HackBar \(Firefox addon\)
 * sqlmap: [sqlmap 用户手册](http://static.hx99.net/static/drops/tips-143.html)
+
+## MySQL 注入简介
+
+### union 注入
+
+union 注入的常见语句格式为：
+
+```sql
+union+select+1,2,3,ooxx,4,...,n+from+OOXX
+```
+
+常见参数有：
+
+* `user()` 带
+
+
 
