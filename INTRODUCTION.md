@@ -36,4 +36,4 @@ PWN 题目主要考察二进制漏洞的发掘和利用，需要对计算机操�
 
 # 友情链接
 
-* [40huo's Blog](http://www.40huo.cn)
+* [40huo's Blog](https://www.40huo.cn)
