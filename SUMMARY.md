@@ -38,6 +38,7 @@
       * [注入常见参数](web/sqli.md#注入常见参数)
       * [后台万能密码](web/sqli.md#后台万能密码)
       * [注入语句备忘](web/sqli.md#注入语句备忘)
+    * [3.3 XSS](web/xss.md)
 * [4 Reverse Engineering](reverse_engineering/README.md)
 * [5 Mobile](mobile/README.md)
 * [6 PWN](pwn/README.md)
