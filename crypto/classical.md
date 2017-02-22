@@ -176,7 +176,7 @@ A D F G X 的由来：
 
 2. 查表得密文
 
-   ![维吉尼亚加密](crypto/images/vigenere2.jpg)
+   ![维吉尼亚加密](/crypto/images/vigenere2.jpg)
 
    ```
    明文：come greatwall
@@ -458,17 +458,17 @@ Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1
 
 [猪圈密码 - 维基百科](https://zh.wikipedia.org/wiki/%E8%B1%AC%E5%9C%88%E5%AF%86%E7%A2%BC)
 
-![猪圈密码对照表](crypto/images/pigpen.png)
+![猪圈密码对照表](/crypto/images/pigpen.png)
 
 #### 例子
 
 明文：X marks the spot
 
-密文：![猪圈密码示例](crypto/images/pigpen_example.png)
+密文：![猪圈密码示例](/crypto/images/pigpen_example.png)
 
 ### 舞动的小人密码
 
 出自于福尔摩斯探案集。每一个跳舞的小人实际上对应的是英文二十六个字母中的一个，而小人手中的旗子则表明该字母是单词的最后一个字母，如果仅仅是一个单词而不是句子，或者是句子中最后的一个单词，则单词中最后一个字母不必举旗。
 
-![舞动的小人密码](crypto/images/dancingman.jpg)
+![舞动的小人密码](/crypto/images/dancingman.jpg)
 

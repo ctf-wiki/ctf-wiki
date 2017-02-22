@@ -10,7 +10,7 @@
 
   * [摩尔斯编码 - 维基百科](https://zh.wikipedia.org/wiki/%E6%91%A9%E5%B0%94%E6%96%AF%E7%94%B5%E7%A0%81)
 
-  ![摩尔斯电码](images/encode-morse.jpg)
+  ![摩尔斯电码](/crypto/images/encode-morse.jpg)
 
   * [摩尔斯编码在线转换](http://www.zhongguosou.com/zonghe/moErSiCodeConverter.aspx)
 
@@ -52,8 +52,8 @@
   * 堆叠式 / 行排式二维码：Code 16k、Code 49、PDF417
   * 矩阵式二维码：QR CODE
 
-  ![二维码](images/encode-qr1.jpg)
+  ![二维码](/crypto/images/encode-qr1.jpg)
 
-  ![二维码区块示意](images/encode-qr2.jpg)
+  ![二维码区块示意](/crypto/images/encode-qr2.jpg)
 
   ​

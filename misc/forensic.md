@@ -36,7 +36,7 @@
 
 - FAT 主磁盘结构
 
-  ![FAT 主磁盘结构](images/forensic-filesys.jpg)
+  ![FAT 主磁盘结构](/crypto/images/forensic-filesys.jpg)
 
 - 删除文件：目录表中文件名第一字节e5
 
