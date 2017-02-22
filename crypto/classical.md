@@ -158,7 +158,7 @@ A D F G X 的由来：
 
 维吉尼亚密码（又译维热纳尔密码）是使用一系列凯撒密码组成密码字母表的加密算法，属于多表密码的一种简单形式。
 
-![维吉尼亚表格](images/vigenere1.jpg)
+![维吉尼亚表格](crypto/images/vigenere1.jpg)
 
 #### 加密过程
 
@@ -169,13 +169,14 @@ A D F G X 的由来：
 
 1. 填充对齐
 
-   | 明文   | c    | o    | m    | e    | g    | r    | e    | a    | t    | w    | a    | l    | l    |
+
+   | 明文 | c    | o    | m    | e    | g    | r    | e    | a    | t    | w    | a    | l    | l    |
    | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
-   | 密钥   | c    | r    | y    | p    | t    | o    | c    | r    | y    | p    | t    | o    | c    |
+   | 密钥 | c    | r    | y    | p    | t    | o    | c    | r    | y    | p    | t    | o    | c    |
 
 2. 查表得密文
 
-   ![维吉尼亚加密](images/vigenere2.jpg)
+   ![维吉尼亚加密](crypto/images/vigenere2.jpg)
 
    ```
    明文：come greatwall
@@ -229,6 +230,7 @@ A D F G X 的由来：
    * 剩下部分按字母顺序填入
    * 字母 i 和 j 等价
 
+   
    |      | 1    | 2    | 3     | 4    | 5    |
    | ---- | ---- | ---- | ----- | ---- | ---- |
    | 1    | h    | e    | l     | o    | w    |
@@ -440,7 +442,7 @@ window      =>  []["filter"]["constructor"]("return this")()
 
 [BrainFuck - 维基百科](https://zh.wikipedia.org/wiki/Brainfuck)
 
-Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1993 年创建的。由于 fuck 在英语中是脏话，这种语言有时被称为 brainf*ck 或 brainf***，甚至被简称为 BF。
+Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1993 年创建的。由于 fuck 在英语中是脏话，这种语言有时被称为 brainf\*ck 或 brainf\*\*\*，甚至被简称为 BF。
 
 #### 例子
 
@@ -456,17 +458,17 @@ Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1
 
 [猪圈密码 - 维基百科](https://zh.wikipedia.org/wiki/%E8%B1%AC%E5%9C%88%E5%AF%86%E7%A2%BC)
 
-![猪圈密码对照表](images/pigpen.png)
+![猪圈密码对照表](crypto/images/pigpen.png)
 
 #### 例子
 
 明文：X marks the spot
 
-密文：![猪圈密码示例](images/pigpen_example.png)
+密文：![猪圈密码示例](crypto/images/pigpen_example.png)
 
 ### 舞动的小人密码
 
 出自于福尔摩斯探案集。每一个跳舞的小人实际上对应的是英文二十六个字母中的一个，而小人手中的旗子则表明该字母是单词的最后一个字母，如果仅仅是一个单词而不是句子，或者是句子中最后的一个单词，则单词中最后一个字母不必举旗。
 
-![舞动的小人密码](images/dancingman.jpg)
+![舞动的小人密码](crypto/images/dancingman.jpg)
 
