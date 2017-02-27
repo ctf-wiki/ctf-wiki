@@ -33,15 +33,15 @@ RSA加密算法是一种非对称加密算法。在公开密钥加密和电子�
 **公钥与私钥的产生**
 
 1. 随机选择两个大质数 $p$ 和 $q$，且二者不相等，计算 $N=p \times q$。
-2. 根据欧拉函数，求得 $$r=\varphi (N)=\varphi (p)\varphi (q)=(p-1)(q-1)$$。
-3. 选择一个小于 $$r$$ 的整数 $$e$$，使 $$e$$ 和 $$r$$ 互质。并求得 $$e$$ 关于 $$r$$ 的模反元素 ，命名为 $$d$$（求 $$d$$ 令 $$ed\equiv 1 \pmod r$$）。
-4. 将 $$p$$ 和 $$q$$ 的记录销毁。
+2. 根据欧拉函数，求得 $r=\varphi (N)=\varphi (p)\varphi (q)=(p-1)(q-1)$。
+3. 选择一个小于 $r$ 的整数 $e$，使 $e$ 和 $r$ 互质。并求得 $e$ 关于 $r$ 的模反元素 ，命名为 $d$（求 $d$ 令 $ed\equiv 1 \pmod r$）。
+4. 将 $p$ 和 $q$ 的记录销毁。
 
-此时，$$(N,e)$$ 是公钥，$$(N,d)$$ 是私钥。
+此时，$(N,e)$ 是公钥，$(N,d)$ 是私钥。
 
 **消息加密**
 
-首先需要将消息 $$m$$ 以一个双方约定好的格式转化为一个小于 $$N$$，且与 $$N$$ 互质的整数 $$n$$。如果消息太长，可以将消息分为几段。
+首先需要将消息 $m$ 以一个双方约定好的格式转化为一个小于 $N$，且与 $N$ 互质的整数 $n$。如果消息太长，可以将消息分为几段。
 
 然后利用如下公式加密：
 $$
@@ -49,31 +49,34 @@ n^{e}\equiv c\pmod N
 $$
 **消息解密**
 
-利用密钥 $$d$$ 进行解码。
+利用密钥 $d$ 进行解码。
 $$
 c^{d}\equiv n\pmod N
 $$
 
 #### RSA 共模攻击
 
-* 攻击条件：当两个用户使用相同的模数 $$N$$、不同的私钥时，即存在共模攻击。
+* 攻击条件：当两个用户使用相同的模数 $N$、不同的私钥时，即存在共模攻击。
 
 * 攻击原理
 
-  设两个用户的公钥分别为 $$e_1$$ 和 $$e_2$$，且两者互质。明文消息为 $$m$$ ，密文分别为：
+  设两个用户的公钥分别为 $e_1$ 和 $e_2$，且两者互质。明文消息为 $m$ ，密文分别为：
+  
   $$
-  \begin{align*}
-  c_1 &= m^{e_1}\bmod N\\
+  \begin{align\*}
+  c_1 &= m^{e_1}\bmod N\\\\
   c_2 &= m^{e_2}\bmod N
-  \end{align*}
+  \end{align\*}
   $$
-  当攻击者截获 $$c_1$$ 和 $$c_2$$ 后，就可以恢复出明文。用扩展欧几里得算法求出 $$re_1+se_2=1\bmod n$$ 的两个整数 $$r$$ 和 $$s$$，由此可得：
+  
+  当攻击者截获 $c_1$ 和 $c_2$ 后，就可以恢复出明文。用扩展欧几里得算法求出 $re_1+se_2=1\bmod n$ 的两个整数 $r$ 和 $s$，由此可得：
+  
   $$
-  \begin{align*}
-  c_{1}^{r}c_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\
-  &\equiv m^(re_1+se_2)\bmod n\\
+  \begin{align\*}
+  c\_{1}^{r}c\_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\\\
+  &\equiv m^{(re_1+se_2)} \bmod n\\\\
   &\equiv m\bmod n
-  \end{align*}
+  \end{align\*}
   $$
 
 * 范例
@@ -149,20 +152,24 @@ $$
 
 #### RSA 小公钥指数攻击
 
-如果用户使用较小的加密密钥 $$e$$，则同样存在安全隐患，假设用户使用的密钥 $$e=3$$。
+如果用户使用较小的加密密钥 $e$，则同样存在安全隐患，假设用户使用的密钥 $e=3$。
 
 考虑到加密关系满足：
+
 $$
 c\equiv m^3 \bmod N
 $$
+
 则：
+
 $$
-\begin{align*}
-m^3 &= c+k\times N\\
+\begin{align\*}
+m^3 &= c+k\times N\\\\
 m &= \sqrt[3]{c+k\times n}
-\end{align*}
+\end{align\*}
 $$
-攻击者可以从小到大枚举 $$n$$，依次开三次根，直到开出整数为止。
+
+攻击者可以从小到大枚举 $n$，依次开三次根，直到开出整数为止。
 
 * 编程工具
 
@@ -221,7 +228,7 @@ $$
   Modulus=B0BEE5E3E9E5A7E8D00B493355C618FC8C7D7D03B82E409951C182F398DEE3104580E7BA70D383AE5311475656E8A964D380CB157F48C951ADFA65DB0B122CA40E42FA709189B719A4F0D746E2F6069BAF11CEBD650F14B93C977352FD13B1EEA6D6E1DA775502ABFF89D3A8B3615FD0DB49B88A976BC20568489284E181F6F11E270891C8EF80017BAD238E363039A458470F1749101BC29949D3A4F4038D463938851579C7525A69984F15B5667F34209B70EB261136947FA123E549DFFF00601883AFD936FE411E006E4E93D1A00B0FEA541BBFC8C5186CB6220503A94B2413110D640C77EA54BA3220FC8F4CC6CE77151E29B3E06578C478BD1BEBE04589EF9A197F6F806DB8B3ECD826CAD24F5324CCDEC6E8FEAD2C2150068602C8DCDC59402CCAC9424B790048CCDD9327068095EFA010B7F196C74BA8C37B128F9E1411751633F78B7B9E56F71F77A1B4DAAD3FC54B5E7EF935D9A72FB176759765522B4BBC02E314D5C06B64D5054B7B096C601236E6CCF45B5E611C805D335DBAB0C35D226CC208D8CE4736BA39A0354426FAE006C7FE52D5267DCFB9C3884F51FDDFDF4A9794BCFE0E1557113749E6C8EF421DBA263AFF68739CE00ED80FD0022EF92D3488F76DEB62BDEF7BEA6026F22A1D25AA2A92D124414A8021FE0C174B9803E6BB5FAD75E186A946A17280770F1243F4387446CCCEB2222A965CC30B3929
   ```
 
-  看到 $$e=3$$ ，很明显是小公钥指数攻击了。
+  看到 $e=3$ ，很明显是小公钥指数攻击了。
 
   ```python
   # coding=utf-8
@@ -292,7 +299,7 @@ $$
 
 #### RSA 衍生算法——Rabin 算法
 
-Rabin 算法的特征在于 $$e=2$$。
+Rabin 算法的特征在于 $e=2$。
 
 密文：
 $$
@@ -300,34 +307,34 @@ c = m^2\bmod n
 $$
 解密：
 
-1. 计算出 $$m_p$$ 和 $$m_q$$：
+1. 计算出 $m_p$ 和 $m_q$：
 $$
-\begin{align*}
-m_p &= \sqrt{c} \bmod p\\
+\begin{align\*}
+m_p &= \sqrt{c} \bmod p\\\\
 m_q &= \sqrt{c} \bmod q
-\end{align*}
+\end{align\*}
 $$
 
-2. 用扩展欧几里得计算出 $$y_p$$ 和 $$y_q$$：
+2. 用扩展欧几里得计算出 $y_p$ 和 $y_q$：
 $$
 y_p \cdot p + y_q \cdot q = 1
 $$
 
 3. 解出四个明文：
 $$
-\begin{align*}
-a &= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\
-b &= n - a\\
-c &= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\
+\begin{align\*}
+a &= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\\\
+b &= n - a\\\\
+c &= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\\\
 d &= n - c
-\end{align*}
+\end{align\*}
 $$
-注意：如果 $$p \equiv q \equiv 3 \pmod 4$$，则
+注意：如果 $p \equiv q \equiv 3 \pmod 4$，则
 $$
-\begin{align*}
-m_p &= c^{\frac{1}{4}(p + 1)} \bmod p\\
+\begin{align\*}
+m_p &= c^{\frac{1}{4}(p + 1)} \bmod p\\\\
 m_q &= c^{\frac{1}{4}(q + 1)} \bmod q
-\end{align*}
+\end{align\*}
 $$
 
 
@@ -355,7 +362,7 @@ yigb/+l/vjDdAgEC
 -----END PUBLIC KEY-----
 ```
 
-$$e=2$$，考虑 Rabin 算法。
+$e=2$，考虑 Rabin 算法。
 
 ```python
 import string
@@ -436,7 +443,7 @@ flag{Rab1n_i5_c00l}
 
 **大因数分解**
 
-* [factor.db](factordb.com)
+* [factor.db](http://factordb.com/)
 * [yafu](https://sourceforge.net/projects/yafu/)
 
 **OpenSSL**
@@ -519,7 +526,7 @@ flag{Rab1n_i5_c00l}
   Modulus=D8E24C12B7B99EFE0A9BC04A6A3DF58A2A944269B492B7376DF129023F2061B9
   ```
 
-  这么小的一个 $$N$$，先分解一下。
+  这么小的一个 $N$，先分解一下。
 
   ```
   p = 311155972145869391293781528370734636009
@@ -566,9 +573,9 @@ flag{Rab1n_i5_c00l}
 
   逻辑很简单，读取 flag，重复 30 遍为密文。
 
-  随机取 $$p$$ 和 $$q$$ ，生成一个公钥，写入 `pubkey.pem`，再用脚本中的 `ext_rsa_encrypt` 函数进行加密，最后将密文写入 `flag.enc`。
+  随机取 $p$ 和 $q$ ，生成一个公钥，写入 `pubkey.pem`，再用脚本中的 `ext_rsa_encrypt` 函数进行加密，最后将密文写入 `flag.enc`。
 
-  尝试一下解密，提示密文过长，再看加密函数，原来当加密失败时，函数会跳到异常处理，以一定算法重新取更大的 $$p$$ 和 $$q$$，直到加密成功。
+  尝试一下解密，提示密文过长，再看加密函数，原来当加密失败时，函数会跳到异常处理，以一定算法重新取更大的 $p$ 和 $q$，直到加密成功。
 
   那么我们只要也写一个相应的解密函数即可。
 
@@ -622,7 +629,7 @@ flag{Rab1n_i5_c00l}
 
 散列函数（或散列算法，又称哈希函数，英语：Hash Function）是一种从任何一种数据中创建小的数字“指纹”的方法。散列函数把消息或数据压缩成摘要，使得数据量变小，将数据的格式固定下来。该函数将数据打乱混合，重新创建一个叫做散列值（hash values，hash codes，hash sums，或 hashes）的指纹。散列值通常用来代表一个短的随机字母和数字组成的字符串。好的散列函数在输入域中很少出现散列冲突。在散列表和数据处理中，不抑制冲突来区别数据，会使得数据库记录更难找到。
 
-* 单向性：对于任意消息 $$x$$，计算 $$H(x)$$ 很容易，相反则很难实现。
+* 单向性：对于任意消息 $x$，计算 $H(x)$ 很容易，相反则很难实现。
 * 破解方式：通常只能暴力破解。
 
 #### Hash 算法分类
