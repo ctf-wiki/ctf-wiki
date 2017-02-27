@@ -25,7 +25,7 @@
 
 * Stegdetect
 
-  ```shell
+  ```bash
   stegdetect -s 1.5 xxx.jpg
   stegdetect -tF xxx.jpg
   ```
@@ -34,13 +34,13 @@
 
 * Mp3Stego
 
-  ```shell
+  ```bash
   decode -X -P pass sound.mp3
   ```
 
 * outguess
 
-  ```shell
+  ```bash
   outguess -e -k "ddtek" -r xxxx
   ```
 
