@@ -1,5 +1,11 @@
 - **前言**
   - [主要内容](/introduction)
+- MISC 杂项
+  - [简介](/misc/)
+  - [信息搜集技术](/misc/recon)
+  - [编码分析](/misc/encode)
+  - [取证分析](/misc/forensic)
+  - [隐写分析](/misc/steganalysis)
 - **密码学**
   - [简介](/crypto/)
   - [古典密码](/crypto/classical)
