@@ -1,6 +1,6 @@
 - **前言**
   - [主要内容](/introduction)
-- MISC 杂项
+- **MISC 杂项**
   - [简介](/misc/)
   - [信息搜集技术](/misc/recon)
   - [编码分析](/misc/encode)
