@@ -1,3 +1,5 @@
+![logo](/logo.png)
+
 # CTF WiKi
 
 [GitHub](https://github.com/40huo/ctf-wiki/)
