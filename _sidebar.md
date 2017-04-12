@@ -14,6 +14,7 @@
   - [简介](/web/)
   - [SQL 注入](/web/sqli)
   - [XSS 跨站脚本攻击](/web/xss)
+  - [CSRF 跨站请求伪造](/web/csrf)
 - **逆向**
   - [简介](/reverse/)
 - **Mobile**
