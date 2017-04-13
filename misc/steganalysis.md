@@ -11,7 +11,7 @@
 
 ### 隐写方法和工具
 
-- RSD、LSB、DCT
+- RSD, LSB, DCT
 - [Steganography tools](https://en.wikipedia.org/wiki/Steganography_tools)
 
 ## 隐写分析
@@ -51,5 +51,5 @@
 ## 扩展阅读
 
 * [An Overview of Steganography for the Computer Forensics Examiner](http://www.garykessler.net/library/fsc_stego.html)
-* [深入理解JPEG图像格式Jphide隐写](http://wooyun.com.com.sb/static/drops/tips-15661.html)
+* [深入理解 JPEG 图像格式 Jphide 隐写](http://wooyun.com.com.sb/static/drops/tips-15661.html)
 * [隐写术总结](http://wooyun.com.com.sb/static/drops/tips-4862.html)

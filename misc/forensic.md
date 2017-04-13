@@ -19,7 +19,7 @@
 ### 需要了解常见文件特征串
 
 - [http://en.wikipedia.org/wiki/List_of_file_signatures](http://en.wikipedia.org/wiki/List_of_file_signatures)
-- JPEG、PNG、GIF、BMP 等图片文件，ZIP、 RAR、TAR、7z 等压缩文件，mp3、wma、avi 等音视频文件
+- JPEG、PNG、GIF、BMP 等图片文件，ZIP、RAR、TAR、7 z 等压缩文件，mp3、wma、avi 等音视频文件
 
 ### 音频分析
 
@@ -38,7 +38,7 @@
 
   ![FAT 主磁盘结构](/misc/images/forensic-filesys.jpg)
 
-- 删除文件：目录表中文件名第一字节e5
+- 删除文件：目录表中文件名第一字节 e5
 
 ### 文件恢复和取证工具
 
@@ -63,7 +63,7 @@
 - Volatility 工具
 - 解析 Windows / Linux / Mac OS X 内存结构
 - 分析进程，内存数据
-- 根据题目提示寻找线索和思路， 提取分析指定进程的特定内存数据
+- 根据题目提示寻找线索和思路，提取分析指定进程的特定内存数据
 
 ## 镜像取证
 
