@@ -31,6 +31,7 @@ HTML中能设置`src/href`等链接地址的标签都可以发起一个GET 请�
 <audio src=""></audio>
 <a href=""></a>
 <table background=""></table>
+等
 ```
 
 还有 CSS 样式中的：
@@ -38,9 +39,23 @@ HTML中能设置`src/href`等链接地址的标签都可以发起一个GET 请�
 ```css
 @import ""
 background:url("")
+等
 ```
 
-还可以通过JavaScript动态生成的标签对象或CSS对象发起GET请求，而发出POST请求则只能通过表单提交的方式。
+也可使用表单来对POST型的请求进行伪造。
 
-### JSON HiJacking
+```html
+<form action="http://www.a.com/register" id="register" method="post">
+  <input type=text name="username" value="" />
+  <input type=password name="password" value="" />
+</form>
+<script>
+  var f = document.getElementById("register");
+  f.inputs[0].value = "test";
+  f.inputs[1].value = "passwd";
+  f.submit();
+</script>
+```
+
+### Flash CSRF
 
