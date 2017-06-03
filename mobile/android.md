@@ -23,9 +23,9 @@
 
 - 硬件开发商不愿意将自己的代码公开，所以谷歌用了一个阴招：HAL
 
-  > 1. 修改内核，增加一些HAL接口，这些代码试用GPL协议，完全公开
-  > 2. 增加HAL层，调用上一步定义好的内核接口
-  > 3. 在HAL层中定义好上层调用所需的统一API
+  > 1. 修改内核，增加一些 HAL 接口，这些代码试用 GPL 协议，完全公开
+  > 2. 增加 HAL 层，调用上一步定义好的内核接口
+  > 3. 在 HAL 层中定义好上层调用所需的统一 API
 
 ### 常见问题解释
 
@@ -41,7 +41,7 @@
 
    听说用 Java 就可以写 Android 应用？是的
 
-   那 Android 执行环境用的就是 JVM么？不是
+   那 Android 执行环境用的就是 JVM 么？不是
 
    - Java 虚拟机
    - Dalvik 虚拟机
@@ -98,7 +98,7 @@
 3. IPC——通信是刚需
    * `Binder`
    * `Intent`
-   * `ContentProvider`、`Broadcast Receiver`、`Activity`
+   * `ContentProvider`, `Broadcast Receiver`, `Activity`
    * 眼耳鼻肤口，5 个 Sensor，但输出 6 种感觉（加速度），`onXXXSensorChanged callback` 函数在大脑中，每个人都可以随时自定义 `callback` 函数内容
    * `ContentProvider` 记忆
    * `Broadcast Receiver` 指令接受，并进行动作输出
@@ -170,7 +170,7 @@ Canary, DEP, ASLR
 
 # Android 代码保护与逆向技术的对抗
 
-1. 安卓的“钱途”
+1. 安卓的「钱途」
 
    市场占有率 > 78%
 
@@ -213,15 +213,15 @@ Java 层
 Native 层
 
 * C/C++ -> ELF (gcc g++)
-* ELF -> ARM 汇编（IDA，objdump/readelf等）
-* 反编译为伪 C/C++ 代码（IDA等）
+* ELF -> ARM 汇编（IDA，objdump/readelf 等）
+* 反编译为伪 C/C++ 代码（IDA 等）
 
 ## 加壳与脱壳
 
 ### 加固平台加固技术
 
 * 梆梆加固、爱加密、腾讯、阿里、百度、360
-* 学术界：DIVILAR等
+* 学术界：DIVILAR 等
 
 ### 开发者自行加固
 
@@ -232,7 +232,7 @@ Native 层
 
 * 针对特定加固方案的特殊对抗方案
   * 钩子技术（Hook）
-    * 基于 Xposed 的ZJDroid 等
+    * 基于 Xposed 的 ZJDroid 等
   * Dump 内存重建 DEX
     * 需要较多手动分析
 * 基于修改 Android 运行时的通用加固对抗方案
@@ -298,7 +298,7 @@ C/C++ 源码 -> 混淆后的 ELF
 
 Rootkit 技术
 
-* 长老木马，PoisonCake等
+* 长老木马，PoisonCake 等
 * Hook 技术修改系统文件甚至内核以隐藏自身
 
 取证技术
