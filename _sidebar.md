@@ -21,6 +21,7 @@
   - [简介](/reverse/)
 - **Mobile**
   - [简介](/mobile/)
+  - [Android](/mobile/android)
 - **PWN**
   - [简介](/pwn/)
 - **CTF 竞赛模式**
