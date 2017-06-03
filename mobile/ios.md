@@ -1,6 +1,6 @@
 > 王铁磊  
 > 盘古团队  
-> 2016年8月18日
+> 2016 年 8 月 18 日
 
 # iOS 安全概要
 
@@ -32,7 +32,7 @@
    * 应用管理接口
    * 开发者接口
 2. 安装的应用
-   * Jekyll 类型应用 (USENIX Security'13)
+   * Jekyll 类型应用 （USENIX Security「13）
    * Masque Attacks (FireEye Research)
 
 ## 用户态远程攻击面攻击
@@ -61,7 +61,7 @@
      * DIOCADDRULE ioctl 处理函数未初始化变量漏洞
        * 可以使任意内核地址的内容减一
 5. /dev/*
-   * ptmx_get_ioctl 内存越界访问漏洞
+   * ptmx＿get＿ioctl 内存越界访问漏洞
      * ptmx 设备在处理 minor 参数
 6. IOKit
    * IOSurface

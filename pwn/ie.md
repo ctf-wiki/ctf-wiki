@@ -2,13 +2,13 @@
 
 > 古河  
 > 360 Vulcan Team  
-> 2016年8月10日
+> 2016 年 8 月 10 日
 
 ## IE Fuzz 漏洞挖掘介绍与实践
 ### IE UAF 漏洞
 #### 引用计数
 * IE objects/elements 通过引用计数管理
-* 当引用计数为0，对象内存释放或回收
+* 当引用计数为 0，对象内存释放或回收
 * 大部分 IE UAF 漏洞成因都是引用计数处理不当。
 
 
@@ -27,7 +27,7 @@
     * 通过调试方法记录 crash
     * 兼容性有问题
 * NodeFuzz
-    * 通过 websocket 记录log
+    * 通过 websocket 记录 log
 
     * 没有 crash 监控，需要自己提供
 
@@ -100,7 +100,7 @@ Idea 是最关键的
 啃文档  太新的或太旧的特性
 让目标更容易 crash
 Windows 下 Page Heap
-Linux下 ASAN
+Linux 下 ASAN
 
 
 > https://github.com/jpp-ffm/bamboo
@@ -116,7 +116,7 @@ Linux下 ASAN
 * 阻止不合法的间接调用
 * 在程序运行时
 
-### 对抗Windows平台的控制流保护
+### 对抗 Windows 平台的控制流保护
 
 
 ## 二进制漏洞研究工作介绍

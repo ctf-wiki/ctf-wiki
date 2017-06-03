@@ -1,14 +1,14 @@
 # XMan 二进制漏洞发掘与利用技术
 
 > 陈星漫  
-> 2016年8月16日
+> 2016 年 8 月 16 日
 
 ## 软件安全基础
 
 * 专注于研究软件的设计和实现的安全
 * 研究对象：代码（源码、字节码、汇编）
 * 研究目标：减少软件漏洞
-* PWN：
+* PWN: 
 
 ### 漏洞的分类
 
@@ -24,9 +24,9 @@
 * 内核漏洞
   * iOS 越狱，Linux / Android 提权
 * 库漏洞
-  * openssl信息泄露
+  * openssl 信息泄露
 * 软件漏洞
-  * 浏览器RCE
+  * 浏览器 RCE
   * nginx RCE
   * 路由器 RCE
   * 等等
@@ -46,7 +46,7 @@
 ### GOT
 
 * Global Offset Table
-* 当执行到 library 的 function 时才会去寻找 function，got table用于
+* 当执行到 library 的 function 时才会去寻找 function，got table 用于
 
 ### x86 内存分布
 
@@ -60,14 +60,14 @@
 
 * 内存中的一块区域，用栈的数据结构来管理
 * 从高地址向低地址增长
-* x86 用ESP 寄存器和 EBP 寄存器来管理
+* x86 用 ESP 寄存器和 EBP 寄存器来管理
 
 ### Heap
 
 * Glibc - ptmalloc
 * Structure
   * chunk 与 bin
-* 以 chunk （块）为单位进行管理
+* 以 chunk（块）为单位进行管理
   * malloc chunk
   * free chunk
   * top chunk
@@ -135,8 +135,8 @@
 * PIE
   * 攻击时需要泄露地址
 * RELRO
-  * Partial: 不可修改 strtab
-  * Full: 程序装载时即填充Got表
+  * Partial：不可修改 strtab
+  * Full：程序装载时即填充 Got 表
 
 ### Tools
 
@@ -153,6 +153,6 @@
 
 ## 漏洞利用题解分享
 
- 
+
 
 ## 漏洞利用实战演练

@@ -3,7 +3,7 @@
 > yuange  
 > 真名：袁仁广  
 > 腾讯湛卢实验室总监  
-> 2016年8月16日
+> 2016 年 8 月 16 日
 
 ## 病毒对抗技术
 
@@ -37,7 +37,7 @@
     * shellcode hook close socket
     * exploit 发送错误数据，server 关闭 socket，shellcode 拦截
   * rpc 的端口复用技术
-    * shellcode hook 服务的rpcnum 入口
+    * shellcode hook 服务的 rpcnum 入口
     * exploit 调用 NdrSendReceive
 
 ## 对抗 IDS
@@ -75,7 +75,7 @@ mov dword ptr [esi-4],0    //原有代码加一句 PID=0 过沙箱
 ## APT 高级漏洞利用技术
 
 * DVE 数据虚拟执行技术
-* 原理，97年两篇文章
+* 原理，97 年两篇文章
   * 《注意利用解释型语言与 CPU 代码结合的新型病毒》
   * 《文本病毒（病毒新理论）》
 * 解释执行也是执行
