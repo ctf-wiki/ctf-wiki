@@ -4,9 +4,9 @@
 
 常见的导致文件包含的函数有：
 
-- PHP：`include()` `include_once()` `require()` `require_once()` `fopen()` `readfile()` 等
-- JSP / Servlet：`ava.io.File()` `java.io.FileReader()` 等
-- ASP：`include file` `include virtual` 等
+- PHP：`include()``include_once()``require()` `require_once()` `fopen()` `readfile()` 等
+- JSP / Servlet：`ava.io.File()``java.io.FileReader()` 等
+- ASP：`includefile``include virtual` 等
 
 当 PHP 包含一个文件时，会将该文件当做 PHP 代码执行，而不会在意文件时什么类型。
 
@@ -448,11 +448,11 @@ $array2 = array("foo", "bar", "hello", "world");
 var_dump(md5($array1)==var_dump($array2)); //true
 ```
 
-PHP 手册中的 md5（）函数的描述是`string md5 ( string $str [, bool $raw_output = false ] ) `，`md5()`中的需要是一个 string 类型的参数。但是当你传递一个 array 时，`md5()`不会报错，只是会无法正确地求出 array 的 md5 值，这样就会导致任意 2 个 array 的 md5 值都会相等。
+PHP 手册中的 md5（）函数的描述是 `string md5 ( string $str [, bool $raw_output = false ] ) `，`md5()` 中的需要是一个 string 类型的参数。但是当你传递一个 array 时，`md5()` 不会报错，只是会无法正确地求出 array 的 md5 值，这样就会导致任意 2 个 array 的 md5 值都会相等。
 
 **strcmp()**
 
-`strcmp()`函数在 PHP 官方手册中的描述是`int strcmp ( string $str1 ， string $str2 )` ,需要给`strcmp()`传递 2 个`string`类型的参数。如果 `str1`小于`str2`，返回-1，相等返回 0，否则返回 1。`strcmp()`函数比较字符串的本质是将两个变量转换为 ASCII，然后进行减法运算，然后根据运算结果来决定返回值。
+`strcmp()`函数在 PHP 官方手册中的描述是 `intstrcmp ( string $str1 ， string $str2 )`，需要给 `strcmp()` 传递 2 个 `string` 类型的参数。如果 `str1` 小于 `str2`，返回-1，相等返回 0，否则返回 1。`strcmp()` 函数比较字符串的本质是将两个变量转换为 ASCII，然后进行减法运算，然后根据运算结果来决定返回值。
 
 如果传入给出`strcmp()`的参数是数字呢？
 
@@ -496,5 +496,176 @@ var_dump(in_array('1bc', $array)); //true
 
 ## 寻找源代码备份
 
+### hg 源码泄露
 
+`hg init` 时会产生 `.hg` 文件。
+
+[利用工具 dvcs-ripper](https://github.com/kost/dvcs-ripper)。
+
+### Git 源码泄露
+
+`.git` 目录内有代码的变更记录等文件，如果部署时该目录下的文件可被访问，可能会被利用来恢复源代码。
+
+```
+/.git
+/.git/HEAD
+/.git/index
+/.git/config
+/.git/description
+```
+
+[GitHack](https://github.com/lijiejie/GitHack)
+
+```shell
+python GitHack.py http://www.openssl.org/.git/
+```
+
+### `.DS_Store` 文件泄露
+
+Mac OS 中会包含有 `.DS_Store` 文件，包含文件名等信息。
+
+[利用工具 ds＿store＿exp](https://github.com/lijiejie/ds_store_exp)。
+
+```shell
+python ds_store_exp.py http://hd.zj.qq.com/themes/galaxyw/.DS_Store
+
+hd.zj.qq.com/
+└── themes
+    └── galaxyw
+        ├── app
+        │   └── css
+        │       └── style.min.css
+        ├── cityData.min.js
+        ├── images
+        │   └── img
+        │       ├── bg-hd.png
+        │       ├── bg-item-activity.png
+        │       ├── bg-masker-pop.png
+        │       ├── btn-bm.png
+        │       ├── btn-login-qq.png
+        │       ├── btn-login-wx.png
+        │       ├── ico-add-pic.png
+        │       ├── ico-address.png
+        │       ├── ico-bm.png
+        │       ├── ico-duration-time.png
+        │       ├── ico-pop-close.png
+        │       ├── ico-right-top-delete.png
+        │       ├── page-login-hd.png
+        │       ├── pic-masker.png
+        │       └── ticket-selected.png
+        └── member
+            ├── assets
+            │   ├── css
+            │   │   ├── ace-reset.css
+            │   │   └── antd.css
+            │   └── lib
+            │       ├── cityData.min.js
+            │       └── ueditor
+            │           ├── index.html
+            │           ├── lang
+            │           │   └── zh-cn
+            │           │       ├── images
+            │           │       │   ├── copy.png
+            │           │       │   ├── localimage.png
+            │           │       │   ├── music.png
+            │           │       │   └── upload.png
+            │           │       └── zh-cn.js
+            │           ├── php
+            │           │   ├── action_crawler.php
+            │           │   ├── action_list.php
+            │           │   ├── action_upload.php
+            │           │   ├── config.json
+            │           │   ├── controller.php
+            │           │   └── Uploader.class.php
+            │           ├── ueditor.all.js
+            │           ├── ueditor.all.min.js
+            │           ├── ueditor.config.js
+            │           ├── ueditor.parse.js
+            │           └── ueditor.parse.min.js
+            └── static
+                ├── css
+                │   └── page.css
+                ├── img
+                │   ├── bg-table-title.png
+                │   ├── bg-tab-say.png
+                │   ├── ico-black-disabled.png
+                │   ├── ico-black-enabled.png
+                │   ├── ico-coorption-person.png
+                │   ├── ico-miss-person.png
+                │   ├── ico-mr-person.png
+                │   ├── ico-white-disabled.png
+                │   └── ico-white-enabled.png
+                └── scripts
+                    ├── js
+                    └── lib
+                        └── jquery.min.js
+
+21 directories, 48 files
+```
+
+### 网站备份文件
+
+管理员备份网站文件后错误地将备份放在 Web 目录下。
+
+常见的后缀名：
+
+```
+.rar
+.zip
+.7z
+.tar
+.tar.gz
+.bak
+.txt
+```
+
+### SVN 泄露
+
+敏感文件：
+
+```
+/.svn
+/.svn/wc.db
+/.svn/entries
+```
+
+[dvcs-ripper](https://github.com/kost/dvcs-ripper)
+
+```shell
+perl rip-svn.pl -v -u http://www.example.com/.svn/
+```
+
+[Seay - SVN](http://tools.40huo.cn/#!web.md#源码泄露)
+
+### WEB-INF / web.xml 泄露
+
+WEB-INF 是 Java Web 应用的安全目录，web.xml 中有文件的映射关系。
+
+WEB-INF 主要包含一下文件或目录：
+
+- `/WEB-INF/web.xml`：Web 应用程序配置文件，描述了 servlet 和其他的应用组件配置及命名规则。
+- `/WEB-INF/classes/`：含了站点所有用的 class 文件，包括 servlet class 和非 servlet class，他们不能包含在。jar 文件中。
+- `/WEB-INF/lib/`：存放 web 应用需要的各种 JAR 文件，放置仅在这个应用中要求使用的 jar 文件，如数据库驱动 jar 文件。
+- `/WEB-INF/src/`：源码目录，按照包名结构放置各个 java 文件。
+- `/WEB-INF/database.properties`：数据库配置文件。
+
+通过找到 web.xml 文件，推断 class 文件的路径，最后直接 class 文件，在通过反编译 class 文件，得到网站源码。
+一般情况，jsp 引擎默认都是禁止访问 WEB-INF 目录的，Nginx 配合 Tomcat 做均衡负载或集群等情况时，问题原因其实很简单，Nginx 不会去考虑配置其他类型引擎（Nginx 不是 jsp 引擎）导致的安全问题而引入到自身的安全规范中来（这样耦合性太高了），修改 Nginx 配置文件禁止访问 WEB-INF 目录就好了： 
+
+```nginx
+location ~ ^/WEB-INF/* { deny all; } # 或者return 404; 或者其他！
+```
+
+### CVS 泄露
+
+```
+http://url/CVS/Root 返回根信息
+http://url/CVS/Entries 返回所有文件的结构
+```
+
+取回源码
+
+```shell
+bk clone http://url/name dir
+```
 
