@@ -1,12 +1,20 @@
 - **前言**
   - [主要内容](/introduction)
-- **MISC 杂项**
+- **MISC**
   - [简介](/misc/)
   - [信息搜集技术](/misc/recon)
-  - [编码分析](/misc/encode)
+  - [编码分析](/misc/encode/readme)
+    - [通信领域](/misc/encode/communication)
+    - [计算机领域](/misc/encode/computer)
+  - [图片](/misc/picture/readme)
+    - [文件尾隐写](/misc/picture/tail)
+    - [lsb隐写](/misc/picture/lsb)
   - [取证分析](/misc/forensic)
   - [隐写分析](/misc/steganalysis)
-- **密码学**
+  - [压缩包](/misc/archive/archive)
+  - [磁盘&内存](/misc/disk&memory/disk&memory)
+  - [流量分析](/misc/traffic/cap)
+- **Crypto**
   - [简介](/crypto/)
   - [古典密码](/crypto/classical)
   - [现代密码](/crypto/modern)
