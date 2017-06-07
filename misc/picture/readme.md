@@ -41,6 +41,7 @@
 
 - file，文件基本属性
 - strings，简单字符串
+  - **jarvisoj-basic-veryeasy**
 
 ## 图片基本信息
 
@@ -85,23 +86,6 @@
 ## 隐藏信息提取
 
 对于不同的载体，可能会有不同的策略，当然还会有一些比较通用的策略。具体的参见可以参见下面更加具体的介绍。
-
-#### 双图隐写
-
-#### FFT隐写
-
-### gif
-
-- stegsolve
-- [在线分解](http://zh.bloggif.com/gif-extract)
-
-### png
-
-### bmp
-
-### jpg
-
-- jphide
 
 # 参考资料
 
