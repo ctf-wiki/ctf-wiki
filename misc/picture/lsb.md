@@ -1,3 +1,5 @@
+# 介绍
+
 # 原理
 
 对于无损压缩图片来说，每一种颜色用八位来表示，LSB隐写就是修改了像素中最低的一个比特位，而这样的修改对于人眼来说是看不出来的，所以借助这样的策略就可以隐写信息。常见的无损压缩图片有
@@ -9,7 +11,7 @@
 
 ![lsb隐写](/misc/picture/figure/lsb-intro.png)
 
-![](./figure/lsb-intro.png)
+![](/misc/picture/figure/lsb-fora.png)
 
 **注意：LSB无法对jpg图片进行隐写，因为jpg图片是有损压缩的。**
 
