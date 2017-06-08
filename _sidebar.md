@@ -24,7 +24,10 @@
   - [其它](/misc/others/others)
 - **Crypto**
   - [简介](/crypto/)
-  - [古典密码](/crypto/classical)
+  - [古典密码](/crypto/classical/)
+    - [单表代换加密](/crypto/classcial/monoalphabetic)
+    - [多表代换加密](/crypto/classcial/polyalphabetic)
+    - [其它类型](/crypto/classcial/others)
   - [现代密码](/crypto/modern)
 - **WEB**
   - [简介](/web/)
