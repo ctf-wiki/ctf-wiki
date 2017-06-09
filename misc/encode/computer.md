@@ -1,20 +1,14 @@
-# 介绍
+本节介绍一些计算机相关的编码。
 
-这里主要是一些计算机相关的编码。
-
-# 字母表编码
-
-## 介绍
+## 字母表编码
 
 - A-Z/a-z对应1-26或者0-25
 
-# ASCII 编码
+## ASCII 编码
 
-## 介绍
+![ascii](/misc/encode/images/ascii.jpg)
 
-![ascii](/misc/encode/figure/ascii.jpg)
-
-## 特点
+### 特点
 
 我们一般使用的ascii编码的时候采用的都是可见字符，而且主要是如下字符
 
@@ -22,9 +16,9 @@
 - A-Z, 65-90
 - a-z, 97-122
 
-## 变形
+### 变形
 
-### 二进制编码
+#### 二进制编码
 
 将ascii码对应的数字换成二进制表示形式。
 
@@ -32,35 +26,36 @@
 - 不大于8位，一般7位也可以，因为可见字符到127.
 - 其实是另一种ascii编码。
 
-### 十六进制编码
+#### 十六进制编码
 
 将ascii码对应的数字换成十六进制表示形式。
 
 - A-Z-->41-5A
 - a-z-->61-7A
 
-## 工具
+### 工具
 
 - jpk, ascii to number, number to ascii
 - http://www.ab126.com/goju/1711.html
 
-## 例子
+### 例子
 
-![ascii](/misc/encode/figure/ascii-example.png)
+![ascii](/misc/encode/images/ascii-example.png)
 
-## 题目
+### 题目
 
 - Jarvis-basic-德军的密码
 
-# base编码
+## Base 编码
 
-## 介绍
 
 base xx 中的xx表示的是采用多少个字符进行编码，比如说base64就是采用以下64个字符编码，由于 2 的 6 次方等于 64，所以每 6 个比特为一个单元，对应某个可打印字符。三个字节有 24 个比特，对应于 4 个 Base64 单元，即 3 个字节需要用 4 个可打印字符来表示。它可用来作为电子邮件的传输编码。在 Base64 中的可打印字符包括字母 A-Z、a-z、数字 0-9，这样共有 62 个字符，此外两个可打印符号在不同的系统中而不同。
 
-![base64](/misc/encode/figure/base64.png)
 
-具体介绍参见[维基百科](https://zh.wikipedia.org/wiki/Base64) 。
+![base64](/misc/encode/images/base64.png)
+
+具体介绍参见 [Base64 - 维基百科](https://zh.wikipedia.org/wiki/Base64) 。
+
 
 **编码man**
 
@@ -72,7 +67,7 @@ base xx 中的xx表示的是采用多少个字符进行编码，比如说base64�
 
 由于解码时补位的 0 并不参与运算，可以在该处隐藏信息。
 
-## 特点
+### 特点
 
 - base64结尾可能会有**=**号，但最多有两个
 - base32结尾可能会最多有3个等号
@@ -80,10 +75,11 @@ base xx 中的xx表示的是采用多少个字符进行编码，比如说base64�
 - **有可能需要自己加等号**
 - **=也就是3D**
 
-## 工具
+### 工具
 
 - http://www1.tc711.com/tool/BASE64.htm
 - python库函数
+
 
 ## 例子
 
@@ -141,17 +137,15 @@ for i in split:
 flag{BASE64_i5_amaz1ng~
 ```
 
-## 题目
 
-# huffman code
+### 题目
 
-## 介绍
+
+## 霍夫曼编码
 
 参见 [霍夫曼编码](https://zh.wikipedia.org/wiki/%E9%9C%8D%E5%A4%AB%E6%9B%BC%E7%BC%96%E7%A0%81) 。
 
-# XXencoding
-
-## 介绍
+## XXencoding
 
 XXencode将输入文本以每三个字节为单位进行编码。如果最后剩下的资料少于三个字节，不够的部份用零补齐。这三个字节共有24个Bit，以6bit为单位分为4个组，每个组以十进制来表示所出现的数值只会落在0到63之间。以所对应值的位置字符代替。
 
@@ -164,40 +158,36 @@ XXencode将输入文本以每三个字节为单位进行编码。如果最后剩
 
 具体信息参见[维基百科](https://en.wikipedia.org/wiki/Xxencoding)
 
-## 特点
+### 特点
 
 - 只有数字，大小写字母
 - +号，-号。
 
-## 工具
+### 工具
 
 - http://web.chacuo.net/charsetxxencode
 
-## 题目
+### 题目
 
-# URL编码
+## URL 编码
 
-## 介绍
+参见[URL 编码 - 维基百科](https://zh.wikipedia.org/wiki/%E7%99%BE%E5%88%86%E5%8F%B7%E7%BC%96%E7%A0%81) 。
 
-参见[维基百科](https://zh.wikipedia.org/wiki/%E7%99%BE%E5%88%86%E5%8F%B7%E7%BC%96%E7%A0%81) 。
-
-## 特点
+### 特点
 
 - 大量的百分号
 
-## 工具
+### 工具
 
-## 题目
+### 题目
 
-# Unicode编码
+## Unicode 编码
 
-## 介绍
-
-参见[维基百科](https://zh.wikipedia.org/wiki/Unicode) 。
+参见[Unicode - 维基百科](https://zh.wikipedia.org/wiki/Unicode) 。
 
 注意，它有四种表现形式。
 
-## 例子
+### 例子
 
 源文本： `The`
 
@@ -209,8 +199,8 @@ XXencode将输入文本以每三个字节为单位进行编码。如果最后剩
 
 \U+ [Hex]： `\U+0054\U+0068\U+0065`
 
-## 工具
+### 工具
 
-## 题目
+### 题目
 
-# HTML实体编码
+## HTML 实体编码
