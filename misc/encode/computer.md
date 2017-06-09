@@ -48,11 +48,24 @@
 
 ## Base 编码
 
-Base xx 中的xx表示的是采用多少个字符进行编码，比如说 Base64 就是采用以下 64 个字符编码
+
+base xx 中的xx表示的是采用多少个字符进行编码，比如说base64就是采用以下64个字符编码，由于 2 的 6 次方等于 64，所以每 6 个比特为一个单元，对应某个可打印字符。三个字节有 24 个比特，对应于 4 个 Base64 单元，即 3 个字节需要用 4 个可打印字符来表示。它可用来作为电子邮件的传输编码。在 Base64 中的可打印字符包括字母 A-Z、a-z、数字 0-9，这样共有 62 个字符，此外两个可打印符号在不同的系统中而不同。
+
 
 ![base64](/misc/encode/images/base64.png)
 
 具体介绍参见 [Base64 - 维基百科](https://zh.wikipedia.org/wiki/Base64) 。
+
+
+**编码man**
+
+![base64 编码 MAN](/misc/encode/figure/base64_man.png)
+
+如果要编码的字节数不能被 3 整除，最后会多出 1 个或 2 个字节，那么可以使用下面的方法进行处理：先使用 0 值在末尾补足，使其能够被 3 整除，然后再进行 base64 的编码。在编码后的 base64 文本后加上一个或两个 `=` 号，代表补足的字节数。也就是说，当最后剩余一个八位字节（一个 byte）时，最后一个 6 位的 base64 字节块有四位是 0 值，最后附加上两个等号；如果最后剩余两个八位字节（2 个 byte）时，最后一个 6 位的 base 字节块有两位是 0 值，最后附加一个等号。参考下表：
+
+![base64 补 0](/misc/encode/figure/base64_0.png)
+
+由于解码时补位的 0 并不参与运算，可以在该处隐藏信息。
 
 ### 特点
 
@@ -67,7 +80,66 @@ Base xx 中的xx表示的是采用多少个字符进行编码，比如说 Base64
 - http://www1.tc711.com/tool/BASE64.htm
 - python库函数
 
+
+## 例子
+
+题目描述：[附件下载](http://xman.xctf.org.cn/media/task/0d309f94-8485-4a21-bf6d-76e5fcf4e6f0.txt)
+
+一大串 Base64 密文，试试补 0 位的数据。
+
+```python
+# coding=utf-8
+import base64
+import re
+
+result = []
+with open('text.txt', 'r') as f:
+    for line in f.readlines():
+        if len(re.findall(r'=', line)) == 2:
+            last = line[-4]
+            if last.isupper():
+                num = ord(last) - ord('A')
+            elif last.islower():
+                num = ord(last) - ord('a') + 26
+            elif last.isdigit():
+                num = int(last) + 52
+            elif last == '+':
+                num = 62
+            elif last == '/':
+                num = 63
+            elem = '{0:06b}'.format(num)
+            result.append(elem[2:])
+
+        elif len(re.findall(r'=', line)) == 1:
+            last = line[-3]
+            if last.isupper():
+                num = ord(last) - ord('A')
+            elif last.islower():
+                num = ord(last) - ord('a') + 26
+            elif last.isdigit():
+                num = int(last) + 52
+            elif last == '+':
+                num = 62
+            elif last == '/':
+                num = 63
+            elem = '{0:06b}'.format(num)
+            result.append(elem[4:])
+
+flag_b = ''.join(result)
+split = re.findall(r'.{8}', flag_b)
+for i in split:
+    print chr(int(i, 2)),
+```
+
+感觉像是程序有点毛病，不过还是能看出来 flag。
+
+```
+flag{BASE64_i5_amaz1ng~
+```
+
+
 ### 题目
+
 
 ## 霍夫曼编码
 
