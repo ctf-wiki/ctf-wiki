@@ -28,8 +28,13 @@
     - [单表代换加密](/crypto/classcial/monoalphabetic)
     - [多表代换加密](/crypto/classcial/polyalphabetic)
     - [其它类型](/crypto/classcial/others)
-  - [现代密码](/crypto/modern)
-- **WEB**
+  - [对称密码](/crypto/symmetric/)
+  - [非对称密码](/crypto/asymmetric/)
+    - [rsa](/crypto/asymmetric/rsa)
+  - [哈希函数](/crypto/hash/)
+    - [md5](/crypto/hash/md5)
+  - [其它](/crypto/others/)
+- **Web**
   - [简介](/web/)
   - [SQL 注入](/web/sqli)
   - [XSS 跨站脚本攻击](/web/xss)
