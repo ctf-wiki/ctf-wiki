@@ -17,7 +17,7 @@
   - [压缩包分析](/misc/archives)
   - [磁盘 / 内存分析](/misc/disk_memory/)
   - [流量分析](/misc/cap)
-  - [其它](/misc/others/others)
+  - [其它](/misc/others)
 - **Crypto**
   - [简介](/crypto/)
   - [古典密码](/crypto/classical/)
