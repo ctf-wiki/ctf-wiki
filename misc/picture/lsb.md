@@ -11,13 +11,13 @@
 
 ![](/misc/picture/figure/lsb-fora.png)
 
-!> 注意：LSB 无法对 JPG 图片进行隐写，因为 JPG 图片是有损压缩的。
+!》注意：LSB 无法对 JPG 图片进行隐写，因为 JPG 图片是有损压缩的。
 
 ## 基本思路
 
 利用 Stegsolve 打开图片之后依次打开一点一点点击，关注每一个通道的最低位，即 plane 0，看是否有异常
 
-- 数据提取目录下依次选择 Red、Green、 Blue 三个通道的最低位，然后勾选右侧的 LSB First。
+- 数据提取目录下依次选择 Red、Green、Blue 三个通道的最低位，然后勾选右侧的 LSB First。
 - 保存为 bin 文件
 
 ## 题目
