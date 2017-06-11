@@ -9,7 +9,7 @@
 
 - `binwalk`
 
-  - [介绍](http://www.freebuf.com/sectool/15266.html)；
+  - [介绍](http://www.freebuf.com/sectool/15266.html)
   - `binwalk -e filename`：提取文件中包含的其他内容。
 
 - `foremost`

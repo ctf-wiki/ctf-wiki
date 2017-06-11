@@ -11,7 +11,7 @@
 
 ![](/misc/picture/figure/lsb-fora.png)
 
-!》注意：LSB 无法对 JPG 图片进行隐写，因为 JPG 图片是有损压缩的。
+!> 注意：LSB 无法对 JPG 图片进行隐写，因为 JPG 图片是有损压缩的。
 
 ## 基本思路
 
