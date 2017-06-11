@@ -10,6 +10,8 @@
     - ISCC 2014 此为 GIF 图片
 
 ## JPG
+- [深入理解 JPEG 图像格式 Jphide 隐写](http://wooyun.com.com.sb/static/drops/tips-15661.html)
+
 - Exif 隐写
 
   JPG 图片的 Exif 处可以存储照片拍摄的具体信息，比如使用什么相机。可以通过修改 Exif 来存储信息。
