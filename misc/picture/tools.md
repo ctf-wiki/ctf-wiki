@@ -9,14 +9,14 @@
 
 - `binwalk`
 
-  - [介绍](http://www.freebuf.com/sectool/15266.html)；
-  - `binwalk -e filename`: 提取文件中包含的其他内容。
+  - [介绍](http://www.freebuf.com/sectool/15266.html)
+  - `binwalk -e filename`：提取文件中包含的其他内容。
 
 - `foremost`
 
   用于分离文件。
 
-- 010Editor
+- 010 Editor
 
   - 十六进制编辑器；
   - 解析文件的格式；
