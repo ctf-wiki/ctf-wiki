@@ -1,16 +1,12 @@
-# 多表代换密码
-
-# Playfair 密码
-
-## 介绍
+## Playfair 密码
 
 [Playfair Cipher - 维基百科](https://en.wikipedia.org/wiki/Playfair_cipher)
 
-Playfair密码（英文：Playfair cipher 或 Playfair square）是一种替换密码，1854年由查尔斯·惠斯通（Charles Wheatstone）的英国人发明。
+Playfair 密码（英文：Playfair cipher 或 Playfair square）是一种替换密码，1854 年由查尔斯·惠斯通（Charles Wheatstone）的英国人发明。
 
 基本算法如下：
 
-1. 选取一个英文字作密钥。除去重复出现的字母。将密匙的字母逐个逐个加入 5×5 的矩阵内，剩下的空间将未加入的英文字母依 a-z 的顺序加入。（将 q 去除，或将 i 和 j 视作同一字。）
+1. 选取一个英文字作密钥。除去重复出现的字母。将密匙的字母逐个逐个加入 5 × 5 的矩阵内，剩下的空间将未加入的英文字母依 a-z 的顺序加入。（将 q 去除，或将 i 和 j 视作同一字。）
 2. 将要加密的讯息分成两个一组。若组内的字母相同，将 X（或 Q）加到该组的第一个字母后，重新分组。若剩下一个字，也加入 X 字。
 3. 在每组中，找出两个字母在矩阵中的地方。
    - 若两个字母不同行也不同列，在矩阵中找出另外两个字母，使这四个字母成为一个长方形的四个角。
@@ -19,7 +15,7 @@ Playfair密码（英文：Playfair cipher 或 Playfair square）是一种替换�
 
 新找到的两个字母就是原本的两个字母加密的结果。
 
-## 例子
+### 例子
 
 取 playfair example 为密匙，得
 
@@ -43,7 +39,7 @@ HI DE TH EG OL DI NT HE TR EX ES TU MP
 BM OD ZB XD NA BE KU DM UI XM MO UV IF
 ```
 
-# Polybius 密码（棋盘密码）
+## Polybius 密码（棋盘密码）
 
 [Polybius square - 维基百科](https://en.wikipedia.org/wiki/Polybius_square)
 
@@ -77,40 +73,38 @@ A D F G X 的由来：
 
 举个例子，HELLO，使用这个表格加密，就是 DD XF AG AG DF。
 
-# 维吉尼亚密码
-
-## 介绍
+## 维吉尼亚密码
 
 [维吉尼亚密码 - 维基百科](https://zh.wikipedia.org/wiki/%E7%BB%B4%E5%90%89%E5%B0%BC%E4%BA%9A%E5%AF%86%E7%A0%81)
 
 维吉尼亚密码（又译维热纳尔密码）是使用一系列凯撒密码组成密码字母表的加密算法，属于多表密码的一种简单形式。
 
-![维吉尼亚表格](/crypto/classcial/figure/vigenere1.jpg)
+![维吉尼亚表格](/crypto/classical/figure/vigenere1.jpg)
 
-## 例子
+### 例子
 
 ```
 明文：come greatwall
 密钥：crypto
 ```
 
-1. 填充对齐
+- 填充对齐
 
 | 明文   | c    | o    | m    | e    | g    | r    | e    | a    | t    | w    | a    | l    | l    |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 | 密钥   | c    | r    | y    | p    | t    | o    | c    | r    | y    | p    | t    | o    | c    |
 
-1. 查表得密文
+- 查表得密文
 
-   ![维吉尼亚加密](/crypto/classcial/figure/vigenere2.jpg)
+  ![维吉尼亚加密](/crypto/classical/figure/vigenere2.jpg)
 
-   ```
-   明文：come greatwall
-   密钥：crypto
-   密文：efkt zferrltzn
-   ```
+  ```
+  明文：come greatwall
+  密钥：crypto
+  密文：efkt zferrltzn
+  ```
 
-## 破解方法
+### 破解方法
 
 对包括维吉尼亚密码在内的所有多表密码的破译都是以字母频率为基础的，但直接的频率分析却并不适用。例如，如果 P 是密文中出现次数最多的字母，则 P 很有可能对应 E（前提是明文的语言为英语）。原因在于 E 是英语中使用频率最高的字母。然而，由于在维吉尼亚密码中，E 可以被加密成不同的密文，因而简单的频率分析在这里并没有用。
 
@@ -140,27 +134,29 @@ A D F G X 的由来：
 
 其中，两个 DYDUXRMH 的出现相隔了 18 个字母。因此，可以假定密钥的长度是 18 的约数，即长度为 18、9、6、3 或 2。而两个 NQD 则相距 20 个字母，意味着密钥长度应为 20、10、5、4 或 2。取两者的交集，则可以基本确定密钥长度为 2。
 
-## 工具
+### 工具
 
 - 已知秘钥
-  - python的pycipher
-  - http://planetcalc.com/2468/
+  - Python 的 pycipher 库
+  - [在线解密 Vigenère cipher](http://planetcalc.com/2468/)
 - 未知秘钥
   - http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-vigenere-cipher/，待完成
+  - [在线解密 Vigenère Cipher Codebreaker](http://www.mygeocachingprofile.com/codebreaker.vigenerecipher.aspx)
+  - [在线解密 Vigenere Solver](https://www.guballa.de/vigenere-solver)
 
-# Nihilist 密码
+## Nihilist 密码
 
 又称关键字密码：明文 + 关键字 = 密文。
 
 以关键字 helloworld 为例。
 
-## 加解密过程
+### 加解密过程
 
-1. 利用密钥构造棋盘矩阵（类似 Polybius 密码）
-   - 新建一个 5 × 5 矩阵
-   - 将字符不重复地依次填入矩阵
-   - 剩下部分按字母顺序填入
-   - 字母 i 和 j 等价
+- 利用密钥构造棋盘矩阵（类似 Polybius 密码）
+  - 新建一个 5 × 5 矩阵
+  - 将字符不重复地依次填入矩阵
+  - 剩下部分按字母顺序填入
+  - 字母 i 和 j 等价
 
 |      | 1    | 2    | 3     | 4    | 5    |
 | ---- | ---- | ---- | ----- | ---- | ---- |
@@ -170,16 +166,16 @@ A D F G X 的由来：
 | 4    | n    | p    | q     | s    | t    |
 | 5    | u    | v    | x     | y    | z    |
 
-1. 加密过程
+- 加密过程
 
-   参照矩阵 M 进行加密：
+  参照矩阵 M 进行加密：
 
-   ```
-   a -> M[2,3] -> 23
-   t -> M[4,5] -> 45
-   ```
+  ```
+  a -> M[2,3] -> 23
+  t -> M[4,5] -> 45
+  ```
 
-2. 解密过程
+- 解密过程
 
    参照矩阵 M 进行解密：
 
@@ -188,21 +184,19 @@ A D F G X 的由来：
    45 -> M[4,5] -> t
    ```
 
-## 特征
+### 特征
 
 密文纯数字，从 1 到 5，最大不超过 55，密文长度偶数。
 
-# 希尔密码
-
-## 介绍
+## 希尔密码
 
 [希尔密码 - 维基百科](https://zh.wikipedia.org/wiki/%E5%B8%8C%E5%B0%94%E5%AF%86%E7%A0%81)
 
-每个字母当作 26 进制数字：A=0, B=1, C=2... 一串字母当成 n 维向量，跟一个 n × n 的矩阵相乘，再将得出的结果模 26。
+每个字母当作 26 进制数字：A=0，B=1，C=2 等，一串字母当成 n 维向量，跟一个 n × n 的矩阵相乘，再将得出的结果模 26。
 
-注意用作加密的矩阵（即密匙）在![](http://latex.codecogs.com/gif.latex?%5Cinline%20%5Cmathbb%7BZ%7D_%7B26%7D%5E%7Bn%7D)必须是可逆的，否则就不可能解码。只有矩阵的行列式和 26 互质，才是可逆的。
+注意用作加密的矩阵（即密匙）在 $\mathbb{Z}_{26}^{n}​$ 必须是可逆的，否则就不可能解码。只有矩阵的行列式和 26 互质，才是可逆的。
 
-## 例子
+### 例子
 
 ```
 明文：ACT
@@ -255,20 +249,18 @@ $$
 ```
 密文：POH
 ```
-## 工具
+### 工具
 
 - http://www.practicalcryptography.com/ciphers/hill-cipher/
 - CAP4(cryptographic analysis program v4)
 
-## 例子
+### 例子
 
-- 2015 ISCC base  decrypt 150
+- ISCC 2015 base decrypt 150
 
-# AutokeyCipher
+## AutokeyCipher
 
-## 介绍
-
-自动密钥密码(Autokey Cipher)是多表替换密码，与维吉尼亚密码密切相关，但使用不同的方法生成密钥，通常来说要比维吉尼亚密码更安全。自动密钥密码主要有两种，关键词自动密钥密码和原文自动密钥密码.下面我们以关键词自动密钥为例：
+自动密钥密码（Autokey Cipher）是多表替换密码，与维吉尼亚密码密切相关，但使用不同的方法生成密钥，通常来说要比维吉尼亚密码更安全。自动密钥密码主要有两种，关键词自动密钥密码和原文自动密钥密码.下面我们以关键词自动密钥为例：
 
 明文： `THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG`
 
@@ -280,12 +272,12 @@ $$
 
 密文： `VBP JOZGD IVEQV HYY AIICX CSNL FWW ZVDP WVK`
 
-## 特点
+### 特点
 
-## 工具
+### 工具
 
 - 已知关键词
-  - python的pycipher
+  - Python 的 pycipher 库
 - 未知关键词
   - http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-autokey-cipher/
-  - tools文件夹下break_autokey.py，待完成。
+  - tools 文件夹下 break_autokey.py，待完成。
