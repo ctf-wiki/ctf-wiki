@@ -6,8 +6,8 @@
   - [编码分析](/misc/encode/readme)
     - [通信领域](/misc/encode/communication)
     - [计算机领域](/misc/encode/computer)
-  - 图片
-    - [简介](/misc/picture/readme)
+    - [现实生活常见编码](/misc/encode/modern)
+  - [图片](/misc/picture/readme)
     - [图片修复](/misc/picture/repair)
     - [文件尾隐写](/misc/picture/tail)
     - [lsb隐写](/misc/picture/lsb)
