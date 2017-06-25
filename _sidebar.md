@@ -1,6 +1,6 @@
 - **前言**
   - [主要内容](/introduction)
-- **MISC**
+- **Misc**
   - [简介](/misc/)
   - [信息搜集技术](/misc/recon)
   - [编码分析](/misc/encode/)
@@ -46,11 +46,11 @@
   - 栈溢出
     - [栈介绍](/pwn/stackoverflow/stack_intro)
     - [栈溢出原理](/pwn/stackoverflow/stackoverflow_basic)
-    - ROP(待续)
-      - 基本ROP
-      - 高级ROP
+    - [ROP](/pwn/stackoverflow/rop)
+      - [基本ROP](/pwn/stackoverflow/basic_rop)
+      - [高级ROP](/pwn/stackoverflow/advanced_rop)(待完善)
       - ROP总结
-    - 其它技巧
+    - [其它技巧](/pwn/stackoverflow/others)(待完善)
     - 栈溢出总结
   - 实战
     - [计算机软件攻防对抗技术](/pwn/windows)
