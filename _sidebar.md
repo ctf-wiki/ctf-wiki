@@ -46,8 +46,8 @@
   - 栈溢出
     - [栈介绍](/pwn/stackoverflow/stack_intro)
     - [栈溢出原理](/pwn/stackoverflow/stackoverflow_basic)
-    - ROP(待续)
-      - 基本ROP
+    - [ROP](/pwn/stackoverflow/rop)
+      - [基本ROP](/pwn/stackoverflow/basic_rop)
       - 高级ROP
       - ROP总结
     - 其它技巧
