@@ -646,7 +646,7 @@ sh.interactive()
 
 - libcdb.com
 
-当然，还有上面提到的https://github.com/lieanu/LibcSearcher。
+**当然，还有上面提到的https://github.com/lieanu/LibcSearcher。**
 
 # 题目
 
@@ -657,6 +657,8 @@ sh.interactive()
 
 **参考阅读**
 
+- 乌云一步一步ROP篇(蒸米)
 - [手把手教你栈溢出从入门到放弃（上）](https://zhuanlan.zhihu.com/p/25816426)
-- [技术分享】现代栈溢出利用技术基础：ROP](http://bobao.360.cn/learning/detail/3694.html)
+- [手把手教你栈溢出从入门到放弃（下）](https://zhuanlan.zhihu.com/p/25892385)
+- [ 【技术分享】现代栈溢出利用技术基础：ROP](http://bobao.360.cn/learning/detail/3694.html)
 
