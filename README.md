@@ -4,4 +4,8 @@
 
 ## 使用说明
 
-Github 仓库中包含本文档的所有文件，本文档采用 [docsify](https://github.com/QingWei-Li/docsify) 部署。
+本文档采用 [docsify](https://github.com/QingWei-Li/docsify) 部署，如果需要本地查看，请自行安装。
+
+## 贡献
+
+欢迎各位大佬提出自己的建议亦或者直接为wiki贡献内容。
