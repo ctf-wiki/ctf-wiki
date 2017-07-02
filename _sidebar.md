@@ -54,9 +54,9 @@
     - [栈溢出原理](/pwn/stackoverflow/stackoverflow_basic)
     - [ROP](/pwn/stackoverflow/rop)
       - [基本ROP](/pwn/stackoverflow/basic_rop)
-      - [高级ROP](/pwn/stackoverflow/advanced_rop)(待完善)
+      - [高级ROP](/pwn/stackoverflow/advanced_rop)
       - ROP总结
-    - [其它技巧](/pwn/stackoverflow/others)(待完善)
+    - [其它技巧](/pwn/stackoverflow/others)
     - 栈溢出总结
   - 实战
     - [计算机软件攻防对抗技术](/pwn/windows)

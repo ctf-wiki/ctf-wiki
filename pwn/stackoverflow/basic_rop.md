@@ -222,6 +222,8 @@ sh.interactive()
 
 ## 题目
 
+- sniperoj-pwn100-shellcode-x86-64
+
 # ret2syscall
 
 ## 原理
@@ -374,6 +376,8 @@ sh.interactive()
 ```
 
 ## 题目
+
+
 
 # ret2libc
 
@@ -559,7 +563,7 @@ sh.interactive()
 
 ## 题目
 
-
+- train.cs.nctu.edu.tw ret2libc
 
 # shell获取小结
 
@@ -651,8 +655,8 @@ sh.interactive()
 # 题目
 
 - train.cs.nctu.edu.tw
-  - ret2libc
   - rop
+- 2013-PlaidCTF-ropasaurusrex
 - Defcon 2015 Qualifier: R0pbaby
 
 **参考阅读**
