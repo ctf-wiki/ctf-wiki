@@ -2,7 +2,7 @@
 
 # 基本栈介绍
 
-栈本身是一种典型的先进后出(First in Last Out)的数据结构，其操作主要有压栈(push)与出栈(pop)两种操作，如下图所示（来自维基百科）。两种操作都是操作栈顶，当然，它也有相应的栈底。
+栈是一种典型的先进后出(First in Last Out)的数据结构，其操作主要有压栈(push)与出栈(pop)两种操作，如下图所示（来自维基百科）。两种操作都是操作栈顶，当然，它也有相应的栈底。
 
 ![基本栈操作](/pwn/stackoverflow/figure/Data_stack.png)
 
@@ -10,7 +10,7 @@
 
 # 函数调用栈
 
-请参考
+请参考，务必仔细看一下。
 
 - [C语言函数调用栈(一)](http://www.cnblogs.com/clover-toeic/p/3755401.html)
 - [C语言函数调用栈(二)](http://www.cnblogs.com/clover-toeic/p/3756668.html)
