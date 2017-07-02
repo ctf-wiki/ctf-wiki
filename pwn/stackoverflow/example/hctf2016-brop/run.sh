@@ -1,0 +1,1 @@
+nohup ./deploy.sh &
