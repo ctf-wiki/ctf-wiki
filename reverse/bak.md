@@ -130,7 +130,7 @@
 ## 构建逆向知识体系
 1. 逆向工程核心原理（人民邮电出版社）
 2. 加密与解密-第三版（电子工业出版社）
-3. Reverse Engineering for Beginners( http://beginners.re) 
+3. Reverse Engineering for Beginners( http://beginners.re)
 4. 使用 OllyDbg 从零开始 Cracking（http://bbs.pediy.com/showthread.php？t=184679）
 5. IDA Pro 权威指南-第二版（人民邮电出版社）
 6. Intel 汇编语言程序设计-第五版（电子工业出版社）
@@ -285,4 +285,3 @@
     * 精通程序层（Pwn）
 
 4. 逆向可攻可守
-
