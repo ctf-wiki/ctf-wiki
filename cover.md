@@ -2,7 +2,7 @@
 
 # CTF WiKi
 
-[GitHub](https://github.com/40huo/ctf-wiki/)
+[GitHub](https://github.com/ctf-wiki/ctf-wiki/)
 [Get Started](introduction)
 
 <!-- 背景色 -->

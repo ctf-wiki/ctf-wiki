@@ -16,17 +16,19 @@
 在阅读Wiki之前，我们希望能给予你几点建议：
 
 * 至少掌握一门编程语言
-* 阅读短文[<< 提问的智慧 >>](http://www.jianshu.com/p/60dd8e9cd12f)
+* 阅读短文 [<< 提问的智慧 >>](http://www.jianshu.com/p/60dd8e9cd12f)
 * 善用Google搜索能帮助你更好地提升自己
 * 动手实践比什么都要管用
 * 保持对技术的好奇与渴望并坚持下去
 
 > 世界很大，互联网让世界变小，真的黑客们应该去思考并创造，无论当下是在破坏还是在创造，记住，未来，那条主线是创造的就对了。 ——by 余弦
 
-安全圈很小，安全的海洋很深。安全之路的探险，不如就从`CTF Wiki`开始吧！
+安全圈很小，安全的海洋很深。安全之路的探险，不如就从`CTF Wiki`开始！
 
 ## 想要帮助Wiki更加完善？
 
-我们非常欢迎你为wiki编写内容，将自己的所学所得与大家分享。我们的github仓库地址是[https://github.com/ctf-wiki/ctf-wiki](https://github.com/ctf-wiki/ctf-wiki)。
+我们非常欢迎你为wiki编写内容，将自己的所学所得与大家分享。
 
-我们一直都期待着你的加入。
+我们的github仓库地址是[https://github.com/ctf-wiki/ctf-wiki](https://github.com/ctf-wiki/ctf-wiki)，欢迎`fork`和`pull request`。
+
+我们 一直都期待着你的加入。
