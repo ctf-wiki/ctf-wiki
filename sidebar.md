@@ -1,5 +1,4 @@
 - **CTF介绍**
-  - [前言](/introduction/)
   - [竞赛历史](/introduction/history)
   - [竞赛模式](/introduction/mode)
   - [赛题类型](/introduction/content)
@@ -41,12 +40,12 @@
   - [CSRF 跨站请求伪造](/web/csrf)
   - [SSRF 服务端请求伪造](/web/ssrf)
   - [PHP 代码审计](/web/php)
-- **逆向**
+- **Reverse Engnieering**
   - [软件逆向与RE简介](/reverse/introduction)
   - [x86汇编速成](/reverse/x86assembly)
   - [软件保护技术简介](/reverse/protection)
   - [逆向分析技术](/reverse/analysis/)
-    - [脱壳6法](/reverse/analysis/unpack)
+    - [脱壳篇](/reverse/analysis/unpack)
     - [Hook技术](/reverse/analysis/hook)
   - [语言平台](/reverse/multi-platform-language)
   - [学习资料](/reverse/resourses)

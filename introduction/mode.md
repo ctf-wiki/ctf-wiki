@@ -18,17 +18,19 @@
 
 ### 赛制介绍
 
-> Belluminar， hacking contest of POC， started at POC2015 in KOREA for the first time。 Belluminar is from ‘Bellum’(war in Latin) and ‘seminar’。 It is not a just hacking contest but a kind of festival consisted of CTF & seminar for the solution about challenges。 Only invited teams can join Belluminar。 Each team can show its ability to attack what other teams want to protect and can defend what others want to attack。
+> Belluminar, hacking contest of POC, started at POC2015 in KOREA for the first time. Belluminar is from 'Bellum'(war in Latin) and 'seminar'. It is not a just hacking contest but a kind of festival consisted of CTF & seminar for the solution about challenges. Only invited teams can join Belluminar. Each team can show its ability to attack what other teams want to protect and can defend what others want to attack.
 
 如官网介绍这样， BELLUMINAR CTF赛制由受邀参赛队伍相互出题挑战， 并在比赛结束后进行赛题的出题思路，学习过程以及解题思路等进行分享。 战队评分依据出题得分， 解题得分和分享得分进行综合评价并得出最终的排名。
 
 ### 出题阶段
 
-> Each team is required to submit 2 challenges to the challenge bank of the sponsor。
+> Each team is required to submit 2 challenges to the challenge bank of the sponsor.
 
 首先各个受邀参赛队伍都必须在正式比赛前出题， 题量为2道。 参赛队伍将有1~2周的时间准备题目。出题积分占总分的30%。
 
-> Challenge 1: must be on the Linux platform; Challenge 2: No platform restriction(except Linux) No challenge type restriction (Pwn， Reverse…)
+> Challenge 1: must be on the Linux platform;
+
+> Challenge 2: No platform restriction(except Linux) No challenge type restriction (Pwn, Reverse…)
 
 传统的 BELLUMINAR 赛制要求出的两道题中一道 Challenge 必须是在 Linux 平台，另外一个则为非Linux平台的 Challenge。 两个 Challenge 的类型则没有做出限制。因此队伍可以尽情展现自己的技术水平。
 
