@@ -5,7 +5,7 @@
   - [赛题类型](/introduction/content)
   - [线下攻防经验](/introduction/experience)
   - [CGC超级挑战赛介绍](/introduction/cgc)
-  - [学习资源](/introduction/resourses)
+  - [学习资源](/introduction/resources)
 - **Misc**
   - [简介](/misc/)
   - [信息搜集技术](/misc/recon)
