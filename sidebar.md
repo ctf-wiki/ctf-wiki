@@ -47,7 +47,9 @@
   - [逆向分析技术](/reverse/analysis/)
     - [脱壳篇](/reverse/analysis/unpack)
     - [Hook技术](/reverse/analysis/hook)
-  - [语言平台](/reverse/multi-platform-language)
+  - [语言篇](/reverse/language/)
+  - [平台篇](/reverse/platform/)
+    - [Linux](/reverse/platform/linux)
   - [学习资料](/reverse/resourses)
 - **Mobile**
   - [简介](/mobile/)
