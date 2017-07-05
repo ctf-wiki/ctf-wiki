@@ -1,11 +1,10 @@
 - **CTF介绍**
-  - [前言](/introduction/)
   - [竞赛历史](/introduction/history)
   - [竞赛模式](/introduction/mode)
   - [赛题类型](/introduction/content)
   - [线下攻防经验](/introduction/experience)
   - [CGC超级挑战赛介绍](/introduction/cgc)
-  - [学习资源](/introduction/resourses)
+  - [学习资源](/introduction/resources)
 - **Misc**
   - [简介](/misc/)
   - [信息搜集技术](/misc/recon)
@@ -41,14 +40,16 @@
   - [CSRF 跨站请求伪造](/web/csrf)
   - [SSRF 服务端请求伪造](/web/ssrf)
   - [PHP 代码审计](/web/php)
-- **逆向**
+- **Reverse Engnieering**
   - [软件逆向与RE简介](/reverse/introduction)
   - [x86汇编速成](/reverse/x86assembly)
   - [软件保护技术简介](/reverse/protection)
   - [逆向分析技术](/reverse/analysis/)
-    - [脱壳6法](/reverse/analysis/unpack)
+    - [脱壳篇](/reverse/analysis/unpack)
     - [Hook技术](/reverse/analysis/hook)
-  - [语言平台](/reverse/multi-platform-language)
+  - [语言篇](/reverse/language/)
+  - [平台篇](/reverse/platform/)
+    - [Linux](/reverse/platform/linux)
   - [学习资料](/reverse/resourses)
 - **Mobile**
   - [简介](/mobile/)
@@ -68,7 +69,3 @@
   - 实战
     - [计算机软件攻防对抗技术](/pwn/windows)
     - [IE 漏洞挖掘](/pwn/ie)
-- **CTF 竞赛模式**
-  - [简介](/ctf_mode/)
-- **CTF 学习进阶**
-  - [简介](/ctf_advanced/)
