@@ -12,7 +12,7 @@
 
 这里我们给出一个简单的例子，其实相信大多数人都接触过printf函数之类的。之后我们再一个一个进行介绍。
 
-![基本例子](./figure/printf.png)
+![基本例子](/pwn/ftmstr/figure/printf.png)
 
 ## 格式化字符串函数
 
@@ -120,7 +120,7 @@
 
 我们再继续以上面的为例子进行介绍
 
-![基本例子](./figure/printf.png)
+![基本例子](/pwn/ftmstr/figure/printf.png)
 
 对于这样的例子，在进入printf函数的之前(即还没有调用printf)，栈上的布局由高地址到低地址依次如下
 
