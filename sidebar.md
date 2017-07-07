@@ -60,12 +60,18 @@
   - 栈溢出
     - [栈介绍](/pwn/stackoverflow/stack_intro)
     - [栈溢出原理](/pwn/stackoverflow/stackoverflow_basic)
-    - [ROP](/pwn/stackoverflow/rop)
-      - [基本ROP](/pwn/stackoverflow/basic_rop)
-      - [高级ROP](/pwn/stackoverflow/advanced_rop)
-      - ROP总结
-    - [其它技巧](/pwn/stackoverflow/others)
-    - 栈溢出总结
+    - [基本ROP](/pwn/stackoverflow/basic_rop)
+    - [高级ROP](/pwn/stackoverflow/advanced_rop)
+    - [花式技巧](/pwn/stackoverflow/others)
+  - [格式化字符串漏洞](/pwn/fmtstr/)
+    - [格式化字符串漏洞原理](/pwn/fmtstr/fmtstr_intro)
+    - [格式化字符串漏洞利用](/pwn/fmtstr/fmtstr_exploit)
+    - 格式化字符串漏洞例子
+      - 格式化字符串盲打
+      - GOT表覆盖
+    - 格式化字符串漏洞检测
+  - 堆利用
+  - 整数溢出
   - 实战
     - [计算机软件攻防对抗技术](/pwn/windows)
     - [IE 漏洞挖掘](/pwn/ie)
