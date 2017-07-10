@@ -1,33 +1,5 @@
 #  其它栈溢出技巧
 
-# hijack GOT
-
-## 原理
-
-在目前的C程序中，libc中的函数都是通过GOT表来跳转的。此外，在 没有开启RELRO保护的前提下，每个libc的函数对应的GOT表项是可以被修改的，因此，我们可以修改某个libc函数的GOT表内容为另一个libc函数的地址来实现对程序的控制。比如说我们可以修改printf的got表项内容为system函数的got表项内容，从而在执行printf的时候实际执行的是system函数。假设我们将函数A的地址覆盖为函数B的地址，这一攻击技巧可以分为以下步骤
-
-- 确定函数A的GOT表地址。
-
-  - 这一步我们利用的函数A一般在程序中已有，所以可以采用简单的寻找地址的方法来找。
-
-- 确定函数B的内存地址
-
-  - 这一步通常来说，需要我们自己想办法来泄露对应函数B的地址
-
-- 将函数B的内存地址写入到函数A的GOT表地址处。
-
-  - 这一步一般来说需要我们利用函数的漏洞来进行触发。一般利用方法有如下两种
-
-    - 写入函数：write函数。
-    - ROP
-
-    ```text
-    pop eax; ret; 			# printf@got -> eax
-    pop ebx; ret; 			# (addr_offset = system_addr - printf_addr) -> ebx
-    add [eax] ebx; ret; 	# [printf@got] = [printf@got] + addr_offset
-    ```
-
-
 # stack privot
 
 ## 原理

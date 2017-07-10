@@ -12,7 +12,7 @@
 
 这里我们给出一个简单的例子，其实相信大多数人都接触过printf函数之类的。之后我们再一个一个进行介绍。
 
-![基本例子](/pwn/ftmstr/figure/printf.png)
+![基本例子](/pwn/fmtstr/figure/printf.png)
 
 ## 格式化字符串函数
 
@@ -24,19 +24,20 @@
 
 - 输出
 
-  |           函数            |        基本介绍         |
-  | :---------------------: | :-----------------: |
-  |         printf          |      输出到stdout      |
-  |         fprintf         |     输出到指定FILE流      |
-  |         vprintf         | 根据参数列表格式化输出到 stdout |
-  |        vfprintf         | 根据参数列表格式化输出到指定FILE流 |
-  |         sprintf         |       输出到字符串        |
-  |        snprintf         |     输出指定字节数到字符串     |
-  |        vsprintf         |   根据参数列表格式化输出到字符串   |
-  |        vsnprintf        | 根据参数列表格式化输出指定字节到字符串 |
-  |      setproctitle       |       设置argv        |
-  |         syslog          |        输出日志         |
-  | err, verr, warn, vwarn等 |         。。。         |
+
+|           函数            |        基本介绍         |
+| :---------------------: | :-----------------: |
+|         printf          |      输出到stdout      |
+|         fprintf         |     输出到指定FILE流      |
+|         vprintf         | 根据参数列表格式化输出到 stdout |
+|        vfprintf         | 根据参数列表格式化输出到指定FILE流 |
+|         sprintf         |       输出到字符串        |
+|        snprintf         |     输出指定字节数到字符串     |
+|        vsprintf         |   根据参数列表格式化输出到字符串   |
+|        vsnprintf        | 根据参数列表格式化输出指定字节到字符串 |
+|      setproctitle       |       设置argv        |
+|         syslog          |        输出日志         |
+| err, verr, warn, vwarn等 |         。。。         |
 
 ## 格式化字符串
 
@@ -120,7 +121,7 @@
 
 我们再继续以上面的为例子进行介绍
 
-![基本例子](/pwn/ftmstr/figure/printf.png)
+![基本例子](/pwn/fmtstr/figure/printf.png)
 
 对于这样的例子，在进入printf函数的之前(即还没有调用printf)，栈上的布局由高地址到低地址依次如下
 
