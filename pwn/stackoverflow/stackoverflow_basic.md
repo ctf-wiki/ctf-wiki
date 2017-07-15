@@ -190,6 +190,8 @@ $
 - **覆盖bss段某个变量的内容**。
 - 等等
 
+之所以我们想要覆盖某个地址，是因为我们想通过覆盖地址的方法来直接或者间接地控制程序执行流程。
+
 **参考阅读**
 
 [stack buffer overflow](https://en.wikipedia.org/wiki/Stack_buffer_overflow)
