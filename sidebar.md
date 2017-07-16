@@ -66,10 +66,8 @@
   - [格式化字符串漏洞](/pwn/fmtstr/)
     - [格式化字符串漏洞原理](/pwn/fmtstr/fmtstr_intro)
     - [格式化字符串漏洞利用](/pwn/fmtstr/fmtstr_exploit)
-    - 格式化字符串漏洞例子
-      - 格式化字符串盲打
-      - GOT表覆盖
-    - 格式化字符串漏洞检测
+    - [格式化字符串漏洞例子](/pwn/fmtstr/fmtstr_example)
+    - [格式化字符串漏洞检测](/pwn/fmtstr/fmtstr_detect)
   - 堆利用
   - 整数溢出
   - 实战
