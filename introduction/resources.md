@@ -2,7 +2,7 @@
 
 ## 在线学习
 
-- [i春秋-专业的网络安全|信息安全在线学习培训平台](http://www.ichunqiu.com)
+- [i 春秋-专业的网络安全|信息安全在线学习培训平台](http://www.ichunqiu.com)
 
 ## 信息资讯
 
@@ -26,4 +26,4 @@
 - [Sniper OJ](http://sniperoj.cn/)
 - [CTF Learn](https://ctflearn.com/)
 
-## CTF Writeup集合
+## CTF Writeup 集合
