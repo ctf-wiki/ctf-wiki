@@ -41,7 +41,7 @@ BM OD ZB XD NA BE KU DM UI XM MO UV IF
 
 - CAP4
 
-## Polybius 密码
+## Polybius
 
 ### 原理
 
@@ -79,11 +79,11 @@ A D F G X 的由来：
 
 暂无。
 
-## 维吉尼亚密码
+## vigenere
 
 ### 原理
 
-维吉尼亚密码（又称维热纳尔密码）是使用一系列凯撒密码组成密码字母表的加密算法，属于多表密码的一种简单形式。
+维吉尼亚密码（vigenere）是使用一系列凯撒密码组成密码字母表的加密算法，属于多表密码的一种简单形式。
 
 ![维吉尼亚表格](/crypto/classical/figure/vigenere1.jpg)
 
@@ -151,7 +151,7 @@ A D F G X 的由来：
   - [在线解密 Vigenère Cipher Codebreaker](http://www.mygeocachingprofile.com/codebreaker.vigenerecipher.aspx)
   - [在线解密 Vigenere Solver](https://www.guballa.de/vigenere-solver)
 
-## Nihilist 密码
+## Nihilist
 
 ### 原理
 
@@ -191,11 +191,11 @@ t -> M[4,5] -> 45
 - 只包含 1 到 5
 - 密文长度偶数。
 
-## 希尔密码
+## Hill
 
 ### 原理
 
-使用每个字母在字母表中的顺序作为其对应的数字，即A=0，B=1，C=2 等，然后将明文转化为 n 维向量，跟一个 n × n 的矩阵相乘，再将得出的结果模 26。注意用作加密的矩阵（即密匙）在 $\mathbb{Z}_{26}^{n}$ 必须是可逆的，否则就不可能解码。只有矩阵的行列式和 26 互质，才是可逆的。西面举一个例子
+希尔密码（Hill）使用每个字母在字母表中的顺序作为其对应的数字，即A=0，B=1，C=2 等，然后将明文转化为 n 维向量，跟一个 n × n 的矩阵相乘，再将得出的结果模 26。注意用作加密的矩阵（即密匙）在 $\mathbb{Z}_{26}^{n}$ 必须是可逆的，否则就不可能解码。只有矩阵的行列式和 26 互质，才是可逆的。西面举一个例子
 
 ```
 明文：ACT
@@ -252,14 +252,33 @@ $$
 
 - http://www.practicalcryptography.com/ciphers/hill-cipher/
 - CAP4
+- Cryptool
 
 ### 例子
 
-- ISCC 2015 base decrypt 150
+这里我们以ISCC 2015 base decrypt 150为例进行介绍，题目为
+
+> 密文： 22,09,00,12,03,01,10,03,04,08,01,17 （wjamdbkdeibr）
+>
+> 使用的矩阵是 1 2 3 4 5 6 7 8 10
+>
+> 请对密文解密.
+
+首先，矩阵是3*3的。说明每次加密3个字符。我们直接使用Cryptool,需要注意的是，这个矩阵是按照列来排布的。即如下
+
+```
+1 4 7
+2 5 8
+3 6 10
+```
+
+最后的结果为overthehillx。
 
 ## AutokeyCipher
 
-自动密钥密码（Autokey Cipher）是多表替换密码，与维吉尼亚密码密切相关，但使用不同的方法生成密钥，通常来说要比维吉尼亚密码更安全。自动密钥密码主要有两种，关键词自动密钥密码和原文自动密钥密码.下面我们以关键词自动密钥为例：
+### 原理
+
+自动密钥密码（Autokey Cipher）也是多表替换密码，与维吉尼亚密码密码类似，但使用不同的方法生成密钥。通常来说它要比维吉尼亚密码更安全。自动密钥密码主要有两种，关键词自动密钥密码和原文自动密钥密码。下面我们以关键词自动密钥为例：
 
 明文： `THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG`
 
@@ -267,7 +286,7 @@ $$
 
 自动生成密钥： `CULTURE THE QUICK BROWN FOX JUMPS OVER THE`
 
-接下来的加密过程和维吉尼亚密码类似，从密表可得：
+接下来的加密过程和维吉尼亚密码类似，从相应的表格可得：
 
 密文： `VBP JOZGD IVEQV HYY AIICX CSNL FWW ZVDP WVK`
 
@@ -277,4 +296,5 @@ $$
   - Python 的 pycipher 库
 - 未知关键词
   - http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-autokey-cipher/
-  - tools 文件夹下 break_autokey.py，待完成。
+  - **tools 文件夹下 break_autokey.py，待完成。**
+
