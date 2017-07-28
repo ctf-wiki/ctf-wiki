@@ -1,146 +1,56 @@
-在非对称密码中，加密者与解密者所使用的秘钥并不一样，典型的有 RSA 加密，椭圆曲线加密。
+# 攻击
 
-## RSA
+# 分解 N
 
-[RSA 加密算法 - 维基百科](https://zh.wikipedia.org/wiki/RSA%E5%8A%A0%E5%AF%86%E6%BC%94%E7%AE%97%E6%B3%95)
-
-RSA 加密算法是一种非对称加密算法。在公开密钥加密和电子商业中 RSA 被广泛使用。RSA 是 1977 年由罗纳德·李维斯特（Ron Rivest）、阿迪·萨莫尔（Adi Shamir）和伦纳德·阿德曼（Leonard Adleman）一起提出的。当时他们三人都在麻省理工学院工作。RSA 就是他们三人姓氏开头字母拼在一起组成的。
-
-对极大整数做因数分解的难度决定了 RSA 算法的可靠性。换言之，对一极大整数做因数分解愈困难，RSA 算法愈可靠。假如有人找到一种快速因数分解的算法的话，那么用 RSA 加密的信息的可靠性就肯定会极度下降。但找到这样的算法的可能性是非常小的。今天只有短的 RSA 钥匙才可能被强力方式解破。到 2016 年为止，世界上还没有任何可靠的攻击 RSA 算法的方式。只要其钥匙的长度足够长，用 RSA 加密的信息实际上是不能被解破的。
-
-### 原理
-
-#### 公钥与私钥的产生
-
-1. 随机选择两个不同大质数 $p$ 和 $q$，计算 $N=p \times q$。
-2. 根据欧拉函数，求得 $r=\varphi (N)=\varphi (p)\varphi (q)=(p-1)(q-1)$。
-3. 选择一个小于 $r$ 的整数 $e$，使 $e$ 和 $r$ 互质。并求得 $e$ 关于 $r$ 的模反元素，命名为 $d$（求 $d$ 令 $ed\equiv 1 \pmod r$）。
-4. 将 $p$ 和 $q$ 的记录销毁。
-
-此时，$(N,e)$ 是公钥，$(N,d)$ 是私钥。
-
-#### 消息加密
-
-首先需要将消息 $m$ 以一个双方约定好的格式转化为一个小于 $N$，且与 $N$ 互质的整数 $n$。如果消息太长，可以将消息分为几段。
-
-然后利用如下公式加密：
-$$
-n^{e}\equiv c\pmod N
-$$
-
-#### 消息解密
-
-利用密钥 $d$ 进行解密。
-$$
-c^{d}\equiv n\pmod N
-$$
-
-#### 简单练手
-
-- Jarvis OJ - Basic - veryeasyRSA
-
-### 基本工具
-
-#### RSAtool
-
-- 安装
-
-  ```bash
-  git clone https://github.com/ius/rsatool.git
-  cd rsatool
-  python rsatool.py -h
-  ```
-
-- 生成私钥
-
-  ```bash
-  python rsatool.py -f PEM -o private.pem -p 1234567-q 7654321
-  ```
-
-#### RSA Converter
-
-- 根据给定密钥对，生成 pem 文件
-- 根据 n，e，d 生成 p，q
-
-#### openssl
-
-更加具体的细节请参考 `openssl --help`。
-
-- 查看公钥文件
-
-  ```bash
-  openssl rsa -pubin -in pubkey.pem -text -modulus
-  ```
-
-- 解密
-
-  ```bash
-  rsautl -decrypt -inkey private.pem -in flag.enc -out flag
-  ```
-
-#### 分解大整数
-
-- [factor.db](http://factordb.com/)
-- [yafu](https://sourceforge.net/projects/yafu/)
-
-#### python 库
-
-##### gmpy
-
-- Python gmpy 库，`gmpy.root(a, b)`，返回一个元组 `(x, y)`，其中 `x` 为 `a` 开 `b` 次方的值，`y`是判断 `x` 是否为整数的布尔型变量。
-
-##### gmpy2
-
-- Python gmpy2 库，`gmpy2.iroot(a, b)`
-
-##### pycrypto
-
-- 安装
-
-  ```bash
-  sudo pip install pycrypto
-  ```
-
-- 使用
-
-  ```python
-  import gmpy
-  from Crypto.Util.number import *
-  from Crypto.PublicKey import RSA
-  from Crypto.Cipher import PKCS1_v1_5
-
-  msg = 'crypto here'
-  p = getPrime(128)
-  q = getPrime(128)
-  n = p*q
-  e = getPrime(64)
-  pubkey = RSA.construct((long(n), long(e)))
-  privatekey = RSA.construct((long(n), long(e), long(d), long(p), long(q)))
-  key = PKCS1_v1_5.new(pubkey)
-  enc = key.encrypt(msg).encode('base64')
-  key = PKCS1_v1_5.new(privatekey)
-  msg = key.decrypt(enc.decode('base64'), e)
-  ```
-
-### 攻击
-
-#### 分解 N
-
-##### 攻击条件
+## 攻击条件
 
 在 N 的比特位数小于 512 的时候，可以采用大整数分解的策略获取 p 和 q。
 
-##### 题目
+## 例子
 
-- JarvisOJ - Medium RSA
+这里我们以JarvisOJ - Medium RSA为例进行介绍，题目如下
 
-#### 共模攻击
+> 还记得 veryeasy RSA 吗？是不是不难？那继续来看看这题吧，这题也不难。 
+> 已知一段 RSA 加密的信息为：0xdc2eeeb2782c 且已知加密所用的公钥： 
+> (N=322831561921859 e = 23) 
+> 请解密出明文，提交时请将数字转化为 ascii 码提交 
+> 比如你解出的明文是 0x6162，那么请提交字符串 ab 
+> 提交格式: PCTF{明文字符串}
 
-##### 攻击条件
+可以看出，我们的N比较小，这里我们直接使用factordb进行分解，可以得到
+
+322831561921859 = 13574881* 23781539
+
+进而我们简单编写程序如下
+
+```python
+import gmpy2
+p = 13574881
+q = 23781539
+n = p * q
+e = 23
+c = 0xdc2eeeb2782c
+phin = (p - 1) * (q - 1)
+d = gmpy2.invert(e, phin)
+p = gmpy2.powmod(c, d, n)
+tmp = hex(p)
+print tmp, tmp[2:].decode('hex')
+```
+
+结果如下
+
+```shell
+➜  Jarvis OJ-Basic-easyRSA git:(master) ✗ python exp.py
+0x33613559 3a5Y
+```
+
+# 共模攻击
+
+## 攻击条件
 
 当两个用户使用相同的模数 $N$、不同的私钥时，即存在共模攻击。
 
-##### 攻击原理
+## 攻击原理
 
 设两个用户的公钥分别为 $e_1$ 和 $e_2$，且两者互质。明文消息为 $m$，密文分别为：
 $$
@@ -155,7 +65,7 @@ c\_{1}^{r}c\_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\\\
 \end{align}
 $$
 
-##### 范例
+## 例子
 
 题目描述：
 
@@ -171,7 +81,7 @@ message2=56728180268162933440701193325366296194571635700363052968690535322931053
 
 > 题目来源：XMan 一期夏令营课堂练习 
 
-写一个脚本跑一下：
+可以看出两个公钥的n是一样的。写一个脚本跑一下：
 
 ```python
 #coding=utf-8
@@ -225,17 +135,17 @@ print flag
 flag{whenwethinkitispossible}
 ```
 
-##### 题目
+## 题目
 
 - Jarvis OJ very hard RSA
 
-#### 小公钥指数攻击
+# 小公钥指数攻击
 
-##### 攻击条件
+## 攻击条件
 
 e 特别小，比如 e 为 3。
 
-##### 攻击原理
+## 攻击原理
 
 假设用户使用的密钥 $e=3$。考虑到加密关系满足：
 $$
@@ -250,7 +160,7 @@ m &= \sqrt[3]{c+k\times n}
 $$
 攻击者可以从小到大枚举 $n$，依次开三次根，直到开出整数为止。
 
-##### 范例
+## 范例
 
 - 题目描述：[附件下载](http://xman.xctf.org.cn/media/task/86113c26-c6b7-43b1-a3ab-a16ff90157ee.zip)
 
@@ -370,17 +280,17 @@ $$
   Didn't you know RSA padding is really important? Now you see a non-padding message is so dangerous. And you should notice this in future.Fl4g: flag{Sm4ll_3xpon3nt_i5_W3ak}
   ```
 
-##### 题目
+## 题目
 
 - JarvisOJ extreamly hard rsa
 
-#### RSA 衍生算法——Rabin 算法
+# RSA 衍生算法——Rabin 算法
 
-##### 攻击条件
+## 攻击条件
 
 Rabin 算法的特征在于 $e=2$。
 
-##### 攻击原理
+## 攻击原理
 
 密文：
 $$
@@ -422,7 +332,7 @@ m_q &= c^{\frac{1}{4}(q + 1)} \bmod q
 \end{align}
 $$
 
-##### 范例
+## 范例
 
 题目描述：[附件下载](http://xman.xctf.org.cn/media/task/506d3331-94f1-426c-90f6-b853535d8088.zip)
 
@@ -524,13 +434,13 @@ print toasc(str(hex(dd))[2:])
 flag{Rab1n_i5_c00l}
 ```
 
-##### 题目
+## 题目
 
 - JarvisOJ hard RSA
 
-#### 综合题目
+# 综合题目
 
-##### 范例 1
+## 范例 1
 
 题目描述：Find the [flag](http://asis-ctf。ir/tasks/rsa。txz_93b525e771c284b7a3f0bb45b290ce56987c5834).
 
