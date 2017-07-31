@@ -190,7 +190,7 @@ $M_2 \equiv\frac{2a^3bC_2-b^4+C_1b}{aC_1-a^4C_2+2ab^3}=\frac{b}{a}\frac{C_1+2a^3
 
 有兴趣的可以进一步阅读[A New Related Message Attack on RSA](https://www.iacr.org/archive/pkc2005/33860001/33860001.pdf) 以及[paper](https://www.cs.unc.edu/~reiter/papers/1996/Eurocrypt.pdf)这里暂不做过多的讲解。
 
-# 例子
+## 例子
 
 这里我们以SCTF rsa3中的level3为例进行介绍。首先，跟踪TCP流可以知道，加密方式是将明文加上用户的user id进行加密，而且还存在多组。这里我们选择第0组和第9组，他们的模数一样，解密脚本如下
 
@@ -296,4 +296,136 @@ $g_1(x,y)=x^e-C_1$
 $g_2(x,y)=(x+y)^e-C_2$
 
 其中$y=r_2-r_1$ 。显然这两个方程具有相同的根M1。然后还有一系列的推导。。。
+
+# Known High Bits Message Attack
+
+## 攻击条件
+
+这里我们假设我们首先加密了消息m，如下
+
+$C\equiv m^d \bmod N$
+
+并且我们假设我们知道消息m的很大的一部分$m_0$ ，即$m=m_0+x$ ，但是我们不知道$x$ 。那么我们就有可能通过该方法进行恢复消息。
+
+## 例子1
+
+可以参考https://github.com/mimoo/RSA-and-LLL-attacks。
+
+## 例子2
+
+# Factoring with High Bits Known
+
+## 攻击条件
+
+当我们知道一个公钥中模数N的一个因子的较高位时，我们就有一定几率来分解N。
+
+## 攻击工具
+
+请参考https://github.com/mimoo/RSA-and-LLL-attacks。上面有使用教程。
+
+## 例子1
+
+参考https://github.com/mimoo/RSA-and-LLL-attacks 。这里我们关注下面的代码
+
+```python
+beta = 0.5
+dd = f.degree()
+epsilon = beta / 7
+mm = ceil(beta**2 / (dd * epsilon))
+tt = floor(dd * mm * ((1/beta) - 1))
+XX = ceil(N**((beta**2/dd) - epsilon)) + 1000000000000000000000000000000000
+roots = coppersmith_howgrave_univariate(f, N, beta, mm, tt, XX)
+```
+
+其中，
+
+- 必须满足 $q\geq N^{beta}$ ，所以这里给出了$beta=0.5$ ，显然两个因数中必然有一个是大于的。
+- XX是$f(x)=q'+x $ 在模q意义下的根的上界，自然我们可以选择调整它，这里其实也表明了我们已知的$q'$ 与因数q之间可能的差距。
+
+# Boneh and Durfee attack
+
+## 攻击条件
+
+当d较小时，满足$d\leq N^{0.292}$ 时，我们可以利用该工具，在一定程度上该工具要比wiener attack要强一些。
+
+## 攻击原理
+
+这里简单说一下原理
+
+首先我们有
+
+$ed \equiv 1 \bmod  \varphi(N)$
+
+进而我们有
+
+$ed =k\varphi(N)+1$ 即 $k \varphi(N) +1 \equiv 0 \bmod e$ 。
+
+又
+
+$\varphi(N)=(p-1)(q-1)=qp-p-q+1=N-p-q+1$
+
+所以
+
+$k(N-p-q+1)+1 \equiv 0 \bmod e$ 
+
+我们假设$A=N+1$，$y=-p-q$ 那么
+
+原式可化为
+
+$f(k,y)=k(A+y)+1 \equiv 0 \bmod e$
+
+如果我们求得了该二元方程的根，那么我们自然也就可以解一元二次方程($N=pq,p+q=-y$)来得到p与q。
+
+## 攻击工具
+
+请参考https://github.com/mimoo/RSA-and-LLL-attacks。上面有使用教程。
+
+## 例子
+
+这里我们以2015年PlaidCTF-CTF-Curious为例进行介绍。
+
+首先题目给了一堆N，e，c。简单看一下可以发现该e比较大。这时候我们可以考虑使用wiener attack，这里我们使用更强的目前介绍的攻击。
+
+核心代码如下
+
+```python
+    nlist = list()
+    elist = list()
+    clist = list()
+    with open('captured') as f:
+        # read the line {N : e : c} and do nothing with it
+        f.readline()
+        for i in f.readlines():
+            (N, e, c) = i[1:-2].split(" : ")
+            nlist.append(long(N,16))
+            elist.append(long(e,16))
+            clist.append(long(c,16))
+    
+    for i in range(len(nlist)):
+        print 'index i'
+        n = nlist[i]
+        e = elist[i]
+        c = clist[i]
+        d = solve(n,e)
+        if d==0:
+            continue
+        else:
+            m = power_mod(c, d, n)
+            hex_string = "%x" % m
+            import binascii
+            print "the plaintext:", binascii.unhexlify(hex_string)
+            return
+```
+
+结果如下
+
+```shell
+=== solution found ===
+private key found: 23974584842546960047080386914966001070087596246662608796022581200084145416583
+the plaintext: flag_S0Y0UKN0WW13N3R$4TT4CK!
+```
+
+
+
+
 
