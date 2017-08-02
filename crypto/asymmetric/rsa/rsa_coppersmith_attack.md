@@ -342,11 +342,299 @@ roots = coppersmith_howgrave_univariate(f, N, beta, mm, tt, XX)
 - 必须满足 $q\geq N^{beta}$ ，所以这里给出了$beta=0.5$ ，显然两个因数中必然有一个是大于的。
 - XX是$f(x)=q'+x $ 在模q意义下的根的上界，自然我们可以选择调整它，这里其实也表明了我们已知的$q'$ 与因数q之间可能的差距。
 
+## 例子2
+
+这里我们以2016年HCTF中的RSA2为例进行介绍。
+
+首先程序的开头是一个绕过验证的，我们大概搞搞，绕过即可，代码如下
+
+```python
+from pwn import *
+from hashlib import sha512
+sh = remote('127.0.0.1', 9999)
+context.log_level = 'debug'
+def sha512_proof(prefix, verify):
+    i = 0
+    pading = ""
+    while True:
+        try:
+            i = randint(0, 1000)
+            pading += str(i)
+            if len(pading) > 200:
+                pading = pading[200:]
+            #print pading
+        except StopIteration:
+            break
+        r = sha512(prefix + pading).hexdigest()
+        if verify in r:
+            return pading
+
+
+def verify():
+    sh.recvuntil("Prefix: ")
+    prefix = sh.recvline()
+    print len(prefix)
+    prefix = prefix[:-1]
+    prefix = prefix.decode('base64')
+    proof = sha512_proof(prefix, "fffffff")
+    sh.send(proof.encode('base64'))
+if __name__ == '__main__':
+    verify()
+    print 'verify success'
+    sh.recvuntil("token: ")
+    token = "5c9597f3c8245907ea71a89d9d39d08e"
+    sh.sendline(token)
+
+    sh.recvuntil("n: ")
+    n = sh.readline().strip()
+    n = int(n[2:], 16)
+
+    sh.recvuntil("e: ")
+    e = sh.readline().strip()
+    e = int(e[2:], 16)
+
+    sh.recvuntil("e2: ")
+    e2 = sh.readline().strip()
+    e2 = int(e2[2:], 16)
+
+    sh.recvuntil("is: ")
+    enc_flag = sh.readline().strip()
+    enc_flag = int(enc_flag[2:-1], 16)
+    print "n: ", hex(n)
+    print "e: ", hex(e)
+    print "e2: ", hex(e2)
+    print "flag: ", hex(enc_flag)
+```
+
+这里我们也已经得到n，e，e2，加密后的flag了，如下
+
+```python
+n:  0x724d41149e1bd9d2aa9b333d467f2dfa399049a5d0b4ee770c9d4883123be11a52ff1bd382ad37d0ff8d58c8224529ca21c86e8a97799a31ddebd246aeeaf0788099b9c9c718713561329a8e529dfeae993036921f036caa4bdba94843e0a2e1254c626abe54dc3129e2f6e6e73bbbd05e7c6c6e9f44fcd0a496f38218ab9d52bf1f266004180b6f5b9bee7988c4fe5ab85b664280c3cfe6b80ae67ed8ba37825758b24feb689ff247ee699ebcc4232b4495782596cd3f29a8ca9e0c2d86ea69372944d027a0f485cea42b74dfd74ec06f93b997a111c7e18017523baf0f57ae28126c8824bd962052623eb565cee0ceee97a35fd8815d2c5c97ab9653c4553f
+e:  0x10001
+e2:  0xf93b
+flag:  0xf11e932fa420790ca3976468dc4df1e6b20519ebfdc427c09e06940e1ef0ca566d41714dc1545ddbdcae626eb51c7fa52608384a36a2a021960d71023b5d0f63e6b38b46ac945ddafea42f01d24cc33ce16825df7aa61395d13617ae619dca2df15b5963c77d6ededf2fe06fd36ae8c5ce0e3c21d72f2d7f20cd9a8696fbb628df29299a6b836c418cbfe91e2b5be74bdfdb4efdd1b33f57ebb72c5246d5dce635529f1f69634d565a631e950d4a34a02281cbed177b5a624932c2bc02f0c8fd9afd332ccf93af5048f02b8bd72213d6a52930b0faa0926973883136d8530b8acf732aede8bb71cb187691ebd93a0ea8aeec7f82d0b8b74bcf010c8a38a1fa8
+
+```
+
+接下来我们来分析主程序。可以看出
+
+```python
+	p, q, e = gen_key()
+	n = p * q
+	phi_n = (p-1)*(q-1)
+	d = invmod(e, phi_n)
+	while True:
+		e2 = random.randint(0x1000, 0x10000)
+		if gcd(e2, phi_n) == 1:
+			break
+```
+
+我们的得到的n=p*q。而p，q，以及我们已知的e都在gen_key函数中生成。看一看gen_key函数
+
+```python
+def gen_key():
+	while True:
+		p = getPrime(k/2)
+		if gcd(e, p-1) == 1:
+			break
+	q_t = getPrime(k/2)
+	n_t = p * q_t
+	t = get_bit(n_t, k/16, 1)
+	y = get_bit(n_t, 5*k/8, 0)
+	p4 = get_bit(p, 5*k/16, 1)
+	u = pi_b(p4, 1)
+	n = bytes_to_long(long_to_bytes(t) + long_to_bytes(u) + long_to_bytes(y))
+	q = n / p
+	if q % 2 == 0:
+		q += 1
+	while True:
+		if isPrime(q) and gcd(e, q-1) == 1:
+			break
+		m = getPrime(k/16) + 1
+		q ^= m
+	return (p, q, e)
+```
+
+其中我们已知如下参数
+
+- k=2048
+- e=0x10001
+
+首先，程序先得到了1024比特位的素数p，并且gcd(2,p-1)=1。
+
+然后，程序又得到了一个1024比特位的素数q_t，并且计算n_t=p*q_t。
+
+下面多次调用了get_bit函数，我们来简单分析一下
+
+```python
+def get_bit(number, n_bit, dire):
+	'''
+	dire:
+		1: left
+		0: right
+	'''
+
+	if dire:
+		sn = size(number)
+		if sn % 8 != 0:
+			sn += (8 - sn % 8)
+		return number >> (sn-n_bit)
+	else:
+		return number & (pow(2, n_bit) - 1)
+```
+
+可以看出根据dire(ction)的不同，会得到不同的数
+
+- dire=1时，程序首先计算number的二进制位数sn，如果不是8 的整数倍的话，就将sn增大为8的整数倍，然后返回number右移(sn-n_bit)的数字。其实 就是最多保留number的n_bit位。
+- dire=0时，程序直接获取number的低n_bit位。
+
+然后我们再来看程序
+
+```python
+	t = get_bit(n_t, k/16, 1)
+	y = get_bit(n_t, 5*k/8, 0)
+	p4 = get_bit(p, 5*k/16, 1)
+```
+
+这三个操作分别做了如下的事情
+
+- t为n_t的最多高k/16，即128位，位数不固定。
+- y为n_t的低5*k/8位，即1280位，位数固定。
+- p4为p的最多高5k/16位，即640位，位数不固定。
+
+此后，程序有如下操作
+
+```python
+	u = pi_b(p4, 1)
+```
+
+利用pi_b对p4进行了加密
+
+```python
+def pi_b(x, m):
+	'''
+	m:
+		1: encrypt
+		0: decrypt
+	'''	
+	enc = DES.new(key)
+	if m:
+		method = enc.encrypt
+	else:
+		method = enc.decrypt
+	s = long_to_bytes(x)
+	sp = [s[a:a+8] for a in xrange(0, len(s), 8)]
+	r = ""
+	for a in sp:
+		r += method(a)
+	return bytes_to_long(r)
+```
+
+其中，我们已知了秘钥key，所以只要我们有密文就可以解密。此外，可以看到的是程序是对传入的消息进行8字节分组，采用密码本方式加密，所以密文之间互不影响。
+
+下面
+
+```python
+	n = bytes_to_long(long_to_bytes(t) + long_to_bytes(u) + long_to_bytes(y))
+	q = n / p
+	if q % 2 == 0:
+		q += 1
+	while True:
+		if isPrime(q) and gcd(e, q-1) == 1:
+			break
+		m = getPrime(k/16) + 1
+		q ^= m
+	return (p, q, e)
+```
+
+程序将t，u，y拼接在一起得到n，进而，程序得到了q，并对q的低k/16位做了抑或，然后返回q'。
+
+在主程序里，再一次得到了n'=p*q'。这里我们仔细分析一下
+
+$n'=p*(q+random(2^{k/16}))$
+
+而p是k/2位的，所以说，random的部分最多可以影响原来的n的最低的$k/2+k/16=9k/16$ 比特位。
+
+而，我们还知道n的最低的5k/8=10k/16 比特为其实就是y，所以其并没有影响到u，即使影响到也就最多影响到一位。
+
+所以我们首先可以利用我们得到的n来获取u，如下
+
+$u=hex(n)[2:-1][-480:-320]$
+
+虽然，这样可能会获得较多位数的u，但是这样并不影响，我们对u解密的时候每一分组都互不影响，所以我们只可能影响最高位数的p4。而p4的的高8位也有可能是填充的。但这也并不影响，我们已经得到了因子p的的很多部分了，我们可以去 尝试着解密了。如下
+
+```python
+if __name__=="__main__":
+	n = 0x724d41149e1bd9d2aa9b333d467f2dfa399049a5d0b4ee770c9d4883123be11a52ff1bd382ad37d0ff8d58c8224529ca21c86e8a97799a31ddebd246aeeaf0788099b9c9c718713561329a8e529dfeae993036921f036caa4bdba94843e0a2e1254c626abe54dc3129e2f6e6e73bbbd05e7c6c6e9f44fcd0a496f38218ab9d52bf1f266004180b6f5b9bee7988c4fe5ab85b664280c3cfe6b80ae67ed8ba37825758b24feb689ff247ee699ebcc4232b4495782596cd3f29a8ca9e0c2d86ea69372944d027a0f485cea42b74dfd74ec06f93b997a111c7e18017523baf0f57ae28126c8824bd962052623eb565cee0ceee97a35fd8815d2c5c97ab9653c4553f
+	u = hex(n)[2:-1][-480:-320]
+	u = int(u,16)
+	p4 = pi_b(u,0)
+	print hex(p4)
+```
+
+解密结果如下
+
+```python
+➜  2016-HCTF-RSA2 git:(master) ✗ python exp_p4.py 
+0xa37302107c17fb4ef5c3443f4ef9e220ac659670077b9aa9ff7381d11073affe9183e88acae0ab61fb75a3c7815ffcb1b756b27c4d90b2e0ada753fa17cc108c1d0de82c747db81b9e6f49bde1362693L
+```
+
+下面，我们直接使用sage来解密，这里sage里面已经实现了这个攻击，我们直接拿来用就好
+
+```python
+from sage.all import *
+import binascii
+n = 0x724d41149e1bd9d2aa9b333d467f2dfa399049a5d0b4ee770c9d4883123be11a52ff1bd382ad37d0ff8d58c8224529ca21c86e8a97799a31ddebd246aeeaf0788099b9c9c718713561329a8e529dfeae993036921f036caa4bdba94843e0a2e1254c626abe54dc3129e2f6e6e73bbbd05e7c6c6e9f44fcd0a496f38218ab9d52bf1f266004180b6f5b9bee7988c4fe5ab85b664280c3cfe6b80ae67ed8ba37825758b24feb689ff247ee699ebcc4232b4495782596cd3f29a8ca9e0c2d86ea69372944d027a0f485cea42b74dfd74ec06f93b997a111c7e18017523baf0f57ae28126c8824bd962052623eb565cee0ceee97a35fd8815d2c5c97ab9653c4553f
+p4 =0xa37302107c17fb4ef5c3443f4ef9e220ac659670077b9aa9ff7381d11073affe9183e88acae0ab61fb75a3c7815ffcb1b756b27c4d90b2e0ada753fa17cc108c1d0de82c747db81b9e6f49bde1362693
+cipher = 0xf11e932fa420790ca3976468dc4df1e6b20519ebfdc427c09e06940e1ef0ca566d41714dc1545ddbdcae626eb51c7fa52608384a36a2a021960d71023b5d0f63e6b38b46ac945ddafea42f01d24cc33ce16825df7aa61395d13617ae619dca2df15b5963c77d6ededf2fe06fd36ae8c5ce0e3c21d72f2d7f20cd9a8696fbb628df29299a6b836c418cbfe91e2b5be74bdfdb4efdd1b33f57ebb72c5246d5dce635529f1f69634d565a631e950d4a34a02281cbed177b5a624932c2bc02f0c8fd9afd332ccf93af5048f02b8bd72213d6a52930b0faa0926973883136d8530b8acf732aede8bb71cb187691ebd93a0ea8aeec7f82d0b8b74bcf010c8a38a1fa8
+e2 = 0xf93b
+pbits = 1024
+kbits = pbits - p4.nbits()
+print p4.nbits()
+p4 = p4 << kbits
+PR.<x> = PolynomialRing(Zmod(n))
+f = x + p4
+roots = f.small_roots(X=2^kbits, beta=0.4)
+if roots:
+    p = p4+int(roots[0])
+    print "p: ", hex(int(p))
+    assert n % p == 0
+    q = n/int(p)
+    print "q: ", hex(int(q))
+    print gcd(p,q)
+    phin = (p-1)*(q-1)
+    print gcd(e2,phin)
+    d = inverse_mod(e2,phin)
+    flag = pow(cipher,d,n)
+    flag = hex(int(flag))[2:-1]
+    print binascii.unhexlify(flag)
+```
+
+关于small_roots的使用，可以参考http://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots 。
+
+结果如下
+
+```shell
+➜  2016-HCTF-RSA2 git:(master) ✗ sage payload.sage
+sys:1: RuntimeWarning: not adding directory '' to sys.path since everybody can write to it.
+Untrusted users could put files in this directory which might then be imported by your Python code. As a general precaution from similar exploits, you should not execute Python code from this directory
+640
+p:  0xa37302107c17fb4ef5c3443f4ef9e220ac659670077b9aa9ff7381d11073affe9183e88acae0ab61fb75a3c7815ffcb1b756b27c4d90b2e0ada753fa17cc108c1d0de82c747db81b9e6f49bde13626933aa6762057e1df53d27356ee6a09b17ef4f4986d862e3bb24f99446a0ab2385228295f4b776c1f391ab2a0d8c0dec1e5L
+q:  0xb306030a7c6ace771db8adb45fae597f3c1be739d79fd39dfa6fd7f8c177e99eb29f0462c3f023e0530b545df6e656dadb984953c265b26f860b68aa6d304fa403b0b0e37183008592ec2a333c431e2906c9859d7cbc4386ef4c4407ead946d855ecd6a8b2067ad8a99b21111b26905fcf0d53a1b893547b46c3142b06061853L
+1
+1
+hctf{d8e8fca2dc0f896fd7cb4cb0031ba249}
+```
+
+## 题目
+
+- 2016 湖湘杯 简单的RSA
+
 # Boneh and Durfee attack
 
 ## 攻击条件
 
-当d较小时，满足$d\leq N^{0.292}$ 时，我们可以利用该工具，在一定程度上该工具要比wiener attack要强一些。
+当d较小时，满足$d\leq N^{0.292}$ 时，我们可以利用该工具，在一定程度上该要攻击比wiener attack要强一些。
 
 ## 攻击原理
 
