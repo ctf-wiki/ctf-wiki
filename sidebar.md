@@ -43,6 +43,7 @@
       - [RSA coppersmith攻击](/crypto/asymmetric/rsa/rsa_coppersmith_attack)
       - [RSA 综合实战](/crypto/asymmetric/rsa/rsa_complex)
     - [背包加密](/crypto/asymmetric/knapsack/)
+    - [离散对数类加密](/crypto/discrete_logarithm/)
   - [哈希函数](/crypto/hash/)
     - [MD5](/crypto/hash/md5)
     - [SHA1](/crypto/hash/sha1)
