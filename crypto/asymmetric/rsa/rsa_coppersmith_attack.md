@@ -186,7 +186,7 @@ $aM_2\equiv  \frac{2a^3bC_2-b^4+C_1b}{C_1-a^3C_2+2b^3}$
 
 $M_2 \equiv\frac{2a^3bC_2-b^4+C_1b}{aC_1-a^4C_2+2ab^3}=\frac{b}{a}\frac{C_1+2a^3C_2-b^3}{C_1-a^3C_2+2b^3}$
 
-上面的式子中邮编所有的内容都是已知的内容，所以我们可以直接获取对应的消息。
+上面的式子中右边所有的内容都是已知的内容，所以我们可以直接获取对应的消息。
 
 有兴趣的可以进一步阅读[A New Related Message Attack on RSA](https://www.iacr.org/archive/pkc2005/33860001/33860001.pdf) 以及[paper](https://www.cs.unc.edu/~reiter/papers/1996/Eurocrypt.pdf)这里暂不做过多的讲解。
 

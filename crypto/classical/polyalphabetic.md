@@ -1,6 +1,6 @@
 对于多表替换加密来说，加密后的字母几乎不再保持原来的频率，所以我们一般只能通过寻找算法实现对应的弱点进行破解。
 
-## Playfair 密码
+## Playfair
 
 ### 原理
 
@@ -45,7 +45,7 @@ BM OD ZB XD NA BE KU DM UI XM MO UV IF
 
 ### 原理
 
-Polybius密码又称为棋盘密码，其一般是将给定的明文加密为两两组合的数字其常用密码表
+Polybius密码又称为棋盘密码，其一般是将给定的明文加密为两两组合的数字，其常用密码表
 
 |      | 1    | 2    | 3    | 4    | 5    |
 | :--- | ---- | ---- | ---- | ---- | :--- |
@@ -77,7 +77,7 @@ A D F G X 的由来：
 
 ### 工具
 
-暂无。
+- CrypTool
 
 ## vigenere
 
@@ -148,8 +148,8 @@ A D F G X 的由来：
   - [在线解密 Vigenère cipher](http://planetcalc.com/2468/)
   - CAP4
 - 未知秘钥
-  - [在线解密 Vigenère Cipher Codebreaker](http://www.mygeocachingprofile.com/codebreaker.vigenerecipher.aspx)
-  - [在线解密 Vigenere Solver](https://www.guballa.de/vigenere-solver)
+  - [Vigenère Cipher Codebreaker](http://www.mygeocachingprofile.com/codebreaker.vigenerecipher.aspx)
+  - [Vigenere Solver](https://www.guballa.de/vigenere-solver) ，不够完善。
 
 ## Nihilist
 
@@ -195,7 +195,7 @@ t -> M[4,5] -> 45
 
 ### 原理
 
-希尔密码（Hill）使用每个字母在字母表中的顺序作为其对应的数字，即A=0，B=1，C=2 等，然后将明文转化为 n 维向量，跟一个 n × n 的矩阵相乘，再将得出的结果模 26。注意用作加密的矩阵（即密匙）在 $\mathbb{Z}_{26}^{n}$ 必须是可逆的，否则就不可能解码。只有矩阵的行列式和 26 互质，才是可逆的。西面举一个例子
+希尔密码（Hill）使用每个字母在字母表中的顺序作为其对应的数字，即A=0，B=1，C=2 等，然后将明文转化为 n 维向量，跟一个 n × n 的矩阵相乘，再将得出的结果模 26。注意用作加密的矩阵（即密匙）在 $\mathbb{Z}_{26}^{n}$ 必须是可逆的，否则就不可能解码。只有矩阵的行列式和 26 互质，才是可逆的。下面举一个例子
 
 ```
 明文：ACT
