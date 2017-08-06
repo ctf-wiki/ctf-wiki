@@ -1,8 +1,19 @@
 # Hash Attack
 
+常见的Hash函数的攻击方法主要有
+
+-  暴力攻击：不依赖于任何算法细节，仅与Hash值长度有关；
+  - 生日攻击法(Birthday Attack)：没有利用Hash函数的结构和任何代数弱性质，只依赖于消息摘要的长度，即Hash值的长度。
+  - 中点交会攻击法(Meet-In-The-Middle)：是生日攻击的一种变形，不比较Hash值，而是比较中间变量。这种攻击主要适用于攻击具有分组链结构的Hash方案。
+-  密码分析：依赖于具体算法的设计缺点。
+
 # 暴力攻击
 
+ **HashCat 工具** 可以说是目前最好的基于 CPU 和 GPU 破解 Hash 的软件，相关链接如下
 
+[HashCat 官网](http://www.hashcat.net/hashcat/)
+
+[HashCat 简单使用](http://www.freebuf.com/sectool/112479.html)
 
 # hash length extension attacks
 
@@ -23,7 +34,7 @@
 - 我们可以控制message的消息。
 - 我们已经知道了包含key的一个消息的hash值。
 
-这样我们就可以得到得到一对(messge,x)满足x=H(key ∥ message)虽然我们并不清楚key的内容。
+这样我们就可以得到一对(messge,x)满足x=H(key ∥ message)虽然我们并不清楚key的内容。
 
 ## 攻击原理
 
@@ -38,7 +49,7 @@ key|s|padding|extra
 这样再去计算hash值的时候，
 
 1. 会对extra进行填充直到满足条件。
-2. 先计算前面的产生的链接变量IV1，而我们已经知道这部分的hash值，并且链接变量产生hash值的算法是可逆的，所以我们可以得到链接变量。
+2. 先计算now对应的链接变量IV1，而我们已经知道这部分的hash值，并且链接变量产生hash值的算法是可逆的，所以我们可以得到链接变量。
 3. 下面会根据得到的链接变量IV1，对extra部分进行哈希算法，并返回hash值。
 
 那么既然我们已经知道了第一部分的hash值，并且，我们还知道extra的值，那么我们便可以得到最后的hash值。
