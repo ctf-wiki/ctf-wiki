@@ -51,7 +51,7 @@
   - [数字签名](/crypto/signature/readme)
     - RSA数字签名
     - [ElGamal数字签名](/crypto/signature/elgamal)
-    - DSA数字签名
+    - [DSA数字签名](/crypto/signature/dsa)
   - [其它](/crypto/others/others)
 - **Web**
   - [简介](/web/)
