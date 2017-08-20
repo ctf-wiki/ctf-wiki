@@ -8,6 +8,7 @@ from flag import get_flag
 from hashlib import sha512
 import signal
 import random
+import time
 
 __author__ = 'Hcamael'
 
