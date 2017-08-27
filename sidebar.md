@@ -20,6 +20,7 @@
     - [LSB 隐写](/misc/picture/lsb)
     - [其他题型](/misc/picture/others)
   - [压缩包分析](/misc/archives)
+  - [Audio](/misc/audio/Readme)
   - [磁盘 / 内存分析](/misc/disk_memory/)
   - [流量分析](/misc/cap)
   - [其它](/misc/others)
