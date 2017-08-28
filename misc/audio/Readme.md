@@ -1,8 +1,12 @@
 # Audio
 
-## Steganography software
+与音频相关的CTF题目主要使用了隐写的策略，主要分为MP3隐写，波形隐写，频谱隐写等等。
 
-### [Mp3Stego](http://www.petitcolas.net/steganography/mp3stego/)
+## MP3 隐写
+
+### 原理
+
+MP3隐写主要是使用 [Mp3Stego](http://www.petitcolas.net/steganography/mp3stego/) 工具进行隐写，其基本介绍及使用方法如下
 
 > MP3Stego will hide information in MP3 files during the compression process. The data is first compressed, encrypted and then hidden in the MP3 bit stream.
 
@@ -12,7 +16,7 @@ Usage:
 
 `decode -X -P pass svega_stego.mp3`
 
-#### 例题
+### 例题
 
 > ISCC-2016:Music Never Sleep
 
@@ -28,19 +32,10 @@ Usage:
 
 base64 && base32 后得到flag
 
-### [Silenteye](http://silenteye.v1kings.io/)
-
-> SilentEye is a cross-platform application design for an easy use of steganography, in this case hiding messages into pictures or sounds. It provides a pretty nice interface and an easy integration of new steganography algorithm and cryptography process by using a plug-ins system.
-
-#### 例题
-
-> 广东省强网杯-2015:Little Apple
-
-直接使用`slienteye`即可
-
-![2](/misc/audio/files/2.jpg)
 
 ## 波形
+
+### 原理
 
 通常来说，波形方向的题，在观察到异常后，使用相关软件(**Audacity,Adobe Audition**)观察波形规律，将波形进一步转化为01字符串等，从而提取转化出最终的flag.
 
@@ -74,7 +69,9 @@ E.g:
 
 ## 频谱
 
-将字符串隐藏在频谱中，此类音频通常会有一个较明显的特征，听起来是一段杂音或者比较刺耳~
+### 原理
+
+音频中的频谱隐写是将字符串隐藏在频谱中，此类音频通常会有一个较明显的特征，听起来是一段杂音或者比较刺耳~
 
 ### 例题
 
@@ -85,11 +82,23 @@ E.g:
 
 ---
 
+
+## LSB音频隐写
+
+### 原理
+
+类似于图片隐写中的LSB隐写，音频中也有对应的LSB隐写。主要可以使用[Silenteye](http://silenteye.v1kings.io/)工具，其介绍如下
+
+> SilentEye is a cross-platform application design for an easy use of steganography, in this case hiding messages into pictures or sounds. It provides a pretty nice interface and an easy integration of new steganography algorithm and cryptography process by using a plug-ins system.
+
+### 例题
+
+> 广东省强网杯-2015:Little Apple
+
+直接使用`slienteye`即可
+
+![2](/misc/audio/files/2.jpg)
+
 ## 延伸
 
 - [音频中的LSB](https://ethackal.github.io/2015/10/05/derbycon-ctf-wav-steganography/)
-
-
-
-
-
