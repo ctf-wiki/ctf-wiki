@@ -1,6 +1,6 @@
 # Audio
 
-与音频相关的CTF题目主要使用了隐写的策略，主要分为MP3隐写，波形隐写，频谱隐写等等。
+与音频相关的CTF题目主要使用了隐写的策略，主要分为MP3隐写，LSB隐写，波形隐写，频谱隐写等等。
 
 ## MP3 隐写
 
@@ -64,8 +64,6 @@ E.g:
 > JarvisOj:上帝之音 
 
 > [wp](https://www.40huo.cn/blog/jarvisoj-misc-writeup.html)
-
-
 
 ## 频谱
 
