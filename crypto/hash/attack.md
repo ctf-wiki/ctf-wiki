@@ -15,8 +15,7 @@
 
 [HashCat 简单使用](http://www.freebuf.com/sectool/112479.html)
 
-# hash length extension attacks
-
+# 哈希长度拓展攻击（hash length extension attacks）
 ## 介绍
 
 基本定义如下，源自[维基百科](https://zh.wikipedia.org/wiki/%E9%95%BF%E5%BA%A6%E6%89%A9%E5%B1%95%E6%94%BB%E5%87%BB)。
@@ -65,3 +64,270 @@ key|s|padding|extra
 - [hashpump](https://github.com/bwall/HashPump)
 
 如何使用请参考github上的readme。
+
+# hash算法设计有误
+一些自定义的hash算法可能是可逆的。
+
+## 例子
+### Hashinator
+题目的逻辑很简单，从一个知名的密码字典"rockyou"挑选出一个`password`，并且使用多种hash算法随机的哈希32轮。我们需要从最后的hash结果中破解出原始的`password`。
+
+#### 分析
+题目采用的hash算法有：`md5`，`sha1`，`blake`，`scrypt`。
+关键的代码如下：
+```python
+    password = self.generate_password()     # from rock_you.txt
+    salt = self.generate_salt(password)     # 与password的长度有关
+    hash_rounds = self.generate_rounds()    # 生成进行hash算法的顺序
+    password_hash = self.calculate_hash(salt + password, hash_rounds)
+```
+1. 程序首先通过从`rockyou.txt`中随机抽取一个`password`，作为加密的明文。
+2. 然后根据抽取的`password`的长度，生成一个长度为`128 - len(password)`的`salt`。
+3. 从之前列举的4种hash算法中抽取，组成32轮的哈希运算。
+4. 根据之前得到的`password`、`salt`计算出最后给我们的`password_hash`。
+
+很明显，我们不可能通过逆向hash算法来完成题目。
+我们知道所有的可能的明文，首先考虑能否通过构造彩虹表来完成穷举。但是注意到`generate_salt()`函数中，`salt`和`password`的长度组合超过了128byte的长度，并且被注释了
+```
+    msize = 128 # f-you hashcat :D
+```
+so，只能无奈放弃。
+
+那这样的话，只存在一种可能，也即算法可逆。查看`calculate_hash()`函数的具体实现，可以发现如下可疑的代码：
+```python
+for i in range(len(hash_rounds)):
+    interim_salt = xor(interim_salt, hash_rounds[-1-i](interim_hash))
+    interim_hash = xor(interim_hash, hash_rounds[i](interim_salt))
+final_hash = interim_salt + interim_hash
+```
+重新梳理一下我们知道的信息：
+1. hash_rounds中保存了32轮，即每轮要使用的hash函数句柄。
+2. final_hash是最后给我们的hash结果。
+3. hash_rounds中的内容也会在生成之后打印给我们。
+4. 我们希望得到`interim_salt`和`interim_hash`在第一轮的值。
+5. `interim_salt`和`interim_hash`的长度均为64byte。
+
+仔细观察一下`interim_salt`和`interim_hash`的计算方法，可以发现它是可逆的。
+$$
+interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
+$$
+
+这行代码里，我们已知 $interim\_hash_1$ 和 $interim\_salt_3$，由此可以推出$interim\_hash_2$的值，而$interim\_hash_2$则是上一轮的`interim_hash`。
+以此方法逆推32次，则可以得到最初的`password`和`salt`。
+
+具体的解密脚本为：
+```python
+import os
+import hashlib
+import socket
+import threading
+import socketserver
+import struct
+import time
+import threading
+# import pyscrypt
+from base64 import b64encode, b64decode
+from pwn import *
+def md5(bytestring):
+    return hashlib.md5(bytestring).digest()
+def sha(bytestring):
+    return hashlib.sha1(bytestring).digest()
+def blake(bytestring):
+    return hashlib.blake2b(bytestring).digest()
+def scrypt(bytestring):
+    l = int(len(bytestring) / 2)
+    salt = bytestring[:l]
+    p = bytestring[l:]
+    return hashlib.scrypt(p, salt=salt, n=2**16, r=8, p=1, maxmem=67111936)
+    # return pyscrypt.hash(p, salt, 2**16, 8, 1, dkLen=64)
+def xor(s1, s2):
+    return b''.join([bytes([s1[i] ^ s2[i % len(s2)]]) for i in range(len(s1))])
+def main():
+    # io = socket.socket(family=socket.AF_INET)
+    # io.connect(('47.88.216.38', 20013))
+    io = remote('47.88.216.38', 20013)
+    print(io.recv(1000))
+    ans_array = bytearray()
+    while True:
+        buf = io.recv(1)
+        if buf:
+            ans_array.extend(buf)
+        if buf == b'!':
+            break
+    
+    password_hash_base64 = ans_array[ans_array.find(b"b'") + 2: ans_array.find(b"'\n")]
+    password_hash = b64decode(password_hash_base64)
+    print('password:', password_hash)
+    method_bytes = ans_array[
+        ans_array.find(b'used:\n') + 6 : ans_array.find(b'\nYour')
+    ]
+    methods = method_bytes.split(b'\n')
+    methods = [bytes(x.strip(b'- ')).decode() for x in methods]
+    print(methods)
+    in_salt = password_hash[:64]
+    in_hash = password_hash[64:]
+    for pos, neg in zip(methods, methods[::-1]):
+        '''
+            interim_salt = xor(interim_salt, hash_rounds[-1-i](interim_hash))
+            interim_hash = xor(interim_hash, hash_rounds[i](interim_salt))
+        '''
+        in_hash = xor(in_hash, eval("{}(in_salt)".format(neg)))
+        in_salt = xor(in_salt, eval("{}(in_hash)".format(pos)))
+    print(in_hash, in_salt)
+    print(in_hash[-20:])
+    io.interactive()
+main()
+    
+```
+
+#### 原hash算法
+```python
+
+import os
+import hashlib
+import socket
+import threading
+import socketserver
+import struct
+import time
+
+# import pyscrypt
+
+from base64 import b64encode
+
+def md5(bytestring):
+    return hashlib.md5(bytestring).digest()
+
+def sha(bytestring):
+    return hashlib.sha1(bytestring).digest()
+
+def blake(bytestring):
+    return hashlib.blake2b(bytestring).digest()
+
+def scrypt(bytestring):
+    l = int(len(bytestring) / 2)
+    salt = bytestring[:l]
+    p = bytestring[l:]
+    return hashlib.scrypt(p, salt=salt, n=2**16, r=8, p=1, maxmem=67111936)
+    # return pyscrypt.hash(p, salt, 2**16, 8, 1)
+
+def xor(s1, s2):
+    return b''.join([bytes([s1[i] ^ s2[i % len(s2)]]) for i in range(len(s1))])
+
+class HashHandler(socketserver.BaseRequestHandler):
+
+    welcome_message = """
+Welcome, young wanna-be Cracker, to the Hashinator.
+
+To prove your worthiness, you must display the power of your cracking skills.
+
+The test is easy:
+1. We send you a password from the rockyou list, hashed using multiple randomly chosen algorithms.
+2. You crack the hash and send back the original password.
+
+As you already know the dictionary and won't need any fancy password rules, {} seconds should be plenty, right?
+
+Please wait while we generate your hash...
+    """
+
+    hashes = [md5, sha, blake, scrypt]
+    timeout = 10
+    total_rounds = 32
+
+    def handle(self):
+        self.request.sendall(self.welcome_message.format(self.timeout).encode())
+
+        password = self.generate_password()     # from rock_you.txt
+        salt = self.generate_salt(password)     # 与password的长度有关
+        hash_rounds = self.generate_rounds()    # 生成进行hash算法的顺序
+        password_hash = self.calculate_hash(salt + password, hash_rounds)
+        self.generate_delay()
+
+        self.request.sendall("Challenge password hash: {}\n".format(b64encode(password_hash)).encode())
+        self.request.sendall("Rounds used:\n".encode())
+        test_rounds = []
+        for r in hash_rounds:
+            test_rounds.append(r)
+
+        for r in hash_rounds:
+            self.request.sendall("- {}\n".format(r.__name__).encode())
+        self.request.sendall("Your time starts now!\n".encode())
+        self.request.settimeout(self.timeout)
+        try:
+            response = self.request.recv(1024)
+            if response.strip() == password:
+                self.request.sendall("Congratulations! You are a true cracking master!\n".encode())
+                self.request.sendall("Welcome to the club: {}\n".format(flag).encode())
+                return
+        except socket.timeout:
+            pass
+        self.request.sendall("Your cracking skills are bad, and you should feel bad!".encode())
+
+
+    def generate_password(self):
+        rand = struct.unpack("I", os.urandom(4))[0]
+        lines = 14344391 # size of rockyou
+        line = rand % lines
+        password = ""
+        f = open('rockyou.txt', 'rb')
+        for i in range(line):
+            password = f.readline()
+        return password.strip()
+
+    def generate_salt(self, p):
+        msize = 128 # f-you hashcat :D
+        salt_size = msize - len(p)
+        return os.urandom(salt_size)
+
+    def generate_rounds(self):
+        rand = struct.unpack("Q", os.urandom(8))[0]
+        rounds = []
+        for i in range(self.total_rounds):
+            rounds.append(self.hashes[rand % len(self.hashes)])
+            rand = rand >> 2
+        return rounds
+
+    def calculate_hash(self, payload, hash_rounds):
+        interim_salt = payload[:64]
+        interim_hash = payload[64:]
+        for i in range(len(hash_rounds)):
+            interim_salt = xor(interim_salt, hash_rounds[-1-i](interim_hash))
+            interim_hash = xor(interim_hash, hash_rounds[i](interim_salt))
+            '''
+            interim_hash = xor(
+                interim_hash, 
+                hash_rounds[i](
+                    xor(interim_salt, hash_rounds[-1-i](interim_hash))
+                )
+            )
+            '''
+        final_hash = interim_salt + interim_hash
+        return final_hash
+
+    def generate_delay(self):
+        rand = struct.unpack("I", os.urandom(4))[0]
+        time.sleep(rand / 1000000000.0)
+
+
+
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    allow_reuse_address = True
+
+PORT = 1337
+HOST = '0.0.0.0'
+flag = ""
+
+with open("flag.txt") as f:
+    flag = f.read()
+
+def main():
+    server = ThreadedTCPServer((HOST, PORT), HashHandler)
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.start()
+    server_thread.join()
+
+if __name__ == "__main__":
+    main()
+
+
+```
