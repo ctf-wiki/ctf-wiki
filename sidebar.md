@@ -42,6 +42,7 @@
       - [RSA 私钥d攻击](/crypto/asymmetric/rsa/rsa_d_attack)
       - [RSA 选择密文攻击](/crypto/asymmetric/rsa/rsa_chosen_cipher)
       - [RSA coppersmith攻击](/crypto/asymmetric/rsa/rsa_coppersmith_attack)
+      - [RSA 侧信道攻击](/crypto/asymmetric/rsa/rsa_side_channel)
       - [RSA 综合实战](/crypto/asymmetric/rsa/rsa_complex)
     - [背包加密](/crypto/asymmetric/knapsack/readme)
     - [离散对数类加密](/crypto/asymmetric/discrete_log/readme)
