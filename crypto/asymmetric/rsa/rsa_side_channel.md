@@ -16,7 +16,7 @@
 
 题目给出了公钥文件`publickey.pem`，密文，测量智能卡功率的电路图，和**解密**过程中智能卡消耗的功率变化（通过在线网站给出 [trace](http://47.74.147.53:20015/index.html)）。
 	
-![电路图](figure/circuitdiagram.png)
+![Circuit diagram](/crypto/asymmetric/rsa/figure/circuitdiagram.png)
 
 密文：
 ```
@@ -28,11 +28,11 @@
 RSA可被SPA攻击的理论基础来自于RSA中包含的快速幂取余算法。
 
 
-快速幂算法依赖于以下的公式：
-$$
-a^b \bmod c = ({a^2}^{b/2}) \bmod c，b为偶数。\\
-a^b \bmod c = ({a^2}^{b/2} \times a) \bmod c，b为奇数。
-$$
+快速幂算法如下
+
+1. b为偶数时，$a^b \bmod c = ({a^2}^{b/2}) \bmod c$ 。
+2. b为奇数时，$a^b \bmod c = ({a^2}^{b/2} \times a) \bmod c$ 。
+
 相应的C代码实现为：
 ```c
 int PowerMod(int a, int b, int c)
@@ -54,7 +54,7 @@ int PowerMod(int a, int b, int c)
 
 > 有时候模乘也可能会从高位向低位进行模乘。这里是从低位向高位模乘。
 
-![](figure/trace.png)
+![](/crypto/asymmetric/rsa/figure/trace.png)
 
 由此可给出还原d的脚本如下：
 
