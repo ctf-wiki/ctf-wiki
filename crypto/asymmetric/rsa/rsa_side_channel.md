@@ -30,7 +30,7 @@ RSA可被SPA攻击的理论基础来自于RSA中包含的快速幂取余算法�
 
 快速幂算法依赖于以下的公式：
 $$
-a^b \bmod c = ({a^2}^{b/2}) \bmod c，b为偶数。\\
+a^b \bmod c = ({a^2}^{b/2}) \bmod c，b为偶数。\\\\
 a^b \bmod c = ({a^2}^{b/2} \times a) \bmod c，b为奇数。
 $$
 相应的C代码实现为：
