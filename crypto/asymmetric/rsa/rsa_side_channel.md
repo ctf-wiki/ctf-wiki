@@ -28,12 +28,11 @@
 由于网站只给出了一条能量迹，所以可以直接断定这是Simple channel analysis(SPA)攻击，也即可以直接通过观察能量迹的高低电平来获得RSA解密过程的密钥d。
 RSA可被SPA攻击的理论基础来自于RSA中包含的快速幂取余算法。
 
-快速幂算法依赖于以下明显的公式：
-$$\begin{eqnarray} 
-&a&^b \mod c = ({a^2}^{b/2}) &\mod& c，b为偶数。\\
-&a&^b \mod c = ({a^2}^{b/2} \times a) &\mod& c，b为奇数。
-\end{eqnarray}$$
-
+快速幂算法依赖于以下的公式：
+$$
+a^b \bmod c = ({a^2}^{b/2}) \bmod c，b为偶数。\\
+a^b \bmod c = ({a^2}^{b/2} \times a) \bmod c，b为奇数。
+$$
 相应的C代码实现为：
 ```c
 int PowerMod(int a, int b, int c)
@@ -50,6 +49,10 @@ int PowerMod(int a, int b, int c)
 }
 ```
 由于快速幂的计算过程中会逐位判断指数的取值，并会采取不同的操作，所以可从能量迹中还原出d的取值（从上面可知，直接得到的值是d的二进制取值的**逆序**）。
+
+**注意**：
+
+> 有时候模乘也可能会从高位向低位进行模乘。这里是从低位向高位模乘。
 
 ![](figure/trace.png)
 
