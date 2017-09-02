@@ -23,9 +23,7 @@
 2. 计算$r\equiv (g^k \bmod p) \bmod q$
 3. 计算$s\equiv (H(m)+xr)k^{-1} \bmod q$
 
-签名结果为(r,s)。
-
-需要注意的是，这里与Elgamal很重要的不同时，这里使用了哈希函数对消息进行了哈希处理。
+签名结果为(r,s)。需要注意的是，这里与Elgamal很重要的不同是这里使用了哈希函数对消息进行了哈希处理。
 
 ## 验证
 
@@ -55,7 +53,9 @@ $k \equiv s^{-1}(H(m)+xr) \equiv H(m)w+xrw \bmod q$
 
 ### 原理
 
-如果知道了随机秘钥k，那么我们就可以根据$s\equiv (H(m)+xr)k^{-1} \bmod q$ 计算私钥d，几乎攻破了DSA。这里一般情况下，消息的hash值都会给出。
+如果知道了随机秘钥k，那么我们就可以根据$s\equiv (H(m)+xr)k^{-1} \bmod q$ 计算私钥d，几乎攻破了DSA。
+
+这里一般情况下，消息的hash值都会给出。
 
 $x \equiv r^{-1}(ks-H(m)) \bmod q$
 
@@ -63,7 +63,9 @@ $x \equiv r^{-1}(ks-H(m)) \bmod q$
 
 ### 原理
 
-如果在两次签名的过程中，共享了k，我们可以进行攻击。假设签名的消息为m1,m2，显然，两者的r的值一样，此外
+如果在两次签名的过程中共享了k，我们就可以进行攻击。
+
+假设签名的消息为m1,m2，显然，两者的r的值一样，此外
 
 $s_1\equiv (H(m_1)+xr)k^{-1} \bmod q$
 
@@ -201,7 +203,7 @@ x = gmpy2.f_mod(x, q)
 print int(x)
 ```
 
-**我发现pip安装的pycrypto竟然没有DSA的mportKey函数。。。只好从github上下载安装了pycrypto。。。**
+**我发现pip安装的pycrypto竟然没有DSA的importKey函数。。。只好从github上下载安装了pycrypto。。。**
 
 结果如下
 

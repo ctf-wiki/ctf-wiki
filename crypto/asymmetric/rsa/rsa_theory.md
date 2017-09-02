@@ -23,6 +23,29 @@ $$
 c^{d}\equiv n\pmod N
 $$
 
+## 正确性证明
+
+即我们要证$n^{ed} \equiv n \bmod N$, 已知$ed \equiv 1 \bmod \phi(N)$ ， 那么$ed=k\phi(N)+1$，即需要证明
+$$
+n^{k\phi(N)+1}  \equiv n \bmod N
+$$
+这里我们分两种情况证明
+
+第一种情况$gcd(n,N)=1$ ，那么$n^{\phi(N)} \equiv 1 \bmod N$ ，因此原式成立。
+
+第二种情况$gcd(n,N)!=1$， 那么n必然是p或者q的倍数，并且n小于N。我们假设
+$$
+n=xp
+$$
+那么x必然小于q，又由于q是素数。那么
+$$
+n^{\phi(q)} \equiv 1 \bmod q
+$$
+进而
+$$
+n^{k\phi(N)}=n^{k(p-1)(q-1)}=(n^{\phi(q)})^{k(p-1)} \equiv 1 \bmod q
+$$
+那么$n^{k\phi(N)+1}=n+uqn$ ，进而$n^{k\phi(N)+1}=n+uqxp=n+uxN$，所以原式成立。
 
 # 基本工具
 
