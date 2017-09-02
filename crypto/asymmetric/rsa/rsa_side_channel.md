@@ -16,7 +16,7 @@
 
 题目给出了公钥文件`publickey.pem`，密文，测量智能卡功率的电路图，和**解密**过程中智能卡消耗的功率变化（通过在线网站给出 [trace](http://47.74.147.53:20015/index.html)）。
 	
-![电路图](/crypto/asymmetric/rsa/figure/circuitdiagram.png)
+![Circuit diagram](/crypto/asymmetric/rsa/figure/circuitdiagram.png)
 
 密文：
 ```
