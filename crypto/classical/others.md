@@ -122,26 +122,6 @@ TAHCEIRPEHIESR
 
 - http://www.practicalcryptography.com/ciphers/classical-era/columnar-transposition/ 行列数相等
 
-## 波利比奥斯方阵密码
-
-### 原理
-
-波利比奥斯方阵密码（Polybius Square Cipher 或称波利比奥斯棋盘）是棋盘密码的一种，是利用波利比奥斯方阵进行加密的密码方式，简单的来说就是把字母排列好，用坐标（行列）的形式表现出来。字母是密文，明文便是字母的坐标。
-
-常见的排布方式：
-
-![Polybius Square Cipher](/crypto/classical/figure/Polybius Square Cipher.png)
-
-加密实例：
-
-明文： `THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG`
-
-密文： `442315 4145241325 1242345233 213453 2445323543 442315 31115554 143422`
-
-可以看出该密码有如下特点
-
-- 每一段都是偶数个数字
-- 数字的大小一般都较小，一般不超过 5
 
 ## 01248 密码
 
