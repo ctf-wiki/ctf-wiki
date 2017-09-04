@@ -1,5 +1,3 @@
-# 程序加载与动态链接
-
 # Program Header
 
 ## 概述
@@ -65,13 +63,13 @@ typedef struct {
 
 可能的段权限位有
 
-![](/executable/ELF/figure/segment_flag_bits.png)
+![](/executable/elf/figure/segment_flag_bits.png)
 
 其中，所有在PF_MASKPROC中的比特位都是被保留用于与处理器相关的语义信息。
 
 如果一个权限位被设置为0，这种类型的段是不可访问的。实际的内存权限取决于相应的内存管理单元，不同的系统可能操作方式不一样。尽管所有的权限组合都是可以的，但是系统一般会授予比请求更多的权限。在任何情况下，除非明确说明，一个段不会有写权限。下面给出了所有的可能组合。
 
-![](/executable/ELF/figure/segment-permission.png)
+![](/executable/elf/figure/segment-permission.png)
 
 例如，一般来说.text段一般具有读和执行权限，但是不会有写权限。数据段一般具有写，读，以及执行权限。
 
@@ -81,7 +79,7 @@ typedef struct {
 
 如下所示，代码段只包含只读的指令以及数据。其它节可能在可加载的段中。当然这个例子并没有给出所有的可能的段。
 
-![](/executable/ELF/figure/text_segment.png)
+![](/executable/elf/figure/text_segment.png)
 
 数据段包含可写的数据以及以及指令，通常来说，包含以下内容
 
