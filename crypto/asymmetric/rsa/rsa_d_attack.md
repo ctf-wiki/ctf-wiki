@@ -28,7 +28,7 @@ $x \equiv -1 \bmod q$
 
 利用以下工具可以直接进行计算
 
-- ~~RsaConverter.exe~~
+- RsaConverter.exe (https://sourceforge.net/projects/rsaconverter/)
 - [rsatool.py](https://github.com/ius/rsatool/blob/master/rsatool.py)
 
 
