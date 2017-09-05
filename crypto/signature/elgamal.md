@@ -38,11 +38,11 @@ ks \equiv m-dr \bmod p-1
 $$
 进而
 $$
-ks+dr=a*(p-1)+m
+ks+dr=a\*(p-1)+m
 $$
 所以
 $$
-g^{ks+dr}=g^{a*(p-1)+m}=(g^{p-1})^a*g^m
+g^{ks+dr}=g^{a\*(p-1)+m}=(g^{p-1})^a*g^m
 $$
 所以根据费马定理，可得
 $$
@@ -65,17 +65,17 @@ $$
 
 假设目前有两个签名都是使用同一个随机数进行签名的。那么我们有
 $$
-r \equiv g^k \bmod p \\s _1\equiv (m_1-dr)k^{-1} \bmod p-1\\r \equiv g^k \bmod p \\s_2 \equiv (m_2-dr)k^{-1} \bmod p-1
+r \equiv g^k \bmod p \\\\ s _1\equiv (m_1-dr)k^{-1} \bmod p-1\\\\ r \equiv g^k \bmod p \\\\ s_2 \equiv (m_2-dr)k^{-1} \bmod p-1
 $$
 进而有
 $$
-s_1k \equiv m_1-dr \bmod p-1 \\ s_2k \equiv m_2-dr \bmod p-1
+s_1k \equiv m_1-dr \bmod p-1 \\\\ s_2k \equiv m_2-dr \bmod p-1
 $$
 两式相减
 $$
 k(s_1-s_2) \equiv m_1-m_2 \bmod p-1
 $$
-这里，$s_1,s_2,m_1,m_2,p-1$ 均已知，所以我们可以很容易算出k。当然，如果$gcd(s_1-s_2,m_1-m_2)!=1$ 的话，可能会存在多个解，这时我们只需要多试一试。进而，我们可以根据s的计算方法得到私钥d，如下
+这里，$s_1,s_2,m_1,m_2,p-1$ 均已知，所以我们可以很容易算出k。当然，如果$gcd(s_1-s_2,p-1)!=1$ 的话，可能会存在多个解，这时我们只需要多试一试。进而，我们可以根据s的计算方法得到私钥d，如下
 $$
 d \equiv \frac{m-ks}{r}
 $$
