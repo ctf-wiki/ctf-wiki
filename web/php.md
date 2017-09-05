@@ -520,6 +520,12 @@ var_dump(in_array('1bc', $array)); //true
 python GitHack.py http://www.openssl.org/.git/
 ```
 
+[GitHacker(可恢复完整 Git 仓库)](https://github.com/WangYihang/GitHacker)
+
+```shell
+python GitHacker.py http://www.openssl.org/.git/
+```
+
 ### `.DS_Store` 文件泄露
 
 Mac OS 中会包含有 `.DS_Store` 文件，包含文件名等信息。

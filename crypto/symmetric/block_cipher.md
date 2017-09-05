@@ -92,11 +92,11 @@ OFB全称为输出反馈模式（Output feedback）。
 
 ## 加密
 
-![](/crypto/symmetric/figure/cfb_encryption.png)
+![](/crypto/symmetric/figure/ofb_encryption.png)
 
 ## 解密
 
-![](/crypto/symmetric/figure/cfb_decryption.png)
+![](/crypto/symmetric/figure/ofb_decryption.png)
 
 
 
