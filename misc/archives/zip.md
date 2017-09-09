@@ -54,7 +54,7 @@ Zip文件主要由三部分构成，分别为
 
 - Windows下的神器[ARCHPR](http://www.downcc.com/soft/130539.html)
 
-![1](/misc/archive/figure/1.png)
+![1](/misc/archives/figure/1.png)
 
 暴力枚举，跑字典，明文攻击，应有尽有
 
@@ -85,7 +85,7 @@ CRC32校验码出现在很多文件中比如`png`文件，同样`zip`中也有CR
 
 比如我们新建一个`flag.txt`，其中内容为`123`,使用密码`!QAZXSW@#EDCVFR$`去加密
 
-![2](/misc/archive/figure/2.png)
+![2](/misc/archives/figure/2.png)
 
 而我们去计算文件的crc32值发现和上图中的crc32值吻合
 
@@ -159,15 +159,6 @@ else:
 
 > 建议使用WIndows的ARCHPR，1是速度较快，2是较稳定（之前出题时遇到过用PKCrack爆不出来的情况）
 
-### 例题
-
-> <a href="/misc/archive/figure/green.zip">SSCTF-2017:我们的秘密是绿色的</a>
-
-> WP: http://bobao.360.cn/ctf/detail/197.html
-
-注意在用明文攻击时的操作
-
-![3](/misc/archive/figure/3.png)
 
 ## 伪加密
 
@@ -194,11 +185,11 @@ Bit 6: Strong encryption.  If this bit is set, you should
 
 在010Editor中我们尝试着将这1位修改`0-->1`
 
-![4](/misc/archive/figure/4.png)
+![4](/misc/archives/figure/4.png)
 
 再打开文件发现已要求输入密码
 
-![5](/misc/archive/figure/5.png)
+![5](/misc/archives/figure/5.png)
 
 
 修改伪加密的方法：
@@ -208,3 +199,24 @@ Bit 6: Strong encryption.  If this bit is set, you should
 - 在Mac OS及部分Linux（如Kali）系统中，可以直接打开伪加密的zip压缩包
 - 检测伪加密的小工具`ZipCenOp.jar`
 - 有时候用`WinRar`的修复功能(此方法有时有奇效，不仅针对伪加密)
+
+
+### 例题
+
+> <a href="/misc/archive/figure/green.zip">SSCTF-2017:我们的秘密是绿色的</a>
+
+> WP: http://bobao.360.cn/ctf/detail/197.html
+
+
+我们在得到两个`readme.txt`，且一个加密，一个已知，很容易想到明文攻击的手法。
+
+注意在用明文攻击时的操作
+
+![3](/misc/archives/figure/3.png)
+
+得到密码`Y29mZmVl`后，解压缩文件，得到另一个压缩包。
+
+观察通用位标记位，猜测伪加密，修改后解压得到`flag`
+
+这一题，基本涵盖了比赛中`zip`的常见考察手法，爆破，伪加密，明文攻击等，都在本题所出现
+
