@@ -24,3 +24,11 @@
 
 - lsb.png
 - HCTF 2016 - 教练，我想打 CTF
+
+## HCTF 2016 - 教练，我想打 CTF
+
+给一张PNG图片，找出隐藏其中的flag。
+- 工具 : Stegsolve。
+- 流程 : 在Stegsolve中打开该PNG文件，点击下方的按钮选择不同的模式，发现channel 0有比较异常的变化，结合LSB的隐藏数据的原理。直接在Stegsolve中选择Analyse中的Data Extraction,按照下图的方式配置(实验发现MSB和LSB效果一样)，可以看到文件的开头是PK，得知这是一个zip文件,保存为bin文件。解压得到的压缩文件，用任意软件(记事本，IDA)发现解压出来的文件开头是ELF。在Linux下运行得到：hctf{dd0gf4c3tok3yb0ard4g41n~~~}。
+
+![conf](/misc/picture/figure/lsb-example2.PNG)
