@@ -2,11 +2,6 @@
 
 与音频相关的CTF题目主要使用了隐写的策略，主要分为MP3隐写，LSB隐写，波形隐写，频谱隐写等等。
 
-## 常见手段
-
-通过`binwalk`以及`strings`可以发现的信息不在详述
-
-
 ## MP3 隐写
 
 ### 原理
@@ -66,7 +61,7 @@ PS
 
 E.g:
 
-> JarvisOj:上帝之音 
+> JarvisOj:上帝之音
 
 > [wp](https://www.40huo.cn/blog/jarvisoj-misc-writeup.html)
 
