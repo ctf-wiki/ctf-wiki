@@ -3,12 +3,12 @@
 音频分析
 =======
 
-与音频相关的CTF题目主要使用了隐写的策略，主要分为MP3隐写，LSB隐写，波形隐写，频谱隐写等等。
+与音频相关的 CTF 题目主要使用了隐写的策略，主要分为 MP3 隐写，LSB 隐写，波形隐写，频谱隐写等等。
 
 常见手段
 --------
 
-通过 ``binwalk`` 以及 ``strings`` 可以发现的信息不在详述
+通过 ``binwalk`` 以及 ``strings`` 可以发现的信息不再详述。
 
 MP3 隐写
 --------
@@ -22,31 +22,30 @@ MP3隐写主要是使用 `Mp3Stego <http://www.petitcolas.net/steganography/mp3s
     process. The data is first compressed, encrypted and then hidden in
     the MP3 bit stream.
 
-Usage:
+.. code-block:: bash
 
-``encode -E hidden_text.txt -P pass svega.wav svega_stego.mp3``
-
-``decode -X -P pass svega_stego.mp3``
+   encode -E hidden_text.txt -P pass svega.wav svega_stego.mp3
+   decode -X -P pass svega_stego.mp3
 
 例题
 ~~~~
 
-    ISCC-2016:Music Never Sleep
+    ISCC-2016: Music Never Sleep
 
-初步观察后,由 ``strings`` 发现.听音频无异常猜测使用隐写软件隐藏数据
+初步观察后，由 ``strings`` 无发现，听音频无异常猜测使用隐写软件隐藏数据。
 
 .. figure:: /misc/audio/files/1.jpg
    :alt: 1
 
-   1
+得到密码后使用 ``Mp3Stego`` 解密、。
 
-得到密码后使用 ``Mp3Stego`` 解密
+.. code-block:: bash
 
-``decode.exe -X ISCC2016.mp3 -P bfsiscc2016``
+   decode.exe -X ISCC2016.mp3 -P bfsiscc2016
 
-得到文件 ``iscc2016.mp3.txt``:``Flag is SkYzWEk0M1JOWlNHWTJTRktKUkdJTVpXRzVSV0U2REdHTVpHT1pZPQ== ???``
+得到文件 ``iscc2016.mp3.txt``: ``Flag is SkYzWEk0M1JOWlNHWTJTRktKUkdJTVpXRzVSV0U2REdHTVpHT1pZPQ== ???``。
 
-base64 && base32 后得到flag
+base64 && base32 后得到flag。
 
 波形
 ----
@@ -54,37 +53,27 @@ base64 && base32 后得到flag
 原理
 ~~~~
 
-通常来说，波形方向的题，在观察到异常后，使用相关软件( **Audacity, Adobe Audition**)观察波形规律，将波形进一步转化为01字符串等，从而提取转化出最终的flag.
+通常来说，波形方向的题，在观察到异常后，使用相关软件（**Audacity, Adobe Audition**）观察波形规律，将波形进一步转化为 01 字符串等，从而提取转化出最终的 flag。
 
 例题
 ~~~~
 
-    ISCC-2017:Misc-04
+    ISCC-2017: Misc-04
 
 其实这题隐藏的信息在最开始的一段音频内，不细心听可能会误认为是隐写软件。
 
 .. figure:: /misc/audio/files/3.png
    :alt: 3
 
-   3
+以高为 1 低为 0，转换得到 ``01`` 字符串。
 
-以高为1低为0，转换得到 ``01`` 字符串
+.. code-block:: bash
 
-``110011011011001100001110011111110111010111011000010101110101010110011011101011101110110111011110011111101``
+   110011011011001100001110011111110111010111011000010101110101010110011011101011101110110111011110011111101
 
-转为ASCII，莫斯密码解密，得到flag
+转为 ASCII，莫斯密码解密，得到 flag。
 
---------------
-
-PS
-
-一些较复杂的可能会先对音频进行一系列的处理，如滤波等
-
-E.g:
-
-    JarvisOj:上帝之音
-
-    `wp <https://www.40huo.cn/blog/jarvisoj-misc-writeup.html>`__
+.. note:: 一些较复杂的可能会先对音频进行一系列的处理，如滤波等。例如 JarvisOJ: 上帝之音，`writeup <https://www.40huo.cn/blog/jarvisoj-misc-writeup.html>`__
 
 频谱
 ----
@@ -92,19 +81,15 @@ E.g:
 原理
 ~~~~
 
-音频中的频谱隐写是将字符串隐藏在频谱中，此类音频通常会有一个较明显的特征，听起来是一段杂音或者比较刺耳~
+音频中的频谱隐写是将字符串隐藏在频谱中，此类音频通常会有一个较明显的特征，听起来是一段杂音或者比较刺耳。
 
 例题
 ~~~~
 
-    Su-ctf-quals-2014:hear\_with\_your\_eyes
+    Su-ctf-quals-2014:hear_with_your_eyes
 
 .. figure:: /misc/audio/files/4.png
    :alt: 4
-
-   4
-
---------------
 
 LSB音频隐写
 -----------
@@ -112,7 +97,7 @@ LSB音频隐写
 原理
 ~~~~
 
-类似于图片隐写中的LSB隐写，音频中也有对应的LSB隐写。主要可以使用\ `Silenteye <http://silenteye.v1kings.io/>`__\ 工具，其介绍如下
+类似于图片隐写中的 LSB 隐写，音频中也有对应的 LSB 隐写。主要可以使用 `Silenteye <http://silenteye.v1kings.io/>`__ 工具，其介绍如下：
 
     SilentEye is a cross-platform application design for an easy use of
     steganography, in this case hiding messages into pictures or sounds.
@@ -123,23 +108,15 @@ LSB音频隐写
 例题
 ~~~~
 
-    广东省强网杯-2015:Little Apple
+    广东省强网杯-2015: Little Apple
 
-直接使用 ``slienteye`` 即可
+直接使用 ``slienteye`` 即可。
 
 .. figure:: /misc/audio/files/2.jpg
    :alt: 2
-
-   2
 
 延伸
 ----
 
 -  `音频中的LSB <https://ethackal.github.io/2015/10/05/derbycon-ctf-wav-steganography/>`__
-
-
-与图片相关的考点主要有图片隐写，图片修复等。
-
--  扩展阅读
-
-`隐写术总结 <http://bobao.360.cn/learning/detail/243.html>`__
+-  `隐写术总结 <http://bobao.360.cn/learning/detail/243.html>`__
