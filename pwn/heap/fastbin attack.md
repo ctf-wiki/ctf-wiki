@@ -154,11 +154,11 @@ int main(void)
     return 0;
 }
 ```
-第一次释放`free(chunk1)`</br>
+</br>第一次释放`free(chunk1)`</br>
 ![捕获.PNG-3kB][2]
-第二次释放`free(chunk2)`</br>
+</br>第二次释放`free(chunk2)`</br>
 ![捕获.PNG-3.4kB][3]
-第三次释放`free(chunk1)`</br>
+</br>第三次释放`free(chunk1)`</br>
 ![捕获.PNG-5.8kB][4]
 注意因为chunk1被再次释放因此其fd值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
 
