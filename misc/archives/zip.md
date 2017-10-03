@@ -1,6 +1,6 @@
 # Zip
 
-# 文件结构
+## 文件结构
 
 Zip文件主要由三部分构成，分别为
 
@@ -18,37 +18,37 @@ Zip文件主要由三部分构成，分别为
 - Central directory 核心目录
   - 记录了压缩文件的目录信息，在这个数据区中每一条纪录对应在压缩源文件数据区中的一条数据。
 
-| Offset | Bytes | Description                              | 译                           |
-| ------ | ----- | ---------------------------------------- | --------------------------- |
+| Offset | Bytes | Description                                          | 译                                    |
+| ------ | ----- | ---------------------------------------------------- | ------------------------------------- |
 | 0      | 4     | Central directory file header signature = 0x02014b50 | 核心目录文件header标识=（0x02014b50） |
-| 4      | 2     | Version made by                          | 压缩所用的pkware版本               |
-| 6      | 2     | Version needed to extract (minimum)      | 解压所需pkware的最低版本             |
-| 8      | 2     | General purpose bit flag                 | **通用位标记**[伪加密]()            |
-| 10     | 2     | Compression method                       | 压缩方法                        |
-| 12     | 2     | File last modification time              | 文件最后修改时间                    |
-| 14     | 2     | File last modification date              | 文件最后修改日期                    |
-| 16     | 4     | CRC-32                                   | CRC-32校验码                   |
-| 20     | 4     | Compressed size                          | 压缩后的大小                      |
-| 24     | 4     | Uncompressed size                        | 未压缩的大小                      |
-| 28     | 2     | File name length (n)                     | 文件名长度                       |
-| 30     | 2     | Extra field length (m)                   | 扩展域长度                       |
-| 32     | 2     | File comment length (k)                  | 文件注释长度                      |
-| 34     | 2     | Disk number where file starts            | 文件开始位置的磁盘编号                 |
-| 36     | 2     | Internal file attributes                 | 内部文件属性                      |
-| 38     | 4     | External file attributes                 | 外部文件属性                      |
-| 42     | 4     | relative offset of local header          | 本地文件头的相对位移                  |
-| 46     | n     | File name                                | 目录文件名                       |
-| 46+n   | m     | Extra field                              | 扩展域                         |
-| 46+n+m | k     | File comment                             | 文件注释内容                      |
+| 4      | 2     | Version made by                                      | 压缩所用的pkware版本                  |
+| 6      | 2     | Version needed to extract (minimum)                  | 解压所需pkware的最低版本              |
+| 8      | 2     | General purpose bit flag                             | **通用位标记**[伪加密]()              |
+| 10     | 2     | Compression method                                   | 压缩方法                              |
+| 12     | 2     | File last modification time                          | 文件最后修改时间                      |
+| 14     | 2     | File last modification date                          | 文件最后修改日期                      |
+| 16     | 4     | CRC-32                                               | CRC-32校验码                          |
+| 20     | 4     | Compressed size                                      | 压缩后的大小                          |
+| 24     | 4     | Uncompressed size                                    | 未压缩的大小                          |
+| 28     | 2     | File name length (n)                                 | 文件名长度                            |
+| 30     | 2     | Extra field length (m)                               | 扩展域长度                            |
+| 32     | 2     | File comment length (k)                              | 文件注释长度                          |
+| 34     | 2     | Disk number where file starts                        | 文件开始位置的磁盘编号                |
+| 36     | 2     | Internal file attributes                             | 内部文件属性                          |
+| 38     | 4     | External file attributes                             | 外部文件属性                          |
+| 42     | 4     | relative offset of local header                      | 本地文件头的相对位移                  |
+| 46     | n     | File name                                            | 目录文件名                            |
+| 46+n   | m     | Extra field                                          | 扩展域                                |
+| 46+n+m | k     | File comment                                         | 文件注释内容                          |
 
 - End of central directory record(EOCD) 目录结束标识
   - 目录结束标识存在于整个归档包的结尾，用于标记压缩的目录数据的结束。每个压缩文件必须有且只有一个EOCD记录。
 
 更加详细参见[官方文档](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.2.0.txt) 。
 
-# 主要攻击
+## 主要攻击
 
-## 爆破
+### 爆破
 
 这里主要介绍两款爆破使用的工具
 
@@ -66,9 +66,9 @@ Usage:
 root@kali:fcrackzip -b -c1 -u test.zip (－b 指定模式为暴破，-c1指定密码类型为纯数字，其它类型可以rtfm,-u这个参数非常重要不然不显示破解出来的密码,-l 5-6可以指定长度)
 ```
 
-## CRC32
+### CRC32
 
-### 原理
+#### 原理
 
 **CRC32**
 
@@ -90,12 +90,12 @@ CRC32校验码出现在很多文件中比如`png`文件，同样`zip`中也有CR
 而我们去计算文件的crc32值发现和上图中的crc32值吻合
 
 ```shell
-文件: flag.txt 
-大小: 3 
-时间: Tue, 29 Aug 2017 10:38:10 +0800 
-MD5: 202cb962ac59075b964b07152d234b70 
-SHA1: 40bd001563085fc35165329ea1ff5c5ecbdbbeef 
-CRC32: 884863D2 
+文件: flag.txt
+大小: 3
+时间: Tue, 29 Aug 2017 10:38:10 +0800
+MD5: 202cb962ac59075b964b07152d234b70
+SHA1: 40bd001563085fc35165329ea1ff5c5ecbdbbeef
+CRC32: 884863D2
 ```
 
 **注意**
@@ -120,8 +120,8 @@ crcdict = {}
 print "computing all possible CRCs..."
 for x in itertools.product(list(alph), repeat=4):
     st = ''.join(x)
-    testcrc = binascii.crc32(st) 
-    crcdict[struct.pack('<i', testcrc)] = st 
+    testcrc = binascii.crc32(st)
+    crcdict[struct.pack('<i', testcrc)] = st
 print "Done!"
 
 f = open('flag.zip')
@@ -134,15 +134,15 @@ else:
     print "FAILED!"
 ```
 
-### 例题
+#### 例题
 
 > [Abctf-2016:Zippy](https://github.com/ctfs/write-ups-2016/tree/master/abctf-2016/forensic/zippy-120)
 
 根据每个压缩包内的文件大小可以推断使用`CRC32`攻击手法，获得每个压缩包内的内容后连在一起base64解码后时一个加密的压缩包，爆破获得flag
 
-## 明文攻击
+### 明文攻击
 
-### 原理
+#### 原理
 
 条件
 
@@ -152,7 +152,7 @@ else:
 
 如果你已经知道加密文件的部分内容，比如在某个网站上发现了它的readme.txt文件，你就可以开始尝试破解了。首先，将这个明文文件打包成zip包，比如将readme.txt打包成readme.zip。打包完成后，需要确认二者采用的压缩算法相同。一个简单的判断方法是用winRAR打开文件，同一个文件压缩后的体积是否相同。如果相同，基本可以说明你用的压缩算法是正确的。如果不同，就尝试另一种压缩算法。
 
-### 工具
+#### 工具
 
 - Windows下的神器[ARCHPR](http://www.downcc.com/soft/130539.html)
 - Linux下的[PKCrack](http://www.unix-ag.uni-kl.de/~conrad/krypto/pkcrack.html)
@@ -160,9 +160,9 @@ else:
 > 建议使用WIndows的ARCHPR，1是速度较快，2是较稳定（之前出题时遇到过用PKCrack爆不出来的情况）
 
 
-## 伪加密
+### 伪加密
 
-### 原理
+#### 原理
 
 在上文`Zip`格式中的**核心目录区**中，我们强调了一个叫做通用位标记(General purpose bit flag )的2字节，不同比特位有着不同的含义。
 
@@ -178,10 +178,11 @@ Bit 1: If the compression method used was type 6,
 Bit 6: Strong encryption.  If this bit is set, you should
      set the version needed to extract value to at least
      50 and you must also set bit 0.  If AES encryption
-     is used, the version needed to extract value must 
+     is used, the version needed to extract value must
      be at least 51.
 ...
 ```
+
 
 在010Editor中我们尝试着将这1位修改`0-->1`
 
@@ -201,7 +202,7 @@ Bit 6: Strong encryption.  If this bit is set, you should
 - 有时候用`WinRar`的修复功能(此方法有时有奇效，不仅针对伪加密)
 
 
-### 例题
+#### 例题
 
 > <a href="/misc/archive/figure/green.zip">SSCTF-2017:我们的秘密是绿色的</a>
 
@@ -219,4 +220,3 @@ Bit 6: Strong encryption.  If this bit is set, you should
 观察通用位标记位，猜测伪加密，修改后解压得到`flag`
 
 这一题，基本涵盖了比赛中`zip`的常见考察手法，爆破，伪加密，明文攻击等，都在本题所出现
-
