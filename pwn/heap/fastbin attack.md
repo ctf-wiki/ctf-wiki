@@ -160,8 +160,8 @@ int main(void)
 ![捕获.PNG-3.4kB][3]
 </br>第三次释放`free(chunk1)`</br>
 ![捕获.PNG-5.8kB][4]
-注意因为chunk1被再次释放因此其fd值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
-
+</br>注意因为chunk1被再次释放因此其fd值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
+</br>
 下面这个示例演示了这一点，首先跟前面一样构造main_arena=>chunk1=>chun2=>chunk1的链表。之后第一次调用malloc返回chunk1之后修改chunk1的fd指针指向bss段上的bss_chunk，之后我们可以看到fastbin会把堆块分配到这里。
 ```
 typedef struct _chunk
@@ -344,9 +344,9 @@ int main(void)
 通过HOS我们可以把fastbin chunk分配到栈中，从而控制返回地址等关键数据。</br>
 要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。
 
-
+</br>
 ## arbitrary alloc
-arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是分配的目标不再是栈中。
+arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是分配的目标不再是栈中。</br>
 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。
 
 ## 演示
