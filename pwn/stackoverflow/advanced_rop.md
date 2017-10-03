@@ -1,3 +1,6 @@
+---
+typora-root-url: ..\..
+---
 
 # 高级ROP
 
