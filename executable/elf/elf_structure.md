@@ -1,3 +1,6 @@
+---
+typora-root-url: ..\..
+---
 
 # ELF文件
 
