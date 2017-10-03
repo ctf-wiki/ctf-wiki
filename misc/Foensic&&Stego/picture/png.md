@@ -62,14 +62,14 @@ CRC(cyclic redundancy check)域中的值是对Chunk Type Code域和Chunk Data域
 
 我们经常会去更改一张图片的高度或者宽度使得一张图片显示不完整从而达到隐藏信息的目的。
 
-![ihdr](/misc/picture/figure/pngihdr.png)
+![ihdr](/misc/Foensic&&Stego/picture/figure/pngihdr.png)
 
 这里可以发现在Kali中是打不开这张图片的，提示`IHDR CRC error`(Windows 10自带的图片查看器能够打开)，就提醒了我们IHDR块被人为的篡改过了，从而尝试修改图片的高度或者宽度发现隐藏的字符串
 
 
 ##### 例题
 
-- <a href="/misc/picutre/file/misc4.png">WDCTF-finals-2017</a>
+- <a href="/misc/Foensic&&Stego/picutre/file/misc4.png">WDCTF-finals-2017</a>
 
 观察文件可以发现,文件头及宽度异常
 
@@ -102,7 +102,7 @@ for i in range(1024):
 
 得到宽度值为`709`后，恢复图片得到flag
 
-![misc4](/misc/picture/figure/misc4.png)
+![misc4](/misc/Foensic&&Stego/picture/figure/misc4.png)
 
 
 #### PLTE
@@ -193,23 +193,23 @@ LSB全称leastsignificant bit，最低有效位PNG文件中的图像像数一般
 
 LSB隐写就是修改RGB颜色分量的最低二进制位（LSB），每个颜色会有8bit，LSB隐写就是修改了像数中的最低的1bit,而人类的眼睛不会注意到这前后的变化,每个像数可以携带3比特的信息
 
-![lsb](/misc/picture/figure/lsb.jpg)
+![lsb](/misc/Foensic&&Stego/picture/figure/lsb.jpg)
 
 如果是要寻找这种LSB隐藏痕迹的话，有一个工具[Stegsolve](http://www.caesum.com/handbook/Stegsolve.jar)是个神器，可以来辅助我们进行分析。
 
 通过下方的按钮可以观察每个通道的信息，例如查看R通道的最低位第8位平面的信息
 
-![lsb1](/misc/picture/figure/lsb1.png)
+![lsb1](/misc/Foensic&&Stego/picture/figure/lsb1.png)
 
 LSB的信息借助于Stegsolve查看各个通道时一定要细心捕捉异常点，抓住LSB隐写的蛛丝马迹
 
 ### 例题
 
-> <a href="/misc/picture/file/hctf.png">HCTF-2016-Misc</a>
+> <a href="/misc/Foensic&&Stego/picture/file/hctf.png">HCTF-2016-Misc</a>
 
 这题的信息隐藏在RGB三个通道的最低位中,借助`Stegsolve-->Analyse-->Data Extract`可以指定通道进行提取。
 
-![hctfsolve](/misc/picture/figure/hctfsolve.png)
+![hctfsolve](/misc/Foensic&&Stego/picture/figure/hctfsolve.png)
 
 可以发现`zip`头，用`save bin`保存为压缩包后，打开运行其中的ELF文件就可以得到最后的flag
 

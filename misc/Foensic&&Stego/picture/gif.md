@@ -17,7 +17,7 @@
 
 下表显示了一个GIF文件的组成结构：
 
-![gif](/misc/picture/figure/gif.png)
+![gif](/misc/Foensic&&Stego/picture/figure/gif.png)
 
 中间的那个大块可以被重复任意次
 
@@ -41,12 +41,12 @@ GIF格式可以拥有global color table，或用于针对每个子图片集，�
 
 每个image都以一个image descriptor block（图像描述块）作为开头，这个块固定为10字节。
 
-![imagesdescription](/misc/picture/figure/imagesdescription.png)
+![imagesdescription](/misc/Foensic&&Stego/picture/figure/imagesdescription.png)
 
 ### 图像数据(Image Data)
 
 终于到了图片数据实际存储的地方。Image Data是由一系列的输出编码（output codes）构成，它们告诉decoder（解码器）需要绘制在画布上的每个颜色信息。这些编码以字节码的形式组织在这个块中。
- 
+
 
 ### 文件终结器(Trailer)
 
