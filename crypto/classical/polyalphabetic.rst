@@ -2,13 +2,16 @@
    :format: html latex
 ..
 
+多表代换加密
+===========
+
 对于多表替换加密来说，加密后的字母几乎不再保持原来的频率，所以我们一般只能通过寻找算法实现对应的弱点进行破解。
 
 Playfair
-========
+--------
 
 原理
-----
+~~~~
 
 Playfair 密码（Playfair cipher or Playfair square）是一种替换密码，1854
 年由英国人查尔斯·惠斯通（Charles Wheatstone）发明，基本算法如下：
@@ -49,15 +52,15 @@ Playfair 密码（Playfair cipher or Playfair square）是一种替换密码，1
     BM OD ZB XD NA BE KU DM UI XM MO UV IF
 
 工具
-----
+~~~~
 
 -  CAP4
 
 Polybius
-========
+--------
 
 原理
-----
+~~~~
 
 Polybius密码又称为棋盘密码，其一般是将给定的明文加密为两两组合的数字，其常用密码表
 
@@ -106,15 +109,15 @@ A D F G X 的由来：
 举个例子，HELLO，使用这个表格加密，就是 DD XF AG AG DF。
 
 工具
-----
+~~~~
 
 -  CrypTool
 
-vigenere
-========
+Vigenere
+--------
 
 原理
-----
+~~~~
 
 维吉尼亚密码（vigenere）是使用一系列凯撒密码组成密码字母表的加密算法，属于多表密码的一种简单形式。
 
@@ -152,7 +155,7 @@ vigenere
     密文：efkt zferrltzn
 
 破解
-----
+~~~~
 
 对包括维吉尼亚密码在内的所有多表密码的破译都是以字母频率为基础的，但直接的频率分析却并不适用，这是因为在维吉尼亚密码中，一个字母可以被加密成不同的密文，因而简单的频率分析在这里并没有用。
 
@@ -193,7 +196,7 @@ ABCD）：
 关于更加详细的破解原理，这里暂时不做过多的介绍。可以参考http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-vigenere-cipher/。
 
 工具
-----
+~~~~
 
 -  已知秘钥
 -  Python 的 pycipher 库
@@ -206,10 +209,10 @@ ABCD）：
    ，不够完善。
 
 Nihilist
-========
+--------
 
 原理
-----
+~~~~
 
 Nihilist密码又称关键字密码：明文 + 关键字 = 密文。以关键字 helloworld
 为例。
@@ -254,10 +257,10 @@ Nihilist密码又称关键字密码：明文 + 关键字 = 密文。以关键字
 -  密文长度偶数。
 
 Hill
-====
+----
 
 原理
-----
+~~~~
 
 希尔密码（Hill）使用每个字母在字母表中的顺序作为其对应的数字，即A=0，B=1，C=2
 等，然后将明文转化为 n 维向量，跟一个 n × n 的矩阵相乘，再将得出的结果模
@@ -327,14 +330,14 @@ Hill
     密文：POH
 
 工具
-----
+~~~~
 
 -  http://www.practicalcryptography.com/ciphers/hill-cipher/
 -  CAP4
 -  Cryptool
 
 例子
-----
+~~~~
 
 这里我们以ISCC 2015 base decrypt 150为例进行介绍，题目为
 
@@ -355,10 +358,10 @@ Hill
 最后的结果为overthehillx。
 
 AutokeyCipher
-=============
+-------------
 
 原理
-----
+~~~~
 
 自动密钥密码（Autokey
 Cipher）也是多表替换密码，与维吉尼亚密码密码类似，但使用不同的方法生成密钥。通常来说它要比维吉尼亚密码更安全。自动密钥密码主要有两种，关键词自动密钥密码和原文自动密钥密码。下面我们以关键词自动密钥为例：
@@ -374,7 +377,7 @@ Cipher）也是多表替换密码，与维吉尼亚密码密码类似，但使�
 密文： ``VBP JOZGD IVEQV HYY AIICX CSNL FWW ZVDP WVK``
 
 工具
-----
+~~~~
 
 -  已知关键词
 -  Python 的 pycipher 库

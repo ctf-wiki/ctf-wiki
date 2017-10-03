@@ -42,13 +42,4 @@
    :caption: Crypto
 
    crypto/index.rst
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Web
-
-   web/index.rst
-   reverse/index.rst
-   mobile/index.rst
-   pwn/index.rst
+   crypto/classical/index.rst
