@@ -8,9 +8,18 @@ typora-root-url: ..\..
 
 堆是一个全局的数据结构，它可以提供动态分配的内存，允许程序在运行的过程中去为一些未知大小的变量申请空间。
 
-GLIBC主要是通过malloc/free函数来实现对内存块进行分配和释放，我们称这个机制为ptmalloc。该机制主要由Wolfram Gloger开发，它的基础为由Doug Lea开发的dlmalloc。其实，ptmalloc与dlmalloc的区别主要在于前者支持多arenas/heaps，并且以一种非常安全的方式支持多线程程序。
+GLIBC主要是通过malloc/free函数来实现对内存块进行分配和释放，这个内存分配器为ptmalloc。
 
-需要注意的是，其实堆就是程序的虚拟地址空间的一块连续的线性区域。这是因为程序在最初申请一块内存时，系统并不会只是分配给程序那么一小块内存，而是分配了很大的一块连续的内存区域，这样剩下的内存就可以被堆进行再次分配了，这中间就不需要系统再次进行操作，除非出现了堆空间不足的情况。
+Linux早期的malloc由Doug Lea实现，但它在并行处理时多个线程时，会共享进程的内存空间。这就会内存分配和回收的正确性和高效性。Wolfram Gloger在Doug Lea的基础上进行改进得到了ptmalloc，使得Glibc的malloc可以支持多线程，这就是我们平时使用的malloc。在glibc-2.3.x.之后，glibc中已经集成了ptmalloc2。
+
+需要注意的是，其实堆就是程序的虚拟地址空间的一块连续的线性区域。
+
+ptmalloc作为linux的堆的分配器，管理着堆的分配与回收操作。它处于用程序与内核中间，主要做以下工作
+
+1. 响应用户的申请内存操作，向操作系统申请内存，然后将其返回给用户程序。同时，为了保持内存管理的高效性，分配器一般都会预先分配很大的一块连续的内存，并通过某种算法管理这块内存。只有当出现了堆空间不足的情况，分配器才会再次与操作系统进行交流。
+2. 管理用户所释放的内存，也就是说，用户释放的内存并不是直接返还给操作系统的，而是由ptmalloc来进行管理，可以来响应那些新的用户希望申请内存的需求。
+
+而且，在内存分配与使用的过程中，Linux有这样的一个基本内存管理思想，**只有当真正访问一个地址的时候，系统才会建立虚拟页面与物理页面的映射关系**。 所以说，上面虽然说已经给程序分配了很大的一块内存，但是这块内存其实只是虚拟内存。只有当用户使用到相应的内存时，系统才会真正分配物理页面给用户使用。
 
 # 堆的基本操作
 
@@ -64,19 +73,19 @@ GLIBC主要是通过malloc/free函数来实现对内存块进行分配和释放�
 - 当p已经被释放之后，再次释放会出现乱七八糟的效果。
 - 除了被禁用(mallopt)的情况下，当释放很大的内存空间时，程序会将这些内存空间还给系统，以便于减小程序所使用的内存空间。
 
-## 堆背后的系统调用
+## 内存分配背后的系统调用
 
-在我们前面提到的函数中，无论是malloc还是free都是直接在glibc中可以使用的，说明他们是标准库函数，并不属于真正与系统交互的函数。可以说正是这些函数，使得操作堆的效率得以快速提升。
+在我们前面提到的函数中，无论是malloc还是free都是直接在glibc中可以使用的，说明它们是标准库函数，并不属于真正与系统交互的函数。可以说正是这些函数，使得操作堆的效率得以快速提升。
 
 在这些函数的背后的系统调用主要是[(s)brk](http://man7.org/linux/man-pages/man2/sbrk.2.html)函数以及[mmap,munmap](http://man7.org/linux/man-pages/man2/mmap.2.html)函数，如下图所示，我们主要考虑对堆进行申请内存块的操作。
 
 ![](/pwn/heap/figure/brk&mmap.png)
 
-### brk
+### (s)brk
 
-brk函数通过增加[brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365)(program break location, the program break is the address of the first location beyond the current end of the data region. https://en.wikipedia.org/wiki/Sbrk )来从内核中获取内存。
+对于堆的操作，操作系统内部提供了brk函数，glibc库提供了sbrk函数，我们可以通过增加[brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365)(program break location, the program break is the address of the first location beyond the current end of the data region. https://en.wikipedia.org/wiki/Sbrk)的大小来从内核中获取内存。
 
-初始时，堆的起始地址[start_brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365) 以及堆的末尾[brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365) 指向同一地址，根据是否开启ASLR，情况会有所不同
+初始时，堆的起始地址[start_brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365) 以及堆的当前末尾[brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365) 指向同一地址，根据是否开启ASLR，情况会有所不同
 
 - 当不开启ASLR保护时，start_brk以及brk会指向data/bss 段的结尾。
 - 当开启ASLR保护时，start_brk以及brk也会指向同一位置，只是这个位置是在data/bss段结尾后的随机偏移处。
@@ -261,7 +270,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 
 ## 多线程支持
 
-在原来的dlmalloc实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问，这是因为在新的视线中，所有的线程共享多个堆。
+在原来的dlmalloc实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问，这是因为在新的实现中，所有的线程共享多个堆。
 
 这里给出一个例子。
 

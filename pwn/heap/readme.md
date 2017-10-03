@@ -18,4 +18,5 @@ libumem   – Solaris
 - [github heap exploition](https://heap-exploitation.dhavalkapil.com/)
 - [sploitfun](https://sploitfun.wordpress.com/archives/)
 - glibc 源码
+- 更多的参考文献请看ref目录下的文件。
 
