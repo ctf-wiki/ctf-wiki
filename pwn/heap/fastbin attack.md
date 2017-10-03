@@ -1,7 +1,5 @@
 ﻿# fastbin attack
 
-标签（空格分隔）： wiki
-
 ---
 
 ## 介绍
