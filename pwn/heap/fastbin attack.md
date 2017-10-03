@@ -345,6 +345,7 @@ int main(void)
 要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。
 
 </br>
+
 ## arbitrary alloc
 arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是分配的目标不再是栈中。</br>
 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。
