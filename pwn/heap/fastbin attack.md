@@ -65,7 +65,7 @@ Fastbins[idx=2, size=0x30,ptr=0x602080]
 ===>Chunk(fd=0x602000, size=0x40, flags=PREV_INUSE)
 ===>Chunk(fd=0x000000, size=0x40, flags=PREV_INUSE) 
 ```
-我们可以使用如下的图片来表示这一点
+我们可以使用如下的图片来表示这一点</br>
 ![捕获.PNG-13.8kB][1]
 
 
