@@ -1,8 +1,8 @@
 Rar 格式
-=======
+============
 
 文件格式
---------
+---------------
 
 ``Rar`` 文件主要由标记块，压缩文件头块，文件头块，结尾快组成。
 
@@ -62,15 +62,15 @@ EXT_TIME                variable size         present if (HEAD_FLAGS & 0x1000) !
 更多详见 http://www.forensicswiki.org/wiki/RAR
 
 主要攻击
--------
+---------
 
 爆破
-~~~~
+~~~~~~~
 
 -  Linux下的 `RarCrack <http://rarcrack.sourceforge.net/>`__
 
 伪加密
-~~~~~~
+~~~~~~~~~~
 
 ``Rar`` 文件的伪加密在文件头中的位标记字段上，用 010Editor 可以很清楚的看见这一位，修改这一位可以造成伪加密
 

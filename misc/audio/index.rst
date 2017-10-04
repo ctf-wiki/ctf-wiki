@@ -1,20 +1,20 @@
 ..
 
 音频分析
-=======
+==============
 
 与音频相关的 CTF 题目主要使用了隐写的策略，主要分为 MP3 隐写，LSB 隐写，波形隐写，频谱隐写等等。
 
 常见手段
---------
+--------------
 
 通过 ``binwalk`` 以及 ``strings`` 可以发现的信息不再详述。
 
 MP3 隐写
---------
+-----------------
 
 原理
-~~~~
+~~~~~~~~~~~~~
 
 MP3隐写主要是使用 `Mp3Stego <http://www.petitcolas.net/steganography/mp3stego/>`__ 工具进行隐写，其基本介绍及使用方法如下
 
@@ -28,7 +28,7 @@ MP3隐写主要是使用 `Mp3Stego <http://www.petitcolas.net/steganography/mp3s
    decode -X -P pass svega_stego.mp3
 
 例题
-~~~~
+~~~~~~~~~~~
 
     ISCC-2016: Music Never Sleep
 
@@ -48,15 +48,15 @@ MP3隐写主要是使用 `Mp3Stego <http://www.petitcolas.net/steganography/mp3s
 base64 && base32 后得到flag。
 
 波形
-----
+-------------
 
 原理
-~~~~
+~~~~~~~~~~~
 
 通常来说，波形方向的题，在观察到异常后，使用相关软件（**Audacity, Adobe Audition**）观察波形规律，将波形进一步转化为 01 字符串等，从而提取转化出最终的 flag。
 
 例题
-~~~~
+~~~~~~~~~~~
 
     ISCC-2017: Misc-04
 
@@ -76,15 +76,15 @@ base64 && base32 后得到flag。
 .. note:: 一些较复杂的可能会先对音频进行一系列的处理，如滤波等。例如 JarvisOJ: 上帝之音，`writeup <https://www.40huo.cn/blog/jarvisoj-misc-writeup.html>`__
 
 频谱
-----
+-------
 
 原理
-~~~~
+~~~~~~~
 
 音频中的频谱隐写是将字符串隐藏在频谱中，此类音频通常会有一个较明显的特征，听起来是一段杂音或者比较刺耳。
 
 例题
-~~~~
+~~~~~~~~
 
     Su-ctf-quals-2014:hear_with_your_eyes
 
@@ -92,10 +92,10 @@ base64 && base32 后得到flag。
    :alt: 4
 
 LSB音频隐写
------------
+----------------
 
 原理
-~~~~
+~~~~~~~
 
 类似于图片隐写中的 LSB 隐写，音频中也有对应的 LSB 隐写。主要可以使用 `Silenteye <http://silenteye.v1kings.io/>`__ 工具，其介绍如下：
 
@@ -106,7 +106,7 @@ LSB音频隐写
     system.
 
 例题
-~~~~
+~~~~~~~~
 
     广东省强网杯-2015: Little Apple
 
@@ -116,7 +116,7 @@ LSB音频隐写
    :alt: 2
 
 延伸
-----
+--------
 
 -  `音频中的LSB <https://ethackal.github.io/2015/10/05/derbycon-ctf-wav-steganography/>`__
 -  `隐写术总结 <http://bobao.360.cn/learning/detail/243.html>`__
