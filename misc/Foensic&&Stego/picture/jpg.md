@@ -21,7 +21,7 @@ JPG基本数据结构为两大类型：“段”和经过压缩编码的图像�
 
 一些常见的段类型
 
-![jpgformat](/misc/picture/figure/jpgformat.png)
+![jpgformat](/misc/Foensic&&Stego/picture/figure/jpgformat.png)
 
 `0xffd8` && `0xffd9`为JPG文件的开始结束的标志
 

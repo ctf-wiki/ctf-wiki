@@ -62,7 +62,7 @@ Rar压缩包的文件头为 `0x 52 61 72 21 1A 07 00`
 
 `Rar`文件的伪加密在文件头中的位标记字段上，用010Editor可以很清楚的看见这一位,修改这一位可以造成伪加密
 
-![6](/misc/archives/figure/6.png)
+![6](/misc/Foensic&&Stego/archives/figure/6.png)
 
 ---
 
