@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 欢迎来到 **CTF Wiki**
-====================
+=======================
 
 **CTF Wiki**，全称 Capture The Flag，即夺旗赛，起源于 1996 年 DEFCON 全球黑客大会，是网络安全技术人员进行技术竞技的一种比赛。
 
@@ -36,10 +36,9 @@
    misc/others.rst
 
 
-
 .. toctree::
    :maxdepth: 2
    :caption: Crypto
 
-   crypto/index.rst
+   crypto/introduction.rst
    crypto/classical/index.rst

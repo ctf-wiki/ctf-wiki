@@ -1,7 +1,7 @@
 ..
 
 古典密码
-========
+=======
 
 在古典密码学中，我们主要介绍单表替代密码，多表替代密码，以及一些其它比较有意思的密码。
 
@@ -18,6 +18,3 @@
    :caption: 目录
 
    monoalphabetic.rst
-   polyalphabetic.rst
-   others.rst
-   summary.rst
