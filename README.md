@@ -36,6 +36,7 @@ pandoc --from markdown --to rst -s xxx.md -o xxx.rst
 文档中已经包含了 Makefile，Linux 下未测试。
 
 ```shell
+pip install -r requirements.txt
 make html
 ```
 
