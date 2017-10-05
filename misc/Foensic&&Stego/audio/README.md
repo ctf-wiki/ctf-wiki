@@ -22,7 +22,7 @@ Usage:
 
 初步观察后,由`strings`发现.听音频无异常猜测使用隐写软件隐藏数据
 
-![1](/misc/audio/files/1.jpg)
+![1](/misc/Foensic&&Stego/audio/files/1.jpg)
 
 得到密码后使用`Mp3Stego`解密
 
@@ -41,11 +41,11 @@ base64 && base32 后得到flag
 
 ### 例题
 
-> <a href="/misc/audio/files/Disco.wav">ISCC-2017:Misc-04</a>
+> <a href="/misc/Foensic&&Stego/audio/files/Disco.wav">ISCC-2017:Misc-04</a>
 
 其实这题隐藏的信息在最开始的一段音频内，不细心听可能会误认为是隐写软件。
 
-![3](/misc/audio/files/3.png)
+![3](/misc/Foensic&&Stego/audio/files/3.png)
 
 以高为1低为0，转换得到`01`字符串
 
@@ -73,10 +73,10 @@ E.g:
 
 ### 例题
 
-> <a href="/misc/audio/files/sound.wav">Su-ctf-quals-2014:hear_with_your_eyes</a>
+> <a href="/misc/Foensic&&Stego/audio/files/sound.wav">Su-ctf-quals-2014:hear_with_your_eyes</a>
 
 
-![4](/misc/audio/files/4.png)
+![4](/misc/Foensic&&Stego/audio/files/4.png)
 
 ---
 
@@ -95,7 +95,7 @@ E.g:
 
 直接使用`slienteye`即可
 
-![2](/misc/audio/files/2.jpg)
+![2](/misc/Foensic&&Stego/audio/files/2.jpg)
 
 
 ## 延伸

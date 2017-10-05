@@ -54,7 +54,7 @@ Zip文件主要由三部分构成，分别为
 
 - Windows下的神器[ARCHPR](http://www.downcc.com/soft/130539.html)
 
-![1](/misc/archives/figure/1.png)
+![1](/misc/Foensic&&Stego/archives/figure/1.png)
 
 暴力枚举，跑字典，明文攻击，应有尽有
 
@@ -85,7 +85,7 @@ CRC32校验码出现在很多文件中比如`png`文件，同样`zip`中也有CR
 
 比如我们新建一个`flag.txt`，其中内容为`123`,使用密码`!QAZXSW@#EDCVFR$`去加密
 
-![2](/misc/archives/figure/2.png)
+![2](/misc/Foensic&&Stego/archives/figure/2.png)
 
 而我们去计算文件的crc32值发现和上图中的crc32值吻合
 
@@ -186,7 +186,7 @@ Bit 6: Strong encryption.  If this bit is set, you should
 
 在010Editor中我们尝试着将这1位修改`0-->1`
 
-![4](/misc/archives/figure/4.png)
+![4](/misc/Foensic&&Stego/archives/figure/4.png)
 
 再打开文件发现已要求输入密码
 
@@ -204,7 +204,7 @@ Bit 6: Strong encryption.  If this bit is set, you should
 
 #### 例题
 
-> <a href="/misc/archive/figure/green.zip">SSCTF-2017:我们的秘密是绿色的</a>
+> <a href="/misc/Foensic&&Stego/archive/figure/green.zip">SSCTF-2017:我们的秘密是绿色的</a>
 
 > WP: http://bobao.360.cn/ctf/detail/197.html
 
@@ -213,7 +213,7 @@ Bit 6: Strong encryption.  If this bit is set, you should
 
 注意在用明文攻击时的操作
 
-![3](/misc/archives/figure/3.png)
+![3](/misc/Foensic&&Stego/archives/figure/3.png)
 
 得到密码`Y29mZmVl`后，解压缩文件，得到另一个压缩包。
 
