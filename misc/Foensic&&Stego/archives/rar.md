@@ -1,13 +1,9 @@
 
 # Rar
 
-# 文件格式
+## 文件格式
 
-**注：可能需要一个rar文件的格式图？**
-
-Rar压缩包的文件头为
-
-`0x 52 61 72 21 1A 07 00`
+`Rar`文件主要有标记块，压缩文件头块，文件头块，结尾快组成。
 
 其每一块大致分为以下几个字段
 
@@ -19,13 +15,14 @@ Rar压缩包的文件头为
 | HEAD_SIZE  | 2      | 块大小          |
 | ADD_SIZE   | 4      | 可选字段 - 添加块大小 |
 
+Rar压缩包的文件头为 `0x 52 61 72 21 1A 07 00`
 
-紧跟着文件头的是标记块（MARK_HEAD），其后还有文件头(File Header)
+紧跟着文件头(0x526172211A0700)的是标记块（MARK_HEAD），其后还有文件头(File Header)
 
 | HEAD_CRC       | 2               | CRC of fields from HEAD_TYPE to FILEATTR and file name |
 | -------------- | --------------- | ---------------------------------------- |
 | HEAD_TYPE      | 1               | Header Type: 0x74                        |
-| HEAD_FLAGS     | 2               | **Bit Flags (Please see 'Bit Flags for File in Archive' table for all possibilities) ** |
+| HEAD_FLAGS     | 2               | **Bit Flags (Please see 'Bit Flags for File in Archive' table for all possibilities)(伪加密) ** |
 | HEAD_SIZE      | 2               | File header full size including file name and comments |
 | PACK_SIZE      | 4               | Compressed file size                     |
 | UNP_SIZE       | 4               | Uncompressed file size                   |
@@ -42,6 +39,17 @@ Rar压缩包的文件头为
 | SALT           | 8               | present if (HEAD_FLAGS & 0x400) != 0     |
 | EXT_TIME       | variable size   | present if (HEAD_FLAGS & 0x1000) != 0    |
 
+
+每个`rar`文件的结尾快（Terminator）都是固定的
+
+| Field Name | Size (bytes) |    Possibilities    |
+|------------|--------------|---------------------|
+| HEAD_CRC   |            2 | Always 0x3DC4       |
+| HEAD_TYPE  |            1 | Header type: 0x7b   |
+| HEAD_FLAGS |            2 | Always 0x4000       |
+| HEAD_SIZE  |            2 | Block size = 0x0007 |
+
+
 更多详见 http://www.forensicswiki.org/wiki/RAR
 
 # 主要攻击
@@ -54,7 +62,7 @@ Rar压缩包的文件头为
 
 `Rar`文件的伪加密在文件头中的位标记字段上，用010Editor可以很清楚的看见这一位,修改这一位可以造成伪加密
 
-![6](/misc/archives/figure/6.png)
+![6](/misc/Foensic&&Stego/archives/figure/6.png)
 
 ---
 
