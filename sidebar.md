@@ -90,11 +90,17 @@
     - [格式化字符串漏洞利用](/pwn/fmtstr/fmtstr_exploit)
     - [格式化字符串漏洞例子](/pwn/fmtstr/fmtstr_example)
     - [格式化字符串漏洞检测](/pwn/fmtstr/fmtstr_detect)
-  - 堆利用
+  - [堆利用](/pwn/heap/README)
+    - [堆基本介绍](/pwn/heap/heap_basic_intro)
+    - [堆相关数据结构](/pwn/heap/heap_structure)
+    - [深入理解堆的实现](/pwn/heap/heap_implementation_details)
   - 整数溢出
   - 实战
     - [计算机软件攻防对抗技术](/pwn/windows)
     - [IE 漏洞挖掘](/pwn/ie)
 - 可执行文件介绍
   - [ELF文件格式](/executable/elf/elf_structure)
+  - [程序加载](/executable/elf/program_loading)
+  - [程序链接](/executable/elf/program_linking)
+  - [程序执行流程](/executable/elf/running_overview)
 

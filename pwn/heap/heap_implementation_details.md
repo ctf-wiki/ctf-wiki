@@ -1,4 +1,4 @@
-# 堆实现
+# 深入理解堆的实现
 
 简单想一下，对于任何堆的实现来说都离不开以下的问题
 
@@ -360,7 +360,7 @@ large bin的处理过程如下
             bck->fd                 = unsorted_chunks(av);
 
             /* Take now instead of binning if exact fit */
-
+            // 如果unsorted bin中的chunk大小正好合适，就直接使用
             if (size == nb) {
                 set_inuse_bit_at_offset(victim, size);
                 if (av != &main_arena) set_non_main_arena(victim);
@@ -371,12 +371,14 @@ large bin的处理过程如下
             }
 
             /* place chunk in bin */
-
+            // 把chunk放到对应的bin中
+            // small bin范围
             if (in_smallbin_range(size)) {
                 victim_index = smallbin_index(size);
                 bck          = bin_at(av, victim_index);
                 fwd          = bck->fd;
             } else {
+                // large bin范围
                 victim_index = largebin_index(size);
                 bck          = bin_at(av, victim_index);
                 fwd          = bck->fd;
@@ -418,21 +420,703 @@ large bin的处理过程如下
                 } else
                     victim->fd_nextsize = victim->bk_nextsize = victim;
             }
-
+            // 放到对应的bin中
             mark_bin(av, victim_index);
             victim->bk = bck;
             victim->fd = fwd;
             fwd->bk    = victim;
             bck->fd    = victim;
-
+            // 最多迭代10000次
 #define MAX_ITERS 10000
             if (++iters >= MAX_ITERS) break;
         }
 ```
 
+#### large chunk
 
+
+
+```c++
+        /*
+           If a large request, scan through the chunks of current bin in
+           sorted order to find smallest that fits.  Use the skip list for this.
+         */
+        // 如果请求的chunk在large chunk范围内，就在对应的bin中从小到大进行扫描，找到第一个合适的
+        if (!in_smallbin_range(nb)) {
+            bin = bin_at(av, idx);
+
+            /* skip scan if empty or largest chunk is too small */
+            // 如果 对应的bin为空或者其中的chunk最大的也很小，那就跳过
+            // first(bin)=bin->fd 表示当前链表中最大的chunk
+            if ((victim = first(bin)) != bin &&
+                (unsigned long) chunksize_nomask(victim) >=
+                    (unsigned long) (nb)) {
+                // 反向遍历链表，直到找到第一个不小于所需chunk大小的chunk
+                victim = victim->bk_nextsize;
+                while (((unsigned long) (size = chunksize(victim)) <
+                        (unsigned long) (nb)))
+                    victim = victim->bk_nextsize;
+
+                /* Avoid removing the first entry for a size so that the skip
+                   list does not have to be rerouted.  */
+                // 如果最终取到的chunk不是该bin中的最后一个chunk，并且该chunk与其前面的chunk
+                // 的大小相同，那么我们就取其前面的chunk，这样可以避免调整bk_nextsize,fd_nextsize
+                //  链表。因为大小相同的chunk只有一个会被串在nextsize链上。
+                if (victim != last(bin) &&
+                    chunksize_nomask(victim) == chunksize_nomask(victim->fd))
+                    victim = victim->fd;
+                // 计算分配后剩余的大小
+                remainder_size = size - nb;
+                // 进行unlink
+                unlink(av, victim, bck, fwd);
+
+                /* Exhaust */
+                // 剩下的大小不足以当做一个块
+                // 很好奇接下来会怎么办？
+                if (remainder_size < MINSIZE) {
+                    set_inuse_bit_at_offset(victim, size);
+                    if (av != &main_arena) set_non_main_arena(victim);
+                }
+                /* Split */
+                //  剩下的大小还可以作为一个chunk，进行分割。
+                else {
+                    // 获取剩下那部分chunk的指针，称为remainder
+                    remainder = chunk_at_offset(victim, nb);
+                    /* We cannot assume the unsorted list is empty and therefore
+                       have to perform a complete insert here.  */
+                    // 插入unsorted bin中
+                    bck = unsorted_chunks(av);
+                    fwd = bck->fd;
+                    if (__glibc_unlikely(fwd->bk != bck)) {
+                        errstr = "malloc(): corrupted unsorted chunks";
+                        goto errout;
+                    }
+                    remainder->bk = bck;
+                    remainder->fd = fwd;
+                    bck->fd       = remainder;
+                    fwd->bk       = remainder;
+                    // 如果处于small bin范围内，就设置对应的字段
+                    if (!in_smallbin_range(remainder_size)) {
+                        remainder->fd_nextsize = NULL;
+                        remainder->bk_nextsize = NULL;
+                    }
+                    // 设置分配的chunk的标记
+                    set_head(victim,
+                             nb | PREV_INUSE |
+                                 (av != &main_arena ? NON_MAIN_ARENA : 0));
+                  
+                    // 设置remainder的使用状态，其余的不用管，直接从上面继承下来了
+                    // 为什么这里也设置了inuse？
+                    set_head(remainder, remainder_size | PREV_INUSE);
+                    // 设置remainder的大小
+                    set_foot(remainder, remainder_size);
+                }
+                // 检查
+                check_malloced_chunk(av, victim, nb);
+                // 转换为mem状态
+                void *p = chunk2mem(victim);
+                // 如果设置了perturb_type, 则将获取到的chunk初始化为 perturb_type ^ 0xff
+                alloc_perturb(p, bytes);
+                return p;
+            }
+        }
+```
+
+#### 暂时转换
+
+如果走到了这里，那说明对于用户所需的chunk，不能直接从其对应的合适的bin中获取chunk，所以我们需要来查找比当前bin更大的fast bin，small bin或者large bin。
+
+```c++
+        /*
+           Search for a chunk by scanning bins, starting with next largest
+           bin. This search is strictly by best-fit; i.e., the smallest
+           (with ties going to approximately the least recently used) chunk
+           that fits is selected.
+
+           The bitmap avoids needing to check that most blocks are nonempty.
+           The particular case of skipping all bins during warm-up phases
+           when no chunks have been returned yet is faster than it might look.
+         */
+
+        ++idx;
+        // 获取对应的bin
+        bin   = bin_at(av, idx);
+        // 获取当前索引在binmap中的block索引
+        // #define idx2block(i) ((i) >> BINMAPSHIFT)  ,BINMAPSHIFT=5
+        // Binmap按block管理，每个block为一个int，共32个bit，可以表示32个bin中是否有空闲chunk存在
+        // 所以这里是右移5
+        block = idx2block(idx);
+        // 获取当前块大小对应的映射，这里可以得知相应的bin中是否有空闲块
+        map   = av->binmap[ block ];
+        // #define idx2bit(i) ((1U << ((i) & ((1U << BINMAPSHIFT) - 1))))
+        // 将idx对应的比特位设置为1，其它位为0
+        bit   = idx2bit(idx);
+```
+
+
+
+#### 小循环
+
+
+
+```c++
+        for (;;) {
+            /* Skip rest of block if there are no more set bits in this block.
+             */
+            // 如果bit>map，则表示该map中没有比当前所需要chunk大的空闲块
+            // 如果bit为0，那么说明，上面idx2bit带入的参数为0。
+            if (bit > map || bit == 0) {
+                do {
+                    // 寻找下一个block，直到其对应的map不为0。
+                    // 如果已经不存在的话，那就只能使用top chunk了
+                    if (++block >= BINMAPSIZE) /* out of bins */
+                        goto use_top;
+                } while ((map = av->binmap[ block ]) == 0);
+                // 获取其对应的bin，因为该map中的chunk大小都比所需的chunk大，而且
+                // map本身不为0，所以必然存在瞒住需求的chunk。
+                bin = bin_at(av, (block << BINMAPSHIFT));
+                bit = 1;
+            }
+
+            /* Advance to bin with set bit. There must be one. */
+            // 从当前map的最小的bin一直找，直到找到合适的bin。
+            // 这里是一定存在的
+            while ((bit & map) == 0) {
+                bin = next_bin(bin);
+                bit <<= 1;
+                assert(bit != 0);
+            }
+
+            /* Inspect the bin. It is likely to be non-empty */
+            // 获取对应的bin
+            victim = last(bin);
+
+            /*  If a false alarm (empty bin), clear the bit. */
+            // 如果victim=bin，那么我们就将map对应的位清0，然后获取下一个bin
+            // 这种情况发生的概率应该很小。
+            if (victim == bin) {
+                av->binmap[ block ] = map &= ~bit; /* Write through */
+                bin                 = next_bin(bin);
+                bit <<= 1;
+            }
+
+            else {
+                //获取对应victim的大小
+                size = chunksize(victim);
+
+                /*  We know the first chunk in this bin is big enough to use. */
+                assert((unsigned long) (size) >= (unsigned long) (nb));
+                // 计算分割后剩余的大小
+                remainder_size = size - nb;
+
+                /* unlink */
+                unlink(av, victim, bck, fwd);
+
+                /* Exhaust */
+                // 如果分割后不够一个chunk怎么办？
+                if (remainder_size < MINSIZE) {
+                    set_inuse_bit_at_offset(victim, size);
+                    if (av != &main_arena) set_non_main_arena(victim);
+                }
+
+                /* Split */
+                // 如果够，尽管分割
+                else {
+                    // 计算剩余的chunk的偏移
+                    remainder = chunk_at_offset(victim, nb);
+
+                    /* We cannot assume the unsorted list is empty and therefore
+                       have to perform a complete insert here.  */
+                    // 将剩余的chunk插入到unsorted bin中
+                    bck = unsorted_chunks(av);
+                    fwd = bck->fd;
+                    if (__glibc_unlikely(fwd->bk != bck)) {
+                        errstr = "malloc(): corrupted unsorted chunks 2";
+                        goto errout;
+                    }
+                    remainder->bk = bck;
+                    remainder->fd = fwd;
+                    bck->fd       = remainder;
+                    fwd->bk       = remainder;
+
+                    /* advertise as last remainder */
+                    // 如果在small bin范围内，就将其标记为remainder
+                    if (in_smallbin_range(nb)) av->last_remainder = remainder;
+                    if (!in_smallbin_range(remainder_size)) {
+                        remainder->fd_nextsize = NULL;
+                        remainder->bk_nextsize = NULL;
+                    }
+                    // 设置victim的使用状态
+                    set_head(victim,
+                             nb | PREV_INUSE |
+                                 (av != &main_arena ? NON_MAIN_ARENA : 0));
+                    // 设置remainder的使用状态，这里是为什么呢？
+                    set_head(remainder, remainder_size | PREV_INUSE);
+                    // 设置remainder的大小
+                    set_foot(remainder, remainder_size);
+                }
+                // 检查
+                check_malloced_chunk(av, victim, nb);
+                // chunk状态转换到mem状态
+                void *p = chunk2mem(victim);
+                // 如果设置了perturb_type, 则将获取到的chunk初始化为 perturb_type ^ 0xff
+                alloc_perturb(p, bytes);
+                return p;
+            }
+        }
+```
+
+#### 使用top chunk
+
+如果所有的bin中的chunk都没有办法直接满足要求（即不合并），或者说都没有空闲的chunk。那么我们就只能使用top chunk了。
+
+```c++
+    use_top:
+        /*
+           If large enough, split off the chunk bordering the end of memory
+           (held in av->top). Note that this is in accord with the best-fit
+           search rule.  In effect, av->top is treated as larger (and thus
+           less well fitting) than any other available chunk since it can
+           be extended to be as large as necessary (up to system
+           limitations).
+
+           We require that av->top always exists (i.e., has size >=
+           MINSIZE) after initialization, so if it would otherwise be
+           exhausted by current request, it is replenished. (The main
+           reason for ensuring it exists is that we may need MINSIZE space
+           to put in fenceposts in sysmalloc.)
+         */
+        // 获取当前的top chunk，并计算其对应的大小
+        victim = av->top;
+        size   = chunksize(victim);
+        // 如果在分割之后，其大小仍然满足chunk的最小大小，那么就可以直接进行分割。
+        if ((unsigned long) (size) >= (unsigned long) (nb + MINSIZE)) {
+            remainder_size = size - nb;
+            remainder      = chunk_at_offset(victim, nb);
+            av->top        = remainder;
+            set_head(victim, nb | PREV_INUSE |
+                                 (av != &main_arena ? NON_MAIN_ARENA : 0));
+            set_head(remainder, remainder_size | PREV_INUSE);
+
+            check_malloced_chunk(av, victim, nb);
+            void *p = chunk2mem(victim);
+            alloc_perturb(p, bytes);
+            return p;
+        }
+        // 否则，判断是否有fast chunk
+        /* When we are using atomic ops to free fast chunks we can get
+           here for all block sizes.  */
+        else if (have_fastchunks(av)) {
+            // 先执行一次fast bin的合并
+            malloc_consolidate(av);
+            /* restore original bin index */
+            // 判断需要的chunk是在small bin范围内还是large bin范围内
+            // 并计算对应的索引
+            // 等待下次再看看是否可以
+            if (in_smallbin_range(nb))
+                idx = smallbin_index(nb);
+            else
+                idx = largebin_index(nb);
+        }
+
+        /*
+           Otherwise, relay to handle system-dependent cases
+         */
+        // 否则的话，我们就只能从系统中再次申请一点内存了。
+        else {
+            void *p = sysmalloc(nb, av);
+            if (p != NULL) alloc_perturb(p, bytes);
+            return p;
+        }
+```
+
+
+
+## sysmalloc
+
+有时间的时候再分析。
+
+## malloc_consolidate
+
+有时间的时候再分析。
 
 # 释放内存块
+
+## __libc_free
+
+类似于malloc，free函数也有一层封装，命名格式与malloc基本类似。代码如下
+
+```c++
+void __libc_free(void *mem) {
+    mstate    ar_ptr;
+    mchunkptr p; /* chunk corresponding to mem */
+    // 判断是否有钩子函数
+    void (*hook)(void *, const void *) = atomic_forced_read(__free_hook);
+    if (__builtin_expect(hook != NULL, 0)) {
+        (*hook)(mem, RETURN_ADDRESS(0));
+        return;
+    }
+    // free NULL没有作用
+    if (mem == 0) /* free(0) has no effect */
+        return;
+    // 将mem转换为chunk状态
+    p = mem2chunk(mem);
+    // 如果该块内存是mmap得到的
+    if (chunk_is_mmapped(p)) /* release mmapped memory. */
+    {
+        /* See if the dynamic brk/mmap threshold needs adjusting.
+       Dumped fake mmapped chunks do not affect the threshold.  */
+        if (!mp_.no_dyn_threshold && chunksize_nomask(p) > mp_.mmap_threshold &&
+            chunksize_nomask(p) <= DEFAULT_MMAP_THRESHOLD_MAX &&
+            !DUMPED_MAIN_ARENA_CHUNK(p)) {
+            mp_.mmap_threshold = chunksize(p);
+            mp_.trim_threshold = 2 * mp_.mmap_threshold;
+            LIBC_PROBE(memory_mallopt_free_dyn_thresholds, 2,
+                       mp_.mmap_threshold, mp_.trim_threshold);
+        }
+        munmap_chunk(p);
+        return;
+    }
+    // 根据chunk获得分配区的指针
+    ar_ptr = arena_for_chunk(p);
+    // 执行释放
+    _int_free(ar_ptr, p, 0);
+}
+```
+
+## _int_free
+
+### 概述
+
+### 初始化
+
+进行函数后，立马定义了一系列的变量，并且得到了用户想要释放的chunk的大小
+
+```c++
+static void _int_free(mstate av, mchunkptr p, int have_lock) {
+    INTERNAL_SIZE_T size;      /* its size */
+    mfastbinptr *   fb;        /* associated fastbin */
+    mchunkptr       nextchunk; /* next contiguous chunk */
+    INTERNAL_SIZE_T nextsize;  /* its size */
+    int             nextinuse; /* true if nextchunk is used */
+    INTERNAL_SIZE_T prevsize;  /* size of previous contiguous chunk */
+    mchunkptr       bck;       /* misc temp for linking */
+    mchunkptr       fwd;       /* misc temp for linking */
+
+    const char *errstr = NULL;
+    int         locked = 0;
+
+    size = chunksize(p);
+```
+
+### 简单的检查
+
+```c++
+    /* Little security check which won't hurt performance: the
+       allocator never wrapps around at the end of the address space.
+       Therefore we can exclude some size values which might appear
+       here by accident or by "design" from some intruder.  */
+    // 指针不能指向非法的地址
+    // 指针必须得对齐，这个对齐得仔细想想
+    if (__builtin_expect((uintptr_t) p > (uintptr_t) -size, 0) ||
+        __builtin_expect(misaligned_chunk(p), 0)) {
+        errstr = "free(): invalid pointer";
+    errout:
+        if (!have_lock && locked) __libc_lock_unlock(av->mutex);
+        malloc_printerr(check_action, errstr, chunk2mem(p), av);
+        return;
+    }
+    /* We know that each chunk is at least MINSIZE bytes in size or a
+       multiple of MALLOC_ALIGNMENT.  */
+    // 大小没有最小的chunk大，或者说，大小不是MALLOC_ALIGNMENT的整数倍
+    if (__glibc_unlikely(size < MINSIZE || !aligned_OK(size))) {
+        errstr = "free(): invalid size";
+        goto errout;
+    }
+    // 检查该chunk是否处于使用状态，如果
+    check_inuse_chunk(av, p);
+```
+
+### fast bin
+
+如果上述检查都合格的话，判断当前的bin是不是在fast bin范围内，在的话，就插入到fastbin中
+
+```c++
+    /*
+      If eligible, place chunk on a fastbin so it can be found
+      and used quickly in malloc.
+    */
+
+    if ((unsigned long) (size) <= (unsigned long) (get_max_fast())
+
+#if TRIM_FASTBINS
+        /*
+      If TRIM_FASTBINS set, don't place chunks
+      bordering top into fastbins
+        */
+       // 如果当前chunk是fast chunk，并且下一个chunk是top chunk，则不能插入
+        && (chunk_at_offset(p, size) != av->top)
+#endif
+            ) {
+        // 下一个chunk的大小不能小于两倍的SIZE_SZ,并且
+        // 下一个chunk的大小不能大于系统可提供的内存
+        // 如果出现这样的情况，就报错。
+        if (__builtin_expect(
+                chunksize_nomask(chunk_at_offset(p, size)) <= 2 * SIZE_SZ, 0) ||
+            __builtin_expect(
+                chunksize(chunk_at_offset(p, size)) >= av->system_mem, 0)) {
+            /* We might not have a lock at this point and concurrent
+               modifications
+               of system_mem might have let to a false positive.  Redo the test
+               after getting the lock.  */
+            if (have_lock || ({
+                    assert(locked == 0);
+                    __libc_lock_lock(av->mutex);
+                    locked = 1;
+                    chunksize_nomask(chunk_at_offset(p, size)) <= 2 * SIZE_SZ ||
+                        chunksize(chunk_at_offset(p, size)) >= av->system_mem;
+                })) {
+                errstr = "free(): invalid next size (fast)";
+                goto errout;
+            }
+            if (!have_lock) {
+                __libc_lock_unlock(av->mutex);
+                locked = 0;
+            }
+        }
+        // 将chunk的mem部分全部设置为perturb_byte 
+        free_perturb(chunk2mem(p), size - 2 * SIZE_SZ);
+        // 设置fast chunk的标记位
+        set_fastchunks(av);
+        // 根据大小获取fast bin的索引
+        unsigned int idx = fastbin_index(size);
+        // 获取对应fastbin的头指针。
+        fb               = &fastbin(av, idx);
+
+        /* Atomically link P to its fastbin: P->FD = *FB; *FB = P;  */
+        // 使用原子操作将P插入到链表中
+        mchunkptr    old     = *fb, old2;
+        unsigned int old_idx = ~0u;
+        do {
+            /* Check that the top of the bin is not the record we are going to
+               add
+               (i.e., double free).  */
+            // so we can not double free one fastbin chunk
+            // 防止对fast bin double free
+            if (__builtin_expect(old == p, 0)) {
+                errstr = "double free or corruption (fasttop)";
+                goto errout;
+            }
+            /* Check that size of fastbin chunk at the top is the same as
+               size of the chunk that we are adding.  We can dereference OLD
+               only if we have the lock, otherwise it might have already been
+               deallocated.  See use of OLD_IDX below for the actual check.  */
+            if (have_lock && old != NULL)
+                old_idx = fastbin_index(chunksize(old));
+            p->fd = old2 = old;
+        } while ((old = catomic_compare_and_exchange_val_rel(fb, p, old2)) !=
+                 old2);
+        // 确保fast bin的加入前与加入后相同
+        if (have_lock && old != NULL && __builtin_expect(old_idx != idx, 0)) {
+            errstr = "invalid fastbin entry (free)";
+            goto errout;
+        }
+    }
+```
+
+### 合并非mmap的chunk
+
+在没有锁的情况下，先获得锁。
+
+```c++
+    /*
+      Consolidate other non-mmapped chunks as they arrive.
+    */
+
+    else if (!chunk_is_mmapped(p)) {
+        if (!have_lock) {
+            __libc_lock_lock(av->mutex);
+            locked = 1;
+        }
+```
+
+#### 轻量级的检测
+
+```c++
+        /* Lightweight tests: check whether the block is already the
+           top block.  */
+        // 当前free的chunk不能是top chunk
+        if (__glibc_unlikely(p == av->top)) {
+            errstr = "double free or corruption (top)";
+            goto errout;
+        }
+        // 当前free的chunk的下一个chunk不能超过arena的边界
+        /* Or whether the next chunk is beyond the boundaries of the arena.  */
+        if (__builtin_expect(contiguous(av) &&
+                                 (char *) nextchunk >=
+                                     ((char *) av->top + chunksize(av->top)),
+                             0)) {
+            errstr = "double free or corruption (out)";
+            goto errout;
+        }
+        // 当前要free的chunk的使用标记没有被标记，double free
+        /* Or whether the block is actually not marked used.  */
+        if (__glibc_unlikely(!prev_inuse(nextchunk))) {
+            errstr = "double free or corruption (!prev)";
+            goto errout;
+        }
+        // 下一个chunk的大小
+        nextsize = chunksize(nextchunk);
+        // 判断下一个chunk的大小是否不大于2*SIZE_SZ，或者
+        // nextsize是否大于系统可提供的内存
+        if (__builtin_expect(chunksize_nomask(nextchunk) <= 2 * SIZE_SZ, 0) ||
+            __builtin_expect(nextsize >= av->system_mem, 0)) {
+            errstr = "free(): invalid next size (normal)";
+            goto errout;
+        }
+```
+
+#### 释放填充
+
+```c++
+        //将 指针的mem部分全部设置为perturb_byte 
+		free_perturb(chunk2mem(p), size - 2 * SIZE_SZ);
+```
+
+#### 后向合并-合并低地址chunk
+
+```c++
+        /* consolidate backward */
+        if (!prev_inuse(p)) {
+            prevsize = prev_size(p);
+            size += prevsize;
+            p = chunk_at_offset(p, -((long) prevsize));
+            unlink(av, p, bck, fwd);
+        }
+```
+
+#### 前向合并-合并高地址chunk
+
+```c++
+		// 如果下一个chunk不是top chunk
+		if (nextchunk != av->top) {
+            /* get and clear inuse bit */
+            // 获取下一个chunk的使用状态
+            nextinuse = inuse_bit_at_offset(nextchunk, nextsize);
+            // 如果不在使用，合并，否则清空当前chunk的使用状态。
+            /* consolidate forward */
+            if (!nextinuse) {
+                unlink(av, nextchunk, bck, fwd);
+                size += nextsize;
+            } else
+                clear_inuse_bit_at_offset(nextchunk, 0);
+
+            /*
+          Place the chunk in unsorted chunk list. Chunks are
+          not placed into regular bins until after they have
+          been given one chance to be used in malloc.
+            */
+            // 把chunk放在unsorted chunk链表的尾部
+            bck = unsorted_chunks(av);
+            fwd = bck->fd;
+            // 简单的检查
+            if (__glibc_unlikely(fwd->bk != bck)) {
+                errstr = "free(): corrupted unsorted chunks";
+                goto errout;
+            }
+            p->fd = fwd;
+            p->bk = bck;
+            if (!in_smallbin_range(size)) {
+                p->fd_nextsize = NULL;
+                p->bk_nextsize = NULL;
+            }
+            bck->fd = p;
+            fwd->bk = p;
+
+            set_head(p, size | PREV_INUSE);
+            set_foot(p, size);
+
+            check_free_chunk(av, p);
+        }
+```
+
+#### 合并到top chunk
+
+```c++
+        /*
+          If the chunk borders the current high end of memory,
+          consolidate into top
+        */
+        // 如果要释放的chunk的下一个chunk是top chunk，那就合并到 top chunk
+        else {
+            size += nextsize;
+            set_head(p, size | PREV_INUSE);
+            av->top = p;
+            check_chunk(av, p);
+        }
+
+```
+
+#### 向系统返还内存
+
+```c++
+        /*
+          If freeing a large space, consolidate possibly-surrounding
+          chunks. Then, if the total unused topmost memory exceeds trim
+          threshold, ask malloc_trim to reduce top.
+
+          Unless max_fast is 0, we don't know if there are fastbins
+          bordering top, so we cannot tell for sure whether threshold
+          has been reached unless fastbins are consolidated.  But we
+          don't want to consolidate on each free.  As a compromise,
+          consolidation is performed if FASTBIN_CONSOLIDATION_THRESHOLD
+          is reached.
+        */
+         // 如果合并后的chunk的大小大于FASTBIN_CONSOLIDATION_THRESHOLD
+         // 那就向系统返还内存
+        if ((unsigned long) (size) >= FASTBIN_CONSOLIDATION_THRESHOLD) {
+            // 如果有fast chunk 就进行合并
+            if (have_fastchunks(av)) malloc_consolidate(av);
+            // 主分配区
+            if (av == &main_arena) {
+#ifndef MORECORE_CANNOT_TRIM
+                // top chunk 大于当前的收缩阙值
+                if ((unsigned long) (chunksize(av->top)) >=
+                    (unsigned long) (mp_.trim_threshold))
+                    systrim(mp_.top_pad, av);
+#endif      // 非主分配区，则直接收缩heap
+            } else {
+                /* Always try heap_trim(), even if the top chunk is not
+                   large, because the corresponding heap might go away.  */
+                heap_info *heap = heap_for_ptr(top(av));
+
+                assert(heap->ar_ptr == av);
+                heap_trim(heap, mp_.top_pad);
+            }
+        }
+
+        if (!have_lock) {
+            assert(locked);
+            __libc_lock_unlock(av->mutex);
+        }
+```
+
+### 释放mmap的chunk
+
+```c++
+    } else {
+        //  If the chunk was allocated via mmap, release via munmap().
+        munmap_chunk(p);
+    }
+```
+
+## systrim
+
+## heap_trim
+
+## munmap_chunk
+
+
 
 # 删除堆
 
