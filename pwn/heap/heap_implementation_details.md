@@ -967,6 +967,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         }
         // 下一个chunk的大小
         nextsize = chunksize(nextchunk);
+        // next chunk size valid check
         // 判断下一个chunk的大小是否不大于2*SIZE_SZ，或者
         // nextsize是否大于系统可提供的内存
         if (__builtin_expect(chunksize_nomask(nextchunk) <= 2 * SIZE_SZ, 0) ||
@@ -995,7 +996,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         }
 ```
 
-#### 前向合并-合并高地址chunk
+#### 下一块不是top chunk-前向合并-合并高地址chunk
 
 ```c++
 		// 如果下一个chunk不是top chunk
@@ -1040,7 +1041,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         }
 ```
 
-#### 合并到top chunk
+#### 下一块是top chunk-合并到top chunk
 
 ```c++
         /*
@@ -1109,6 +1110,72 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         munmap_chunk(p);
     }
 ```
+
+## unlink
+
+unlink函数主要是将chunk P从bin中取出来，如下
+
+```c
+/* Take a chunk off a bin list */
+#define unlink(AV, P, BK, FD) {                                            \
+    FD = P->fd;                                                                      \
+    BK = P->bk;                                                                      \
+    if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
+      malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
+    else {                                                                      \
+        FD->bk = BK;                                                              \
+        BK->fd = FD;                                                              \
+        if (!in_smallbin_range (chunksize_nomask (P))                              \
+            && __builtin_expect (P->fd_nextsize != NULL, 0)) {                      \
+            if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
+                || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
+              malloc_printerr (check_action,                                      \
+                               "corrupted double-linked list (not small)",    \
+                               P, AV);                                              \
+            if (FD->fd_nextsize == NULL) {                                      \
+                if (P->fd_nextsize == P)                                      \
+                  FD->fd_nextsize = FD->bk_nextsize = FD;                      \
+                else {                                                              \
+                    FD->fd_nextsize = P->fd_nextsize;                              \
+                    FD->bk_nextsize = P->bk_nextsize;                              \
+                    P->fd_nextsize->bk_nextsize = FD;                              \
+                    P->bk_nextsize->fd_nextsize = FD;                              \
+                  }                                                              \
+              } else {                                                              \
+                P->fd_nextsize->bk_nextsize = P->bk_nextsize;                      \
+                P->bk_nextsize->fd_nextsize = P->fd_nextsize;                      \
+              }                                                                      \
+          }                                                                      \
+      }                                                                              \
+}
+```
+
+可以看到首先是分别获取P的forward chunk和backward chunk。
+
+```
+FD = P->fd;                                                                      \
+BK = P->bk;                                                                      \
+```
+
+接下来有这样的一个判断
+
+```
+if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
+  malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
+```
+
+看起来似乎很正常，P的forward chunk的bk很自然是P，同样P的backward chunk的fd也很自然是P。然而，这里真正的目的在于进行双向链表的冲突检测。
+
+考虑加入没有的情况，如果我们将该chunk 的fd为某个got表项-12(32位)的地址，同时修改bk为shellcode代码，这样当执行完下面的代码后，该got表项的地址其实就是shellcode的地址。如果我们调用了该got表项对应的函数，那么实际上执行的就是shellcode。所以这里的检查是必要的。
+
+然后就是直接修改相应的指针，去掉P。
+
+接下来判断chunk P是否属于large chunk，如果属于就需要进行进一步的处理。
+
+**注意：堆的第一个chunk的话所记录的prev_inuse位默认为1。**
+
+1. **给出图片说明**
+2. **说明unlink的判断**
 
 ## systrim
 

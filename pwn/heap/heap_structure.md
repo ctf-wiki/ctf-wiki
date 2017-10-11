@@ -204,11 +204,9 @@ struct malloc_chunk {
   - bk指向上一个（非物理相邻）空闲的chunk
   - 通过fd和bk可以将空闲的chunk块加入到空闲的chunk块链表进行统一管理
 - **fd_nextsize, bk_nextsize**，也是只有chunk空闲的时候才使用，不过其用于较大的chunk（large chunk）。
-  - fd_nextsize指向前一个与当前chunk大小不同的第一个空闲块
-  - bk_nextsize指向后一个与当前chunk大小不同的第一个空闲块
+  - fd_nextsize指向前一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针（可暂不考虑）。
+  - bk_nextsize指向后一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针（可暂不考虑）。
   - **这样做可以避免在寻找合适chunk时挨个遍历。**
-
-我们可以发现，如果一个chunk处于free状态，其实是可能有两个位置记录其相应的大小的，一个是本身的记录，一个是其后一个chunk会记录。而这也恰好加速了两个物理相邻的空闲chunk块的合并速度。
 
 一个已经分配的chunk的样子如下。**我们称前两个字段称为chunk header，后面的部分称为user data。每次malloc申请得到的内存指针，其实指向user data的起始处。** 
 
@@ -252,6 +250,8 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
         |             Size of next chunk, in bytes                |A|0|0|
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
+
+我们可以发现，如果一个chunk处于free状态，其实是可能有两个位置记录其相应的大小的，一个是本身的记录，一个是其后一个chunk会记录。而一般来说相邻的两个空闲chunk会被合并为一个chunk，这也恰好加速了两个物理相邻的空闲chunk块的合并速度。
 
 **一些关于堆的约束，后面详细考虑**
 
@@ -566,7 +566,7 @@ typedef struct malloc_chunk *mfastbinptr;
 */
 ```
 
-为了更加高效地利用fast bin，glibc 直接采用单向链表对其中的每个bin进行组织，并且每个bin采取LIFO策略，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的chunk的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中是否有bin中有对应大小的空闲块，如果有的话，就会直接从这个bin中获取chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
+为了更加高效地利用fast bin，glibc 直接采用单向链表对其中的每个bin进行组织，并且**每个bin采取LIFO策略**，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的chunk的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中是否有bin中有对应大小的空闲块，如果有的话，就会直接从这个bin中获取chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
 
 默认情况下（32位为例）， fastbin 中默认支持最大的 chunk 的数据空间大小为64字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的bin的个数为10个，从数据空间为8字节开始一直到80字节，定义如下
 
@@ -699,7 +699,7 @@ small bins中每个chunk的大小与其所在的bin的index的关系为：chunk_
 | x    | 2\*4\*x        | 2\*8\*x        |
 | 63   | 504            | 1008           |
 
-small bins中一共有62个链表，每个链表中存储的chunk大小都一致。比如对于32位系统来说，下标2对应的双向链表中存储的chunk大小为均为16字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，small bins中每个bin对应的链表都采用LIFO的规则，所以同一个链表中后被释放的chunk会首先被分配出去。
+small bins中一共有62个链表，每个链表中存储的chunk大小都一致。比如对于32位系统来说，下标2对应的双向链表中存储的chunk大小为均为16字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，**small bins中每个bin对应的链表采用FIFO的规则**，所以同一个链表中先被释放的chunk会先被分配出去。
 
 small bin相关的宏如下
 
@@ -862,25 +862,13 @@ glibc中对于top chunk的描述如下
 #define initial_top(M) (unsorted_chunks(M))
 ```
 
-需要注意的是，top chunk的prev_inuse比特位始终为1，否则其前面的chunk就会被合并到top chunk中。
+程序第一次进行malloc的时候，就会将heap分为两块，一块给用户，剩下的那块就是top chunk。其实，所谓的top chunk就是处于当前堆的物理地址最高的chunk。这个chunk不属于任何一个bin，它的作用在于当所有的bin都无法满足用户请求的大小时，如果其大小不小于指定的大小，就进行分配，并将剩下的部分作为新的top chunk。否则，就对heap进行扩展后再进行分配。在main arena中通过sbrk扩展heap，而在thread arena中通过mmap分配新的heap。
 
-其实，所谓的top chunk就是处于当前堆的物理地址最高的chunk。
+需要注意的是，top chunk的prev_inuse比特位始终为1，否则其前面的chunk就会被合并到top chunk中。
 
 ## last remainder
 
-简单的说，last remainder就是当一块chunk被分割成两半时剩下的那一块。
-
-
-
-
-
-
-
-
-
-
-
-
+在用户使用malloc请求分配内存时，ptmalloc2找到的chunk可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为last remainder chunk，unsort bin也会存这一块。
 
 
 
