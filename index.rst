@@ -42,3 +42,8 @@
 
    crypto/introduction.rst
    crypto/classical/index.rst
+   crypto/symmetric/index.rst
+   crypto/asymmetric/index.rst
+   crypto/hash/index.rst
+   crypto/signature/index.rst
+   crypto/others/others.rst
