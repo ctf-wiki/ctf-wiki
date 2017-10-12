@@ -53,3 +53,4 @@
    :caption: Pwn
 
    pwn/stackoverflow/index.rst
+   pwn/fmtstr/index.rst

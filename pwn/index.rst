@@ -8,4 +8,5 @@ Pwn
    :caption: PWN 目录
 
    stackoverflow/index.rst
+   fmtstr/index.rst
 
