@@ -55,3 +55,10 @@
    pwn/stackoverflow/index.rst
    pwn/fmtstr/index.rst
    pwn/heap/index.rst
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Executable
+
+   executable/elf/index.rst
