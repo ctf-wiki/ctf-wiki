@@ -1,15 +1,15 @@
-其它栈溢出技巧
+..
+
+花式栈溢出技巧
 ==============
 
 stack privot
-============
+^^^^^^^^^^^^^^^^
 
 原理
 ----
 
-stack
-privot，正如它所描述的，该技巧就是劫持栈指针指向攻击者所能控制的内存处。然后再在相应的位置进行ROP。一般来说，我们可能在以下情况需要使用stack
-privot
+stack privot，正如它所描述的，该技巧就是劫持栈指针指向攻击者所能控制的内存处。然后再在相应的位置进行ROP。一般来说，我们可能在以下情况需要使用stack privot
 
 -  可以控制的栈溢出的字节数较少，难以构造较长的ROP链
 -  开启了PIE保护，栈地址未知，我们可以将栈劫持到已知的区域。
@@ -25,7 +25,23 @@ privot
 
 当然，还会有一些其它的姿势。比如说libc\_csu\_init中的gadgets，我们通过偏移就可以得到控制rsp指针。上面的是正常的，下面的是偏移的。
 
-``assembly   gef➤  x/7i 0x000000000040061a      0x40061a <__libc_csu_init+90>: pop    rbx      0x40061b <__libc_csu_init+91>: pop    rbp      0x40061c <__libc_csu_init+92>: pop    r12      0x40061e <__libc_csu_init+94>: pop    r13      0x400620 <__libc_csu_init+96>: pop    r14      0x400622 <__libc_csu_init+98>: pop    r15      0x400624 <__libc_csu_init+100>:    ret       gef➤  x/7i 0x000000000040061d      0x40061d <__libc_csu_init+93>: pop    rsp      0x40061e <__libc_csu_init+94>: pop    r13      0x400620 <__libc_csu_init+96>: pop    r14      0x400622 <__libc_csu_init+98>: pop    r15      0x400624 <__libc_csu_init+100>:    ret``
+.. code-block::assembly
+
+gef➤  x/7i 0x000000000040061a
+   0x40061a <__libc_csu_init+90>:    pop    rbx
+   0x40061b <__libc_csu_init+91>:    pop    rbp
+   0x40061c <__libc_csu_init+92>:    pop    r12
+   0x40061e <__libc_csu_init+94>:    pop    r13
+   0x400620 <__libc_csu_init+96>:    pop    r14
+   0x400622 <__libc_csu_init+98>:    pop    r15
+   0x400624 <__libc_csu_init+100>:    ret    
+gef➤  x/7i 0x000000000040061d
+   0x40061d <__libc_csu_init+93>:    pop    rsp
+   0x40061e <__libc_csu_init+94>:    pop    r13
+   0x400620 <__libc_csu_init+96>:    pop    r14
+   0x400622 <__libc_csu_init+98>:    pop    r15
+   0x400624 <__libc_csu_init+100>:   ret
+
 
 此外，还有更加高级的fake frame。
 
@@ -39,8 +55,7 @@ privot
 例1
 ~~~
 
-这里我们以\ **X-CTF Quals 2016 -
-b0verfl0w**\ 为例，进行介绍。首先，查看程序的安全保护，如下
+这里我们以 **X-CTF Quals 2016 - b0verfl0w** 为例，进行介绍。首先，查看程序的安全保护，如下
 
 .. code:: shell
 
@@ -138,7 +153,7 @@ privot。由于程序本身并没有开启堆栈保护，所以我们可以在�
 -  EkoPartyCTF 2016 fuckzing-exploit-200
 
 frame faking
-============
+^^^^^^^^^^^^^^^^^^^^
 
 正如这个技巧名字所说的那样，这个技巧就是构造一个虚假的栈帧来控制程序的执行流。
 
@@ -150,8 +165,7 @@ frame faking
 -  控制程序EIP
 -  控制程序EBP
 
-其最终都是控制程序的执行流。在frame
-faking中，我们所利用的技巧便是同时控制EBP与EIP，这样我们在控制程序执行流的同时，也改变程序栈帧的位置。一般来说其payload如下
+其最终都是控制程序的执行流。在frame faking中，我们所利用的技巧便是同时控制EBP与EIP，这样我们在控制程序执行流的同时，也改变程序栈帧的位置。一般来说其payload如下
 
 ::
 
@@ -172,8 +186,7 @@ faking中，我们所利用的技巧便是同时控制EBP与EIP，这样我们�
     v
     ebp2|target function addr|leave ret addr|arg1|arg2
 
-这里我们的fake
-ebp指向ebp2，即它为ebp2所在的地址。通常来说，这里都是我们能够控制的可读的内容。在我们介绍基本的控制过程之前，我们还是有必要说一下，函数的入口点与出口点的基本操作
+这里我们的 fake ebp 指向 ebp2 ，即它为ebp2所在的地址。通常来说，这里都是我们能够控制的可读的内容。在我们介绍基本的控制过程之前，我们还是有必要说一下，函数的入口点与出口点的基本操作
 
 入口点
 
@@ -200,35 +213,30 @@ ebp指向ebp2，即它为ebp2所在的地址。通常来说，这里都是我们
 
 1. 在有栈溢出的程序执行leave时，其分为两个步骤
 
--  move ebp, esp ，这会将esp也指向当前栈溢出漏洞的ebp基地址处。
--  pop ebp， 这会将栈中存放的fake
-   ebp的值赋给ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了ebp2所在的地址。
+	-  move ebp, esp ，这会将esp也指向当前栈溢出漏洞的ebp基地址处。
+	-  pop ebp， 这会将栈中存放的fake
+	   ebp的值赋给ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了ebp2所在的地址。
 
 2. 执行ret指令，会再次执行leave ret指令。
 
 3. 执行leave指令，其分为两个步骤
 
--  move ebp, esp ，这会将esp指向ebp2。
--  pop ebp，此时，会将ebp的内容设置为ebp2的值，同时esp会指向target
-   function。
+	-  move ebp, esp ，这会将esp指向ebp2。
+	-  pop ebp，此时，会将ebp的内容设置为ebp2的值，同时esp会指向target
+	   function。
 
 4. 执行ret指令，这时候程序就会执行targetfunction，当其进行程序的时候会执行
 
--  push ebp,会将ebp2值压入栈中，
+	-  push ebp,会将ebp2值压入栈中，
 
--  move esp, ebp，将ebp指向当前基地址。
-
-   此时的栈结构如下
-
-   ``ebp  |  v  ebp2|leave ret addr|arg1|arg2``
+	-  move esp, ebp，将ebp指向当前基地址。此时的栈结构为 ``ebp  |  v  ebp2|leave ret addr|arg1|arg2``
 
 5. 当程序执行师，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。
 
 6. 程序结束后，其又会执行两次 leave ret
    addr，所以如果我们在ebp2处布置好了对应的内容，那么我们就可以一直控制程序的执行流程。
 
-可以看出在fake
-frame中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与stack
+可以看出在fake frame中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与stack
 privot相似。
 
 例子
@@ -246,13 +254,13 @@ level2中利用过这个技巧，其它地方暂时还未遇到，遇到的时�
 -  http://phrack.org/issues/58/4.html
 
 Stack smash
-===========
+^^^^^^^^^^^^^^^^^^^^
 
 原理
 ----
 
 在程序加了canary保护之后，如果我们读取的buffer覆盖了对应的值时，程序就会报错，而一般来说我们并不会关心报错信息。而stack
-smash技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序发现canary保护之后，如果发现canary被修改的话，程序就会执行\_\_stack\_chk\_fail函数来打印argv[0]指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
+smash技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序发现canary保护之后，如果发现canary被修改的话，程序就会执行__stack_chk_fail函数来打印argv[0]指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
 
 .. code:: c
 
@@ -268,13 +276,12 @@ smash技巧则就是利用打印这一信息的程序来得到我们想要的内
                         msg, __libc_argv[0] ?: "<unknown>");
     }
 
-所以说如果我们利用栈溢出覆盖argv[0]为我们想要输出的字符串的地址，那么在\_\_fortify\_fail函数中就会输出我们想要的信息。
+所以说如果我们利用栈溢出覆盖argv[0]为我们想要输出的字符串的地址，那么在 __fortify_fail 函数中就会输出我们想要的信息。
 
 例子
 ----
 
-这里，我们以2015年32C3 CTF
-smashes为例进行介绍，该题目在jarvisoj上有复现。
+这里，我们以2015年32C3 CTF smashes为例进行介绍，该题目在 jarvisoj 上有复现。
 
 确定保护
 ~~~~~~~~
@@ -331,10 +338,9 @@ ida看一下
       return *MK_FP(__FS__, 40LL) ^ v5;
     }
 
-很显然，程序在\_IO\_gets((\_\_int64)&v4);存在栈溢出。
+很显然，程序在 _IO_gets((__int64)&v4); 存在栈溢出。
 
-此外，程序中还提示要overwrite
-flag。而且发现程序很有意思的在while循环之后执行了这条语句
+此外，程序中还提示要overwrite flag。而且发现程序很有意思的在while循环之后执行了这条语句
 
 .. code:: c
 
@@ -347,7 +353,7 @@ flag。而且发现程序很有意思的在while循环之后执行了这条语�
     .data:0000000000600D20 ; char aPctfHereSTheFl[]
     .data:0000000000600D20 aPctfHereSTheFl db 'PCTF{Here',27h,'s the flag on server}',0
 
-但是如果我们直接利用栈溢出输出该地址的内容是不可行的，这是因为我们读入的内容\ ``byte_600D20[v1++] = v2;``\ 也恰恰就是该块内存，这会直接将其覆盖掉，这时候我们就需要利用一个技巧了
+但是如果我们直接利用栈溢出输出该地址的内容是不可行的，这是因为我们读入的内容 ``byte_600D20[v1++] = v2;`` 也恰恰就是该块内存，这会直接将其覆盖掉，这时候我们就需要利用一个技巧了
 
 -  在EFL内存映射时，bss段会被映射两次，所以我们可以使用另一处的地址来进行输出，可以使用gdb的find来进行查找。
 
@@ -465,7 +471,7 @@ flag。而且发现程序很有意思的在while循环之后执行了这条语�
     .text:000000000040080B                 mov     rdi, rsp
     .text:000000000040080E                 call    __IO_gets
 
-我们可以确定我们读入的字符串的起始地址其实就是调用\_\_IO\_gets之前的rsp，所以我们把断点下在call处，如下
+我们可以确定我们读入的字符串的起始地址其实就是调用 __IO_gets 之前的rsp，所以我们把断点下在call处，如下
 
 .. code:: assembly
 
