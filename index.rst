@@ -50,6 +50,12 @@
 
 .. toctree::
    :maxdepth: 2
+   :caption: Reverse
+
+   reverse/index.rst
+
+.. toctree::
+   :maxdepth: 2
    :caption: Pwn
 
    pwn/stackoverflow/index.rst
