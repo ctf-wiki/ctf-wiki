@@ -54,3 +54,4 @@
 
    pwn/stackoverflow/index.rst
    pwn/fmtstr/index.rst
+   pwn/heap/index.rst
