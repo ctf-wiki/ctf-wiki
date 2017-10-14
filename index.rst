@@ -48,6 +48,14 @@
    crypto/signature/index.rst
    crypto/others/others.rst
 
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Web
+
+   web/index.rst
+   web/sqli.rst
+
 .. toctree::
    :maxdepth: 2
    :caption: Reverse
