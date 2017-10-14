@@ -20,7 +20,7 @@
       - [Archive](/misc/Foensic&&Stego/archives/)
         - [Zip](/misc/Foensic&&Stego/archives/zip)
         - [Rar](/misc/Foensic&&Stego/archives/rar)
-      - [Audio](/misc/Foensic&&Stego/Audio/)
+      - [Audio](/misc/Foensic&&Stego/audio/)
       - [磁盘 / 内存分析](/misc/Foensic&&Stego/disk_memory/)
       - [流量分析](/misc/Foensic&&Stego/cap)
 - [**Crypto**](/crypto/)
