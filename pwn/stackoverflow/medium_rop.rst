@@ -14,7 +14,7 @@ ret2__libc_scu_init
 在64位程序中，函数的前6个参数是通过寄存器传递的，但是大多数时候，我们很难找到每一个寄存器对应的gadgets。
 这时候，我们可以利用x64下的__libc_scu_init中的gadgets。这个函数是用来对libc进行初始化操作的，而一般的程序都会调用libc函数，所以这个函数一定会存在。我们先来看一下这个函数(当然，不同版本的这个函数有一定的区别)
 
-.. code:: assembly
+.. code:: asm
 
     .text:00000000004005C0 ; void _libc_csu_init(void)
     .text:00000000004005C0                 public __libc_csu_init
@@ -215,7 +215,7 @@ gadget
 
 而其实libc_csu_init的尾部通过偏移是可以控制其他寄存器的。其中，0x000000000040061A是正常的起始地址， **可以看到我们在0x000000000040061f处可以控制rbp寄存器，在0x0000000000400621处可以控制rsi寄存器。** 而如果想要深入地了解这一部分的内容，就要对汇编指令中的每个字段进行更加透彻地理解。如下。
 
-.. code:: assembly
+.. code:: asm
 
     gef➤  x/5i 0x000000000040061A
        0x40061a <__libc_csu_init+90>:   pop    rbx
@@ -360,7 +360,7 @@ Blind ROP
 
 最朴素的执行write函数的方法就是构造系统调用。
 
-.. code:: assembly
+.. code:: asm
 
     pop rdi; ret # socket
     pop rsi; ret # buffer
@@ -388,7 +388,7 @@ control rdx
 
 需要注意的是，rdx只是我们用来输出程序字节长度的变量，只要不为0即可。一般来说程序中的rdx经常性会不是零。但是为了更好地控制程序输出，我们仍然尽量可以控制这个值。但是，在程序
 
-.. code:: assembly
+.. code:: asm
 
     pop rdx; ret
 

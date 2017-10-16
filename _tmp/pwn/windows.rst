@@ -66,7 +66,7 @@ XMan 计算机软件攻防对抗技术
 XP 挑战赛对抗沙箱
 -----------------
 
-.. code:: assembly
+.. code:: asm
 
     mov ebx,0x40
     mov eax,[edi+ebx]
