@@ -48,6 +48,18 @@
    crypto/signature/index.rst
    crypto/others/others.rst
 
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Web
+
+   web/index.rst
+   web/sqli.rst
+   web/xss.rst
+   web/csrf.rst
+   web/ssrf.rst
+   web/php.rst
+
 .. toctree::
    :maxdepth: 2
    :caption: Reverse
