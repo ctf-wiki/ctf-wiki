@@ -283,7 +283,7 @@ Rabin 算法的特征在于 :math:`e=2` 。
 
 拿到 flag。
 
-::
+.. code-block:: shell
 
     ➜  Jarvis OJ-hard RSA git:(master) ✗ python Rabin.py 
     please input p
