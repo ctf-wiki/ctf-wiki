@@ -105,9 +105,9 @@ https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
 -  当不开启ASLR保护时，start_brk以及brk会指向data/bss 段的结尾。
 -  当开启ASLR保护时，start_brk以及brk也会指向同一位置，只是这个位置是在data/bss段结尾后的随机偏移处。
 
-具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示
+具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示。
 
-.. figure:: pwn/heap/figure/program_virtual_address_memory_space.png
+.. figure:: /pwn/heap/figure/program_virtual_address_memory_space.png
    :alt: 
 
 **例子**

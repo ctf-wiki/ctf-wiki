@@ -4,7 +4,7 @@
 **参考 Execution Angleboye@Bamboofox 。**
 
 基本概述
-========
+^^^^^^^^^^^^^^^^^^^^
 
 静态执行
 --------
@@ -47,8 +47,7 @@ load\_elf\_binary
 
 -  如果目标文件采用动态链接，则使用.interp 节来确定loader的路径。
 
--  将program header 中记录的相应的段映射到内存中。program
-   header中有以下重要信息
+-  将program header 中记录的相应的段映射到内存中。program header中有以下重要信息
 
 -  每一个段需要映射到的地址
 -  每一个段相应的权限。
@@ -61,8 +60,7 @@ load\_elf\_binary
 
 分情况处理
 
--  动态链接情况下，将sys\_execve的返回地址改为loader(ld.so)的entry
-   point。
+-  动态链接情况下，将sys\_execve的返回地址改为loader(ld.so)的entry point。
 -  静态链接情况下，将sys\_execve的返回地址改为程序的入口点。
 
 ld.so
