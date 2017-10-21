@@ -28,7 +28,7 @@
 
 ## 想要帮助 Wiki 更加完善？
 
-我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。同时，我们并不希望你将本 Repo 的内容重新建立一个公开的 Wiki 站点，这样并不利于 Wiki 的发展。
+我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。
 
 关于更加具体的内容请参见 [ctf-wiki's wiki](https://github.com/ctf-wiki/ctf-wiki/wiki)。 其中主要包含
 
