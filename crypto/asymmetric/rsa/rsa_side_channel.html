@@ -1,0 +1,416 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>侧信道攻击 &mdash; CTF Wiki  文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="索引"
+              href="../../../genindex.html"/>
+        <link rel="search" title="搜索" href="../../../search.html"/>
+    <link rel="top" title="CTF Wiki  文档" href="../../../index.html"/>
+        <link rel="up" title="RSA" href="rsa_index.html"/>
+        <link rel="next" title="Bleichenbacher’s attack" href="rsa_pkcs_attack.html"/>
+        <link rel="prev" title="Coppersmith Related Attack" href="rsa_coppersmith_attack.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> CTF Wiki
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/cap.html">流量分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">非对称密码</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rsa_index.html">RSA</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="rsa_theory.html">RSA 基本介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsa_module_attack.html">模数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsa_e_attack.html">公钥指数攻击</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsa_d_attack.html">私钥 d 攻击</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsa_chosen_cipher.html">选择密文攻击</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsa_coppersmith_attack.html">Coppersmith Related Attack</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">侧信道攻击</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">攻击条件</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">例子</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">参考资料</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rsa_pkcs_attack.html">Bleichenbacher’s attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsa_complex.html">综合题目</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../knapsack/knapsack_intro.html">背包加密</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../discrete_log/discrete_log_intro.html">离散对数相关</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reverse/index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../executable/elf/index.html">ELF文件</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">CTF Wiki</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">非对称密码</a> &raquo;</li>
+        
+          <li><a href="rsa_index.html">RSA</a> &raquo;</li>
+        
+      <li>侧信道攻击</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/crypto/asymmetric/rsa/rsa_side_channel.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>侧信道攻击<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<p>能量分析攻击（侧信道攻击）是一种能够从密码设备中获取秘密信息的密码攻击方法．与其
+他攻击方法不同：这种攻击利用的是密码设备的能量消耗特征，而非密码算法的数学特性．能量分析攻击是一种非入侵式攻击，攻击者可以方便地购买实施攻击所需要的设备：所以这种攻击对智能卡之类的密码设备的安全性造成了严重威胁。</p>
+<p>能量分析攻击是安全领域内非常重要的一个部分，我们只在这里简单讨论下。</p>
+<p>能量分析攻击分为：</p>
+<ul class="simple">
+<li>简单能量分析攻击（SPA），即对能量迹进行直观分析，肉眼看即可。</li>
+<li>差分能量分析攻击（DPA），基于能量迹之间的相关系数进行分析。</li>
+</ul>
+<div class="section" id="id2">
+<h2>攻击条件<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>攻击者可获取与加/解密相关的侧信道信息，例如能量消耗、运算时间、电磁辐射等等。</p>
+</div>
+<div class="section" id="id3">
+<h2>例子<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<p>这里我们以HITB 2017的 <code class="docutils literal"><span class="pre">hack</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">card</span> <span class="pre">I</span></code> 作为例子。</p>
+<p>题目给出了公钥文件 <code class="docutils literal"><span class="pre">publickey.pem</span></code> ，密文，测量智能卡功率的电路图，和 <strong>解密</strong> 过程中智能卡消耗的功率变化（通过在线网站给出
+<a class="reference external" href="http://47.74.147.53:20015/index.html">trace</a> ）。</p>
+<div class="figure" id="id6">
+<img alt="Circuit diagram" src="../../../_images/circuitdiagram.png" />
+<p class="caption"><span class="caption-text">Circuit diagram</span></p>
+</div>
+<p>密文：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mi">014</span><span class="n">b05e1a09668c83e13fda8be28d148568a2342aed833e0ad646bd45461da2decf9d538c2d3ab245b272873beb112586bb7b17dc4b30f0c5408d8b03cfbc8388b2bd579fb419a1cac38798da1c3da75dc9a74a90d98c8f986fd8ab8b2dc539768beb339cadc13383c62b5223a50e050cb9c6b759072962c2b2cf21b4421ca73394d9e12cfbc958fc5f6b596da368923121e55a3c6a7b12fdca127ecc0e8470463f6e04f27cd4bb3de30555b6c701f524c8c032fa51d719901e7c75cc72764ac00976ac6427a1f483779f61cee455ed319ee9071abefae4473e7c637760b4b3131f25e5eb9950dd9d37666e129640c82a4b01b8bdc1a78b007f8ec71e7bad48046</span>
+</pre></div>
+</div>
+<div class="section" id="id4">
+<h3>分析<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
+<p>由于网站只给出了一条能量迹，所以可以断定这是Simple channel
+analysis(SPA)攻击。那么我们可以直接通过观察能量迹的高低电平来获得RSA解密过程的密钥d。
+RSA可被SPA攻击的理论基础来自于RSA中包含的快速幂取余算法。</p>
+<p>快速幂算法如下</p>
+<ol class="arabic simple">
+<li>b为偶数时， <span class="math">\(a^b \bmod c = ({a^2}^{b/2}) \bmod c\)</span> 。</li>
+<li>b为奇数时， <span class="math">\(a^b \bmod c = ({a^2}^{b/2} \times a) \bmod c\)</span> 。</li>
+</ol>
+<p>相应的C代码实现为：</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">PowerMod</span><span class="p">(</span><span class="nb">int</span> <span class="n">a</span><span class="p">,</span> <span class="nb">int</span> <span class="n">b</span><span class="p">,</span> <span class="nb">int</span> <span class="n">c</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nb">int</span> <span class="n">ans</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">%</span> <span class="n">c</span><span class="p">;</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">b</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">b</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">当b为奇数时会多执行下面的指令</span>
+            <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span><span class="n">ans</span> <span class="o">*</span> <span class="n">a</span><span class="p">)</span> <span class="o">%</span> <span class="n">c</span><span class="p">;</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">a</span><span class="p">)</span> <span class="o">%</span> <span class="n">c</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">ans</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>由于快速幂的计算过程中会逐位判断指数的取值，并会采取不同的操作，所以可从能量迹中还原出d的取值（从上面可知，直接得到的值是d的二进制取值的<strong>逆序</strong>）。</p>
+<p><strong>注意</strong> ：</p>
+<blockquote>
+<div>有时候模乘也可能会从高位向低位进行模乘。这里是从低位向高位模乘。</div></blockquote>
+<div class="figure">
+<img alt="" src="../../../_images/trace.png" />
+</div>
+<p>由此可给出还原d的脚本如下：</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;./data.txt&#39;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;point number:&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+<span class="n">start_point</span> <span class="o">=</span> <span class="mi">225</span>   <span class="c1"># 开始分析的点</span>
+<span class="n">mid</span> <span class="o">=</span> <span class="mi">50</span>            <span class="c1"># 采样点间隔</span>
+<span class="n">fence</span> <span class="o">=</span> <span class="mi">228</span>         <span class="c1"># 高低电平分界线</span>
+
+<span class="n">bin_array</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">point_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start_point</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">mid</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">point_index</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">fence</span><span class="p">:</span>
+        <span class="n">bin_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bin_array</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">bin_array2</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">flag1</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">flag2</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">bin_array</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">x</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">flag1</span><span class="p">:</span>
+            <span class="n">flag2</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">flag1</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">flag2</span><span class="p">:</span>
+            <span class="n">bin_array2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bin_array2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">flag1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">flag2</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c1"># d_bin = bin_array2[::-1]</span>
+<span class="n">d_bin</span> <span class="o">=</span> <span class="n">bin_array2</span>
+<span class="n">d</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">d_bin</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+<span class="n">d_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">d_int</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>参考资料<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h2>
+<ol class="arabic simple">
+<li>Mangard, S., Oswald, E., Popp, T., 冯登国, 周永彬, &amp; 刘继业. (2010).
+能量分析攻击.</li>
+</ol>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="rsa_pkcs_attack.html" class="btn btn-neutral float-right" title="Bleichenbacher’s attack" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="rsa_coppersmith_attack.html" class="btn btn-neutral" title="Coppersmith Related Attack" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, CTF Wiki.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

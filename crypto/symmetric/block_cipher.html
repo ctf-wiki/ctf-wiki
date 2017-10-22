@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>分组模式 &mdash; CTF Wiki  文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="索引"
+              href="../../genindex.html"/>
+        <link rel="search" title="搜索" href="../../search.html"/>
+    <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
+        <link rel="up" title="对称加密" href="index.html"/>
+        <link rel="next" title="非对称密码" href="../asymmetric/index.html"/>
+        <link rel="prev" title="AES" href="aes.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> CTF Wiki
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/cap.html">流量分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../classical/index.html">古典密码</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">对称加密</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="des.html">DES</a></li>
+<li class="toctree-l2"><a class="reference internal" href="aes.html">AES</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">分组模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ecb">ECB</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">加密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">解密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">缺点</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cbc">CBC</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id5">加密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">解密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">特点</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id8">攻击</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pcbc">PCBC</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id10">加密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id11">解密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id12">特点</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cfb">CFB</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id13">加密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id14">解密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id15">特点</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id16">攻击</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ofb">OFB</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id17">加密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id18">解密</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ctr">CTR</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id19">加密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id20">解密</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reverse/index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CTF Wiki</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">对称加密</a> &raquo;</li>
+        
+      <li>分组模式</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/crypto/symmetric/block_cipher.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>分组模式<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<p>在分组加密中，会将明文消息划分为固定大小的块，每块分别在密钥控制下加密为等长的密文。当然并不是每个消息都会是相应大小的整数倍，所以我们可能需要进行填充。</p>
+<div class="section" id="ecb">
+<h2>ECB<a class="headerlink" href="#ecb" title="永久链接至标题">¶</a></h2>
+<p>ECB模式全称为电子密码本模式（Electronic codebook）。</p>
+<div class="section" id="id2">
+<h3>加密<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="ECB 加密" src="../../_images/ecb_encryption.png" />
+</div>
+</div>
+<div class="section" id="id3">
+<h3>解密<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="ECB 解密" src="../../_images/ecb_decryption.png" />
+</div>
+</div>
+<div class="section" id="id4">
+<h3>缺点<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
+<ul class="simple">
+<li>同样的明文块会被加密成相同的密文块</li>
+</ul>
+</div>
+</div>
+<div class="section" id="cbc">
+<h2>CBC<a class="headerlink" href="#cbc" title="永久链接至标题">¶</a></h2>
+<p>CBC全称为密码分组链接（Cipher-block chaining） 模式。</p>
+<div class="section" id="id5">
+<h3>加密<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="CBC 加密" src="../../_images/cbc_encryption.png" />
+</div>
+</div>
+<div class="section" id="id6">
+<h3>解密<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="CBC 解密" src="../../_images/cbc_decryption.png" />
+</div>
+</div>
+<div class="section" id="id7">
+<h3>特点<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
+<ul class="simple">
+<li>密文块中的一位变化只会影响当前密文块和下一密文块。</li>
+<li>加密过程难以并行化</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h3>攻击<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id9">
+<h4>字节反转攻击<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h4>
+<ul class="simple">
+<li>iv向量，影响第一个明文分组</li>
+<li>第n个密文分组，影响第n+1个明文分组</li>
+</ul>
+</div>
+<div class="section" id="padding-oracle-attack">
+<h4>padding oracle attack<a class="headerlink" href="#padding-oracle-attack" title="永久链接至标题">¶</a></h4>
+</div>
+</div>
+</div>
+<div class="section" id="pcbc">
+<h2>PCBC<a class="headerlink" href="#pcbc" title="永久链接至标题">¶</a></h2>
+<p>PCBC的全称为明文密码块链接（Plaintext cipher-block
+chaining）。也称为填充密码块链接（Propagating cipher-block chaining）。</p>
+<div class="section" id="id10">
+<h3>加密<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="PCBC 加密" src="../../_images/pcbc_encryption.png" />
+</div>
+</div>
+<div class="section" id="id11">
+<h3>解密<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="PCBC 解密" src="../../_images/pcbc_decryption.png" />
+</div>
+</div>
+<div class="section" id="id12">
+<h3>特点<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h3>
+<ul class="simple">
+<li>解密过程难以并行化</li>
+<li>互换邻接的密文块不会对后面的密文块造成影响</li>
+</ul>
+</div>
+</div>
+<div class="section" id="cfb">
+<h2>CFB<a class="headerlink" href="#cfb" title="永久链接至标题">¶</a></h2>
+<p>CFB全称为密文反馈模式（Cipher feedback）。</p>
+<div class="section" id="id13">
+<h3>加密<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="CFB 加密" src="../../_images/cfb_encryption.png" />
+</div>
+</div>
+<div class="section" id="id14">
+<h3>解密<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="CFB 解密" src="../../_images/cfb_decryption.png" />
+</div>
+</div>
+<div class="section" id="id15">
+<h3>特点<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
+<ul class="simple">
+<li>加解密均不能并行化。</li>
+</ul>
+</div>
+<div class="section" id="id16">
+<h3>攻击<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h3>
+<ul class="simple">
+<li>HITCONCTF-Quals-2015-Simple-(Crypto-100)</li>
+<li>​</li>
+</ul>
+</div>
+</div>
+<div class="section" id="ofb">
+<h2>OFB<a class="headerlink" href="#ofb" title="永久链接至标题">¶</a></h2>
+<p>OFB全称为输出反馈模式（Output feedback）。</p>
+<div class="section" id="id17">
+<h3>加密<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="OFB 加密" src="../../_images/ofb_encryption.png" />
+</div>
+</div>
+<div class="section" id="id18">
+<h3>解密<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="OFB 解密" src="../../_images/ofb_decryption.png" />
+</div>
+</div>
+</div>
+<div class="section" id="ctr">
+<h2>CTR<a class="headerlink" href="#ctr" title="永久链接至标题">¶</a></h2>
+<p>CTR全称为计数器模式（Counter mode）。</p>
+<div class="section" id="id19">
+<h3>加密<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="CTR 加密" src="../../_images/ctr_encryption.png" />
+</div>
+</div>
+<div class="section" id="id20">
+<h3>解密<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h3>
+<div class="figure">
+<img alt="CTR 解密" src="../../_images/ctr_decryption.png" />
+</div>
+<p>参考链接</p>
+<ul class="simple">
+<li><a class="reference external" href="https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F">分组加密模式</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../asymmetric/index.html" class="btn btn-neutral float-right" title="非对称密码" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="aes.html" class="btn btn-neutral" title="AES" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, CTF Wiki.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

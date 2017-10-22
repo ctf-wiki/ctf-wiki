@@ -1,0 +1,457 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>堆溢出原理 &mdash; CTF Wiki  文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="索引"
+              href="../../genindex.html"/>
+        <link rel="search" title="搜索" href="../../search.html"/>
+    <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
+        <link rel="up" title="堆利用" href="index.html"/>
+        <link rel="next" title="off-by-one漏洞原理" href="off-by-one.html"/>
+        <link rel="prev" title="深入理解堆的实现" href="heap_implementation_details.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> CTF Wiki
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/cap.html">流量分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reverse/index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">堆利用</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="heap_basic_intro.html">基本堆介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">堆溢出原理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">基本示例</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">小总结</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id5">寻找堆分配函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">寻找危险函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">确定填充长度</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="off-by-one.html">off-by-one漏洞原理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin-attack.html">fastbin attack</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CTF Wiki</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">堆利用</a> &raquo;</li>
+        
+      <li>堆溢出原理</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/pwn/heap/heapoverflow_basic.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>堆溢出原理<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<div class="section" id="id2">
+<h2>介绍<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>堆溢出指的是程序向某个堆块中写入的字节数超过了这个堆块本身所申请的字节数，因而导致数据溢出了当前的堆块并覆盖到相邻的下一个堆块。这种问题是一种特定的缓冲区溢出漏洞(比如说，还有向栈写，向bss段写)。而对于黑客来说，堆溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。此外，我们也不难发现，发生堆溢出的基本前提是</p>
+<ul class="simple">
+<li>程序必须向堆上写入数据。</li>
+<li>写入的数据大小没有被良好地控制。</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>基本示例<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<p>与栈溢出不同，堆上并不存在返回地址等可以让攻击者直接控制执行流程的数据，因此攻击者需要利用前面提到过的ptmalloc特性把堆溢出转化为任意地址写(write-anything-anywhere)或控制堆块中的内容等效果。下面，我们举一个简单的例子：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">char</span> <span class="o">*</span><span class="n">chunk</span><span class="p">;</span>
+  <span class="n">chunk</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">24</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Get input:&quot;</span><span class="p">);</span>
+  <span class="n">gets</span><span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>这个程序的主要目的是调用malloc分配一块堆上的内存，之后向这个堆块中写入一个字符串，如果输入的字符串过长会导致溢出chunk的区域并覆盖到其后的top
+chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可能并不是top
+chunk)。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span><span class="n">chunk</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fe1</span> <span class="o">&lt;===</span><span class="n">top</span> <span class="n">chunk</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+</pre></div>
+</div>
+<p>print ‘A’*100 进行写入</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span><span class="n">chunk</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span> <span class="o">&lt;===</span><span class="n">top</span> <span class="n">chunk</span><span class="p">(</span><span class="n">已被溢出</span><span class="p">)</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
+<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>小总结<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
+<p>堆溢出中比较重要的几个步骤:</p>
+<div class="section" id="id5">
+<h3>寻找堆分配函数<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<p>通常来说堆是通过调用glibc函数malloc进行分配的，在某些情况下会使用calloc分配。calloc与malloc的区别是calloc在分配后会自动进行清空，这对于某些信息泄露漏洞的利用来说是致命的。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">calloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
+<span class="o">//</span><span class="n">等同于</span>
+<span class="n">ptr</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
+<span class="n">memset</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mh">0x20</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>除此之外，还有一种分配是经由realloc进行的，realloc函数可以身兼malloc和free两个函数的功能。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">char</span> <span class="o">*</span><span class="n">chunk</span><span class="p">,</span><span class="o">*</span><span class="n">chunk1</span><span class="p">;</span>
+  <span class="n">chunk</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">16</span><span class="p">);</span>
+  <span class="n">chunk1</span><span class="o">=</span><span class="n">realloc</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span><span class="mi">32</span><span class="p">);</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>realloc的操作并不是像字面意义上那么简单，其内部会根据不同的情况进行不同操作</p>
+<ul class="simple">
+<li>当realloc(ptr,size)的size不等于ptr的size时<ul>
+<li>如果申请size&gt;原来size<ul>
+<li>如果chunk与top chunk相邻，直接扩展这个chunk到新size大小</li>
+<li>如果chunk与top chunk不相邻，相当于free(ptr),malloc(new_size)</li>
+</ul>
+</li>
+<li>如果申请size&lt;原来size<ul>
+<li>如果相差不足以容得下一个最小chunk(64位下32个字节，32位下16个字节)，则保持不变</li>
+<li>如果相差可以容得下一个最小chunk，则切割原chunk为两部分，free掉后一部分</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>当realloc(ptr,size)的size等于0时，相当于free(ptr)</li>
+<li>当realloc(ptr,size)的size等于ptr的size，不进行任何操作</li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h3>寻找危险函数<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
+<p>通过寻找危险函数，我们快速确定程序是否可能有堆溢出，以及有的话，堆溢出的位置在哪里。</p>
+<p>常见的危险函数如下</p>
+<ul class="simple">
+<li>输入<ul>
+<li>gets，直接读取一行，忽略 ‘x00’</li>
+<li>scanf</li>
+<li>vscanf</li>
+</ul>
+</li>
+<li>输出<ul>
+<li>sprintf</li>
+</ul>
+</li>
+<li>字符串<ul>
+<li>strcpy，字符串复制，遇到 ‘x00’ 停止</li>
+<li>strcat，字符串拼接，遇到 ‘x00’ 停止</li>
+<li>bcopy</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h3>确定填充长度<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
+<p>这一部分主要是计算  <strong>我们开始写入的地址与我们所要覆盖的地址之间的距离</strong> 。
+一个常见的误区是malloc的参数等于实际分配堆块的大小，但是事实上ptmalloc分配出来的堆块是存在对其长度的。这个长度一般是字长，比如32位系统是4个字节，64位系统是8个字节。但是对于小于2倍字长的请求，malloc会直接返回2倍字长的块也就是最小chunk，比如64位系统执行 <code class="docutils literal"><span class="pre">malloc(0)</span></code> 会返回用户区域为16字节的块。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">char</span> <span class="o">*</span><span class="n">chunk</span><span class="p">;</span>
+  <span class="n">chunk</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Get input:&quot;</span><span class="p">);</span>
+  <span class="n">gets</span><span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span>//根据系统的位数，malloc会分配8或16字节的用户空间
+0x602000:   0x0000000000000000  0x0000000000000021
+0x602010:   0x0000000000000000  0x0000000000000000
+0x602020:   0x0000000000000000  0x0000000000020fe1
+0x602030:   0x0000000000000000  0x0000000000000000
+</pre></div>
+</div>
+<p>注意用户区域的大小不等于chunk_hear.size，chunk_hear.size=用户区域大小+2*字长</p>
+<p>还有一点是借位储存，回头再来看下之前的示例代码</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">char</span> <span class="o">*</span><span class="n">chunk</span><span class="p">;</span>
+  <span class="n">chunk</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">24</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Get input:&quot;</span><span class="p">);</span>
+  <span class="n">gets</span><span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>观察如上代码，malloc的参数是24个字节，当这个代码被编译成64位执行时，实际上分配的内存会是16个字节而不是24个。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fe1</span>
+</pre></div>
+</div>
+<p>16个字节的空间是如何装得下24个字节的内容呢？答案是借用了下一个块的pre_size域，根据我们前面学到的知识可以了解到pre_size仅当前块处于释放状态时才起作用，因此实际上ptmalloc分配内存是以双字为基本单位的。以64位系统为例，分配出来的空间是16的整数倍，如果申请的size不是16的整数倍的话就借用下一块的pre_size域储存强行对齐到16字节。</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="off-by-one.html" class="btn btn-neutral float-right" title="off-by-one漏洞原理" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="heap_implementation_details.html" class="btn btn-neutral" title="深入理解堆的实现" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, CTF Wiki.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

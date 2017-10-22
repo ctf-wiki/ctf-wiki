@@ -1,0 +1,467 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SSRF 服务端请求伪造 &mdash; CTF Wiki  文档</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="索引"
+              href="../genindex.html"/>
+        <link rel="search" title="搜索" href="../search.html"/>
+    <link rel="top" title="CTF Wiki  文档" href="../index.html"/>
+        <link rel="next" title="PHP 代码审计" href="php.html"/>
+        <link rel="prev" title="CSRF 跨站请求伪造" href="csrf.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> CTF Wiki
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/cap.html">流量分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SSRF 服务端请求伪造</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">SSRF 简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">SSRF 漏洞出现的场景</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">常用的后端实现</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">阻碍 SSRF 漏洞利用的场景</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">利用 SSRF 进行端口扫描</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">协议利用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">参考资料</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reverse/index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../executable/elf/index.html">ELF文件</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">CTF Wiki</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>SSRF 服务端请求伪造</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/web/ssrf.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="ssrf">
+<h1>SSRF 服务端请求伪造<a class="headerlink" href="#ssrf" title="永久链接至标题">¶</a></h1>
+<div class="section" id="id1">
+<h2>SSRF 简介<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
+<p>SSRF，Server-Side Request Forgery，服务端请求伪造，是一种由攻击者构造形成由服务器端发起请求的一个漏洞。一般情况下，SSRF 攻击的目标是从外网无法访问的内部系统。</p>
+<p>漏洞形成的原因大多是因为服务端提供了从其他服务器应用获取数据的功能且没有对目标地址作过滤和限制。</p>
+<p>攻击者可以利用 SSRF 实现的攻击主要有 5 种：</p>
+<ol class="arabic simple">
+<li>可以对外网、服务器所在内网、本地进行端口扫描，获取一些服务的 banner 信息</li>
+<li>攻击运行在内网或本地的应用程序（比如溢出）</li>
+<li>对内网 WEB 应用进行指纹识别，通过访问默认文件实现</li>
+<li>攻击内外网的 web 应用，主要是使用 GET 参数就可以实现的攻击（比如 Struts2，sqli 等）</li>
+<li>利用 <code class="docutils literal"><span class="pre">file</span></code> 协议读取本地文件等</li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h2>SSRF 漏洞出现的场景<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li>能够对外发起网络请求的地方，就可能存在 SSRF 漏洞</li>
+<li>从远程服务器请求资源（Upload from URL，Import &amp; Export RSS Feed）</li>
+<li>数据库内置功能（Oracle、MongoDB、MSSQL、Postgres、CouchDB）</li>
+<li>Webmail 收取其他邮箱邮件（POP3、IMAP、SMTP）</li>
+<li>文件处理、编码处理、属性信息处理（ffmpeg、ImageMagic、DOCX、PDF、XML）</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>常用的后端实现<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<ol class="arabic">
+<li><p class="first"><code class="docutils literal"><span class="pre">file_get_contents</span></code></p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="nv">$content</span> <span class="o">=</span> <span class="nb">file_get_contents</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]);</span>
+    <span class="nv">$filename</span> <span class="o">=</span><span class="s1">&#39;./images/&#39;</span><span class="o">.</span><span class="nb">rand</span><span class="p">()</span><span class="o">.</span><span class="s1">&#39;;img1.jpg&#39;</span><span class="p">;</span>
+    <span class="nb">file_put_contents</span><span class="p">(</span><span class="nv">$filename</span><span class="p">,</span> <span class="nv">$content</span><span class="p">);</span>
+    <span class="k">echo</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">];</span>
+    <span class="nv">$img</span> <span class="o">=</span> <span class="s2">&quot;&lt;img src=</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="o">.</span><span class="nv">$filename</span><span class="o">.</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">/&gt;&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="k">echo</span> <span class="nv">$img</span><span class="p">;</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>这段代码使用 <code class="docutils literal"><span class="pre">file_get_contents</span></code> 函数从用户指定的 URL 获取图片。然后把它用一个随即文件名保存在硬盘上，并展示给用户。</p>
+<ol class="arabic" start="2">
+<li><p class="first"><code class="docutils literal"><span class="pre">fsockopen()</span></code></p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="k">function</span> <span class="nf">GetFile</span><span class="p">(</span><span class="nv">$host</span><span class="p">,</span><span class="nv">$port</span><span class="p">,</span><span class="nv">$link</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$fp</span> <span class="o">=</span> <span class="nb">fsockopen</span><span class="p">(</span><span class="nv">$host</span><span class="p">,</span> <span class="nb">intval</span><span class="p">(</span><span class="nv">$port</span><span class="p">),</span> <span class="nv">$errno</span><span class="p">,</span> <span class="nv">$errstr</span><span class="p">,</span> <span class="mi">30</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$fp</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">echo</span> <span class="s2">&quot;</span><span class="si">$errstr</span><span class="s2"> (error number </span><span class="si">$errno</span><span class="s2">) </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nv">$out</span> <span class="o">=</span> <span class="s2">&quot;GET </span><span class="si">$link</span><span class="s2"> HTTP/1.1</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">;</span>
+        <span class="nv">$out</span> <span class="o">.=</span> <span class="s2">&quot;Host: </span><span class="si">$host\r\n</span><span class="s2">&quot;</span><span class="p">;</span>
+        <span class="nv">$out</span> <span class="o">.=</span> <span class="s2">&quot;Connection: Close</span><span class="se">\r\n\r\n</span><span class="s2">&quot;</span><span class="p">;</span>
+        <span class="nv">$out</span> <span class="o">.=</span> <span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">;</span>
+        <span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fp</span><span class="p">,</span> <span class="nv">$out</span><span class="p">);</span>
+        <span class="nv">$contents</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="nb">feof</span><span class="p">(</span><span class="nv">$fp</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nv">$contents</span><span class="o">.=</span> <span class="nb">fgets</span><span class="p">(</span><span class="nv">$fp</span><span class="p">,</span> <span class="mi">1024</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="nb">fclose</span><span class="p">(</span><span class="nv">$fp</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nv">$contents</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>这段代码使用 <code class="docutils literal"><span class="pre">fsockopen</span></code> 函数实现获取用户制定 URL 的数据（文件或者 HTML）。这个函数会使用 socket 跟服务器建立 TCP 连接，传输原始数据。</p>
+<ol class="arabic" start="3">
+<li><p class="first"><code class="docutils literal"><span class="pre">curl_exec()</span></code></p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="nv">$link</span> <span class="o">=</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">];</span>
+    <span class="nv">$curlobj</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">();</span>
+    <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">,</span> <span class="nx">CURLOPT_POST</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">,</span><span class="nx">CURLOPT_URL</span><span class="p">,</span><span class="nv">$link</span><span class="p">);</span>
+    <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">,</span> <span class="nx">CURLOPT_RETURNTRANSFER</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="nv">$result</span><span class="o">=</span><span class="nb">curl_exec</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">);</span>
+    <span class="nb">curl_close</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">);</span>
+
+    <span class="nv">$filename</span> <span class="o">=</span> <span class="s1">&#39;./curled/&#39;</span><span class="o">.</span><span class="nb">rand</span><span class="p">()</span><span class="o">.</span><span class="s1">&#39;.txt&#39;</span><span class="p">;</span>
+    <span class="nb">file_put_contents</span><span class="p">(</span><span class="nv">$filename</span><span class="p">,</span> <span class="nv">$result</span><span class="p">);</span>
+    <span class="k">echo</span> <span class="nv">$result</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>使用 <code class="docutils literal"><span class="pre">curl</span></code> 获取数据。</p>
+</div>
+<div class="section" id="id4">
+<h2>阻碍 SSRF 漏洞利用的场景<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li>服务器开启 OpenSSL 无法进行交互利用</li>
+<li>服务端需要鉴权（Cookies &amp; User：Pass）不能完美利用</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h2>利用 SSRF 进行端口扫描<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h2>
+<p>根据服务器的返回信息进行判断，大部分应用不会判别端口，可通过返回的 banner 信息判断端口状态。</p>
+<p>后端实现</p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="nv">$link</span> <span class="o">=</span> <span class="nv">$_POST</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">];</span>
+    <span class="nv">$filename</span> <span class="o">=</span> <span class="s1">&#39;./curled/&#39;</span><span class="o">.</span><span class="nb">rand</span><span class="p">()</span><span class="o">.</span><span class="s1">&#39;txt&#39;</span><span class="p">;</span>
+    <span class="nv">$curlobj</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">(</span><span class="nv">$link</span><span class="p">);</span>
+    <span class="nv">$fp</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="nv">$filename</span><span class="p">,</span><span class="s2">&quot;w&quot;</span><span class="p">);</span>
+    <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">,</span> <span class="nx">CURLOPT_FILE</span><span class="p">,</span> <span class="nv">$fp</span><span class="p">);</span>
+    <span class="nb">curl_setopt</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">,</span> <span class="nx">CURLOPT_HEADER</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="nb">curl_exec</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">);</span>
+    <span class="nb">curl_close</span><span class="p">(</span><span class="nv">$curlobj</span><span class="p">);</span>
+    <span class="nb">fclose</span><span class="p">(</span><span class="nv">$fp</span><span class="p">);</span>
+    <span class="nv">$fp</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="nv">$filename</span><span class="p">,</span><span class="s2">&quot;r&quot;</span><span class="p">);</span>
+    <span class="nv">$result</span> <span class="o">=</span> <span class="nb">fread</span><span class="p">(</span><span class="nv">$fp</span><span class="p">,</span> <span class="nb">filesize</span><span class="p">(</span><span class="nv">$filename</span><span class="p">));</span>
+    <span class="nb">fclose</span><span class="p">(</span><span class="nv">$fp</span><span class="p">);</span>
+    <span class="k">echo</span> <span class="nv">$result</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+<p>构造一个前端页面</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">form</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;px&quot;</span> <span class="na">method</span><span class="o">=</span><span class="s">&quot;post&quot;</span> <span class="na">action</span><span class="o">=</span><span class="s">&quot;http://127.0.0.1/ss.php&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;text&quot;</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;url&quot;</span> <span class="na">value</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;submit&quot;</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;commit&quot;</span> <span class="na">value</span><span class="o">=</span><span class="s">&quot;submit&quot;</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>请求非 HTTP 的端口可以返回 banner 信息。</p>
+<p>或可利用 302 跳转绕过 HTTP 协议的限制。</p>
+<p>辅助脚本</p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="nv">$ip</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;ip&#39;</span><span class="p">];</span>
+<span class="nv">$port</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;port&#39;</span><span class="p">];</span>
+<span class="nv">$scheme</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">];</span>
+<span class="nv">$data</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">];</span>
+<span class="nb">header</span><span class="p">(</span><span class="s2">&quot;Location: </span><span class="si">$scheme</span><span class="s2">://</span><span class="si">$ip</span><span class="s2">:</span><span class="si">$port</span><span class="s2">/</span><span class="si">$data</span><span class="s2">&quot;</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://_thorns.gitbooks.io/sec/content/teng_xun_mou_chu_ssrf_lou_6d1e28_fei_chang_hao_de_.html">腾讯某处 SSRF 漏洞（非常好的利用点）附利用脚本</a></p>
+</div>
+<div class="section" id="id7">
+<h2>协议利用<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h2>
+<ul>
+<li><p class="first">Dict 协议</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">dict</span><span class="p">:</span><span class="o">//</span><span class="n">fuzz</span><span class="o">.</span><span class="n">wuyun</span><span class="o">.</span><span class="n">org</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">helo</span><span class="p">:</span><span class="nb">dict</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Gopher 协议</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">gopher</span><span class="p">:</span><span class="o">//</span><span class="n">fuzz</span><span class="o">.</span><span class="n">wuyun</span><span class="o">.</span><span class="n">org</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">gopher</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">File 协议</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">file</span><span class="p">:</span><span class="o">///</span><span class="n">etc</span><span class="o">/</span><span class="n">passwd</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h2>参考资料<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="http://tools.40huo.cn/#!papers.md">《Build Your SSRF EXP Autowork》猪猪侠</a></li>
+<li><a class="reference external" href="https://_thorns.gitbooks.io/sec/content/teng_xun_mou_chu_ssrf_lou_6d1e28_fei_chang_hao_de_.html">腾讯某处 SSRF 漏洞（非常好的利用点）附利用脚本</a></li>
+<li><a class="reference external" href="https://_thorns.gitbooks.io/sec/content/bilibilimou_fen_zhan_cong_xin_xi_xie_lu_dao_ssrf_z.html">bilibili 某分站从信息泄露到 ssrf 再到命令执行</a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="php.html" class="btn btn-neutral float-right" title="PHP 代码审计" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="csrf.html" class="btn btn-neutral" title="CSRF 跨站请求伪造" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, CTF Wiki.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="../_static/translations.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
