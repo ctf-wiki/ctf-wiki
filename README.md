@@ -1,5 +1,7 @@
 
-# 前言
+# CTF Wiki
+
+[![Build Status](https://travis-ci.org/ctf-wiki/ctf-wiki.svg?branch=master)](https://travis-ci.org/ctf-wiki/ctf-wiki)
 
 欢迎来到 **CTF Wiki**。
 
