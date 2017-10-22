@@ -30,7 +30,7 @@
 
 我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。
 
-关于更加具体的内容请参见 [ctf-wiki's wiki](https://github.com/ctf-wiki/ctf-wiki/wiki)。 其中主要包含
+关于更加具体的内容请参见 [CTF-Wiki's Wiki](https://github.com/ctf-wiki/ctf-wiki/wiki)。 其中主要包含
 
 - 交流方式
 - 贡献方式
