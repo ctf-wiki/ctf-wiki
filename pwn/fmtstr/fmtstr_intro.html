@@ -225,16 +225,15 @@
 <p>为了介绍格式化字符串漏洞的原理，会对格式化字符串的利用进行简单介绍。</p>
 <div class="section" id="id2">
 <h2>格式化字符串函数介绍<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>格式化字符串函数可以接受可变数量的参数，并<strong>将第一个参数作为格式化字符串，根据其来解析之后的参数</strong>。通俗来说，格式化字符串函数就是将计算机内存中表示的数据转化为我们人类可读的字符串格式。几乎所有的C/C++程序都会利用格式化字符串函数来<strong>输出信息，调试程序，或者处理字符串</strong>。一般来说，格式化字符串在利用的时候主要分为三个部分</p>
+<p>格式化字符串函数可以接受可变数量的参数，并将<strong>第一个参数作为格式化字符串，根据其来解析之后的参数</strong>。通俗来说，格式化字符串函数就是将计算机内存中表示的数据转化为我们人类可读的字符串格式。几乎所有的C/C++程序都会利用格式化字符串函数来<strong>输出信息，调试程序，或者处理字符串</strong>。一般来说，格式化字符串在利用的时候主要分为三个部分</p>
 <ul class="simple">
 <li>格式化字符串函数</li>
 <li>格式化字符串</li>
 <li>后续参数，<strong>可选</strong></li>
 </ul>
 <p>这里我们给出一个简单的例子，其实相信大多数人都接触过printf函数之类的。之后我们再一个一个进行介绍。</p>
-<div class="figure" id="id8">
-<img alt="基本例子" src="../../_images/printf.png" />
-<p class="caption"><span class="caption-text">基本例子</span></p>
+<div class="figure">
+<img alt="" src="../../_images/printf.png" />
 </div>
 <div class="section" id="id3">
 <h3>格式化字符串函数<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
@@ -297,44 +296,38 @@
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span><span class="p">[</span><span class="n">parameter</span><span class="p">][</span><span class="n">flags</span><span class="p">][</span><span class="n">field</span> <span class="n">width</span><span class="p">][</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="n">length</span><span class="p">]</span><span class="nb">type</span>
 </pre></div>
 </div>
-<p>每一种pattern的含义请具体参考维基百科的<a class="reference external" href="https://zh.wikipedia.org/wiki/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2">格式化字符串</a>
-。以下几个pattern中的对应选择需要重点关注</p>
+<p>每一种pattern的含义请具体参考维基百科的<a class="reference external" href="https://zh.wikipedia.org/wiki/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2">格式化字符串</a> 。以下几个pattern中的对应选择需要重点关注</p>
 <ul class="simple">
-<li>parameter</li>
+<li>parameter<ul>
 <li>n$，获取格式化字符串中的指定参数</li>
+</ul>
+</li>
 <li>flag</li>
-<li><ul class="first">
-<li></li>
-</ul>
-</li>
-<li><ul class="first">
-<li></li>
-</ul>
-</li>
-<li>field width</li>
+<li>field width<ul>
 <li>输出的最小宽度</li>
-<li>precision</li>
+</ul>
+</li>
+<li>precision<ul>
 <li>输出的最大长度</li>
-<li>length，输出的长度</li>
+</ul>
+</li>
+<li>length，输出的长度<ul>
 <li>hh，输出一个字节</li>
-<li>h，输出一个双字节</li>
-<li>​</li>
-<li>type</li>
+<li>h，输出一个双字节 ​</li>
+</ul>
+</li>
+<li>type<ul>
 <li>d/i，有符号整数</li>
 <li>u，无符号整数</li>
-<li>x/X，
-16进制<code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span></code>。’<code class="docutils literal"><span class="pre">x</span></code>’使用小写字母；’<code class="docutils literal"><span class="pre">X</span></code>’使用大写字母。如果指定了精度，则输出的数字不足时在左侧补0。默认精度为1。精度为0且值为0，则输出为空。</li>
-<li>o，
-8进制<code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span></code>。如果指定了精度，则输出的数字不足时在左侧补0。默认精度为1。精度为0且值为0，则输出为空。</li>
-<li>s，如果没有用l标志，输出<a class="reference external" href="https://zh.wikipedia.org/w/index.php?title=Null%E7%BB%93%E5%B0%BE%E5%AD%97%E7%AC%A6%E4%B8%B2&amp;action=edit&amp;redlink=1">null结尾字符串</a>直到精度规定的上限；如果没有指定精度，则输出所有字节。如果用了l标志，则对应函数参数指向wchar_t型的数组，输出时把每个宽字符转化为多字节字符，相当于调用<code class="docutils literal"><span class="pre">wcrtomb</span></code>函数。</li>
-<li>c，
-如果没有用l标志，把int参数转为<code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">char</span></code>型输出；如果用了l标志，把wint_t参数转为包含两个元素的<code class="docutils literal"><span class="pre">wchart_t</span></code>数组，其中第一个元素包含要输出的字符，第二个元素为null宽字符。</li>
-<li>p， void *型，输出对应变量的值。printf(“%p”,
-a)用地址的格式打印变量a的值，printf(“%p”,
-&amp;a)打印变量a所在的地址。</li>
+<li>x/X，16进制&nbsp;unsigned int&nbsp;。x使用小写字母；X使用大写字母。如果指定了精度，则输出的数字不足时在左侧补0。默认精度为1。精度为0且值为0，则输出为空。</li>
+<li>o，8进制unsigned int。如果指定了精度，则输出的数字不足时在左侧补0。默认精度为1。精度为0且值为0，则输出为空。</li>
+<li>s，如果没有用l标志，输出&nbsp;null结尾字符串&nbsp;直到精度规定的上限；如果没有指定精度，则输出所有字节。如果用了l标志，则对应函数参数指向wchar_t型的数组，输出时把每个宽字符转化为多字节字符，相当于调用wcrtomb函数。</li>
+<li>c，如果没有用l标志，把int参数转为unsigned char型输出；如果用了l标志，把wint_t参数转为包含两个元素的wchart_t数组，其中第一个元素包含要输出的字符，第二个元素为null宽字符。</li>
+<li>p， void *型，输出对应变量的值。printf(“%p”,a)用地址的格式打印变量a的值，printf(“%p”, &amp;a)打印变量a所在的地址。</li>
 <li>n，不输出字符，但是把已经成功输出的字符个数写入对应的整型指针参数所指的变量。</li>
-<li>%， ‘<code class="docutils literal"><span class="pre">%</span></code>’字面值，不接受任何flags, width,
-precision or length。</li>
+<li>%， ‘<code class="docutils literal"><span class="pre">%</span></code>’字面值，不接受任何flags, width,</li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section" id="id5">
@@ -346,7 +339,7 @@ precision or length。</li>
 <h2>格式化字符串漏洞原理<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h2>
 <p>在一开始，我们就给出格式化字符串的基本介绍，这里再说一些比较细致的内容。我们上面说，格式化字符串函数是根据格式化字符串函数来进行解析的。<strong>那么相应的要被解析的参数的个数也自然是由这个格式化字符串所控制</strong>。比如说’%s’表明我们会输出一个字符串参数。</p>
 <p>我们再继续以上面的为例子进行介绍</p>
-<div class="figure" id="id9">
+<div class="figure" id="id8">
 <img alt="基本例子" src="../../_images/printf.png" />
 <p class="caption"><span class="caption-text">基本例子</span></p>
 </div>

