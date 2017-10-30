@@ -30,14 +30,8 @@
 
 ## 想要帮助 Wiki 更加完善？
 
-我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。
+我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。 
 
-关于更加具体的内容请参见 [CTF-Wiki's Wiki](https://github.com/ctf-wiki/ctf-wiki/wiki)。 其中主要包含
-
-- 交流方式
-- 贡献方式
-- 文档内容
-- Sphinx 注意事项
-- 中文文档编写规范
+具体的贡献方式请参见 [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/blob/master/CONTRIBUTING.md)。 
 
 在你决定要贡献内容之前，请你务必看完这些内容。我们期待你的加入。
