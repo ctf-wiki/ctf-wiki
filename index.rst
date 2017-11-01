@@ -28,10 +28,6 @@
    :maxdepth: 2
    :caption: Misc
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Misc
-
    misc/about.rst
    misc/recon.rst
    misc/encode/index.rst
