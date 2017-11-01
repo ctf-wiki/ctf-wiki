@@ -3,20 +3,14 @@
 图片分析
 =======================
 
-与图片相关的考点主要有图片隐写，图片修复等。
-
--  扩展阅读
-
-`隐写术总结 <http://bobao.360.cn/learning/detail/243.html>`__
+图像文件能够很好地包含黑客文化，因此CTF竞赛中经常会出现各种图像文件。图像文件有多种复杂的格式，可以用于各种涉及到元数据、信息丢失和无损压缩、校验、隐写或可视化数据编码的分析解密，都是\ ``Misc``\ 中的一个很重要的出题方向。涉及到的知识点很多(包括基本的文件格式，常见的隐写手法及隐写用的软件)，有的地方也需要去进行深入的理解。
 
 
 .. toctree::
    :maxdepth: 2
    :caption: 目录
 
-   tools.rst
-   strategy.rst
-   repair.rst
-   double_picture.rst
-   lsb.rst
-   others.rst
+   about.rst
+   png.rst
+   jpg.rst
+   gif.rst

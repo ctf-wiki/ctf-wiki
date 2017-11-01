@@ -28,14 +28,21 @@
    :maxdepth: 2
    :caption: Misc
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Misc
+
+   misc/about.rst
    misc/recon.rst
    misc/encode/index.rst
+   misc/prefix.rst
    misc/picture/index.rst
    misc/archive/index.rst
    misc/audio/index.rst
    misc/disk_memory/index.rst
    misc/cap.rst
    misc/others.rst
+
 
 
 .. toctree::
