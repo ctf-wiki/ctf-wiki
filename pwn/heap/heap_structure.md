@@ -1,9 +1,9 @@
-# 堆数据结构
+# 堆相关数据结构
 
-既然堆的操作本身这么复杂，那么在计算机系统内部必然也有相应的数据结构来管理堆。与堆相应的数据结构主要分为
+既然堆的操作本身这么复杂，那么在glibc内部必然也有相应的精妙设计的数据结构来管理它。与堆相应的数据结构主要分为
 
-- 控制结构，主要用于控制堆，可以通过这些数据结构来得到堆的一些基本信息。
-- 存储结构，主要用于表示申请的内存块，以便于可以让用户正常的申请与释放这些堆块。
+- 宏观结构，主要说明堆的宏观信息，可以通过这些数据结构来得到堆的一些基本信息。
+- 微观结构，主要用于表示在宏观结构下更加细致的结构，一般堆的分配与回收主要是与这些结构进行交流。
 
 # Overview？？？？
 
@@ -17,7 +17,7 @@
 
 ### arena 数量
 
-首先，我们需要明确的是，不是每一个线程都会有自己对应的arena，这是因为每个系统的核数是有限的，当线程数大于核数的二倍时，就必然有线程处于等待状态。所以没有必要为每个线程分配一个arena的。具体的[约束](https://github.com/sploitfun/lsploits/blob/master/glibc/malloc/arena.c#L847)如下
+不是每一个线程都会有对应的arena，这是因为每个系统的核数是有限的，当线程数大于核数的二倍时，就必然有线程处于等待状态。所以没有必要为每个线程分配一个arena的。具体的[约束](https://github.com/sploitfun/lsploits/blob/master/glibc/malloc/arena.c#L847)如下
 
 ```text
 For 32 bit systems:
@@ -30,7 +30,7 @@ For 64 bit systems:
 
 ### arena 分配规则
 
-待补充。
+**待补充。**
 
 ### 区别
 
@@ -38,7 +38,7 @@ For 64 bit systems:
 
 ## heap_info
 
-该数据结构是专门为从Memory Mapping Segment处申请的内存准备的。当主线程申请较小的内存空间时，可以通过sbrk()函数扩展program break location获得（直到触及Memory Mapping Segment），因此只有一个heap。所以没有heap_info数据结构。
+该数据结构是专门为从Memory Mapping Segment处申请的内存准备的。当主线程申请较小的内存空间时，可以通过sbrk()函数扩展program break location获得（直到触及Memory Mapping Segment），因此主线程只有一个heap，没有heap_info数据结构。
 
 heap_info的主要结构如下
 
@@ -81,23 +81,20 @@ typedef struct _heap_info
 
 该结构主要是描述堆的基本信息，包括
 
-- 给出了该堆对应的heap arena的地址。
-- 在该堆前面的heap_info的地址，这里可以看到用来描述每个堆的heap_info是通过单向链表进行链接的。
-- size表示当前堆的大小。
-- 最后一部分确保对齐。（**这里负数使用的缘由是什么呢**？）
+- 堆对应的heap arena的地址
+- 该堆前面的heap_info的地址，这里可以看到每个堆的heap_info是通过单向链表进行链接的
+- size表示当前堆的大小
+- 最后一部分确保对齐（**这里负数使用的缘由是什么呢**？）
 
-看起来该结构应该是相当重要的，但是如果你仔细看看整个malloc的实现的话，它出现的频率并不高。
+看起来该结构应该是相当重要的，但是如果如果我们仔细看完整个malloc的实现的话，就会发现它出现的频率并不高。
 
-程序刚开始执行时，每个线程是没有heap区域的，当申请内存的时，就需要一个结构来记录对应的信息，而heap_info的作用就是这个。而且当该heap的资源被使用完后，就必须得再次申请heap了。此外，一般申请的heap是不连续的，因此使用heap_info结构去记录不同heap之间的链接结构。
+程序刚开始执行时，每个线程是没有heap区域的。当其申请内存时，就需要一个结构来记录对应的信息，而heap_info的作用就是这个。而且当该heap的资源被使用完后，就必须得再次申请heap了。此外，一般申请的heap是不连续的，因此需要记录不同heap之间的链接结构。
 
 ## malloc_state
 
-该结构用于管理堆，记录每个arena当前的申请内存的状态。无论是对于thread arena还是说main arena，它们都只有一个malloc state结构。由于thread的arena可能有多个，malloc state结构会在最新申请的arena中。该结构体中一般存储如下信息
+该结构用于管理堆，记录每个arena当前的申请内存的具体状态，比如说有什么大小的空闲chunk，如何快速判断有没有什么大小的空闲的chunk。无论是对于thread arena还是说main arena，它们都只有一个malloc state结构。由于thread的arena可能有多个，malloc state结构会在最新申请的arena中。
 
-- bins、top chunk的信息
-- last_remainder的信息
-
-注意，main arena的malloc_state并不是heap segment的一部分，而是一个全局变量，存储在libc.so的数据段。
+**注意，main arena的malloc_state并不是heap segment的一部分，而是一个全局变量，存储在libc.so的数据段。**
 
 其结构如下
 
@@ -161,17 +158,17 @@ struct malloc_state {
 
 ## malloc_par
 
-
+**待补充**
 
 # 微观结构
 
-基本上上面的结构就是堆的宏观结构，下面就是堆中比较细节的结构了，而我们关于堆的利用业主要是集中在这些结构中。
+上面的结构就是堆的宏观结构，下面就是堆中比较细节的结构了，**关于堆的利用主要是集中在这些结构中**。
 
 ## malloc_chunk
 
 ### 概述
 
-在程序中，由malloc申请的内存被称为chunk。该内存由malloc_chunk结构体来表示。当该chunk被free掉，会被加入到对应的管理列表中。非常有意思的是，**ptmalloc2中利用了一个统一的结构来实现chunk，无论一个chunk的大小如何，处于分配状态或者释放状态，它们所使用的数据结构相同**。但是，需要注意的是，虽然它们使用了同一个数据结构，但是根据堆是否被释放，它们的表现形式会有所不同。
+在程序的使用过程中，我们称由malloc申请的内存为chunk。该块内存在ptmalloc内部用malloc_chunk结构体来表示。该chunk被free后会被加入到对应的管理列表中。非常有意思的是，**ptmalloc2中使用了一个统一的结构来实现chunk，无论一个chunk的大小如何，处于分配状态或者释放状态，它们所使用的数据结构相同**。需要注意的是，虽然它们使用了同一个数据结构，但是根据是否被释放，它们的表现形式会有所不同。
 
 malloc_chunk的结构如下
 
@@ -201,18 +198,17 @@ struct malloc_chunk {
 - **size** ，该chunk的大小，大小必须是8（32位）的整数倍。如果申请的大小不是8的整数倍，会被转换满足大小的最小的8的倍数。该字段的最低的三个比特位从高到低分别表示
   - NON_MAIN_ARENA 记录当前chunk是否不属于主线程，1表示不属于，0表示属于。
   - IS_MAPPED 记录当前chunk是否是由mmap分配的。 
-  - PREV_INUSE 记录前一个chunk块是否被分配。一般来说，对于堆中第一个申请的内存块来说，其size字段的P位都会被设置为1，以便于防止访问前面的非法内存。而且，当一个chunk的size的P位为0时，我们能通过prev_size字段来获取上一个chunk的地址。这也方便进行空闲chunk之间的合并。
-- **fd,bk**。 chunk处于分配状态时，从fd字段开始是用户的数据，否则在chunk是空闲的时候，其字段的含义如下
+  - PREV_INUSE 记录前一个chunk块是否被分配。一般来说，堆中第一个被分配的内存块的size字段的P位都会被设置为1，以便于防止访问前面的非法内存。而且，当一个chunk的size的P位为0时，我们能通过prev_size字段来获取上一个chunk的地址。这也方便进行空闲chunk之间的合并。
+- **fd,bk**。 chunk处于分配状态时，从fd字段开始是用户的数据，否则chunk空闲时，其字段的含义如下
   - fd指向下一个（非物理相邻）空闲的chunk
-  - bk指向上一个空闲（非物理相邻）的chunk
+  - bk指向上一个（非物理相邻）空闲的chunk
   - 通过fd和bk可以将空闲的chunk块加入到空闲的chunk块链表进行统一管理
-- **fd_nextsize, bk_nextsize**，也是只有chunk空闲的时候才使用，不过其用于较大的chunk。
-  - fd_nextsize指向下一个比当前chunk大的第一个空闲块
-  - bd_nextsize指向前一个比当前chunk小的第一个空闲块
+- **fd_nextsize, bk_nextsize**，也是只有chunk空闲的时候才使用，不过其用于较大的chunk（large chunk）。
+  - fd_nextsize指向前一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针（可暂不考虑）。
+  - bk_nextsize指向后一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针（可暂不考虑）。
+  - **这样做可以避免在寻找合适chunk时挨个遍历。**
 
-我们可以发现，如果一个chunk处于free状态的话，其实是可能有两个位置记录其相应的大小的，一个是本身的记录，一个是其后一个chunk会记录。而这也恰好加速了两个物理相邻的空闲chunk块的合并速度。
-
-一个已经分配的chunk的样子如下。**一般来说，我们称前两个字段称为chunk header，后面的部分称为user data。我们每次malloc申请得到的内存指针，其实指向user data的起始处。** 
+一个已经分配的chunk的样子如下。**我们称前两个字段称为chunk header，后面的部分称为user data。每次malloc申请得到的内存指针，其实指向user data的起始处。** 
 
 当一个chunk处于使用状态时，它的下一个chunk的prev_size域无效，所以下一个chunk的该部分也可以被当前chunk使用。**这就是chunk中的空间复用。**
 
@@ -233,7 +229,7 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-被释放的chunk一般被记录在链表中（可能是循环链表，也可能是单向链表）。具体形状如下
+被释放的chunk一般被记录在链表中（可能是循环链表，也可能是单向链表）。具体结构如下
 
 ```c++
 chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -255,9 +251,9 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
+我们可以发现，如果一个chunk处于free状态，其实是可能有两个位置记录其相应的大小的，一个是本身的记录，一个是其后一个chunk会记录。而一般来说相邻的两个空闲chunk会被合并为一个chunk，这也恰好加速了两个物理相邻的空闲chunk块的合并速度。
 
-
-**一些关于堆的约束？？？？**
+**一些关于堆的约束，后面详细考虑**
 
 ```c++
 /*
@@ -283,7 +279,7 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 ### chunk相关宏
 
-这里主要包含了关于chunk的大小、对齐检查以及一些转换的宏代码。
+这里主要介绍关于chunk的大小、对齐检查以及一些转换的宏代码。
 
 **chunk与mem指针头部的转换**
 
@@ -342,7 +338,7 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 ```c++
 /* pad request bytes into a usable size -- internal version */
-
+//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1
 #define request2size(req)                                                      \
     (((req) + SIZE_SZ + MALLOC_ALIGN_MASK < MINSIZE)                           \
          ? MINSIZE                                                             \
@@ -358,9 +354,7 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     (sz) = request2size(req);
 ```
 
-当一个chunk处于分配状态时，它的下一个chunk的prev_size字段必然是无效的，故而这个字段就可以被当前这个chunk使用。这就是ptmalloc中chunk之间的复用。因此，实际上一个将要被分配的chunk的大小应该为先添加上存储本chunk的大小字段的字节大小，然后再按照MALLOC的规定进行对齐，这里之所以不需要再加上prev_size字段所占据的大小，就是可以复用下一个chunk的这一个字段作为当前chunk的数据段。除此之外，我们必须得确保实际分配的chunk大小必然至少可以存储prev_size，size，fd，bk这四个字段，所以我们会将其与MINSIZE进行比较。如果调整后不满足最低要求，那么我们就需要直接分配MINSIZE字节，否则，我们就可以按照之前的计算公式来进行计算。
-
-
+当一个chunk处于已分配状态时，它的物理相邻的下一个chunk的prev_size字段必然是无效的，故而这个字段就可以被当前这个chunk使用。这就是ptmalloc中chunk之间的复用。因此，实际要被分配的内存的大小应该为先添加上存储本chunk的大小字段的字节大小，然后再按照MALLOC的规定进行对齐，这里之所以不需要再加上prev_size字段所占据的大小，就是可以复用下一个chunk的这一字段作为当前chunk的数据段。除此之外，我们必须得确保chunk实际所能利用的大小至少可以存储prev_size，size，fd，bk这四个字段，所以我们会将其与MINSIZE进行比较。如果调整后不满足最低要求，那么我们就需要直接分配MINSIZE字节，否则，我们就可以按照之前的计算公式来进行计算。
 
 **标记位相关**
 
@@ -478,20 +472,15 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 #define clear_inuse_bit_at_offset(p, s)                                        \
     (((mchunkptr)(((char *) (p)) + (s)))->mchunk_size &= ~(PREV_INUSE))
-
-
-
 ```
-
-
 
 ## bin
 
 ### 概述
 
-我们曾经说到过，用户释放掉的chunk不会马上归还给系统，ptmalloc会统一管理heap和mmap映射区域中的空闲的chunk。当用户进行下一次分配请求时，ptmalloc分配器会首先试图在空闲的chunk中挑选一块合适的给用户。这样可以避免频繁的系统调用，降低内存分配的开销。
+我们曾经说到过，用户释放掉的chunk不会马上归还给系统，ptmalloc会统一管理heap和mmap映射区域中的空闲的chunk。当用户再一次请求分配内存时，ptmalloc分配器会试图在空闲的chunk中挑选一块合适的给用户。这样可以避免频繁的系统调用，降低内存分配的开销。
 
-在具体的实现中，对于空闲的chunk，ptmalloc采用分箱式方法进行管理，根据空闲的chunk的大小以及使用状态将chunk进行初步分为4类：fast bins，small bins，large bins，unsorted bins。每类中仍然有更加细化的划分，相似大小的chunk会用双向链表链接起来。也就是说，在每类bin的内部仍然会有仍然存在多个互不相关的链表来保存不同大小的chunk。
+在具体的实现中，对于空闲的chunk，ptmalloc采用分箱式方法进行管理。首先，它会根据空闲的chunk的大小以及使用状态将chunk进行初步分为4类：fast bins，small bins，large bins，unsorted bins。每类中仍然有更加细化的划分，相似大小的chunk会用双向链表链接起来。也就是说，在每类bin的内部仍然会有多个互不相关的链表来保存不同大小的chunk。
 
 对于small bins，large bins，unsorted bins来说，Ptmalloc将它们维护在同一个数组中。这些bin对应的数据结构在malloc_state中，如下
 
@@ -507,7 +496,7 @@ mchunkptr bins[ NBINS * 2 - 2 ];
 | ----- | ---------------------- | ----------------- | ---------------------- | ----------------- |
 | bin下标 | 0                      | 1                 | 2                      | 3                 |
 
-可以看出除了第一个bin（unsorted bin）外，后面的每个bin会共享前面的bin的字段，将其视为malloc chunk部分的prev_size和size。这里也说明了一个问题，bin的下标和我们所说的第几个bin并不是一致的。**这里也说明了一个问题，bin表头的chunk的prev_size与size字段不能随便修改，因为这两个字段是被其它bin所利用的。**
+可以看出除了第一个bin（unsorted bin）外，后面的每个bin会共享前面的bin的字段，将其视为malloc chunk部分的prev_size和size。这里也说明了一个问题，**bin的下标和我们所说的第几个bin并不是一致的**。**这里也说明bin表头的chunk的prev_size与size字段不能随便修改，因为这两个字段是被其它bin所利用的。**
 
 相应的宏如下
 
@@ -531,39 +520,25 @@ typedef struct malloc_chunk *mbinptr;
 #define last(b) ((b)->bk)
 ```
 
-**这里给出一个更加详细的图。**
+**这里给出一个更加详细的图。?????**
 
 
 
 数组中的bin依次介绍如下
 
 1. 第一个为unsorted bin，字如其面，这里面的chunk没有进行排序，存储的chunk比较杂。
-2. 索引从2到64的bin称为small bins，同一个small bin中的chunk的大小相同。两个相邻的small bin中的chunk大小相差的字节数为**2个机器字长**，即32位相差8字节，64位相差16字节。
-3. small bins后面的bin被称作large bins。这些bin存储的chunk的大小大于large bins中的每一个bin分别包含了一个给定范围内的chunk，其中的chunk按大小序排列。相同大小的chunk同样按照最近使用顺序排列。
+2. 索引从2到64的bin称为small bins，同一个small bin中的chunk的大小相同。两个相邻索引的small bin中的chunk大小相差的字节数为**2个机器字长**，即32位相差8字节，64位相差16字节。
+3. small bins后面的bin被称作large bins。large bins中的每一个bin都包含一定范围内的chunk，其中的chunk按大小序排列。相同大小的chunk同样按照最近使用顺序排列。
 
 从small bin开始，每个bin的所存储的chunk的大小会不断增加。
-
-
 
 此外，上述这些bin的排布都会遵循一个原则：**任意两个物理相邻的空闲chunk不能在一起**。
 
 需要注意的是，并不是所有的chunk被释放后就立即被放到bin中。ptmalloc为了提高分配的速度，会把一些小的的chunk**先**放到fast bins的容器内。**而且，fastbin中容器中的chunk的使用标记总是被置位的，所以不满足上面的那个原则。**
 
-一些bin中会记录着大小一样的chunk，而另外一些bin则会记录大小位于一定区间的chunk。前者由于大小都一样，其中的chunk不需要进行排序，但链表的头部是最近刚刚被释放的chunk。后者中的chunk则按照其大小排序。
-
-```c++
-没看明白，
-    Chunks of the same size are linked with the most
-    recently freed at the front, and allocations are taken from the
-    back.  This results in LRU (FIFO) allocation order, which tends
-    to give each chunk an equal opportunity to be consolidated with
-    adjacent freed chunks, resulting in larger free chunks and less
-    fragmentation.
-```
-
 ### fast bin
 
-对于大多数程序来说，经常会申请以及释放一些比较小的内存块。而且，这个频率相对来说比较高。如果我们在将一些较小的chunk释放之后发现存在与之相邻的空闲的chunk并将它们进行合并，当我们下一次再次申请相应大小的chunk时，就需要对chunk进行分割，这样就大大降低了堆的利用效率。**因为我们把大部分时间花在了合并与分割以及中间检查的过程中。**因此，ptmalloc中专门设计了一个bin称之为fastbin，就是 malloc state 中的 fastbinsY 。其对应的数据结构如下
+对于大多数程序来说，经常会申请以及释放一些比较小的内存块。而且，这个频率相对来说比较高。如果我们在将一些较小的chunk释放之后发现存在与之相邻的空闲的chunk并将它们进行合并，当我们下一次再次申请相应大小的chunk时，就需要对chunk进行分割，这样就大大降低了堆的利用效率。**因为我们把大部分时间花在了合并与分割以及中间检查的过程中。**因此，ptmalloc中专门设计了fast bin，就是 malloc state 中的 fastbinsY 。其对应的数据结构如下
 
 ```c++
 /*
@@ -591,7 +566,7 @@ typedef struct malloc_chunk *mfastbinptr;
 */
 ```
 
-为了更加高效地利用fastbin，glibc 直接采用单向链表对其中的每个bin进行组织，并且每个bin采取LIFO策略，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的chunk的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中是否有bin中有对应大小的空闲块，如果有的话，就会直接从这个bin中获取chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
+为了更加高效地利用fast bin，glibc 直接采用单向链表对其中的每个bin进行组织，并且**每个bin采取LIFO策略**，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的chunk的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中是否有bin中有对应大小的空闲块，如果有的话，就会直接从这个bin中获取chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
 
 默认情况下（32位为例）， fastbin 中默认支持最大的 chunk 的数据空间大小为64字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的bin的个数为10个，从数据空间为8字节开始一直到80字节，定义如下
 
@@ -700,28 +675,16 @@ ptmalloc默认情况下会调用set_max_fast(s)将全局变量 global_max_fast �
 #define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)
 ```
 
-
-
-```c++
-
-
-```
-
-
-
-**malloc_consolidate，函数可以将fastbin中所有的chunk释放并合并在一起。？？？** 
+**malloc_consolidate函数可以将fastbin中所有的chunk释放并合并在一起。？？？** 
 
 ```
 /*
-？？？？？？？？？？？？
-    Chunks in fastbins keep their inuse bit set, so they cannot
+	Chunks in fastbins keep their inuse bit set, so they cannot
     be consolidated with other free chunks. malloc_consolidate
     releases all chunks in fastbins and consolidates them with
     other free chunks.
  */
 ```
-
-
 
 ### small bin
 
@@ -736,7 +699,7 @@ small bins中每个chunk的大小与其所在的bin的index的关系为：chunk_
 | x    | 2\*4\*x        | 2\*8\*x        |
 | 63   | 504            | 1008           |
 
-small bins中一共有62个链表，每个链表中存储的chunk大小都一致。比如对于32位系统来说，下标2对应的双向链表中存储的chunk大小为均为16字节。其中，每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，small bin中每条链表都采用LIFO的规则，所以同一个链表中后被释放的chunk会首先被分配出去。
+small bins中一共有62个链表，每个链表中存储的chunk大小都一致。比如对于32位系统来说，下标2对应的双向链表中存储的chunk大小为均为16字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，**small bins中每个bin对应的链表采用FIFO的规则**，所以同一个链表中先被释放的chunk会先被分配出去。
 
 small bin相关的宏如下
 
@@ -827,8 +790,6 @@ large bins中一共包括63个bin，每个bin中的chunk的大小不再一致，
                                                 : largebin_index_32(sz))
 ```
 
-
-
 ### unsorted bin
 
 unsorted bin可以视为small bins 与large bins 之间的缓冲。	unsorted bin只有一个链表，其中的空闲chunk不会进行排序，其空闲的chunk主要有两个来源
@@ -874,8 +835,6 @@ unsorted bin处于我们之前所说的数组下标1处。
     ((in_smallbin_range(sz)) ? smallbin_index(sz) : largebin_index(sz))
 ```
 
-
-
 ## top chunk
 
 glibc中对于top chunk的描述如下
@@ -903,23 +862,13 @@ glibc中对于top chunk的描述如下
 #define initial_top(M) (unsorted_chunks(M))
 ```
 
+程序第一次进行malloc的时候，就会将heap分为两块，一块给用户，剩下的那块就是top chunk。其实，所谓的top chunk就是处于当前堆的物理地址最高的chunk。这个chunk不属于任何一个bin，它的作用在于当所有的bin都无法满足用户请求的大小时，如果其大小不小于指定的大小，就进行分配，并将剩下的部分作为新的top chunk。否则，就对heap进行扩展后再进行分配。在main arena中通过sbrk扩展heap，而在thread arena中通过mmap分配新的heap。
+
 需要注意的是，top chunk的prev_inuse比特位始终为1，否则其前面的chunk就会被合并到top chunk中。
 
 ## last remainder
 
-简单的说，last remainder就是当一块chunk被分割成两半时剩下的那一块。
-
-
-
-
-
-
-
-
-
-
-
-
+在用户使用malloc请求分配内存时，ptmalloc2找到的chunk可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为last remainder chunk，unsort bin也会存这一块。
 
 
 

