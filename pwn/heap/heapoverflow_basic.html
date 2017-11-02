@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>堆溢出原理 &mdash; CTF Wiki  文档</title>
+  <title>堆溢出 &mdash; CTF Wiki  文档</title>
   
 
   
@@ -37,7 +37,7 @@
         <link rel="search" title="搜索" href="../../search.html"/>
     <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
         <link rel="up" title="堆利用" href="index.html"/>
-        <link rel="next" title="off-by-one漏洞原理" href="off-by-one.html"/>
+        <link rel="next" title="Use After Free" href="use_after_free.html"/>
         <link rel="prev" title="深入理解堆的实现" href="heap_implementation_details.html"/> 
 
   
@@ -140,19 +140,20 @@
 <li class="toctree-l2"><a class="reference internal" href="heap_basic_intro.html">基本堆介绍</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">堆溢出原理</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">堆溢出</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id2">介绍</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id3">基本示例</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id4">小总结</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id5">寻找堆分配函数</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id6">寻找危险函数</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id7">确定填充长度</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id13">确定填充长度</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="off-by-one.html">off-by-one漏洞原理</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin-attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
 </ul>
 </li>
 </ul>
@@ -205,7 +206,7 @@
         
           <li><a href="index.html">堆利用</a> &raquo;</li>
         
-      <li>堆溢出原理</li>
+      <li>堆溢出</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -225,7 +226,7 @@
            <div itemprop="articleBody">
             
   <div class="section" id="id1">
-<h1>堆溢出原理<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<h1>堆溢出<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id2">
 <h2>介绍<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
 <p>堆溢出指的是程序向某个堆块中写入的字节数超过了这个堆块本身所申请的字节数，因而导致数据溢出了当前的堆块并覆盖到相邻的下一个堆块。这种问题是一种特定的缓冲区溢出漏洞(比如说，还有向栈写，向bss段写)。而对于黑客来说，堆溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。此外，我们也不难发现，发生堆溢出的基本前提是</p>
@@ -250,8 +251,7 @@
 </pre></div>
 </div>
 <p>这个程序的主要目的是调用malloc分配一块堆上的内存，之后向这个堆块中写入一个字符串，如果输入的字符串过长会导致溢出chunk的区域并覆盖到其后的top
-chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可能并不是top
-chunk)。</p>
+chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可能并不是top chunk)。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span><span class="n">chunk</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fe1</span> <span class="o">&lt;===</span><span class="n">top</span> <span class="n">chunk</span>
@@ -317,7 +317,7 @@ chunk)。</p>
 <p>常见的危险函数如下</p>
 <ul class="simple">
 <li>输入<ul>
-<li>gets，直接读取一行，忽略 ‘x00’</li>
+<li>gets，直接读取一行，忽略’:raw-latex:<a href="#id7"><span class="problematic" id="id8">`</span></a>x`00’</li>
 <li>scanf</li>
 <li>vscanf</li>
 </ul>
@@ -327,17 +327,17 @@ chunk)。</p>
 </ul>
 </li>
 <li>字符串<ul>
-<li>strcpy，字符串复制，遇到 ‘x00’ 停止</li>
-<li>strcat，字符串拼接，遇到 ‘x00’ 停止</li>
+<li>strcpy，字符串复制，遇到’:raw-latex:<a href="#id9"><span class="problematic" id="id10">`</span></a>x`00’停止</li>
+<li>strcat，字符串拼接，遇到’:raw-latex:<a href="#id11"><span class="problematic" id="id12">`</span></a>x`00’停止</li>
 <li>bcopy</li>
 </ul>
 </li>
 </ul>
 </div>
-<div class="section" id="id7">
-<h3>确定填充长度<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<p>这一部分主要是计算  <strong>我们开始写入的地址与我们所要覆盖的地址之间的距离</strong> 。
-一个常见的误区是malloc的参数等于实际分配堆块的大小，但是事实上ptmalloc分配出来的堆块是存在对其长度的。这个长度一般是字长，比如32位系统是4个字节，64位系统是8个字节。但是对于小于2倍字长的请求，malloc会直接返回2倍字长的块也就是最小chunk，比如64位系统执行 <code class="docutils literal"><span class="pre">malloc(0)</span></code> 会返回用户区域为16字节的块。</p>
+<div class="section" id="id13">
+<h3>确定填充长度<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
+<p>这一部分主要是计算<strong>我们开始写入的地址与我们所要覆盖的地址之间的距离</strong>。
+一个常见的误区是malloc的参数等于实际分配堆块的大小，但是事实上ptmalloc分配出来的堆块是存在对其长度的。这个长度一般是字长，比如32位系统是4个字节，64位系统是8个字节。但是对于小于2倍字长的请求，malloc会直接返回2倍字长的块也就是最小chunk，比如64位系统执行<code class="docutils literal"><span class="pre">malloc(0)</span></code>会返回用户区域为16字节的块。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
 
 <span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
@@ -392,7 +392,7 @@ chunk)。</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="off-by-one.html" class="btn btn-neutral float-right" title="off-by-one漏洞原理" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="use_after_free.html" class="btn btn-neutral float-right" title="Use After Free" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="heap_implementation_details.html" class="btn btn-neutral" title="深入理解堆的实现" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

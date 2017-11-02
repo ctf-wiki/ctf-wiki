@@ -142,17 +142,18 @@
 <li class="toctree-l3"><a class="reference internal" href="#id3">堆的基本操作</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#malloc">malloc</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#free">free</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id5">内存分配背后的系统调用</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id9">多线程支持</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">内存分配背后的系统调用</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">多线程支持</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
-<li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出原理</a></li>
-<li class="toctree-l2"><a class="reference internal" href="off-by-one.html">off-by-one漏洞原理</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin-attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
+<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
 </ul>
 </li>
 </ul>
@@ -232,15 +233,14 @@
 <p>目前标准Linux发行版中使用的堆分配器就是glibc中提供的堆分配器，它被称为ptmalloc2。glibc主要是通过malloc/free函数来实现对内存块进行分配和释放。</p>
 <p>Linux中早期的堆分配与回收由Doug
 Lea实现，但它在并行处理多个线程时，会共享进程的堆内存空间，因此会出现堆被线程加锁利用时，其它线程无法使用的情况，这就会降低内存分配和回收的高效性。同时，如果在多线程使用时，没能正确控制，也可能引起内存分配和回收的正确性。Wolfram
-Gloger在Doug
-Lea的基础上进行改进使其可以支持多线程，这个堆分配器就是ptmalloc。在glibc-2.3.x.之后，glibc中已经集成了ptmalloc2。</p>
+Gloger在Doug Lea的基础上进行改进使其可以支持多线程，这个堆分配器就是ptmalloc。在glibc-2.3.x.之后，glibc中已经集成了ptmalloc2。</p>
 <p>需要注意的是，堆其实就是程序的虚拟地址空间的一块连续的线性区域，它由低地址向高地址方向增长。</p>
 <p>ptmalloc处于用户程序与内核中间，主要做以下工作</p>
 <ol class="arabic simple">
 <li>响应用户的申请内存操作，向操作系统申请内存，然后将其返回给用户程序。同时，为了保持内存管理的高效性，内核一般都会预先分配很大的一块连续的内存，然后让ptmalloc通过某种算法管理这块内存。只有当出现了堆空间不足的情况，ptmalloc才会再次与操作系统进行交流。</li>
 <li>管理用户所释放的内存。也就是说用户释放的内存并不是直接返还给操作系统的，而是由ptmalloc进行管理。这些释放的chunk可以来响应用户新申请的内存的请求。</li>
 </ol>
-<p>需要注意的是，在内存分配与使用的过程中，Linux有这样的一个基本内存管理思想， <strong>只有当真正访问一个地址的时候，系统才会建立虚拟页面与物理页面的映射关系</strong> 。
+<p>需要注意的是，在内存分配与使用的过程中，Linux有这样的一个基本内存管理思想，<strong>只有当真正访问一个地址的时候，系统才会建立虚拟页面与物理页面的映射关系</strong>。
 所以虽然我们上面说操作系统已经给程序分配了很大的一块内存，但是这块内存其实只是虚拟内存。只有当用户使用到相应的内存时，系统才会真正分配物理页面给用户使用。</p>
 </div>
 <div class="section" id="id3">
@@ -248,7 +248,7 @@ Lea的基础上进行改进使其可以支持多线程，这个堆分配器就�
 <p>这里我们主要介绍一下基本的堆的操作，包括堆的分配，回收，堆分配背后的系统调用，最后会介绍堆目前的多线程支持。</p>
 <div class="section" id="malloc">
 <h3>malloc<a class="headerlink" href="#malloc" title="永久链接至标题">¶</a></h3>
-<p>在glibc的 <a class="reference external" href="https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448">malloc.h</a> 中，malloc的说明如下</p>
+<p>在glibc的<a class="reference external" href="https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448">malloc.h</a>中，malloc的说明如下</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span>
   <span class="n">malloc</span><span class="p">(</span><span class="n">size_t</span> <span class="n">n</span><span class="p">)</span>
   <span class="n">Returns</span> <span class="n">a</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">a</span> <span class="n">newly</span> <span class="n">allocated</span> <span class="n">chunk</span> <span class="n">of</span> <span class="n">at</span> <span class="n">least</span> <span class="n">n</span> <span class="nb">bytes</span><span class="p">,</span> <span class="ow">or</span> <span class="n">null</span>
@@ -272,7 +272,7 @@ Lea的基础上进行改进使其可以支持多线程，这个堆分配器就�
 </div>
 <div class="section" id="free">
 <h3>free<a class="headerlink" href="#free" title="永久链接至标题">¶</a></h3>
-<p>在glibc的 <a class="reference external" href="https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465">malloc.h</a> 中，free的说明如下</p>
+<p>在glibc的<a class="reference external" href="https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465">malloc.h</a>中，free的说明如下</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/*
       free(void* p)
       Releases the chunk of memory pointed to by p, that had been previously
@@ -292,58 +292,55 @@ Lea的基础上进行改进使其可以支持多线程，这个堆分配器就�
 <li>除了被禁用(mallopt)的情况下，当释放很大的内存空间时，程序会将这些内存空间还给系统，以便于减小程序所使用的内存空间。</li>
 </ul>
 </div>
-<div class="section" id="id5">
-<h3>内存分配背后的系统调用<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id4">
+<h3>内存分配背后的系统调用<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
 <p>在我们前面提到的函数中，无论是malloc函数还是free函数，我们都是直接在程序中可以使用的，说明它们是标准库函数。但是它们并不是真正与系统交互的函数。</p>
-<p>这些函数背后的系统调用主要是 <a class="reference external" href="http://man7.org/linux/man-pages/man2/sbrk.2.html">(s)brk</a> 函数以及 <a class="reference external" href="http://man7.org/linux/man-pages/man2/mmap.2.html">mmap,munmap</a> 函数，如下图所示，我们主要考虑对堆进行申请内存块的操作。</p>
+<p>这些函数背后的系统调用主要是<a class="reference external" href="http://man7.org/linux/man-pages/man2/sbrk.2.html">(s)brk</a>函数以及<a class="reference external" href="http://man7.org/linux/man-pages/man2/mmap.2.html">mmap,munmap</a>函数，如下图所示，我们主要考虑对堆进行申请内存块的操作。</p>
 <div class="figure">
 <img alt="" src="../../_images/brk&amp;mmap.png" />
 </div>
-<div class="section" id="id6">
-<h4>(s)brk<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h4>
-<p>对于堆的操作，操作系统内部提供了brk函数，glibc库提供了sbrk函数，我们可以通过增加 <a class="reference external" href="http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365">brk</a> (program
-break location, the program break is the address of the first location
-beyond the current end of the data region.
-<a class="reference external" href="https://en.wikipedia.org/wiki/Sbrk">https://en.wikipedia.org/wiki/Sbrk</a>)的大小来向操作系统申请内存。</p>
-<p>初始时，堆的起始地址 <a class="reference external" href="http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365">start_brk</a>
-以及堆的当前末尾 <a class="reference external" href="http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365">brk</a>
-指向同一地址，根据是否开启ASLR，情况会有所不同</p>
+<div class="section" id="s-brk">
+<h4>(s)brk<a class="headerlink" href="#s-brk" title="永久链接至标题">¶</a></h4>
+<p>对于堆的操作，操作系统内部提供了brk函数，glibc库提供了sbrk函数，我们可以通过增加<a class="reference external" href="http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365">brk</a>(program break location,
+the program break is the address of the first location beyond the current end of the data region. <a class="reference external" href="https://en.wikipedia.org/wiki/Sbrk">https://en.wikipedia.org/wiki/Sbrk</a>)的大小来向操作系统申请内存。</p>
+<p>初始时，堆的起始地址<a class="reference external" href="http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365">start_brk</a>
+以及堆的当前末尾<a class="reference external" href="http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365">brk</a> 指向同一地址，根据是否开启ASLR，情况会有所不同</p>
 <ul class="simple">
 <li>当不开启ASLR保护时，start_brk以及brk会指向data/bss 段的结尾。</li>
 <li>当开启ASLR保护时，start_brk以及brk也会指向同一位置，只是这个位置是在data/bss段结尾后的随机偏移处。</li>
 </ul>
-<p>具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示。</p>
+<p>具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示</p>
 <div class="figure">
 <img alt="" src="../../_images/program_virtual_address_memory_space.png" />
 </div>
 <p><strong>例子</strong></p>
-<div class="highlight-cpp"><div class="highlight"><pre><span></span><span class="cm">/* sbrk and brk example */</span>
-<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp"></span>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">sbrk</span> <span class="ow">and</span> <span class="n">brk</span> <span class="n">example</span> <span class="o">*/</span>
+<span class="c1">##include &lt;stdio.h&gt;</span>
+<span class="c1">##include &lt;unistd.h&gt;</span>
+<span class="c1">##include &lt;sys/types.h&gt;</span>
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
 <span class="p">{</span>
-        <span class="kt">void</span> <span class="o">*</span><span class="n">curr_brk</span><span class="p">,</span> <span class="o">*</span><span class="n">tmp_brk</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="n">void</span> <span class="o">*</span><span class="n">curr_brk</span><span class="p">,</span> <span class="o">*</span><span class="n">tmp_brk</span> <span class="o">=</span> <span class="n">NULL</span><span class="p">;</span>
 
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Welcome to sbrk example:%dn&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">());</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Welcome to sbrk example:</span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">());</span>
 
-        <span class="cm">/* sbrk(0) gives current program break location */</span>
+        <span class="o">/*</span> <span class="n">sbrk</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="n">gives</span> <span class="n">current</span> <span class="n">program</span> <span class="k">break</span> <span class="n">location</span> <span class="o">*/</span>
         <span class="n">tmp_brk</span> <span class="o">=</span> <span class="n">curr_brk</span> <span class="o">=</span> <span class="n">sbrk</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Program Break Location1:%pn&quot;</span><span class="p">,</span> <span class="n">curr_brk</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Program Break Location1:%p</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">curr_brk</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
 
-        <span class="cm">/* brk(addr) increments/decrements program break location */</span>
+        <span class="o">/*</span> <span class="n">brk</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">increments</span><span class="o">/</span><span class="n">decrements</span> <span class="n">program</span> <span class="k">break</span> <span class="n">location</span> <span class="o">*/</span>
         <span class="n">brk</span><span class="p">(</span><span class="n">curr_brk</span><span class="o">+</span><span class="mi">4096</span><span class="p">);</span>
 
         <span class="n">curr_brk</span> <span class="o">=</span> <span class="n">sbrk</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Program break Location2:%pn&quot;</span><span class="p">,</span> <span class="n">curr_brk</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Program break Location2:%p</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">curr_brk</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
 
         <span class="n">brk</span><span class="p">(</span><span class="n">tmp_brk</span><span class="p">);</span>
 
         <span class="n">curr_brk</span> <span class="o">=</span> <span class="n">sbrk</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Program Break Location3:%pn&quot;</span><span class="p">,</span> <span class="n">curr_brk</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Program Break Location3:%p</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">curr_brk</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
 
         <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
@@ -392,51 +389,48 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 <ul class="simple">
 <li>0x0804b000 是相应堆的起始地址</li>
 <li>rw-p表明堆具有可读可写权限，并且属于隐私数据。</li>
-<li>00000000
-表明文件偏移，由于这部分内容并不是从文件中映射得到的，所以为0。</li>
-<li>00:00
-是主从(Major/mirror)的设备号，这部分内容也不是从文件中映射得到的，所以也都为0。</li>
+<li>00000000 表明文件偏移，由于这部分内容并不是从文件中映射得到的，所以为0。</li>
+<li>00:00 是主从(Major/mirror)的设备号，这部分内容也不是从文件中映射得到的，所以也都为0。</li>
 <li>0表示着Inode 号。由于这部分内容并不是从文件中映射得到的，所以为0。</li>
 </ul>
 </div>
 <div class="section" id="mmap">
 <h4>mmap<a class="headerlink" href="#mmap" title="永久链接至标题">¶</a></h4>
-<p>malloc会使用
-<a class="reference external" href="http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285">mmap</a> 来创建隐私的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。</p>
+<p>malloc会使用 <a class="reference external" href="http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285">mmap</a>来创建隐私的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。</p>
 <p><strong>例子</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Private</span> <span class="n">anonymous</span> <span class="n">mapping</span> <span class="n">example</span> <span class="n">using</span> <span class="n">mmap</span> <span class="n">syscall</span> <span class="o">*/</span>
-<span class="c1">#include &lt;stdio.h&gt;</span>
-<span class="c1">#include &lt;sys/mman.h&gt;</span>
-<span class="c1">#include &lt;sys/types.h&gt;</span>
-<span class="c1">#include &lt;sys/stat.h&gt;</span>
-<span class="c1">#include &lt;fcntl.h&gt;</span>
-<span class="c1">#include &lt;unistd.h&gt;</span>
-<span class="c1">#include &lt;stdlib.h&gt;</span>
+<span class="c1">##include &lt;stdio.h&gt;</span>
+<span class="c1">##include &lt;sys/mman.h&gt;</span>
+<span class="c1">##include &lt;sys/types.h&gt;</span>
+<span class="c1">##include &lt;sys/stat.h&gt;</span>
+<span class="c1">##include &lt;fcntl.h&gt;</span>
+<span class="c1">##include &lt;unistd.h&gt;</span>
+<span class="c1">##include &lt;stdlib.h&gt;</span>
 
 <span class="n">void</span> <span class="n">static</span> <span class="n">inline</span> <span class="n">errExit</span><span class="p">(</span><span class="n">const</span> <span class="n">char</span><span class="o">*</span> <span class="n">msg</span><span class="p">)</span>
 <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> failed. Exiting the processn&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> failed. Exiting the process</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
         <span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
 
 <span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
 <span class="p">{</span>
         <span class="nb">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Welcome to private anonymous mapping example::PID:</span><span class="si">%d</span><span class="s2">n&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">());</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Before mmapn&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Welcome to private anonymous mapping example::PID:</span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">());</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Before mmap</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
         <span class="n">char</span><span class="o">*</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">NULL</span><span class="p">;</span>
         <span class="n">addr</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="n">NULL</span><span class="p">,</span> <span class="p">(</span><span class="n">size_t</span><span class="p">)</span><span class="mi">132</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span> <span class="n">PROT_READ</span><span class="o">|</span><span class="n">PROT_WRITE</span><span class="p">,</span> <span class="n">MAP_PRIVATE</span> <span class="o">|</span> <span class="n">MAP_ANONYMOUS</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">addr</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span>
                 <span class="n">errExit</span><span class="p">(</span><span class="s2">&quot;mmap&quot;</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After mmapn&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After mmap</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
 
         <span class="o">/*</span> <span class="n">Unmap</span> <span class="n">mapped</span> <span class="n">region</span><span class="o">.</span> <span class="o">*/</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="n">munmap</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="p">(</span><span class="n">size_t</span><span class="p">)</span><span class="mi">132</span><span class="o">*</span><span class="mi">1024</span><span class="p">);</span>
         <span class="k">if</span><span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">errExit</span><span class="p">(</span><span class="s2">&quot;munmap&quot;</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After munmapn&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After munmap</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
         <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
@@ -477,25 +471,25 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 </div>
 </div>
 </div>
-<div class="section" id="id9">
-<h3>多线程支持<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id5">
+<h3>多线程支持<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
 <p>在原来的dlmalloc实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问。在新的实现中，所有的线程共享多个堆。</p>
 <p>这里给出一个例子。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Per</span> <span class="n">thread</span> <span class="n">arena</span> <span class="n">example</span><span class="o">.</span> <span class="o">*/</span>
-<span class="c1">#include &lt;stdio.h&gt;</span>
-<span class="c1">#include &lt;stdlib.h&gt;</span>
-<span class="c1">#include &lt;pthread.h&gt;</span>
-<span class="c1">#include &lt;unistd.h&gt;</span>
-<span class="c1">#include &lt;sys/types.h&gt;</span>
+<span class="c1">##include &lt;stdio.h&gt;</span>
+<span class="c1">##include &lt;stdlib.h&gt;</span>
+<span class="c1">##include &lt;pthread.h&gt;</span>
+<span class="c1">##include &lt;unistd.h&gt;</span>
+<span class="c1">##include &lt;sys/types.h&gt;</span>
 
 <span class="n">void</span><span class="o">*</span> <span class="n">threadFunc</span><span class="p">(</span><span class="n">void</span><span class="o">*</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Before malloc in thread 1n&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Before malloc in thread 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
         <span class="n">char</span><span class="o">*</span> <span class="n">addr</span> <span class="o">=</span> <span class="p">(</span><span class="n">char</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After malloc and before free in thread 1n&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After malloc and before free in thread 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
         <span class="n">free</span><span class="p">(</span><span class="n">addr</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After free in thread 1n&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After free in thread 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
 <span class="p">}</span>
 
@@ -505,32 +499,32 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
         <span class="nb">int</span> <span class="n">ret</span><span class="p">;</span>
         <span class="n">char</span><span class="o">*</span> <span class="n">addr</span><span class="p">;</span>
 
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Welcome to per thread arena example::</span><span class="si">%d</span><span class="s2">n&quot;</span><span class="p">,</span><span class="n">getpid</span><span class="p">());</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Before malloc in main threadn&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Welcome to per thread arena example::</span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span><span class="n">getpid</span><span class="p">());</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Before malloc in main thread</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
         <span class="n">addr</span> <span class="o">=</span> <span class="p">(</span><span class="n">char</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After malloc and before free in main threadn&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After malloc and before free in main thread</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
         <span class="n">free</span><span class="p">(</span><span class="n">addr</span><span class="p">);</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After free in main threadn&quot;</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;After free in main thread</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
         <span class="n">getchar</span><span class="p">();</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">t1</span><span class="p">,</span> <span class="n">NULL</span><span class="p">,</span> <span class="n">threadFunc</span><span class="p">,</span> <span class="n">NULL</span><span class="p">);</span>
         <span class="k">if</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
         <span class="p">{</span>
-                <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Thread creation errorn&quot;</span><span class="p">);</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Thread creation error</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
                 <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
         <span class="p">}</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="n">pthread_join</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
         <span class="k">if</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
         <span class="p">{</span>
-                <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Thread join errorn&quot;</span><span class="p">);</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Thread join error</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
                 <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p><strong>第一次申请之前</strong> ， 没有任何任何堆段。</p>
+<p><strong>第一次申请之前</strong>， 没有任何任何堆段。</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
@@ -544,8 +538,8 @@ b7e05000-b7e07000 rw-p 00000000 00:00 0
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 </pre></div>
 </div>
-<p><strong>第一次申请后</strong> ，
-从下面的输出可以看出，堆段被建立了，并且它就紧邻着数据段，这说明malloc的背后是用brk函数来实现的。同时，需要注意的是，我们虽然只是申请了1000个字节，但是我们却得到了0x0806c000-0x0804b000=0x21000个字节的堆。 <strong>这说明虽然程序可能只是向操作系统申请很小的内存，但是为了方便，操作系统会把很大的内存分配给程序。这样的话，就避免了多次内核态与用户态的切换，加快了程序的效率。</strong> 我们称这一块连续的内存区域为arena。此外，由于这块内存是由主线程申请的，所以我们称之为main_arena。对于后续的申请的内存会一直从这个arena中获取，直到空间不足。当出现arena空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena也可以通过减小brk来缩小自己的空间。</p>
+<p><strong>第一次申请后</strong>，
+从下面的输出可以看出，堆段被建立了，并且它就紧邻着数据段，这说明malloc的背后是用brk函数来实现的。同时，需要注意的是，我们虽然只是申请了1000个字节，但是我们却得到了0x0806c000-0x0804b000=0x21000个字节的堆。<strong>这说明虽然程序可能只是向操作系统申请很小的内存，但是为了方便，操作系统会把很大的内存分配给程序。这样的话，就避免了多次内核态与用户态的切换，加快了程序的效率。</strong>我们称这一块连续的内存区域为arena。此外，由于这块内存是由主线程申请的，所以我们称之为main_arena。对于后续的申请的内存会一直从这个arena中获取，直到空间不足。当出现arena空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena也可以通过减小brk来缩小自己的空间。</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
@@ -561,7 +555,7 @@ b7e05000-b7e07000 rw-p 00000000 00:00 0
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 </pre></div>
 </div>
-<p><strong>在主线程释放内存后</strong> ，我们从下面的输出可以看出，其对应的arena并没有进行回收，而是交由glibc来进行管理。当后面程序再次申请内存时，在glibc中管理的内存充足的情况下，glibc就会根据堆分配的算法来给程序分配相应的内存。</p>
+<p><strong>在主线程释放内存后</strong>，我们从下面的输出可以看出，其对应的arena并没有进行回收，而是交由glibc来进行管理。当后面程序再次申请内存时，在glibc中管理的内存充足的情况下，glibc就会根据堆分配的算法来给程序分配相应的内存。</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
@@ -578,7 +572,7 @@ b7e05000-b7e07000 rw-p 00000000 00:00 0
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 </pre></div>
 </div>
-<p><strong>在第一个线程malloc之前</strong> ，我们可以看到并没有出现与线程1相关的堆，但是出现了与线程1相关的栈。</p>
+<p><strong>在第一个线程malloc之前</strong>，我们可以看到并没有出现与线程1相关的堆，但是出现了与线程1相关的栈。</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
@@ -597,7 +591,7 @@ b7605000-b7e07000 rw-p 00000000 00:00 0          [stack:6594]
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 </pre></div>
 </div>
-<p><strong>第一个线程malloc后</strong> ，
+<p><strong>第一个线程malloc后</strong>，
 我们可以从下面输出看出线程1的堆段被建立了。而且它所在的位置为内存映射段区域，同样大小也是132KB(b7500000-b7521000)。因此这表明该线程申请的堆时，背后对应的函数为mmap函数。同时，我们可以看出实际真的分配给程序的内存为1M(b7500000-b7600000)。而且，只有132KB的部分具有可读可写权限，这一块连续的区域成为thread
 arena。</p>
 <p>注意：</p>
@@ -624,8 +618,7 @@ b7605000-b7e07000 rw-p 00000000 00:00 0          [stack:6594]
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 </pre></div>
 </div>
-<p><strong>在第一个线程释放内存后</strong> ，
-我们可以从下面的输出看到，这样释放内存同样不会把内存重新给系统。</p>
+<p><strong>在第一个线程释放内存后</strong>， 我们可以从下面的输出看到，这样释放内存同样不会把内存重新给系统。</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread

@@ -147,7 +147,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#malloc-par">malloc_par</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id7">微观结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">微观结构</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#malloc-chunk">malloc_chunk</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#bin">bin</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#top-chunk">top chunk</a></li>
@@ -157,9 +157,10 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
-<li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出原理</a></li>
-<li class="toctree-l2"><a class="reference internal" href="off-by-one.html">off-by-one漏洞原理</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin-attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
+<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
 </ul>
 </li>
 </ul>
@@ -249,7 +250,7 @@
 <p>正如我们之前所说的，无论是主线程还是新创建的线程来说在第一次申请内存时，都会有自己独立的arena，那么会不会每个线程都有自己的arena呢？下面我们就具体介绍。</p>
 <div class="section" id="id3">
 <h4>arena 数量<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h4>
-<p>不是每一个线程都会有对应的arena，这是因为每个系统的核数是有限的，当线程数大于核数的二倍时，就必然有线程处于等待状态。所以没有必要为每个线程分配一个arena的。具体的 <a class="reference external" href="https://github.com/sploitfun/lsploits/blob/master/glibc/malloc/arena.c#L847">约束</a> 如下</p>
+<p>不是每一个线程都会有对应的arena，这是因为每个系统的核数是有限的，当线程数大于核数的二倍时，就必然有线程处于等待状态。所以没有必要为每个线程分配一个arena的。具体的<a class="reference external" href="https://github.com/sploitfun/lsploits/blob/master/glibc/malloc/arena.c#L847">约束</a>如下</p>
 <div class="code text highlight-default"><div class="highlight"><pre><span></span><span class="n">For</span> <span class="mi">32</span> <span class="n">bit</span> <span class="n">systems</span><span class="p">:</span>
      <span class="n">Number</span> <span class="n">of</span> <span class="n">arena</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">number</span> <span class="n">of</span> <span class="n">cores</span><span class="o">.</span>
 <span class="n">For</span> <span class="mi">64</span> <span class="n">bit</span> <span class="n">systems</span><span class="p">:</span>
@@ -258,31 +259,28 @@
 </div>
 <p>至于为什么64位系统，要那么设置，我也没有想明白。</p>
 </div>
-<div class="section" id="id5">
-<h4>arena 分配规则<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id4">
+<h4>arena 分配规则<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h4>
 <p><strong>待补充。</strong></p>
 </div>
-<div class="section" id="id6">
-<h4>区别<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h4>
-<p>此外，与thread不同的是，main的arena
-header并不在申请的heap中，它是一个全局变量，在libc.so的数据段。</p>
+<div class="section" id="id5">
+<h4>区别<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h4>
+<p>此外，与thread不同的是，main的arena header并不在申请的heap中，它是一个全局变量，在libc.so的数据段。</p>
 </div>
 </div>
 <div class="section" id="heap-info">
 <h3>heap_info<a class="headerlink" href="#heap-info" title="永久链接至标题">¶</a></h3>
-<p>该数据结构是专门为从Memory Mapping
-Segment处申请的内存准备的。当主线程申请较小的内存空间时，可以通过sbrk()函数扩展program
-break location获得（直到触及Memory Mapping
+<p>该数据结构是专门为从Memory Mapping Segment处申请的内存准备的。当主线程申请较小的内存空间时，可以通过sbrk()函数扩展program break location获得（直到触及Memory Mapping
 Segment），因此主线程只有一个heap，没有heap_info数据结构。</p>
 <p>heap_info的主要结构如下</p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="c1">#define HEAP_MIN_SIZE (32 * 1024)</span>
-<span class="c1">#ifndef HEAP_MAX_SIZE</span>
-<span class="c1"># ifdef DEFAULT_MMAP_THRESHOLD_MAX</span>
-<span class="c1">#  define HEAP_MAX_SIZE (2 * DEFAULT_MMAP_THRESHOLD_MAX)</span>
-<span class="c1"># else</span>
-<span class="c1">#  define HEAP_MAX_SIZE (1024 * 1024) /* must be a power of two */</span>
-<span class="c1"># endif</span>
-<span class="c1">#endif</span>
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="c1">##define HEAP_MIN_SIZE (32 * 1024)</span>
+<span class="c1">##ifndef HEAP_MAX_SIZE</span>
+<span class="c1">## ifdef DEFAULT_MMAP_THRESHOLD_MAX</span>
+<span class="c1">##  define HEAP_MAX_SIZE (2 * DEFAULT_MMAP_THRESHOLD_MAX)</span>
+<span class="c1">## else</span>
+<span class="c1">##  define HEAP_MAX_SIZE (1024 * 1024) /* must be a power of two */</span>
+<span class="c1">## endif</span>
+<span class="c1">##endif</span>
 
 <span class="o">/*</span> <span class="n">HEAP_MIN_SIZE</span> <span class="ow">and</span> <span class="n">HEAP_MAX_SIZE</span> <span class="n">limit</span> <span class="n">the</span> <span class="n">size</span> <span class="n">of</span> <span class="n">mmap</span><span class="p">()</span><span class="n">ed</span> <span class="n">heaps</span>
    <span class="n">that</span> <span class="n">are</span> <span class="n">dynamically</span> <span class="n">created</span> <span class="k">for</span> <span class="n">multi</span><span class="o">-</span><span class="n">threaded</span> <span class="n">programs</span><span class="o">.</span>  <span class="n">The</span>
@@ -316,19 +314,16 @@ Segment），因此主线程只有一个heap，没有heap_info数据结构。</p
 <li>堆对应的heap arena的地址</li>
 <li>该堆前面的heap_info的地址，这里可以看到每个堆的heap_info是通过单向链表进行链接的</li>
 <li>size表示当前堆的大小</li>
-<li>最后一部分确保对齐（ <strong>这里负数使用的缘由是什么呢</strong> ？）</li>
+<li>最后一部分确保对齐（<strong>这里负数使用的缘由是什么呢</strong>？）</li>
 </ul>
 <p>看起来该结构应该是相当重要的，但是如果如果我们仔细看完整个malloc的实现的话，就会发现它出现的频率并不高。</p>
 <p>程序刚开始执行时，每个线程是没有heap区域的。当其申请内存时，就需要一个结构来记录对应的信息，而heap_info的作用就是这个。而且当该heap的资源被使用完后，就必须得再次申请heap了。此外，一般申请的heap是不连续的，因此需要记录不同heap之间的链接结构。</p>
 </div>
 <div class="section" id="malloc-state">
 <h3>malloc_state<a class="headerlink" href="#malloc-state" title="永久链接至标题">¶</a></h3>
-<p>该结构用于管理堆，记录每个arena当前的申请内存的具体状态，比如说有什么大小的空闲chunk，如何快速判断有没有什么大小的空闲的chunk。无论是对于thread
-arena还是说main arena，它们都只有一个malloc
-state结构。由于thread的arena可能有多个，malloc
-state结构会在最新申请的arena中。</p>
-<p><strong>注意，main arena的malloc_state并不是heap
-segment的一部分，而是一个全局变量，存储在libc.so的数据段。</strong></p>
+<p>该结构用于管理堆，记录每个arena当前的申请内存的具体状态，比如说有什么大小的空闲chunk，如何快速判断有没有什么大小的空闲的chunk。无论是对于thread arena还是说main arena，它们都只有一个malloc
+state结构。由于thread的arena可能有多个，malloc state结构会在最新申请的arena中。</p>
+<p><strong>注意，main arena的malloc_state并不是heap segment的一部分，而是一个全局变量，存储在libc.so的数据段。</strong></p>
 <p>其结构如下</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">malloc_state</span> <span class="p">{</span>
     <span class="o">/*</span> <span class="n">Serialize</span> <span class="n">access</span><span class="o">.</span>  <span class="o">*/</span>
@@ -371,26 +366,20 @@ segment的一部分，而是一个全局变量，存储在libc.so的数据段。
 </pre></div>
 </div>
 <ul class="simple">
-<li><dl class="first docutils">
-<dt>​ __libc_lock_define(, mutex);</dt>
-<dd><ul class="first last">
+<li>​ __libc_lock_define(, mutex);</li>
 <li>该变量用于控制程序串行化访问同一个分配区，当一个线程获取了分配区之后，其它线程要想访问该分配区，就必须等待该线程分配完成候才能够使用。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li>flags
--  flags记录了分配区的一些标志，比如说bit0 记录了分配区是否有fast bin chunk，bit1标识分配区是否能返回连续的虚拟地址空间。</li>
-<li>fastbinsY[ NFASTBINS ]
--  存放每个fast chunk链表头部的指针</li>
-<li>top
--  指向分配区的top chunk</li>
-<li>last_reminder
--  一个chunk分割之后剩下的那部分</li>
-<li>bins
--  用于存储unstored bin，small bins和large bins的chunk链表。</li>
-<li>binmap
--  ptmalloc用一个bit来标识该bit对应的bin中是否包含空闲chunk。</li>
+<li>flags</li>
+<li>flags记录了分配区的一些标志，比如说bit0 记录了分配区是否有fast bin chunk，bit1标识分配区是否能返回连续的虚拟地址空间。</li>
+<li>fastbinsY[ NFASTBINS ]</li>
+<li>存放每个fast chunk链表头部的指针</li>
+<li>top</li>
+<li>指向分配区的top chunk</li>
+<li>last_reminder</li>
+<li>一个chunk分割之后剩下的那部分</li>
+<li>bins</li>
+<li>用于存储unstored bin，small bins和large bins的chunk链表。</li>
+<li>binmap</li>
+<li>ptmalloc用一个bit来标识该bit对应的bin中是否包含空闲chunk。</li>
 </ul>
 <p>关于其中每一个变量的具体意思，我们会在使用到的时候进行详细地说明。</p>
 </div>
@@ -399,14 +388,14 @@ segment的一部分，而是一个全局变量，存储在libc.so的数据段。
 <p><strong>待补充</strong></p>
 </div>
 </div>
-<div class="section" id="id7">
-<h2>微观结构<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h2>
-<p>上面的结构就是堆的宏观结构，下面就是堆中比较细节的结构了， <strong>关于堆的利用主要是集中在这些结构中</strong> 。</p>
+<div class="section" id="id6">
+<h2>微观结构<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h2>
+<p>上面的结构就是堆的宏观结构，下面就是堆中比较细节的结构了，<strong>关于堆的利用主要是集中在这些结构中</strong>。</p>
 <div class="section" id="malloc-chunk">
 <h3>malloc_chunk<a class="headerlink" href="#malloc-chunk" title="永久链接至标题">¶</a></h3>
-<div class="section" id="id8">
-<h4>概述<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h4>
-<p>在程序的使用过程中，我们称由malloc申请的内存为chunk。该块内存在ptmalloc内部用malloc_chunk结构体来表示。该chunk被free后会被加入到对应的管理列表中。非常有意思的是， <strong>ptmalloc2中使用了一个统一的结构来实现chunk，无论一个chunk的大小如何，处于分配状态或者释放状态，它们所使用的数据结构相同</strong> 。需要注意的是，虽然它们使用了同一个数据结构，但是根据是否被释放，它们的表现形式会有所不同。</p>
+<div class="section" id="id7">
+<h4>概述<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h4>
+<p>在程序的使用过程中，我们称由malloc申请的内存为chunk。该块内存在ptmalloc内部用malloc_chunk结构体来表示。该chunk被free后会被加入到对应的管理列表中。非常有意思的是，<strong>ptmalloc2中使用了一个统一的结构来实现chunk，无论一个chunk的大小如何，处于分配状态或者释放状态，它们所使用的数据结构相同</strong>。需要注意的是，虽然它们使用了同一个数据结构，但是根据是否被释放，它们的表现形式会有所不同。</p>
 <p>malloc_chunk的结构如下</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span>
   <span class="n">This</span> <span class="n">struct</span> <span class="n">declaration</span> <span class="ow">is</span> <span class="n">misleading</span> <span class="p">(</span><span class="n">but</span> <span class="n">accurate</span> <span class="ow">and</span> <span class="n">necessary</span><span class="p">)</span><span class="o">.</span>
@@ -429,42 +418,24 @@ segment的一部分，而是一个全局变量，存储在libc.so的数据段。
 </div>
 <p>具体的，每个字段的解释如下</p>
 <ul class="simple">
-<li><strong>prev_size</strong>, 如果该chunk的 <strong>物理相邻（即两个指针的地址的差值为chunk大小）的前一chunk</strong> 是空闲的话，那该字段记录的是前一个chunk的大小(包括chunk头)。否则，该字段可以用来存储上一个chunk的数据。这里的前一chunk指的是较低地址的chunk。</li>
-<li><dl class="first docutils">
-<dt><strong>size</strong> ，该chunk的大小，大小必须是8（32位）的整数倍。如果申请的大小不是8的整数倍，会被转换满足大小的最小的8的倍数。该字段的最低的三个比特位从高到低分别表示</dt>
-<dd><ul class="first last">
-<li>NON_MAIN_ARENA, 记录当前chunk是否不属于主线程，1表示不属于，0表示属于。</li>
-<li>IS_MAPPED, 记录当前chunk是否是由mmap分配的。</li>
-<li>PREV_INUSE, 记录前一个chunk块是否被分配。一般来说，堆中第一个被分配的内存块的size字段的P位都会被设置为1，以便于防止访问前面的非法内存。而且，当一个chunk的size的P位为0时，我们能通过prev_size字段来获取上一个chunk的地址。这也方便进行空闲chunk之间的合并。</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt><strong>fd,bk</strong> 。chunk处于分配状态时，从fd字段开始是用户的数据，否则chunk空闲时，其字段的含义如下</dt>
-<dd><ul class="first last">
+<li><strong>prev_size</strong>,
+如果该chunk的<strong>物理相邻（即两个指针的地址的差值为chunk大小）的前一chunk</strong>是空闲的话，那该字段记录的是前一个chunk的大小(包括chunk头)。否则，该字段可以用来存储上一个chunk的数据。这里的前一chunk指的是较低地址的chunk。</li>
+<li><strong>size</strong> ，该chunk的大小，大小必须是8（32位）的整数倍。如果申请的大小不是8的整数倍，会被转换满足大小的最小的8的倍数。该字段的最低的三个比特位从高到低分别表示</li>
+<li>NON_MAIN_ARENA 记录当前chunk是否不属于主线程，1表示不属于，0表示属于。</li>
+<li>IS_MAPPED 记录当前chunk是否是由mmap分配的。</li>
+<li>PREV_INUSE
+记录前一个chunk块是否被分配。一般来说，堆中第一个被分配的内存块的size字段的P位都会被设置为1，以便于防止访问前面的非法内存。而且，当一个chunk的size的P位为0时，我们能通过prev_size字段来获取上一个chunk的地址。这也方便进行空闲chunk之间的合并。</li>
+<li><strong>fd,bk</strong>。 chunk处于分配状态时，从fd字段开始是用户的数据，否则chunk空闲时，其字段的含义如下</li>
 <li>fd指向下一个（非物理相邻）空闲的chunk</li>
 <li>bk指向上一个（非物理相邻）空闲的chunk</li>
 <li>通过fd和bk可以将空闲的chunk块加入到空闲的chunk块链表进行统一管理</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt><strong>fd_nextsize, bk_nextsize</strong> ，也是只有chunk空闲的时候才使用，不过其用于较大的chunk（large chunk）。</dt>
-<dd><ul class="first last">
+<li><strong>fd_nextsize, bk_nextsize</strong>，也是只有chunk空闲的时候才使用，不过其用于较大的chunk（large chunk）。</li>
 <li>fd_nextsize指向前一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针（可暂不考虑）。</li>
 <li>bk_nextsize指向后一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针（可暂不考虑）。</li>
 <li><strong>这样做可以避免在寻找合适chunk时挨个遍历。</strong></li>
 </ul>
-</dd>
-</dl>
-</li>
-</ul>
-<p>一个已经分配的chunk的样子如下。 <strong>我们称前两个字段称为chunk
-header，后面的部分称为user
-data。每次malloc申请得到的内存指针，其实指向user data的起始处。</strong></p>
-<p>当一个chunk处于使用状态时，它的下一个chunk的prev_size域无效，所以下一个chunk的该部分也可以被当前chunk使用。 <strong>这就是chunk中的空间复用。</strong></p>
+<p>一个已经分配的chunk的样子如下。<strong>我们称前两个字段称为chunk header，后面的部分称为user data。每次malloc申请得到的内存指针，其实指向user data的起始处。</strong></p>
+<p>当一个chunk处于使用状态时，它的下一个chunk的prev_size域无效，所以下一个chunk的该部分也可以被当前chunk使用。<strong>这就是chunk中的空间复用。</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="n">chunk</span><span class="o">-&gt;</span> <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
         <span class="o">|</span>             <span class="n">Size</span> <span class="n">of</span> <span class="n">previous</span> <span class="n">chunk</span><span class="p">,</span> <span class="k">if</span> <span class="n">unallocated</span> <span class="p">(</span><span class="n">P</span> <span class="n">clear</span><span class="p">)</span>  <span class="o">|</span>
         <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
@@ -531,31 +502,31 @@ chunk-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 <p><strong>chunk与mem指针头部的转换</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">conversion</span> <span class="kn">from</span> <span class="nn">malloc</span> <span class="n">headers</span> <span class="n">to</span> <span class="n">user</span> <span class="n">pointers</span><span class="p">,</span> <span class="ow">and</span> <span class="n">back</span> <span class="o">*/</span>
 
-<span class="c1">#define chunk2mem(p) ((void *) ((char *) (p) + 2 * SIZE_SZ))</span>
-<span class="c1">#define mem2chunk(mem) ((mchunkptr)((char *) (mem) -2 * SIZE_SZ))</span>
+<span class="c1">##define chunk2mem(p) ((void *) ((char *) (p) + 2 * SIZE_SZ))</span>
+<span class="c1">##define mem2chunk(mem) ((mchunkptr)((char *) (mem) -2 * SIZE_SZ))</span>
 </pre></div>
 </div>
 <p><strong>最小可能的chunk</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">The</span> <span class="n">smallest</span> <span class="n">possible</span> <span class="n">chunk</span> <span class="o">*/</span>
-<span class="c1">#define MIN_CHUNK_SIZE (offsetof(struct malloc_chunk, fd_nextsize))</span>
+<span class="c1">##define MIN_CHUNK_SIZE (offsetof(struct malloc_chunk, fd_nextsize))</span>
 </pre></div>
 </div>
 <p>这里，offsetof函数计算出fd_nextsize在malloc_chunk中的偏移，这说明，最小的chunk至少要包含到bk指针。</p>
 <p><strong>最小申请的堆内存大小</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">The</span> <span class="n">smallest</span> <span class="n">size</span> <span class="n">we</span> <span class="n">can</span> <span class="n">malloc</span> <span class="ow">is</span> <span class="n">an</span> <span class="n">aligned</span> <span class="n">minimal</span> <span class="n">chunk</span> <span class="o">*/</span>
 
-<span class="c1">#define MINSIZE</span>
-    <span class="p">(</span><span class="n">unsigned</span> <span class="n">long</span><span class="p">)</span> <span class="p">(((</span><span class="n">MIN_CHUNK_SIZE</span> <span class="o">+</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">)</span> <span class="o">&amp;</span>
+<span class="c1">##define MINSIZE                                                                \</span>
+    <span class="p">(</span><span class="n">unsigned</span> <span class="n">long</span><span class="p">)</span> <span class="p">(((</span><span class="n">MIN_CHUNK_SIZE</span> <span class="o">+</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">)</span> <span class="o">&amp;</span>                   \
                       <span class="o">~</span><span class="n">MALLOC_ALIGN_MASK</span><span class="p">))</span>
 </pre></div>
 </div>
 <p><strong>检查分配给用户的内存与本身的chunk是否对齐</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/* Check if m has acceptable alignment */
 
-#define aligned_OK(m) (((unsigned long) (m) &amp; MALLOC_ALIGN_MASK) == 0)
+##define aligned_OK(m) (((unsigned long) (m) &amp; MALLOC_ALIGN_MASK) == 0)
 
-#define misaligned_chunk(p)
-    ((uintptr_t)(MALLOC_ALIGNMENT == 2 * SIZE_SZ ? (p) : chunk2mem(p)) &amp;
+##define misaligned_chunk(p)                                                    \
+    ((uintptr_t)(MALLOC_ALIGNMENT == 2 * SIZE_SZ ? (p) : chunk2mem(p)) &amp;       \
      MALLOC_ALIGN_MASK)
 </pre></div>
 </div>
@@ -566,52 +537,52 @@ chunk-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    <span class="n">low</span> <span class="n">enough</span> <span class="n">so</span> <span class="n">that</span> <span class="n">adding</span> <span class="n">MINSIZE</span> <span class="n">will</span> <span class="n">also</span> <span class="ow">not</span> <span class="n">wrap</span> <span class="n">around</span> <span class="n">zero</span><span class="o">.</span>
  <span class="o">*/</span>
 
-<span class="c1">#define REQUEST_OUT_OF_RANGE(req)</span>
+<span class="c1">##define REQUEST_OUT_OF_RANGE(req)                                              \</span>
     <span class="p">((</span><span class="n">unsigned</span> <span class="n">long</span><span class="p">)</span> <span class="p">(</span><span class="n">req</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">unsigned</span> <span class="n">long</span><span class="p">)</span> <span class="p">(</span><span class="n">INTERNAL_SIZE_T</span><span class="p">)(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">MINSIZE</span><span class="p">))</span>
 </pre></div>
 </div>
 <p><strong>将用户请求内存大小转为实际分配大小</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/* pad request bytes into a usable size -- internal version */
 //MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1
-#define request2size(req)
-    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)
-         ? MINSIZE
+##define request2size(req)                                                      \
+    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)                           \
+         ? MINSIZE                                                             \
          : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK)
 
 /*  Same, except also perform argument check */
 
-#define checked_request2size(req, sz)
-    if (REQUEST_OUT_OF_RANGE(req)) {
-        __set_errno(ENOMEM);
-        return 0;
-    }
+##define checked_request2size(req, sz)                                          \
+    if (REQUEST_OUT_OF_RANGE(req)) {                                           \
+        __set_errno(ENOMEM);                                                   \
+        return 0;                                                              \
+    }                                                                          \
     (sz) = request2size(req);
 </pre></div>
 </div>
 <p>当一个chunk处于已分配状态时，它的物理相邻的下一个chunk的prev_size字段必然是无效的，故而这个字段就可以被当前这个chunk使用。这就是ptmalloc中chunk之间的复用。因此，实际要被分配的内存的大小应该为先添加上存储本chunk的大小字段的字节大小，然后再按照MALLOC的规定进行对齐，这里之所以不需要再加上prev_size字段所占据的大小，就是可以复用下一个chunk的这一字段作为当前chunk的数据段。除此之外，我们必须得确保chunk实际所能利用的大小至少可以存储prev_size，size，fd，bk这四个字段，所以我们会将其与MINSIZE进行比较。如果调整后不满足最低要求，那么我们就需要直接分配MINSIZE字节，否则，我们就可以按照之前的计算公式来进行计算。</p>
 <p><strong>标记位相关</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">size</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">or</span><span class="s1">&#39;ed with PREV_INUSE when previous adjacent chunk in use */</span>
-<span class="c1">#define PREV_INUSE 0x1</span>
+<span class="c1">##define PREV_INUSE 0x1</span>
 
 <span class="o">/*</span> <span class="n">extract</span> <span class="n">inuse</span> <span class="n">bit</span> <span class="n">of</span> <span class="n">previous</span> <span class="n">chunk</span> <span class="o">*/</span>
-<span class="c1">#define prev_inuse(p) ((p)-&gt;mchunk_size &amp; PREV_INUSE)</span>
+<span class="c1">##define prev_inuse(p) ((p)-&gt;mchunk_size &amp; PREV_INUSE)</span>
 
 <span class="o">/*</span> <span class="n">size</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">or</span><span class="s1">&#39;ed with IS_MMAPPED if the chunk was obtained with mmap() */</span>
-<span class="c1">#define IS_MMAPPED 0x2</span>
+<span class="c1">##define IS_MMAPPED 0x2</span>
 
 <span class="o">/*</span> <span class="n">check</span> <span class="k">for</span> <span class="n">mmap</span><span class="p">()</span><span class="s1">&#39;ed chunk */</span>
-<span class="c1">#define chunk_is_mmapped(p) ((p)-&gt;mchunk_size &amp; IS_MMAPPED)</span>
+<span class="c1">##define chunk_is_mmapped(p) ((p)-&gt;mchunk_size &amp; IS_MMAPPED)</span>
 
 <span class="o">/*</span> <span class="n">size</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">or</span><span class="s1">&#39;ed with NON_MAIN_ARENA if the chunk was obtained</span>
    <span class="kn">from</span> <span class="nn">a</span> <span class="n">non</span><span class="o">-</span><span class="n">main</span> <span class="n">arena</span><span class="o">.</span>  <span class="n">This</span> <span class="ow">is</span> <span class="n">only</span> <span class="nb">set</span> <span class="n">immediately</span> <span class="n">before</span> <span class="n">handing</span>
    <span class="n">the</span> <span class="n">chunk</span> <span class="n">to</span> <span class="n">the</span> <span class="n">user</span><span class="p">,</span> <span class="k">if</span> <span class="n">necessary</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define NON_MAIN_ARENA 0x4</span>
+<span class="c1">##define NON_MAIN_ARENA 0x4</span>
 
 <span class="o">/*</span> <span class="n">Check</span> <span class="k">for</span> <span class="n">chunk</span> <span class="kn">from</span> <span class="nn">main</span> <span class="n">arena</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define chunk_main_arena(p) (((p)-&gt;mchunk_size &amp; NON_MAIN_ARENA) == 0)</span>
+<span class="c1">##define chunk_main_arena(p) (((p)-&gt;mchunk_size &amp; NON_MAIN_ARENA) == 0)</span>
 
 <span class="o">/*</span> <span class="n">Mark</span> <span class="n">a</span> <span class="n">chunk</span> <span class="k">as</span> <span class="ow">not</span> <span class="n">being</span> <span class="n">on</span> <span class="n">the</span> <span class="n">main</span> <span class="n">arena</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define set_non_main_arena(p) ((p)-&gt;mchunk_size |= NON_MAIN_ARENA)</span>
+<span class="c1">##define set_non_main_arena(p) ((p)-&gt;mchunk_size |= NON_MAIN_ARENA)</span>
 
 <span class="o">/*</span>
    <span class="n">Bits</span> <span class="n">to</span> <span class="n">mask</span> <span class="n">off</span> <span class="n">when</span> <span class="n">extracting</span> <span class="n">size</span>
@@ -620,74 +591,74 @@ chunk-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    <span class="n">cause</span> <span class="n">helpful</span> <span class="n">core</span> <span class="n">dumps</span> <span class="n">to</span> <span class="n">occur</span> <span class="k">if</span> <span class="n">it</span> <span class="ow">is</span> <span class="n">tried</span> <span class="n">by</span> <span class="n">accident</span> <span class="n">by</span>
    <span class="n">people</span> <span class="n">extending</span> <span class="ow">or</span> <span class="n">adapting</span> <span class="n">this</span> <span class="n">malloc</span><span class="o">.</span>
  <span class="o">*/</span>
-<span class="c1">#define SIZE_BITS (PREV_INUSE | IS_MMAPPED | NON_MAIN_ARENA)</span>
+<span class="c1">##define SIZE_BITS (PREV_INUSE | IS_MMAPPED | NON_MAIN_ARENA)</span>
 </pre></div>
 </div>
 <p><strong>获取chunk size</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Get</span> <span class="n">size</span><span class="p">,</span> <span class="n">ignoring</span> <span class="n">use</span> <span class="n">bits</span> <span class="o">*/</span>
-<span class="c1">#define chunksize(p) (chunksize_nomask(p) &amp; ~(SIZE_BITS))</span>
+<span class="c1">##define chunksize(p) (chunksize_nomask(p) &amp; ~(SIZE_BITS))</span>
 
 <span class="o">/*</span> <span class="n">Like</span> <span class="n">chunksize</span><span class="p">,</span> <span class="n">but</span> <span class="n">do</span> <span class="ow">not</span> <span class="n">mask</span> <span class="n">SIZE_BITS</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define chunksize_nomask(p) ((p)-&gt;mchunk_size)</span>
+<span class="c1">##define chunksize_nomask(p) ((p)-&gt;mchunk_size)</span>
 </pre></div>
 </div>
 <p><strong>获取下一个物理相邻的chunk</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Ptr</span> <span class="n">to</span> <span class="nb">next</span> <span class="n">physical</span> <span class="n">malloc_chunk</span><span class="o">.</span> <span class="o">*/</span>
-<span class="c1">#define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))</span>
+<span class="c1">##define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))</span>
 </pre></div>
 </div>
 <p><strong>获取前一个chunk的信息</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">chunk</span> <span class="n">below</span> <span class="n">P</span><span class="o">.</span>  <span class="n">Only</span> <span class="n">valid</span> <span class="k">if</span> <span class="n">prev_inuse</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define prev_size(p) ((p)-&gt;mchunk_prev_size)</span>
+<span class="c1">##define prev_size(p) ((p)-&gt;mchunk_prev_size)</span>
 
 <span class="o">/*</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">chunk</span> <span class="n">below</span> <span class="n">P</span><span class="o">.</span>  <span class="n">Only</span> <span class="n">valid</span> <span class="k">if</span> <span class="n">prev_inuse</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define set_prev_size(p, sz) ((p)-&gt;mchunk_prev_size = (sz))</span>
+<span class="c1">##define set_prev_size(p, sz) ((p)-&gt;mchunk_prev_size = (sz))</span>
 
 <span class="o">/*</span> <span class="n">Ptr</span> <span class="n">to</span> <span class="n">previous</span> <span class="n">physical</span> <span class="n">malloc_chunk</span><span class="o">.</span>  <span class="n">Only</span> <span class="n">valid</span> <span class="k">if</span> <span class="n">prev_inuse</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))</span>
+<span class="c1">##define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))</span>
 </pre></div>
 </div>
 <p><strong>当前chunk使用状态相关操作</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">extract</span> <span class="n">p</span><span class="s1">&#39;s inuse bit */</span>
-<span class="c1">#define inuse(p)</span>
+<span class="c1">##define inuse(p)                                                               \</span>
     <span class="p">((((</span><span class="n">mchunkptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">+</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">p</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_size</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">PREV_INUSE</span><span class="p">)</span>
 
 <span class="o">/*</span> <span class="nb">set</span><span class="o">/</span><span class="n">clear</span> <span class="n">chunk</span> <span class="k">as</span> <span class="n">being</span> <span class="n">inuse</span> <span class="n">without</span> <span class="n">otherwise</span> <span class="n">disturbing</span> <span class="o">*/</span>
-<span class="c1">#define set_inuse(p)</span>
+<span class="c1">##define set_inuse(p)                                                           \</span>
     <span class="p">((</span><span class="n">mchunkptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">+</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">p</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_size</span> <span class="o">|=</span> <span class="n">PREV_INUSE</span>
 
-<span class="c1">#define clear_inuse(p)</span>
+<span class="c1">##define clear_inuse(p)                                                         \</span>
     <span class="p">((</span><span class="n">mchunkptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">+</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">p</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_size</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="n">PREV_INUSE</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>设置chunk的size字段</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Set</span> <span class="n">size</span> <span class="n">at</span> <span class="n">head</span><span class="p">,</span> <span class="n">without</span> <span class="n">disturbing</span> <span class="n">its</span> <span class="n">use</span> <span class="n">bit</span> <span class="o">*/</span>
 <span class="o">//</span> <span class="n">SIZE_BITS</span> <span class="o">=</span> <span class="mi">7</span>
-<span class="c1">#define set_head_size(p, s)</span>
+<span class="c1">##define set_head_size(p, s)                                                    \</span>
     <span class="p">((</span><span class="n">p</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">mchunk_size</span> <span class="o">=</span> <span class="p">(((</span><span class="n">p</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">mchunk_size</span> <span class="o">&amp;</span> <span class="n">SIZE_BITS</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">s</span><span class="p">)))</span>
 
 <span class="o">/*</span> <span class="n">Set</span> <span class="n">size</span><span class="o">/</span><span class="n">use</span> <span class="n">field</span> <span class="o">*/</span>
-<span class="c1">#define set_head(p, s) ((p)-&gt;mchunk_size = (s))</span>
+<span class="c1">##define set_head(p, s) ((p)-&gt;mchunk_size = (s))</span>
 
 <span class="o">/*</span> <span class="n">Set</span> <span class="n">size</span> <span class="n">at</span> <span class="n">footer</span> <span class="p">(</span><span class="n">only</span> <span class="n">when</span> <span class="n">chunk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">use</span><span class="p">)</span> <span class="o">*/</span>
-<span class="c1">#define set_foot(p, s)</span>
+<span class="c1">##define set_foot(p, s)                                                         \</span>
     <span class="p">(((</span><span class="n">mchunkptr</span><span class="p">)((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">s</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_prev_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="p">))</span>
 </pre></div>
 </div>
 <p><strong>获取指定偏移的chunk</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Treat</span> <span class="n">space</span> <span class="n">at</span> <span class="n">ptr</span> <span class="o">+</span> <span class="n">offset</span> <span class="k">as</span> <span class="n">a</span> <span class="n">chunk</span> <span class="o">*/</span>
-<span class="c1">#define chunk_at_offset(p, s) ((mchunkptr)(((char *) (p)) + (s)))</span>
+<span class="c1">##define chunk_at_offset(p, s) ((mchunkptr)(((char *) (p)) + (s)))</span>
 </pre></div>
 </div>
 <p><strong>指定偏移处chunk使用状态相关操作</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">check</span><span class="o">/</span><span class="nb">set</span><span class="o">/</span><span class="n">clear</span> <span class="n">inuse</span> <span class="n">bits</span> <span class="ow">in</span> <span class="n">known</span> <span class="n">places</span> <span class="o">*/</span>
-<span class="c1">#define inuse_bit_at_offset(p, s)</span>
+<span class="c1">##define inuse_bit_at_offset(p, s)                                              \</span>
     <span class="p">(((</span><span class="n">mchunkptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="n">s</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_size</span> <span class="o">&amp;</span> <span class="n">PREV_INUSE</span><span class="p">)</span>
 
-<span class="c1">#define set_inuse_bit_at_offset(p, s)</span>
+<span class="c1">##define set_inuse_bit_at_offset(p, s)                                          \</span>
     <span class="p">(((</span><span class="n">mchunkptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="n">s</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_size</span> <span class="o">|=</span> <span class="n">PREV_INUSE</span><span class="p">)</span>
 
-<span class="c1">#define clear_inuse_bit_at_offset(p, s)</span>
+<span class="c1">##define clear_inuse_bit_at_offset(p, s)                                        \</span>
     <span class="p">(((</span><span class="n">mchunkptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="n">s</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_size</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="n">PREV_INUSE</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -695,15 +666,13 @@ chunk-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 </div>
 <div class="section" id="bin">
 <h3>bin<a class="headerlink" href="#bin" title="永久链接至标题">¶</a></h3>
-<div class="section" id="id9">
-<h4>概述<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id8">
+<h4>概述<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h4>
 <p>我们曾经说到过，用户释放掉的chunk不会马上归还给系统，ptmalloc会统一管理heap和mmap映射区域中的空闲的chunk。当用户再一次请求分配内存时，ptmalloc分配器会试图在空闲的chunk中挑选一块合适的给用户。这样可以避免频繁的系统调用，降低内存分配的开销。</p>
-<p>在具体的实现中，对于空闲的chunk，ptmalloc采用分箱式方法进行管理。首先，它会根据空闲的chunk的大小以及使用状态将chunk进行初步分为4类：fast
-bins，small bins，large bins，unsorted
+<p>在具体的实现中，对于空闲的chunk，ptmalloc采用分箱式方法进行管理。首先，它会根据空闲的chunk的大小以及使用状态将chunk进行初步分为4类：fast bins，small bins，large bins，unsorted
 bins。每类中仍然有更加细化的划分，相似大小的chunk会用双向链表链接起来。也就是说，在每类bin的内部仍然会有多个互不相关的链表来保存不同大小的chunk。</p>
-<p>对于small bins，large bins，unsorted
-bins来说，Ptmalloc将它们维护在同一个数组中。这些bin对应的数据结构在malloc_state中，如下</p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="c1">#define NBINS 128</span>
+<p>对于small bins，large bins，unsorted bins来说，Ptmalloc将它们维护在同一个数组中。这些bin对应的数据结构在malloc_state中，如下</p>
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="c1">##define NBINS 128</span>
 <span class="o">/*</span> <span class="n">Normal</span> <span class="n">bins</span> <span class="n">packed</span> <span class="k">as</span> <span class="n">described</span> <span class="n">above</span> <span class="o">*/</span>
 <span class="n">mchunkptr</span> <span class="n">bins</span><span class="p">[</span> <span class="n">NBINS</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span> <span class="p">];</span>
 </pre></div>
@@ -735,47 +704,43 @@ bins来说，Ptmalloc将它们维护在同一个数组中。这些bin对应的�
 </tbody>
 </table>
 <p>可以看出除了第一个bin（unsorted bin）外，后面的每个bin会共享前面的bin的字段，将其视为malloc
-chunk部分的prev_size和size。这里也说明了一个问题， <strong>bin的下标和我们所说的第几个bin并不是一致的</strong> 。 <strong>这里也说明bin表头的chunk的prev_size与size字段不能随便修改，因为这两个字段是被其它bin所利用的。</strong></p>
+chunk部分的prev_size和size。这里也说明了一个问题，<strong>bin的下标和我们所说的第几个bin并不是一致的</strong>。<strong>这里也说明bin表头的chunk的prev_size与size字段不能随便修改，因为这两个字段是被其它bin所利用的。</strong></p>
 <p>相应的宏如下</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="n">typedef</span> <span class="n">struct</span> <span class="n">malloc_chunk</span> <span class="o">*</span><span class="n">mbinptr</span><span class="p">;</span>
 
 <span class="o">/*</span> <span class="n">addressing</span> <span class="o">--</span> <span class="n">note</span> <span class="n">that</span> <span class="n">bin_at</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">exist</span> <span class="o">*/</span>
-<span class="c1">#define bin_at(m, i)</span>
-    <span class="p">(</span><span class="n">mbinptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="p">((</span><span class="n">m</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bins</span><span class="p">[</span> <span class="p">((</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="p">]))</span> <span class="o">-</span>
+<span class="c1">##define bin_at(m, i)                                                           \</span>
+    <span class="p">(</span><span class="n">mbinptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="p">((</span><span class="n">m</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bins</span><span class="p">[</span> <span class="p">((</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="p">]))</span> <span class="o">-</span>                        \
               <span class="n">offsetof</span><span class="p">(</span><span class="n">struct</span> <span class="n">malloc_chunk</span><span class="p">,</span> <span class="n">fd</span><span class="p">))</span>
 
 <span class="o">/*</span> <span class="n">analog</span> <span class="n">of</span> <span class="o">++</span><span class="nb">bin</span> <span class="o">*/</span>
 <span class="o">//</span><span class="n">获取下一个bin的地址</span>
-<span class="c1">#define next_bin(b) ((mbinptr)((char *) (b) + (sizeof(mchunkptr) &lt;&lt; 1)))</span>
+<span class="c1">##define next_bin(b) ((mbinptr)((char *) (b) + (sizeof(mchunkptr) &lt;&lt; 1)))</span>
 
 <span class="o">/*</span> <span class="n">Reminders</span> <span class="n">about</span> <span class="nb">list</span> <span class="n">directionality</span> <span class="n">within</span> <span class="n">bins</span> <span class="o">*/</span>
 <span class="o">//</span><span class="n">这两个宏可以用来遍历bin</span>
 <span class="o">//</span><span class="n">获取bin的位于链表头的chunk</span>
-<span class="c1">#define first(b) ((b)-&gt;fd)</span>
+<span class="c1">##define first(b) ((b)-&gt;fd)</span>
 <span class="o">//</span><span class="n">获取bin的位于链表尾的chunk</span>
-<span class="c1">#define last(b) ((b)-&gt;bk)</span>
+<span class="c1">##define last(b) ((b)-&gt;bk)</span>
 </pre></div>
 </div>
 <p><strong>这里给出一个更加详细的图。?????</strong></p>
 <p>数组中的bin依次介绍如下</p>
 <ol class="arabic simple">
-<li>第一个为unsorted
-bin，字如其面，这里面的chunk没有进行排序，存储的chunk比较杂。</li>
-<li>索引从2到64的bin称为small bins，同一个small
-bin中的chunk的大小相同。两个相邻索引的small
-bin中的chunk大小相差的字节数为 <strong>2个机器字长</strong> ，即32位相差8字节，64位相差16字节。</li>
-<li>small bins后面的bin被称作large bins。large
-bins中的每一个bin都包含一定范围内的chunk，其中的chunk按大小序排列。相同大小的chunk同样按照最近使用顺序排列。</li>
+<li>第一个为unsorted bin，字如其面，这里面的chunk没有进行排序，存储的chunk比较杂。</li>
+<li>索引从2到64的bin称为small bins，同一个small bin中的chunk的大小相同。两个相邻索引的small bin中的chunk大小相差的字节数为<strong>2个机器字长</strong>，即32位相差8字节，64位相差16字节。</li>
+<li>small bins后面的bin被称作large bins。large bins中的每一个bin都包含一定范围内的chunk，其中的chunk按大小序排列。相同大小的chunk同样按照最近使用顺序排列。</li>
 </ol>
 <p>从small bin开始，每个bin的所存储的chunk的大小会不断增加。</p>
-<p>此外，上述这些bin的排布都会遵循一个原则： <strong>任意两个物理相邻的空闲chunk不能在一起</strong> 。</p>
-<p>需要注意的是，并不是所有的chunk被释放后就立即被放到bin中。ptmalloc为了提高分配的速度，会把一些小的的chunk <strong>先</strong> 放到fast
-bins的容器内。 <strong>而且，fastbin中容器中的chunk的使用标记总是被置位的，所以不满足上面的那个原则。</strong></p>
+<p>此外，上述这些bin的排布都会遵循一个原则：<strong>任意两个物理相邻的空闲chunk不能在一起</strong>。</p>
+<p>需要注意的是，并不是所有的chunk被释放后就立即被放到bin中。ptmalloc为了提高分配的速度，会把一些小的的chunk<strong>先</strong>放到fast
+bins的容器内。<strong>而且，fastbin中容器中的chunk的使用标记总是被置位的，所以不满足上面的那个原则。</strong></p>
 </div>
 <div class="section" id="fast-bin">
 <h4>fast bin<a class="headerlink" href="#fast-bin" title="永久链接至标题">¶</a></h4>
-<p>对于大多数程序来说，经常会申请以及释放一些比较小的内存块。而且，这个频率相对来说比较高。如果我们在将一些较小的chunk释放之后发现存在与之相邻的空闲的chunk并将它们进行合并，当我们下一次再次申请相应大小的chunk时，就需要对chunk进行分割，这样就大大降低了堆的利用效率。 <strong>因为我们把大部分时间花在了合并与分割以及中间检查的过程中。</strong> 因此，ptmalloc中专门设计了fast
-bin，就是 malloc state 中的 fastbinsY 。其对应的数据结构如下</p>
+<p>对于大多数程序来说，经常会申请以及释放一些比较小的内存块。而且，这个频率相对来说比较高。如果我们在将一些较小的chunk释放之后发现存在与之相邻的空闲的chunk并将它们进行合并，当我们下一次再次申请相应大小的chunk时，就需要对chunk进行分割，这样就大大降低了堆的利用效率。<strong>因为我们把大部分时间花在了合并与分割以及中间检查的过程中。</strong>因此，ptmalloc中专门设计了fast
+bin，对应的变量就是 malloc state 中的 fastbinsY ，对应的数据结构如下</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span>
    <span class="n">Fastbins</span>
 
@@ -801,24 +766,19 @@ bin，就是 malloc state 中的 fastbinsY 。其对应的数据结构如下</p>
 <span class="o">*/</span>
 </pre></div>
 </div>
-<p>为了更加高效地利用fast bin，glibc
-直接采用单向链表对其中的每个bin进行组织，并且 <strong>每个bin采取LIFO策略</strong> ，最近释放的
-chunk
-会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的chunk的大小小于
-fastbin 的最大大小时， ptmalloc 会首先判断 fastbin
+<p>为了更加高效地利用fast bin，glibc 直接采用单向链表对其中的每个bin进行组织，并且<strong>每个bin采取LIFO策略</strong>，最近释放的 chunk
+会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的chunk的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin
 中是否有bin中有对应大小的空闲块，如果有的话，就会直接从这个bin中获取chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。</p>
-<p>默认情况下（32位为例）， fastbin 中默认支持最大的 chunk
-的数据空间大小为64字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外，
-fastbin
+<p>默认情况下（32位为例）， fastbin 中默认支持最大的 chunk 的数据空间大小为64字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin
 最多可以支持的bin的个数为10个，从数据空间为8字节开始一直到80字节，定义如下</p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>#define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>##define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)
 
-#ifndef DEFAULT_MXFAST
-#define DEFAULT_MXFAST (64 * SIZE_SZ / 4)
-#endif
+##ifndef DEFAULT_MXFAST
+##define DEFAULT_MXFAST (64 * SIZE_SZ / 4)
+##endif
 
 /* The maximum fastbin request size we support */
-#define MAX_FAST_SIZE (80 * SIZE_SZ / 4)
+##define MAX_FAST_SIZE (80 * SIZE_SZ / 4)
 
 /*
    Since the lowest 2 bits in max_fast don&#39;t matter in size comparisons,
@@ -835,11 +795,11 @@ fastbin
    initialization checks.
  */
 //判断分配区是否有 fast bin chunk，1表示没有
-#define FASTCHUNKS_BIT (1U)
+##define FASTCHUNKS_BIT (1U)
 
-#define have_fastchunks(M) (((M)-&gt;flags &amp; FASTCHUNKS_BIT) == 0)
-#define clear_fastchunks(M) catomic_or(&amp;(M)-&gt;flags, FASTCHUNKS_BIT)
-#define set_fastchunks(M) catomic_and(&amp;(M)-&gt;flags, ~FASTCHUNKS_BIT)
+##define have_fastchunks(M) (((M)-&gt;flags &amp; FASTCHUNKS_BIT) == 0)
+##define clear_fastchunks(M) catomic_or(&amp;(M)-&gt;flags, FASTCHUNKS_BIT)
+##define set_fastchunks(M) catomic_and(&amp;(M)-&gt;flags, ~FASTCHUNKS_BIT)
 
 /*
    NONCONTIGUOUS_BIT indicates that MORECORE does not return contiguous
@@ -853,21 +813,21 @@ fastbin
 // 主分配区中的MORECORE其实为sbr()，默认返回连续虚拟地址空间
 // 非主分配区使用mmap()分配大块虚拟内存，然后进行切分来模拟主分配区的行为
 // 而默认情况下mmap映射区域是不保证虚拟地址空间连续的，所以非主分配区默认分配非连续虚拟地址空间。
-#define NONCONTIGUOUS_BIT (2U)
+##define NONCONTIGUOUS_BIT (2U)
 
-#define contiguous(M) (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) == 0)
-#define noncontiguous(M) (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) != 0)
-#define set_noncontiguous(M) ((M)-&gt;flags |= NONCONTIGUOUS_BIT)
-#define set_contiguous(M) ((M)-&gt;flags &amp;= ~NONCONTIGUOUS_BIT)
+##define contiguous(M) (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) == 0)
+##define noncontiguous(M) (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) != 0)
+##define set_noncontiguous(M) ((M)-&gt;flags |= NONCONTIGUOUS_BIT)
+##define set_contiguous(M) ((M)-&gt;flags &amp;= ~NONCONTIGUOUS_BIT)
 
 /* ARENA_CORRUPTION_BIT is set if a memory corruption was detected on the
    arena.  Such an arena is no longer used to allocate chunks.  Chunks
    allocated in that arena before detecting corruption are not freed.  */
 
-#define ARENA_CORRUPTION_BIT (4U)
+##define ARENA_CORRUPTION_BIT (4U)
 
-#define arena_is_corrupt(A) (((A)-&gt;flags &amp; ARENA_CORRUPTION_BIT))
-#define set_arena_corrupt(A) ((A)-&gt;flags |= ARENA_CORRUPTION_BIT)
+##define arena_is_corrupt(A) (((A)-&gt;flags &amp; ARENA_CORRUPTION_BIT))
+##define set_arena_corrupt(A) ((A)-&gt;flags |= ARENA_CORRUPTION_BIT)
 
 /*
    Set value of max_fast.
@@ -876,27 +836,24 @@ fastbin
    Setting the value clears fastchunk bit but preserves noncontiguous bit.
  */
 
-#define set_max_fast(s)
-    global_max_fast =
+##define set_max_fast(s)                                                        \
+    global_max_fast =                                                          \
         (((s) == 0) ? SMALLBIN_WIDTH : ((s + SIZE_SZ) &amp; ~MALLOC_ALIGN_MASK))
-#define get_max_fast() global_max_fast
+##define get_max_fast() global_max_fast
 </pre></div>
 </div>
-<p>ptmalloc默认情况下会调用set_max_fast(s)将全局变量 global_max_fast
-设置为DEFAULT_MXFAST，也就是设置fast
-bins中chunk的最大值。当MAX_FAST_SIZE被设置为0时，系统就不会支持fastbin。</p>
+<p>ptmalloc默认情况下会调用set_max_fast(s)将全局变量 global_max_fast 设置为DEFAULT_MXFAST，也就是设置fast bins中chunk的最大值。当MAX_FAST_SIZE被设置为0时，系统就不会支持fastbin。</p>
 <p><strong>fastbin的索引</strong></p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>#define fastbin(ar_ptr, idx) ((ar_ptr)-&gt;fastbinsY[ idx ])
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>##define fastbin(ar_ptr, idx) ((ar_ptr)-&gt;fastbinsY[ idx ])
 
 /* offset 2 to use otherwise unindexable first 2 bins */
 // 这里要减2，否则的话，前两个bin没有办法索引到。
-#define fastbin_index(sz)
+##define fastbin_index(sz)                                                      \
     ((((unsigned int) (sz)) &gt;&gt; (SIZE_SZ == 8 ? 4 : 3)) - 2)
 </pre></div>
 </div>
 <p><strong>需要特别注意的是，fastbin范围的chunk的inuse始终被置为1。因此它们不会和其它被释放的chunk合并。</strong></p>
-<p>但是当释放的chunk与该chunk相邻的空闲chunk合并后的大小大于FASTBIN_CONSOLIDATION_THRESHOLD时，内存碎片可能比较多了，我们就需要把fast
-bins中的chunk都进行合并，以减少内存碎片对系统的影响。</p>
+<p>但是当释放的chunk与该chunk相邻的空闲chunk合并后的大小大于FASTBIN_CONSOLIDATION_THRESHOLD时，内存碎片可能比较多了，我们就需要把fast bins中的chunk都进行合并，以减少内存碎片对系统的影响。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span>
    <span class="n">FASTBIN_CONSOLIDATION_THRESHOLD</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">size</span> <span class="n">of</span> <span class="n">a</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">free</span><span class="p">()</span>
    <span class="n">that</span> <span class="n">triggers</span> <span class="n">automatic</span> <span class="n">consolidation</span> <span class="n">of</span> <span class="n">possibly</span><span class="o">-</span><span class="n">surrounding</span>
@@ -908,7 +865,7 @@ bins中的chunk都进行合并，以减少内存碎片对系统的影响。</p>
    <span class="k">if</span> <span class="n">trimming</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">used</span><span class="o">.</span>
  <span class="o">*/</span>
 
-<span class="c1">#define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)</span>
+<span class="c1">##define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)</span>
 </pre></div>
 </div>
 <p><strong>malloc_consolidate函数可以将fastbin中所有的chunk释放并合并在一起。？？？</strong></p>
@@ -923,17 +880,17 @@ bins中的chunk都进行合并，以减少内存碎片对系统的影响。</p>
 </div>
 <div class="section" id="small-bin">
 <h4>small bin<a class="headerlink" href="#small-bin" title="永久链接至标题">¶</a></h4>
-<p>small bins中每个chunk的大小与其所在的bin的index的关系为：chunk_size =2 * SIZE_SZ * index，具体如下</p>
+<p>small bins中每个chunk的大小与其所在的bin的index的关系为：chunk_size =2 * SIZE_SZ *index，具体如下</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="13%" />
-<col width="44%" />
+<col width="15%" />
+<col width="42%" />
 <col width="42%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head">index</th>
-<th class="head">SIZE_SZ=4(32 bits)</th>
-<th class="head">SIZE_SZ=8(64 bits)</th>
+<tr class="row-odd"><th class="head">下标</th>
+<th class="head">SIZE_SZ=4（32位）</th>
+<th class="head">SIZE_SZ=8（64位）</th>
 </tr>
 </thead>
 <tbody valign="top">
@@ -963,34 +920,31 @@ bins中的chunk都进行合并，以减少内存碎片对系统的影响。</p>
 </tr>
 </tbody>
 </table>
-<p>small bins中一共有62个链表，每个链表中存储的chunk大小都一致。比如对于32位系统来说，下标2对应的双向链表中存储的chunk大小为均为16字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外， <strong>small
-bins中每个bin对应的链表采用FIFO的规则</strong> ，所以同一个链表中先被释放的chunk会先被分配出去。</p>
+<p>small
+bins中一共有62个链表，每个链表中存储的chunk大小都一致。比如对于32位系统来说，下标2对应的双向链表中存储的chunk大小为均为16字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，<strong>small
+bins中每个bin对应的链表采用FIFO的规则</strong>，所以同一个链表中先被释放的chunk会先被分配出去。</p>
 <p>small bin相关的宏如下</p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>#define NSMALLBINS 64
-#define SMALLBIN_WIDTH MALLOC_ALIGNMENT
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>##define NSMALLBINS 64
+##define SMALLBIN_WIDTH MALLOC_ALIGNMENT
 // 是否需要对small bin的下标进行纠正
-#define SMALLBIN_CORRECTION (MALLOC_ALIGNMENT &gt; 2 * SIZE_SZ)
+##define SMALLBIN_CORRECTION (MALLOC_ALIGNMENT &gt; 2 * SIZE_SZ)
 
-#define MIN_LARGE_SIZE ((NSMALLBINS - SMALLBIN_CORRECTION) * SMALLBIN_WIDTH)
+##define MIN_LARGE_SIZE ((NSMALLBINS - SMALLBIN_CORRECTION) * SMALLBIN_WIDTH)
 //判断chunk的大小是否在small bin范围内
-#define in_smallbin_range(sz)
+##define in_smallbin_range(sz)                                                  \
     ((unsigned long) (sz) &lt; (unsigned long) MIN_LARGE_SIZE)
 // 根据chunk的大小得到small bin对应的索引。
-#define smallbin_index(sz)
-    ((SMALLBIN_WIDTH == 16 ? (((unsigned) (sz)) &gt;&gt; 4)
-                           : (((unsigned) (sz)) &gt;&gt; 3)) +
+##define smallbin_index(sz)                                                     \
+    ((SMALLBIN_WIDTH == 16 ? (((unsigned) (sz)) &gt;&gt; 4)                          \
+                           : (((unsigned) (sz)) &gt;&gt; 3)) +                       \
      SMALLBIN_CORRECTION)
 </pre></div>
 </div>
-<p><strong>或许，大家会很疑惑，那fastbin与small
-bin中chunk的大小会有很大一部分重合啊，那small
-bin中对应大小的bin是不是就没有什么作用啊？</strong> 其实不然，fast
-bin中的chunk是有可能被放到small bin中去的。</p>
+<p><strong>或许，大家会很疑惑，那fastbin与small bin中chunk的大小会有很大一部分重合啊，那small bin中对应大小的bin是不是就没有什么作用啊？</strong> 其实不然，fast bin中的chunk是有可能被放到small bin中去的。</p>
 </div>
 <div class="section" id="large-bin">
 <h4>large bin<a class="headerlink" href="#large-bin" title="永久链接至标题">¶</a></h4>
-<p>large
-bins中一共包括63个bin，每个bin中的chunk的大小不再一致，而是处于一定区间范围内。此外，这63个bin被分成了6组，每组bin中的chunk大小之间的公差一致，具体如下：</p>
+<p>large bins中一共包括63个bin，每个bin中的chunk的大小不再一致，而是处于一定区间范围内。此外，这63个bin被分成了6组，每组bin中的chunk大小之间的公差一致，具体如下：</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="24%" />
@@ -1030,64 +984,61 @@ bins中一共包括63个bin，每个bin中的chunk的大小不再一致，而是
 </tr>
 </tbody>
 </table>
-<p>这里我们以32位平台的large bin为例，第一个large
-bin的起始chunk大小为512字节，其位于第一组，所以该bin可以存储的chunk的大小范围为[512,512+64)。</p>
-<p>关于large bin的宏如下，这里我们以32位平台下，第一个large
-bin的起始chunk大小为例，为512字节，那么</p>
+<p>这里我们以32位平台的large bin为例，第一个large bin的起始chunk大小为512字节，其位于第一组，所以该bin可以存储的chunk的大小范围为[512,512+64)。</p>
+<p>关于large bin的宏如下，这里我们以32位平台下，第一个large bin的起始chunk大小为例，为512字节，那么</p>
 <p>512&gt;&gt;6 = 8，所以其下标为56+8=64。</p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>#define largebin_index_32(sz)
-    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 38)
-         ? 56 + (((unsigned long) (sz)) &gt;&gt; 6)
-         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)
-               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)
-               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)
-                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)
-                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)
-                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)
-                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)
-                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>##define largebin_index_32(sz)                                                  \
+    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 38)                                     \
+         ? 56 + (((unsigned long) (sz)) &gt;&gt; 6)                                  \
+         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)                               \
+               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)                            \
+               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)                        \
+                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)                    \
+                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)                   \
+                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)              \
+                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)             \
+                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)        \
                                  : 126)
 
-#define largebin_index_32_big(sz)
-    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 45)
-         ? 49 + (((unsigned long) (sz)) &gt;&gt; 6)
-         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)
-               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)
-               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)
-                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)
-                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)
-                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)
-                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)
-                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)
+##define largebin_index_32_big(sz)                                              \
+    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 45)                                     \
+         ? 49 + (((unsigned long) (sz)) &gt;&gt; 6)                                  \
+         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)                               \
+               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)                            \
+               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)                        \
+                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)                    \
+                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)                   \
+                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)              \
+                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)             \
+                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)        \
                                  : 126)
 
 // XXX It remains to be seen whether it is good to keep the widths of
 // XXX the buckets the same or whether it should be scaled by a factor
 // XXX of two as well.
-#define largebin_index_64(sz)
-    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 48)
-         ? 48 + (((unsigned long) (sz)) &gt;&gt; 6)
-         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)
-               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)
-               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)
-                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)
-                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)
-                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)
-                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)
-                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)
+##define largebin_index_64(sz)                                                  \
+    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 48)                                     \
+         ? 48 + (((unsigned long) (sz)) &gt;&gt; 6)                                  \
+         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)                               \
+               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)                            \
+               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)                        \
+                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)                    \
+                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)                   \
+                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)              \
+                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)             \
+                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)        \
                                  : 126)
 
-#define largebin_index(sz)
-    (SIZE_SZ == 8 ? largebin_index_64(sz) : MALLOC_ALIGNMENT == 16
-                                                ? largebin_index_32_big(sz)
+##define largebin_index(sz)                                                     \
+    (SIZE_SZ == 8 ? largebin_index_64(sz) : MALLOC_ALIGNMENT == 16             \
+                                                ? largebin_index_32_big(sz)    \
                                                 : largebin_index_32(sz))
 </pre></div>
 </div>
 </div>
 <div class="section" id="unsorted-bin">
 <h4>unsorted bin<a class="headerlink" href="#unsorted-bin" title="永久链接至标题">¶</a></h4>
-<p>unsorted bin可以视为small bins 与large bins 之间的缓冲。 unsorted
-bin只有一个链表，其中的空闲chunk不会进行排序，其空闲的chunk主要有两个来源</p>
+<p>unsorted bin可以视为small bins 与large bins 之间的缓冲。 unsorted bin只有一个链表，其中的空闲chunk不会进行排序，主要有两个来源</p>
 <ul class="simple">
 <li>一个chunk被分割成两半后剩下的部分会被放到unsorted bin中。</li>
 <li>所有的chunk在回收利用前都会放到unsorted bin中。</li>
@@ -1110,7 +1061,7 @@ bin只有一个链表，其中的空闲chunk不会进行排序，其空闲的chu
 </div>
 <p>从下面的宏我们可以看出</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">The</span> <span class="n">otherwise</span> <span class="n">unindexable</span> <span class="mi">1</span><span class="o">-</span><span class="nb">bin</span> <span class="ow">is</span> <span class="n">used</span> <span class="n">to</span> <span class="n">hold</span> <span class="n">unsorted</span> <span class="n">chunks</span><span class="o">.</span> <span class="o">*/</span>
-<span class="c1">#define unsorted_chunks(M) (bin_at(M, 1))</span>
+<span class="c1">##define unsorted_chunks(M) (bin_at(M, 1))</span>
 </pre></div>
 </div>
 <p>unsorted bin处于我们之前所说的数组下标1处。</p>
@@ -1119,7 +1070,7 @@ bin只有一个链表，其中的空闲chunk不会进行排序，其空闲的chu
 <h4>common macro<a class="headerlink" href="#common-macro" title="永久链接至标题">¶</a></h4>
 <p>这里介绍一些通用的宏。</p>
 <p><strong>根据chunk的大小统一地获得chunk所在的索引</strong></p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>#define bin_index(sz)
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span>##define bin_index(sz)                                                          \
     ((in_smallbin_range(sz)) ? smallbin_index(sz) : largebin_index(sz))
 </pre></div>
 </div>
@@ -1147,18 +1098,17 @@ bin只有一个链表，其中的空闲chunk不会进行排序，其空闲的chu
  <span class="o">*/</span>
 
 <span class="o">/*</span> <span class="n">Conveniently</span><span class="p">,</span> <span class="n">the</span> <span class="n">unsorted</span> <span class="nb">bin</span> <span class="n">can</span> <span class="n">be</span> <span class="n">used</span> <span class="k">as</span> <span class="n">dummy</span> <span class="n">top</span> <span class="n">on</span> <span class="n">first</span> <span class="n">call</span> <span class="o">*/</span>
-<span class="c1">#define initial_top(M) (unsorted_chunks(M))</span>
+<span class="c1">##define initial_top(M) (unsorted_chunks(M))</span>
 </pre></div>
 </div>
-<p>程序第一次进行malloc的时候，就会将heap分为两块，一块给用户，剩下的那块就是top chunk。其实，所谓的top chunk就是处于当前堆的物理地址最高的chunk。这个chunk不属于任何一个bin，它的作用在于当所有的bin都无法满足用户请求的大小时，如果其大小不小于指定的大小，就进行分配，并将剩下的部分作为新的top
+<p>程序第一次进行malloc的时候，就会将heap分为两块，一块给用户，剩下的那块就是top chunk。其实，所谓的top
+chunk就是处于当前堆的物理地址最高的chunk。这个chunk不属于任何一个bin，它的作用在于当所有的bin都无法满足用户请求的大小时，如果其大小不小于指定的大小，就进行分配，并将剩下的部分作为新的top
 chunk。否则，就对heap进行扩展后再进行分配。在main arena中通过sbrk扩展heap，而在thread arena中通过mmap分配新的heap。</p>
-<p>需要注意的是，top chunk的prev_inuse比特位始终为1，否则其前面的chunk就会被合并到top
-chunk中。</p>
+<p>需要注意的是，top chunk的prev_inuse比特位始终为1，否则其前面的chunk就会被合并到top chunk中。</p>
 </div>
 <div class="section" id="last-remainder">
 <h3>last remainder<a class="headerlink" href="#last-remainder" title="永久链接至标题">¶</a></h3>
-<p>在用户使用malloc请求分配内存时，ptmalloc2找到的chunk可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为last
-remainder chunk，unsort bin也会存这一块。</p>
+<p>在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin也会存这一块。</p>
 </div>
 </div>
 </div>
