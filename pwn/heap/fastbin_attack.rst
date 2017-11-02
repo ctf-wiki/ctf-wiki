@@ -1,15 +1,12 @@
-..
-
 fastbin attack
 ==============
 
+--------------
 
 介绍
 ----
 
-fastbin
-attack是一种(或多种)堆漏洞的利用方法，这种方法需要使用fastbin的特性，因此需要漏洞发生在属于fastbin的chunk中。
-基于这一点我们可以知道这种利用的前提是：
+fastbin attack是一种(或多种)堆漏洞的利用方法，这种方法需要使用fastbin的特性，因此需要漏洞发生在属于fastbin的chunk中。 基于这一点我们可以知道这种利用的前提是：
 
 -  存在堆溢出、use-after-free等能控制chunk内容的漏洞
 -  漏洞发生于属于fastbin的chunk中
@@ -17,9 +14,7 @@ attack是一种(或多种)堆漏洞的利用方法，这种方法需要使用fas
 原理
 ----
 
-fastbin
-attack存在的原因在于fastbin是使用单链表来维护释放的堆块的，并且由fastbin管理的chunk即使被释放其next_chunk的pre_inuse位也不会被置为空。
-我们实际的来看一下fastbin是怎样的管理被释放的chunk的。
+fastbin attack存在的原因在于fastbin是使用单链表来维护释放的堆块的，并且由fastbin管理的chunk即使被释放其next\_chunk的pre\_inuse位也不会被置为空。 我们实际的来看一下fastbin是怎样的管理被释放的chunk的。
 
 ::
 
@@ -72,7 +67,7 @@ attack存在的原因在于fastbin是使用单链表来维护释放的堆块的�
     0x6020b0:   0x0000000000000000  0x0000000000000000
     0x6020c0:   0x0000000000000000  0x0000000000020f41 <=== top chunk
 
-此时位于main_arena中的fastbin链表中已经储存了指向chunk3的指针，并且chunk3、2、1构成了一个单链表
+此时位于main\_arena中的fastbin链表中已经储存了指向chunk3的指针，并且chunk3、2、1构成了一个单链表
 
 ::
 
@@ -86,8 +81,7 @@ attack存在的原因在于fastbin是使用单链表来维护释放的堆块的�
 分类
 ----
 
-fastbin
-attack是一个统称，意为所有基于fastbin的利用，如果细分可以做如下的分类：
+fastbin attack是一个统称，意为所有基于fastbin的利用，如果细分可以做如下的分类：
 
 -  fastbin double free
 -  House of Spirit
@@ -101,10 +95,9 @@ free是指一个属于fastbin的chunk可以多次被释放并多次的存在于f
 confused)的效果。
 
 演示
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----
 
-fastbin double
-free之所以能够成功的实现有两部分的原因，一是属于fastbin的堆块被释放后next_chunk的pre_inuse位不会被清空，二是fastbin在执行free的时候仅验证了main_arena直接指向的块
+fastbin double free之所以能够成功的实现有两部分的原因，一是属于fastbin的堆块被释放后next\_chunk的pre\_inuse位不会被清空，二是fastbin在执行free的时候仅验证了main\_arena直接指向的块
 
 ::
 
@@ -131,8 +124,7 @@ free之所以能够成功的实现有两部分的原因，一是属于fastbin的
         return 0;
     }
 
-如果你执行这个程序，不出意外的话会得到如下的结果，这正是_int_free函数检测到了fastbin的double
-free。
+如果你执行这个程序，不出意外的话会得到如下的结果，这正是\_int\_free函数检测到了fastbin的double free。
 
 ::
 
@@ -171,7 +163,7 @@ free。
     ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
     已放弃 (核心已转储)
 
-如果我们在chunk1释放后，再释放chunk2，这样main_arena就指向chunk2而不是chunk1了，此时我们再去释放chunk1就不再会被检测到。
+如果我们在chunk1释放后，再释放chunk2，这样main\_arena就指向chunk2而不是chunk1了，此时我们再去释放chunk1就不再会被检测到。
 
 ::
 
@@ -187,11 +179,9 @@ free。
         return 0;
     }
 
-第一次释放 ``free(chunk1)``  |捕获.PNG-3kB|
-第二次释放 ``free(chunk2)``  |捕获.PNG-3.4kB|
-第三次释放 ``free(chunk1)``  |捕获.PNG-5.8kB|
+第一次释放\ ``free(chunk1)``\  |捕获.PNG-3kB| 第二次释放\ ``free(chunk2)``\  |捕获.PNG-3.4kB| 第三次释放\ ``free(chunk1)``\  |捕获.PNG-5.8kB|
 注意因为chunk1被再次释放因此其fd值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
-下面这个示例演示了这一点，首先跟前面一样构造main_arena=>chunk1=>chun2=>chunk1的链表。之后第一次调用malloc返回chunk1之后修改chunk1的fd指针指向bss段上的bss_chunk，之后我们可以看到fastbin会把堆块分配到这里。
+下面这个示例演示了这一点，首先跟前面一样构造main\_arena=>chunk1=>chun2=>chunk1的链表。之后第一次调用malloc返回chunk1之后修改chunk1的fd指针指向bss段上的bss\_chunk，之后我们可以看到fastbin会把堆块分配到这里。
 
 ::
 
@@ -227,7 +217,7 @@ free。
         return 0;
     }
 
-在我的系统上chunk_b输出的值会是0x601090，这个值位于bss段中正是我们之前设置的 ``CHUNK bss_chunk``
+在我的系统上chunk\_b输出的值会是0x601090，这个值位于bss段中正是我们之前设置的\ ``CHUNK bss_chunk``
 
 ::
 
@@ -243,7 +233,7 @@ free。
     0x6010b0:               0x0000000000000000  0x0000000000000000
     0x6010c0:               0x0000000000000000  0x0000000000000000
 
-值得注意的是我们在main函数的第一步就进行了 ``bss_chunk.size=0x21;`` 的操作，这是因为_int_malloc会对欲分配位置的size域进行验证，如果其size与当前fastbin链表应有size不符就会抛出异常。
+值得注意的是我们在main函数的第一步就进行了\ ``bss_chunk.size=0x21;``\ 的操作，这是因为\_int\_malloc会对欲分配位置的size域进行验证，如果其size与当前fastbin链表应有size不符就会抛出异常。
 
 ::
 
@@ -282,7 +272,7 @@ free。
     ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
     已放弃 (核心已转储)
 
-_int_malloc中的校验如下
+\_int\_malloc中的校验如下
 
 ::
 
@@ -295,27 +285,24 @@ _int_malloc中的校验如下
     }
 
 小总结
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------
 
-通过fastbin double
-free我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。
+通过fastbin double free我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。
 如果是更进一步的修改fd指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。
 
 House of Spirit
 ---------------
 
-House of Spirit是House of XX的一种,House of
-XX是2004年左右发出来的一篇关于Linux堆利用的技术文章中提出一系列利用方法。
+House of Spirit是House of XX的一种,House of XX是2004年左右发出来的一篇关于Linux堆利用的技术文章中提出一系列利用方法。
 对HOS的描述是可以使得fastbin堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。
-如果你已经理解了前文所讲的fastbin double
-free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于fastbin链表是使用当前chunk的fd指针指向下一个chunk构成的。
+
+如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于 fastbin 链表是使用当前chunk的fd指针指向下一个chunk构成的。
 HOS的核心同样在于劫持fastbin链表中chunk的fd指针，把fd指针指向我们想要分配的栈上，实现控制栈中数据。
 
 演示
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----
 
-这次我们把fake_chunk置于栈中称为stack_chunk，同时劫持了fastbin链表中chunk的fd值，通过把这个fd值指向stack_chunk就可以实现在栈中分配fastbin
-chunk。
+这次我们把fake\_chunk置于栈中称为stack\_chunk，同时劫持了fastbin链表中chunk的fd值，通过把这个fd值指向stack\_chunk就可以实现在栈中分配fastbin chunk。
 
 ::
 
@@ -345,7 +332,7 @@ chunk。
         return 0;
     }
 
-通过gdb调试可以看到我们首先把chunk1的fd指针指向了stack_chunk
+通过gdb调试可以看到我们首先把chunk1的fd指针指向了stack\_chunk
 
 ::
 
@@ -353,7 +340,7 @@ chunk。
     0x602010:   0x00007fffffffde60  0x0000000000000000
     0x602020:   0x0000000000000000  0x0000000000020fe1 <=== top chunk
 
-之后第一次malloc使得fastbin链表指向了stack_chunk，这意味着下一次分配会使用stack_chunk的内存进行
+之后第一次malloc使得fastbin链表指向了stack\_chunk，这意味着下一次分配会使用stack\_chunk的内存进行
 
 ::
 
@@ -361,7 +348,7 @@ chunk。
     0x7ffff7dd1b28 <main_arena+8>:  0x00007fffffffde60 <=== fastbin[0]
     0x7ffff7dd1b30 <main_arena+16>: 0x0000000000000000  
 
-最终第二次malloc返回值为0x00007fffffffde70也就是stack_chunk
+最终第二次malloc返回值为0x00007fffffffde70也就是stack\_chunk
 
 ::
 
@@ -390,24 +377,20 @@ chunk。
     0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
 
 小总结
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------
 
-通过HOS我们可以把fastbin chunk分配到栈中，从而控制返回地址等关键数据。
-要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。
+通过HOS我们可以把fastbin chunk分配到栈中，从而控制返回地址等关键数据。 要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。
 
 arbitrary alloc
 ---------------
 
-arbitrary alloc其实与House of
-Spirit是完全相同的，唯一的区别是分配的目标不再是栈中。
-事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。
+arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。
 
 演示
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----
 
-有些同学可能会认为HOS与arbitrary
-alloc没有什么区别因此没有必要分为两类，这里我们使用如下的这个例子来说明这种利用手法与HOS的意义是不同的。
-这个例子是使用字节错位来实现直接分配fastbin到__malloc_hook的位置，相当于直接写入__malloc_hook来控制程序流程。
+有些同学可能会认为HOS与arbitrary alloc没有什么区别因此没有必要分为两类，这里我们使用如下的这个例子来说明这种利用手法与HOS的意义是不同的。
+这个例子是使用字节错位来实现直接分配fastbin到\_\_malloc\_hook的位置，相当于直接写入\_\_malloc\_hook来控制程序流程。
 
 ::
 
@@ -451,7 +434,7 @@ alloc没有什么区别因此没有必要分为两类，这里我们使用如下
     0x7ffff7dd1b08 0x0  0x2a 0xa9 0xf7 0xff 0x7f 0x0 0x0
     0x7ffff7dd1b10 <__malloc_hook>: 0x30    0x28    0xa9    0xf7    0xff    0x7f    0x0 0x0
 
-0x7ffff7dd1b10是我们想要控制的__malloc_hook的内容，于是我们向上寻找是否可以错位出一个合法的size域。因为我们是在64位系统下进行的调试，因此fastbin的范围为32字节到128字节(0x20-0x80),如下：
+0x7ffff7dd1b10是我们想要控制的\_\_malloc\_hook的内容，于是我们向上寻找是否可以错位出一个合法的size域。因为我们是在64位系统下进行的调试，因此fastbin的范围为32字节到128字节(0x20-0x80),如下：
 
 ::
 
@@ -473,8 +456,8 @@ alloc没有什么区别因此没有必要分为两类，这里我们使用如下
 
     0x7ffff7dd1af5 <_IO_wide_data_0+309>:   0x000000000000007f
 
-因为0x7f是属于0x70的，而其大小又包含了0x10的chunk_header因此我们选择分配0x60的fastbin，将其加入链表。
-最后经过两次分配可以观察到chunk被分配到0x00007ffff7dd1b15，因此我们就可以直接控制__malloc_hook的内容。
+因为0x7f是属于0x70的，而其大小又包含了0x10的chunk\_header因此我们选择分配0x60的fastbin，将其加入链表。
+最后经过两次分配可以观察到chunk被分配到0x00007ffff7dd1b15，因此我们就可以直接控制\_\_malloc\_hook的内容。
 
 ::
 
@@ -489,10 +472,9 @@ alloc没有什么区别因此没有必要分为两类，这里我们使用如下
     0x7ffff7dd1b35 <main_arena+21>: 0x0000000000000000  0x0000000000000000
 
 小总结
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------
 
-虽然arbitrary alloc与HOS的原理是相同的，但是arbitrary
-alloc在CTF中要比HOS更常出现也更加使用。
+虽然arbitrary alloc与HOS的原理是相同的，但是arbitrary alloc在CTF中要比HOS更常出现也更加使用。
 我们可以利用字节错位等方法来绕过size域的检验，实现任意地址分配chunk，最后的效果也就相当于任意地址写任意值。
 
 .. |捕获.PNG-13.8kB| image:: http://static.zybuluo.com/vbty/e8k7kq9w9a0fzm0qxfpzwpw5/%E6%8D%95%E8%8E%B7.PNG

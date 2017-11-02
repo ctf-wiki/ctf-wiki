@@ -34,6 +34,7 @@
    heap_structure.rst
    heap_implementation_details.rst
    heapoverflow_basic.rst
-   off-by-one.rst
-   fastbin-attack.rst
+   use_after_free.rst
+   off_by_one.rst
+   fastbin_attack.rst
 

@@ -1,10 +1,8 @@
-..
-
 基本堆介绍
 ==========
 
 什么是堆
-^^^^^^^^^^^^^^
+--------
 
 在程序的运行过程中，堆可以提供动态分配的内存，允许程序去为在程序运行之前还未知大小的变量申请空间。
 
@@ -12,8 +10,7 @@
 
 Linux中早期的堆分配与回收由Doug
 Lea实现，但它在并行处理多个线程时，会共享进程的堆内存空间，因此会出现堆被线程加锁利用时，其它线程无法使用的情况，这就会降低内存分配和回收的高效性。同时，如果在多线程使用时，没能正确控制，也可能引起内存分配和回收的正确性。Wolfram
-Gloger在Doug
-Lea的基础上进行改进使其可以支持多线程，这个堆分配器就是ptmalloc。在glibc-2.3.x.之后，glibc中已经集成了ptmalloc2。
+Gloger在Doug Lea的基础上进行改进使其可以支持多线程，这个堆分配器就是ptmalloc。在glibc-2.3.x.之后，glibc中已经集成了ptmalloc2。
 
 需要注意的是，堆其实就是程序的虚拟地址空间的一块连续的线性区域，它由低地址向高地址方向增长。
 
@@ -22,18 +19,18 @@ ptmalloc处于用户程序与内核中间，主要做以下工作
 1. 响应用户的申请内存操作，向操作系统申请内存，然后将其返回给用户程序。同时，为了保持内存管理的高效性，内核一般都会预先分配很大的一块连续的内存，然后让ptmalloc通过某种算法管理这块内存。只有当出现了堆空间不足的情况，ptmalloc才会再次与操作系统进行交流。
 2. 管理用户所释放的内存。也就是说用户释放的内存并不是直接返还给操作系统的，而是由ptmalloc进行管理。这些释放的chunk可以来响应用户新申请的内存的请求。
 
-需要注意的是，在内存分配与使用的过程中，Linux有这样的一个基本内存管理思想， **只有当真正访问一个地址的时候，系统才会建立虚拟页面与物理页面的映射关系** 。
+需要注意的是，在内存分配与使用的过程中，Linux有这样的一个基本内存管理思想，\ **只有当真正访问一个地址的时候，系统才会建立虚拟页面与物理页面的映射关系**\ 。
 所以虽然我们上面说操作系统已经给程序分配了很大的一块内存，但是这块内存其实只是虚拟内存。只有当用户使用到相应的内存时，系统才会真正分配物理页面给用户使用。
 
 堆的基本操作
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------
 
 这里我们主要介绍一下基本的堆的操作，包括堆的分配，回收，堆分配背后的系统调用，最后会介绍堆目前的多线程支持。
 
 malloc
-------
+~~~~~~
 
-在glibc的 `malloc.h <https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448>`_ 中，malloc的说明如下
+在glibc的\ `malloc.h <https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448>`__\ 中，malloc的说明如下
 
 .. code:: cpp
 
@@ -54,12 +51,12 @@ malloc
 可以看出，malloc操作返回了对应大小字节的内存块的指针。此外，该函数还对一些异常情况进行了处理
 
 -  当n=0时，返回当前系统允许的堆的最小内存块。
--  当n为负数时，由于在大多数系统上，size_t是无符号数，所以程序就会申请很大的内存空间，但通常来说都会崩溃，因为系统没有那么多的内存可以分配。
+-  当n为负数时，由于在大多数系统上，size\_t是无符号数，所以程序就会申请很大的内存空间，但通常来说都会崩溃，因为系统没有那么多的内存可以分配。
 
 free
-----
+~~~~
 
-在glibc的 `malloc.h <https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465>`_ 中，free的说明如下
+在glibc的\ `malloc.h <https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465>`__\ 中，free的说明如下
 
 .. code:: cpp
 
@@ -81,66 +78,63 @@ free
 -  除了被禁用(mallopt)的情况下，当释放很大的内存空间时，程序会将这些内存空间还给系统，以便于减小程序所使用的内存空间。
 
 内存分配背后的系统调用
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 在我们前面提到的函数中，无论是malloc函数还是free函数，我们都是直接在程序中可以使用的，说明它们是标准库函数。但是它们并不是真正与系统交互的函数。
 
-这些函数背后的系统调用主要是 `(s)brk <http://man7.org/linux/man-pages/man2/sbrk.2.html>`_ 函数以及 `mmap,munmap <http://man7.org/linux/man-pages/man2/mmap.2.html>`_ 函数，如下图所示，我们主要考虑对堆进行申请内存块的操作。
+这些函数背后的系统调用主要是\ `(s)brk <http://man7.org/linux/man-pages/man2/sbrk.2.html>`__\ 函数以及\ `mmap,munmap <http://man7.org/linux/man-pages/man2/mmap.2.html>`__\ 函数，如下图所示，我们主要考虑对堆进行申请内存块的操作。
 
 .. figure:: /pwn/heap/figure/brk&mmap.png
    :alt: 
 
 (s)brk
-~~~~~~
+^^^^^^
 
-对于堆的操作，操作系统内部提供了brk函数，glibc库提供了sbrk函数，我们可以通过增加 `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`_ (program
-break location, the program break is the address of the first location
-beyond the current end of the data region.
-https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
+对于堆的操作，操作系统内部提供了brk函数，glibc库提供了sbrk函数，我们可以通过增加\ `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__\ (program break location,
+the program break is the address of the first location beyond the current end of the data region. https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
 
-初始时，堆的起始地址 `start_brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`_
-以及堆的当前末尾 `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`_
-指向同一地址，根据是否开启ASLR，情况会有所不同
+初始时，堆的起始地址\ `start\_brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__
+以及堆的当前末尾\ `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ 指向同一地址，根据是否开启ASLR，情况会有所不同
 
--  当不开启ASLR保护时，start_brk以及brk会指向data/bss 段的结尾。
--  当开启ASLR保护时，start_brk以及brk也会指向同一位置，只是这个位置是在data/bss段结尾后的随机偏移处。
+-  当不开启ASLR保护时，start\_brk以及brk会指向data/bss 段的结尾。
+-  当开启ASLR保护时，start\_brk以及brk也会指向同一位置，只是这个位置是在data/bss段结尾后的随机偏移处。
 
-具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示。
+具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示
 
 .. figure:: /pwn/heap/figure/program_virtual_address_memory_space.png
    :alt: 
 
 **例子**
 
-.. code-block:: cpp
+.. code:: c
 
     /* sbrk and brk example */
-    #include <stdio.h>
-    #include <unistd.h>
-    #include <sys/types.h>
+    ##include <stdio.h>
+    ##include <unistd.h>
+    ##include <sys/types.h>
 
     int main()
     {
             void *curr_brk, *tmp_brk = NULL;
 
-            printf("Welcome to sbrk example:%dn", getpid());
+            printf("Welcome to sbrk example:%d\n", getpid());
 
             /* sbrk(0) gives current program break location */
             tmp_brk = curr_brk = sbrk(0);
-            printf("Program Break Location1:%pn", curr_brk);
+            printf("Program Break Location1:%p\n", curr_brk);
             getchar();
 
             /* brk(addr) increments/decrements program break location */
             brk(curr_brk+4096);
 
             curr_brk = sbrk(0);
-            printf("Program break Location2:%pn", curr_brk);
+            printf("Program break Location2:%p\n", curr_brk);
             getchar();
 
             brk(tmp_brk);
 
             curr_brk = sbrk(0);
-            printf("Program Break Location3:%pn", curr_brk);
+            printf("Program Break Location3:%p\n", curr_brk);
             getchar();
 
             return 0;
@@ -152,7 +146,7 @@ https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
 
 从下面的输出可以看出，并没有出现堆。因此
 
--  start_brk = brk = end_data = 0x804b000
+-  start\_brk = brk = end\_data = 0x804b000
 
 .. code:: shell
 
@@ -171,7 +165,7 @@ https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
 
 从下面的输出可以看出，已经出现了堆段
 
--  start_brk = end_data = 0x804b000
+-  start\_brk = end\_data = 0x804b000
 -  brk = 0x804c000
 
 .. code:: shell
@@ -193,55 +187,52 @@ https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
 
 -  0x0804b000 是相应堆的起始地址
 -  rw-p表明堆具有可读可写权限，并且属于隐私数据。
--  00000000
-   表明文件偏移，由于这部分内容并不是从文件中映射得到的，所以为0。
--  00:00
-   是主从(Major/mirror)的设备号，这部分内容也不是从文件中映射得到的，所以也都为0。
+-  00000000 表明文件偏移，由于这部分内容并不是从文件中映射得到的，所以为0。
+-  00:00 是主从(Major/mirror)的设备号，这部分内容也不是从文件中映射得到的，所以也都为0。
 -  0表示着Inode 号。由于这部分内容并不是从文件中映射得到的，所以为0。
 
 mmap
-~~~~
+^^^^
 
-malloc会使用
-`mmap <http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285>`_ 来创建隐私的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。
+malloc会使用 `mmap <http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285>`__\ 来创建隐私的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。
 
 **例子**
 
 .. code:: cpp
 
     /* Private anonymous mapping example using mmap syscall */
-    #include <stdio.h>
-    #include <sys/mman.h>
-    #include <sys/types.h>
-    #include <sys/stat.h>
-    #include <fcntl.h>
-    #include <unistd.h>
-    #include <stdlib.h>
+    ##include <stdio.h>
+    ##include <sys/mman.h>
+    ##include <sys/types.h>
+    ##include <sys/stat.h>
+    ##include <fcntl.h>
+    ##include <unistd.h>
+    ##include <stdlib.h>
 
     void static inline errExit(const char* msg)
     {
-            printf("%s failed. Exiting the processn", msg);
+            printf("%s failed. Exiting the process\n", msg);
             exit(-1);
     }
 
     int main()
     {
             int ret = -1;
-            printf("Welcome to private anonymous mapping example::PID:%dn", getpid());
-            printf("Before mmapn");
+            printf("Welcome to private anonymous mapping example::PID:%d\n", getpid());
+            printf("Before mmap\n");
             getchar();
             char* addr = NULL;
             addr = mmap(NULL, (size_t)132*1024, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
             if (addr == MAP_FAILED)
                     errExit("mmap");
-            printf("After mmapn");
+            printf("After mmap\n");
             getchar();
 
             /* Unmap mapped region. */
             ret = munmap(addr, (size_t)132*1024);
             if(ret == -1)
                     errExit("munmap");
-            printf("After munmapn");
+            printf("After munmap\n");
             getchar();
             return 0;
     }
@@ -289,7 +280,7 @@ malloc会使用
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 
 多线程支持
-----------
+~~~~~~~~~~
 
 在原来的dlmalloc实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问。在新的实现中，所有的线程共享多个堆。
 
@@ -298,20 +289,20 @@ malloc会使用
 .. code:: cpp
 
     /* Per thread arena example. */
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <pthread.h>
-    #include <unistd.h>
-    #include <sys/types.h>
+    ##include <stdio.h>
+    ##include <stdlib.h>
+    ##include <pthread.h>
+    ##include <unistd.h>
+    ##include <sys/types.h>
 
     void* threadFunc(void* arg) {
-            printf("Before malloc in thread 1n");
+            printf("Before malloc in thread 1\n");
             getchar();
             char* addr = (char*) malloc(1000);
-            printf("After malloc and before free in thread 1n");
+            printf("After malloc and before free in thread 1\n");
             getchar();
             free(addr);
-            printf("After free in thread 1n");
+            printf("After free in thread 1\n");
             getchar();
     }
 
@@ -321,31 +312,31 @@ malloc会使用
             int ret;
             char* addr;
 
-            printf("Welcome to per thread arena example::%dn",getpid());
-            printf("Before malloc in main threadn");
+            printf("Welcome to per thread arena example::%d\n",getpid());
+            printf("Before malloc in main thread\n");
             getchar();
             addr = (char*) malloc(1000);
-            printf("After malloc and before free in main threadn");
+            printf("After malloc and before free in main thread\n");
             getchar();
             free(addr);
-            printf("After free in main threadn");
+            printf("After free in main thread\n");
             getchar();
             ret = pthread_create(&t1, NULL, threadFunc, NULL);
             if(ret)
             {
-                    printf("Thread creation errorn");
+                    printf("Thread creation error\n");
                     return -1;
             }
             ret = pthread_join(t1, &s);
             if(ret)
             {
-                    printf("Thread join errorn");
+                    printf("Thread join error\n");
                     return -1;
             }
             return 0;
     }
 
-**第一次申请之前** ， 没有任何任何堆段。
+**第一次申请之前**\ ， 没有任何任何堆段。
 
 .. code:: shell
 
@@ -361,8 +352,8 @@ malloc会使用
     ...
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 
-**第一次申请后** ，
-从下面的输出可以看出，堆段被建立了，并且它就紧邻着数据段，这说明malloc的背后是用brk函数来实现的。同时，需要注意的是，我们虽然只是申请了1000个字节，但是我们却得到了0x0806c000-0x0804b000=0x21000个字节的堆。 **这说明虽然程序可能只是向操作系统申请很小的内存，但是为了方便，操作系统会把很大的内存分配给程序。这样的话，就避免了多次内核态与用户态的切换，加快了程序的效率。** 我们称这一块连续的内存区域为arena。此外，由于这块内存是由主线程申请的，所以我们称之为main_arena。对于后续的申请的内存会一直从这个arena中获取，直到空间不足。当出现arena空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena也可以通过减小brk来缩小自己的空间。
+**第一次申请后**\ ，
+从下面的输出可以看出，堆段被建立了，并且它就紧邻着数据段，这说明malloc的背后是用brk函数来实现的。同时，需要注意的是，我们虽然只是申请了1000个字节，但是我们却得到了0x0806c000-0x0804b000=0x21000个字节的堆。\ **这说明虽然程序可能只是向操作系统申请很小的内存，但是为了方便，操作系统会把很大的内存分配给程序。这样的话，就避免了多次内核态与用户态的切换，加快了程序的效率。**\ 我们称这一块连续的内存区域为arena。此外，由于这块内存是由主线程申请的，所以我们称之为main\_arena。对于后续的申请的内存会一直从这个arena中获取，直到空间不足。当出现arena空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena也可以通过减小brk来缩小自己的空间。
 
 .. code:: shell
 
@@ -380,7 +371,7 @@ malloc会使用
     ...
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 
-**在主线程释放内存后** ，我们从下面的输出可以看出，其对应的arena并没有进行回收，而是交由glibc来进行管理。当后面程序再次申请内存时，在glibc中管理的内存充足的情况下，glibc就会根据堆分配的算法来给程序分配相应的内存。
+**在主线程释放内存后**\ ，我们从下面的输出可以看出，其对应的arena并没有进行回收，而是交由glibc来进行管理。当后面程序再次申请内存时，在glibc中管理的内存充足的情况下，glibc就会根据堆分配的算法来给程序分配相应的内存。
 
 .. code:: shell
 
@@ -399,7 +390,7 @@ malloc会使用
     ...
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 
-**在第一个线程malloc之前** ，我们可以看到并没有出现与线程1相关的堆，但是出现了与线程1相关的栈。
+**在第一个线程malloc之前**\ ，我们可以看到并没有出现与线程1相关的堆，但是出现了与线程1相关的栈。
 
 .. code:: shell
 
@@ -420,7 +411,7 @@ malloc会使用
     ...
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 
-**第一个线程malloc后** ，
+**第一个线程malloc后**\ ，
 我们可以从下面输出看出线程1的堆段被建立了。而且它所在的位置为内存映射段区域，同样大小也是132KB(b7500000-b7521000)。因此这表明该线程申请的堆时，背后对应的函数为mmap函数。同时，我们可以看出实际真的分配给程序的内存为1M(b7500000-b7600000)。而且，只有132KB的部分具有可读可写权限，这一块连续的区域成为thread
 arena。
 
@@ -450,8 +441,7 @@ arena。
     ...
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 
-**在第一个线程释放内存后** ，
-我们可以从下面的输出看到，这样释放内存同样不会把内存重新给系统。
+**在第一个线程释放内存后**\ ， 我们可以从下面的输出看到，这样释放内存同样不会把内存重新给系统。
 
 .. code:: shell
 

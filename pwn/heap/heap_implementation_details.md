@@ -11,15 +11,15 @@
 
 当然，这些都是一些比较高层面的想法，对于一些底层的实现来说，会有所不同。
 
-# 堆初始化
+## 堆初始化
 
-# 创建堆
+## 创建堆
 
-# 申请内存块
+## 申请内存块
 
 我们之前也说了，我们会使用malloc函数来申请内存块，可是当我们仔细看看glibc的源码实现时，其实并没有malloc函数。其实该函数真正调用的是__libc_malloc函数。为什么不直接写个malloc函数呢，因为有时候我们可能需要不同的名称，而且该函数只是用来简单封装\_int_malloc函数。\_int_malloc 才是申请内存块的核心。下面我们来仔细分析一下实现。
 
-## __libc_malloc
+### __libc_malloc
 
 1. 该函数会首先检查是否有内存分配函数的钩子函数。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。
 
@@ -79,9 +79,9 @@ void *__libc_malloc(size_t bytes) {
 }
 ```
 
-## _int_malloc
+### _int_malloc
 
-### 概述
+#### 概述
 
 _int_malloc时内存分配的核心函数，其核心思路有以下几点
 
@@ -89,7 +89,7 @@ _int_malloc时内存分配的核心函数，其核心思路有以下几点
 2. 它会首先检查申请的内存块是不是有相应的空闲块可以满足需求，没有的话，才会进行内存块申请。
 3. 它会按照chunk 的大小由小到大依次判断。
 
-### 初始
+#### 初始
 
 在进入该函数后，函数立马定义了一系列自己需要的变量，并在开始时，将用户申请的内存大小转换为其chunk大小。
 
@@ -127,7 +127,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
     checked_request2size(bytes, nb);
 ```
 
-### 判断是否有arena可用
+#### 判断是否有arena可用
 
 ```c++
     /* There are no usable arenas.  Fall back to sysmalloc to get a chunk from
@@ -139,7 +139,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
     }
 ```
 
-### fast bin
+#### fast bin
 
 如果申请的chunk的大小位于fastbin 范围内
 
@@ -182,7 +182,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
     }
 ```
 
-### small bin
+#### small bin
 
 如果获取的内存块的范围处于small bin的范围，那么执行如下流程
 
@@ -236,7 +236,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
     }
 ```
 
-### large bin
+#### large bin
 
 large bin的处理过程如下
 
@@ -261,9 +261,9 @@ large bin的处理过程如下
 
 ```
 
-### 循环
+#### 循环
 
-#### 概述
+##### 概述
 
 **上面说明没有bin可以直接满足需求**。在接下来的这个循环中，主要做了以下的操作
 
@@ -271,7 +271,7 @@ large bin的处理过程如下
 - 尝试从large bin中分配用户所需的内存
 - 尝试从top  chunk中分配用户所需内存
 
-#### 大循环
+##### 大循环
 
 该部分是一个大循环，这是为了尝试重新分配small bin chunk，这是因为我们虽然会首先使用large bin，top chunk来尝试满足用户的请求，但是如果没有满足的话，由于我们在上面没有分配成功small bin的话，我们并没有对fast bin中的chunk进行合并，所以这里会进行fast bin chunk的合并，进而使用一个大循环来尝试再次分配small bin chunk。
 
@@ -293,7 +293,7 @@ large bin的处理过程如下
         int iters = 0;
 ```
 
-#### unsort bin & last remainder
+##### unsort bin & last remainder
 
 先考虑unsorted bin，在考虑last remainder，但是对于small bin chunk的请求会有所例外。
 
@@ -427,12 +427,12 @@ large bin的处理过程如下
             fwd->bk    = victim;
             bck->fd    = victim;
             // 最多迭代10000次
-#define MAX_ITERS 10000
+##define MAX_ITERS 10000
             if (++iters >= MAX_ITERS) break;
         }
 ```
 
-#### large chunk
+##### large chunk
 
 
 
@@ -522,7 +522,7 @@ large bin的处理过程如下
         }
 ```
 
-#### 暂时转换
+##### 暂时转换
 
 如果走到了这里，那说明对于用户所需的chunk，不能直接从其对应的合适的bin中获取chunk，所以我们需要来查找比当前bin更大的fast bin，small bin或者large bin。
 
@@ -555,7 +555,7 @@ large bin的处理过程如下
 
 
 
-#### 小循环
+##### 小循环
 
 
 
@@ -666,7 +666,7 @@ large bin的处理过程如下
         }
 ```
 
-#### 使用top chunk
+##### 使用top chunk
 
 如果所有的bin中的chunk都没有办法直接满足要求（即不合并），或者说都没有空闲的chunk。那么我们就只能使用top chunk了。
 
@@ -732,17 +732,17 @@ large bin的处理过程如下
 
 
 
-## sysmalloc
+### sysmalloc
 
 有时间的时候再分析。
 
-## malloc_consolidate
+### malloc_consolidate
 
 有时间的时候再分析。
 
-# 释放内存块
+## 释放内存块
 
-## __libc_free
+### __libc_free
 
 类似于malloc，free函数也有一层封装，命名格式与malloc基本类似。代码如下
 
@@ -784,11 +784,11 @@ void __libc_free(void *mem) {
 }
 ```
 
-## _int_free
+### _int_free
 
-### 概述
+#### 概述
 
-### 初始化
+#### 初始化
 
 进行函数后，立马定义了一系列的变量，并且得到了用户想要释放的chunk的大小
 
@@ -809,7 +809,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
     size = chunksize(p);
 ```
 
-### 简单的检查
+#### 简单的检查
 
 ```c++
     /* Little security check which won't hurt performance: the
@@ -837,7 +837,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
     check_inuse_chunk(av, p);
 ```
 
-### fast bin
+#### fast bin
 
 如果上述检查都合格的话，判断当前的bin是不是在fast bin范围内，在的话，就插入到fastbin中
 
@@ -849,14 +849,14 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 
     if ((unsigned long) (size) <= (unsigned long) (get_max_fast())
 
-#if TRIM_FASTBINS
+##if TRIM_FASTBINS
         /*
       If TRIM_FASTBINS set, don't place chunks
       bordering top into fastbins
         */
        // 如果当前chunk是fast chunk，并且下一个chunk是top chunk，则不能插入
         && (chunk_at_offset(p, size) != av->top)
-#endif
+##endif
             ) {
         // 下一个chunk的大小不能小于两倍的SIZE_SZ,并且
         // 下一个chunk的大小不能大于系统可提供的内存
@@ -890,7 +890,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         set_fastchunks(av);
         // 根据大小获取fast bin的索引
         unsigned int idx = fastbin_index(size);
-        // 获取对应fastbin的头指针。
+        // 获取对应fastbin的头指针，被初始化后为NULL。
         fb               = &fastbin(av, idx);
 
         /* Atomically link P to its fastbin: P->FD = *FB; *FB = P;  */
@@ -924,7 +924,16 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
     }
 ```
 
-### 合并非mmap的chunk
+#### 合并非mmap的空闲chunk
+
+首先，我们先说一下为什么会合并chunk，这是为了避免heap中有太多的零零碎碎的内存块，合并之后可以用来应对更大的内存块请求。
+
+合并的主要顺序为
+
+- 先考虑低地址空闲块
+- 后考虑高地址空闲块
+
+**合并后的chunk指向所有合并的chunk的低地址。**
 
 在没有锁的情况下，先获得锁。
 
@@ -940,7 +949,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         }
 ```
 
-#### 轻量级的检测
+##### 轻量级的检测
 
 ```c++
         /* Lightweight tests: check whether the block is already the
@@ -977,14 +986,14 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         }
 ```
 
-#### 释放填充
+##### 释放填充
 
 ```c++
         //将 指针的mem部分全部设置为perturb_byte 
 		free_perturb(chunk2mem(p), size - 2 * SIZE_SZ);
 ```
 
-#### 后向合并-合并低地址chunk
+##### 后向合并-合并低地址chunk
 
 ```c++
         /* consolidate backward */
@@ -996,7 +1005,9 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         }
 ```
 
-#### 下一块不是top chunk-前向合并-合并高地址chunk
+##### 下一块不是top chunk-前向合并-合并高地址chunk
+
+需要注意的是，如果下一块不是top chunk后，合并后的chunk会被放入到unsorted bin中。
 
 ```c++
 		// 如果下一个chunk不是top chunk
@@ -1041,7 +1052,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         }
 ```
 
-#### 下一块是top chunk-合并到top chunk
+##### 下一块是top chunk-合并到top chunk
 
 ```c++
         /*
@@ -1055,10 +1066,9 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
             av->top = p;
             check_chunk(av, p);
         }
-
 ```
 
-#### 向系统返还内存
+##### 向系统返还内存
 
 ```c++
         /*
@@ -1080,12 +1090,12 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
             if (have_fastchunks(av)) malloc_consolidate(av);
             // 主分配区
             if (av == &main_arena) {
-#ifndef MORECORE_CANNOT_TRIM
+##ifndef MORECORE_CANNOT_TRIM
                 // top chunk 大于当前的收缩阙值
                 if ((unsigned long) (chunksize(av->top)) >=
                     (unsigned long) (mp_.trim_threshold))
                     systrim(mp_.top_pad, av);
-#endif      // 非主分配区，则直接收缩heap
+##endif      // 非主分配区，则直接收缩heap
             } else {
                 /* Always try heap_trim(), even if the top chunk is not
                    large, because the corresponding heap might go away.  */
@@ -1102,7 +1112,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         }
 ```
 
-### 释放mmap的chunk
+#### 释放mmap的chunk
 
 ```c++
     } else {
@@ -1111,13 +1121,13 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
     }
 ```
 
-## unlink
+### unlink
 
 unlink函数主要是将chunk P从bin中取出来，如下
 
 ```c
 /* Take a chunk off a bin list */
-#define unlink(AV, P, BK, FD) {                                            \
+##define unlink(AV, P, BK, FD) {                                            \
     FD = P->fd;                                                                      \
     BK = P->bk;                                                                      \
     if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
@@ -1177,13 +1187,13 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 1. **给出图片说明**
 2. **说明unlink的判断**
 
-## systrim
+### systrim
 
-## heap_trim
+### heap_trim
 
-## munmap_chunk
+### munmap_chunk
 
 
 
-# 删除堆
+## 删除堆
 
