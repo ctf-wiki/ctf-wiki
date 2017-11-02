@@ -1,6 +1,6 @@
 # 基本堆介绍
 
-# 什么是堆
+## 什么是堆
 
 在程序的运行过程中，堆可以提供动态分配的内存，允许程序去为在程序运行之前还未知大小的变量申请空间。
 
@@ -17,11 +17,11 @@ ptmalloc处于用户程序与内核中间，主要做以下工作
 
 需要注意的是，在内存分配与使用的过程中，Linux有这样的一个基本内存管理思想，**只有当真正访问一个地址的时候，系统才会建立虚拟页面与物理页面的映射关系**。 所以虽然我们上面说操作系统已经给程序分配了很大的一块内存，但是这块内存其实只是虚拟内存。只有当用户使用到相应的内存时，系统才会真正分配物理页面给用户使用。
 
-# 堆的基本操作
+## 堆的基本操作
 
 这里我们主要介绍一下基本的堆的操作，包括堆的分配，回收，堆分配背后的系统调用，最后会介绍堆目前的多线程支持。
 
-## malloc
+### malloc
 
 在glibc的[malloc.h](https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448)中，malloc的说明如下
 
@@ -46,7 +46,7 @@ ptmalloc处于用户程序与内核中间，主要做以下工作
 - 当n=0时，返回当前系统允许的堆的最小内存块。
 - 当n为负数时，由于在大多数系统上，size_t是无符号数，所以程序就会申请很大的内存空间，但通常来说都会崩溃，因为系统没有那么多的内存可以分配。
 
-## free
+### free
 
 在glibc的[malloc.h](https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465)中，free的说明如下
 
@@ -69,7 +69,7 @@ ptmalloc处于用户程序与内核中间，主要做以下工作
 - 当p已经被释放之后，再次释放会出现乱七八糟的效果。
 - 除了被禁用(mallopt)的情况下，当释放很大的内存空间时，程序会将这些内存空间还给系统，以便于减小程序所使用的内存空间。
 
-## 内存分配背后的系统调用
+### 内存分配背后的系统调用
 
 在我们前面提到的函数中，无论是malloc函数还是free函数，我们都是直接在程序中可以使用的，说明它们是标准库函数。但是它们并不是真正与系统交互的函数。
 
@@ -77,7 +77,7 @@ ptmalloc处于用户程序与内核中间，主要做以下工作
 
 ![](/pwn/heap/figure/brk&mmap.png)
 
-### (s)brk
+#### (s)brk
 
 对于堆的操作，操作系统内部提供了brk函数，glibc库提供了sbrk函数，我们可以通过增加[brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365)(program break location, the program break is the address of the first location beyond the current end of the data region. https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
 
@@ -88,15 +88,15 @@ ptmalloc处于用户程序与内核中间，主要做以下工作
 
 具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示
 
-![](pwn/heap/figure/program_virtual_address_memory_space.png)
+![](/pwn/heap/figure/program_virtual_address_memory_space.png)
 
 **例子**
 
-```
+```c
 /* sbrk and brk example */
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
+##include <stdio.h>
+##include <unistd.h>
+##include <sys/types.h>
 
 int main()
 {
@@ -177,7 +177,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 - 00:00 是主从(Major/mirror)的设备号，这部分内容也不是从文件中映射得到的，所以也都为0。
 - 0表示着Inode 号。由于这部分内容并不是从文件中映射得到的，所以为0。
 
-### mmap
+#### mmap
 
 malloc会使用 [mmap](http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285)来创建隐私的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。
 
@@ -185,13 +185,13 @@ malloc会使用 [mmap](http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L128
 
 ```c++
 /* Private anonymous mapping example using mmap syscall */
-#include <stdio.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
+##include <stdio.h>
+##include <sys/mman.h>
+##include <sys/types.h>
+##include <sys/stat.h>
+##include <fcntl.h>
+##include <unistd.h>
+##include <stdlib.h>
 
 void static inline errExit(const char* msg)
 {
@@ -264,7 +264,7 @@ b7e21000-b7e22000 rw-p 00000000 00:00 0
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 ```
 
-## 多线程支持
+### 多线程支持
 
 在原来的dlmalloc实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问。在新的实现中，所有的线程共享多个堆。
 
@@ -272,11 +272,11 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 
 ```c++
 /* Per thread arena example. */
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/types.h>
+##include <stdio.h>
+##include <stdlib.h>
+##include <pthread.h>
+##include <unistd.h>
+##include <sys/types.h>
 
 void* threadFunc(void* arg) {
         printf("Before malloc in thread 1\n");

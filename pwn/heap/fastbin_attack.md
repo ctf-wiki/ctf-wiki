@@ -266,8 +266,8 @@ if (__builtin_expect (fastbin_index (chunksize (victim)) != idx, 0))
 ## House of Spirit
 House of Spirit是House of XX的一种,House of XX是2004年左右发出来的一篇关于Linux堆利用的技术文章中提出一系列利用方法。
 对HOS的描述是可以使得fastbin堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。
-</br>
-如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于fastbin链表是使用当前chunk的fd指针指向下一个chunk构成的。</br>
+
+如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于 fastbin 链表是使用当前chunk的fd指针指向下一个chunk构成的。
 HOS的核心同样在于劫持fastbin链表中chunk的fd指针，把fd指针指向我们想要分配的栈上，实现控制栈中数据。
 
 ## 演示
@@ -431,7 +431,7 @@ Fastbins[idx=6, size=0x70]
 我们可以利用字节错位等方法来绕过size域的检验，实现任意地址分配chunk，最后的效果也就相当于任意地址写任意值。
 
 
-  [1]: http://static.zybuluo.com/vbty/e8k7kq9w9a0fzm0qxfpzwpw5/%E6%8D%95%E8%8E%B7.PNG
-  [2]: http://static.zybuluo.com/vbty/48ue5xatzz40sif5qnqu8syz/%E6%8D%95%E8%8E%B7.PNG
-  [3]: http://static.zybuluo.com/vbty/0101jwbohr0r8sjha5yvxuu6/%E6%8D%95%E8%8E%B7.PNG
-  [4]: http://static.zybuluo.com/vbty/ggyvxt73jujf9qlcnm429khb/%E6%8D%95%E8%8E%B7.PNG
+[1]: http://static.zybuluo.com/vbty/e8k7kq9w9a0fzm0qxfpzwpw5/%E6%8D%95%E8%8E%B7.PNG
+[2]: http://static.zybuluo.com/vbty/48ue5xatzz40sif5qnqu8syz/%E6%8D%95%E8%8E%B7.PNG
+[3]: http://static.zybuluo.com/vbty/0101jwbohr0r8sjha5yvxuu6/%E6%8D%95%E8%8E%B7.PNG
+[4]: http://static.zybuluo.com/vbty/ggyvxt73jujf9qlcnm429khb/%E6%8D%95%E8%8E%B7.PNG
