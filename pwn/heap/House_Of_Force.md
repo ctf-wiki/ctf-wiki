@@ -58,7 +58,7 @@ av->top        = remainder;
 
 ## 简单示例
 在学习完HOF的原理之后，我们这里通过一个示例来说明HOF的利用
-这个例子的目标是通过HOF来篡改malloc@got.plt实现劫持程序流程
+这个例子的目标是通过HOF来篡改`malloc@got.plt`实现劫持程序流程
 
 ```
 int main()
@@ -101,7 +101,7 @@ int main()
 0x7ffff7dd1b80 <main_arena+96>:	0x0000000000000000	0x00007ffff7dd1b78
 ```
 接下来我们执行`malloc(-4120);`，-4120是怎么得出的呢？
-首先明确要写入的目的地址，这里我编译的情况0x601020是malloc@got.plt的地址
+首先明确要写入的目的地址，这里我编译的情况0x601020是`malloc@got.plt`的地址
 
 ```
 0x601020:	0x00007ffff7a91130 <=== malloc@got.plt
@@ -136,7 +136,7 @@ int main()
     malloc(0x10);
 }
 ```
-我们可以看到程序代码与简单示例1基本相同，除了第二次malloc的size有所不同。
+我们可以看到程序代码与简单示例1基本相同，除了第二次malloc的size有所不同。<br>
 这次我们的目标是malloc_hook，我们知道malloc_hook是位于libc.so里的全局变量值，首先查看内存布局
 
 ```
