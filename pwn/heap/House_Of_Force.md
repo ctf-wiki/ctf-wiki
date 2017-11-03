@@ -106,7 +106,7 @@ int main()
 ```
 0x601020:	0x00007ffff7a91130 <=== malloc@got.plt
 ```
-之后明确当前top chunk的地址，根据前面描述，top chunk位于0x602020
+之后明确当前top chunk的地址，根据前面描述，top chunk位于0x602020<br>
 所以我们使用0x601020-0x602020-0x10=-4120,之所以要减去0x10是为了刨除chunk header的偏移
 当调用`malloc(-4120)`之后，我们可以观察到top chunk被抬高到我们想要的位置
 
