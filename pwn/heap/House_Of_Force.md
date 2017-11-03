@@ -14,7 +14,7 @@ House Of Force是一种堆溢出的利用方法，当然能够通过House Of For
 House Of Force产生的原因在于glibc对top chunk的处理，根据前面堆数据结构部分的知识我们得知，进行堆分配时会从top chunk中分割出相应的大小作为堆块的空间，因此top chunk的位置会发生上下浮动以适应堆内存分配和释放。
 
 HOF的利用思想可以概括为一句话：
-当使用top chunk分配堆块的size值是由用户控制的任意值时会发生什么？
+当使用top chunk分配堆块的size值是由用户控制的任意值时会发生什么？<br>
 答案是，可以使得top chunk移动到我们想要达到的任何位置，这就相当于一次任意地址写。
 <br>
 然而在glibc中，会对用户请求的大小和top chunk现有的size进行验证
