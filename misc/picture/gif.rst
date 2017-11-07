@@ -24,7 +24,6 @@ GIF
 .. figure:: /misc/picture/figure/gif.png
    :alt: gif
 
-   gif
 
 中间的那个大块可以被重复任意次
 
@@ -55,7 +54,6 @@ GIF格式可以拥有global color table，或用于针对每个子图片集，�
 .. figure:: /misc/picture/figure/imagesdescription.png
    :alt: imagesdescription
 
-   imagesdescription
 
 图像数据(Image Data)
 ~~~~~~~~~~~~~~~~~~~~

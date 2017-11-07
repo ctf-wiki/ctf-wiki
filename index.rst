@@ -24,9 +24,6 @@
    introduction/resources.rst
 
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Misc
 
 .. toctree::
    :maxdepth: 2
@@ -42,6 +39,7 @@
    misc/disk_memory/index.rst
    misc/cap.rst
    misc/others.rst
+   misc/end.rst
 
 
 
