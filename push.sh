@@ -22,7 +22,7 @@ if [ "$1" != "dry" ]; then
 fi
 
 # Copy in the HTML.  You may want to change this with your documentation path.
-rm -rf * .* 2> /dev/null
+ls -A1 | xargs rm -rf
 cp -R ../$REPO/_build/html/* ./
 
 # Add and commit changes.
