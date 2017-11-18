@@ -1,7 +1,7 @@
 # House Of Force
 
 ## 介绍
-House Of Force属于House Of XXX系列，House Of XXX指的是2004年一篇名为《The Malloc Maleficarum-Glibc Malloc Exploitation Techniques》的文章中提出的一系列针对glibc漏洞的利用方法。<br>
+House Of Force属于House Of XXX系列，House Of XXX指的是2004年一篇名为《The Malloc Maleficarum-Glibc Malloc Exploitation Techniques》的文章中提出的一系列针对glibc漏洞的利用方法。
 但是由于年代久远《The Malloc Maleficarum》中提出的大多数利用在今天都不能奏效，我们现在所指的House Of XXX利用相比2004年文章中写的已有较大的不同。但是《The Malloc Maleficarum》依然是一篇推荐阅读的文章，你可以在这里读到它的原文：
 https://dl.packetstormsecurity.net/papers/attack/MallocMaleficarum.txt
 
@@ -14,9 +14,8 @@ House Of Force是一种堆溢出的利用方法，当然能够通过House Of For
 House Of Force产生的原因在于glibc对top chunk的处理，根据前面堆数据结构部分的知识我们得知，进行堆分配时会从top chunk中分割出相应的大小作为堆块的空间，因此top chunk的位置会发生上下浮动以适应堆内存分配和释放。
 
 HOF的利用思想可以概括为一句话：
-当使用top chunk分配堆块的size值是由用户控制的任意值时会发生什么？<br>
+当使用top chunk分配堆块的size值是由用户控制的任意值时会发生什么？
 答案是，可以使得top chunk移动到我们想要达到的任何位置，这就相当于一次任意地址写。
-<br>
 然而在glibc中，会对用户请求的大小和top chunk现有的size进行验证
 ```
 // 获取当前的top chunk，并计算其对应的大小
@@ -52,11 +51,9 @@ av->top        = remainder;
 /* Treat space at ptr + offset as a chunk */
 ##define chunk_at_offset(p, s) ((mchunkptr)(((char *) (p)) + (s)))
 ```
-之后这里会把top指针更新，接下来的堆块就会分配到这个位置，用户只要控制了这个指针就相当于实现任意地址写任意址(write-anything-anywhere)
+之后这里会把top指针更新，接下来的堆块就会分配到这个位置，用户只要控制了这个指针就相当于实现任意地址写任意址(write-anything-anywhere)。
 
-
-
-## 简单示例
+## 简单示例1
 在学习完HOF的原理之后，我们这里通过一个示例来说明HOF的利用
 这个例子的目标是通过HOF来篡改`malloc@got.plt`实现劫持程序流程
 
