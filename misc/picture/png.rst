@@ -94,7 +94,6 @@ IHDR
 .. figure:: /misc/picture/figure/pngihdr.png
    :alt: ihdr
 
-   ihdr
 
 这里可以发现在Kali中是打不开这张图片的，提示\ ``IHDR CRC error``\ (Windows 10自带的图片查看器能够打开)，就提醒了我们IHDR块被人为的篡改过了，从而尝试修改图片的高度或者宽度发现隐藏的字符串
 
@@ -136,7 +135,6 @@ IHDR
 .. figure:: /misc/picture/figure/misc4.png
    :alt: misc4
 
-   misc4
 
 PLTE
 ^^^^
@@ -234,7 +232,6 @@ LSB隐写就是修改RGB颜色分量的最低二进制位（LSB），每个颜�
 .. figure:: /misc/picture/figure/lsb.jpg
    :alt: lsb
 
-   lsb
 
 如果是要寻找这种LSB隐藏痕迹的话，有一个工具\ `Stegsolve <http://www.caesum.com/handbook/Stegsolve.jar>`__\ 是个神器，可以来辅助我们进行分析。
 
@@ -243,7 +240,6 @@ LSB隐写就是修改RGB颜色分量的最低二进制位（LSB），每个颜�
 .. figure:: /misc/picture/figure/lsb1.png
    :alt: lsb1
 
-   lsb1
 
 LSB的信息借助于Stegsolve查看各个通道时一定要细心捕捉异常点，抓住LSB隐写的蛛丝马迹
 
@@ -257,7 +253,6 @@ LSB的信息借助于Stegsolve查看各个通道时一定要细心捕捉异常�
 .. figure:: /misc/picture/figure/hctfsolve.png
    :alt: hctfsolve
 
-   hctfsolve
 
 可以发现\ ``zip``\ 头，用\ ``save bin``\ 保存为压缩包后，打开运行其中的ELF文件就可以得到最后的flag
 
