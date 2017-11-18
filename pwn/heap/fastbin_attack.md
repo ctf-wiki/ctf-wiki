@@ -1,9 +1,7 @@
 ﻿# fastbin attack
 
----
-
 ## 介绍
-fastbin attack是一种(或多种)堆漏洞的利用方法，这种方法需要使用fastbin的特性，因此需要漏洞发生在属于fastbin的chunk中。
+fastbin attack是一种(或多种)堆漏洞的利用方法，这种方法需要使用fastbin的特性，因此需要漏洞发生在属于fastbin 的chunk 中。
 基于这一点我们可以知道这种利用的前提是：
 
 * 存在堆溢出、use-after-free等能控制chunk内容的漏洞
@@ -264,7 +262,7 @@ if (__builtin_expect (fastbin_index (chunksize (victim)) != idx, 0))
 
 
 ## House of Spirit
-House of Spirit是House of XX的一种,House of XX是2004年左右发出来的一篇关于Linux堆利用的技术文章中提出一系列利用方法。
+House of Spirit 是 House of XX 的一种，House of XX 是 2004 年左右发出来的一篇关于 Linux 堆利用的技术文章中提出一系列利用方法。
 对HOS的描述是可以使得fastbin堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。
 
 如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于 fastbin 链表是使用当前chunk的fd指针指向下一个chunk构成的。

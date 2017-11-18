@@ -27,7 +27,7 @@
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: Heap Exploration
 
    heap_basic_intro.rst
@@ -37,4 +37,4 @@
    use_after_free.rst
    off_by_one.rst
    fastbin_attack.rst
-
+   unlink.rst

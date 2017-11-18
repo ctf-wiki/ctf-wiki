@@ -89,7 +89,7 @@ int main(void)
 </br>
 但是strlen和strcpy的行为不一致却导致了off-by-one的发生。
 </br>
-strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在计算字符串长度时是不把结束符'\x00'计算在内的，但是strcpy在复制字符串时会拷贝结束符'\x00'。这就导致了我们向chunk1中写入了25个字节，我们使用gdb进行调试可以看到这一点。
+strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在计算字符串长度时是不把结束符 `'\x00'` 计算在内的，但是strcpy在复制字符串时会拷贝结束符 `'\x00'` 。这就导致了我们向chunk1中写入了25个字节，我们使用gdb进行调试可以看到这一点。
 
 ```
 0x602000:	0x0000000000000000	0x0000000000000021 <=== chunk1
@@ -107,7 +107,7 @@ print 'A'*24
 0x602020:	0x4141414141414141	0x0000000000000400
 ```
 
-可以看到next chunk的chunk_header.size域低字节被结束符'\x00'覆盖，这种又属于off-by-one的一个分支称为NULL byte off-by-one，我们在后面会看到off-by-one与NULL byte off-by-one在利用上的区别。
+可以看到next chunk的chunk_header.size域低字节被结束符 `'\x00'` 覆盖，这种又属于off-by-one的一个分支称为NULL byte off-by-one，我们在后面会看到off-by-one与NULL byte off-by-one在利用上的区别。
 还是有一点就是为什么是低字节被覆盖呢，因为我们通常使用的CPU的字节序都是小端法的，比如一个DWORD值在使用小端法的内存中是这样储存的
 
 ```

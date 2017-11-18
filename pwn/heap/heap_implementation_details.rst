@@ -18,6 +18,105 @@
 创建堆
 ------
 
+双向链表相关操作
+----------------
+
+unlink
+~~~~~~
+
+unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在以下地方使用
+
+-  malloc
+-  从恰好合适的large bin 中获取chunk。
+-  从比所需要的chunk相应的bin大的bin中取chunk。
+-  Free
+-  后向合并，合并物理相邻低地址空闲chunk。
+-  前向合并，合并物理相邻高地址空闲chunk（除了top chunk）。
+-  malloc\_consolidate
+-  后向合并，合并物理相邻低地址空闲chunk。
+-  前向合并，合并物理相邻高地址空闲chunk（除了top chunk）。
+-  realloc
+-  前向扩展，合并物理相邻高地址空闲chunk（除了top chunk）。
+
+由于unlink 本身被使用地非常频繁，所以 unlink 被实现为了一个宏。unlink 宏主要将一个 chunk 从它所在的 bin 中取出来，如下
+
+.. code:: c
+
+    /* Take a chunk off a bin list */
+    ##define unlink(AV, P, BK, FD) {                                            \
+        // 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
+        if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
+          malloc_printerr ("corrupted size vs. prev_size");               \
+        FD = P->fd;                                                                      \
+        BK = P->bk;                                                                      \
+        // 防止攻击者简单篡改空闲的 chunk 的 fd 与 bk 来实现任意写的效果。
+        if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
+          malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
+        else {                                                                      \
+            FD->bk = BK;                                                              \
+            BK->fd = FD;                                                              \
+            // 下面主要考虑 P 对应的 nextsize 双向链表的修改
+            if (!in_smallbin_range (chunksize_nomask (P))                              \
+                // 如果P->fd_nextsize为NULL，表明 P 未插入到largbin 链表中。
+                // 那么其实也就没有必要对nextsize字段进行修改了。
+                // 这里没有去判断bk_nextsize字段，可能会出问题。
+                && __builtin_expect (P->fd_nextsize != NULL, 0)) {                      \
+                // 类似于小的chunk的检查思路
+                if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
+                    || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
+                  malloc_printerr (check_action,                                      \
+                                   "corrupted double-linked list (not small)",    \
+                                   P, AV);                                              \
+                // 这里说明P已经在nextsize链表中了。
+                // 如果 FD 没有在nextsize链表中
+                if (FD->fd_nextsize == NULL) {                                      \
+                    // 如果nextsize串起来的双链表只有 P 本身，那就直接拿走P，令FD为nextsize 串起来的
+                    // 双链表
+                    if (P->fd_nextsize == P)                                      \
+                      FD->fd_nextsize = FD->bk_nextsize = FD;                      \
+                    else {                                                              \
+                    // 否则我们需要将 FD 插入到nextsize形成的双链表中
+                        FD->fd_nextsize = P->fd_nextsize;                              \
+                        FD->bk_nextsize = P->bk_nextsize;                              \
+                        P->fd_nextsize->bk_nextsize = FD;                              \
+                        P->bk_nextsize->fd_nextsize = FD;                              \
+                      }                                                              \
+                  } else {                                                              \
+                    // 如果在的话，直接拿走即可
+                    P->fd_nextsize->bk_nextsize = P->bk_nextsize;                      \
+                    P->bk_nextsize->fd_nextsize = P->fd_nextsize;                      \
+                  }                                                                      \
+              }                                                                      \
+          }                                                                              \
+    }
+
+这里我们只是以small bin的unlink为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize的处理。
+
+.. figure:: /pwn/heap/figure/unlink_smallbin_intro.png
+   :alt: 
+
+可以看出，对于最后的P来说其FD和bk指针并没有发生变化，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。
+
+同时，对于无论是对于 fd，bk 还是 fd\_nextsize ，bk\_nextsize，程序都做了相应的检测。
+
+.. code:: c
+
+    // fd bk
+    if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
+      malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
+      
+      // next_size related
+                  if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
+                    || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
+                  malloc_printerr (check_action,                                      \
+                                   "corrupted double-linked list (not small)",    \
+                                   P, AV);   
+
+看起来似乎很正常。我们以fd 和 bk 为例，P 的 forward chunk 的 bk 很自然是 P ，同样 P 的 backward chunk 的 fd 也很自然是 P 。如果没有做相应的检查的话，我们可以修改 P 的 fd 与
+bk，从而可以很容易地达到任意地址写的效果。关于更加详细的例子，可以参见利用部分的 unlink 。
+
+**注意：堆的第一个chunk的话所记录的prev\_inuse位默认为1。**
+
 申请内存块
 ----------
 
@@ -87,19 +186,14 @@
 \_int\_malloc
 ~~~~~~~~~~~~~
 
-概述
-^^^^
+\_int\_malloc 是内存分配的核心函数，其核心思路有以下几点
 
-\_int\_malloc时内存分配的核心函数，其核心思路有以下几点
+1. 它根据用户申请的内存块的大小以及相应大小chunk使用的频度（fastbin chunk, small chunk, large chunk），依次实现了不同的分配方法。
+2. 它按照 chunk 的大小由小到大依次检查是否有相应的空闲块可以满足需求。
+3. 当所有的空闲 chunk 都无法满足时，它会考虑 top chunk。
+4. 当 top chunk 也无法满足，才会进行内存块申请。
 
-1. 它根据用户申请的内存块的大小，依次实现了不同的分配方法。
-2. 它会首先检查申请的内存块是不是有相应的空闲块可以满足需求，没有的话，才会进行内存块申请。
-3. 它会按照chunk 的大小由小到大依次判断。
-
-初始
-^^^^
-
-在进入该函数后，函数立马定义了一系列自己需要的变量，并在开始时，将用户申请的内存大小转换为其chunk大小。
+在进入该函数后，函数立马定义了一系列自己需要的变量，并将用户申请的内存大小转换为内部的chunk大小。
 
 .. code:: cpp
 
@@ -135,8 +229,8 @@
 
         checked_request2size(bytes, nb);
 
-判断是否有arena可用
-^^^^^^^^^^^^^^^^^^^
+arena
+^^^^^
 
 .. code:: cpp
 
@@ -167,7 +261,7 @@ fast bin
             // 得到对应的fastbin的头指针
             mfastbinptr *fb = &fastbin(av, idx);
             mchunkptr    pp = *fb;
-            // 检查对应的bin内是否有空闲的chunk块，
+            // 利用fd前向遍历对应的bin内是否有空闲的chunk块，
             do {
                 victim = pp;
                 if (victim == NULL) break;
@@ -175,7 +269,9 @@ fast bin
                                                                 victim)) != victim);
             // 存在可以利用的chunk
             if (victim != 0) {
-                // 检查取到的chunk是否确实在对应的fastbin中。
+                // 检查取到的 chunk 大小是否与相应的 fastbin 索引一致。
+                // 根据取得的 victim ，利用 chunksize 计算其大小。
+                // 利用fastbin_index 计算 chunk 的索引。
                 if (__builtin_expect(fastbin_index(chunksize(victim)) != idx, 0)) {
                     errstr = "malloc(): memory corruption (fast)";
                 errout:
@@ -250,7 +346,7 @@ small bin
 large bin
 ^^^^^^^^^
 
-large bin的处理过程如下
+large bin 的处理过程如下，程序并没有直接从相应的large bin中获取chunk，而是先将 fast bin中有可能能够合并的 chunk 先进行合并，然后再在下面的大循环中进行相应的处理。
 
 .. code:: cpp
 
@@ -272,20 +368,17 @@ large bin的处理过程如下
             if (have_fastchunks(av)) malloc_consolidate(av);
         }
 
-循环
-^^^^
+大循环
+^^^^^^
 
-概述
-''''
+**如果程序执行到了这里，那么说明 chunk 直接对应的 bin (fast bin， small bin) 没有 chunk可以直接满足需求 ，但是large chunk 则是在这个大循环中处理**\ 。为什么不直接从相应的 bin 中取出 large chunk
+呢？这是ptmalloc 的机制，他会在分配 large chunk 之前对堆中碎片 chunk 进行合并，以便减少堆中的碎片。
 
-**上面说明没有bin可以直接满足需求**\ 。在接下来的这个循环中，主要做了以下的操作
+在接下来的这个循环中，主要做了以下的操作
 
 -  尝试从unsorted bin中分配用户所需的内存
 -  尝试从large bin中分配用户所需的内存
 -  尝试从top chunk中分配用户所需内存
-
-大循环
-''''''
 
 该部分是一个大循环，这是为了尝试重新分配small bin chunk，这是因为我们虽然会首先使用large bin，top chunk来尝试满足用户的请求，但是如果没有满足的话，由于我们在上面没有分配成功small
 bin的话，我们并没有对fast bin中的chunk进行合并，所以这里会进行fast bin chunk的合并，进而使用一个大循环来尝试再次分配small bin chunk。
@@ -308,10 +401,10 @@ bin的话，我们并没有对fast bin中的chunk进行合并，所以这里会�
         for (;;) {
             int iters = 0;
 
-unsort bin & last remainder
-'''''''''''''''''''''''''''
+unsort bin 遍历
+'''''''''''''''
 
-先考虑unsorted bin，在考虑last remainder，但是对于small bin chunk的请求会有所例外。
+先考虑 unsorted bin，再考虑 last remainder ，但是对于small bin chunk 的请求会有所例外。
 
 .. code:: cpp
 
@@ -320,13 +413,21 @@ unsort bin & last remainder
             while ((victim = unsorted_chunks(av)->bk) != unsorted_chunks(av)) {
                 // 得到 unsorted bin的最后一个chunk
                 bck = victim->bk;
-                // 判断得到的chunk是否满足要求，不能过小，也不能过大
+                // 判断得到的 chunk 是否满足要求，不能过小，也不能过大
+                // 一般 system_mem 的大小为132K
                 if (__builtin_expect(chunksize_nomask(victim) <= 2 * SIZE_SZ, 0) ||
                     __builtin_expect(chunksize_nomask(victim) > av->system_mem, 0))
                     malloc_printerr(check_action, "malloc(): memory corruption",
                                     chunk2mem(victim), av);
                 // 得到victim对应的chunk大小。
                 size = chunksize(victim);
+
+small request
+             
+
+如果用户的请求为 small bin chunk，那么我们首先考虑 last remainder，如果 last remainder 是 unsorted bin 中的唯一一块的话， 并且 last remainder 的大小分割够还可以作为一个 chunk ，为什么没有等号？
+
+.. code:: c
 
                 /*
                    If a small request, try to use last remainder if it is the
@@ -335,9 +436,7 @@ unsort bin & last remainder
                    exception to best-fit, and applies only when there is
                    no exact fit for a small chunk.
                  */
-                // 如果用户的请求为 small bin chunk，那么我们首先考虑last remainder
-                // 如果last remainder是unsorted bin中的唯一一块的话
-                // 并且last remainder的大小分割够还可以作为一个chunk，为什么没有等号？
+
                 if (in_smallbin_range(nb) && bck == unsorted_chunks(av) &&
                     victim == av->last_remainder &&
                     (unsigned long) (size) > (unsigned long) (nb + MINSIZE)) {
@@ -371,13 +470,24 @@ unsort bin & last remainder
                     alloc_perturb(p, bytes);
                     return p;
                 }
-                //
+
+初始取出
+        
+
+.. code:: c
+
                 /* remove from unsorted list */
                 unsorted_chunks(av)->bk = bck;
                 bck->fd                 = unsorted_chunks(av);
 
+exact fit
+         
+
+如果从 unsorted bin 中取出来的chunk大小正好合适，就直接使用。这里应该已经把合并后恰好合适的chunk 给分配出去了。
+
+.. code:: c
+
                 /* Take now instead of binning if exact fit */
-                // 如果unsorted bin中的chunk大小正好合适，就直接使用
                 if (size == nb) {
                     set_inuse_bit_at_offset(victim, size);
                     if (av != &main_arena) set_non_main_arena(victim);
@@ -387,13 +497,27 @@ unsort bin & last remainder
                     return p;
                 }
 
+place chunk in small bin
+                        
+
+把取出来的 chunk 放到对应的 small bin 中。
+
+.. code:: c
+
                 /* place chunk in bin */
-                // 把chunk放到对应的bin中
-                // small bin范围
+
                 if (in_smallbin_range(size)) {
                     victim_index = smallbin_index(size);
                     bck          = bin_at(av, victim_index);
                     fwd          = bck->fd;
+
+place chunk in large bin
+                        
+
+把取出来的 chunk 放到对应的 large bin 中。
+
+.. code:: c
+
                 } else {
                     // large bin范围
                     victim_index = largebin_index(size);
@@ -401,32 +525,52 @@ unsort bin & last remainder
                     fwd          = bck->fd;
 
                     /* maintain large bins in sorted order */
+                    /* 从这里我们可以总结出，largebin以fd_nextsize递减排序。
+                       同样大小的chunk，后来的只会插入到之前同样大小的chunk后，
+                       而不会修改之前相同大小的fd/bk_nextsize，这也很容易理解，
+                       可以减低开销。此外，bin头不参与nextsize链接。*/
+                    // 如果 large bin 链表不空
                     if (fwd != bck) {
                         /* Or with inuse bit to speed comparisons */
+                        // 加速比较，应该不仅仅有这个考虑，因为链表里的chunk都会设置该位。
                         size |= PREV_INUSE;
                         /* if smaller than smallest, bypass loop below */
+                        // bck-bk 存储着相应 large bin 中最小的chunk。
+                        // 如果遍历的chunk比当前最小的还要小，那就只需要插入到链表尾部。
+                        // 判断 bck->bk 是不是在 main arena。
                         assert(chunk_main_arena(bck->bk));
                         if ((unsigned long) (size) <
                             (unsigned long) chunksize_nomask(bck->bk)) {
+                            // 令 fwd 指向 bin 头
                             fwd = bck;
+                            // 令 bck 指向 bin 尾
                             bck = bck->bk;
-
+                            // victim 的 fd_nextsize 指向链表的第一个 chunk
                             victim->fd_nextsize = fwd->fd;
+                            // victim 的 bk_nextsize 指向原来链表的第一个chunk 指向的bk_nextsize
                             victim->bk_nextsize = fwd->fd->bk_nextsize;
+                            // 原来链表的第一个 chunk 的 bk_nextsize 指向 victim
+                            // 原来指向链表第一个 chunk 的 fd_nextsize 指向 victim
                             fwd->fd->bk_nextsize =
                                 victim->bk_nextsize->fd_nextsize = victim;
                         } else {
+                            // 当前要插入的 victim 的大小大于最小的 chunk 
+                            // 判断 fwd 是否在 main arena
                             assert(chunk_main_arena(fwd));
+                            // 从链表头部开始找到不比 victim 大的 chunk
                             while ((unsigned long) size < chunksize_nomask(fwd)) {
                                 fwd = fwd->fd_nextsize;
                                 assert(chunk_main_arena(fwd));
                             }
-
+                            // 如果找到了一个和 victim 一样大的 chunk，
+                            // 那就直接将 chunk 插入到该chunk的后面，并不修改 nextsize 指针。
                             if ((unsigned long) size ==
                                 (unsigned long) chunksize_nomask(fwd))
                                 /* Always insert in the second position.  */
                                 fwd = fwd->fd;
                             else {
+                                // 如果找到的chunk和当前victim大小不一样
+                                // 那么久需要构造 nextsize 双向链表了
                                 victim->fd_nextsize              = fwd;
                                 victim->bk_nextsize              = fwd->bk_nextsize;
                                 fwd->bk_nextsize                 = victim;
@@ -435,15 +579,30 @@ unsort bin & last remainder
                             bck = fwd->bk;
                         }
                     } else
+                        // 如果空的话，直接简单使得 fd_nextsize 与 bk_nextsize 构成一个双向链表即可。
                         victim->fd_nextsize = victim->bk_nextsize = victim;
                 }
-                // 放到对应的bin中
+
+最终取出
+        
+
+.. code:: c
+
+                // 放到对应的bin中，构成 bk<-->victim<-->fwd。
                 mark_bin(av, victim_index);
                 victim->bk = bck;
                 victim->fd = fwd;
                 fwd->bk    = victim;
                 bck->fd    = victim;
-                // 最多迭代10000次
+
+while 迭代次数
+              
+
+while 最多迭代10000次后退出。
+
+.. code:: c
+
+                // 
     ##define MAX_ITERS 10000
                 if (++iters >= MAX_ITERS) break;
             }
@@ -451,18 +610,21 @@ unsort bin & last remainder
 large chunk
 '''''''''''
 
+**注： 或许会很奇怪，为什么这里没有先去看 small chunk是否满足新需求了呢？这是因为small bin 在循环之前已经判断过了，这里如果有的话，就是合并后的才出现chunk。但是在大循环外，large
+chunk只是单纯地找到其索引，所以觉得在这里直接先判断是合理的，而且也为了下面可以再去找较大的chunk。**
+
+如果请求的 chunk 在 large chunk 范围内，就在对应的bin中从小到大进行扫描，找到第一个合适的。
+
 .. code:: cpp
 
             /*
                If a large request, scan through the chunks of current bin in
                sorted order to find smallest that fits.  Use the skip list for this.
              */
-            // 如果请求的chunk在large chunk范围内，就在对应的bin中从小到大进行扫描，找到第一个合适的
             if (!in_smallbin_range(nb)) {
                 bin = bin_at(av, idx);
-
                 /* skip scan if empty or largest chunk is too small */
-                // 如果 对应的bin为空或者其中的chunk最大的也很小，那就跳过
+                // 如果对应的bin为空或者其中的chunk最大的也很小，那就跳过
                 // first(bin)=bin->fd 表示当前链表中最大的chunk
                 if ((victim = first(bin)) != bin &&
                     (unsigned long) chunksize_nomask(victim) >=
@@ -503,6 +665,7 @@ large chunk
                         // 插入unsorted bin中
                         bck = unsorted_chunks(av);
                         fwd = bck->fd;
+                        // 判断 unsorted bin 是否被破坏。
                         if (__glibc_unlikely(fwd->bk != bck)) {
                             errstr = "malloc(): corrupted unsorted chunks";
                             goto errout;
@@ -511,7 +674,7 @@ large chunk
                         remainder->fd = fwd;
                         bck->fd       = remainder;
                         fwd->bk       = remainder;
-                        // 如果处于small bin范围内，就设置对应的字段
+                        // 如果不处于small bin范围内，就设置对应的字段
                         if (!in_smallbin_range(remainder_size)) {
                             remainder->fd_nextsize = NULL;
                             remainder->bk_nextsize = NULL;
@@ -521,8 +684,8 @@ large chunk
                                  nb | PREV_INUSE |
                                      (av != &main_arena ? NON_MAIN_ARENA : 0));
                       
-                        // 设置remainder的使用状态，其余的不用管，直接从上面继承下来了
-                        // 为什么这里也设置了inuse？
+                        // 设置remainder的上一个chunk，即分配出去的chunk的使用状态
+                        // 其余的不用管，直接从上面继承下来了
                         set_head(remainder, remainder_size | PREV_INUSE);
                         // 设置remainder的大小
                         set_foot(remainder, remainder_size);
@@ -537,10 +700,10 @@ large chunk
                 }
             }
 
-暂时转换
-''''''''
+寻找较大 chunk
+''''''''''''''
 
-如果走到了这里，那说明对于用户所需的chunk，不能直接从其对应的合适的bin中获取chunk，所以我们需要来查找比当前bin更大的fast bin，small bin或者large bin。
+如果走到了这里，那说明对于用户所需的chunk，不能直接从其对应的合适的bin中获取chunk，所以我们需要来查找比当前 bin 更大的 fast bin ， small bin 或者 large bin。
 
 .. code:: cpp
 
@@ -568,16 +731,16 @@ large chunk
             // #define idx2bit(i) ((1U << ((i) & ((1U << BINMAPSHIFT) - 1))))
             // 将idx对应的比特位设置为1，其它位为0
             bit   = idx2bit(idx);
+            for (;;) {
 
-小循环
-''''''
+找到一个合适的map
+                 
 
 .. code:: cpp
 
-            for (;;) {
                 /* Skip rest of block if there are no more set bits in this block.
                  */
-                // 如果bit>map，则表示该map中没有比当前所需要chunk大的空闲块
+                // 如果bit>map，则表示该 map 中没有比当前所需要chunk大的空闲块
                 // 如果bit为0，那么说明，上面idx2bit带入的参数为0。
                 if (bit > map || bit == 0) {
                     do {
@@ -587,10 +750,15 @@ large chunk
                             goto use_top;
                     } while ((map = av->binmap[ block ]) == 0);
                     // 获取其对应的bin，因为该map中的chunk大小都比所需的chunk大，而且
-                    // map本身不为0，所以必然存在瞒住需求的chunk。
+                    // map本身不为0，所以必然存在满足需求的chunk。
                     bin = bin_at(av, (block << BINMAPSHIFT));
                     bit = 1;
                 }
+
+找到合适的bin
+             
+
+.. code:: c
 
                 /* Advance to bin with set bit. There must be one. */
                 // 从当前map的最小的bin一直找，直到找到合适的bin。
@@ -600,6 +768,12 @@ large chunk
                     bit <<= 1;
                     assert(bit != 0);
                 }
+
+简单检查chunk
+             
+
+.. code:: c
+
 
                 /* Inspect the bin. It is likely to be non-empty */
                 // 获取对应的bin
@@ -613,6 +787,11 @@ large chunk
                     bin                 = next_bin(bin);
                     bit <<= 1;
                 }
+
+真正取出chunk
+             
+
+.. code:: c
 
                 else {
                     //获取对应victim的大小
@@ -677,7 +856,6 @@ large chunk
                     alloc_perturb(p, bytes);
                     return p;
                 }
-            }
 
 使用top chunk
 '''''''''''''
@@ -803,13 +981,7 @@ malloc\_consolidate
 \_int\_free
 ~~~~~~~~~~~
 
-概述
-^^^^
-
-初始化
-^^^^^^
-
-进行函数后，立马定义了一系列的变量，并且得到了用户想要释放的chunk的大小
+函数初始时刻定义了一系列的变量，并且得到了用户想要释放的chunk的大小
 
 .. code:: cpp
 
@@ -837,8 +1009,8 @@ malloc\_consolidate
            allocator never wrapps around at the end of the address space.
            Therefore we can exclude some size values which might appear
            here by accident or by "design" from some intruder.  */
-        // 指针不能指向非法的地址
-        // 指针必须得对齐，这个对齐得仔细想想
+        // 指针不能指向非法的地址, 必须小于等于-size，为什么？？？
+        // 指针必须得对齐，2*SIZE_SZ 这个对齐得仔细想想
         if (__builtin_expect((uintptr_t) p > (uintptr_t) -size, 0) ||
             __builtin_expect(misaligned_chunk(p), 0)) {
             errstr = "free(): invalid pointer";
@@ -854,13 +1026,25 @@ malloc\_consolidate
             errstr = "free(): invalid size";
             goto errout;
         }
-        // 检查该chunk是否处于使用状态，如果
+        // 检查该chunk是否处于使用状态
         check_inuse_chunk(av, p);
+
+其中
+
+.. code:: c
+
+    /* Check if m has acceptable alignment */
+
+    #define aligned_OK(m) (((unsigned long) (m) &MALLOC_ALIGN_MASK) == 0)
+
+    #define misaligned_chunk(p)                                                    \
+        ((uintptr_t)(MALLOC_ALIGNMENT == 2 * SIZE_SZ ? (p) : chunk2mem(p)) &       \
+         MALLOC_ALIGN_MASK)
 
 fast bin
 ^^^^^^^^
 
-如果上述检查都合格的话，判断当前的bin是不是在fast bin范围内，在的话，就插入到fastbin中
+如果上述检查都合格的话，判断当前的bin是不是在fast bin范围内，在的话就插入到fastbin中
 
 .. code:: cpp
 
@@ -881,7 +1065,7 @@ fast bin
     ##endif
                 ) {
             // 下一个chunk的大小不能小于两倍的SIZE_SZ,并且
-            // 下一个chunk的大小不能大于系统可提供的内存
+            // 下一个chunk的大小不能大于system_mem， 一般为132k
             // 如果出现这样的情况，就报错。
             if (__builtin_expect(
                     chunksize_nomask(chunk_at_offset(p, size)) <= 2 * SIZE_SZ, 0) ||
@@ -924,7 +1108,7 @@ fast bin
                    add
                    (i.e., double free).  */
                 // so we can not double free one fastbin chunk
-                // 防止对fast bin double free
+                // 防止对 fast bin double free
                 if (__builtin_expect(old == p, 0)) {
                     errstr = "double free or corruption (fasttop)";
                     goto errout;
@@ -948,14 +1132,12 @@ fast bin
 合并非mmap的空闲chunk
 ^^^^^^^^^^^^^^^^^^^^^
 
-首先，我们先说一下为什么会合并chunk，这是为了避免heap中有太多的零零碎碎的内存块，合并之后可以用来应对更大的内存块请求。
+首先我们先说一下为什么会合并chunk，这是为了避免heap中有太多零零碎碎的内存块，合并之后可以用来应对更大的内存块请求。合并的主要顺序为
 
-合并的主要顺序为
+-  先考虑物理低地址空闲块
+-  后考虑物理高地址空闲块
 
--  先考虑低地址空闲块
--  后考虑高地址空闲块
-
-**合并后的chunk指向所有合并的chunk的低地址。**
+**合并后的chunk指向合并的chunk的低地址。**
 
 在没有锁的情况下，先获得锁。
 
@@ -970,6 +1152,7 @@ fast bin
                 __libc_lock_lock(av->mutex);
                 locked = 1;
             }
+            nextchunk = chunk_at_offset(p, size);
 
 轻量级的检测
 ''''''''''''
@@ -1065,6 +1248,7 @@ fast bin
                 }
                 p->fd = fwd;
                 p->bk = bck;
+                // 如果是 large chunk，那就设置nextsize指针字段为NULL。
                 if (!in_smallbin_range(size)) {
                     p->fd_nextsize = NULL;
                     p->bk_nextsize = NULL;
@@ -1149,74 +1333,6 @@ fast bin
             //  If the chunk was allocated via mmap, release via munmap().
             munmap_chunk(p);
         }
-
-unlink
-~~~~~~
-
-unlink函数主要是将chunk P从bin中取出来，如下
-
-.. code:: c
-
-    /* Take a chunk off a bin list */
-    ##define unlink(AV, P, BK, FD) {                                            \
-        FD = P->fd;                                                                      \
-        BK = P->bk;                                                                      \
-        if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
-          malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
-        else {                                                                      \
-            FD->bk = BK;                                                              \
-            BK->fd = FD;                                                              \
-            if (!in_smallbin_range (chunksize_nomask (P))                              \
-                && __builtin_expect (P->fd_nextsize != NULL, 0)) {                      \
-                if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
-                    || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
-                  malloc_printerr (check_action,                                      \
-                                   "corrupted double-linked list (not small)",    \
-                                   P, AV);                                              \
-                if (FD->fd_nextsize == NULL) {                                      \
-                    if (P->fd_nextsize == P)                                      \
-                      FD->fd_nextsize = FD->bk_nextsize = FD;                      \
-                    else {                                                              \
-                        FD->fd_nextsize = P->fd_nextsize;                              \
-                        FD->bk_nextsize = P->bk_nextsize;                              \
-                        P->fd_nextsize->bk_nextsize = FD;                              \
-                        P->bk_nextsize->fd_nextsize = FD;                              \
-                      }                                                              \
-                  } else {                                                              \
-                    P->fd_nextsize->bk_nextsize = P->bk_nextsize;                      \
-                    P->bk_nextsize->fd_nextsize = P->fd_nextsize;                      \
-                  }                                                                      \
-              }                                                                      \
-          }                                                                              \
-    }
-
-可以看到首先是分别获取P的forward chunk和backward chunk。
-
-::
-
-    FD = P->fd;                                                                      \
-    BK = P->bk;                                                                      \
-
-接下来有这样的一个判断
-
-::
-
-    if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
-      malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
-
-看起来似乎很正常，P的forward chunk的bk很自然是P，同样P的backward chunk的fd也很自然是P。然而，这里真正的目的在于进行双向链表的冲突检测。
-
-考虑加入没有的情况，如果我们将该chunk
-的fd为某个got表项-12(32位)的地址，同时修改bk为shellcode代码，这样当执行完下面的代码后，该got表项的地址其实就是shellcode的地址。如果我们调用了该got表项对应的函数，那么实际上执行的就是shellcode。所以这里的检查是必要的。
-
-然后就是直接修改相应的指针，去掉P。
-
-接下来判断chunk P是否属于large chunk，如果属于就需要进行进一步的处理。
-
-**注意：堆的第一个chunk的话所记录的prev\_inuse位默认为1。**
-
-1. **给出图片说明**
-2. **说明unlink的判断**
 
 systrim
 ~~~~~~~

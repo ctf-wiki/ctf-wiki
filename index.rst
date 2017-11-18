@@ -13,7 +13,7 @@
 文档内容托管在 `Github <https://github.com/ctf-wiki/ctf-wiki>`_，期待你的加入。
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: CTF 介绍
 
    introduction/history.rst
@@ -25,7 +25,7 @@
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: Misc
 
    misc/about.rst
@@ -42,7 +42,7 @@
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: Crypto
 
    crypto/introduction.rst
@@ -55,7 +55,7 @@
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: Web
 
    web/index.rst
@@ -66,13 +66,13 @@
    web/php.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: Reverse
 
    reverse/index.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: Pwn
 
    pwn/stackoverflow/index.rst
@@ -81,7 +81,7 @@
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 6
    :caption: Executable
 
    executable/elf/index.rst

@@ -204,9 +204,9 @@ struct malloc_chunk {
   - bk指向上一个（非物理相邻）空闲的chunk
   - 通过fd和bk可以将空闲的chunk块加入到空闲的chunk块链表进行统一管理
 - **fd_nextsize, bk_nextsize**，也是只有chunk空闲的时候才使用，不过其用于较大的chunk（large chunk）。
-  - fd_nextsize指向前一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针（可暂不考虑）。
-  - bk_nextsize指向后一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针（可暂不考虑）。
-  - **这样做可以避免在寻找合适chunk时挨个遍历。**
+  - fd_nextsize指向前一个与当前 chunk 大小不同的第一个空闲块，不包含bin的头指针。
+  - bk_nextsize指向后一个与当前 chunk 大小不同的第一个空闲块，不包含bin的头指针。
+  - 一般空闲的large chunk 按照由小到大的顺序排列。**这样做可以避免在寻找合适chunk时挨个遍历。**
 
 一个已经分配的chunk的样子如下。**我们称前两个字段称为chunk header，后面的部分称为user data。每次malloc申请得到的内存指针，其实指向user data的起始处。** 
 
