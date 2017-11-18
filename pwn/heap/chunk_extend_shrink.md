@@ -1,13 +1,13 @@
-﻿# chunk extend利用
+﻿# chunk extend/shrink
 
 ## 介绍
-chunk extend是针对堆上漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，想使用extend\shrink攻击同样需要有基于堆的漏洞发生。其实这句话的实际含义是堆结构的malloc_chunk能够被攻击者控制。因此这种利用方法需要以下的先决条件：
+chunk extend是堆上漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，chunk extend\shrink攻击同样需要有可以控制malloc_chunk的漏洞。这种利用方法需要以下的先决条件：
 
 * 程序中存在基于堆的漏洞
 * 漏洞可以使得malloc_chunk能够被攻击者控制
 
-## extend利用原理
-extend利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的各种属性的校验。
+## 原理
+extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的各种属性的校验。
 
 在ptmalloc中，获取本chunk块大小的操作如下
 
@@ -18,15 +18,15 @@ extend利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的�
 /* Like chunksize, but do not mask SIZE_BITS.  */
 #define chunksize_nomask(p) ((p)->mchunk_size)
 ```
-即取出malloc_chunk中的size域值并去除标志位。
+即取出 malloc_chunk 中的 size 字段并去除标志位。
 
-在ptmalloc中，获取下一chunk块地址的操作如下
+在 ptmalloc 中，获取下一 chunk 块地址的操作如下
 
 ```
 /* Ptr to next physical malloc_chunk. */
 #define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))
 ```
-即使用当前块指针加上当前块大小
+即使用当前块指针加上当前块大小。
 
 在ptmalloc中，获取前一个chunk信息的操作如下
 
@@ -46,12 +46,11 @@ extend利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的�
 ```
 即查看下一chunk的prev_inuse域，而下一块地址又如我们前面所述是根据当前chunk的size计算得出的。
 
-更多的操作详见`堆相关数据结构`一节。
-简而言之，extend\shrink chunk利用就是通过对size\pre_size域进行控制来实现的“放缩”利用。
+更多的操作详见`堆相关数据结构`一节。简而言之，extend\shrink chunk利用就是通过对size\pre_size域进行控制来实现的“放缩”利用。
 
-## 基本示例
-基本示例如下，简单来说利用的效果是可以通过更改第一个块的大小来控制第二个块的内容。
-注意，我们的示例都是在64位的程序，因此int的长度为8个字节，如果想在32位下进行测试，可以把8字节偏移改为4字节。
+## 基本示例1
+简单来说，该利用的效果是通过更改第一个块的大小来控制第二个块的内容。
+**注意，我们的示例都是在64位的程序。如果想在32位下进行测试，可以把8字节偏移改为4字节**。
 ```
 int main(void)
 {
@@ -60,7 +59,7 @@ int main(void)
     ptr=malloc(0x10);//分配第一个0x10的chunk
     malloc(0x10);//分配第二个0x10的chunk
     
-    *(int *)((int)ptr-0x8)=0x41;//篡改第一个块的size域
+    *(long long *)((long long)ptr-0x8)=0x41;//修改第一个块的size域
     
     free(ptr);
     ptr1=malloc(0x30);//实现extend，控制了第二个块的内容
@@ -75,7 +74,7 @@ int main(void)
 0x602030:	0x0000000000000000	0x0000000000000000
 0x602040:	0x0000000000000000	0x0000000000020fc1 <=== top chunk
 ```
-之后 我们把chunk1的size域更改为0x41，0x41是因为chunk的size域包含了用户控制的大小和header的大小。如上所示正好大小为0x40。在题目中这一步可以由堆溢出h
+之后，我们把chunk1的size域更改为0x41，0x41是因为chunk的size域包含了用户控制的大小和header的大小。如上所示正好大小为0x40。在题目中这一步可以由堆溢出得到。
 ```
 0x602000:	0x0000000000000000	0x0000000000000041 <=== 篡改大小
 0x602010:	0x0000000000000000	0x0000000000000000
@@ -102,7 +101,7 @@ rax = 0x602010
 ```
 
 ## 基本示例2
-通过之前深入理解堆的实现部分的内容，我们得知处于fastbin范围的chunk释放后会被置入fastbin链表中，而不处于这个范围的chunk被释放后会被置于unsorted bin链表中。
+通过之前深入理解堆的实现部分的内容，我们得知处于 fastbin 范围的 chunk 释放后会被置入 fastbin 链表中，而不处于这个范围的chunk被释放后会被置于unsorted bin链表中。
 以下这个示例中，我们使用0x80这个大小来分配堆（作为对比fastbin的范围是0x70）
 ```
 int main()

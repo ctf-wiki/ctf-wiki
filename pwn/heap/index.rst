@@ -34,7 +34,9 @@
    heap_structure.rst
    heap_implementation_details.rst
    heapoverflow_basic.rst
-   use_after_free.rst
    off_by_one.rst
-   fastbin_attack.rst
+   chunk_extend_shrink.rst
    unlink.rst
+   use_after_free.rst
+   fastbin_attack.rst
+   House_Of_Force.rst
