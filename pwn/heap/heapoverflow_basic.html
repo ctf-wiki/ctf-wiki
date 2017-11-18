@@ -146,7 +146,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#id4">小总结</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id5">寻找堆分配函数</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id6">寻找危险函数</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id13">确定填充长度</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">确定填充长度</a></li>
 </ul>
 </li>
 </ul>
@@ -154,6 +154,7 @@
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
 <li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
 </ul>
 </li>
 </ul>
@@ -229,15 +230,34 @@
 <h1>堆溢出<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id2">
 <h2>介绍<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>堆溢出指的是程序向某个堆块中写入的字节数超过了这个堆块本身所申请的字节数，因而导致数据溢出了当前的堆块并覆盖到相邻的下一个堆块。这种问题是一种特定的缓冲区溢出漏洞(比如说，还有向栈写，向bss段写)。而对于黑客来说，堆溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。此外，我们也不难发现，发生堆溢出的基本前提是</p>
+<p>堆溢出是指程序向某个堆块中写入的字节数超过了堆块本身可利用的字节数（<strong>之所以是可利用的是因为堆管理器会对用户所申请的字节数进行调整，这也导致可利用的字节数都不小于用户申请的字节数</strong>），因而导致了数据溢出，并覆盖到<strong>物理相邻</strong>的下一个堆块。对于攻击者来说，堆溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。不难发现，堆溢出漏洞发生的基本前提是</p>
 <ul class="simple">
 <li>程序必须向堆上写入数据。</li>
 <li>写入的数据大小没有被良好地控制。</li>
 </ul>
+<p>堆溢出是一种特定的缓冲区溢出（还有栈溢出， bss 段溢出等)。但是其与栈溢出所不同的是，堆上并不存在返回地址等可以让攻击者直接控制执行流程的数据，因此我们一般无法直接通过堆溢出来控制 EIP
+。一般来说，我们利用堆溢出的策略是</p>
+<ol class="arabic simple">
+<li>覆盖与其<strong>物理相邻的下一个 chunk</strong> 的内容。</li>
+</ol>
+<ul class="simple">
+<li>prev_size</li>
+<li>size，主要有三个比特位，以及该堆块真正的大小。<ul>
+<li>NON_MAIN_ARENA</li>
+<li>IS_MAPPED</li>
+<li>PREV_INUSE</li>
+<li>the True chunk size</li>
+</ul>
+</li>
+<li>chunk content</li>
+</ul>
+<ol class="arabic simple" start="2">
+<li>利用堆中的机制（如 unlink 等 ）来实现任意地址写入（ Write-Anything-Anywhere）或控制堆块中的内容等效果，从而来控制程序的执行流。</li>
+</ol>
 </div>
 <div class="section" id="id3">
 <h2>基本示例<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<p>与栈溢出不同，堆上并不存在返回地址等可以让攻击者直接控制执行流程的数据，因此攻击者需要利用前面提到过的ptmalloc特性把堆溢出转化为任意地址写(write-anything-anywhere)或控制堆块中的内容等效果。下面，我们举一个简单的例子：</p>
+<p>下面我们举一个简单的例子：</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
 
 <span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
@@ -317,7 +337,7 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
 <p>常见的危险函数如下</p>
 <ul class="simple">
 <li>输入<ul>
-<li>gets，直接读取一行，忽略’:raw-latex:<a href="#id7"><span class="problematic" id="id8">`</span></a>x`00’</li>
+<li>gets，直接读取一行，忽略 <code class="docutils literal"><span class="pre">'\x00'</span></code></li>
 <li>scanf</li>
 <li>vscanf</li>
 </ul>
@@ -327,15 +347,15 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
 </ul>
 </li>
 <li>字符串<ul>
-<li>strcpy，字符串复制，遇到’:raw-latex:<a href="#id9"><span class="problematic" id="id10">`</span></a>x`00’停止</li>
-<li>strcat，字符串拼接，遇到’:raw-latex:<a href="#id11"><span class="problematic" id="id12">`</span></a>x`00’停止</li>
+<li>strcpy，字符串复制，遇到 <code class="docutils literal"><span class="pre">'\x00'</span></code> 停止</li>
+<li>strcat，字符串拼接，遇到 <code class="docutils literal"><span class="pre">'\x00'</span></code> 停止</li>
 <li>bcopy</li>
 </ul>
 </li>
 </ul>
 </div>
-<div class="section" id="id13">
-<h3>确定填充长度<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id7">
+<h3>确定填充长度<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
 <p>这一部分主要是计算<strong>我们开始写入的地址与我们所要覆盖的地址之间的距离</strong>。
 一个常见的误区是malloc的参数等于实际分配堆块的大小，但是事实上ptmalloc分配出来的堆块是存在对其长度的。这个长度一般是字长，比如32位系统是4个字节，64位系统是8个字节。但是对于小于2倍字长的请求，malloc会直接返回2倍字长的块也就是最小chunk，比如64位系统执行<code class="docutils literal"><span class="pre">malloc(0)</span></code>会返回用户区域为16字节的块。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>

@@ -152,6 +152,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
 </ul>
 </li>
 </ul>
@@ -299,7 +300,8 @@
 </pre></div>
 </div>
 <p>程序乍看上去没有任何问题(不考虑栈溢出)，可能很多人在实际的代码中也是这样写的。 但是strlen和strcpy的行为不一致却导致了off-by-one的发生。
-strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在计算字符串长度时是不把结束符’x`00’。这就导致了我们向chunk1中写入了25个字节，我们使用gdb进行调试可以看到这一点。</p>
+strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在计算字符串长度时是不把结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 计算在内的，但是strcpy在复制字符串时会拷贝结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code>
+。这就导致了我们向chunk1中写入了25个字节，我们使用gdb进行调试可以看到这一点。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000411</span> <span class="o">&lt;===</span> <span class="nb">next</span> <span class="n">chunk</span>
@@ -311,7 +313,7 @@ strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x0000000000000400</span>
 </pre></div>
 </div>
-<p>可以看到next chunk的chunk_header.size域低字节被结束符\x00覆盖，这种又属于off-by-one的一个分支称为NULL byte off-by-one，我们在后面会看到off-by-one与NULL byte off-by-one在利用上的区别。
+<p>可以看到next chunk的chunk_header.size域低字节被结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 覆盖，这种又属于off-by-one的一个分支称为NULL byte off-by-one，我们在后面会看到off-by-one与NULL byte off-by-one在利用上的区别。
 还是有一点就是为什么是低字节被覆盖呢，因为我们通常使用的CPU的字节序都是小端法的，比如一个DWORD值在使用小端法的内存中是这样储存的</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DWORD</span> <span class="mh">0x41424344</span>
 <span class="n">内存</span>  <span class="mh">0x44</span><span class="p">,</span><span class="mh">0x43</span><span class="p">,</span><span class="mh">0x42</span><span class="p">,</span><span class="mh">0x41</span>
