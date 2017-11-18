@@ -37,8 +37,8 @@
         <link rel="search" title="搜索" href="../../search.html"/>
     <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
         <link rel="up" title="堆利用" href="index.html"/>
-        <link rel="next" title="fastbin attack" href="fastbin_attack.html"/>
-        <link rel="prev" title="Use After Free" href="use_after_free.html"/> 
+        <link rel="next" title="chunk extend/shrink" href="chunk_extend_shrink.html"/>
+        <link rel="prev" title="堆溢出" href="heapoverflow_basic.html"/> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
@@ -141,18 +141,23 @@
 <li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
-<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">堆中的off-by-one</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id1">介绍</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">off-by-one漏洞原理</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">基本示例</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">小总结</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id5">注意循环边界</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id6">注意字符串操作</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">off-by-one漏洞原理</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3">示例1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">示例2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">小总结</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">例子</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">题目</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="House_Of_Force.html">House Of Force</a></li>
 </ul>
 </li>
 </ul>
@@ -228,18 +233,19 @@
 <h1>堆中的off-by-one<a class="headerlink" href="#off-by-one" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id1">
 <h2>介绍<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>严格来说off-by-one漏洞是一种特殊的溢出漏洞，off-by-one是指程序向缓冲区中进行写入时，写入的字节数超过了这个缓冲区本身所申请的字节数并且这个越界只越了一个字节。</p>
+<p>严格来说 off-by-one 漏洞是一种特殊的溢出漏洞，off-by-one 指程序向缓冲区中写入时，写入的字节数超过了这个缓冲区本身所申请的字节数并且只越界了一个字节。</p>
 </div>
 <div class="section" id="id2">
 <h2>off-by-one漏洞原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>off-by-one是指1字节缓冲区溢出，这种漏洞的产生往往与边界验证不严和字符串操作有关，当然也不排除写入的size正好就只多了一个字节的情况。
-其中边界验证不严是指使用比如循环向堆块中写入数据时，循环的次数设置错误(这在C语言初学者中很常见)导致多写入了一个字节。
-一般来说，1字节溢出通常被认为是难以利用的，但是因为Linux的堆管理机制ptmalloc验证的松散性，基于Linux堆的off-by-one漏洞利用起来并不复杂，并且威力强大。
-此外还要说明的一点是off-by-one是可以基于各种缓冲区的，比如栈、bss段等等，但是堆上(heap based)的off-by-one是能够利用的也是CTF中最主要出现的，因此我们这里仅讨论堆上的off-by-one情况。</p>
-</div>
+<p>off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界验证不严和字符串操作有关，当然也不排除写入的size 正好就只多了一个字节的情况。其中边界验证不严通常指</p>
+<ul class="simple">
+<li>使用循环向堆块中写入数据时，循环的次数设置错误(这在C语言初学者中很常见)导致多写入了一个字节。</li>
+<li>字符串操作不合适</li>
+</ul>
+<p>一般来说，单字节溢出被认为是难以利用的，但是因为Linux的堆管理机制ptmalloc验证的松散性，基于Linux堆的off-by-one漏洞利用起来并不复杂，并且威力强大。
+此外还要说明的一点是off-by-one是可以基于各种缓冲区的，比如栈、bss段等等，但是堆上(heap based)的off-by-one是能够利用的也是CTF中最主要出现的。我们这里仅讨论堆上的off-by-one情况。</p>
 <div class="section" id="id3">
-<h2>基本示例<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<p>下面的示例演示了这一点。</p>
+<h3>示例1<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">my_gets</span><span class="p">(</span><span class="n">char</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span><span class="nb">int</span> <span class="n">size</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="nb">int</span> <span class="n">i</span><span class="p">;</span>
@@ -282,6 +288,9 @@
 <span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="id4">
+<h3>示例2<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
 <p>第二种常见的导致off-by-one的场景就是字符串操作了，常见的原因是字符串的结束符计算有误</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
@@ -307,7 +316,7 @@ strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000411</span> <span class="o">&lt;===</span> <span class="nb">next</span> <span class="n">chunk</span>
 </pre></div>
 </div>
-<p>当我们执行了strcpy之后 print ‘A’*24</p>
+<p>在我们输入’A’*24后执行strcpy</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x0000000000000400</span>
@@ -320,17 +329,24 @@ strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在
 </pre></div>
 </div>
 </div>
-<div class="section" id="id4">
-<h2>小总结<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
-<p>上面的示例其实也展示了寻找off-by-one中比较重要的几个步骤:</p>
-</div>
 <div class="section" id="id5">
-<h2>注意循环边界<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h2>
+<h3>小总结<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<p>上面的示例其实也展示了寻找off-by-one中比较重要的几个步骤:</p>
+<div class="section" id="id6">
+<h4>注意循环边界<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h4>
 <p>在进行诸如循环写入的操作时，要特别注意循环的次数是否存在边界问题导致的off-by-one。</p>
 </div>
-<div class="section" id="id6">
-<h2>注意字符串操作<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id7">
+<h4>注意字符串操作<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h4>
 <p>字符串结束符处理的不严谨往往会导致off-by-one问题的发生。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>例子<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h2>
+</div>
+<div class="section" id="id9">
+<h2>题目<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h2>
 </div>
 </div>
 
@@ -344,10 +360,10 @@ strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="fastbin_attack.html" class="btn btn-neutral float-right" title="fastbin attack" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="chunk_extend_shrink.html" class="btn btn-neutral float-right" title="chunk extend/shrink" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="use_after_free.html" class="btn btn-neutral" title="Use After Free" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="heapoverflow_basic.html" class="btn btn-neutral" title="堆溢出" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

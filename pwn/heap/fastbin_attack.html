@@ -37,8 +37,8 @@
         <link rel="search" title="搜索" href="../../search.html"/>
     <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
         <link rel="up" title="堆利用" href="index.html"/>
-        <link rel="next" title="unlink" href="unlink.html"/>
-        <link rel="prev" title="堆中的off-by-one" href="off_by_one.html"/> 
+        <link rel="next" title="House Of Force" href="House_Of_Force.html"/>
+        <link rel="prev" title="Use After Free" href="use_after_free.html"/> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
@@ -141,24 +141,34 @@
 <li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
-<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
 <li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">fastbin attack</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id1">介绍</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">原理</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">分类</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#fastbin-double-free">fastbin double free</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">演示</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id5">小总结</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#house-of-spirit">House of Spirit</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id6">演示</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id7">小总结</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#arbitrary-alloc">arbitrary alloc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id8">演示</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id9">小总结</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fastbin-double-free">fastbin double free</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3">介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">演示</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">小总结</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#house-of-spirit">House Of Spirit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id6">介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">演示</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id8">小总结</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#arbitrary-alloc">arbitrary alloc</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id9">介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id10">演示</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id11">小总结</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="House_Of_Force.html">House Of Force</a></li>
 </ul>
 </li>
 </ul>
@@ -234,15 +244,22 @@
 <h1>fastbin attack<a class="headerlink" href="#fastbin-attack" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id1">
 <h2>介绍<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>fastbin attack是一种(或多种)堆漏洞的利用方法，这种方法需要使用fastbin的特性，因此需要漏洞发生在属于fastbin 的chunk 中。 基于这一点我们可以知道这种利用的前提是：</p>
+<p>fastbin attack 是一类漏洞的利用方法，是指所有基于 fastbin 机制的漏洞利用方法。这类利用的前提是：</p>
 <ul class="simple">
 <li>存在堆溢出、use-after-free等能控制chunk内容的漏洞</li>
-<li>漏洞发生于属于fastbin的chunk中</li>
+<li>漏洞发生于fastbin的chunk中</li>
+</ul>
+<p>如果细分的话，可以做如下的分类：</p>
+<ul class="simple">
+<li>fastbin double free</li>
+<li>House of Spirit</li>
+<li>arbitrary alloc</li>
 </ul>
 </div>
 <div class="section" id="id2">
 <h2>原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>fastbin attack存在的原因在于fastbin是使用单链表来维护释放的堆块的，并且由fastbin管理的chunk即使被释放其next_chunk的pre_inuse位也不会被置为空。 我们实际的来看一下fastbin是怎样的管理被释放的chunk的。</p>
+<p>fastbin attack 存在的原因在于 fastbin 是使用单链表来维护释放的堆块的，并且由 fastbin 管理的 chunk 即使被释放其 next_chunk 的 pre_inuse 位也不会被置为空。 我们来看一下 fastbin 是怎样管理空闲 chunk
+的。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">void</span> <span class="o">*</span><span class="n">chunk1</span><span class="p">,</span><span class="o">*</span><span class="n">chunk2</span><span class="p">,</span><span class="o">*</span><span class="n">chunk3</span><span class="p">;</span>
@@ -289,33 +306,26 @@
 <span class="mh">0x6020c0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f41</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
 </pre></div>
 </div>
-<p>此时位于main_arena中的fastbin链表中已经储存了指向chunk3的指针，并且chunk3、2、1构成了一个单链表</p>
+<p>此时位于main_arena中的 fastbin 链表中已经储存了指向chunk3的指针，并且chunk3、2、1构成了一个单链表</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x30</span><span class="p">,</span><span class="n">ptr</span><span class="o">=</span><span class="mh">0x602080</span><span class="p">]</span>
 <span class="o">===&gt;</span><span class="n">Chunk</span><span class="p">(</span><span class="n">fd</span><span class="o">=</span><span class="mh">0x602040</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x40</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">PREV_INUSE</span><span class="p">)</span>
 <span class="o">===&gt;</span><span class="n">Chunk</span><span class="p">(</span><span class="n">fd</span><span class="o">=</span><span class="mh">0x602000</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x40</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">PREV_INUSE</span><span class="p">)</span>
 <span class="o">===&gt;</span><span class="n">Chunk</span><span class="p">(</span><span class="n">fd</span><span class="o">=</span><span class="mh">0x000000</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x40</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">PREV_INUSE</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>我们可以使用如下的图片来表示这一点 <img alt="捕获.PNG-13.8kB" src="http://static.zybuluo.com/vbty/e8k7kq9w9a0fzm0qxfpzwpw5/%E6%8D%95%E8%8E%B7.PNG" /></p>
-</div>
-<div class="section" id="id3">
-<h2>分类<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<p>fastbin attack是一个统称，意为所有基于fastbin的利用，如果细分可以做如下的分类：</p>
-<ul class="simple">
-<li>fastbin double free</li>
-<li>House of Spirit</li>
-<li>arbitrary alloc</li>
-</ul>
+<p>我们可以使用如下的图片来表示这一点 <img alt="image0" src="../../_images/fastbin_link_list.png" /></p>
 </div>
 <div class="section" id="fastbin-double-free">
 <h2>fastbin double free<a class="headerlink" href="#fastbin-double-free" title="永久链接至标题">¶</a></h2>
-<p>fastbin double
-free是指一个属于fastbin的chunk可以多次被释放并多次的存在于fastbin链表中。这样导致的后果是多次分配可以从fastbin链表中取出同一个堆块，相当于多个指针指向同一个堆块，结合堆块的数据内容可以实现类似于类型混淆(type
-confused)的效果。</p>
-</div>
-<div class="section" id="id4">
-<h2>演示<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
-<p>fastbin double free之所以能够成功的实现有两部分的原因，一是属于fastbin的堆块被释放后next_chunk的pre_inuse位不会被清空，二是fastbin在执行free的时候仅验证了main_arena直接指向的块</p>
+<div class="section" id="id3">
+<h3>介绍<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
+<p>fastbin double free 是指 fastbin 的 chunk 可以被多次释放并多次的存在于fastbin链表中。这样导致的后果是多次分配可以从 fastbin
+链表中取出同一个堆块，相当于多个指针指向同一个堆块，结合堆块的数据内容可以实现类似于类型混淆(type confused)的效果。</p>
+<p>fastbin double free之所以能够成功的实现有两部分的原因</p>
+<ol class="arabic simple">
+<li>fastbin 的堆块被释放后next_chunk的pre_inuse位不会被清空</li>
+<li>fastbin 在执行free的时候仅验证了main_arena直接指向的块</li>
+</ol>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Another</span> <span class="n">simple</span> <span class="n">check</span><span class="p">:</span> <span class="n">make</span> <span class="n">sure</span> <span class="n">the</span> <span class="n">top</span> <span class="n">of</span> <span class="n">the</span> <span class="nb">bin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">the</span>
        <span class="n">record</span> <span class="n">we</span> <span class="n">are</span> <span class="n">going</span> <span class="n">to</span> <span class="n">add</span> <span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">e</span><span class="o">.</span><span class="p">,</span> <span class="n">double</span> <span class="n">free</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">old</span> <span class="o">==</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
@@ -325,6 +335,9 @@ confused)的效果。</p>
 <span class="p">}</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="id4">
+<h3>演示<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
 <p>下面的示例程序说明了这一点，当我们试图执行以下代码时</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
@@ -389,8 +402,19 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>第一次释放<code class="docutils literal"><span class="pre">free(chunk1)</span></code> <img alt="捕获.PNG-3kB" src="http://static.zybuluo.com/vbty/48ue5xatzz40sif5qnqu8syz/%E6%8D%95%E8%8E%B7.PNG" /> 第二次释放<code class="docutils literal"><span class="pre">free(chunk2)</span></code> <img alt="捕获.PNG-3.4kB" src="http://static.zybuluo.com/vbty/0101jwbohr0r8sjha5yvxuu6/%E6%8D%95%E8%8E%B7.PNG" /> 第三次释放<code class="docutils literal"><span class="pre">free(chunk1)</span></code> <img alt="捕获.PNG-5.8kB" src="http://static.zybuluo.com/vbty/ggyvxt73jujf9qlcnm429khb/%E6%8D%95%E8%8E%B7.PNG" />
-注意因为chunk1被再次释放因此其fd值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
+<p>第一次释放<code class="docutils literal"><span class="pre">free(chunk1)</span></code></p>
+<div class="figure">
+<img alt="" src="../../_images/fastbin_free_chunk1.png" />
+</div>
+<p>第二次释放<code class="docutils literal"><span class="pre">free(chunk2)</span></code></p>
+<div class="figure">
+<img alt="" src="../../_images/fastbin_free_chunk2.png" />
+</div>
+<p>第三次释放<code class="docutils literal"><span class="pre">free(chunk1)</span></code></p>
+<div class="figure">
+<img alt="" src="../../_images/fastbin_free_chunk3.png" />
+</div>
+<p>注意因为chunk1被再次释放因此其 fd 值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
 下面这个示例演示了这一点，首先跟前面一样构造main_arena=&gt;chunk1=&gt;chun2=&gt;chunk1的链表。之后第一次调用malloc返回chunk1之后修改chunk1的fd指针指向bss段上的bss_chunk，之后我们可以看到fastbin会把堆块分配到这里。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">typedef</span> <span class="n">struct</span> <span class="n">_chunk</span>
 <span class="p">{</span>
@@ -488,19 +512,22 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 </div>
 </div>
 <div class="section" id="id5">
-<h2>小总结<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h2>
-<p>通过fastbin double free我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。
-如果是更进一步的修改fd指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。</p>
+<h3>小总结<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<p>通过 fastbin double free 我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。
+如果更进一步修改fd指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。</p>
+</div>
 </div>
 <div class="section" id="house-of-spirit">
-<h2>House of Spirit<a class="headerlink" href="#house-of-spirit" title="永久链接至标题">¶</a></h2>
-<p>House of Spirit 是 House of XX 的一种，House of XX 是 2004 年左右发出来的一篇关于 Linux 堆利用的技术文章中提出一系列利用方法。
-对HOS的描述是可以使得fastbin堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。</p>
-<p>如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于 fastbin 链表是使用当前chunk的fd指针指向下一个chunk构成的。
-HOS的核心同样在于劫持fastbin链表中chunk的fd指针，把fd指针指向我们想要分配的栈上，实现控制栈中数据。</p>
-</div>
+<h2>House Of Spirit<a class="headerlink" href="#house-of-spirit" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id6">
-<h2>演示<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h2>
+<h3>介绍<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
+<p>House of Spirit 是 House of XX 的一种，House of XX 是 2004 年左右的一篇关于 Linux 堆利用的技术文章中提出一系列利用方法。 HOS 可以使得 fastbin
+堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。</p>
+<p>如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于 fastbin 链表是使用当前 chunk 的 fd 指针指向下一个chunk构成的。 HOS 的核心同样在于劫持 fastbin
+链表中 chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，实现控制栈中数据。</p>
+</div>
+<div class="section" id="id7">
+<h3>演示<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
 <p>这次我们把fake_chunk置于栈中称为stack_chunk，同时劫持了fastbin链表中chunk的fd值，通过把这个fd值指向stack_chunk就可以实现在栈中分配fastbin chunk。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">typedef</span> <span class="n">struct</span> <span class="n">_chunk</span>
 <span class="p">{</span>
@@ -568,18 +595,21 @@ HOS的核心同样在于劫持fastbin链表中chunk的fd指针，把fd指针指�
 </pre></div>
 </div>
 </div>
-<div class="section" id="id7">
-<h2>小总结<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h2>
-<p>通过HOS我们可以把fastbin chunk分配到栈中，从而控制返回地址等关键数据。 要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。</p>
+<div class="section" id="id8">
+<h3>小总结<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
+<p>通过HOS我们可以把fastbin chunk分配到栈中，从而控制返回地址等关键数据。要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。</p>
+</div>
 </div>
 <div class="section" id="arbitrary-alloc">
 <h2>arbitrary alloc<a class="headerlink" href="#arbitrary-alloc" title="永久链接至标题">¶</a></h2>
-<p>arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。</p>
+<div class="section" id="id9">
+<h3>介绍<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
+<p>arbitrary alloc 其实与 House of Spirit 是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。</p>
+<p>大家可能会认为 HOS 与 arbitrary alloc 没有什么区别，因此没有必要分为两类。相信看完下面的一个例子，就会有不一样的想法了。</p>
 </div>
-<div class="section" id="id8">
-<h2>演示<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h2>
-<p>有些同学可能会认为HOS与arbitrary alloc没有什么区别因此没有必要分为两类，这里我们使用如下的这个例子来说明这种利用手法与HOS的意义是不同的。
-这个例子是使用字节错位来实现直接分配fastbin到__malloc_hook的位置，相当于直接写入__malloc_hook来控制程序流程。</p>
+<div class="section" id="id10">
+<h3>演示<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
+<p>在这个例子，我们使用字节错位来实现直接分配fastbin到<strong>_malloc_hook的位置，相当于覆盖_malloc_hook来控制程序流程。</strong></p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
 
@@ -598,7 +628,7 @@ HOS的核心同样在于劫持fastbin链表中chunk的fd指针，把fd指针指�
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>这里的0x7ffff7dd1b05是我根据本机的情况得出的值，这个值是怎么获得的呢？首先我们要观察欲写入地址附近是否存在可以字节错位的情况</p>
+<p>这里的0x7ffff7dd1b05是我根据本机的情况得出的值，这个值是怎么获得的呢？首先我们要观察欲写入地址附近是否存在可以字节错位的情况。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x7ffff7dd1a88</span> <span class="mh">0x0</span>  <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span>
 <span class="mh">0x7ffff7dd1a90</span> <span class="mh">0x0</span>  <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span>
 <span class="mh">0x7ffff7dd1a98</span> <span class="mh">0x0</span>  <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span>
@@ -619,8 +649,8 @@ HOS的核心同样在于劫持fastbin链表中chunk的fd指针，把fd指针指�
 <span class="mh">0x7ffff7dd1b10</span> <span class="o">&lt;</span><span class="n">__malloc_hook</span><span class="o">&gt;</span><span class="p">:</span> <span class="mh">0x30</span>    <span class="mh">0x28</span>    <span class="mh">0xa9</span>    <span class="mh">0xf7</span>    <span class="mh">0xff</span>    <span class="mh">0x7f</span>    <span class="mh">0x0</span> <span class="mh">0x0</span>
 </pre></div>
 </div>
-<p>0x7ffff7dd1b10是我们想要控制的__malloc_hook的内容，于是我们向上寻找是否可以错位出一个合法的size域。因为我们是在64位系统下进行的调试，因此fastbin的范围为32字节到128字节(0x20-0x80),如下：</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>//这里的size指用户区域，因此要小2倍字长
+<p>0x7ffff7dd1b10是我们想要控制的__malloc_hook的地址，于是我们向上寻找是否可以错位出一个合法的size域。因为这个程序是64位的，因此fastbin的范围为32字节到128字节(0x20-0x80)，如下：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>//这里的size指用户区域，因此要小2倍SIZE_SZ
 Fastbins[idx=0, size=0x10]
 Fastbins[idx=1, size=0x20]
 Fastbins[idx=2, size=0x30]
@@ -637,8 +667,12 @@ Fastbins[idx=6, size=0x70]
 <span class="mh">0x7ffff7dd1af5</span> <span class="o">&lt;</span><span class="n">_IO_wide_data_0</span><span class="o">+</span><span class="mi">309</span><span class="o">&gt;</span><span class="p">:</span>   <span class="mh">0x000000000000007f</span>
 </pre></div>
 </div>
-<p>因为0x7f是属于0x70的，而其大小又包含了0x10的chunk_header因此我们选择分配0x60的fastbin，将其加入链表。
-最后经过两次分配可以观察到chunk被分配到0x00007ffff7dd1b15，因此我们就可以直接控制__malloc_hook的内容。</p>
+<p>因为0x7f在计算fastbin index时，是属于index 5的，即chunk大小为0x70的。</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span>##define fastbin_index(sz)                                                      \
+    ((((unsigned int) (sz)) &gt;&gt; (SIZE_SZ == 8 ? 4 : 3)) - 2)
+</pre></div>
+</div>
+<p>而其大小又包含了0x10的chunk_header，因此我们选择分配0x60的fastbin，将其加入链表。 最后经过两次分配可以观察到chunk被分配到0x00007ffff7dd1b15，因此我们就可以直接控制__malloc_hook的内容。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>0x4005a8 &lt;main+66&gt;        call   0x400450 &lt;malloc@plt&gt;
  →   0x4005ad &lt;main+71&gt;        mov    QWORD PTR [rbp-0x8], rax
 
@@ -651,10 +685,10 @@ Fastbins[idx=6, size=0x70]
 </pre></div>
 </div>
 </div>
-<div class="section" id="id9">
-<h2>小总结<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h2>
-<p>虽然arbitrary alloc与HOS的原理是相同的，但是arbitrary alloc在CTF中要比HOS更常出现也更加使用。
-我们可以利用字节错位等方法来绕过size域的检验，实现任意地址分配chunk，最后的效果也就相当于任意地址写任意值。</p>
+<div class="section" id="id11">
+<h3>小总结<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
+<p>虽然arbitrary alloc与HOS的原理是相同的，但是arbitrary alloc在CTF中要比HOS更常出现也更加使用。我们可以利用字节错位等方法来绕过size域的检验，实现任意地址分配chunk，最后的效果也就相当于任意地址写任意值。</p>
+</div>
 </div>
 </div>
 
@@ -668,10 +702,10 @@ Fastbins[idx=6, size=0x70]
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="unlink.html" class="btn btn-neutral float-right" title="unlink" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="House_Of_Force.html" class="btn btn-neutral float-right" title="House Of Force" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="off_by_one.html" class="btn btn-neutral" title="堆中的off-by-one" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="use_after_free.html" class="btn btn-neutral" title="Use After Free" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

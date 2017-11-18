@@ -37,7 +37,7 @@
         <link rel="search" title="搜索" href="../../search.html"/>
     <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
         <link rel="up" title="堆利用" href="index.html"/>
-        <link rel="next" title="Use After Free" href="use_after_free.html"/>
+        <link rel="next" title="堆中的off-by-one" href="off_by_one.html"/>
         <link rel="prev" title="深入理解堆的实现" href="heap_implementation_details.html"/> 
 
   
@@ -151,10 +151,12 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
 <li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="House_Of_Force.html">House Of Force</a></li>
 </ul>
 </li>
 </ul>
@@ -293,7 +295,7 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
 <p>堆溢出中比较重要的几个步骤:</p>
 <div class="section" id="id5">
 <h3>寻找堆分配函数<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<p>通常来说堆是通过调用glibc函数malloc进行分配的，在某些情况下会使用calloc分配。calloc与malloc的区别是calloc在分配后会自动进行清空，这对于某些信息泄露漏洞的利用来说是致命的。</p>
+<p>通常来说堆是通过调用 glibc 函数 malloc 进行分配的，在某些情况下会使用 calloc 分配。calloc 与 malloc 的区别是 calloc 在分配后会自动进行清空，这对于某些信息泄露漏洞的利用来说是致命的。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">calloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
 <span class="o">//</span><span class="n">等同于</span>
 <span class="n">ptr</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
@@ -378,7 +380,7 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
 </pre></div>
 </div>
 <p>注意用户区域的大小不等于chunk_hear.size，chunk_hear.size=用户区域大小+2*字长</p>
-<p>还有一点是借位储存，回头再来看下之前的示例代码</p>
+<p>还有一点是之前所说的用户申请的内存大小会被修改，其有可能会使用与其物理相邻的下一个chunk的prev_size字段储存内容。回头再来看下之前的示例代码</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
 
 <span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
@@ -391,13 +393,24 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>观察如上代码，malloc的参数是24个字节，当这个代码被编译成64位执行时，实际上分配的内存会是16个字节而不是24个。</p>
+<p>观察如上代码，我们申请的chunk大小是24个字节。但是我们将其编译为64位可执行程序时，实际上分配的内存会是16个字节而不是24个。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fe1</span>
 </pre></div>
 </div>
-<p>16个字节的空间是如何装得下24个字节的内容呢？答案是借用了下一个块的pre_size域，根据我们前面学到的知识可以了解到pre_size仅当前块处于释放状态时才起作用，因此实际上ptmalloc分配内存是以双字为基本单位的。以64位系统为例，分配出来的空间是16的整数倍，如果申请的size不是16的整数倍的话就借用下一块的pre_size域储存强行对齐到16字节。</p>
+<p>16个字节的空间是如何装得下24个字节的内容呢？答案是借用了下一个块的pre_size域。我们可来看一下用户申请的内存大小与glibc中实际分配的内存大小之间的转换。</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span>/* pad request bytes into a usable size -- internal version */
+//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1
+##define request2size(req)                                                      \
+    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)                           \
+         ? MINSIZE                                                             \
+         : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK)
+</pre></div>
+</div>
+<p>当req=24时，request2size(24)=32。而除去chunk
+头部的16个字节。实际上用户可用chunk的字节数为16。而根据我们前面学到的知识可以知道chunk的pre_size仅当它的前一块块处于释放状态时才起作用。所以用户这时候其实还可以使用下一个chunk的prev_size字段，正好24个字节。<strong>实际上
+ptmalloc 分配内存是以双字为基本单位，以64位系统为例，分配出来的空间是16的整数倍，即用户申请的chunk都是16字节对齐的。</strong></p>
 </div>
 </div>
 </div>
@@ -412,7 +425,7 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="use_after_free.html" class="btn btn-neutral float-right" title="Use After Free" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="off_by_one.html" class="btn btn-neutral float-right" title="堆中的off-by-one" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="heap_implementation_details.html" class="btn btn-neutral" title="深入理解堆的实现" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

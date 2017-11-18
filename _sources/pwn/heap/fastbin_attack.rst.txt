@@ -4,15 +4,22 @@ fastbin attack
 介绍
 ----
 
-fastbin attack是一种(或多种)堆漏洞的利用方法，这种方法需要使用fastbin的特性，因此需要漏洞发生在属于fastbin 的chunk 中。 基于这一点我们可以知道这种利用的前提是：
+fastbin attack 是一类漏洞的利用方法，是指所有基于 fastbin 机制的漏洞利用方法。这类利用的前提是：
 
 -  存在堆溢出、use-after-free等能控制chunk内容的漏洞
--  漏洞发生于属于fastbin的chunk中
+-  漏洞发生于fastbin的chunk中
+
+如果细分的话，可以做如下的分类：
+
+-  fastbin double free
+-  House of Spirit
+-  arbitrary alloc
 
 原理
 ----
 
-fastbin attack存在的原因在于fastbin是使用单链表来维护释放的堆块的，并且由fastbin管理的chunk即使被释放其next\_chunk的pre\_inuse位也不会被置为空。 我们实际的来看一下fastbin是怎样的管理被释放的chunk的。
+fastbin attack 存在的原因在于 fastbin 是使用单链表来维护释放的堆块的，并且由 fastbin 管理的 chunk 即使被释放其 next\_chunk 的 pre\_inuse 位也不会被置为空。 我们来看一下 fastbin 是怎样管理空闲 chunk
+的。
 
 ::
 
@@ -65,7 +72,7 @@ fastbin attack存在的原因在于fastbin是使用单链表来维护释放的�
     0x6020b0:   0x0000000000000000  0x0000000000000000
     0x6020c0:   0x0000000000000000  0x0000000000020f41 <=== top chunk
 
-此时位于main\_arena中的fastbin链表中已经储存了指向chunk3的指针，并且chunk3、2、1构成了一个单链表
+此时位于main\_arena中的 fastbin 链表中已经储存了指向chunk3的指针，并且chunk3、2、1构成了一个单链表
 
 ::
 
@@ -74,28 +81,21 @@ fastbin attack存在的原因在于fastbin是使用单链表来维护释放的�
     ===>Chunk(fd=0x602000, size=0x40, flags=PREV_INUSE)
     ===>Chunk(fd=0x000000, size=0x40, flags=PREV_INUSE) 
 
-我们可以使用如下的图片来表示这一点 |捕获.PNG-13.8kB|
-
-分类
-----
-
-fastbin attack是一个统称，意为所有基于fastbin的利用，如果细分可以做如下的分类：
-
--  fastbin double free
--  House of Spirit
--  arbitrary alloc
+我们可以使用如下的图片来表示这一点 |image0|
 
 fastbin double free
 -------------------
 
-fastbin double
-free是指一个属于fastbin的chunk可以多次被释放并多次的存在于fastbin链表中。这样导致的后果是多次分配可以从fastbin链表中取出同一个堆块，相当于多个指针指向同一个堆块，结合堆块的数据内容可以实现类似于类型混淆(type
-confused)的效果。
+介绍
+~~~~
 
-演示
-----
+fastbin double free 是指 fastbin 的 chunk 可以被多次释放并多次的存在于fastbin链表中。这样导致的后果是多次分配可以从 fastbin
+链表中取出同一个堆块，相当于多个指针指向同一个堆块，结合堆块的数据内容可以实现类似于类型混淆(type confused)的效果。
 
-fastbin double free之所以能够成功的实现有两部分的原因，一是属于fastbin的堆块被释放后next\_chunk的pre\_inuse位不会被清空，二是fastbin在执行free的时候仅验证了main\_arena直接指向的块
+fastbin double free之所以能够成功的实现有两部分的原因
+
+1. fastbin 的堆块被释放后next\_chunk的pre\_inuse位不会被清空
+2. fastbin 在执行free的时候仅验证了main\_arena直接指向的块
 
 ::
 
@@ -106,6 +106,9 @@ fastbin double free之所以能够成功的实现有两部分的原因，一是�
             errstr = "double free or corruption (fasttop)";
             goto errout;
     }
+
+演示
+~~~~
 
 下面的示例程序说明了这一点，当我们试图执行以下代码时
 
@@ -177,8 +180,22 @@ fastbin double free之所以能够成功的实现有两部分的原因，一是�
         return 0;
     }
 
-第一次释放\ ``free(chunk1)``\  |捕获.PNG-3kB| 第二次释放\ ``free(chunk2)``\  |捕获.PNG-3.4kB| 第三次释放\ ``free(chunk1)``\  |捕获.PNG-5.8kB|
-注意因为chunk1被再次释放因此其fd值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
+第一次释放\ ``free(chunk1)``
+
+.. figure:: /pwn/heap/figure/fastbin_free_chunk1.png
+   :alt: 
+
+第二次释放\ ``free(chunk2)``
+
+.. figure:: /pwn/heap/figure/fastbin_free_chunk2.png
+   :alt: 
+
+第三次释放\ ``free(chunk1)``
+
+.. figure:: /pwn/heap/figure/fastbin_free_chunk3.png
+   :alt: 
+
+注意因为chunk1被再次释放因此其 fd 值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
 下面这个示例演示了这一点，首先跟前面一样构造main\_arena=>chunk1=>chun2=>chunk1的链表。之后第一次调用malloc返回chunk1之后修改chunk1的fd指针指向bss段上的bss\_chunk，之后我们可以看到fastbin会把堆块分配到这里。
 
 ::
@@ -283,22 +300,25 @@ fastbin double free之所以能够成功的实现有两部分的原因，一是�
     }
 
 小总结
-------
+~~~~~~
 
-通过fastbin double free我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。
-如果是更进一步的修改fd指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。
+通过 fastbin double free 我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。
+如果更进一步修改fd指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。
 
-House of Spirit
+House Of Spirit
 ---------------
 
-House of Spirit 是 House of XX 的一种，House of XX 是 2004 年左右发出来的一篇关于 Linux 堆利用的技术文章中提出一系列利用方法。
-对HOS的描述是可以使得fastbin堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。
+介绍
+~~~~
 
-如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于 fastbin 链表是使用当前chunk的fd指针指向下一个chunk构成的。
-HOS的核心同样在于劫持fastbin链表中chunk的fd指针，把fd指针指向我们想要分配的栈上，实现控制栈中数据。
+House of Spirit 是 House of XX 的一种，House of XX 是 2004 年左右的一篇关于 Linux 堆利用的技术文章中提出一系列利用方法。 HOS 可以使得 fastbin
+堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。
+
+如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于 fastbin 链表是使用当前 chunk 的 fd 指针指向下一个chunk构成的。 HOS 的核心同样在于劫持 fastbin
+链表中 chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，实现控制栈中数据。
 
 演示
-----
+~~~~
 
 这次我们把fake\_chunk置于栈中称为stack\_chunk，同时劫持了fastbin链表中chunk的fd值，通过把这个fd值指向stack\_chunk就可以实现在栈中分配fastbin chunk。
 
@@ -375,20 +395,24 @@ HOS的核心同样在于劫持fastbin链表中chunk的fd指针，把fd指针指�
     0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
 
 小总结
-------
+~~~~~~
 
-通过HOS我们可以把fastbin chunk分配到栈中，从而控制返回地址等关键数据。 要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。
+通过HOS我们可以把fastbin chunk分配到栈中，从而控制返回地址等关键数据。要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。
 
 arbitrary alloc
 ---------------
 
-arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。
+介绍
+~~~~
+
+arbitrary alloc 其实与 House of Spirit 是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。
+
+大家可能会认为 HOS 与 arbitrary alloc 没有什么区别，因此没有必要分为两类。相信看完下面的一个例子，就会有不一样的想法了。
 
 演示
-----
+~~~~
 
-有些同学可能会认为HOS与arbitrary alloc没有什么区别因此没有必要分为两类，这里我们使用如下的这个例子来说明这种利用手法与HOS的意义是不同的。
-这个例子是使用字节错位来实现直接分配fastbin到\_\_malloc\_hook的位置，相当于直接写入\_\_malloc\_hook来控制程序流程。
+在这个例子，我们使用字节错位来实现直接分配fastbin到\ **\_malloc\_hook的位置，相当于覆盖\_malloc\_hook来控制程序流程。**
 
 ::
 
@@ -409,7 +433,7 @@ arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是�
         return 0;
     }
 
-这里的0x7ffff7dd1b05是我根据本机的情况得出的值，这个值是怎么获得的呢？首先我们要观察欲写入地址附近是否存在可以字节错位的情况
+这里的0x7ffff7dd1b05是我根据本机的情况得出的值，这个值是怎么获得的呢？首先我们要观察欲写入地址附近是否存在可以字节错位的情况。
 
 ::
 
@@ -432,11 +456,11 @@ arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是�
     0x7ffff7dd1b08 0x0  0x2a 0xa9 0xf7 0xff 0x7f 0x0 0x0
     0x7ffff7dd1b10 <__malloc_hook>: 0x30    0x28    0xa9    0xf7    0xff    0x7f    0x0 0x0
 
-0x7ffff7dd1b10是我们想要控制的\_\_malloc\_hook的内容，于是我们向上寻找是否可以错位出一个合法的size域。因为我们是在64位系统下进行的调试，因此fastbin的范围为32字节到128字节(0x20-0x80),如下：
+0x7ffff7dd1b10是我们想要控制的\_\_malloc\_hook的地址，于是我们向上寻找是否可以错位出一个合法的size域。因为这个程序是64位的，因此fastbin的范围为32字节到128字节(0x20-0x80)，如下：
 
 ::
 
-    //这里的size指用户区域，因此要小2倍字长
+    //这里的size指用户区域，因此要小2倍SIZE_SZ
     Fastbins[idx=0, size=0x10] 
     Fastbins[idx=1, size=0x20] 
     Fastbins[idx=2, size=0x30] 
@@ -454,8 +478,14 @@ arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是�
 
     0x7ffff7dd1af5 <_IO_wide_data_0+309>:   0x000000000000007f
 
-因为0x7f是属于0x70的，而其大小又包含了0x10的chunk\_header因此我们选择分配0x60的fastbin，将其加入链表。
-最后经过两次分配可以观察到chunk被分配到0x00007ffff7dd1b15，因此我们就可以直接控制\_\_malloc\_hook的内容。
+因为0x7f在计算fastbin index时，是属于index 5的，即chunk大小为0x70的。
+
+.. code:: c
+
+    ##define fastbin_index(sz)                                                      \
+        ((((unsigned int) (sz)) >> (SIZE_SZ == 8 ? 4 : 3)) - 2)
+
+而其大小又包含了0x10的chunk\_header，因此我们选择分配0x60的fastbin，将其加入链表。 最后经过两次分配可以观察到chunk被分配到0x00007ffff7dd1b15，因此我们就可以直接控制\_\_malloc\_hook的内容。
 
 ::
 
@@ -470,12 +500,8 @@ arbitrary alloc其实与House of Spirit是完全相同的，唯一的区别是�
     0x7ffff7dd1b35 <main_arena+21>: 0x0000000000000000  0x0000000000000000
 
 小总结
-------
+~~~~~~
 
-虽然arbitrary alloc与HOS的原理是相同的，但是arbitrary alloc在CTF中要比HOS更常出现也更加使用。
-我们可以利用字节错位等方法来绕过size域的检验，实现任意地址分配chunk，最后的效果也就相当于任意地址写任意值。
+虽然arbitrary alloc与HOS的原理是相同的，但是arbitrary alloc在CTF中要比HOS更常出现也更加使用。我们可以利用字节错位等方法来绕过size域的检验，实现任意地址分配chunk，最后的效果也就相当于任意地址写任意值。
 
-.. |捕获.PNG-13.8kB| image:: http://static.zybuluo.com/vbty/e8k7kq9w9a0fzm0qxfpzwpw5/%E6%8D%95%E8%8E%B7.PNG
-.. |捕获.PNG-3kB| image:: http://static.zybuluo.com/vbty/48ue5xatzz40sif5qnqu8syz/%E6%8D%95%E8%8E%B7.PNG
-.. |捕获.PNG-3.4kB| image:: http://static.zybuluo.com/vbty/0101jwbohr0r8sjha5yvxuu6/%E6%8D%95%E8%8E%B7.PNG
-.. |捕获.PNG-5.8kB| image:: http://static.zybuluo.com/vbty/ggyvxt73jujf9qlcnm429khb/%E6%8D%95%E8%8E%B7.PNG
+.. |image0| image:: /pwn/heap/figure/fastbin_link_list.png
