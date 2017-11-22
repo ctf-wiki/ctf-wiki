@@ -292,39 +292,39 @@ static void *_int_malloc(mstate av, size_t bytes) {
      */
 
     if (in_smallbin_range(nb)) {
-        // 获取small bin的索引
+        // 获取 small bin 的索引
         idx = smallbin_index(nb);
-        // 获取对应small bin中的chunk指针
+        // 获取对应 small bin 中的 chunk 指针
         bin = bin_at(av, idx);
-        // 先执行victim= last(bin)
-        // 如果victim = bin，那说明该bin为空。
+        // 先执行 victim= last(bin)，获取 small bin 的最后一个 chunk
+        // 如果 victim = bin ，那说明该 bin 为空。
         // 如果不相等，那么会有两种情况
         if ((victim = last(bin)) != bin) {
-            // 第一种情况，该bin还没有初始化。
+            // 第一种情况，small bin 还没有初始化。
             if (victim == 0) /* initialization check */
-                // 执行初始化，将fast bins中的chunk进行合并
+                // 执行初始化，将 fast bins 中的 chunk 进行合并
                 malloc_consolidate(av);
-            // 第二种情况，该bin中存在空闲的chunk
+            // 第二种情况，small bin 中存在空闲的 chunk
             else {
-                // 获取该bin中最后一个chunk。
+                // 获取 small bin 中倒数第二个 chunk 。
                 bck = victim->bk;
-                // 检查bck中记录的前一个chunk是不是victim，防止伪造
+                // 检查 bck->fd 是不是 victim，防止伪造
                 if (__glibc_unlikely(bck->fd != victim)) {
                     errstr = "malloc(): smallbin double linked list corrupted";
                     goto errout;
                 }
-                // 设置与victim对应的inuse位
+                // 设置 victim 对应的 inuse 位
                 set_inuse_bit_at_offset(victim, nb);
-                // 修改bin的链表情况
+                // 修改 small bin 链表，将 small bin 的最后一个 chunk 取出来
                 bin->bk = bck;
                 bck->fd = bin;
-                // 如果不是主arena，设置对应的标志
+                // 如果不是 main_arena，设置对应的标志
                 if (av != &main_arena) set_non_main_arena(victim);
                 // 细致的检查
                 check_malloced_chunk(av, victim, nb);
-                // 将申请到的chunk转化为对应的mem状态
+                // 将申请到的 chunk 转化为对应的 mem 状态
                 void *p = chunk2mem(victim);
-                // 如果设置了perturb_type, 则将获取到的chunk初始化为 perturb_type ^ 0xff
+                // 如果设置了 perturb_type , 则将获取到的chunk初始化为 perturb_type ^ 0xff
                 alloc_perturb(p, bytes);
                 return p;
             }
@@ -397,7 +397,8 @@ large bin 的处理过程如下，程序并没有直接从相应的large bin中�
         // 如果unsorted bin不为空
         // First In First Out
         while ((victim = unsorted_chunks(av)->bk) != unsorted_chunks(av)) {
-            // 得到 unsorted bin的最后一个chunk
+            // victim 为 unsorted bin 的最后一个 chunk
+            // bck 为 unsorted bin 的倒数第二个 chunk
             bck = victim->bk;
             // 判断得到的 chunk 是否满足要求，不能过小，也不能过大
             // 一般 system_mem 的大小为132K
@@ -1201,7 +1202,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
           not placed into regular bins until after they have
           been given one chance to be used in malloc.
             */
-            // 把chunk放在unsorted chunk链表的尾部
+            // 把chunk放在unsorted chunk链表的头部
             bck = unsorted_chunks(av);
             fwd = bck->fd;
             // 简单的检查
