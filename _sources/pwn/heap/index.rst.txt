@@ -39,4 +39,6 @@
    unlink.rst
    use_after_free.rst
    fastbin_attack.rst
-   House_Of_Force.rst
+   house_of_force.rst
+   unsorted_bin_attack.rst
+   house_of_lore.rst
