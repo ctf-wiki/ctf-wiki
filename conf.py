@@ -20,6 +20,8 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import os
+import cloud_sptheme as csp
 
 # -- General configuration ------------------------------------------------
 
@@ -41,12 +43,16 @@ templates_path = ['_templates']
 # source_suffix = ['.rst', '.md']
 source_suffix = ['.rst']
 
+# The encoding of source files.
+source_encoding = 'utf-8'
+
 # The master toctree document.
 master_doc = 'index'
+index_doc = 'index'
 
 # General information about the project.
 project = 'CTF Wiki'
-copyright = '2017, CTF Wiki'
+copyright = '2016-2017, CTF Wiki'
 author = 'CTF Wiki'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -63,7 +69,7 @@ release = ''
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = 'zh_CN'
+# language = 'zh_CN'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -82,13 +88,27 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'cloud'
+html_theme_path = [csp.get_theme_dir()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
+html_theme_options = {}
+if csp.is_cloud_theme(html_theme):
+    html_theme_options.update(
+        roottarget=index_doc,
+        borderless_decor=True,
+        max_width="15in"
+    )
+
+html_title = "%s v%s" % (project, release)
+html_short_title = "%s %s" % (project, version)
+html_logo = os.path.join("_static", "logo.png")
+html_favicon = os.path.join("_static", "favicon.ico")
+html_use_index = False
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -102,19 +122,15 @@ html_static_path = ['_static']
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
     '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',  # needs 'show_related': True theme option to display
         'searchbox.html',
-        'donate.html',
+        'globaltoc.html'
     ]
 }
-
 
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'CTFWikidoc'
+htmlhelp_basename = 'CTF Wiki'
 
 
 # -- Options for LaTeX output ---------------------------------------------

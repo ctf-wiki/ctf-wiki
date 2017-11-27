@@ -10,7 +10,7 @@
 
 文件解压出来，有一个密文，一个公钥，一个 py 脚本。看一下公钥。
 
-.. code:: bash
+.. code-block:: bash
 
     ➜  RSA openssl rsa -pubin -in pubkey.pem -text -modulus
     Public-Key: (256 bit)
@@ -30,7 +30,7 @@
 
 再看给的 py 脚本。
 
-.. code:: python
+.. code-block:: python
 
     #!/usr/bin/python
     import gmpy
@@ -75,7 +75,7 @@
 
 那么我们只要也写一个相应的解密函数即可。
 
-.. code:: python
+.. code-block:: python
 
     #!/usr/bin/python
     import gmpy
@@ -124,7 +124,7 @@
 
 这里我们以SCTF RSA1为例进行介绍，首先解压压缩包后，得到如下文件
 
-.. code:: shell
+.. code-block:: shell
 
     ➜  level0 git:(master) ✗ ls -al
     总用量 4
@@ -136,7 +136,7 @@
 
 尝试解压缩了一下level1.zip发现需要密码。然后根据level1.passwd.enc可知，应该是我们需要解密这个文件才能得到对应的密码。查看公钥
 
-.. code:: shell
+.. code-block:: shell
 
     ➜  level0 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus 
     Public-Key: (2048 bit)
@@ -181,7 +181,7 @@
 
 然后就可以构造，并且解密，代码如下
 
-.. code:: python
+.. code-block:: python
 
     from Crypto.PublicKey import RSA
     import gmpy2
@@ -214,7 +214,7 @@
 
 发现不对
 
-.. code:: shell
+.. code-block:: shell
 
     ➜  level0 git:(master) ✗ python exp.py
     a�*�ؠO�=�MK�&E=������)���۱'ﶓ��u����BG�0�6�@i���za�' ���y���t҃Nj���WK��'R.؞                                �d������8ވ���)}j'6kG�Dwu>�V����?:3o�u��Tr�����F���l��0Bp'Z<�tb�w��e���y_lNh3B����f�bT{6����9!�z$6
@@ -222,7 +222,7 @@
 
 这时候就要考虑其他情况了，一般来说现实中实现的RSA都不会直接用原生的RSA，都会加一些填充比如OAEP，我们这里试试，修改代码
 
-.. code:: shell
+.. code-block:: python
 
     def decrypt1():
         with open('./level1.passwd.enc') as f:
@@ -235,14 +235,14 @@
 
 果然如此，得到
 
-.. code:: shell
+.. code-block:: shell
 
     ➜  level0 git:(master) ✗ python exp.py
     FaC5ori1ati0n_aTTA3k_p_tOO_sma11
 
 得到解压密码。继续，查看level1中的公钥
 
-.. code:: shell
+.. code-block:: shell
 
     ➜  level1 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus
     Public-Key: (2048 bit)
@@ -278,9 +278,9 @@
     fQIDAQAB
     -----END PUBLIC KEY-----
 
-似乎还是不是很大，再次分解，然后试了factordb不行，试试yafu。结果分解出来了。
+似乎还是不是很大，再次分解，然后试了 factordb 不行，试试 yafu，结果分解出来了。
 
-.. code:: shell
+.. code-block:: shell
 
     P309 = 156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496383
 
@@ -288,9 +288,9 @@
 
 可以发现这两个数非常相近，可能是factordb没有实现这类分解。
 
-继而下面的操作类似于level0。只是这次是直接解密就好，没啥填充，试了填充反而错
+继而下面的操作类似于 level0。只是这次是直接解密就好，没啥填充，试了填充反而错
 
-.. code:: shell
+.. code-block:: shell
 
     ➜  level1 git:(master) ✗ python exp.py
     ��XB�8m؏�ey�(���K��6�v�.ϿіD�S�
@@ -298,9 +298,10 @@
     kWeT3������X�\8id�]Pl.A���/�� ���N㰺��\Dr����ܘ�f�f����x
     ���H"(��`�޷Dp   �#F$�L�gg�#m�fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS
 
-得到密码fA35ORI11TLoN\_Att1Ck\_cL0sE\_PrI8e\_4acTorS。继续下一步，查看公钥
 
-.. code:: shell
+得到密码 ``fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS``。继续下一步，查看公钥。
+
+.. code-block:: shell
 
    ➜  level2 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus
    Public-Key: (1025 bit)
@@ -339,7 +340,7 @@
 发现私钥e和n几乎一样大，考虑d比较小，使用Wiener’s
 Attack。得到d，当然也可以再次验证一遍。
 
-.. code:: shell
+.. code-block:: shell
 
     ➜  level2 git:(master) ✗ python RSAwienerHacker.py
     Testing Wiener Attack
@@ -361,7 +362,7 @@ Attack。得到d，当然也可以再次验证一遍。
 
 这时我们解密密文，解密代码如下
 
-.. code:: python
+.. code-block:: python
 
     from Crypto.PublicKey import RSA
     from Crypto.Cipher import PKCS1_v1_5, PKCS1_OAEP
@@ -393,7 +394,7 @@ Attack。得到d，当然也可以再次验证一遍。
 
 解密结果如下
 
-.. code:: shell
+.. code-block:: shell
 
     ➜  level2 git:(master) ✗ python exp.py            
     j�������Ibq�[��.��i}#
