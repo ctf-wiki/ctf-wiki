@@ -1,93 +1,207 @@
 
 
-<!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>堆中的off-by-one &mdash; CTF Wiki  文档</title>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>堆中的off-by-one &#8212; CTF Wiki v</title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="chunk extend/shrink" href="chunk_extend_shrink.html" />
+    <link rel="prev" title="堆溢出" href="heapoverflow_basic.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="chunk_extend_shrink.html" title="chunk extend/shrink"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="heapoverflow_basic.html" title="堆溢出"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">堆利用</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
   
 
-  
-  
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="索引"
-              href="../../genindex.html"/>
-        <link rel="search" title="搜索" href="../../search.html"/>
-    <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
-        <link rel="up" title="堆利用" href="index.html"/>
-        <link rel="next" title="chunk extend/shrink" href="chunk_extend_shrink.html"/>
-        <link rel="prev" title="堆溢出" href="heapoverflow_basic.html"/> 
-
-  
-  <script src="../../_static/js/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-   
-  <div class="wy-grid-for-nav">
-
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
-            <a href="../../index.html" class="icon icon-home"> CTF Wiki
-          
-
-          
-          </a>
-
-          
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
             
-            
-          
+  <div class="section" id="off-by-one">
+<h1>堆中的off-by-one<a class="headerlink" href="#off-by-one" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>介绍<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>严格来说 off-by-one 漏洞是一种特殊的溢出漏洞，off-by-one 指程序向缓冲区中写入时，写入的字节数超过了这个缓冲区本身所申请的字节数并且只越界了一个字节。</p>
+</div>
+<div class="section" id="id2">
+<h2>off-by-one漏洞原理<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界验证不严和字符串操作有关，当然也不排除写入的size 正好就只多了一个字节的情况。其中边界验证不严通常指</p>
+<ul class="simple">
+<li>使用循环向堆块中写入数据时，循环的次数设置错误(这在C语言初学者中很常见)导致多写入了一个字节。</li>
+<li>字符串操作不合适</li>
+</ul>
+<p>一般来说，单字节溢出被认为是难以利用的，但是因为Linux的堆管理机制ptmalloc验证的松散性，基于Linux堆的off-by-one漏洞利用起来并不复杂，并且威力强大。
+此外还要说明的一点是off-by-one是可以基于各种缓冲区的，比如栈、bss段等等，但是堆上(heap based)的off-by-one是能够利用的也是CTF中最主要出现的。我们这里仅讨论堆上的off-by-one情况。</p>
+<div class="section" id="id3">
+<h3>示例1<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">my_gets</span><span class="p">(</span><span class="n">char</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span><span class="nb">int</span> <span class="n">size</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nb">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;=</span><span class="n">size</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">ptr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">getchar</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">void</span> <span class="o">*</span><span class="n">chunk1</span><span class="p">,</span><span class="o">*</span><span class="n">chunk2</span><span class="p">;</span>
+    <span class="n">chunk1</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">16</span><span class="p">);</span>
+    <span class="n">chunk2</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">16</span><span class="p">);</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Get Input:&quot;</span><span class="p">);</span>
+    <span class="n">my_gets</span><span class="p">(</span><span class="n">chunk1</span><span class="p">,</span><span class="mi">16</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>我们自己编写的my_gets函数导致了一个off-by-one漏洞，原因是for循环的边界没有控制好导致写入多执行了一次，这也被称为栅栏错误</p>
+<blockquote>
+<div><p>wikipedia: 栅栏错误（有时也称为电线杆错误或者灯柱错误）是差一错误的一种。如以下问题：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>建造一条直栅栏（即不围圈），长30米、每条栅栏柱间相隔3米，需要多少条栅栏柱？
+</pre></div>
+</div>
+<p>最容易想到的答案10是错的。这个栅栏有10个间隔，11条栅栏柱。</p>
+</div></blockquote>
+<p>我们使用gdb对程序进行调试，在进行输入前可以看到分配的两个用户区域为16字节的堆块</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk2</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+</pre></div>
+</div>
+<p>当我们执行my_gets进行输入之后，可以看到数据发生了溢出覆盖到了下一个堆块的pre_inuse域 print ‘A’*17</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000041</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk2</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h3>示例2<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>第二种常见的导致off-by-one的场景就是字符串操作了，常见的原因是字符串的结束符计算有误</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">40</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">;</span>
+    <span class="n">void</span> <span class="o">*</span><span class="n">chunk1</span><span class="p">;</span>
+    <span class="n">chunk1</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">24</span><span class="p">);</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Get Input&quot;</span><span class="p">);</span>
+    <span class="n">gets</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="o">==</span><span class="mi">24</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">strcpy</span><span class="p">(</span><span class="n">chunk1</span><span class="p">,</span><span class="n">buffer</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>程序乍看上去没有任何问题(不考虑栈溢出)，可能很多人在实际的代码中也是这样写的。 但是strlen和strcpy的行为不一致却导致了off-by-one的发生。
+strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在计算字符串长度时是不把结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 计算在内的，但是strcpy在复制字符串时会拷贝结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code>
+。这就导致了我们向chunk1中写入了25个字节，我们使用gdb进行调试可以看到这一点。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000411</span> <span class="o">&lt;===</span> <span class="nb">next</span> <span class="n">chunk</span>
+</pre></div>
+</div>
+<p>在我们输入’A’*24后执行strcpy</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x0000000000000400</span>
+</pre></div>
+</div>
+<p>可以看到next chunk的chunk_header.size域低字节被结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 覆盖，这种又属于off-by-one的一个分支称为NULL byte off-by-one，我们在后面会看到off-by-one与NULL byte off-by-one在利用上的区别。
+还是有一点就是为什么是低字节被覆盖呢，因为我们通常使用的CPU的字节序都是小端法的，比如一个DWORD值在使用小端法的内存中是这样储存的</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DWORD</span> <span class="mh">0x41424344</span>
+<span class="n">内存</span>  <span class="mh">0x44</span><span class="p">,</span><span class="mh">0x43</span><span class="p">,</span><span class="mh">0x42</span><span class="p">,</span><span class="mh">0x41</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>小总结<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>上面的示例其实也展示了寻找off-by-one中比较重要的几个步骤:</p>
+<div class="section" id="id6">
+<h4>注意循环边界<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
+<p>在进行诸如循环写入的操作时，要特别注意循环的次数是否存在边界问题导致的off-by-one。</p>
+</div>
+<div class="section" id="id7">
+<h4>注意字符串操作<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
+<p>字符串结束符处理的不严谨往往会导致off-by-one问题的发生。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>例子<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id9">
+<h2>题目<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+</div>
 </div>
 
-          
-        </div>
 
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../index.html" title="index">
+          <img class="logo" src="../../_static/logo.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
@@ -146,7 +260,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#id2">off-by-one漏洞原理</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id3">示例1</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id4">示例2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id5">小总结</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">小总结</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id6">注意循环边界</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id7">注意字符串操作</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#id8">例子</a></li>
@@ -166,263 +284,50 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
 </ul>
-
-            
-          
+</div>
         </div>
       </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">CTF Wiki</a>
-        
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="index.html">堆利用</a> &raquo;</li>
-        
-      <li>堆中的off-by-one</li>
     
     
-      <li class="wy-breadcrumbs-aside">
-        
+        <div class="sidebar-toggle-group no-js">
             
-            <a href="../../_sources/pwn/heap/off_by_one.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
     
-  </ul>
-
-  
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
-  <div class="section" id="off-by-one">
-<h1>堆中的off-by-one<a class="headerlink" href="#off-by-one" title="永久链接至标题">¶</a></h1>
-<div class="section" id="id1">
-<h2>介绍<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>严格来说 off-by-one 漏洞是一种特殊的溢出漏洞，off-by-one 指程序向缓冲区中写入时，写入的字节数超过了这个缓冲区本身所申请的字节数并且只越界了一个字节。</p>
-</div>
-<div class="section" id="id2">
-<h2>off-by-one漏洞原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界验证不严和字符串操作有关，当然也不排除写入的size 正好就只多了一个字节的情况。其中边界验证不严通常指</p>
-<ul class="simple">
-<li>使用循环向堆块中写入数据时，循环的次数设置错误(这在C语言初学者中很常见)导致多写入了一个字节。</li>
-<li>字符串操作不合适</li>
-</ul>
-<p>一般来说，单字节溢出被认为是难以利用的，但是因为Linux的堆管理机制ptmalloc验证的松散性，基于Linux堆的off-by-one漏洞利用起来并不复杂，并且威力强大。
-此外还要说明的一点是off-by-one是可以基于各种缓冲区的，比如栈、bss段等等，但是堆上(heap based)的off-by-one是能够利用的也是CTF中最主要出现的。我们这里仅讨论堆上的off-by-one情况。</p>
-<div class="section" id="id3">
-<h3>示例1<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">my_gets</span><span class="p">(</span><span class="n">char</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span><span class="nb">int</span> <span class="n">size</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="nb">int</span> <span class="n">i</span><span class="p">;</span>
-    <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;=</span><span class="n">size</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">ptr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">getchar</span><span class="p">();</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="n">void</span> <span class="o">*</span><span class="n">chunk1</span><span class="p">,</span><span class="o">*</span><span class="n">chunk2</span><span class="p">;</span>
-    <span class="n">chunk1</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">16</span><span class="p">);</span>
-    <span class="n">chunk2</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">16</span><span class="p">);</span>
-    <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Get Input:&quot;</span><span class="p">);</span>
-    <span class="n">my_gets</span><span class="p">(</span><span class="n">chunk1</span><span class="p">,</span><span class="mi">16</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>我们自己编写的my_gets函数导致了一个off-by-one漏洞，原因是for循环的边界没有控制好导致写入多执行了一次，这也被称为栅栏错误</p>
-<blockquote>
-<div><p>wikipedia: 栅栏错误（有时也称为电线杆错误或者灯柱错误）是差一错误的一种。如以下问题：</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>建造一条直栅栏（即不围圈），长30米、每条栅栏柱间相隔3米，需要多少条栅栏柱？
-</pre></div>
-</div>
-<p>最容易想到的答案10是错的。这个栅栏有10个间隔，11条栅栏柱。</p>
-</div></blockquote>
-<p>我们使用gdb对程序进行调试，在进行输入前可以看到分配的两个用户区域为16字节的堆块</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk2</span>
-<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-</pre></div>
-</div>
-<p>当我们执行my_gets进行输入之后，可以看到数据发生了溢出覆盖到了下一个堆块的pre_inuse域 print ‘A’*17</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000041</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk2</span>
-<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="id4">
-<h3>示例2<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
-<p>第二种常见的导致off-by-one的场景就是字符串操作了，常见的原因是字符串的结束符计算有误</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">40</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">;</span>
-    <span class="n">void</span> <span class="o">*</span><span class="n">chunk1</span><span class="p">;</span>
-    <span class="n">chunk1</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mi">24</span><span class="p">);</span>
-    <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Get Input&quot;</span><span class="p">);</span>
-    <span class="n">gets</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span><span class="o">==</span><span class="mi">24</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">strcpy</span><span class="p">(</span><span class="n">chunk1</span><span class="p">,</span><span class="n">buffer</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>程序乍看上去没有任何问题(不考虑栈溢出)，可能很多人在实际的代码中也是这样写的。 但是strlen和strcpy的行为不一致却导致了off-by-one的发生。
-strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在计算字符串长度时是不把结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 计算在内的，但是strcpy在复制字符串时会拷贝结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code>
-。这就导致了我们向chunk1中写入了25个字节，我们使用gdb进行调试可以看到这一点。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000411</span> <span class="o">&lt;===</span> <span class="nb">next</span> <span class="n">chunk</span>
-</pre></div>
-</div>
-<p>在我们输入’A’*24后执行strcpy</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x0000000000000400</span>
-</pre></div>
-</div>
-<p>可以看到next chunk的chunk_header.size域低字节被结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 覆盖，这种又属于off-by-one的一个分支称为NULL byte off-by-one，我们在后面会看到off-by-one与NULL byte off-by-one在利用上的区别。
-还是有一点就是为什么是低字节被覆盖呢，因为我们通常使用的CPU的字节序都是小端法的，比如一个DWORD值在使用小端法的内存中是这样储存的</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DWORD</span> <span class="mh">0x41424344</span>
-<span class="n">内存</span>  <span class="mh">0x44</span><span class="p">,</span><span class="mh">0x43</span><span class="p">,</span><span class="mh">0x42</span><span class="p">,</span><span class="mh">0x41</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="id5">
-<h3>小总结<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<p>上面的示例其实也展示了寻找off-by-one中比较重要的几个步骤:</p>
-<div class="section" id="id6">
-<h4>注意循环边界<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h4>
-<p>在进行诸如循环写入的操作时，要特别注意循环的次数是否存在边界问题导致的off-by-one。</p>
-</div>
-<div class="section" id="id7">
-<h4>注意字符串操作<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h4>
-<p>字符串结束符处理的不严谨往往会导致off-by-one问题的发生。</p>
-</div>
-</div>
-</div>
-<div class="section" id="id8">
-<h2>例子<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h2>
-</div>
-<div class="section" id="id9">
-<h2>题目<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h2>
-</div>
-</div>
-
-
-           </div>
-           <div class="articleComments">
-            
-           </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="chunk_extend_shrink.html" class="btn btn-neutral float-right" title="chunk extend/shrink" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="heapoverflow_basic.html" class="btn btn-neutral" title="堆溢出" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+      <div class="clearer"></div>
     </div>
-  
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="chunk_extend_shrink.html" title="chunk extend/shrink"
+             >next</a></li>
+        <li class="right" >
+          <a href="heapoverflow_basic.html" title="堆溢出"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
-  <hr/>
+          <li class="nav-item nav-item-1"><a href="index.html" >堆利用</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
 
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2017, CTF Wiki.
-
-    </p>
-  </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
-      <script type="text/javascript" src="../../_static/translations.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
 </html>

@@ -1,92 +1,219 @@
 
 
-<!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>取证隐写 &mdash; CTF Wiki  文档</title>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>取证隐写 &#8212; CTF Wiki v</title>
+    <link rel="stylesheet" href="../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="图片分析" href="picture/index.html" />
+    <link rel="prev" title="现实世界中常用的编码" href="encode/modern.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="picture/index.html" title="图片分析"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="encode/modern.html" title="现实世界中常用的编码"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
   
 
-  
-  
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="索引"
-              href="../genindex.html"/>
-        <link rel="search" title="搜索" href="../search.html"/>
-    <link rel="top" title="CTF Wiki  文档" href="../index.html"/>
-        <link rel="next" title="图片分析" href="picture/index.html"/>
-        <link rel="prev" title="现实世界中常用的编码" href="encode/modern.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-   
-  <div class="wy-grid-for-nav">
-
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
-            <a href="../index.html" class="icon icon-home"> CTF Wiki
-          
-
-          
-          </a>
-
-          
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
             
-            
-          
+  <div class="section" id="id1">
+<h1>取证隐写<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>大部分的CTF比赛中，取证及隐写两者密不可分，两者所需要的知识也相辅相成，所以这里也将对两者一起介绍。</p>
+<p>任何要求检查一个静态数据文件从而获取隐藏信息的都可以被认为是隐写取证题(除非单纯地是密码学的知识)，一些低分的隐写取证又常常与古典密码学结合在一起，而高分的题目则通常用与一些较为复杂的现代密码学知识结合在一起，很好地体现了Misc题的特点。</p>
+<div class="section" id="id2">
+<h2>前置技能<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>了解常见的编码</li>
+</ul>
+<p>能够对文件中出现的一些编码进行解码，并且对一些特殊的编码(Base64,十六进制，二进制等)有一定的敏感度，对其进行转换并得到最终的flag。</p>
+<ul class="simple">
+<li>能够利用脚本语言(python)去操作二进制数据</li>
+<li>熟知常见文件的文件格式,尤其是 <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_file_signatures">文件头</a>，协议，结构等</li>
+<li>灵活运用常见的工具</li>
+</ul>
+</div>
+<div class="section" id="python">
+<h2>python操作二进制数据<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="struct">
+<h3>Struct模块<a class="headerlink" href="#struct" title="Permalink to this headline">¶</a></h3>
+<p>有的时候需要用python处理二进制数据，比如，存取文件，socket操作时.这时候，可以使用python的struct模块来完成。</p>
+<p>struct模块中最重要的三个函数是pack(), unpack(), calcsize()</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">pack(fmt,</span> <span class="pre">v1,</span> <span class="pre">v2,</span> <span class="pre">...)</span></code>按照给定的格式(fmt)，把数据封装成字符串(实际上是类似于c结构体的字节流)</li>
+<li><code class="docutils literal"><span class="pre">unpack(fmt,</span> <span class="pre">string)</span></code>按照给定的格式(fmt)解析字节流string，返回解析出来的tuple</li>
+<li><code class="docutils literal"><span class="pre">calcsize(fmt)</span></code>计算给定的格式(fmt)占用多少字节的内存</li>
+</ul>
+<p>这里打包格式 <code class="docutils literal"><span class="pre">fmt</span></code> 确定了将变量按照什么方式打包成字节流，其包含了一系列的格式字符串。这里就不再给出不同格式字符串的含义了，详细细节可以参照 <a class="reference external" href="https://docs.python.org/2/library/struct.html">Python
+Doc</a></p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">struct</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&gt;I&#39;</span><span class="p">,</span><span class="mi">16</span><span class="p">)</span>
+<span class="go">&#39;\x00\x00\x00\x10&#39;</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">pack的第一个参数是处理指令，’&gt;I’的意思是：</div>
+<div class="line"><code class="docutils literal"><span class="pre">&gt;</span></code>表示字节顺序是big-endian，也就是网络序，<code class="docutils literal"><span class="pre">I</span></code>表示4字节无符号整数。</div>
+<div class="line">后面的参数个数要和处理指令一致。</div>
+</div>
+<p>读入一个BMP文件的前30字节，文件头的结构按顺序如下</p>
+<ul class="simple">
+<li>两个字节：’BM’表示Windows位图，’BA’表示OS/2位图</li>
+<li>一个4字节整数：表示位图大小</li>
+<li>一个4字节整数：保留位，始终为0</li>
+<li>一个4字节整数：实际图像的偏移量</li>
+<li>一个4字节整数：Header的字节数</li>
+<li>一个4字节整数：图像宽度</li>
+<li>一个4字节整数：图像高度</li>
+<li>一个2字节整数：始终为1</li>
+<li>一个2字节整数：颜色数</li>
+</ul>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">struct</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bmp</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\x42\x4d\x38\x8c\x0a\x00\x00\x00\x00\x00\x36\x00\x00\x00\x28\x00\x00\x00\x80\x02\x00\x00\x68\x01\x00\x00\x01\x00\x18\x00</span><span class="s1">&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;ccIIIIIIHH&#39;</span><span class="p">,</span><span class="n">bmp</span><span class="p">)</span>
+<span class="go">(&#39;B&#39;, &#39;M&#39;, 691256, 0, 54, 40, 640, 360, 1, 24)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="bytearray">
+<h3>bytearray字节数组<a class="headerlink" href="#bytearray" title="Permalink to this headline">¶</a></h3>
+<p>将文件以二进制数组形式读取</p>
+<p><code class="docutils literal"><span class="pre">data</span> <span class="pre">=</span> <span class="pre">bytearray(open('challenge.png',</span> <span class="pre">'rb').read())</span></code></p>
+<p>字节数组就是可变版本的字节</p>
+<p><code class="docutils literal"><span class="pre">data[0]</span> <span class="pre">=</span> <span class="pre">'\x89'</span></code></p>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>常用工具<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="editor">
+<h3><a class="reference external" href="http://www.sweetscape.com/010editor/">010Editor</a><a class="headerlink" href="#editor" title="Permalink to this headline">¶</a></h3>
+<p>SweetScape 010 Editor是一个全新的十六进位文件编辑器，它有别於传统的十六进位编辑器在於它可用’范本’来解析二进位文件, 从而让你读懂和编辑它. 它还可用来比较一切可视的二进位文件.</p>
+<p>利用它的模板功能可以非常轻松的观察文件内部的具体结构并且依此快速更改内容。</p>
+<div class="figure">
+<img alt="010" src="../_images/010.png" />
+</div>
+</div>
+<div class="section" id="file">
+<h3><code class="docutils literal"><span class="pre">file</span></code><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">file</span></code>命令根据文件头(魔法字节)去识别一个文件的文件类型</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="ow">in</span> <span class="o">~/</span><span class="n">Desktop</span><span class="o">/</span><span class="n">tmp</span> <span class="n">λ</span> <span class="n">file</span> <span class="n">flag</span>
+<span class="n">flag</span><span class="p">:</span> <span class="n">PNG</span> <span class="n">image</span> <span class="n">data</span><span class="p">,</span> <span class="mi">450</span> <span class="n">x</span> <span class="mi">450</span><span class="p">,</span> <span class="mi">8</span><span class="o">-</span><span class="n">bit</span> <span class="n">grayscale</span><span class="p">,</span> <span class="n">non</span><span class="o">-</span><span class="n">interlaced</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="strings">
+<h3><code class="docutils literal"><span class="pre">strings</span></code><a class="headerlink" href="#strings" title="Permalink to this headline">¶</a></h3>
+<p>打印文件中可打印的字符,经常用来发现文件中的一些提示信息或是一些特殊的编码信息，常常用来发现题目的突破口。</p>
+<ul class="simple">
+<li>可以配合<code class="docutils literal"><span class="pre">grep</span></code>命令探测指定信息</li>
+</ul>
+<p><code class="docutils literal"><span class="pre">strings</span> <span class="pre">test|grep</span> <span class="pre">-i</span> <span class="pre">XXCTF</span></code></p>
+<ul class="simple">
+<li>也可以配合<code class="docutils literal"><span class="pre">-o</span></code>参数获取所有ASCII字符偏移</li>
+</ul>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="ow">in</span> <span class="o">~/</span><span class="n">Desktop</span><span class="o">/</span><span class="n">tmp</span> <span class="n">λ</span> <span class="n">strings</span> <span class="o">-</span><span class="n">o</span> <span class="n">flag</span><span class="o">|</span><span class="n">head</span>
+     <span class="mi">14</span> <span class="n">IHDR</span>
+     <span class="mi">45</span> <span class="n">gAMA</span>
+     <span class="mi">64</span>  <span class="n">cHRM</span>
+    <span class="mi">141</span> <span class="n">bKGD</span>
+    <span class="mi">157</span> <span class="n">tIME</span>
+    <span class="mi">202</span> <span class="n">IDATx</span>
+    <span class="mi">223</span> <span class="n">NFdVK3</span>
+    <span class="mi">361</span> <span class="o">|</span><span class="p">;</span><span class="o">*-</span>
+    <span class="mi">410</span> <span class="n">Ge</span><span class="o">%&lt;</span><span class="n">W</span>
+    <span class="mi">431</span> <span class="mi">5</span><span class="n">duX</span><span class="o">@%</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="binwalk">
+<h3><code class="docutils literal"><span class="pre">binwalk</span></code><a class="headerlink" href="#binwalk" title="Permalink to this headline">¶</a></h3>
+<p>binwalk本是一个固件的分析工具，比赛中常用来发现多个文件粘合再在一起的情况。根据文件头去识别一个文件中夹杂的其他文件，有时也会存在误报率(尤其是对Pcap流量包等文件时)。</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="ow">in</span> <span class="o">~/</span><span class="n">Desktop</span><span class="o">/</span><span class="n">tmp</span> <span class="n">λ</span> <span class="n">binwalk</span> <span class="n">flag</span>
 
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+<span class="n">DECIMAL</span>       <span class="n">HEXADECIMAL</span>     <span class="n">DESCRIPTION</span>
+<span class="o">--------------------------------------------------------------------------------</span>
+<span class="mi">0</span>             <span class="mh">0x0</span>             <span class="n">PNG</span> <span class="n">image</span><span class="p">,</span> <span class="mi">450</span> <span class="n">x</span> <span class="mi">450</span><span class="p">,</span> <span class="mi">8</span><span class="o">-</span><span class="n">bit</span> <span class="n">grayscale</span><span class="p">,</span> <span class="n">non</span><span class="o">-</span><span class="n">interlaced</span>
+<span class="mi">134</span>           <span class="mh">0x86</span>            <span class="n">Zlib</span> <span class="n">compressed</span> <span class="n">data</span><span class="p">,</span> <span class="n">best</span> <span class="n">compression</span>
+<span class="mi">25683</span>         <span class="mh">0x6453</span>          <span class="n">Zip</span> <span class="n">archive</span> <span class="n">data</span><span class="p">,</span> <span class="n">at</span> <span class="n">least</span> <span class="n">v2</span><span class="o">.</span><span class="mi">0</span> <span class="n">to</span> <span class="n">extract</span><span class="p">,</span> <span class="n">compressed</span> <span class="n">size</span><span class="p">:</span> <span class="mi">675</span><span class="p">,</span> <span class="n">uncompressed</span> <span class="n">size</span><span class="p">:</span> <span class="mi">1159</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">readme</span><span class="o">.</span><span class="n">txt</span>
+<span class="mi">26398</span>         <span class="mh">0x671E</span>          <span class="n">Zip</span> <span class="n">archive</span> <span class="n">data</span><span class="p">,</span> <span class="n">at</span> <span class="n">least</span> <span class="n">v2</span><span class="o">.</span><span class="mi">0</span> <span class="n">to</span> <span class="n">extract</span><span class="p">,</span> <span class="n">compressed</span> <span class="n">size</span><span class="p">:</span> <span class="mi">430849</span><span class="p">,</span> <span class="n">uncompressed</span> <span class="n">size</span><span class="p">:</span> <span class="mi">1027984</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">trid</span>
+<span class="mi">457387</span>        <span class="mh">0x6FAAB</span>         <span class="n">End</span> <span class="n">of</span> <span class="n">Zip</span> <span class="n">archive</span>
+</pre></div>
+</div>
+<p>配合<code class="docutils literal"><span class="pre">-e</span></code>参数可以进行自动化提取</p>
+<p>也可以结合<code class="docutils literal"><span class="pre">dd命令进行手动切割</span></code></p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="ow">in</span> <span class="o">~/</span><span class="n">Desktop</span><span class="o">/</span><span class="n">tmp</span> <span class="n">λ</span> <span class="n">dd</span> <span class="k">if</span><span class="o">=</span><span class="n">flag</span> <span class="n">of</span><span class="o">=</span><span class="mf">1.</span><span class="n">zip</span> <span class="n">bs</span><span class="o">=</span><span class="mi">1</span> <span class="n">skip</span><span class="o">=</span><span class="mi">25683</span>
+<span class="mi">431726</span><span class="o">+</span><span class="mi">0</span> <span class="n">records</span> <span class="ow">in</span>
+<span class="mi">431726</span><span class="o">+</span><span class="mi">0</span> <span class="n">records</span> <span class="n">out</span>
+<span class="mi">431726</span> <span class="nb">bytes</span> <span class="p">(</span><span class="mi">432</span> <span class="n">kB</span><span class="p">,</span> <span class="mi">422</span> <span class="n">KiB</span><span class="p">)</span> <span class="n">copied</span><span class="p">,</span> <span class="mf">0.900973</span> <span class="n">s</span><span class="p">,</span> <span class="mi">479</span> <span class="n">kB</span><span class="o">/</span><span class="n">s</span>
+</pre></div>
+</div>
+</div>
+</div>
 </div>
 
-          
-        </div>
 
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../index.html" title="index">
+          <img class="logo" src="../_static/logo.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../introduction/history.html">CTF 竞赛的历史</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction/mode.html">CTF 竞赛模式简介</a></li>
@@ -156,274 +283,49 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../executable/elf/index.html">ELF文件</a></li>
 </ul>
-
-            
-          
+</div>
         </div>
       </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">CTF Wiki</a>
-        
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-      <li>取证隐写</li>
     
     
-      <li class="wy-breadcrumbs-aside">
-        
+        <div class="sidebar-toggle-group no-js">
             
-            <a href="../_sources/misc/prefix.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
     
-  </ul>
-
-  
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
-  <div class="section" id="id1">
-<h1>取证隐写<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
-<p>大部分的CTF比赛中，取证及隐写两者密不可分，两者所需要的知识也相辅相成，所以这里也将对两者一起介绍。</p>
-<p>任何要求检查一个静态数据文件从而获取隐藏信息的都可以被认为是隐写取证题(除非单纯地是密码学的知识)，一些低分的隐写取证又常常与古典密码学结合在一起，而高分的题目则通常用与一些较为复杂的现代密码学知识结合在一起，很好地体现了Misc题的特点。</p>
-<div class="section" id="id2">
-<h2>前置技能<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<ul class="simple">
-<li>了解常见的编码</li>
-</ul>
-<p>能够对文件中出现的一些编码进行解码，并且对一些特殊的编码(Base64,十六进制，二进制等)有一定的敏感度，对其进行转换并得到最终的flag。</p>
-<ul class="simple">
-<li>能够利用脚本语言(python)去操作二进制数据</li>
-<li>熟知常见文件的文件格式,尤其是 <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_file_signatures">文件头</a>，协议，结构等</li>
-<li>灵活运用常见的工具</li>
-</ul>
-</div>
-<div class="section" id="python">
-<h2>python操作二进制数据<a class="headerlink" href="#python" title="永久链接至标题">¶</a></h2>
-<div class="section" id="struct">
-<h3>Struct模块<a class="headerlink" href="#struct" title="永久链接至标题">¶</a></h3>
-<p>有的时候需要用python处理二进制数据，比如，存取文件，socket操作时.这时候，可以使用python的struct模块来完成。</p>
-<p>struct模块中最重要的三个函数是pack(), unpack(), calcsize()</p>
-<ul class="simple">
-<li><code class="docutils literal"><span class="pre">pack(fmt,</span> <span class="pre">v1,</span> <span class="pre">v2,</span> <span class="pre">...)</span></code>按照给定的格式(fmt)，把数据封装成字符串(实际上是类似于c结构体的字节流)</li>
-<li><code class="docutils literal"><span class="pre">unpack(fmt,</span> <span class="pre">string)</span></code>按照给定的格式(fmt)解析字节流string，返回解析出来的tuple</li>
-<li><code class="docutils literal"><span class="pre">calcsize(fmt)</span></code>计算给定的格式(fmt)占用多少字节的内存</li>
-</ul>
-<p>这里打包格式 <code class="docutils literal"><span class="pre">fmt</span></code> 确定了将变量按照什么方式打包成字节流，其包含了一系列的格式字符串。这里就不再给出不同格式字符串的含义了，详细细节可以参照 <a class="reference external" href="https://docs.python.org/2/library/struct.html">Python
-Doc</a></p>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">struct</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&gt;I&#39;</span><span class="p">,</span><span class="mi">16</span><span class="p">)</span>
-<span class="go">&#39;\x00\x00\x00\x10&#39;</span>
-</pre></div>
-</div>
-<div class="line-block">
-<div class="line">pack的第一个参数是处理指令，’&gt;I’的意思是：</div>
-<div class="line"><code class="docutils literal"><span class="pre">&gt;</span></code>表示字节顺序是big-endian，也就是网络序，<code class="docutils literal"><span class="pre">I</span></code>表示4字节无符号整数。</div>
-<div class="line">后面的参数个数要和处理指令一致。</div>
-</div>
-<p>读入一个BMP文件的前30字节，文件头的结构按顺序如下</p>
-<ul class="simple">
-<li>两个字节：’BM’表示Windows位图，’BA’表示OS/2位图</li>
-<li>一个4字节整数：表示位图大小</li>
-<li>一个4字节整数：保留位，始终为0</li>
-<li>一个4字节整数：实际图像的偏移量</li>
-<li>一个4字节整数：Header的字节数</li>
-<li>一个4字节整数：图像宽度</li>
-<li>一个4字节整数：图像高度</li>
-<li>一个2字节整数：始终为1</li>
-<li>一个2字节整数：颜色数</li>
-</ul>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">struct</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">bmp</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\x42\x4d\x38\x8c\x0a\x00\x00\x00\x00\x00\x36\x00\x00\x00\x28\x00\x00\x00\x80\x02\x00\x00\x68\x01\x00\x00\x01\x00\x18\x00</span><span class="s1">&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;ccIIIIIIHH&#39;</span><span class="p">,</span><span class="n">bmp</span><span class="p">)</span>
-<span class="go">(&#39;B&#39;, &#39;M&#39;, 691256, 0, 54, 40, 640, 360, 1, 24)</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="bytearray">
-<h3>bytearray字节数组<a class="headerlink" href="#bytearray" title="永久链接至标题">¶</a></h3>
-<p>将文件以二进制数组形式读取</p>
-<p><code class="docutils literal"><span class="pre">data</span> <span class="pre">=</span> <span class="pre">bytearray(open('challenge.png',</span> <span class="pre">'rb').read())</span></code></p>
-<p>字节数组就是可变版本的字节</p>
-<p><code class="docutils literal"><span class="pre">data[0]</span> <span class="pre">=</span> <span class="pre">'\x89'</span></code></p>
-</div>
-</div>
-<div class="section" id="id3">
-<h2>常用工具<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<div class="section" id="editor">
-<h3><a class="reference external" href="http://www.sweetscape.com/010editor/">010Editor</a><a class="headerlink" href="#editor" title="永久链接至标题">¶</a></h3>
-<p>SweetScape 010 Editor是一个全新的十六进位文件编辑器，它有别於传统的十六进位编辑器在於它可用’范本’来解析二进位文件, 从而让你读懂和编辑它. 它还可用来比较一切可视的二进位文件.</p>
-<p>利用它的模板功能可以非常轻松的观察文件内部的具体结构并且依此快速更改内容。</p>
-<div class="figure">
-<img alt="010" src="../_images/010.png" />
-</div>
-</div>
-<div class="section" id="file">
-<h3><code class="docutils literal"><span class="pre">file</span></code><a class="headerlink" href="#file" title="永久链接至标题">¶</a></h3>
-<p><code class="docutils literal"><span class="pre">file</span></code>命令根据文件头(魔法字节)去识别一个文件的文件类型</p>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="ow">in</span> <span class="o">~/</span><span class="n">Desktop</span><span class="o">/</span><span class="n">tmp</span> <span class="n">λ</span> <span class="n">file</span> <span class="n">flag</span>
-<span class="n">flag</span><span class="p">:</span> <span class="n">PNG</span> <span class="n">image</span> <span class="n">data</span><span class="p">,</span> <span class="mi">450</span> <span class="n">x</span> <span class="mi">450</span><span class="p">,</span> <span class="mi">8</span><span class="o">-</span><span class="n">bit</span> <span class="n">grayscale</span><span class="p">,</span> <span class="n">non</span><span class="o">-</span><span class="n">interlaced</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="strings">
-<h3><code class="docutils literal"><span class="pre">strings</span></code><a class="headerlink" href="#strings" title="永久链接至标题">¶</a></h3>
-<p>打印文件中可打印的字符,经常用来发现文件中的一些提示信息或是一些特殊的编码信息，常常用来发现题目的突破口。</p>
-<ul class="simple">
-<li>可以配合<code class="docutils literal"><span class="pre">grep</span></code>命令探测指定信息</li>
-</ul>
-<p><code class="docutils literal"><span class="pre">strings</span> <span class="pre">test|grep</span> <span class="pre">-i</span> <span class="pre">XXCTF</span></code></p>
-<ul class="simple">
-<li>也可以配合<code class="docutils literal"><span class="pre">-o</span></code>参数获取所有ASCII字符偏移</li>
-</ul>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="ow">in</span> <span class="o">~/</span><span class="n">Desktop</span><span class="o">/</span><span class="n">tmp</span> <span class="n">λ</span> <span class="n">strings</span> <span class="o">-</span><span class="n">o</span> <span class="n">flag</span><span class="o">|</span><span class="n">head</span>
-     <span class="mi">14</span> <span class="n">IHDR</span>
-     <span class="mi">45</span> <span class="n">gAMA</span>
-     <span class="mi">64</span>  <span class="n">cHRM</span>
-    <span class="mi">141</span> <span class="n">bKGD</span>
-    <span class="mi">157</span> <span class="n">tIME</span>
-    <span class="mi">202</span> <span class="n">IDATx</span>
-    <span class="mi">223</span> <span class="n">NFdVK3</span>
-    <span class="mi">361</span> <span class="o">|</span><span class="p">;</span><span class="o">*-</span>
-    <span class="mi">410</span> <span class="n">Ge</span><span class="o">%&lt;</span><span class="n">W</span>
-    <span class="mi">431</span> <span class="mi">5</span><span class="n">duX</span><span class="o">@%</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="binwalk">
-<h3><code class="docutils literal"><span class="pre">binwalk</span></code><a class="headerlink" href="#binwalk" title="永久链接至标题">¶</a></h3>
-<p>binwalk本是一个固件的分析工具，比赛中常用来发现多个文件粘合再在一起的情况。根据文件头去识别一个文件中夹杂的其他文件，有时也会存在误报率(尤其是对Pcap流量包等文件时)。</p>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="ow">in</span> <span class="o">~/</span><span class="n">Desktop</span><span class="o">/</span><span class="n">tmp</span> <span class="n">λ</span> <span class="n">binwalk</span> <span class="n">flag</span>
-
-<span class="n">DECIMAL</span>       <span class="n">HEXADECIMAL</span>     <span class="n">DESCRIPTION</span>
-<span class="o">--------------------------------------------------------------------------------</span>
-<span class="mi">0</span>             <span class="mh">0x0</span>             <span class="n">PNG</span> <span class="n">image</span><span class="p">,</span> <span class="mi">450</span> <span class="n">x</span> <span class="mi">450</span><span class="p">,</span> <span class="mi">8</span><span class="o">-</span><span class="n">bit</span> <span class="n">grayscale</span><span class="p">,</span> <span class="n">non</span><span class="o">-</span><span class="n">interlaced</span>
-<span class="mi">134</span>           <span class="mh">0x86</span>            <span class="n">Zlib</span> <span class="n">compressed</span> <span class="n">data</span><span class="p">,</span> <span class="n">best</span> <span class="n">compression</span>
-<span class="mi">25683</span>         <span class="mh">0x6453</span>          <span class="n">Zip</span> <span class="n">archive</span> <span class="n">data</span><span class="p">,</span> <span class="n">at</span> <span class="n">least</span> <span class="n">v2</span><span class="o">.</span><span class="mi">0</span> <span class="n">to</span> <span class="n">extract</span><span class="p">,</span> <span class="n">compressed</span> <span class="n">size</span><span class="p">:</span> <span class="mi">675</span><span class="p">,</span> <span class="n">uncompressed</span> <span class="n">size</span><span class="p">:</span> <span class="mi">1159</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">readme</span><span class="o">.</span><span class="n">txt</span>
-<span class="mi">26398</span>         <span class="mh">0x671E</span>          <span class="n">Zip</span> <span class="n">archive</span> <span class="n">data</span><span class="p">,</span> <span class="n">at</span> <span class="n">least</span> <span class="n">v2</span><span class="o">.</span><span class="mi">0</span> <span class="n">to</span> <span class="n">extract</span><span class="p">,</span> <span class="n">compressed</span> <span class="n">size</span><span class="p">:</span> <span class="mi">430849</span><span class="p">,</span> <span class="n">uncompressed</span> <span class="n">size</span><span class="p">:</span> <span class="mi">1027984</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">trid</span>
-<span class="mi">457387</span>        <span class="mh">0x6FAAB</span>         <span class="n">End</span> <span class="n">of</span> <span class="n">Zip</span> <span class="n">archive</span>
-</pre></div>
-</div>
-<p>配合<code class="docutils literal"><span class="pre">-e</span></code>参数可以进行自动化提取</p>
-<p>也可以结合<code class="docutils literal"><span class="pre">dd命令进行手动切割</span></code></p>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="ow">in</span> <span class="o">~/</span><span class="n">Desktop</span><span class="o">/</span><span class="n">tmp</span> <span class="n">λ</span> <span class="n">dd</span> <span class="k">if</span><span class="o">=</span><span class="n">flag</span> <span class="n">of</span><span class="o">=</span><span class="mf">1.</span><span class="n">zip</span> <span class="n">bs</span><span class="o">=</span><span class="mi">1</span> <span class="n">skip</span><span class="o">=</span><span class="mi">25683</span>
-<span class="mi">431726</span><span class="o">+</span><span class="mi">0</span> <span class="n">records</span> <span class="ow">in</span>
-<span class="mi">431726</span><span class="o">+</span><span class="mi">0</span> <span class="n">records</span> <span class="n">out</span>
-<span class="mi">431726</span> <span class="nb">bytes</span> <span class="p">(</span><span class="mi">432</span> <span class="n">kB</span><span class="p">,</span> <span class="mi">422</span> <span class="n">KiB</span><span class="p">)</span> <span class="n">copied</span><span class="p">,</span> <span class="mf">0.900973</span> <span class="n">s</span><span class="p">,</span> <span class="mi">479</span> <span class="n">kB</span><span class="o">/</span><span class="n">s</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-
-
-           </div>
-           <div class="articleComments">
-            
-           </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="picture/index.html" class="btn btn-neutral float-right" title="图片分析" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="encode/modern.html" class="btn btn-neutral" title="现实世界中常用的编码" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+      <div class="clearer"></div>
     </div>
-  
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="picture/index.html" title="图片分析"
+             >next</a></li>
+        <li class="right" >
+          <a href="encode/modern.html" title="现实世界中常用的编码"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
 
-  <hr/>
-
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2017, CTF Wiki.
-
-    </p>
-  </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="../_static/translations.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
 </html>

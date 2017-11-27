@@ -1,93 +1,247 @@
 
 
-<!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>格式化字符串漏洞原理介绍 &mdash; CTF Wiki  文档</title>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>格式化字符串漏洞原理介绍 &#8212; CTF Wiki v</title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="格式化字符串漏洞利用" href="fmtstr_exploit.html" />
+    <link rel="prev" title="格式化字符串漏洞" href="index.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="fmtstr_exploit.html" title="格式化字符串漏洞利用"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="index.html" title="格式化字符串漏洞"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">格式化字符串漏洞</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
   
 
-  
-  
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="索引"
-              href="../../genindex.html"/>
-        <link rel="search" title="搜索" href="../../search.html"/>
-    <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
-        <link rel="up" title="格式化字符串漏洞" href="index.html"/>
-        <link rel="next" title="格式化字符串漏洞利用" href="fmtstr_exploit.html"/>
-        <link rel="prev" title="格式化字符串漏洞" href="index.html"/> 
-
-  
-  <script src="../../_static/js/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-   
-  <div class="wy-grid-for-nav">
-
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
-            <a href="../../index.html" class="icon icon-home"> CTF Wiki
-          
-
-          
-          </a>
-
-          
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
             
-            
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+  <div class="section" id="id1">
+<h1>格式化字符串漏洞原理介绍<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>为了介绍格式化字符串漏洞的原理，会对格式化字符串的利用进行简单介绍。</p>
+<div class="section" id="id2">
+<h2>格式化字符串函数介绍<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>格式化字符串函数可以接受可变数量的参数，并将<strong>第一个参数作为格式化字符串，根据其来解析之后的参数</strong>。通俗来说，格式化字符串函数就是将计算机内存中表示的数据转化为我们人类可读的字符串格式。几乎所有的C/C++程序都会利用格式化字符串函数来<strong>输出信息，调试程序，或者处理字符串</strong>。一般来说，格式化字符串在利用的时候主要分为三个部分</p>
+<ul class="simple">
+<li>格式化字符串函数</li>
+<li>格式化字符串</li>
+<li>后续参数，<strong>可选</strong></li>
+</ul>
+<p>这里我们给出一个简单的例子，其实相信大多数人都接触过printf函数之类的。之后我们再一个一个进行介绍。</p>
+<div class="figure">
+<img alt="" src="../../_images/printf.png" />
+</div>
+<div class="section" id="id3">
+<h3>格式化字符串函数<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>常见的有格式化字符串函数有</p>
+<ul class="simple">
+<li>输入</li>
+<li>scanf</li>
+<li>输出</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">函数</th>
+<th class="head">基本介绍</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>printf</td>
+<td>输出到stdout</td>
+</tr>
+<tr class="row-odd"><td>fprintf</td>
+<td>输出到指定FILE流</td>
+</tr>
+<tr class="row-even"><td>vprintf</td>
+<td>根据参数列表格式化输出到 stdout</td>
+</tr>
+<tr class="row-odd"><td>vfprintf</td>
+<td>根据参数列表格式化输出到指定FILE流</td>
+</tr>
+<tr class="row-even"><td>sprintf</td>
+<td>输出到字符串</td>
+</tr>
+<tr class="row-odd"><td>snprintf</td>
+<td>输出指定字节数到字符串</td>
+</tr>
+<tr class="row-even"><td>vsprintf</td>
+<td>根据参数列表格式化输出到字符串</td>
+</tr>
+<tr class="row-odd"><td>vsnprintf</td>
+<td>根据参数列表格式化输出指定字节到字符串</td>
+</tr>
+<tr class="row-even"><td>setproctitle</td>
+<td>设置argv</td>
+</tr>
+<tr class="row-odd"><td>syslog</td>
+<td>输出日志</td>
+</tr>
+<tr class="row-even"><td>err, verr, warn, vwarn等</td>
+<td>。。。</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id4">
+<h3>格式化字符串<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>这里我们了解一下格式化字符串的格式，其基本格式如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span><span class="p">[</span><span class="n">parameter</span><span class="p">][</span><span class="n">flags</span><span class="p">][</span><span class="n">field</span> <span class="n">width</span><span class="p">][</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="n">length</span><span class="p">]</span><span class="nb">type</span>
+</pre></div>
+</div>
+<p>每一种pattern的含义请具体参考维基百科的<a class="reference external" href="https://zh.wikipedia.org/wiki/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2">格式化字符串</a> 。以下几个pattern中的对应选择需要重点关注</p>
+<ul class="simple">
+<li>parameter<ul>
+<li>n$，获取格式化字符串中的指定参数</li>
+</ul>
+</li>
+<li>flag</li>
+<li>field width<ul>
+<li>输出的最小宽度</li>
+</ul>
+</li>
+<li>precision<ul>
+<li>输出的最大长度</li>
+</ul>
+</li>
+<li>length，输出的长度<ul>
+<li>hh，输出一个字节</li>
+<li>h，输出一个双字节 ​</li>
+</ul>
+</li>
+<li>type<ul>
+<li>d/i，有符号整数</li>
+<li>u，无符号整数</li>
+<li>x/X，16进制&nbsp;unsigned int&nbsp;。x使用小写字母；X使用大写字母。如果指定了精度，则输出的数字不足时在左侧补0。默认精度为1。精度为0且值为0，则输出为空。</li>
+<li>o，8进制unsigned int。如果指定了精度，则输出的数字不足时在左侧补0。默认精度为1。精度为0且值为0，则输出为空。</li>
+<li>s，如果没有用l标志，输出&nbsp;null结尾字符串&nbsp;直到精度规定的上限；如果没有指定精度，则输出所有字节。如果用了l标志，则对应函数参数指向wchar_t型的数组，输出时把每个宽字符转化为多字节字符，相当于调用wcrtomb函数。</li>
+<li>c，如果没有用l标志，把int参数转为unsigned char型输出；如果用了l标志，把wint_t参数转为包含两个元素的wchart_t数组，其中第一个元素包含要输出的字符，第二个元素为null宽字符。</li>
+<li>p， void *型，输出对应变量的值。printf(“%p”,a)用地址的格式打印变量a的值，printf(“%p”, &amp;a)打印变量a所在的地址。</li>
+<li>n，不输出字符，但是把已经成功输出的字符个数写入对应的整型指针参数所指的变量。</li>
+<li>%， ‘<code class="docutils literal"><span class="pre">%</span></code>’字面值，不接受任何flags, width,</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h3>参数<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>就是相应的要输出的变量。</p>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>格式化字符串漏洞原理<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>在一开始，我们就给出格式化字符串的基本介绍，这里再说一些比较细致的内容。我们上面说，格式化字符串函数是根据格式化字符串函数来进行解析的。<strong>那么相应的要被解析的参数的个数也自然是由这个格式化字符串所控制</strong>。比如说’%s’表明我们会输出一个字符串参数。</p>
+<p>我们再继续以上面的为例子进行介绍</p>
+<div class="figure" id="id8">
+<img alt="基本例子" src="../../_images/printf.png" />
+<p class="caption"><span class="caption-text">基本例子</span></p>
+</div>
+<p>对于这样的例子，在进入printf函数的之前(即还没有调用printf)，栈上的布局由高地址到低地址依次如下</p>
+<div class="code text highlight-default"><div class="highlight"><pre><span></span><span class="n">some</span> <span class="n">value</span>
+<span class="mf">3.14</span>
+<span class="mi">123456</span>
+<span class="n">addr</span> <span class="n">of</span> <span class="s2">&quot;red&quot;</span>
+<span class="n">addr</span> <span class="n">of</span> <span class="nb">format</span> <span class="n">string</span><span class="p">:</span> <span class="n">Color</span> <span class="o">%</span><span class="n">s</span><span class="o">...</span>
+</pre></div>
+</div>
+<p><strong>注：这里我们假设3.14上面的值为某个未知的值。</strong></p>
+<p>在进入printf之后，函数首先获取第一个参数，一个一个读取其字符会遇到两种情况</p>
+<ul class="simple">
+<li>当前字符不是%，直接输出到相应标准输出。</li>
+<li>当前字符是%， 继续读取下一个字符</li>
+<li>如果没有字符，报错</li>
+<li>如果下一个字符是%,输出%</li>
+<li>否则根据相应的字符，获取相应的参数，对其进行解析并输出</li>
+</ul>
+<p>那么假设，此时我们在编写程序时候，写成了下面的样子</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Color </span><span class="si">%s</span><span class="s2">, Number </span><span class="si">%d</span><span class="s2">, Float </span><span class="si">%4.2f</span><span class="s2">&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>此时我们可以发现我们并没有提供参数，那么程序会如何运行呢？程序照样会运行，会将栈上存储格式化字符串地址上面的三个变量分别解析为</p>
+<ol class="arabic simple">
+<li>解析其地址对应的字符串</li>
+<li>解析其内容对应的整形值</li>
+<li>解析其内容对应的浮点值</li>
+</ol>
+<p>对于2，3来说倒还无妨，但是对于对于1来说，如果提供了一个不可访问地址，比如0，那么程序就会因此而崩溃。</p>
+<p>这基本就是格式化字符串漏洞的基本原理了。</p>
+</div>
+<div class="section" id="id7">
+<h2>参考阅读<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="https://zh.wikipedia.org/wiki/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2">https://zh.wikipedia.org/wiki/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2</a></li>
+</ul>
+</div>
 </div>
 
-          
-        </div>
 
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../index.html" title="index">
+          <img class="logo" src="../../_static/logo.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
@@ -158,303 +312,50 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
 </ul>
-
-            
-          
+</div>
         </div>
       </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">CTF Wiki</a>
-        
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="index.html">格式化字符串漏洞</a> &raquo;</li>
-        
-      <li>格式化字符串漏洞原理介绍</li>
     
     
-      <li class="wy-breadcrumbs-aside">
-        
+        <div class="sidebar-toggle-group no-js">
             
-            <a href="../../_sources/pwn/fmtstr/fmtstr_intro.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
     
-  </ul>
-
-  
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
-  <div class="section" id="id1">
-<h1>格式化字符串漏洞原理介绍<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
-<p>为了介绍格式化字符串漏洞的原理，会对格式化字符串的利用进行简单介绍。</p>
-<div class="section" id="id2">
-<h2>格式化字符串函数介绍<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>格式化字符串函数可以接受可变数量的参数，并将<strong>第一个参数作为格式化字符串，根据其来解析之后的参数</strong>。通俗来说，格式化字符串函数就是将计算机内存中表示的数据转化为我们人类可读的字符串格式。几乎所有的C/C++程序都会利用格式化字符串函数来<strong>输出信息，调试程序，或者处理字符串</strong>。一般来说，格式化字符串在利用的时候主要分为三个部分</p>
-<ul class="simple">
-<li>格式化字符串函数</li>
-<li>格式化字符串</li>
-<li>后续参数，<strong>可选</strong></li>
-</ul>
-<p>这里我们给出一个简单的例子，其实相信大多数人都接触过printf函数之类的。之后我们再一个一个进行介绍。</p>
-<div class="figure">
-<img alt="" src="../../_images/printf.png" />
-</div>
-<div class="section" id="id3">
-<h3>格式化字符串函数<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
-<p>常见的有格式化字符串函数有</p>
-<ul class="simple">
-<li>输入</li>
-<li>scanf</li>
-<li>输出</li>
-</ul>
-<table border="1" class="docutils">
-<colgroup>
-<col width="40%" />
-<col width="60%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">函数</th>
-<th class="head">基本介绍</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>printf</td>
-<td>输出到stdout</td>
-</tr>
-<tr class="row-odd"><td>fprintf</td>
-<td>输出到指定FILE流</td>
-</tr>
-<tr class="row-even"><td>vprintf</td>
-<td>根据参数列表格式化输出到 stdout</td>
-</tr>
-<tr class="row-odd"><td>vfprintf</td>
-<td>根据参数列表格式化输出到指定FILE流</td>
-</tr>
-<tr class="row-even"><td>sprintf</td>
-<td>输出到字符串</td>
-</tr>
-<tr class="row-odd"><td>snprintf</td>
-<td>输出指定字节数到字符串</td>
-</tr>
-<tr class="row-even"><td>vsprintf</td>
-<td>根据参数列表格式化输出到字符串</td>
-</tr>
-<tr class="row-odd"><td>vsnprintf</td>
-<td>根据参数列表格式化输出指定字节到字符串</td>
-</tr>
-<tr class="row-even"><td>setproctitle</td>
-<td>设置argv</td>
-</tr>
-<tr class="row-odd"><td>syslog</td>
-<td>输出日志</td>
-</tr>
-<tr class="row-even"><td>err, verr, warn, vwarn等</td>
-<td>。。。</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="id4">
-<h3>格式化字符串<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
-<p>这里我们了解一下格式化字符串的格式，其基本格式如下</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span><span class="p">[</span><span class="n">parameter</span><span class="p">][</span><span class="n">flags</span><span class="p">][</span><span class="n">field</span> <span class="n">width</span><span class="p">][</span><span class="o">.</span><span class="n">precision</span><span class="p">][</span><span class="n">length</span><span class="p">]</span><span class="nb">type</span>
-</pre></div>
-</div>
-<p>每一种pattern的含义请具体参考维基百科的<a class="reference external" href="https://zh.wikipedia.org/wiki/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2">格式化字符串</a> 。以下几个pattern中的对应选择需要重点关注</p>
-<ul class="simple">
-<li>parameter<ul>
-<li>n$，获取格式化字符串中的指定参数</li>
-</ul>
-</li>
-<li>flag</li>
-<li>field width<ul>
-<li>输出的最小宽度</li>
-</ul>
-</li>
-<li>precision<ul>
-<li>输出的最大长度</li>
-</ul>
-</li>
-<li>length，输出的长度<ul>
-<li>hh，输出一个字节</li>
-<li>h，输出一个双字节 ​</li>
-</ul>
-</li>
-<li>type<ul>
-<li>d/i，有符号整数</li>
-<li>u，无符号整数</li>
-<li>x/X，16进制&nbsp;unsigned int&nbsp;。x使用小写字母；X使用大写字母。如果指定了精度，则输出的数字不足时在左侧补0。默认精度为1。精度为0且值为0，则输出为空。</li>
-<li>o，8进制unsigned int。如果指定了精度，则输出的数字不足时在左侧补0。默认精度为1。精度为0且值为0，则输出为空。</li>
-<li>s，如果没有用l标志，输出&nbsp;null结尾字符串&nbsp;直到精度规定的上限；如果没有指定精度，则输出所有字节。如果用了l标志，则对应函数参数指向wchar_t型的数组，输出时把每个宽字符转化为多字节字符，相当于调用wcrtomb函数。</li>
-<li>c，如果没有用l标志，把int参数转为unsigned char型输出；如果用了l标志，把wint_t参数转为包含两个元素的wchart_t数组，其中第一个元素包含要输出的字符，第二个元素为null宽字符。</li>
-<li>p， void *型，输出对应变量的值。printf(“%p”,a)用地址的格式打印变量a的值，printf(“%p”, &amp;a)打印变量a所在的地址。</li>
-<li>n，不输出字符，但是把已经成功输出的字符个数写入对应的整型指针参数所指的变量。</li>
-<li>%， ‘<code class="docutils literal"><span class="pre">%</span></code>’字面值，不接受任何flags, width,</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="id5">
-<h3>参数<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<p>就是相应的要输出的变量。</p>
-</div>
-</div>
-<div class="section" id="id6">
-<h2>格式化字符串漏洞原理<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h2>
-<p>在一开始，我们就给出格式化字符串的基本介绍，这里再说一些比较细致的内容。我们上面说，格式化字符串函数是根据格式化字符串函数来进行解析的。<strong>那么相应的要被解析的参数的个数也自然是由这个格式化字符串所控制</strong>。比如说’%s’表明我们会输出一个字符串参数。</p>
-<p>我们再继续以上面的为例子进行介绍</p>
-<div class="figure" id="id8">
-<img alt="基本例子" src="../../_images/printf.png" />
-<p class="caption"><span class="caption-text">基本例子</span></p>
-</div>
-<p>对于这样的例子，在进入printf函数的之前(即还没有调用printf)，栈上的布局由高地址到低地址依次如下</p>
-<div class="code text highlight-default"><div class="highlight"><pre><span></span><span class="n">some</span> <span class="n">value</span>
-<span class="mf">3.14</span>
-<span class="mi">123456</span>
-<span class="n">addr</span> <span class="n">of</span> <span class="s2">&quot;red&quot;</span>
-<span class="n">addr</span> <span class="n">of</span> <span class="nb">format</span> <span class="n">string</span><span class="p">:</span> <span class="n">Color</span> <span class="o">%</span><span class="n">s</span><span class="o">...</span>
-</pre></div>
-</div>
-<p><strong>注：这里我们假设3.14上面的值为某个未知的值。</strong></p>
-<p>在进入printf之后，函数首先获取第一个参数，一个一个读取其字符会遇到两种情况</p>
-<ul class="simple">
-<li>当前字符不是%，直接输出到相应标准输出。</li>
-<li>当前字符是%， 继续读取下一个字符</li>
-<li>如果没有字符，报错</li>
-<li>如果下一个字符是%,输出%</li>
-<li>否则根据相应的字符，获取相应的参数，对其进行解析并输出</li>
-</ul>
-<p>那么假设，此时我们在编写程序时候，写成了下面的样子</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Color </span><span class="si">%s</span><span class="s2">, Number </span><span class="si">%d</span><span class="s2">, Float </span><span class="si">%4.2f</span><span class="s2">&quot;</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>此时我们可以发现我们并没有提供参数，那么程序会如何运行呢？程序照样会运行，会将栈上存储格式化字符串地址上面的三个变量分别解析为</p>
-<ol class="arabic simple">
-<li>解析其地址对应的字符串</li>
-<li>解析其内容对应的整形值</li>
-<li>解析其内容对应的浮点值</li>
-</ol>
-<p>对于2，3来说倒还无妨，但是对于对于1来说，如果提供了一个不可访问地址，比如0，那么程序就会因此而崩溃。</p>
-<p>这基本就是格式化字符串漏洞的基本原理了。</p>
-</div>
-<div class="section" id="id7">
-<h2>参考阅读<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h2>
-<ul class="simple">
-<li><a class="reference external" href="https://zh.wikipedia.org/wiki/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2">https://zh.wikipedia.org/wiki/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2</a></li>
-</ul>
-</div>
-</div>
-
-
-           </div>
-           <div class="articleComments">
-            
-           </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="fmtstr_exploit.html" class="btn btn-neutral float-right" title="格式化字符串漏洞利用" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="index.html" class="btn btn-neutral" title="格式化字符串漏洞" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+      <div class="clearer"></div>
     </div>
-  
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="fmtstr_exploit.html" title="格式化字符串漏洞利用"
+             >next</a></li>
+        <li class="right" >
+          <a href="index.html" title="格式化字符串漏洞"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
-  <hr/>
+          <li class="nav-item nav-item-1"><a href="index.html" >格式化字符串漏洞</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
 
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2017, CTF Wiki.
-
-    </p>
-  </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
-      <script type="text/javascript" src="../../_static/translations.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
 </html>

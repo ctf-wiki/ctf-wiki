@@ -1,92 +1,178 @@
 
 
-<!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>CSRF 跨站请求伪造 &mdash; CTF Wiki  文档</title>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CSRF 跨站请求伪造 &#8212; CTF Wiki v</title>
+    <link rel="stylesheet" href="../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SSRF 服务端请求伪造" href="ssrf.html" />
+    <link rel="prev" title="XSS 跨站脚本攻击" href="xss.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="ssrf.html" title="SSRF 服务端请求伪造"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="xss.html" title="XSS 跨站脚本攻击"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
   
 
-  
-  
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="索引"
-              href="../genindex.html"/>
-        <link rel="search" title="搜索" href="../search.html"/>
-    <link rel="top" title="CTF Wiki  文档" href="../index.html"/>
-        <link rel="next" title="SSRF 服务端请求伪造" href="ssrf.html"/>
-        <link rel="prev" title="XSS 跨站脚本攻击" href="xss.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-   
-  <div class="wy-grid-for-nav">
-
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
-            <a href="../index.html" class="icon icon-home"> CTF Wiki
-          
-
-          
-          </a>
-
-          
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
             
-            
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+  <div class="section" id="csrf">
+<h1>CSRF 跨站请求伪造<a class="headerlink" href="#csrf" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>CSRF 简介<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>CSRF，全名 Cross Site Request Forgery，跨站请求伪造。很容易将它与 XSS 混淆，对于 CSRF，其两个关键点是跨站点的请求与请求的伪造，由于目标站无 token 或 referer 防御，导致用户的敏感操作的每一个参数都可以被攻击者获知，攻击者即可以伪造一个完全一样的请求以用户的身份达到恶意目的。</p>
+</div>
+<div class="section" id="id2">
+<h2>CSRF 类型<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>按请求类型，可分为 GET 型和 POST 型。</p>
+<p>按攻击方式，可分为 HTML CSRF、JSON HiJacking、Flash CSRF 等。</p>
+<div class="section" id="html-csrf">
+<h3>HTML CSRF<a class="headerlink" href="#html-csrf" title="Permalink to this headline">¶</a></h3>
+<p>利用 HTML 元素发出 CSRF 请求，这是最常见的 CSRF 攻击。</p>
+<p>HTML 中能设置 <code class="docutils literal"><span class="pre">src/href</span></code> 等链接地址的标签都可以发起一个 GET 请求，如：</p>
+<div class="code html highlight-default"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">link</span> <span class="n">href</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">img</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">img</span> <span class="n">lowsrc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">img</span> <span class="n">dynsrc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">meta</span> <span class="n">http</span><span class="o">-</span><span class="n">equiv</span><span class="o">=</span><span class="s2">&quot;refresh&quot;</span> <span class="n">content</span><span class="o">=</span><span class="s2">&quot;0; url=&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">iframe</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">frame</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">script</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">script</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">bgsound</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">bgsound</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">embed</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">bgsound</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">video</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">video</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">audio</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">audio</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">a</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">table</span> <span class="n">background</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">table</span><span class="o">&gt;</span>
+<span class="o">......</span>
+</pre></div>
+</div>
+<p>还有 CSS 样式中的：</p>
+<div class="code css highlight-default"><div class="highlight"><pre><span></span><span class="nd">@import</span> <span class="s2">&quot;&quot;</span>
+<span class="n">background</span><span class="p">:</span><span class="n">url</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="o">......</span>
+</pre></div>
+</div>
+<p>也可使用表单来对 POST 型的请求进行伪造。</p>
+<div class="code html highlight-default"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">form</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;http://www.a.com/register&quot;</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;register&quot;</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;post&quot;</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="n">text</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;username&quot;</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;&quot;</span> <span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="n">password</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;password&quot;</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;&quot;</span> <span class="o">/&gt;</span>
+<span class="o">&lt;/</span><span class="n">form</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">script</span><span class="o">&gt;</span>
+  <span class="n">var</span> <span class="n">f</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">getElementById</span><span class="p">(</span><span class="s2">&quot;register&quot;</span><span class="p">);</span>
+  <span class="n">f</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">;</span>
+  <span class="n">f</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="s2">&quot;passwd&quot;</span><span class="p">;</span>
+  <span class="n">f</span><span class="o">.</span><span class="n">submit</span><span class="p">();</span>
+<span class="o">&lt;/</span><span class="n">script</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="flash-csrf">
+<h3>Flash CSRF<a class="headerlink" href="#flash-csrf" title="Permalink to this headline">¶</a></h3>
+<p>Flash 也有各种方式可以发起网络请求，包括 POST。</p>
+<div class="code javascript highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">flash.net.URLRequest</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">flash.system.Security</span><span class="p">;</span>
+<span class="n">var</span> <span class="n">url</span> <span class="o">=</span> <span class="n">new</span> <span class="n">URLRequest</span><span class="p">(</span><span class="s2">&quot;http://target/page&quot;</span><span class="p">);</span>
+<span class="n">var</span> <span class="n">param</span> <span class="o">=</span> <span class="n">new</span> <span class="n">URLVariables</span><span class="p">();</span>
+<span class="n">param</span> <span class="o">=</span> <span class="s2">&quot;test=123&quot;</span><span class="p">;</span>
+<span class="n">url</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">;</span>
+<span class="n">url</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">param</span><span class="p">;</span>
+<span class="n">sendToURL</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+<span class="n">stop</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Flash 中还可以使用 <code class="docutils literal"><span class="pre">getURL</span></code>、<code class="docutils literal"><span class="pre">loadVars</span></code> 等方式发起请求。</p>
+<div class="code javascript highlight-default"><div class="highlight"><pre><span></span><span class="n">req</span> <span class="o">=</span> <span class="n">new</span> <span class="n">LoadVars</span><span class="p">();</span>
+<span class="n">req</span><span class="o">.</span><span class="n">addRequestHeader</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;bar&quot;</span><span class="p">);</span>
+<span class="n">req</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;http://target/page?v1=123&amp;v2=222&quot;</span><span class="p">,</span> <span class="s2">&quot;_blank&quot;</span><span class="p">,</span> <span class="s2">&quot;GET&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>CSRF 的防御<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h3>验证码<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>验证码强制用户必须与应用进行交互，才能完成最终请求。</p>
+</div>
+<div class="section" id="referer-check">
+<h3>Referer Check<a class="headerlink" href="#referer-check" title="Permalink to this headline">¶</a></h3>
+<p>检查请求是否来自合法的源。但服务器并非什么时候都能取得 Referer。</p>
+</div>
+<div class="section" id="token">
+<h3>Token<a class="headerlink" href="#token" title="Permalink to this headline">¶</a></h3>
+<p>CSRF 能够攻击成功的本质原因是重要操作的所有参数都可以被攻击者猜测得到。</p>
+<p>保持原参数不变，新增一个参数 Token，值是随机的，在实际应用中，Token 可以放在用户的 Session 中，或浏览器的 Cookies 中。</p>
+<p>Token 一定要足够随机。此外，Token 的目的不是为了防止重复提交，所以为了使用方便，可以允许在一个用户的有效生命周期内，在 Token 消耗掉之前都使用同一个 Token，但如果用户已经提交了表单，则这个 Token 已经消耗掉，应该重新生成 Token。</p>
+<p>Token 还应注意其保密性，如果 Token 出现在 URL 中，则可能会通过 Referer 泄露，应尽量把 Token 放在表单中，把敏感操作由 GET 改为 POST，以表单或 AJAX 的形式提交，避免 Token 泄露。</p>
+</div>
+</div>
 </div>
 
-          
-        </div>
 
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../index.html" title="index">
+          <img class="logo" src="../_static/logo.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../introduction/history.html">CTF 竞赛的历史</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction/mode.html">CTF 竞赛模式简介</a></li>
@@ -155,233 +241,49 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../executable/elf/index.html">ELF文件</a></li>
 </ul>
-
-            
-          
+</div>
         </div>
       </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">CTF Wiki</a>
-        
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-      <li>CSRF 跨站请求伪造</li>
     
     
-      <li class="wy-breadcrumbs-aside">
-        
+        <div class="sidebar-toggle-group no-js">
             
-            <a href="../_sources/web/csrf.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
     
-  </ul>
-
-  
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
-  <div class="section" id="csrf">
-<h1>CSRF 跨站请求伪造<a class="headerlink" href="#csrf" title="永久链接至标题">¶</a></h1>
-<div class="section" id="id1">
-<h2>CSRF 简介<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>CSRF，全名 Cross Site Request Forgery，跨站请求伪造。很容易将它与 XSS 混淆，对于 CSRF，其两个关键点是跨站点的请求与请求的伪造，由于目标站无 token 或 referer 防御，导致用户的敏感操作的每一个参数都可以被攻击者获知，攻击者即可以伪造一个完全一样的请求以用户的身份达到恶意目的。</p>
-</div>
-<div class="section" id="id2">
-<h2>CSRF 类型<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>按请求类型，可分为 GET 型和 POST 型。</p>
-<p>按攻击方式，可分为 HTML CSRF、JSON HiJacking、Flash CSRF 等。</p>
-<div class="section" id="html-csrf">
-<h3>HTML CSRF<a class="headerlink" href="#html-csrf" title="永久链接至标题">¶</a></h3>
-<p>利用 HTML 元素发出 CSRF 请求，这是最常见的 CSRF 攻击。</p>
-<p>HTML 中能设置 <code class="docutils literal"><span class="pre">src/href</span></code> 等链接地址的标签都可以发起一个 GET 请求，如：</p>
-<div class="code html highlight-default"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">link</span> <span class="n">href</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">img</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">img</span> <span class="n">lowsrc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">img</span> <span class="n">dynsrc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">meta</span> <span class="n">http</span><span class="o">-</span><span class="n">equiv</span><span class="o">=</span><span class="s2">&quot;refresh&quot;</span> <span class="n">content</span><span class="o">=</span><span class="s2">&quot;0; url=&quot;</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">iframe</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">frame</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">script</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">script</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">bgsound</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">bgsound</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">embed</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">bgsound</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">video</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">video</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">audio</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">audio</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">a</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">table</span> <span class="n">background</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">&gt;&lt;/</span><span class="n">table</span><span class="o">&gt;</span>
-<span class="o">......</span>
-</pre></div>
-</div>
-<p>还有 CSS 样式中的：</p>
-<div class="code css highlight-default"><div class="highlight"><pre><span></span><span class="nd">@import</span> <span class="s2">&quot;&quot;</span>
-<span class="n">background</span><span class="p">:</span><span class="n">url</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-<span class="o">......</span>
-</pre></div>
-</div>
-<p>也可使用表单来对 POST 型的请求进行伪造。</p>
-<div class="code html highlight-default"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">form</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;http://www.a.com/register&quot;</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;register&quot;</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;post&quot;</span><span class="o">&gt;</span>
-  <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="n">text</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;username&quot;</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;&quot;</span> <span class="o">/&gt;</span>
-  <span class="o">&lt;</span><span class="nb">input</span> <span class="nb">type</span><span class="o">=</span><span class="n">password</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;password&quot;</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;&quot;</span> <span class="o">/&gt;</span>
-<span class="o">&lt;/</span><span class="n">form</span><span class="o">&gt;</span>
-<span class="o">&lt;</span><span class="n">script</span><span class="o">&gt;</span>
-  <span class="n">var</span> <span class="n">f</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">getElementById</span><span class="p">(</span><span class="s2">&quot;register&quot;</span><span class="p">);</span>
-  <span class="n">f</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span><span class="p">;</span>
-  <span class="n">f</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="s2">&quot;passwd&quot;</span><span class="p">;</span>
-  <span class="n">f</span><span class="o">.</span><span class="n">submit</span><span class="p">();</span>
-<span class="o">&lt;/</span><span class="n">script</span><span class="o">&gt;</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="flash-csrf">
-<h3>Flash CSRF<a class="headerlink" href="#flash-csrf" title="永久链接至标题">¶</a></h3>
-<p>Flash 也有各种方式可以发起网络请求，包括 POST。</p>
-<div class="code javascript highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">flash.net.URLRequest</span><span class="p">;</span>
-<span class="kn">import</span> <span class="nn">flash.system.Security</span><span class="p">;</span>
-<span class="n">var</span> <span class="n">url</span> <span class="o">=</span> <span class="n">new</span> <span class="n">URLRequest</span><span class="p">(</span><span class="s2">&quot;http://target/page&quot;</span><span class="p">);</span>
-<span class="n">var</span> <span class="n">param</span> <span class="o">=</span> <span class="n">new</span> <span class="n">URLVariables</span><span class="p">();</span>
-<span class="n">param</span> <span class="o">=</span> <span class="s2">&quot;test=123&quot;</span><span class="p">;</span>
-<span class="n">url</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">;</span>
-<span class="n">url</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">param</span><span class="p">;</span>
-<span class="n">sendToURL</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
-<span class="n">stop</span><span class="p">();</span>
-</pre></div>
-</div>
-<p>Flash 中还可以使用 <code class="docutils literal"><span class="pre">getURL</span></code>、<code class="docutils literal"><span class="pre">loadVars</span></code> 等方式发起请求。</p>
-<div class="code javascript highlight-default"><div class="highlight"><pre><span></span><span class="n">req</span> <span class="o">=</span> <span class="n">new</span> <span class="n">LoadVars</span><span class="p">();</span>
-<span class="n">req</span><span class="o">.</span><span class="n">addRequestHeader</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;bar&quot;</span><span class="p">);</span>
-<span class="n">req</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;http://target/page?v1=123&amp;v2=222&quot;</span><span class="p">,</span> <span class="s2">&quot;_blank&quot;</span><span class="p">,</span> <span class="s2">&quot;GET&quot;</span><span class="p">);</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="id3">
-<h2>CSRF 的防御<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<div class="section" id="id4">
-<h3>验证码<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
-<p>验证码强制用户必须与应用进行交互，才能完成最终请求。</p>
-</div>
-<div class="section" id="referer-check">
-<h3>Referer Check<a class="headerlink" href="#referer-check" title="永久链接至标题">¶</a></h3>
-<p>检查请求是否来自合法的源。但服务器并非什么时候都能取得 Referer。</p>
-</div>
-<div class="section" id="token">
-<h3>Token<a class="headerlink" href="#token" title="永久链接至标题">¶</a></h3>
-<p>CSRF 能够攻击成功的本质原因是重要操作的所有参数都可以被攻击者猜测得到。</p>
-<p>保持原参数不变，新增一个参数 Token，值是随机的，在实际应用中，Token 可以放在用户的 Session 中，或浏览器的 Cookies 中。</p>
-<p>Token 一定要足够随机。此外，Token 的目的不是为了防止重复提交，所以为了使用方便，可以允许在一个用户的有效生命周期内，在 Token 消耗掉之前都使用同一个 Token，但如果用户已经提交了表单，则这个 Token 已经消耗掉，应该重新生成 Token。</p>
-<p>Token 还应注意其保密性，如果 Token 出现在 URL 中，则可能会通过 Referer 泄露，应尽量把 Token 放在表单中，把敏感操作由 GET 改为 POST，以表单或 AJAX 的形式提交，避免 Token 泄露。</p>
-</div>
-</div>
-</div>
-
-
-           </div>
-           <div class="articleComments">
-            
-           </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="ssrf.html" class="btn btn-neutral float-right" title="SSRF 服务端请求伪造" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="xss.html" class="btn btn-neutral" title="XSS 跨站脚本攻击" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+      <div class="clearer"></div>
     </div>
-  
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="ssrf.html" title="SSRF 服务端请求伪造"
+             >next</a></li>
+        <li class="right" >
+          <a href="xss.html" title="XSS 跨站脚本攻击"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
 
-  <hr/>
-
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2017, CTF Wiki.
-
-    </p>
-  </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="../_static/translations.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
 </html>

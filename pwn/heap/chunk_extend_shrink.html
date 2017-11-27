@@ -1,93 +1,322 @@
 
 
-<!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>chunk extend/shrink &mdash; CTF Wiki  文档</title>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>chunk extend/shrink &#8212; CTF Wiki v</title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="unlink" href="unlink.html" />
+    <link rel="prev" title="堆中的off-by-one" href="off_by_one.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="unlink.html" title="unlink"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="off_by_one.html" title="堆中的off-by-one"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">堆利用</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
   
 
-  
-  
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="索引"
-              href="../../genindex.html"/>
-        <link rel="search" title="搜索" href="../../search.html"/>
-    <link rel="top" title="CTF Wiki  文档" href="../../index.html"/>
-        <link rel="up" title="堆利用" href="index.html"/>
-        <link rel="next" title="unlink" href="unlink.html"/>
-        <link rel="prev" title="堆中的off-by-one" href="off_by_one.html"/> 
-
-  
-  <script src="../../_static/js/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-   
-  <div class="wy-grid-for-nav">
-
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
-
-          
-            <a href="../../index.html" class="icon icon-home"> CTF Wiki
-          
-
-          
-          </a>
-
-          
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
             
-            
-          
+  <div class="section" id="chunk-extend-shrink">
+<h1>chunk extend/shrink<a class="headerlink" href="#chunk-extend-shrink" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>介绍<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>chunk extend是堆上漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，chunk extend:raw-latex:<cite>shrink攻击同样需要有可以控制malloc</cite>_chunk的漏洞。这种利用方法需要以下的先决条件：</p>
+<ul class="simple">
+<li>程序中存在基于堆的漏洞</li>
+<li>漏洞可以使得malloc_chunk能够被攻击者控制</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>原理<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的各种属性的校验。</p>
+<p>在ptmalloc中，获取本chunk块大小的操作如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Get</span> <span class="n">size</span><span class="p">,</span> <span class="n">ignoring</span> <span class="n">use</span> <span class="n">bits</span> <span class="o">*/</span>
+<span class="c1">#define chunksize(p) (chunksize_nomask(p) &amp; ~(SIZE_BITS))</span>
 
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+<span class="o">/*</span> <span class="n">Like</span> <span class="n">chunksize</span><span class="p">,</span> <span class="n">but</span> <span class="n">do</span> <span class="ow">not</span> <span class="n">mask</span> <span class="n">SIZE_BITS</span><span class="o">.</span>  <span class="o">*/</span>
+<span class="c1">#define chunksize_nomask(p) ((p)-&gt;mchunk_size)</span>
+</pre></div>
+</div>
+<p>即取出 malloc_chunk 中的 size 字段并去除标志位。</p>
+<p>在 ptmalloc 中，获取下一 chunk 块地址的操作如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Ptr</span> <span class="n">to</span> <span class="nb">next</span> <span class="n">physical</span> <span class="n">malloc_chunk</span><span class="o">.</span> <span class="o">*/</span>
+<span class="c1">#define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))</span>
+</pre></div>
+</div>
+<p>即使用当前块指针加上当前块大小。</p>
+<p>在ptmalloc中，获取前一个chunk信息的操作如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">chunk</span> <span class="n">below</span> <span class="n">P</span><span class="o">.</span>  <span class="n">Only</span> <span class="n">valid</span> <span class="k">if</span> <span class="n">prev_inuse</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
+<span class="c1">#define prev_size(p) ((p)-&gt;mchunk_prev_size)</span>
+
+<span class="o">/*</span> <span class="n">Ptr</span> <span class="n">to</span> <span class="n">previous</span> <span class="n">physical</span> <span class="n">malloc_chunk</span><span class="o">.</span>  <span class="n">Only</span> <span class="n">valid</span> <span class="k">if</span> <span class="n">prev_inuse</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
+<span class="c1">#define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))</span>
+</pre></div>
+</div>
+<p>即通过malloc_chunk-&gt;prev_size获取前一块大小，然后使用本chunk地址减去所得大小。</p>
+<p>在ptmalloc，判断当前chunk是否是use状态的操作如下：</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#define inuse(p)</span>
+    <span class="p">((((</span><span class="n">mchunkptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">+</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">p</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_size</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">PREV_INUSE</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>即查看下一chunk的prev_inuse域，而下一块地址又如我们前面所述是根据当前chunk的size计算得出的。</p>
+<p>更多的操作详见<code class="docutils literal"><span class="pre">堆相关数据结构</span></code>一节。简而言之，extend:raw-latex:<cite>shrink `chunk利用就是通过对size:raw-latex:</cite>pre`_size域进行控制来实现的“放缩”利用。</p>
+</div>
+<div class="section" id="id3">
+<h2>基本示例1<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>简单来说，该利用的效果是通过更改第一个块的大小来控制第二个块的内容。 <strong>注意，我们的示例都是在64位的程序。如果想在32位下进行测试，可以把8字节偏移改为4字节</strong>。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>int main(void)
+{
+    void *ptr,*ptr1;
+
+    ptr=malloc(0x10);//分配第一个0x10的chunk
+    malloc(0x10);//分配第二个0x10的chunk
+
+    *(long long *)((long long)ptr-0x8)=0x41;//修改第一个块的size域
+
+    free(ptr);
+    ptr1=malloc(0x30);//实现extend，控制了第二个块的内容
+    return 0;
+}
+</pre></div>
+</div>
+<p>当两个malloc语句执行之后，堆的内存分布如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk</span> <span class="mi">1</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk</span> <span class="mi">2</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fc1</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
+</pre></div>
+</div>
+<p>之后，我们把chunk1的size域更改为0x41，0x41是因为chunk的size域包含了用户控制的大小和header的大小。如上所示正好大小为0x40。在题目中这一步可以由堆溢出得到。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000041</span> <span class="o">&lt;===</span> <span class="n">篡改大小</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fc1</span>
+</pre></div>
+</div>
+<p>执行free之后，我们可以看到chunk2与chunk1合成一个0x40大小的chunk，一起释放了。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>Fastbins[idx=0, size=0x10] 0x00
+Fastbins[idx=1, size=0x20] 0x00
+Fastbins[idx=2, size=0x30]  ←  Chunk(addr=0x602010, size=0x40, flags=PREV_INUSE)
+Fastbins[idx=3, size=0x40] 0x00
+Fastbins[idx=4, size=0x50] 0x00
+Fastbins[idx=5, size=0x60] 0x00
+Fastbins[idx=6, size=0x70] 0x00
+</pre></div>
+</div>
+<p>之后我们通过malloc(0x30)得到chunk1+chunk2的块，此时就可以直接控制chunk2中的内容，我们也把这种状态称为overlapping chunk。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span>   <span class="mh">0x400450</span> <span class="o">&lt;</span><span class="n">malloc</span><span class="nd">@plt</span><span class="o">&gt;</span>
+<span class="n">mov</span>    <span class="n">QWORD</span> <span class="n">PTR</span> <span class="p">[</span><span class="n">rbp</span><span class="o">-</span><span class="mh">0x8</span><span class="p">],</span> <span class="n">rax</span>
+
+<span class="n">rax</span> <span class="o">=</span> <span class="mh">0x602010</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>基本示例2<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>通过之前深入理解堆的实现部分的内容，我们得知处于 fastbin 范围的 chunk 释放后会被置入 fastbin 链表中，而不处于这个范围的chunk被释放后会被置于unsorted bin链表中。
+以下这个示例中，我们使用0x80这个大小来分配堆（作为对比fastbin的范围是0x70）</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span><span class="o">*</span><span class="n">ptr1</span><span class="p">;</span>
+
+    <span class="n">ptr</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x80</span><span class="p">);</span><span class="o">//</span><span class="n">分配第一个0x80的chunk1</span>
+    <span class="n">malloc</span><span class="p">(</span><span class="mh">0x10</span><span class="p">);</span><span class="o">//</span><span class="n">分配第二个0x10的chunk2</span>
+    <span class="n">malloc</span><span class="p">(</span><span class="mh">0x10</span><span class="p">);</span><span class="o">//</span><span class="n">防止与top</span> <span class="n">chunk合并</span>
+
+    <span class="o">*</span><span class="p">(</span><span class="nb">int</span> <span class="o">*</span><span class="p">)((</span><span class="nb">int</span><span class="p">)</span><span class="n">ptr</span><span class="o">-</span><span class="mh">0x8</span><span class="p">)</span><span class="o">=</span><span class="mh">0xb1</span><span class="p">;</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
+    <span class="n">ptr1</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0xa0</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>在这个例子中，因为分配的size不处于fastbin的范围，因此在释放时如果与top chunk相连会导致和top chunk合并。所以我们需要额外分配一个chunk，把释放的块与top chunk隔开。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x00000000000000b1</span> <span class="o">&lt;===</span><span class="n">chunk1</span> <span class="n">篡改size域</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602050</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602060</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602070</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602080</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602090</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk2</span>
+<span class="mh">0x6020a0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x6020b0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">防止合并的chunk</span>
+<span class="mh">0x6020c0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x6020d0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f31</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
+</pre></div>
+</div>
+<p>释放后，chunk1把chunk2的内容吞并掉并一起置入unsorted bin</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x00000000000000b1</span> <span class="o">&lt;===</span> <span class="n">被放入unsorted</span> <span class="nb">bin</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x00007ffff7dd1b78</span>  <span class="mh">0x00007ffff7dd1b78</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602050</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602060</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602070</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602080</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602090</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
+<span class="mh">0x6020a0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x6020b0</span><span class="p">:</span>   <span class="mh">0x00000000000000b0</span>  <span class="mh">0x0000000000000020</span> <span class="o">&lt;===</span> <span class="n">注意此处标记为空</span>
+<span class="mh">0x6020c0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x6020d0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f31</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span>[+] unsorted_bins[0]: fw=0x602000, bk=0x602000
+ →   Chunk(addr=0x602010, size=0xb0, flags=PREV_INUSE)
+</pre></div>
+</div>
+<p>再次进行分配的时候就会取回chunk1和chunk2的空间，此时我们就可以控制chunk2中的内容</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>    0x4005b0 &lt;main+74&gt;        call   0x400450 &lt;malloc@plt&gt;
+→   0x4005b5 &lt;main+79&gt;        mov    QWORD PTR [rbp-0x8], rax
+
+    rax : 0x0000000000602010
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>基本示例3<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>示例3是在示例2的基础上进行的，这次我们先释放chunk1，然后再修改处于unsorted bin中的chunk1的size域。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>int main()
+{
+    void *ptr,*ptr1;
+
+    ptr=malloc(0x80);//分配第一个0x80的chunk1
+    malloc(0x10);//分配第二个0x10的chunk2
+
+    free(ptr);//首先进行释放，使得chunk1进入unsorted bin
+
+    *(int *)((int)ptr-0x8)=0xb1;
+    ptr1=malloc(0xa0);
+}
+</pre></div>
+</div>
+<p>两次malloc之后的结果如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000091</span> <span class="o">&lt;===</span> <span class="n">chunk</span> <span class="mi">1</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602050</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602060</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602070</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602080</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602090</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk</span> <span class="mi">2</span>
+<span class="mh">0x6020a0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x6020b0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f51</span>
+</pre></div>
+</div>
+<p>我们首先释放chunk1使它进入unsorted bin中</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>     unsorted_bins[0]: fw=0x602000, bk=0x602000
+ →   Chunk(addr=0x602010, size=0x90, flags=PREV_INUSE)
+
+0x602000:   0x0000000000000000  0x0000000000000091 &lt;=== 进入unsorted bin
+0x602010:   0x00007ffff7dd1b78  0x00007ffff7dd1b78
+0x602020:   0x0000000000000000  0x0000000000000000
+0x602030:   0x0000000000000000  0x0000000000000000
+0x602040:   0x0000000000000000  0x0000000000000000
+0x602050:   0x0000000000000000  0x0000000000000000
+0x602060:   0x0000000000000000  0x0000000000000000
+0x602070:   0x0000000000000000  0x0000000000000000
+0x602080:   0x0000000000000000  0x0000000000000000
+0x602090:   0x0000000000000090  0x0000000000000020 &lt;=== chunk 2
+0x6020a0:   0x0000000000000000  0x0000000000000000
+0x6020b0:   0x0000000000000000  0x0000000000020f51 &lt;=== top chunk
+</pre></div>
+</div>
+<p>然后篡改chunk1的size域</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x00000000000000b1</span> <span class="o">&lt;===</span> <span class="n">size域被篡改</span>
+<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x00007ffff7dd1b78</span>  <span class="mh">0x00007ffff7dd1b78</span>
+<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602050</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602060</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602070</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602080</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x602090</span><span class="p">:</span>   <span class="mh">0x0000000000000090</span>  <span class="mh">0x0000000000000020</span>
+<span class="mh">0x6020a0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
+<span class="mh">0x6020b0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f51</span>
+</pre></div>
+</div>
+<p>此时再进行malloc分配就可以得到chunk1+chunk2的堆块，从而控制了chunk2的内容。</p>
+</div>
+<div class="section" id="extend-heap">
+<h2>extend heap可以做什么<a class="headerlink" href="#extend-heap" title="Permalink to this headline">¶</a></h2>
+<p>一般来说 extend heap并不能直接控制程序的执行流程。但是因为extend heap可以导致chunk
+overlapping，所以我们可以完整的控制这个堆块chunk中的内容。如果chunk存在字符串指针、函数指针等，就可以利用这些指针来进行信息泄漏和控制执行流程。如果不存在类似的域也可以通过控制chunk
+header中的数据来实现fastbin attack等利用。</p>
+</div>
 </div>
 
-          
-        </div>
 
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">CTF 介绍</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+        <p class="logo"><a href="../../index.html" title="index">
+          <img class="logo" src="../../_static/logo.png" alt="Logo"/>
+        </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
@@ -163,378 +392,50 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
 </ul>
-
-            
-          
+</div>
         </div>
       </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">CTF Wiki</a>
-        
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="index.html">堆利用</a> &raquo;</li>
-        
-      <li>chunk extend/shrink</li>
     
     
-      <li class="wy-breadcrumbs-aside">
-        
+        <div class="sidebar-toggle-group no-js">
             
-            <a href="../../_sources/pwn/heap/chunk_extend_shrink.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
     
-  </ul>
-
-  
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
-  <div class="section" id="chunk-extend-shrink">
-<h1>chunk extend/shrink<a class="headerlink" href="#chunk-extend-shrink" title="永久链接至标题">¶</a></h1>
-<div class="section" id="id1">
-<h2>介绍<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>chunk extend是堆上漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，chunk extend:raw-latex:<cite>shrink攻击同样需要有可以控制malloc</cite>_chunk的漏洞。这种利用方法需要以下的先决条件：</p>
-<ul class="simple">
-<li>程序中存在基于堆的漏洞</li>
-<li>漏洞可以使得malloc_chunk能够被攻击者控制</li>
-</ul>
-</div>
-<div class="section" id="id2">
-<h2>原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的各种属性的校验。</p>
-<p>在ptmalloc中，获取本chunk块大小的操作如下</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Get</span> <span class="n">size</span><span class="p">,</span> <span class="n">ignoring</span> <span class="n">use</span> <span class="n">bits</span> <span class="o">*/</span>
-<span class="c1">#define chunksize(p) (chunksize_nomask(p) &amp; ~(SIZE_BITS))</span>
-
-<span class="o">/*</span> <span class="n">Like</span> <span class="n">chunksize</span><span class="p">,</span> <span class="n">but</span> <span class="n">do</span> <span class="ow">not</span> <span class="n">mask</span> <span class="n">SIZE_BITS</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define chunksize_nomask(p) ((p)-&gt;mchunk_size)</span>
-</pre></div>
-</div>
-<p>即取出 malloc_chunk 中的 size 字段并去除标志位。</p>
-<p>在 ptmalloc 中，获取下一 chunk 块地址的操作如下</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Ptr</span> <span class="n">to</span> <span class="nb">next</span> <span class="n">physical</span> <span class="n">malloc_chunk</span><span class="o">.</span> <span class="o">*/</span>
-<span class="c1">#define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))</span>
-</pre></div>
-</div>
-<p>即使用当前块指针加上当前块大小。</p>
-<p>在ptmalloc中，获取前一个chunk信息的操作如下</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">chunk</span> <span class="n">below</span> <span class="n">P</span><span class="o">.</span>  <span class="n">Only</span> <span class="n">valid</span> <span class="k">if</span> <span class="n">prev_inuse</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define prev_size(p) ((p)-&gt;mchunk_prev_size)</span>
-
-<span class="o">/*</span> <span class="n">Ptr</span> <span class="n">to</span> <span class="n">previous</span> <span class="n">physical</span> <span class="n">malloc_chunk</span><span class="o">.</span>  <span class="n">Only</span> <span class="n">valid</span> <span class="k">if</span> <span class="n">prev_inuse</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
-<span class="c1">#define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))</span>
-</pre></div>
-</div>
-<p>即通过malloc_chunk-&gt;prev_size获取前一块大小，然后使用本chunk地址减去所得大小。</p>
-<p>在ptmalloc，判断当前chunk是否是use状态的操作如下：</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#define inuse(p)</span>
-    <span class="p">((((</span><span class="n">mchunkptr</span><span class="p">)(((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="o">+</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">p</span><span class="p">)))</span><span class="o">-&gt;</span><span class="n">mchunk_size</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">PREV_INUSE</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>即查看下一chunk的prev_inuse域，而下一块地址又如我们前面所述是根据当前chunk的size计算得出的。</p>
-<p>更多的操作详见<code class="docutils literal"><span class="pre">堆相关数据结构</span></code>一节。简而言之，extend:raw-latex:<cite>shrink `chunk利用就是通过对size:raw-latex:</cite>pre`_size域进行控制来实现的“放缩”利用。</p>
-</div>
-<div class="section" id="id3">
-<h2>基本示例1<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<p>简单来说，该利用的效果是通过更改第一个块的大小来控制第二个块的内容。 <strong>注意，我们的示例都是在64位的程序。如果想在32位下进行测试，可以把8字节偏移改为4字节</strong>。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>int main(void)
-{
-    void *ptr,*ptr1;
-
-    ptr=malloc(0x10);//分配第一个0x10的chunk
-    malloc(0x10);//分配第二个0x10的chunk
-
-    *(long long *)((long long)ptr-0x8)=0x41;//修改第一个块的size域
-
-    free(ptr);
-    ptr1=malloc(0x30);//实现extend，控制了第二个块的内容
-    return 0;
-}
-</pre></div>
-</div>
-<p>当两个malloc语句执行之后，堆的内存分布如下</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk</span> <span class="mi">1</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk</span> <span class="mi">2</span>
-<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fc1</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
-</pre></div>
-</div>
-<p>之后，我们把chunk1的size域更改为0x41，0x41是因为chunk的size域包含了用户控制的大小和header的大小。如上所示正好大小为0x40。在题目中这一步可以由堆溢出得到。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000041</span> <span class="o">&lt;===</span> <span class="n">篡改大小</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
-<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fc1</span>
-</pre></div>
-</div>
-<p>执行free之后，我们可以看到chunk2与chunk1合成一个0x40大小的chunk，一起释放了。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>Fastbins[idx=0, size=0x10] 0x00
-Fastbins[idx=1, size=0x20] 0x00
-Fastbins[idx=2, size=0x30]  ←  Chunk(addr=0x602010, size=0x40, flags=PREV_INUSE)
-Fastbins[idx=3, size=0x40] 0x00
-Fastbins[idx=4, size=0x50] 0x00
-Fastbins[idx=5, size=0x60] 0x00
-Fastbins[idx=6, size=0x70] 0x00
-</pre></div>
-</div>
-<p>之后我们通过malloc(0x30)得到chunk1+chunk2的块，此时就可以直接控制chunk2中的内容，我们也把这种状态称为overlapping chunk。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span>   <span class="mh">0x400450</span> <span class="o">&lt;</span><span class="n">malloc</span><span class="nd">@plt</span><span class="o">&gt;</span>
-<span class="n">mov</span>    <span class="n">QWORD</span> <span class="n">PTR</span> <span class="p">[</span><span class="n">rbp</span><span class="o">-</span><span class="mh">0x8</span><span class="p">],</span> <span class="n">rax</span>
-
-<span class="n">rax</span> <span class="o">=</span> <span class="mh">0x602010</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="id4">
-<h2>基本示例2<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
-<p>通过之前深入理解堆的实现部分的内容，我们得知处于 fastbin 范围的 chunk 释放后会被置入 fastbin 链表中，而不处于这个范围的chunk被释放后会被置于unsorted bin链表中。
-以下这个示例中，我们使用0x80这个大小来分配堆（作为对比fastbin的范围是0x70）</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="n">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span><span class="o">*</span><span class="n">ptr1</span><span class="p">;</span>
-
-    <span class="n">ptr</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x80</span><span class="p">);</span><span class="o">//</span><span class="n">分配第一个0x80的chunk1</span>
-    <span class="n">malloc</span><span class="p">(</span><span class="mh">0x10</span><span class="p">);</span><span class="o">//</span><span class="n">分配第二个0x10的chunk2</span>
-    <span class="n">malloc</span><span class="p">(</span><span class="mh">0x10</span><span class="p">);</span><span class="o">//</span><span class="n">防止与top</span> <span class="n">chunk合并</span>
-
-    <span class="o">*</span><span class="p">(</span><span class="nb">int</span> <span class="o">*</span><span class="p">)((</span><span class="nb">int</span><span class="p">)</span><span class="n">ptr</span><span class="o">-</span><span class="mh">0x8</span><span class="p">)</span><span class="o">=</span><span class="mh">0xb1</span><span class="p">;</span>
-    <span class="n">free</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
-    <span class="n">ptr1</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0xa0</span><span class="p">);</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>在这个例子中，因为分配的size不处于fastbin的范围，因此在释放时如果与top chunk相连会导致和top chunk合并。所以我们需要额外分配一个chunk，把释放的块与top chunk隔开。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x00000000000000b1</span> <span class="o">&lt;===</span><span class="n">chunk1</span> <span class="n">篡改size域</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602050</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602060</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602070</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602080</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602090</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk2</span>
-<span class="mh">0x6020a0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x6020b0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">防止合并的chunk</span>
-<span class="mh">0x6020c0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x6020d0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f31</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
-</pre></div>
-</div>
-<p>释放后，chunk1把chunk2的内容吞并掉并一起置入unsorted bin</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x00000000000000b1</span> <span class="o">&lt;===</span> <span class="n">被放入unsorted</span> <span class="nb">bin</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x00007ffff7dd1b78</span>  <span class="mh">0x00007ffff7dd1b78</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602050</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602060</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602070</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602080</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602090</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
-<span class="mh">0x6020a0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x6020b0</span><span class="p">:</span>   <span class="mh">0x00000000000000b0</span>  <span class="mh">0x0000000000000020</span> <span class="o">&lt;===</span> <span class="n">注意此处标记为空</span>
-<span class="mh">0x6020c0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x6020d0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f31</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
-</pre></div>
-</div>
-<div class="highlight-default"><div class="highlight"><pre><span></span>[+] unsorted_bins[0]: fw=0x602000, bk=0x602000
- →   Chunk(addr=0x602010, size=0xb0, flags=PREV_INUSE)
-</pre></div>
-</div>
-<p>再次进行分配的时候就会取回chunk1和chunk2的空间，此时我们就可以控制chunk2中的内容</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>    0x4005b0 &lt;main+74&gt;        call   0x400450 &lt;malloc@plt&gt;
-→   0x4005b5 &lt;main+79&gt;        mov    QWORD PTR [rbp-0x8], rax
-
-    rax : 0x0000000000602010
-</pre></div>
-</div>
-</div>
-<div class="section" id="id5">
-<h2>基本示例3<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h2>
-<p>示例3是在示例2的基础上进行的，这次我们先释放chunk1，然后再修改处于unsorted bin中的chunk1的size域。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>int main()
-{
-    void *ptr,*ptr1;
-
-    ptr=malloc(0x80);//分配第一个0x80的chunk1
-    malloc(0x10);//分配第二个0x10的chunk2
-
-    free(ptr);//首先进行释放，使得chunk1进入unsorted bin
-
-    *(int *)((int)ptr-0x8)=0xb1;
-    ptr1=malloc(0xa0);
-}
-</pre></div>
-</div>
-<p>两次malloc之后的结果如下</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000091</span> <span class="o">&lt;===</span> <span class="n">chunk</span> <span class="mi">1</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602050</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602060</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602070</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602080</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602090</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk</span> <span class="mi">2</span>
-<span class="mh">0x6020a0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x6020b0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f51</span>
-</pre></div>
-</div>
-<p>我们首先释放chunk1使它进入unsorted bin中</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>     unsorted_bins[0]: fw=0x602000, bk=0x602000
- →   Chunk(addr=0x602010, size=0x90, flags=PREV_INUSE)
-
-0x602000:   0x0000000000000000  0x0000000000000091 &lt;=== 进入unsorted bin
-0x602010:   0x00007ffff7dd1b78  0x00007ffff7dd1b78
-0x602020:   0x0000000000000000  0x0000000000000000
-0x602030:   0x0000000000000000  0x0000000000000000
-0x602040:   0x0000000000000000  0x0000000000000000
-0x602050:   0x0000000000000000  0x0000000000000000
-0x602060:   0x0000000000000000  0x0000000000000000
-0x602070:   0x0000000000000000  0x0000000000000000
-0x602080:   0x0000000000000000  0x0000000000000000
-0x602090:   0x0000000000000090  0x0000000000000020 &lt;=== chunk 2
-0x6020a0:   0x0000000000000000  0x0000000000000000
-0x6020b0:   0x0000000000000000  0x0000000000020f51 &lt;=== top chunk
-</pre></div>
-</div>
-<p>然后篡改chunk1的size域</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x00000000000000b1</span> <span class="o">&lt;===</span> <span class="n">size域被篡改</span>
-<span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x00007ffff7dd1b78</span>  <span class="mh">0x00007ffff7dd1b78</span>
-<span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602040</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602050</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602060</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602070</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602080</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x602090</span><span class="p">:</span>   <span class="mh">0x0000000000000090</span>  <span class="mh">0x0000000000000020</span>
-<span class="mh">0x6020a0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
-<span class="mh">0x6020b0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f51</span>
-</pre></div>
-</div>
-<p>此时再进行malloc分配就可以得到chunk1+chunk2的堆块，从而控制了chunk2的内容。</p>
-</div>
-<div class="section" id="extend-heap">
-<h2>extend heap可以做什么<a class="headerlink" href="#extend-heap" title="永久链接至标题">¶</a></h2>
-<p>一般来说 extend heap并不能直接控制程序的执行流程。但是因为extend heap可以导致chunk
-overlapping，所以我们可以完整的控制这个堆块chunk中的内容。如果chunk存在字符串指针、函数指针等，就可以利用这些指针来进行信息泄漏和控制执行流程。如果不存在类似的域也可以通过控制chunk
-header中的数据来实现fastbin attack等利用。</p>
-</div>
-</div>
-
-
-           </div>
-           <div class="articleComments">
-            
-           </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="unlink.html" class="btn btn-neutral float-right" title="unlink" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="off_by_one.html" class="btn btn-neutral" title="堆中的off-by-one" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+      <div class="clearer"></div>
     </div>
-  
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="unlink.html" title="unlink"
+             >next</a></li>
+        <li class="right" >
+          <a href="off_by_one.html" title="堆中的off-by-one"
+             >previous</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
-  <hr/>
+          <li class="nav-item nav-item-1"><a href="index.html" >堆利用</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
 
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2017, CTF Wiki.
-
-    </p>
-  </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
-      <script type="text/javascript" src="../../_static/translations.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
 </html>
