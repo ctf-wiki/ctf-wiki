@@ -1,12 +1,16 @@
-<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>深入理解堆的实现 &#8212; CTF Wiki  documentation</title>
-    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    <title>深入理解堆的实现 &#8212; CTF Wiki </title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/css/overflow.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
@@ -20,426 +24,47 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
-    <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
     <link rel="next" title="堆溢出" href="heapoverflow_basic.html" />
-    <link rel="prev" title="堆相关数据结构" href="heap_structure.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
-
+    <link rel="prev" title="堆相关数据结构" href="heap_structure.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             accesskey="C">toc</a></li>
+        <li class="right" >
+          <a href="heapoverflow_basic.html" title="堆溢出"
+             accesskey="N">下一页</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="heap_structure.html" title="堆相关数据结构"
+             accesskey="P">上一页</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../../index.html">
-          CTF Wiki</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
-
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
-            
-            
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../../index.html">Chapters <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><p class="caption"><span class="caption-text">CTF 介绍</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/history.html#id1">CTF 的起源</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/history.html#id2">早期 CTF 竞赛</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/history.html#id3">「现代」CTF 竞赛</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/mode.html#jeopardy">解题模式 - Jeopardy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/mode.html#belluminar">战争分享模式 - Belluminar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/mode.html#attack-defense">攻防模式 - Attack &amp; Defense</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/content.html">CTF 竞赛内容</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/content.html#id1">全国大学生信息安全竞赛 - 竞赛内容</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/experience.html">线下攻防经验小结</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/experience.html#gamebox">关注 Gamebox 状态</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/experience.html#id2">分清区段与端口</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/experience.html#patch">服务 patch 与防御</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/experience.html#id3">构造脚本框架快速展开攻击</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/experience.html#id4">比赛的一些策略</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/cgc.html">CGC 网络超级挑战赛</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/cgc.html#id1">性能评价指标</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/cgc.html#id2">明确核心任务</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/cgc.html#id3">分析方法</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/cgc.html#id4">CGC 经验总结</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../introduction/resources.html">学习资源</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/resources.html#id2">在线学习</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/resources.html#id3">信息资讯</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/resources.html#id4">论坛</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/resources.html#ctf-oj">CTF OJ</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../introduction/resources.html#ctf-writeup">CTF Writeup 集合</a></li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Misc</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/about.html">杂项简介</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/recon.html">信息搜集技术</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/recon.html#id2">网络信息搜集技巧</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/recon.html#id3">基本搜索技巧</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/recon.html#id4">地图和街景搜索</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/encode/index.html">编码分析</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/encode/communication.html">通信领域常用的编码</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/encode/computer.html">计算机相关的编码</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/encode/modern.html">现实世界中常用的编码</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/prefix.html">取证隐写</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/prefix.html#id2">前置技能</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/prefix.html#python">python操作二进制数据</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/prefix.html#id3">常用工具</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/picture/index.html">图片分析</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/picture/about.html">Image Analysis</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/picture/png.html">PNG</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/picture/jpg.html">JPG</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/picture/gif.html">GIF</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/archive/index.html">压缩包分析</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/archive/zip.html">Zip 格式</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/archive/rar.html">Rar 格式</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/audio/index.html">音频分析</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/audio/index.html#id2">常见手段</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/audio/index.html#mp3">MP3 隐写</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/audio/index.html#id5">波形</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/audio/index.html#id8">频谱</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/audio/index.html#lsb">LSB音频隐写</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/audio/index.html#id13">延伸</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/disk_memory/index.html">磁盘 / 内存分析</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/disk_memory/index.html#id2">常用工具</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/disk_memory/index.html#id3">磁盘</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/disk_memory/index.html#vmdk">VMDK</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/disk_memory/index.html#id4">内存</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/disk_memory/index.html#id5">题目</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/disk_memory/index.html#id6">参考</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/cap.html">流量分析</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/cap.html#id2">基本工具</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/cap.html#id4">常见题型</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/cap.html#id5">题目</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../misc/others.html">其他</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../misc/others.html#shellcode">shellcode</a></li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Crypto</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../crypto/introduction.html">密码学简介</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../crypto/classical/index.html">古典密码</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/classical/monoalphabetic.html">单表代换密码</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/classical/polyalphabetic.html">多表代换加密</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/classical/others.html">其他类型</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/classical/summary.html">总结</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../crypto/symmetric/index.html">对称加密</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/symmetric/des.html">DES</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/symmetric/aes.html">AES</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/symmetric/block_cipher.html">分组模式</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../crypto/asymmetric/index.html">非对称密码</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/asymmetric/rsa/rsa_index.html">RSA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/asymmetric/knapsack/knapsack_intro.html">背包加密</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/asymmetric/discrete_log/discrete_log_intro.html">离散对数相关</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../crypto/hash/index.html">哈希函数</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/hash/md5.html">MD5</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/hash/sha1.html">SHA1</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/hash/attack.html">Hash Attack</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../crypto/signature/index.html">数字签名</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/signature/rsa.html">RSA数字签名</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/signature/elgamal.html">ElGamal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/signature/dsa.html">DSA</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../crypto/others/others.html">证书格式</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/others/others.html#der">DER</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/others/others.html#pem">PEM</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../crypto/others/others.html#id2">格式转换</a></li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Web</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../web/index.html">WEB 简介</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#sql">SQL 注入</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#xss">XSS 跨站脚本攻击</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#id1">命令执行</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#id2">文件包含</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#csrf">CSRF 跨站请求伪造</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#ssrf">SSRF 服务器端请求伪造</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#id3">文件上传</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#id4">点击劫持</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#vps">VPS 虚拟专用服务器</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#id5">条件竞争</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#xxe">XXE</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#xsch">XSCH</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#id6">越权（功能级访问缺失）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#id7">敏感信息泄露</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#id8">错误的安全配置</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#waf">WAF</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#ids">IDS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/index.html#ips">IPS</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../web/sqli.html">SQL 注入</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../web/sqli.html#id1">基本概念</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/sqli.html#id2">常用工具</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/sqli.html#id3">注入常见参数</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/sqli.html#id4">语法参考与小技巧</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/sqli.html#id8">后台万能密码</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/sqli.html#id9">注入语句备忘</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/sqli.html#id19">参考资料</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../web/xss.html">XSS 跨站脚本攻击</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../web/xss.html#id1">XSS 简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/xss.html#id4">XSS 利用方式</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../web/csrf.html">CSRF 跨站请求伪造</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../web/csrf.html#id1">CSRF 简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/csrf.html#id2">CSRF 类型</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/csrf.html#id3">CSRF 的防御</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../web/ssrf.html">SSRF 服务端请求伪造</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../web/ssrf.html#id1">SSRF 简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/ssrf.html#id2">SSRF 漏洞出现的场景</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/ssrf.html#id3">常用的后端实现</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/ssrf.html#id4">阻碍 SSRF 漏洞利用的场景</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/ssrf.html#id5">利用 SSRF 进行端口扫描</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/ssrf.html#id7">协议利用</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/ssrf.html#id8">参考资料</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../web/php.html">PHP 代码审计</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../web/php.html#id1">文件包含</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/php.html#id4">文件上传</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/php.html#id6">变量覆盖</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/php.html#id8">命令执行</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/php.html#id14">PHP 特性</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../web/php.html#id19">寻找源代码备份</a></li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Reverse</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../reverse/index.html">Reverse Engineering</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../reverse/introduction.html">软件逆向工程简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reverse/x86assembly.html">施工中</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reverse/protection.html">施工中</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reverse/analysis/index.html">逆向分析核心技术</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../reverse/resources.html">施工中</a></li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Pwn</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../stackoverflow/index.html">栈溢出</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../stackoverflow/stack_intro.html">栈介绍</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../stackoverflow/stackoverflow_basic.html">栈溢出原理</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../stackoverflow/basic_rop.html">基本ROP</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../stackoverflow/others.html">花式栈溢出技巧</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../stackoverflow/medium_rop.html">中级ROP</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../stackoverflow/advanced_rop.html">高级ROP</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../fmtstr/index.html">格式化字符串漏洞</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../fmtstr/fmtstr_intro.html">格式化字符串漏洞原理介绍</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../fmtstr/fmtstr_exploit.html">格式化字符串漏洞利用</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../fmtstr/fmtstr_example.html">格式化字符串漏洞例子</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../fmtstr/fmtstr_detect.html">格式化字符串漏洞检测</a></li>
-</ul>
-</li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">堆利用</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="heap_basic_intro.html">基本堆介绍</a></li>
-<li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">深入理解堆的实现</a></li>
-<li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
-<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
-<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>
-</ul>
-</li>
-</ul>
-<p class="caption"><span class="caption-text">Executable</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../executable/elf/elf_structure.html">ELF文件基本结构</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../executable/elf/program_loading.html">程序加载</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../executable/elf/program_linking.html">程序链接</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../executable/elf/running_overview.html">程序执行流程</a></li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Sections <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">深入理解堆的实现</a><ul>
-<li><a class="reference internal" href="#id2">堆初始化</a></li>
-<li><a class="reference internal" href="#id3">创建堆</a></li>
-<li><a class="reference internal" href="#id4">双向链表相关操作</a><ul>
-<li><a class="reference internal" href="#unlink">unlink</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#id5">申请内存块</a><ul>
-<li><a class="reference internal" href="#libc-malloc">__libc_malloc</a></li>
-<li><a class="reference internal" href="#int-malloc">_int_malloc</a><ul>
-<li><a class="reference internal" href="#arena">arena</a></li>
-<li><a class="reference internal" href="#fast-bin">fast bin</a></li>
-<li><a class="reference internal" href="#small-bin">small bin</a></li>
-<li><a class="reference internal" href="#large-bin">large bin</a></li>
-<li><a class="reference internal" href="#id6">大循环</a><ul>
-<li><a class="reference internal" href="#unsort-bin">unsort bin 遍历</a></li>
-<li><a class="reference internal" href="#large-chunk">large chunk</a></li>
-<li><a class="reference internal" href="#chunk">寻找较大 chunk</a></li>
-<li><a class="reference internal" href="#top-chunk">使用top chunk</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#sysmalloc">sysmalloc</a></li>
-<li><a class="reference internal" href="#malloc-consolidate">malloc_consolidate</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#id7">释放内存块</a><ul>
-<li><a class="reference internal" href="#libc-free">__libc_free</a></li>
-<li><a class="reference internal" href="#int-free">_int_free</a><ul>
-<li><a class="reference internal" href="#id8">简单的检查</a></li>
-<li><a class="reference internal" href="#id9">fast bin</a></li>
-<li><a class="reference internal" href="#mmapchunk">合并非mmap的空闲chunk</a><ul>
-<li><a class="reference internal" href="#id10">轻量级的检测</a></li>
-<li><a class="reference internal" href="#id11">释放填充</a></li>
-<li><a class="reference internal" href="#id12">后向合并-合并低地址chunk</a></li>
-<li><a class="reference internal" href="#top-chunk-chunk">下一块不是top chunk-前向合并-合并高地址chunk</a></li>
-<li><a class="reference internal" href="#top-chunk-top-chunk">下一块是top chunk-合并到top chunk</a></li>
-<li><a class="reference internal" href="#id13">向系统返还内存</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#id14">释放mmap的chunk</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#systrim">systrim</a></li>
-<li><a class="reference internal" href="#heap-trim">heap_trim</a></li>
-<li><a class="reference internal" href="#munmap-chunk">munmap_chunk</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#id15">删除堆</a></li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-            
-            
-              
-                
-  <li>
-    <a href="heap_structure.html" title="Previous Chapter: 堆相关数据结构"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; 堆相关数据结构</span>
-    </a>
-  </li>
-  <li>
-    <a href="heapoverflow_basic.html" title="Next Chapter: 堆溢出"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">堆溢出 &raquo;</span>
-    </a>
-  </li>
-              
-            
-            
-            
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="../../_sources/pwn/heap/heap_implementation_details.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
-            
-          </ul>
-
-          
-            
-<form class="navbar-form navbar-right" action="../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
-          
-        </div>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">堆利用</a> &#187;</li> 
+      </ul>
     </div>
-  </div>
+    </div>
+  
 
-<div class="container">
-  <div class="row">
-    <div class="col-md-12 content">
-      
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
   <div class="section" id="id1">
-<h1>深入理解堆的实现<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<h1>深入理解堆的实现<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
 <p>简单想一下，对于任何堆的实现来说都离不开以下的问题</p>
 <ul class="simple">
 <li>宏观角度</li>
@@ -451,15 +76,15 @@
 </ul>
 <p>当然，这些都是一些比较高层面的想法，对于一些底层的实现来说，会有所不同。</p>
 <div class="section" id="id2">
-<h2>堆初始化<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2>堆初始化<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
 </div>
 <div class="section" id="id3">
-<h2>创建堆<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>创建堆<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
 </div>
 <div class="section" id="id4">
-<h2>双向链表相关操作<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>双向链表相关操作<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
 <div class="section" id="unlink">
-<h3>unlink<a class="headerlink" href="#unlink" title="Permalink to this headline">¶</a></h3>
+<h3>unlink<a class="headerlink" href="#unlink" title="永久链接至标题">¶</a></h3>
 <p>unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在以下地方使用</p>
 <ul class="simple">
 <li>malloc</li>
@@ -548,11 +173,11 @@ bk，从而可以很容易地达到任意地址写的效果。关于更加详细
 </div>
 </div>
 <div class="section" id="id5">
-<h2>申请内存块<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<h2>申请内存块<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h2>
 <p>我们之前也说了，我们会使用malloc函数来申请内存块，可是当我们仔细看看glibc的源码实现时，其实并没有malloc函数。其实该函数真正调用的是__libc_malloc函数。为什么不直接写个malloc函数呢，因为有时候我们可能需要不同的名称，而且该函数只是用来简单封装_int_malloc函数。_int_malloc
 才是申请内存块的核心。下面我们来仔细分析一下实现。</p>
 <div class="section" id="libc-malloc">
-<h3>__libc_malloc<a class="headerlink" href="#libc-malloc" title="Permalink to this headline">¶</a></h3>
+<h3>__libc_malloc<a class="headerlink" href="#libc-malloc" title="永久链接至标题">¶</a></h3>
 <ol class="arabic simple">
 <li>该函数会首先检查是否有内存分配函数的钩子函数。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。</li>
 </ol>
@@ -612,7 +237,7 @@ if (!victim &amp;&amp; ar_ptr != NULL) {
 </div>
 </div>
 <div class="section" id="int-malloc">
-<h3>_int_malloc<a class="headerlink" href="#int-malloc" title="Permalink to this headline">¶</a></h3>
+<h3>_int_malloc<a class="headerlink" href="#int-malloc" title="永久链接至标题">¶</a></h3>
 <p>_int_malloc 是内存分配的核心函数，其核心思路有以下几点</p>
 <ol class="arabic simple">
 <li>它根据用户申请的内存块的大小以及相应大小chunk使用的频度（fastbin chunk, small chunk, large chunk），依次实现了不同的分配方法。</li>
@@ -655,7 +280,7 @@ if (!victim &amp;&amp; ar_ptr != NULL) {
 </pre></div>
 </div>
 <div class="section" id="arena">
-<h4>arena<a class="headerlink" href="#arena" title="Permalink to this headline">¶</a></h4>
+<h4>arena<a class="headerlink" href="#arena" title="永久链接至标题">¶</a></h4>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">There</span> <span class="n">are</span> <span class="n">no</span> <span class="n">usable</span> <span class="n">arenas</span><span class="o">.</span>  <span class="n">Fall</span> <span class="n">back</span> <span class="n">to</span> <span class="n">sysmalloc</span> <span class="n">to</span> <span class="n">get</span> <span class="n">a</span> <span class="n">chunk</span> <span class="kn">from</span>
    <span class="nn">mmap.</span>  <span class="o">*/</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span><span class="p">(</span><span class="n">av</span> <span class="o">==</span> <span class="n">NULL</span><span class="p">))</span> <span class="p">{</span>
@@ -667,7 +292,7 @@ if (!victim &amp;&amp; ar_ptr != NULL) {
 </div>
 </div>
 <div class="section" id="fast-bin">
-<h4>fast bin<a class="headerlink" href="#fast-bin" title="Permalink to this headline">¶</a></h4>
+<h4>fast bin<a class="headerlink" href="#fast-bin" title="永久链接至标题">¶</a></h4>
 <p>如果申请的chunk的大小位于fastbin 范围内</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/*
    If the size qualifies as a fastbin, first check corresponding bin.
@@ -711,7 +336,7 @@ if ((unsigned long) (nb) &lt;= (unsigned long) (get_max_fast())) {
 </div>
 </div>
 <div class="section" id="small-bin">
-<h4>small bin<a class="headerlink" href="#small-bin" title="Permalink to this headline">¶</a></h4>
+<h4>small bin<a class="headerlink" href="#small-bin" title="永久链接至标题">¶</a></h4>
 <p>如果获取的内存块的范围处于small bin的范围，那么执行如下流程</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/*
    If a small request, check regular bin.  Since these &quot;smallbins&quot;
@@ -764,7 +389,7 @@ if (in_smallbin_range(nb)) {
 </div>
 </div>
 <div class="section" id="large-bin">
-<h4>large bin<a class="headerlink" href="#large-bin" title="Permalink to this headline">¶</a></h4>
+<h4>large bin<a class="headerlink" href="#large-bin" title="永久链接至标题">¶</a></h4>
 <p>large bin 的处理过程如下，程序并没有直接从相应的large bin中获取chunk，而是先将 fast bin中有可能能够合并的 chunk 先进行合并，然后再在下面的大循环中进行相应的处理。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/*
    If this is a large request, consolidate fastbins before continuing.
@@ -787,7 +412,7 @@ else {
 </div>
 </div>
 <div class="section" id="id6">
-<h4>大循环<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
+<h4>大循环<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h4>
 <p><strong>如果程序执行到了这里，那么说明 chunk 直接对应的 bin (fast bin， small bin) 没有 chunk可以直接满足需求 ，但是large chunk 则是在这个大循环中处理</strong>。为什么不直接从相应的 bin 中取出 large chunk
 呢？这是ptmalloc 的机制，他会在分配 large chunk 之前对堆中碎片 chunk 进行合并，以便减少堆中的碎片。</p>
 <p>在接下来的这个循环中，主要做了以下的操作</p>
@@ -816,7 +441,7 @@ bin的话，我们并没有对fast bin中的chunk进行合并，所以这里会�
 </pre></div>
 </div>
 <div class="section" id="unsort-bin">
-<h5>unsort bin 遍历<a class="headerlink" href="#unsort-bin" title="Permalink to this headline">¶</a></h5>
+<h5>unsort bin 遍历<a class="headerlink" href="#unsort-bin" title="永久链接至标题">¶</a></h5>
 <p>先考虑 unsorted bin，再考虑 last remainder ，但是对于small bin chunk 的请求会有所例外。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>// 如果unsorted bin不为空
 // First In First Out
@@ -995,7 +620,7 @@ bck-&gt;fd    = victim;
 </div>
 </div>
 <div class="section" id="large-chunk">
-<h5>large chunk<a class="headerlink" href="#large-chunk" title="Permalink to this headline">¶</a></h5>
+<h5>large chunk<a class="headerlink" href="#large-chunk" title="永久链接至标题">¶</a></h5>
 <p><strong>注： 或许会很奇怪，为什么这里没有先去看 small chunk是否满足新需求了呢？这是因为small bin 在循环之前已经判断过了，这里如果有的话，就是合并后的才出现chunk。但是在大循环外，large
 chunk只是单纯地找到其索引，所以觉得在这里直接先判断是合理的，而且也为了下面可以再去找较大的chunk。</strong></p>
 <p>如果请求的 chunk 在 large chunk 范围内，就在对应的bin中从小到大进行扫描，找到第一个合适的。</p>
@@ -1085,7 +710,7 @@ if (!in_smallbin_range(nb)) {
 </div>
 </div>
 <div class="section" id="chunk">
-<h5>寻找较大 chunk<a class="headerlink" href="#chunk" title="Permalink to this headline">¶</a></h5>
+<h5>寻找较大 chunk<a class="headerlink" href="#chunk" title="永久链接至标题">¶</a></h5>
 <p>如果走到了这里，那说明对于用户所需的chunk，不能直接从其对应的合适的bin中获取chunk，所以我们需要来查找比当前 bin 更大的 fast bin ， small bin 或者 large bin。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/*
    Search for a chunk by scanning bins, starting with next largest
@@ -1227,7 +852,7 @@ if (victim == bin) {
 </div>
 </div>
 <div class="section" id="top-chunk">
-<h5>使用top chunk<a class="headerlink" href="#top-chunk" title="Permalink to this headline">¶</a></h5>
+<h5>使用top chunk<a class="headerlink" href="#top-chunk" title="永久链接至标题">¶</a></h5>
 <p>如果所有的bin中的chunk都没有办法直接满足要求（即不合并），或者说都没有空闲的chunk。那么我们就只能使用top chunk了。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>use_top:
     /*
@@ -1292,18 +917,18 @@ if (victim == bin) {
 </div>
 </div>
 <div class="section" id="sysmalloc">
-<h3>sysmalloc<a class="headerlink" href="#sysmalloc" title="Permalink to this headline">¶</a></h3>
+<h3>sysmalloc<a class="headerlink" href="#sysmalloc" title="永久链接至标题">¶</a></h3>
 <p>有时间的时候再分析。</p>
 </div>
 <div class="section" id="malloc-consolidate">
-<h3>malloc_consolidate<a class="headerlink" href="#malloc-consolidate" title="Permalink to this headline">¶</a></h3>
+<h3>malloc_consolidate<a class="headerlink" href="#malloc-consolidate" title="永久链接至标题">¶</a></h3>
 <p>有时间的时候再分析。</p>
 </div>
 </div>
 <div class="section" id="id7">
-<h2>释放内存块<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<h2>释放内存块<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h2>
 <div class="section" id="libc-free">
-<h3>__libc_free<a class="headerlink" href="#libc-free" title="Permalink to this headline">¶</a></h3>
+<h3>__libc_free<a class="headerlink" href="#libc-free" title="永久链接至标题">¶</a></h3>
 <p>类似于malloc，free函数也有一层封装，命名格式与malloc基本类似。代码如下</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>void __libc_free(void *mem) {
     mstate    ar_ptr;
@@ -1344,7 +969,7 @@ if (victim == bin) {
 </div>
 </div>
 <div class="section" id="int-free">
-<h3>_int_free<a class="headerlink" href="#int-free" title="Permalink to this headline">¶</a></h3>
+<h3>_int_free<a class="headerlink" href="#int-free" title="永久链接至标题">¶</a></h3>
 <p>函数初始时刻定义了一系列的变量，并且得到了用户想要释放的chunk的大小</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="n">static</span> <span class="n">void</span> <span class="n">_int_free</span><span class="p">(</span><span class="n">mstate</span> <span class="n">av</span><span class="p">,</span> <span class="n">mchunkptr</span> <span class="n">p</span><span class="p">,</span> <span class="nb">int</span> <span class="n">have_lock</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">INTERNAL_SIZE_T</span> <span class="n">size</span><span class="p">;</span>      <span class="o">/*</span> <span class="n">its</span> <span class="n">size</span> <span class="o">*/</span>
@@ -1363,7 +988,7 @@ if (victim == bin) {
 </pre></div>
 </div>
 <div class="section" id="id8">
-<h4>简单的检查<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h4>
+<h4>简单的检查<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h4>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/* Little security check which won&#39;t hurt performance: the
    allocator never wrapps around at the end of the address space.
    Therefore we can exclude some size values which might appear
@@ -1401,7 +1026,7 @@ check_inuse_chunk(av, p);
 </div>
 </div>
 <div class="section" id="id9">
-<h4>fast bin<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h4>
+<h4>fast bin<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h4>
 <p>如果上述检查都合格的话，判断当前的bin是不是在fast bin范围内，在的话就插入到fastbin中</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>    /*
       If eligible, place chunk on a fastbin so it can be found
@@ -1487,7 +1112,7 @@ check_inuse_chunk(av, p);
 </div>
 </div>
 <div class="section" id="mmapchunk">
-<h4>合并非mmap的空闲chunk<a class="headerlink" href="#mmapchunk" title="Permalink to this headline">¶</a></h4>
+<h4>合并非mmap的空闲chunk<a class="headerlink" href="#mmapchunk" title="永久链接至标题">¶</a></h4>
 <p>首先我们先说一下为什么会合并chunk，这是为了避免heap中有太多零零碎碎的内存块，合并之后可以用来应对更大的内存块请求。合并的主要顺序为</p>
 <ul class="simple">
 <li>先考虑物理低地址空闲块</li>
@@ -1508,7 +1133,7 @@ else if (!chunk_is_mmapped(p)) {
 </pre></div>
 </div>
 <div class="section" id="id10">
-<h5>轻量级的检测<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h5>
+<h5>轻量级的检测<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h5>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/* Lightweight tests: check whether the block is already the
    top block.  */
 // 当前free的chunk不能是top chunk
@@ -1545,14 +1170,14 @@ if (__builtin_expect(chunksize_nomask(nextchunk) &lt;= 2 * SIZE_SZ, 0) ||
 </div>
 </div>
 <div class="section" id="id11">
-<h5>释放填充<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h5>
+<h5>释放填充<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h5>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span><span class="n">将</span> <span class="n">指针的mem部分全部设置为perturb_byte</span>
 <span class="n">free_perturb</span><span class="p">(</span><span class="n">chunk2mem</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">size</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">);</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="id12">
-<h5>后向合并-合并低地址chunk<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h5>
+<h5>后向合并-合并低地址chunk<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h5>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/* consolidate backward */
 if (!prev_inuse(p)) {
     prevsize = prev_size(p);
@@ -1564,7 +1189,7 @@ if (!prev_inuse(p)) {
 </div>
 </div>
 <div class="section" id="top-chunk-chunk">
-<h5>下一块不是top chunk-前向合并-合并高地址chunk<a class="headerlink" href="#top-chunk-chunk" title="Permalink to this headline">¶</a></h5>
+<h5>下一块不是top chunk-前向合并-合并高地址chunk<a class="headerlink" href="#top-chunk-chunk" title="永久链接至标题">¶</a></h5>
 <p>需要注意的是，如果下一块不是top chunk后，合并后的chunk会被放入到unsorted bin中。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>// 如果下一个chunk不是top chunk
 if (nextchunk != av-&gt;top) {
@@ -1611,7 +1236,7 @@ if (nextchunk != av-&gt;top) {
 </div>
 </div>
 <div class="section" id="top-chunk-top-chunk">
-<h5>下一块是top chunk-合并到top chunk<a class="headerlink" href="#top-chunk-top-chunk" title="Permalink to this headline">¶</a></h5>
+<h5>下一块是top chunk-合并到top chunk<a class="headerlink" href="#top-chunk-top-chunk" title="永久链接至标题">¶</a></h5>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/*
   If the chunk borders the current high end of memory,
   consolidate into top
@@ -1627,7 +1252,7 @@ else {
 </div>
 </div>
 <div class="section" id="id13">
-<h5>向系统返还内存<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h5>
+<h5>向系统返还内存<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h5>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>        /*
           If freeing a large space, consolidate possibly-surrounding
           chunks. Then, if the total unused topmost memory exceeds trim
@@ -1672,7 +1297,7 @@ else {
 </div>
 </div>
 <div class="section" id="id14">
-<h4>释放mmap的chunk<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h4>
+<h4>释放mmap的chunk<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h4>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
     <span class="o">//</span>  <span class="n">If</span> <span class="n">the</span> <span class="n">chunk</span> <span class="n">was</span> <span class="n">allocated</span> <span class="n">via</span> <span class="n">mmap</span><span class="p">,</span> <span class="n">release</span> <span class="n">via</span> <span class="n">munmap</span><span class="p">()</span><span class="o">.</span>
     <span class="n">munmap_chunk</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
@@ -1682,36 +1307,204 @@ else {
 </div>
 </div>
 <div class="section" id="systrim">
-<h3>systrim<a class="headerlink" href="#systrim" title="Permalink to this headline">¶</a></h3>
+<h3>systrim<a class="headerlink" href="#systrim" title="永久链接至标题">¶</a></h3>
 </div>
 <div class="section" id="heap-trim">
-<h3>heap_trim<a class="headerlink" href="#heap-trim" title="Permalink to this headline">¶</a></h3>
+<h3>heap_trim<a class="headerlink" href="#heap-trim" title="永久链接至标题">¶</a></h3>
 </div>
 <div class="section" id="munmap-chunk">
-<h3>munmap_chunk<a class="headerlink" href="#munmap-chunk" title="Permalink to this headline">¶</a></h3>
+<h3>munmap_chunk<a class="headerlink" href="#munmap-chunk" title="永久链接至标题">¶</a></h3>
 </div>
 </div>
 <div class="section" id="id15">
-<h2>删除堆<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
+<h2>删除堆<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h2>
 </div>
 </div>
 
 
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>快速搜索</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="转向" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../../index.html">內容目录</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/about.html">杂项简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/prefix.html">取证隐写</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/cap.html">流量分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reverse/index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">堆利用</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="heap_basic_intro.html">基本堆介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">深入理解堆的实现</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">堆初始化</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">创建堆</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">双向链表相关操作</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#unlink">unlink</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">申请内存块</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#libc-malloc">__libc_malloc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#int-malloc">_int_malloc</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#arena">arena</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#fast-bin">fast bin</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#small-bin">small bin</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#large-bin">large bin</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id6">大循环</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#unsort-bin">unsort bin 遍历</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#large-chunk">large chunk</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#chunk">寻找较大 chunk</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#top-chunk">使用top chunk</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#sysmalloc">sysmalloc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#malloc-consolidate">malloc_consolidate</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">释放内存块</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#libc-free">__libc_free</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#int-free">_int_free</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id8">简单的检查</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id9">fast bin</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#mmapchunk">合并非mmap的空闲chunk</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#id10">轻量级的检测</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#id11">释放填充</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#id12">后向合并-合并低地址chunk</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#top-chunk-chunk">下一块不是top chunk-前向合并-合并高地址chunk</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#top-chunk-top-chunk">下一块是top chunk-合并到top chunk</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#id13">向系统返还内存</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="#id14">释放mmap的chunk</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#systrim">systrim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#heap-trim">heap_trim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#munmap-chunk">munmap_chunk</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">删除堆</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
     </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
-    <p>
-        &copy; Copyright 2016-2017, CTF Wiki.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
-    </p>
-  </div>
-</footer>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             >toc</a></li>
+        <li class="right" >
+          <a href="heapoverflow_basic.html" title="堆溢出"
+             >下一页</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="heap_structure.html" title="堆相关数据结构"
+             >上一页</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="index.html" >堆利用</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      由 <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5 创建。
+    </div>
+    <!-- cloud_sptheme 1.4 -->
   </body>
 </html>
