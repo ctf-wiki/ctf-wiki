@@ -21,7 +21,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import os
-import sphinx_bootstrap_theme
+import cloud_sptheme as csp
 
 # -- General configuration ------------------------------------------------
 
@@ -32,7 +32,14 @@ import sphinx_bootstrap_theme
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.mathjax', 'sphinx.ext.githubpages']
+extensions = [
+    'sphinx.ext.mathjax',
+    'sphinx.ext.githubpages',
+    'cloud_sptheme.ext.relbar_links',
+    'cloud_sptheme.ext.escaped_samp_literals',
+    'cloud_sptheme.ext.issue_tracker',
+    'cloud_sptheme.ext.table_styling',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -69,7 +76,7 @@ release = ''
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-# language = 'zh_CN'
+language = 'zh_CN'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -88,82 +95,26 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+html_theme = 'cloud'
+html_theme_path = csp.get_theme_dir()
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
-html_theme_options = {
-    # Navigation bar title. (Default: ``project`` value)
-    # 'navbar_title': "Demo",
+html_theme_options = {}
+if csp.is_cloud_theme(html_theme):
+    html_theme_options.update(
+        roottarget=index_doc,
+        borderless_decor=True,
+        max_width="13in"
+    )
 
-    # Tab name for entire site. (Default: "Site")
-    'navbar_site_name': "Chapters",
-
-    # Tab name for the current pages TOC. (Default: "Page")
-    'navbar_pagenav_name': "Sections",
-
-    # A list of tuples containing pages or urls to link to.
-    # Valid tuples should be in the following forms:
-    #    (name, page)                 # a link to a page
-    #    (name, "/aa/bb", 1)          # a link to an arbitrary relative url
-    #    (name, "http://example.com", True) # arbitrary absolute url
-    # Note the "1" or "True" value above as the third argument to indicate
-    # an arbitrary url.
-    # 'navbar_links': [
-    #     ("Examples", "examples"),
-    #     ("Link", "http://example.com", True),
-    # ],
-
-    # Global TOC depth for "site" navbar tab. (Default: 1)
-    # Switching to -1 shows all levels.
-    'globaltoc_depth': 2,
-
-    # Include hidden TOCs in Site navbar?
-    #
-    # Note: If this is "false", you cannot have mixed ``:hidden:`` and
-    # non-hidden ``toctree`` directives in the same page, or else the build
-    # will break.
-    #
-    # Values: "true" (default) or "false"
-    'globaltoc_includehidden': "true",
-
-    # HTML navbar class (Default: "navbar") to attach to <div> element.
-    # For black navbar, do "navbar navbar-inverse"
-    'navbar_class': "navbar",
-
-    # Fix navigation bar to top of page?
-    # Values: "true" (default) or "false"
-    'navbar_fixed_top': "true",
-
-    # Location of link to source.
-    # Options are "nav" (default), "footer" or anything else to exclude.
-    'source_link_position': "nav",
-
-    # Bootswatch (http://bootswatch.com/) theme.
-    #
-    # Options are nothing (default) or the name of a valid theme such
-    # such as "cosmo" or "sandstone".
-    #
-    # Example themes:
-    # * flatly
-    # * sandstone (v3 only)
-    # * united
-    # * yeti (v3 only)
-    'bootswatch_theme': "sandstone",
-
-    # Choose Bootstrap version.
-    # Values: "3" (default) or "2" (in quotes)
-    'bootstrap_version': "3",
-}
-
-# html_title = "%s v%s" % (project, release)
-# html_short_title = "%s %s" % (project, version)
+html_title = "%s %s" % (project, release)
+html_short_title = "%s %s" % (project, version)
 html_favicon = os.path.join("_static", "img", "favicon.ico")
-# html_use_index = False
+html_use_index = False
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -175,7 +126,12 @@ html_static_path = ['_static']
 #
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-# html_sidebars = {'**': ['localtoc.html']}
+html_sidebars = {
+    '**': [
+        'searchbox.html',
+        'globaltoc.html'
+    ]
+}
 
 # -- Options for HTMLHelp output ------------------------------------------
 
@@ -232,9 +188,3 @@ texinfo_documents = [
      author, 'CTFWiki', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-def setup(app):
-    app.add_stylesheet("css/overflow.css") # also can be a full URL
-    # app.add_stylesheet("ANOTHER.css")
-    # app.add_stylesheet("AND_ANOTHER.css")
