@@ -188,3 +188,6 @@ texinfo_documents = [
      author, 'CTFWiki', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+def setup(app):
+    app.add_stylesheet("css/custom.css") # also can be a full URL
