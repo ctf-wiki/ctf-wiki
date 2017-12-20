@@ -24,7 +24,7 @@ ret2text即需要我们控制程序执行程序本身已有的的代码(.text)�
 
 其实，在栈溢出的基本原理中，我们已经介绍了这一简单的攻击。在这里，我们再给出另外一个例子，bamboofox中介绍ROP时使用的ret2text的例子。
 
-点击下载: `ret2text <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2text/ret2text>`_
+点击下载: `ret2text <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2text/ret2text>`__
 
 首先，查看一下程序的保护机制
 
@@ -145,7 +145,7 @@ ret2shellcode需要我们控制程序执行shellcode代码。而所谓的shellco
 
 这里我们以bamboofox中的ret2shellcode为例
 
-点击下载: `ret2shellcode <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2shellcode/ret2shellcode>`_
+点击下载: `ret2shellcode <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2shellcode/ret2shellcode>`__
 
 首先检测程序开启的保护
 
@@ -262,7 +262,7 @@ ret2syscall需要我们控制程序执行系统调用，获取shell。
 
 这里我们以bamboofox中的ret2syscall为例
 
-点击下载: `ret2syscall <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2syscall/rop>`_
+点击下载: `ret2syscall <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2syscall/rop>`__
 
 首先检测程序开启的保护
 
@@ -411,7 +411,6 @@ eax，那么现在eax的值就为10。但是我们并不能期待有一段连续
 题目
 ~~~~
 
-
 ret2libc
 --------
 
@@ -428,9 +427,9 @@ ret2libc即控制函数的执行 libc中的函数，通常是返回至某个函�
 例1
 ^^^
 
-这里我们以bamboofox中ret2libc1为例。
+这里我们以bamboofox中ret2libc1为例
 
-点击下载: `ret2libc1 <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc1/ret2libc1>`_
+点击下载: `ret2libc1 <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc1/ret2libc1>`__
 
 首先，我们可以检查一下程序的安全保护
 
@@ -498,7 +497,7 @@ ret2libc即控制函数的执行 libc中的函数，通常是返回至某个函�
 
 这里以bamboofox中的ret2libc2为例
 
-点击下载: `ret2libc2 <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc2/ret2libc2>`_
+点击下载: `ret2libc2 <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc2/ret2libc2>`__
 
 该题目与例1基本一致，只不过不再出现/bin/sh字符串，所以此次需要我们自己来读取字符串，所以我们需要两个gadgets，第一个控制程序读取字符串，第二个控制程序执行system(""/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的exp如下
 
@@ -526,7 +525,7 @@ ret2libc即控制函数的执行 libc中的函数，通常是返回至某个函�
 
 这里以bamboofox中的ret2libc3为例
 
-点击下载: `ret2libc3 <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc3/ret2libc3>`_
+点击下载: `ret2libc3 <https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc3/ret2libc3>`__
 
 在例2的基础上，再次将system函数的地址去掉。此时，我们需要同时找到system函数地址与/bin/sh字符串的地址。首先，查看安全保护
 
@@ -559,7 +558,7 @@ ret2libc即控制函数的执行 libc中的函数，通常是返回至某个函�
 
 -  system函数属于libc，而libc.so文件中的函数之间相对偏移是固定的。
 -  即使程序有ASLR保护，也只是针对于地址中间位进行随机，最低的12位并不会发生改变。而libc在github上有人进行收集，具体细节如下
--  https://github.com/niklasb/libc-database
+   -  https://github.com/niklasb/libc-database
 
 所以如果我们知道libc中某个函数的地址，那么我们就可以确定该程序利用的libc。进而我们就可以知道system函数的地址。
 
@@ -622,38 +621,38 @@ shell获取小结
 这里总结几种常见的获取shell的方式：
 
 -  执行shellcode，这一方面也会有不同的情况
--  可以直接返回shell
--  可以将shell返回到某一个端口
--  shellcode中字符有时候需要满足不同的需求
--  **注意，我们需要将shellcode写在可以执行的内存区域中。**
--  执行system("/bin/sh"),system('sh')等等
--  关于system的地址，参见下面章节的\ **地址寻找**\ 。
--  关于"/bin/sh"， “sh”
+   -  可以直接返回shell
+   -  可以将shell返回到某一个端口
+   -  shellcode中字符有时候需要满足不同的需求
+   -  **注意，我们需要将shellcode写在可以执行的内存区域中。**
+   -  执行system("/bin/sh"),system('sh')等等
+   -  关于system的地址，参见下面章节的\ **地址寻找**\ 。
+   -  关于"/bin/sh"， “sh”
 
-   -  首先寻找binary里面有没有对应的字符串,\ **比如说有flush函数，那就一定有sh了**
-   -  考虑个人读取对应字符串
-   -  libc中其实是有/bin/sh的
+      -  首先寻找binary里面有没有对应的字符串,\ **比如说有flush函数，那就一定有sh了**
+      -  考虑个人读取对应字符串
+      -  libc中其实是有/bin/sh的
 
--  优点
+   -  优点
 
-   -  只需要一个参数。
+      -  只需要一个参数。
 
--  缺点
+   -  缺点
 
-   -  **有可能因为破坏环境变量而无法执行。**
+      -  **有可能因为破坏环境变量而无法执行。**
 
 -  执行execve("/bin/sh",NULL,NULL)
--  前几条同system
--  优点
+   -  前几条同system
+   -  优点
 
-   -  几乎不受环境变量的影响。
+      -  几乎不受环境变量的影响。
 
--  缺点
+   -  缺点
 
-   -  **需要3个参数。**
+      -  **需要3个参数。**
 
 -  系统调用
--  系统调用号11
+   -  系统调用号11
 
 地址寻找小结
 ------------
@@ -729,7 +728,7 @@ ret2dl-resolve
 ----
 
 -  train.cs.nctu.edu.tw
--  rop
+   -  rop
 -  2013-PlaidCTF-ropasaurusrex
 -  Defcon 2015 Qualifier: R0pbaby
 
