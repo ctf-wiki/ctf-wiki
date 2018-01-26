@@ -35,9 +35,9 @@ what@kali:/tmp$ gnuplot
 
 ### 常用方法
 
-`tshark -r **.pcap –Y ** -T fields –e ** | **** > data`
+> `tshark -r **.pcap –Y ** -T fields –e ** | **** > data`
 
-```shell
+```
 Usage:
   -Y <display filter>      packet displaY filter in Wireshark display filter
                            syntax
@@ -47,12 +47,13 @@ Usage:
                            _ws.col.Info)
 ```
 
-通过`-Y`过滤器(与wireshark一致),然后用`-T filds -e`配合指定显示的数据段(比如usb.capdata),
+通过`-Y`过滤器(与wireshark一致),然后用`-T filds -e`配合指定显示的数据段(比如usb.capdata)
 
 - tips
     - `-e`后的参数不确定可以由wireshark右击需要的数据选中后得到
 
-### 例题一
+
+**例题**
 
 - [google-ctf-2016 : a-cute-stegosaurus-100](https://github.com/ctfs/write-ups-2016/tree/master/google-ctf-2016/forensics/a-cute-stegosaurus-100)
 
@@ -73,7 +74,7 @@ Usage:
 
 通过tshark提取`tcp.urg`然后去除0的字段,换行符转`,`直接转换成python的列表,转ascii即可得到flag
 
-```sh
+```
 ⚡ root@kali:  tshark -r Stego-200_urg.pcap -T fields -e  tcp.urgent_pointer|egrep -vi "^0$"|tr '\n' ','
 Running as user "root" and group "root". This could be dangerous.
 67,84,70,123,65,110,100,95,89,111,117,95,84,104,111,117,103,104,116,95,73,116,95,87,97,115,95,73,110,95,84,104,101,95,80,105,99,116,117,114,101,125,#
@@ -83,7 +84,7 @@ CTF{And_You_Thought_It_Was_In_The_Picture}
 ```
 
 
-### 例题二
+**例题**
 
 - <a href="file\stego-150_ears.xz">stego-150_ears.xz</a>
 
