@@ -1,0 +1,329 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>数据提取 &#8212; CTF Wiki </title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="压缩包分析" href="../archive/index.html" />
+    <link rel="prev" title="协议分析" href="protocols.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             accesskey="C">toc</a></li>
+        <li class="right" >
+          <a href="../archive/index.html" title="压缩包分析"
+             accesskey="N">下一页</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="protocols.html" title="协议分析"
+             accesskey="P">上一页</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">流量包分析</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>数据提取<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<p>这一块是流量包中另一个重点,通过对协议分析,找到了题目的关键点,如何提取数据成了接下来的关键问题</p>
+<div class="section" id="wireshark">
+<h2>wireshark<a class="headerlink" href="#wireshark" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id2">
+<h3>wireshark自动分析<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">file</span> <span class="pre">-&gt;</span> <span class="pre">export</span> <span class="pre">objects</span> <span class="pre">-&gt;</span> <span class="pre">http</span></code></p>
+</div>
+<div class="section" id="id3">
+<h3>手动数据提取<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">file-&gt;export</span> <span class="pre">selected</span> <span class="pre">Packet</span> <span class="pre">Bytes</span></code></p>
+</div>
+</div>
+<div class="section" id="tshark">
+<h2>tshark<a class="headerlink" href="#tshark" title="永久链接至标题">¶</a></h2>
+<p>tshark作为wireshark的命令行版,高效快捷是它的优点,配合其余命令行工具(awk,grep)等灵活使用,可以快速定位,提取数据从而省去了繁杂的脚本编写</p>
+<p>再看<code class="docutils literal"><span class="pre">Google</span> <span class="pre">CTF</span> <span class="pre">2016</span> <span class="pre">Forensic-200</span></code>这一题,可以通过tshark迅速完成解题</p>
+<ul class="simple">
+<li>Step 1 鼠标协议中数据提取</li>
+<li>Step 2 通过awk进行位置坐标转换</li>
+<li>Step 3 形成图形</li>
+</ul>
+<hr class="docutils" />
+<div class="section" id="id4">
+<h3>常用方法<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
+<blockquote>
+<div><code class="docutils literal"><span class="pre">tshark</span> <span class="pre">-r</span> <span class="pre">**.pcap</span> <span class="pre">–Y</span> <span class="pre">**</span> <span class="pre">-T</span> <span class="pre">fields</span> <span class="pre">–e</span> <span class="pre">**</span> <span class="pre">|</span> <span class="pre">****</span> <span class="pre">&gt;</span> <span class="pre">data</span></code></div></blockquote>
+<div class="highlight-default"><div class="highlight"><pre><span></span>Usage:
+  -Y &lt;display filter&gt;      packet displaY filter in Wireshark display filter
+                           syntax
+  -T pdml|ps|psml|json|jsonraw|ek|tabs|text|fields|?
+                           format of text output (def: text)
+  -e &lt;field&gt;               field to print if -Tfields selected (e.g. tcp.port,
+                           _ws.col.Info)
+</pre></div>
+</div>
+<p>通过<code class="docutils literal"><span class="pre">-Y</span></code>过滤器(与wireshark一致),然后用<code class="docutils literal"><span class="pre">-T</span> <span class="pre">filds</span> <span class="pre">-e</span></code>配合指定显示的数据段(比如usb.capdata)</p>
+<ul class="simple">
+<li>tips<ul>
+<li><code class="docutils literal"><span class="pre">-e</span></code>后的参数不确定可以由wireshark右击需要的数据选中后得到</li>
+</ul>
+</li>
+</ul>
+<p><strong>例题</strong></p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/ctfs/write-ups-2016/tree/master/google-ctf-2016/forensics/a-cute-stegosaurus-100">google-ctf-2016 : a-cute-stegosaurus-100</a></li>
+</ul>
+<p>这题的数据隐藏的非常巧妙,而且有一张图片混淆视听,需要对<code class="docutils literal"><span class="pre">tcp</span></code>协议非常熟悉,所以当时做出来的人并不多,全球只有26支队伍</p>
+<p>在<code class="docutils literal"><span class="pre">tcp</span></code>报文段中有6Bit的状态控制码,分别如下</p>
+<ul class="simple">
+<li>URG：紧急比特（urgent）,当URG＝1时，表明紧急指针字段有效,代表该封包为紧急封包。它告诉系统此报文段中有紧急数据，应尽快传送(相当于高优先级的数据)</li>
+<li>ACK：确认比特（Acknowledge）。只有当ACK＝1时确认号字段才有效,代表这个封包为确认封包。当ACK＝0时，确认号无效。</li>
+<li>PSH：（Push function）若为1时，代表要求对方立即传送缓冲区内的其他对应封包，而无需等缓冲满了才送。</li>
+<li>RST：复位比特(Reset) ,当RST＝1时，表明TCP连接中出现严重差错（如由于主机崩溃或其他原因），必须释放连接，然后再重新建立运输连接。</li>
+<li>SYN：同步比特(Synchronous)，SYN置为1，就表示这是一个连接请求或连接接受报文,通常带有 SYN 标志的封包表示『主动』要连接到对方的意思。。</li>
+<li>FIN：终止比特(Final)，用来释放一个连接。当FIN＝1时，表明此报文段的发送端的数据已发送完毕，并要求释放运输连接。</li>
+</ul>
+<p>而这里的<code class="docutils literal"><span class="pre">tcp.urg</span></code>却为</p>
+<div class="figure">
+<img alt="urg" src="../../_images/urg.png" />
+</div>
+<p>通过tshark提取<code class="docutils literal"><span class="pre">tcp.urg</span></code>然后去除0的字段,换行符转<code class="docutils literal"><span class="pre">,</span></code>直接转换成python的列表,转ascii即可得到flag</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>⚡ root@kali:  tshark -r Stego-200_urg.pcap -T fields -e  tcp.urgent_pointer|egrep -vi &quot;^0$&quot;|tr &#39;\n&#39; &#39;,&#39;
+Running as user &quot;root&quot; and group &quot;root&quot;. This could be dangerous.
+67,84,70,123,65,110,100,95,89,111,117,95,84,104,111,117,103,104,116,95,73,116,95,87,97,115,95,73,110,95,84,104,101,95,80,105,99,116,117,114,101,125,#
+...
+&gt;&gt;&gt; print &quot;&quot;.join([chr(x) for x in arr]) #python转换ascii
+CTF{And_You_Thought_It_Was_In_The_Picture}
+</pre></div>
+</div>
+<p><strong>例题</strong></p>
+<ul class="simple">
+<li>stego-150_ears.xz</li>
+<li>Step 1</li>
+</ul>
+<p>通过<code class="docutils literal"><span class="pre">file</span></code>命令不断解压得到pcap文件</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  Desktop file ears
+ears: XZ compressed data
+➜  Desktop unxz &lt; ears &gt; file_1
+➜  Desktop file file_1
+file_1: POSIX tar archive
+➜  Desktop 7z x file_1
+
+7-Zip [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21
+p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,1 CPU Intel(R) Core(TM) i7-4710MQ CPU @ 2.50GHz (306C3),ASM,AES-NI)
+
+    Scanning the drive for archives:
+    1 file, 4263936 bytes (4164 KiB)
+
+    Extracting archive: file_1
+    --
+    Path = file_1
+    Type = tar
+    Physical Size = 4263936
+    Headers Size = 1536
+    Code Page = UTF-8
+
+    Everything is Ok
+
+    Size:       4262272
+    Compressed: 4263936
+</pre></div>
+</div>
+<ul class="simple">
+<li>Step 2</li>
+</ul>
+<p>通过wireshark发现dns中回应名字存在异常，组成16进制的png文件</p>
+<p>采用tshark进行提取,提取dns中的数据,筛选具体报文形式<code class="docutils literal"><span class="pre">\w{4,}.asis.io</span></code></p>
+<p><code class="docutils literal"><span class="pre">tshark</span> <span class="pre">-r</span> <span class="pre">forensic_175_d78a42edc01c9104653776f16813d9e5</span> <span class="pre">-T</span> <span class="pre">fields</span> <span class="pre">-e</span> <span class="pre">dns.qry.name</span> <span class="pre">-e</span> <span class="pre">dns.flags|grep</span> <span class="pre">8180|awk</span> <span class="pre">'{if</span> <span class="pre">($1~/\w{4,}.asis.io/)</span> <span class="pre">print</span> <span class="pre">$1}'|awk</span> <span class="pre">-F</span> <span class="pre">'.'</span> <span class="pre">'{print</span> <span class="pre">$1}'|tr</span> <span class="pre">-d</span> <span class="pre">'\n'</span> <span class="pre">&gt;</span> <span class="pre">png</span></code></p>
+<ul class="simple">
+<li>Step 3</li>
+</ul>
+<p>16进制还原图片</p>
+<p><code class="docutils literal"><span class="pre">xxd</span> <span class="pre">-p</span> <span class="pre">-r</span> <span class="pre">png</span> <span class="pre">flag</span></code></p>
+</div>
+</div>
+<div class="section" id="python-script">
+<h2>Python Script<a class="headerlink" href="#python-script" title="永久链接至标题">¶</a></h2>
+<p>TODO</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>快速搜索</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="转向" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../../index.html">內容目录</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../about.html">杂项简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prefix.html">取证隐写</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../picture/index.html">图片分析</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">流量包分析</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="fix.html">PCAP文件修复</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocols.html">协议分析</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">数据提取</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#wireshark">wireshark</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">wireshark自动分析</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">手动数据提取</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#tshark">tshark</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id4">常用方法</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#python-script">Python Script</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reverse/index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             >toc</a></li>
+        <li class="right" >
+          <a href="../archive/index.html" title="压缩包分析"
+             >下一页</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="protocols.html" title="协议分析"
+             >上一页</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="index.html" >流量包分析</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      由 <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6 创建。
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>
