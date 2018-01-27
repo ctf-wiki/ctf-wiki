@@ -8,7 +8,7 @@ Reverse Engineering
    :caption: Reverse Engineering
 
    introduction.rst
-   x86assembly.rst
-   protection.rst
-   analysis/index.rst
-   resources.rst
+   unpack/index.rst
+   unicorn/index.rst
+   anti-debug/index.rst
+

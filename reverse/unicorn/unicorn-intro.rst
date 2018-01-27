@@ -1,5 +1,5 @@
-Unicorn引擎指南
-===============
+Unicorn Engine简介
+==================
 
 什么是Unicorn引擎
 -----------------
@@ -162,7 +162,3 @@ Unicorn将会默认以无穷时间和无穷指令数目的条件来模拟执行�
 -  `Unicorn Official Site <http://www.unicorn-engine.org/>`__
 -  `Quick tutorial on programming with Unicorn - with C &
    Python. <http://www.unicorn-engine.org/docs/>`__
--  `Unicorn Engine
-   tutorial <http://eternal.red/2018/unicorn-engine-tutorial/>`__
--  `Avatao tool tutorials:
-   Unicorn <https://platform.avatao.com/paths/8e720072-9169-4d4c-9569-c330ce7fd947/challenges/28f5ae81-6a01-11e6-bdf4-0800200c9a66>`__
