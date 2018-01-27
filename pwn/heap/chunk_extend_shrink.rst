@@ -11,12 +11,12 @@ chunk extend/shrink
 chunk extend是堆上漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，chunk extend:raw-latex:`\shrink攻击同样需要有可以控制malloc`\_chunk的漏洞。这种利用方法需要以下的先决条件：
 
 -  程序中存在基于堆的漏洞
--  漏洞可以使得malloc\_chunk能够被攻击者控制
+-  漏洞可以使得malloc_chunk能够被攻击者控制
 
 原理
 ----
 
-extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc\_chunk的各种属性的校验。
+extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的各种属性的校验。
 
 在ptmalloc中，获取本chunk块大小的操作如下
 
@@ -28,7 +28,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc\_chunk�
     /* Like chunksize, but do not mask SIZE_BITS.  */
     #define chunksize_nomask(p) ((p)->mchunk_size)
 
-即取出 malloc\_chunk 中的 size 字段并去除标志位。
+即取出 malloc_chunk 中的 size 字段并去除标志位。
 
 在 ptmalloc 中，获取下一 chunk 块地址的操作如下
 
@@ -49,7 +49,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc\_chunk�
     /* Ptr to previous physical malloc_chunk.  Only valid if prev_inuse (P).  */
     #define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))
 
-即通过malloc\_chunk->prev\_size获取前一块大小，然后使用本chunk地址减去所得大小。
+即通过malloc_chunk->prev_size获取前一块大小，然后使用本chunk地址减去所得大小。
 
 在ptmalloc，判断当前chunk是否是use状态的操作如下：
 
@@ -58,7 +58,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc\_chunk�
     #define inuse(p)
         ((((mchunkptr)(((char *) (p)) + chunksize(p)))->mchunk_size) & PREV_INUSE)
 
-即查看下一chunk的prev\_inuse域，而下一块地址又如我们前面所述是根据当前chunk的size计算得出的。
+即查看下一chunk的prev_inuse域，而下一块地址又如我们前面所述是根据当前chunk的size计算得出的。
 
 更多的操作详见\ ``堆相关数据结构``\ 一节。简而言之，extend:raw-latex:`\shrink `chunk利用就是通过对size:raw-latex:`\pre`\_size域进行控制来实现的“放缩”利用。
 
