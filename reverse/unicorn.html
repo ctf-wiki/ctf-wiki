@@ -1,0 +1,331 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Unicorn引擎指南 &#8212; CTF Wiki </title>
+    <link rel="stylesheet" href="../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/translations.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="search" title="搜索" href="../search.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../index.html" title="內容目录"
+             accesskey="C">toc</a></li>
+    <li><a href="../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="unicorn">
+<h1>Unicorn引擎指南<a class="headerlink" href="#unicorn" title="永久链接至标题">¶</a></h1>
+<div class="section" id="id1">
+<h2>什么是Unicorn引擎<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
+<p>Unicorn是一个轻量级, 多平台, 多架构的CPU模拟器框架.
+我们可以更好地关注CPU操作, 忽略机器设备的差异. 想象一下,
+我们可以将其应用于这些情景:
+比如我们单纯只是需要模拟代码的执行而非需要一个真的CPU去完成那些操作,
+又或者想要更安全地分析恶意代码, 检测病毒特征,
+或者想要在逆向过程中验证某些代码的含义.
+使用CPU模拟器可以很好地帮助我们提供便捷.</p>
+<p>它的亮点(这也归功于Unicorn是基于<a class="reference external" href="http://www.qemu.org">qemu</a>而开发的)有:</p>
+<ul class="simple">
+<li>支持多种架构: Arm, Arm64 (Armv8), M68K, Mips, Sparc, &amp; X86 (include
+X86_64).</li>
+<li>对Windows和<a href="#id2"><span class="problematic" id="id3">*</span></a>nix系统(已确认包含Mac OSX, Linux, <a href="#id4"><span class="problematic" id="id5">*</span></a>BSD &amp;
+Solaris)的原生支持</li>
+<li>具有平台独立且简洁易于使用的API</li>
+<li>使用JIT编译技术, 性能表现优异</li>
+</ul>
+<p>你可以在<a class="reference external" href="http://www.unicorn-engine.org/BHUSA2015-unicorn.pdf">Black Hat USA
+2015</a>获悉有关Unicorn引擎的更多技术细节.
+Github项目主页: <a class="reference external" href="https://github.com/unicorn-engine/unicorn">unicorn</a></p>
+<p>尽管它不同寻常, 但它无法模拟整个程序或系统, 也不支持系统调用.
+你需要手动映射内存并写入数据进去, 随后你才能从指定地址开始模拟.</p>
+</div>
+<div class="section" id="id6">
+<h2>应用的情景<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h2>
+<p>什么时候能够用到Unicorn引擎呢?</p>
+<ul class="simple">
+<li>你可以调用恶意软件中一些有趣的函数, 而不用创建一个有害的进程.</li>
+<li>用于CTF竞赛</li>
+<li>用于模糊测试</li>
+<li>用于gdb插件, 基于代码模拟执行的插件</li>
+<li>模拟执行一些混淆代码</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h2>如何安装<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h2>
+<p>安装Unicorn最简单的方式就是使用pip安装,
+只要在命令行中运行以下命令即可(这是适合于喜爱用python的用户的安装方法,
+对于那些想要使用C的用户, 则需要去官网查看文档编译源码包):</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">unicorn</span>
+</pre></div>
+</div>
+<p>但如果你想用源代码进行本地编译的话,
+你需要在<a class="reference external" href="http://www.unicorn-engine.org/download/">下载</a>页面中下载源代码包,
+然后可以按照以下命令执行:</p>
+<ul class="simple">
+<li>*nix 平台用户</li>
+</ul>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>$ cd bindings/python
+$ sudo make install
+</pre></div>
+</div>
+<ul class="simple">
+<li>Windows平台用户</li>
+</ul>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">bindings</span><span class="o">/</span><span class="n">python</span>
+<span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+</pre></div>
+</div>
+<p>对于Windows, 在执行完上述命令后,
+还需要将<a class="reference external" href="http://www.unicorn-engine.org/download/">下载</a>页面的<code class="docutils literal"><span class="pre">Windows</span> <span class="pre">core</span> <span class="pre">engine</span></code>的所有dll文件复制到<code class="docutils literal"><span class="pre">C:\locationtopython\Lib\site-packages\unicorn</span></code>位置处.</p>
+</div>
+<div class="section" id="id8">
+<h2>使用unicorn的快速指南<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h2>
+<p>我们将会展示如何使用python调用unicorn的api以及它是如何轻易地模拟二进制代码.
+当然这里用的api仅是一小部分, 但对于入门已经足够了.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span> <span class="mi">1</span> <span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+ <span class="mi">2</span> <span class="kn">from</span> <span class="nn">unicorn</span> <span class="k">import</span> <span class="o">*</span>
+ <span class="mi">3</span> <span class="kn">from</span> <span class="nn">unicorn.x86_const</span> <span class="k">import</span> <span class="o">*</span>
+ <span class="mi">4</span>
+ <span class="mi">5</span> <span class="c1"># code to be emulated</span>
+ <span class="mi">6</span> <span class="n">X86_CODE32</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x41\x4a</span><span class="s2">&quot;</span> <span class="c1"># INC ecx; DEC edx</span>
+ <span class="mi">7</span>
+ <span class="mi">8</span> <span class="c1"># memory address where emulation starts</span>
+ <span class="mi">9</span> <span class="n">ADDRESS</span> <span class="o">=</span> <span class="mh">0x1000000</span>
+<span class="mi">10</span>
+<span class="mi">11</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Emulate i386 code&quot;</span><span class="p">)</span>
+<span class="mi">12</span> <span class="k">try</span><span class="p">:</span>
+<span class="mi">13</span>     <span class="c1"># Initialize emulator in X86-32bit mode</span>
+<span class="mi">14</span>     <span class="n">mu</span> <span class="o">=</span> <span class="n">Uc</span><span class="p">(</span><span class="n">UC_ARCH_X86</span><span class="p">,</span> <span class="n">UC_MODE_32</span><span class="p">)</span>
+<span class="mi">15</span>
+<span class="mi">16</span>     <span class="c1"># map 2MB memory for this emulation</span>
+<span class="mi">17</span>     <span class="n">mu</span><span class="o">.</span><span class="n">mem_map</span><span class="p">(</span><span class="n">ADDRESS</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span>
+<span class="mi">18</span>
+<span class="mi">19</span>     <span class="c1"># write machine code to be emulated to memory</span>
+<span class="mi">20</span>     <span class="n">mu</span><span class="o">.</span><span class="n">mem_write</span><span class="p">(</span><span class="n">ADDRESS</span><span class="p">,</span> <span class="n">X86_CODE32</span><span class="p">)</span>
+<span class="mi">21</span>
+<span class="mi">22</span>     <span class="c1"># initialize machine registers</span>
+<span class="mi">23</span>     <span class="n">mu</span><span class="o">.</span><span class="n">reg_write</span><span class="p">(</span><span class="n">UC_X86_REG_ECX</span><span class="p">,</span> <span class="mh">0x1234</span><span class="p">)</span>
+<span class="mi">24</span>     <span class="n">mu</span><span class="o">.</span><span class="n">reg_write</span><span class="p">(</span><span class="n">UC_X86_REG_EDX</span><span class="p">,</span> <span class="mh">0x7890</span><span class="p">)</span>
+<span class="mi">25</span>
+<span class="mi">26</span>     <span class="c1"># emulate code in infinite time &amp; unlimited instructions</span>
+<span class="mi">27</span>     <span class="n">mu</span><span class="o">.</span><span class="n">emu_start</span><span class="p">(</span><span class="n">ADDRESS</span><span class="p">,</span> <span class="n">ADDRESS</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">X86_CODE32</span><span class="p">))</span>
+<span class="mi">28</span>
+<span class="mi">29</span>     <span class="c1"># now print out some registers</span>
+<span class="mi">30</span>     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Emulation done. Below is the CPU context&quot;</span><span class="p">)</span>
+<span class="mi">31</span>
+<span class="mi">32</span>     <span class="n">r_ecx</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">reg_read</span><span class="p">(</span><span class="n">UC_X86_REG_ECX</span><span class="p">)</span>
+<span class="mi">33</span>     <span class="n">r_edx</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">reg_read</span><span class="p">(</span><span class="n">UC_X86_REG_EDX</span><span class="p">)</span>
+<span class="mi">34</span>     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; ECX = 0x</span><span class="si">%x</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">r_ecx</span><span class="p">)</span>
+<span class="mi">35</span>     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; EDX = 0x</span><span class="si">%x</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">r_edx</span><span class="p">)</span>
+<span class="mi">36</span>
+<span class="mi">37</span> <span class="k">except</span> <span class="n">UcError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<span class="mi">38</span>     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>运行结果如下:</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>$ python test1.py
+Emulate i386 code
+Emulation done. Below is the CPU context
+&gt;&gt;&gt; ECX = 0x1235
+&gt;&gt;&gt; EDX = 0x788f
+</pre></div>
+</div>
+<p>样例里的注释已经非常直观, 但我们还是对每一行代码做出解释: * 行号2~3:
+在使用Unicorn前导入<code class="docutils literal"><span class="pre">unicorn</span></code>模块. 样例中使用了一些x86寄存器常量,
+所以也需要导入<code class="docutils literal"><span class="pre">unicorn.x86_const</span></code>模块 * 行号6:
+这是我们需要模拟的二进制机器码, 使用十六进制表示, 代表的汇编指令是: “INC
+ecx” 和 “DEC edx”. * 行号9: 我们将模拟执行上述指令的所在虚拟地址 *
+行号14: 使用<code class="docutils literal"><span class="pre">Uc</span></code>类初始化Unicorn, 该类接受2个参数:
+硬件架构和硬件位数(模式). 在样例中我们需要模拟执行x86架构的32位代码,
+我们使用变量<code class="docutils literal"><span class="pre">mu</span></code>来接受返回值. * 行号17:
+使用<code class="docutils literal"><span class="pre">mem_map</span></code>方法根据在行号9处声明的地址,
+映射2MB用于模拟执行的内存空间.
+所有进程中的CPU操作都应该只访问该内存区域.
+映射的内存具有默认的读,写和执行权限. * 行号20:
+将需要模拟执行的代码写入我们刚刚映射的内存中.
+<code class="docutils literal"><span class="pre">mem_write</span></code>方法接受2个参数: 要写入的内存地址和需要写入内存的代码. *
+行号23~24:
+使用<code class="docutils literal"><span class="pre">reg_write</span></code>方法设置<code class="docutils literal"><span class="pre">ECX</span></code>和<code class="docutils literal"><span class="pre">EDX</span></code>寄存器的值 *
+行号27: 使用<code class="docutils literal"><span class="pre">emu_start</span></code>方法开始模拟执行, 该API接受4个参数:
+要模拟执行的代码地址,
+模拟执行停止的内存地址(这里是<code class="docutils literal"><span class="pre">X86_CODE32</span></code>的最后1字节处),
+模拟执行的时间和需要执行的指令数目. 如果我们像样例一样忽略后两个参数,
+Unicorn将会默认以无穷时间和无穷指令数目的条件来模拟执行代码. *
+行号32~35: 打印输出<code class="docutils literal"><span class="pre">ECX</span></code>和<code class="docutils literal"><span class="pre">EDX</span></code>寄存器的值.
+我们使用函数<code class="docutils literal"><span class="pre">reg_read</span></code>来读取寄存器的值.</p>
+<p>要想查看更多的python示例,
+可以查看文件夹<a class="reference external" href="https://github.com/unicorn-engine/unicorn/tree/master/bindings/python">bindings/python</a>下的代码.
+而C的示例则可以查看<a class="reference external" href="https://github.com/unicorn-engine/unicorn/tree/master/samples">sample</a>文件夹下的代码.</p>
+</div>
+<div class="section" id="id9">
+<h2>参考链接<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="http://www.unicorn-engine.org/">Unicorn Official Site</a></li>
+<li><a class="reference external" href="http://www.unicorn-engine.org/docs/">Quick tutorial on programming with Unicorn - with C &amp;
+Python.</a></li>
+<li><a class="reference external" href="http://eternal.red/2018/unicorn-engine-tutorial/">Unicorn Engine
+tutorial</a></li>
+<li><a class="reference external" href="https://platform.avatao.com/paths/8e720072-9169-4d4c-9569-c330ce7fd947/challenges/28f5ae81-6a01-11e6-bdf4-0800200c9a66">Avatao tool tutorials:
+Unicorn</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>快速搜索</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="转向" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../index.html">內容目录</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../misc/about.html">杂项简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/prefix.html">取证隐写</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/traffic/index.html">流量包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../executable/elf/index.html">ELF文件</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../index.html" title="內容目录"
+             >toc</a></li>
+    <li><a href="../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      由 <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6 创建。
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

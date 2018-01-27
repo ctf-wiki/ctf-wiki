@@ -1,0 +1,249 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>0x01 单步跟踪法 &#8212; CTF Wiki </title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="搜索" href="../../search.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             accesskey="C">toc</a></li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="x01">
+<h1>0x01 单步跟踪法<a class="headerlink" href="#x01" title="永久链接至标题">¶</a></h1>
+<p>单步跟踪法的原理就是通过Ollydbg的步过(F8), 步入(F7)和运行到(F4)功能,
+完整走过程序的自脱壳过程, 跳过一些循环恢复代码的片段,
+并用单步进入确保程序不会略过OEP. 这样可以在软件自动脱壳模块运行完毕后,
+到达OEP, 并dump程序.</p>
+<div class="section" id="id1">
+<h2>要点<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
+<ol class="arabic simple">
+<li>打开程序按F8单步向下, 尽量实现向下的jmp跳转</li>
+<li>会经常遇到大的循环, 这时要多用 F4 来跳过循环</li>
+<li>如果函数载入时不远处就是一个call(近call), 那么我们尽量不要直接跳过,
+而是进入这个call</li>
+<li>一般跳转幅度大的jmp指令, 都极有可能是跳转到了原程序入口点(OEP)</li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h2>示例<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>示例程序可以点击此处下载:
+<a class="reference external" href="https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/example/1-trace.zip">1-trace.zip</a></p>
+<p>单步跟踪法其实就是一步一步尽量从程序入口点往下走,
+在单步的过程中注意EIP不要跑偏了, 但是对于一些比较复杂的壳而言,
+单步的过程会显得异常枯燥而且容易把自己绕晕.
+所以单步跟踪也常用于分析一些关键代码部分(跟静态分析相结合),
+而不是完全地从头分析到尾, 这有违逆向工程的理念.</p>
+<p>用Ollydbg打开压缩包内的Notepad.exe, 停在了下图位置.
+入口点是一个<code class="docutils literal"><span class="pre">pushad</span></code>保存所有寄存器状态到栈中,
+随后便是一个<code class="docutils literal"><span class="pre">call</span></code>调用位于<code class="docutils literal"><span class="pre">0040D00A</span></code>处的函数.
+调用后便无条件跳转到<code class="docutils literal"><span class="pre">459DD4F7</span></code>处,
+之后的<code class="docutils literal"><span class="pre">push</span> <span class="pre">ebp</span></code>和<code class="docutils literal"><span class="pre">retn</span></code>显然没有任何意义.
+像这种入口点附近就是一个<code class="docutils literal"><span class="pre">call</span></code>的我们称为<code class="docutils literal"><span class="pre">近call</span></code>,
+对于近call我们选择步进, 按下F7(当然你也只能选择步进,
+不然EIP就跑偏程序停止了).</p>
+<div class="figure" id="id3">
+<img alt="trace-01.png" src="https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/trace-01.png" />
+<p class="caption"><span class="caption-text">trace-01.png</span></p>
+</div>
+<p>步进后又是一个<code class="docutils literal"><span class="pre">call</span></code>, 我们继续步进, 按F7, 跟进后发现没有近call了,
+我们可以看到程序在调<code class="docutils literal"><span class="pre">GetModuleHandleA</span></code>, <code class="docutils literal"><span class="pre">GetProcAddress</span></code>等API,
+继续向下分析.</p>
+<div class="figure" id="id4">
+<img alt="trace-02.png" src="https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/trace-02.png" />
+<p class="caption"><span class="caption-text">trace-02.png</span></p>
+</div>
+<p>之后会遇到多个跳转，我们尽量满足向下的跳转，对于向上的跳转不予实现并利用F4跳出循环，直到<code class="docutils literal"><span class="pre">0040D3AF</span></code>处,
+我们看以下的代码</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="mi">0040</span><span class="n">D3AF</span>    <span class="mi">61</span>                  <span class="n">popad</span>
+<span class="mi">0040</span><span class="n">D3B0</span>    <span class="mi">75</span> <span class="mi">08</span>               <span class="n">jnz</span> <span class="n">short</span> <span class="n">NotePad</span><span class="o">.</span><span class="mi">0040</span><span class="n">D3BA</span>
+<span class="mi">0040</span><span class="n">D3B2</span>    <span class="n">B8</span> <span class="mi">01000000</span>         <span class="n">mov</span> <span class="n">eax</span><span class="p">,</span><span class="mh">0x1</span>
+<span class="mi">0040</span><span class="n">D3B7</span>    <span class="n">C2</span> <span class="mi">0</span><span class="n">C00</span>             <span class="n">retn</span> <span class="mh">0xC</span>
+<span class="mi">0040</span><span class="n">D3BA</span>    <span class="mi">68</span> <span class="n">CC104000</span>         <span class="n">push</span> <span class="n">NotePad</span><span class="o">.</span><span class="mi">004010</span><span class="n">CC</span>
+<span class="mi">0040</span><span class="n">D3BF</span>    <span class="n">C3</span>                  <span class="n">retn</span>
+</pre></div>
+</div>
+<p>这里<code class="docutils literal"><span class="pre">popad</span></code>可以恢复在程序入口点处保存的寄存器状态,
+然后<code class="docutils literal"><span class="pre">jnz</span></code>跳转到<code class="docutils literal"><span class="pre">0040D3BA</span></code>处,
+这里是利用<code class="docutils literal"><span class="pre">push</span></code>和<code class="docutils literal"><span class="pre">retn</span></code>来将<code class="docutils literal"><span class="pre">EIP</span></code>改变为<code class="docutils literal"><span class="pre">004010CC</span></code>,
+也就是说在壳解压完代码等资源完毕后,
+将通过<code class="docutils literal"><span class="pre">jnz</span></code>跳转到<code class="docutils literal"><span class="pre">push</span></code>处,
+然后通过<code class="docutils literal"><span class="pre">push</span></code>和<code class="docutils literal"><span class="pre">ret</span></code>将<code class="docutils literal"><span class="pre">EIP</span></code>设置为程序原来的入口点(OEP)并返回到OEP处,
+然后继续执行原程序的代码. 我们执行到<code class="docutils literal"><span class="pre">retn</span></code>返回后, 可以看到如下:</p>
+<div class="figure" id="id5">
+<img alt="trace-03.png" src="https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/trace-03.png" />
+<p class="caption"><span class="caption-text">trace-03.png</span></p>
+</div>
+<p>显然, 我们到了一堆被<code class="docutils literal"><span class="pre">Ollydbg</span></code>误认为是数据的地方继续执行,
+显然<code class="docutils literal"><span class="pre">Ollydbg</span></code>分析错误了, 我们需要让<code class="docutils literal"><span class="pre">Ollydbg</span></code>重新分析,
+我们可以右键选择<code class="docutils literal"><span class="pre">分析-&gt;从模块中删除分析</span></code>, 或是按下<code class="docutils literal"><span class="pre">ctrl+a</span></code>,
+这时正确地显示出OEP处的汇编指令.</p>
+<div class="figure" id="id6">
+<img alt="trace-04.png" src="https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/trace-04.png" />
+<p class="caption"><span class="caption-text">trace-04.png</span></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>快速搜索</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="转向" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../../index.html">內容目录</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/about.html">杂项简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/prefix.html">取证隐写</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/traffic/index.html">流量包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Reverse Engineering</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             >toc</a></li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      由 <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6 创建。
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>
