@@ -1,36 +1,37 @@
-基本堆介绍
-==========
+堆概述
+======
 
 什么是堆
 --------
 
-在程序的运行过程中，堆可以提供动态分配的内存，允许程序去为在程序运行之前还未知大小的变量申请空间。
+在程序运行过程中，堆可以提供动态分配的内存，允许程序申请大小未知的内存。堆其实就是程序虚拟地址空间的一块连续的线性区域，它由低地址向高地址方向增长。我们一般称管理堆的那部分程序为堆管理器。
 
-目前标准Linux发行版中使用的堆分配器就是glibc中提供的堆分配器，它被称为ptmalloc2。glibc主要是通过malloc/free函数来实现对内存块进行分配和释放。
+堆管理器处于用户程序与内核中间，主要做以下工作
 
-Linux中早期的堆分配与回收由Doug
-Lea实现，但它在并行处理多个线程时，会共享进程的堆内存空间，因此会出现堆被线程加锁利用时，其它线程无法使用的情况，这就会降低内存分配和回收的高效性。同时，如果在多线程使用时，没能正确控制，也可能引起内存分配和回收的正确性。Wolfram
-Gloger在Doug Lea的基础上进行改进使其可以支持多线程，这个堆分配器就是ptmalloc。在glibc-2.3.x.之后，glibc中已经集成了ptmalloc2。
+1. 响应用户的申请内存请求，向操作系统申请内存，然后将其返回给用户程序。同时，为了保持内存管理的高效性，内核一般都会预先分配很大的一块连续的内存，然后让堆管理器通过某种算法管理这块内存。只有当出现了堆空间不足的情况，堆管理器才会再次与操作系统进行交互。
+2. 管理用户所释放的内存。一般来说，用户释放的内存并不是直接返还给操作系统的，而是由堆管理器进行管理。这些释放的内存可以来响应用户新申请的内存的请求。
 
-需要注意的是，堆其实就是程序的虚拟地址空间的一块连续的线性区域，它由低地址向高地址方向增长。
+Linux 中早期的堆分配与回收由 Doug Lea
+实现，但它在并行处理多个线程时，会共享进程的堆内存空间。因此，为了安全性，一个线程使用堆时，会进行加锁。然而，与此同时，加锁会导致其它线程无法使用堆，降低了内存分配和回收的高效性。同时，如果在多线程使用时，没能正确控制，也可能引起内存分配和回收的正确性。Wolfram
+Gloger 在 Doug Lea 的基础上进行改进使其可以支持多线程，这个堆分配器就是 ptmalloc 。在 glibc-2.3.x. 之后，glibc 中集成了ptmalloc2。
 
-ptmalloc处于用户程序与内核中间，主要做以下工作
-
-1. 响应用户的申请内存操作，向操作系统申请内存，然后将其返回给用户程序。同时，为了保持内存管理的高效性，内核一般都会预先分配很大的一块连续的内存，然后让ptmalloc通过某种算法管理这块内存。只有当出现了堆空间不足的情况，ptmalloc才会再次与操作系统进行交流。
-2. 管理用户所释放的内存。也就是说用户释放的内存并不是直接返还给操作系统的，而是由ptmalloc进行管理。这些释放的chunk可以来响应用户新申请的内存的请求。
+目前 Linux 标准发行版中使用的堆分配器是 glibc 中的堆分配器：ptmalloc2。ptmalloc2 主要是通过 malloc/free 函数来分配和释放内存块。
 
 需要注意的是，在内存分配与使用的过程中，Linux有这样的一个基本内存管理思想，\ **只有当真正访问一个地址的时候，系统才会建立虚拟页面与物理页面的映射关系**\ 。
-所以虽然我们上面说操作系统已经给程序分配了很大的一块内存，但是这块内存其实只是虚拟内存。只有当用户使用到相应的内存时，系统才会真正分配物理页面给用户使用。
+所以虽然操作系统已经给程序分配了很大的一块内存，但是这块内存其实只是虚拟内存。只有当用户使用到相应的内存时，系统才会真正分配物理页面给用户使用。
 
 堆的基本操作
 ------------
 
-这里我们主要介绍一下基本的堆的操作，包括堆的分配，回收，堆分配背后的系统调用，最后会介绍堆目前的多线程支持。
+这里我们主要介绍
+
+-  基本的堆操作，包括堆的分配，回收，堆分配背后的系统调用
+-  介绍堆目前的多线程支持。
 
 malloc
 ~~~~~~
 
-在glibc的\ `malloc.h <https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448>`__\ 中，malloc的说明如下
+在 glibc 的\ `malloc.h <https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448>`__\ 中，malloc 的说明如下
 
 .. code:: cpp
 
@@ -48,15 +49,15 @@ malloc
       representable value of a size_t.
     */
 
-可以看出，malloc操作返回了对应大小字节的内存块的指针。此外，该函数还对一些异常情况进行了处理
+可以看出，malloc 函数返回对应大小字节的内存块的指针。此外，该函数还对一些异常情况进行了处理
 
--  当n=0时，返回当前系统允许的堆的最小内存块。
--  当n为负数时，由于在大多数系统上，size\_t是无符号数，所以程序就会申请很大的内存空间，但通常来说都会崩溃，因为系统没有那么多的内存可以分配。
+-  当 n=0 时，返回当前系统允许的堆的最小内存块。
+-  当 n 为负数时，由于在大多数系统上，\ **size_t 是无符号数（这一点非常重要）**\ ，所以程序就会申请很大的内存空间，但通常来说都会崩溃，因为系统没有那么多的内存可以分配。
 
 free
 ~~~~
 
-在glibc的\ `malloc.h <https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465>`__\ 中，free的说明如下
+在 glibc 的 `malloc.h <https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465>`__ 中，free 的说明如下
 
 .. code:: cpp
 
@@ -71,38 +72,39 @@ free
           back unused memory to the system, thus reducing program footprint.
         */
 
-可以看出，free函数主要是释放由p所指向的内存块，并且这个内存块有可能是通过malloc函数得到的，也有可能是通过相关的函数realloc得到的。此外，该函数也同样对异常情况进行了处理
+可以看出，free 函数会释放由 p 所指向的内存块。这个内存块有可能是通过 malloc 函数得到的，也有可能是通过相关的函数 realloc 得到的。
 
--  当p为空指针时，函数不执行任何操作。
--  当p已经被释放之后，再次释放会出现乱七八糟的效果。
--  除了被禁用(mallopt)的情况下，当释放很大的内存空间时，程序会将这些内存空间还给系统，以便于减小程序所使用的内存空间。
+此外，该函数也同样对异常情况进行了处理
+
+-  **当 p 为空指针时，函数不执行任何操作。**
+-  当 p 已经被释放之后，再次释放会出现乱七八糟的效果，这其实就是 ``double free``\ 。
+-  除了被禁用 (mallopt) 的情况下，当释放很大的内存空间时，程序会将这些内存空间还给系统，以便于减小程序所使用的内存空间。
 
 内存分配背后的系统调用
 ~~~~~~~~~~~~~~~~~~~~~~
 
-在我们前面提到的函数中，无论是malloc函数还是free函数，我们都是直接在程序中可以使用的，说明它们是标准库函数。但是它们并不是真正与系统交互的函数。
+在前面提到的函数中，无论是 malloc 函数还是 free 函数，我们动态申请和释放内存时，都经常会使用，但是它们并不是真正与系统交互的函数。这些函数背后的系统调用主要是
+`(s)brk <http://man7.org/linux/man-pages/man2/sbrk.2.html>`__ 函数以及 `mmap, munmap <http://man7.org/linux/man-pages/man2/mmap.2.html>`__ 函数。
 
-这些函数背后的系统调用主要是\ `(s)brk <http://man7.org/linux/man-pages/man2/sbrk.2.html>`__\ 函数以及\ `mmap,munmap <http://man7.org/linux/man-pages/man2/mmap.2.html>`__\ 函数，如下图所示，我们主要考虑对堆进行申请内存块的操作。
+如下图所示，我们主要考虑对堆进行申请内存块的操作。
 
-.. figure:: /pwn/heap/figure/brk&mmap.png
-   :alt: 
+|image0|
 
 (s)brk
 ^^^^^^
 
-对于堆的操作，操作系统内部提供了brk函数，glibc库提供了sbrk函数，我们可以通过增加\ `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__\ (program break location,
-the program break is the address of the first location beyond the current end of the data region. https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
+对于堆的操作，操作系统提供了 brk 函数，glibc 库提供了 sbrk 函数，我们可以通过增加 `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ (program break location,
+the program break is the address of the first location beyond the current end of the data region, https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
 
-初始时，堆的起始地址\ `start\_brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__
-以及堆的当前末尾\ `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ 指向同一地址，根据是否开启ASLR，情况会有所不同
+初始时，堆的起始地址 `start_brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ 以及堆的当前末尾
+`brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ 指向同一地址。根据是否开启ASLR，两者的具体位置会有所不同
 
--  当不开启ASLR保护时，start\_brk以及brk会指向data/bss 段的结尾。
--  当开启ASLR保护时，start\_brk以及brk也会指向同一位置，只是这个位置是在data/bss段结尾后的随机偏移处。
+-  不开启 ASLR 保护时，start_brk 以及 brk 会指向 data/bss 段的结尾。
+-  开启 ASLR 保护时，start_brk 以及 brk 也会指向同一位置，只是这个位置是在 data/bss 段结尾后的随机偏移处。
 
 具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示
 
-.. figure:: /pwn/heap/figure/program_virtual_address_memory_space.png
-   :alt: 
+|image1|
 
 **例子**
 
@@ -146,7 +148,7 @@ the program break is the address of the first location beyond the current end of
 
 从下面的输出可以看出，并没有出现堆。因此
 
--  start\_brk = brk = end\_data = 0x804b000
+-  start_brk = brk = end_data = 0x804b000
 
 .. code:: shell
 
@@ -165,7 +167,7 @@ the program break is the address of the first location beyond the current end of
 
 从下面的输出可以看出，已经出现了堆段
 
--  start\_brk = end\_data = 0x804b000
+-  start_brk = end_data = 0x804b000
 -  brk = 0x804c000
 
 .. code:: shell
@@ -194,7 +196,7 @@ the program break is the address of the first location beyond the current end of
 mmap
 ^^^^
 
-malloc会使用 `mmap <http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285>`__\ 来创建隐私的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。
+malloc 会使用 `mmap <http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285>`__\ 来创建独立的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。
 
 **例子**
 
@@ -282,7 +284,8 @@ malloc会使用 `mmap <http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L128
 多线程支持
 ~~~~~~~~~~
 
-在原来的dlmalloc实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问。在新的实现中，所有的线程共享多个堆。
+在原来的 dlmalloc
+实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问。在新的实现中，所有的线程共享多个堆。
 
 这里给出一个例子。
 
@@ -353,7 +356,9 @@ malloc会使用 `mmap <http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L128
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 
 **第一次申请后**\ ，
-从下面的输出可以看出，堆段被建立了，并且它就紧邻着数据段，这说明malloc的背后是用brk函数来实现的。同时，需要注意的是，我们虽然只是申请了1000个字节，但是我们却得到了0x0806c000-0x0804b000=0x21000个字节的堆。\ **这说明虽然程序可能只是向操作系统申请很小的内存，但是为了方便，操作系统会把很大的内存分配给程序。这样的话，就避免了多次内核态与用户态的切换，加快了程序的效率。**\ 我们称这一块连续的内存区域为arena。此外，由于这块内存是由主线程申请的，所以我们称之为main\_arena。对于后续的申请的内存会一直从这个arena中获取，直到空间不足。当出现arena空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena也可以通过减小brk来缩小自己的空间。
+从下面的输出可以看出，堆段被建立了，并且它就紧邻着数据段，这说明malloc的背后是用brk函数来实现的。同时，需要注意的是，我们虽然只是申请了1000个字节，但是我们却得到了0x0806c000-0x0804b000=0x21000个字节的堆。\ **这说明虽然程序可能只是向操作系统申请很小的内存，但是为了方便，操作系统会把很大的内存分配给程序。这样的话，就避免了多次内核态与用户态的切换，提高了程序的效率。**\ 我们称这一块连续的内存区域为
+arena。此外，我们称由主线程申请的内存为 main_arena。后续的申请的内存会一直从这个 arena 中获取，直到空间不足。当 arena 空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena 也可以通过减小
+brk 来缩小自己的空间。
 
 .. code:: shell
 
@@ -371,7 +376,8 @@ malloc会使用 `mmap <http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L128
     ...
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 
-**在主线程释放内存后**\ ，我们从下面的输出可以看出，其对应的arena并没有进行回收，而是交由glibc来进行管理。当后面程序再次申请内存时，在glibc中管理的内存充足的情况下，glibc就会根据堆分配的算法来给程序分配相应的内存。
+**在主线程释放内存后**\ ，我们从下面的输出可以看出，其对应的 arena 并没有进行回收，而是交由glibc来进行管理。当后面程序再次申请内存时，在 glibc 中管理的内存充足的情况下，glibc
+就会根据堆分配的算法来给程序分配相应的内存。
 
 .. code:: shell
 
@@ -465,3 +471,11 @@ arena。
     b7605000-b7e07000 rw-p 00000000 00:00 0          [stack:6594]
     ...
     sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
+
+参考文献
+--------
+
+-  `sploitfun <https://sploitfun.wordpress.com/archives/>`__
+
+.. |image0| image:: /pwn/heap/figure/brk&mmap.png
+.. |image1| image:: /pwn/heap/figure/program_virtual_address_memory_space.png

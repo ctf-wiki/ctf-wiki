@@ -1,17 +1,22 @@
 # 深入理解堆的实现
 
-简单想一下，对于任何堆的实现来说都离不开以下的问题
+仔细想一下，任何堆的实现都离不开以下两个方面的问题
 
 - 宏观角度
-  - 创建堆并对堆进行初始化
+  - 创建堆
+  - 堆初始化
   - 删除堆
 - 微观角度
   - 申请内存块
   - 释放内存块
 
-当然，这些都是一些比较高层面的想法，对于一些底层的实现来说，会有所不同。
+当然，这些都还是比较高层面的想法，不同的堆的底层的实现会有所不同。
+
+## 堆实现概览
 
 ## 堆初始化
+
+堆初始化是在用户第一次申请内存时执行 malloc_consolidate 再执行 malloc_init_state 实现的。这里不做过多讲解。可以参见 `malloc_state 相关函数`。
 
 ## 创建堆
 
@@ -22,25 +27,27 @@
 unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在以下地方使用
 
 - malloc
-  - 从恰好合适的large bin 中获取chunk。
-  - 从比所需要的chunk相应的bin大的bin中取chunk。
+  - 从恰好大小合适的 large bin 中获取 chunk。
+    - **这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。**
+    - 依次遍历处理unsorted bin时也是没有unlink的。
+  - 从比所需要的 chunk 相应的 bin 大的 bin 中取 chunk。
 - Free
-  - 后向合并，合并物理相邻低地址空闲chunk。
-  - 前向合并，合并物理相邻高地址空闲chunk（除了top chunk）。
+  - 后向合并，合并物理相邻低地址空闲 chunk。
+  - 前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
 - malloc_consolidate
-  - 后向合并，合并物理相邻低地址空闲chunk。
-  - 前向合并，合并物理相邻高地址空闲chunk（除了top chunk）。
+  - 后向合并，合并物理相邻低地址空闲 chunk。
+  - 前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
 - realloc
-  - 前向扩展，合并物理相邻高地址空闲chunk（除了top chunk）。
+  - 前向扩展，合并物理相邻高地址空闲 chunk（除了top chunk）。
 
 
 
-由于unlink 本身被使用地非常频繁，所以 unlink 被实现为了一个宏。unlink 宏主要将一个 chunk 从它所在的 bin 中取出来，如下
+由于 unlink 使用非常频繁，所以 unlink 被实现为了一个宏，如下
 
 ```c
 /* Take a chunk off a bin list */
 ##define unlink(AV, P, BK, FD) {                                            \
-    // 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
+    // 由于 P 已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
     if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
       malloc_printerr ("corrupted size vs. prev_size");			      \
     FD = P->fd;                                                                      \
@@ -53,25 +60,25 @@ unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在�
         BK->fd = FD;                                                              \
         // 下面主要考虑 P 对应的 nextsize 双向链表的修改
         if (!in_smallbin_range (chunksize_nomask (P))                              \
-            // 如果P->fd_nextsize为NULL，表明 P 未插入到largbin 链表中。
-            // 那么其实也就没有必要对nextsize字段进行修改了。
-            // 这里没有去判断bk_nextsize字段，可能会出问题。
+            // 如果P->fd_nextsize为 NULL，表明 P 未插入到 largbin 链表中。
+            // 那么其实也就没有必要对 nextsize 字段进行修改了。
+            // 这里没有去判断 bk_nextsize 字段，可能会出问题。
             && __builtin_expect (P->fd_nextsize != NULL, 0)) {                      \
-            // 类似于小的chunk的检查思路
+            // 类似于小的 chunk 的检查思路
             if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
                 || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
               malloc_printerr (check_action,                                      \
                                "corrupted double-linked list (not small)",    \
                                P, AV);                                              \
-            // 这里说明P已经在nextsize链表中了。
-            // 如果 FD 没有在nextsize链表中
+            // 这里说明 P 已经在 nextsize 链表中了。
+            // 如果 FD 没有在 nextsize 链表中
             if (FD->fd_nextsize == NULL) {                                      \
-                // 如果nextsize串起来的双链表只有 P 本身，那就直接拿走P，令FD为nextsize 串起来的
-                // 双链表
+                // 如果 nextsize 串起来的双链表只有 P 本身，那就直接拿走 P
+                // 令 FD 为 nextsize 串起来的
                 if (P->fd_nextsize == P)                                      \
                   FD->fd_nextsize = FD->bk_nextsize = FD;                      \
                 else {                                                              \
-                // 否则我们需要将 FD 插入到nextsize形成的双链表中
+                // 否则我们需要将 FD 插入到 nextsize 形成的双链表中
                     FD->fd_nextsize = P->fd_nextsize;                              \
                     FD->bk_nextsize = P->bk_nextsize;                              \
                     P->fd_nextsize->bk_nextsize = FD;                              \
@@ -87,11 +94,11 @@ unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在�
 }
 ```
 
-这里我们只是以small bin的unlink为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize的处理。
+这里我们只是以 small bin 的 unlink 为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize 的处理。
 
 ![](/pwn/heap/figure/unlink_smallbin_intro.png)
 
-可以看出，对于最后的P来说其FD和bk指针并没有发生变化，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。
+可以看出， P 最后的 fd 和 bk 指针并没有发生变化，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。
 
 同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都做了相应的检测。
 
@@ -108,17 +115,17 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
                                P, AV);   
 ```
 
-看起来似乎很正常。我们以fd 和 bk 为例，P 的 forward chunk 的 bk 很自然是 P ，同样 P 的 backward chunk 的 fd 也很自然是 P 。如果没有做相应的检查的话，我们可以修改 P 的 fd 与 bk，从而可以很容易地达到任意地址写的效果。关于更加详细的例子，可以参见利用部分的 unlink 。
+看起来似乎很正常。我们以 fd 和 bk 为例，P 的 forward chunk 的 bk 很自然是 P ，同样 P 的 backward chunk 的 fd 也很自然是 P 。如果没有做相应的检查的话，我们可以修改 P 的 fd 与 bk，从而可以很容易地达到任意地址写的效果。关于更加详细的例子，可以参见利用部分的 unlink 。
 
 **注意：堆的第一个chunk的话所记录的prev_inuse位默认为1。**
 
 ## 申请内存块
 
-我们之前也说了，我们会使用malloc函数来申请内存块，可是当我们仔细看看glibc的源码实现时，其实并没有malloc函数。其实该函数真正调用的是__libc_malloc函数。为什么不直接写个malloc函数呢，因为有时候我们可能需要不同的名称，而且该函数只是用来简单封装\_int_malloc函数。\_int_malloc 才是申请内存块的核心。下面我们来仔细分析一下实现。
+我们之前也说了，我们会使用 malloc 函数来申请内存块，可是当我们仔细看看 glibc 的源码实现时，其实并没有malloc 函数。其实该函数真正调用的是 \_\_libc_malloc 函数。为什么不直接写个 malloc 函数呢，因为有时候我们可能需要不同的名称。此外，__libc_malloc 函数只是用来简单封装 _int_malloc 函数。\_int_malloc 才是申请内存块的核心。下面我们来仔细分析一下实现。
 
 ### __libc_malloc
 
-1. 该函数会首先检查是否有内存分配函数的钩子函数。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。
+1. 该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。
 
 ```c++
 // wapper for int_malloc
@@ -132,19 +139,19 @@ void *__libc_malloc(size_t bytes) {
 
 ```
 
-2. 接着会寻找一个arena来试图分配内存。
+2. 接着会寻找一个 arena 来试图分配内存。
 
 ```c++
     arena_get(ar_ptr, bytes);
 ```
 
-3. 然后调用_int_malloc函数去申请对应的内存。
+3. 然后调用 _int_malloc 函数去申请对应的内存。
 
 ```C++
     victim = _int_malloc(ar_ptr, bytes);
 ```
 
-4. 如果分配失败的话，ptmalloc会尝试再去寻找一个可用的arena，并分配内存。
+4. 如果分配失败的话，ptmalloc 会尝试再去寻找一个可用的 arena，并分配内存。
 
 ```c++
     /* Retry with another arena only if we were able to find a usable arena
@@ -156,13 +163,13 @@ void *__libc_malloc(size_t bytes) {
     }
 ```
 
-5. 如果申请到了arena，那么在离开之前还得解锁。
+5. 如果申请到了arena，那么在退出之前还得解锁。
 
 ```c++
     if (ar_ptr != NULL) __libc_lock_unlock(ar_ptr->mutex);
 ```
 
-6.  判断目前的状态是否满足以下条件，要么没有申请到内存，要么是mmap的内存，**要么申请到的内存必须在其所分配的arena中**。
+6.  判断目前的状态是否满足以下条件，要么没有申请到内存，要么是 mmap 的内存，**要么申请到的内存必须在其所分配的arena中**。
 
 ```c++
     assert(!victim || chunk_is_mmapped(mem2chunk(victim)) ||
@@ -178,12 +185,12 @@ void *__libc_malloc(size_t bytes) {
 
 ### _int_malloc
 
-_int_malloc 是内存分配的核心函数，其核心思路有以下几点
+_int_malloc 是内存分配的核心函数，其核心思路有如下
 
-1. 它根据用户申请的内存块的大小以及相应大小chunk使用的频度（fastbin chunk, small chunk, large chunk），依次实现了不同的分配方法。
-2. 它按照 chunk 的大小由小到大依次检查是否有相应的空闲块可以满足需求。
+1. 它根据用户申请的内存块的大小以及相应大小 chunk 使用的频度（fastbin chunk, small chunk, large chunk），依次实现了不同的分配方法。
+2. 它由小到大依次检查不同的 bin 中是否有相应的空闲块可以满足需求。
 3. 当所有的空闲 chunk 都无法满足时，它会考虑 top chunk。
-4. 当 top chunk 也无法满足，才会进行内存块申请。
+4. 当 top chunk 也无法满足时，堆分配器才会进行内存块申请。
 
 在进入该函数后，函数立马定义了一系列自己需要的变量，并将用户申请的内存大小转换为内部的chunk大小。
 
@@ -235,7 +242,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
 
 #### fast bin
 
-如果申请的chunk的大小位于fastbin 范围内
+如果申请的 chunk 的大小位于 fastbin 范围内，**需要注意的是这里比较的是无符号整数**。
 
 ```c++
     /*
@@ -250,7 +257,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
         // 得到对应的fastbin的头指针
         mfastbinptr *fb = &fastbin(av, idx);
         mchunkptr    pp = *fb;
-        // 利用fd前向遍历对应的bin内是否有空闲的chunk块，
+        // 利用fd遍历对应的bin内是否有空闲的chunk块，
         do {
             victim = pp;
             if (victim == NULL) break;
@@ -267,7 +274,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
                 malloc_printerr(check_action, errstr, chunk2mem(victim), av);
                 return NULL;
             }
-            // 细致的检查。。
+            // 细致的检查。。只有在 DEBUG 的时候有用
             check_remalloced_chunk(av, victim, nb);
             // 将获取的到chunk转换为mem模式
             void *p = chunk2mem(victim);
@@ -280,7 +287,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
 
 #### small bin
 
-如果获取的内存块的范围处于small bin的范围，那么执行如下流程
+如果获取的内存块的范围处于 small bin 的范围，那么执行如下流程
 
 ```c++
     /*
@@ -296,7 +303,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
         idx = smallbin_index(nb);
         // 获取对应 small bin 中的 chunk 指针
         bin = bin_at(av, idx);
-        // 先执行 victim= last(bin)，获取 small bin 的最后一个 chunk
+        // 先执行 victim = last(bin)，获取 small bin 的最后一个 chunk
         // 如果 victim = bin ，那说明该 bin 为空。
         // 如果不相等，那么会有两种情况
         if ((victim = last(bin)) != bin) {
@@ -320,7 +327,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
                 bck->fd = bin;
                 // 如果不是 main_arena，设置对应的标志
                 if (av != &main_arena) set_non_main_arena(victim);
-                // 细致的检查
+                // 细致的检查，非调试状态没有作用
                 check_malloced_chunk(av, victim, nb);
                 // 将申请到的 chunk 转化为对应的 mem 状态
                 void *p = chunk2mem(victim);
@@ -334,7 +341,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
 
 #### large bin
 
-large bin 的处理过程如下，程序并没有直接从相应的large bin中获取chunk，而是先将 fast bin中有可能能够合并的 chunk 先进行合并，然后再在下面的大循环中进行相应的处理。
+当 fast bin、small bin 中的 chunk 都不能满足用户请求 chunk 大小时，就会考虑是不是 large bin。但是，其实在 large bin 中并没有直接去扫描对应 bin 中的chunk，而是先利用 malloc_consolidate（参见malloc_state相关函数） 函数处理 fast bin 中的chunk，将有可能能够合并的 chunk 先进行合并后放到 unsorted bin 中，不能够合并的就直接放到 unsorted bin 中，然后再在下面的大循环中进行相应的处理。**为什么不直接从相应的 bin 中取出 large chunk 呢？这是ptmalloc 的机制，它会在分配 large chunk 之前对堆中碎片 chunk 进行合并，以便减少堆中的碎片。**
 
 ```c++
     /*
@@ -351,25 +358,23 @@ large bin 的处理过程如下，程序并没有直接从相应的large bin中�
     else {
         // 获取large bin的下标。
         idx = largebin_index(nb);
-        // 如果存在fastbin的话，会先对fastbin进行合并，将其加入到unsorted bin中
+        // 如果存在fastbin的话，会处理 fastbin 
         if (have_fastchunks(av)) malloc_consolidate(av);
     }
 
 ```
 
-
-
 #### 大循环
 
-**如果程序执行到了这里，那么说明 chunk 直接对应的 bin (fast bin， small bin) 没有 chunk可以直接满足需求 ，但是large chunk  则是在这个大循环中处理**。为什么不直接从相应的 bin 中取出 large chunk 呢？这是ptmalloc 的机制，他会在分配 large chunk 之前对堆中碎片 chunk 进行合并，以便减少堆中的碎片。
+**如果程序执行到了这里，那么说明 与 chunk 大小正好一致的 bin (fast bin， small bin) 中没有 chunk可以直接满足需求 ，但是large chunk  则是在这个大循环中处理**。
 
 在接下来的这个循环中，主要做了以下的操作
 
-- 尝试从unsorted bin中分配用户所需的内存
-- 尝试从large bin中分配用户所需的内存
-- 尝试从top  chunk中分配用户所需内存
+- 尝试从 unsorted bin 中分配用户所需的内存
+- 尝试从 large bin 中分配用户所需的内存
+- 尝试从 top  chunk 中分配用户所需内存
 
-该部分是一个大循环，这是为了尝试重新分配small bin chunk，这是因为我们虽然会首先使用large bin，top chunk来尝试满足用户的请求，但是如果没有满足的话，由于我们在上面没有分配成功small bin的话，我们并没有对fast bin中的chunk进行合并，所以这里会进行fast bin chunk的合并，进而使用一个大循环来尝试再次分配small bin chunk。
+该部分是一个大循环，这是为了尝试重新分配 small bin chunk，这是因为我们虽然会首先使用 large bin，top chunk 来尝试满足用户的请求，但是如果没有满足的话，由于我们在上面没有分配成功 small bin，我们并没有对fast bin 中的 chunk 进行合并，所以这里会进行 fast bin chunk 的合并，进而使用一个大循环来尝试再次分配small bin chunk。
 
 ```c++
     /*
@@ -394,7 +399,7 @@ large bin 的处理过程如下，程序并没有直接从相应的large bin中�
 先考虑 unsorted bin，再考虑 last remainder ，但是对于small bin chunk 的请求会有所例外。
 
 ```c++
-        // 如果unsorted bin不为空
+        // 如果 unsorted bin 不为空
         // First In First Out
         while ((victim = unsorted_chunks(av)->bk) != unsorted_chunks(av)) {
             // victim 为 unsorted bin 的最后一个 chunk
@@ -412,7 +417,7 @@ large bin 的处理过程如下，程序并没有直接从相应的large bin中�
 
 ###### small request
 
-如果用户的请求为 small bin chunk，那么我们首先考虑 last remainder，如果 last remainder 是 unsorted bin 中的唯一一块的话， 并且 last remainder 的大小分割够还可以作为一个 chunk ，为什么没有等号？
+如果用户的请求为 small bin chunk，那么我们首先考虑 last remainder，如果 last remainder 是 unsorted bin 中的唯一一块的话， 并且 last remainder 的大小分割够还可以作为一个 chunk ，**为什么没有等号**？
 
 ```c
             /*
@@ -427,13 +432,13 @@ large bin 的处理过程如下，程序并没有直接从相应的large bin中�
                 victim == av->last_remainder &&
                 (unsigned long) (size) > (unsigned long) (nb + MINSIZE)) {
                 /* split and reattach remainder */
-                // 获取新的remainder的大小
+                // 获取新的 remainder 的大小
                 remainder_size          = size - nb;
-                // 获取新的remainder的位置
+                // 获取新的 remainder 的位置
                 remainder               = chunk_at_offset(victim, nb);
-                // 更新unsorted bin的情况
+                // 更新 unsorted bin 的情况
                 unsorted_chunks(av)->bk = unsorted_chunks(av)->fd = remainder;
-                // 更新av中记录的last_remainder
+                // 更新 av 中记录的 last_remainder
                 av->last_remainder                                = remainder;
                 // 更新last remainder的指针
                 remainder->bk = remainder->fd = unsorted_chunks(av);
@@ -444,13 +449,13 @@ large bin 的处理过程如下，程序并没有直接从相应的large bin中�
                 // 设置victim的头部，
                 set_head(victim, nb | PREV_INUSE |
                                      (av != &main_arena ? NON_MAIN_ARENA : 0));
-                // 设置remainder的头部
+                // 设置 remainder 的头部
                 set_head(remainder, remainder_size | PREV_INUSE);
-                // 设置记录 remainder大小的prev_size字段，因为此时remainder处于空闲状态。
+                // 设置记录 remainder 大小的 prev_size 字段，因为此时 remainder 处于空闲状态。
                 set_foot(remainder, remainder_size);
-                // 细致的检查
+                // 细致的检查，非调试状态下没有作用
                 check_malloced_chunk(av, victim, nb);
-                // 将victim从chunk模式转化为mem模式
+                // 将 victim 从 chunk 模式转化为mem模式
                 void *p = chunk2mem(victim);
                 // 如果设置了perturb_type, 则将获取到的chunk初始化为 perturb_type ^ 0xff
                 alloc_perturb(p, bytes);
@@ -468,7 +473,7 @@ large bin 的处理过程如下，程序并没有直接从相应的large bin中�
 
 ###### exact fit
 
-如果从 unsorted bin 中取出来的chunk大小正好合适，就直接使用。这里应该已经把合并后恰好合适的chunk 给分配出去了。
+如果从 unsorted bin 中取出来的 chunk 大小正好合适，就直接使用。这里应该已经把合并后恰好合适的 chunk 给分配出去了。
 
 ```c
             /* Take now instead of binning if exact fit */
@@ -507,10 +512,10 @@ large bin 的处理过程如下，程序并没有直接从相应的large bin中�
                 fwd          = bck->fd;
 
                 /* maintain large bins in sorted order */
-                /* 从这里我们可以总结出，largebin以fd_nextsize递减排序。
-                   同样大小的chunk，后来的只会插入到之前同样大小的chunk后，
+                /* 从这里我们可以总结出，largebin 以 fd_nextsize 递减排序。
+                   同样大小的 chunk，后来的只会插入到之前同样大小的 chunk 后，
                    而不会修改之前相同大小的fd/bk_nextsize，这也很容易理解，
-                   可以减低开销。此外，bin头不参与nextsize链接。*/
+                   可以减低开销。此外，bin 头不参与 nextsize 链接。*/
                 // 如果 large bin 链表不空
                 if (fwd != bck) {
                     /* Or with inuse bit to speed comparisons */
@@ -590,9 +595,9 @@ while 最多迭代10000次后退出。
 
 ##### large chunk
 
-**注： 或许会很奇怪，为什么这里没有先去看 small chunk是否满足新需求了呢？这是因为small bin 在循环之前已经判断过了，这里如果有的话，就是合并后的才出现chunk。但是在大循环外，large chunk只是单纯地找到其索引，所以觉得在这里直接先判断是合理的，而且也为了下面可以再去找较大的chunk。**
+**注： 或许会很奇怪，为什么这里没有先去看 small chunk 是否满足新需求了呢？这是因为small bin 在循环之前已经判断过了，这里如果有的话，就是合并后的才出现chunk。但是在大循环外，large chunk 只是单纯地找到其索引，所以觉得在这里直接先判断是合理的，而且也为了下面可以再去找较大的chunk。**
 
-如果请求的 chunk 在 large chunk 范围内，就在对应的bin中从小到大进行扫描，找到第一个合适的。
+如果请求的 chunk 在 large chunk 范围内，就在对应的 bin 中从小到大进行扫描，找到第一个合适的。
 
 ```c++
         /*
@@ -602,7 +607,7 @@ while 最多迭代10000次后退出。
         if (!in_smallbin_range(nb)) {
             bin = bin_at(av, idx);
             /* skip scan if empty or largest chunk is too small */
-            // 如果对应的bin为空或者其中的chunk最大的也很小，那就跳过
+            // 如果对应的 bin 为空或者其中的chunk最大的也很小，那就跳过
             // first(bin)=bin->fd 表示当前链表中最大的chunk
             if ((victim = first(bin)) != bin &&
                 (unsigned long) chunksize_nomask(victim) >=
@@ -711,7 +716,7 @@ while 最多迭代10000次后退出。
         for (;;) {
 ```
 
-###### 找到一个合适的map
+###### 找到一个合适的 map
 
 ```c++
             /* Skip rest of block if there are no more set bits in this block.
@@ -732,7 +737,7 @@ while 最多迭代10000次后退出。
             }
 ```
 
-###### 找到合适的bin
+###### 找到合适的 bin
 
 ```c
             /* Advance to bin with set bit. There must be one. */
@@ -745,7 +750,7 @@ while 最多迭代10000次后退出。
             }
 ```
 
-###### 简单检查chunk
+###### 简单检查 chunk
 
 ```c
 
@@ -767,7 +772,7 @@ while 最多迭代10000次后退出。
 
 ```c
             else {
-                //获取对应victim的大小
+                // 获取对应victim的大小
                 size = chunksize(victim);
 
                 /*  We know the first chunk in this bin is big enough to use. */
@@ -833,7 +838,7 @@ while 最多迭代10000次后退出。
 
 ##### 使用top chunk
 
-如果所有的bin中的chunk都没有办法直接满足要求（即不合并），或者说都没有空闲的chunk。那么我们就只能使用top chunk了。
+如果所有的 bin 中的 chunk 都没有办法直接满足要求（即不合并），或者说都没有空闲的 chunk。那么我们就只能使用 top chunk 了。
 
 ```c++
     use_top:
@@ -854,7 +859,7 @@ while 最多迭代10000次后退出。
         // 获取当前的top chunk，并计算其对应的大小
         victim = av->top;
         size   = chunksize(victim);
-        // 如果在分割之后，其大小仍然满足chunk的最小大小，那么就可以直接进行分割。
+        // 如果在分割之后，其大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
         if ((unsigned long) (size) >= (unsigned long) (nb + MINSIZE)) {
             remainder_size = size - nb;
             remainder      = chunk_at_offset(victim, nb);
@@ -868,7 +873,7 @@ while 最多迭代10000次后退出。
             alloc_perturb(p, bytes);
             return p;
         }
-        // 否则，判断是否有fast chunk
+        // 否则，判断是否有 fast chunk
         /* When we are using atomic ops to free fast chunks we can get
            here for all block sizes.  */
         else if (have_fastchunks(av)) {
@@ -901,21 +906,17 @@ while 最多迭代10000次后退出。
 
 有时间的时候再分析。
 
-### malloc_consolidate
-
-有时间的时候再分析。
-
 ## 释放内存块
 
 ### __libc_free
 
-类似于malloc，free函数也有一层封装，命名格式与malloc基本类似。代码如下
+类似于 malloc，free 函数也有一层封装，命名格式与 malloc 基本类似。代码如下
 
 ```c++
 void __libc_free(void *mem) {
     mstate    ar_ptr;
     mchunkptr p; /* chunk corresponding to mem */
-    // 判断是否有钩子函数
+    // 判断是否有钩子函数 __free_hook
     void (*hook)(void *, const void *) = atomic_forced_read(__free_hook);
     if (__builtin_expect(hook != NULL, 0)) {
         (*hook)(mem, RETURN_ADDRESS(0));
@@ -951,7 +952,7 @@ void __libc_free(void *mem) {
 
 ### _int_free
 
-函数初始时刻定义了一系列的变量，并且得到了用户想要释放的chunk的大小
+函数初始时刻定义了一系列的变量，并且得到了用户想要释放的 chunk 的大小
 
 ```c++
 static void _int_free(mstate av, mchunkptr p, int have_lock) {
@@ -1014,7 +1015,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 
 #### fast bin
 
-如果上述检查都合格的话，判断当前的bin是不是在fast bin范围内，在的话就插入到fastbin中
+如果上述检查都合格的话，判断当前的 bin 是不是在 fast bin 范围内，在的话就插入到 fastbin 中
 
 ```c++
     /*
@@ -1305,4 +1306,182 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 
 
 ## 删除堆
+
+## malloc_state 相关函数
+
+### malloc_init_state
+
+```c
+/*
+   Initialize a malloc_state struct.
+   This is called only from within malloc_consolidate, which needs
+   be called in the same contexts anyway.  It is never called directly
+   outside of malloc_consolidate because some optimizing compilers try
+   to inline it at all call points, which turns out not to be an
+   optimization at all. (Inlining it in malloc_consolidate is fine though.)
+ */
+
+static void malloc_init_state(mstate av) {
+    int     i;
+    mbinptr bin;
+
+    /* Establish circular links for normal bins */
+    for (i = 1; i < NBINS; ++i) {
+        bin     = bin_at(av, i);
+        bin->fd = bin->bk = bin;
+    }
+
+#if MORECORE_CONTIGUOUS
+    if (av != &main_arena)
+#endif
+        set_noncontiguous(av);
+    if (av == &main_arena) set_max_fast(DEFAULT_MXFAST);
+    // 设置 flags 标记目前没有fast chunk
+    av->flags |= FASTCHUNKS_BIT;
+    // 就是 unsorted bin
+    av->top = initial_top(av);
+}
+```
+
+
+
+### malloc_consolidate
+
+该函数主要有两个功能
+
+1. 若 fastbin 未初始化，即 global_max_fast 为0，那就初始化 malloc_state。
+2. 如果已经初始化的话，就合并 fastbin 中的 chunk。
+
+基本的流程如下
+
+#### 初始
+
+```c
+static void malloc_consolidate(mstate av) {
+    mfastbinptr *fb;             /* current fastbin being consolidated */
+    mfastbinptr *maxfb;          /* last fastbin (for loop control) */
+    mchunkptr    p;              /* current chunk being consolidated */
+    mchunkptr    nextp;          /* next chunk to consolidate */
+    mchunkptr    unsorted_bin;   /* bin header */
+    mchunkptr    first_unsorted; /* chunk to link to */
+
+    /* These have same use as in free() */
+    mchunkptr       nextchunk;
+    INTERNAL_SIZE_T size;
+    INTERNAL_SIZE_T nextsize;
+    INTERNAL_SIZE_T prevsize;
+    int             nextinuse;
+    mchunkptr       bck;
+    mchunkptr       fwd;
+```
+
+#### 合并 chunk
+
+```c
+    /*
+      If max_fast is 0, we know that av hasn't
+      yet been initialized, in which case do so below
+    */
+	// 说明 fastbin 已经初始化
+    if (get_max_fast() != 0) {
+        // 清空 fastbin 标记
+        // 因为要合并 fastbin 中的 chunk 了。
+        clear_fastchunks(av);
+        // 
+        unsorted_bin = unsorted_chunks(av);
+
+        /*
+          Remove each chunk from fast bin and consolidate it, placing it
+          then in unsorted bin. Among other reasons for doing this,
+          placing in unsorted bin avoids needing to calculate actual bins
+          until malloc is sure that chunks aren't immediately going to be
+          reused anyway.
+        */
+        // 依次遍历fastbin的每一个bin，将bin中的每一个 chunk 合并掉。
+        maxfb = &fastbin(av, NFASTBINS - 1);
+        fb    = &fastbin(av, 0);
+        do {
+            p = atomic_exchange_acq(fb, NULL);
+            if (p != 0) {
+                do {
+                    check_inuse_chunk(av, p);
+                    nextp = p->fd;
+
+                    /* Slightly streamlined version of consolidation code in
+                     * free() */
+                    size      = chunksize(p);
+                    nextchunk = chunk_at_offset(p, size);
+                    nextsize  = chunksize(nextchunk);
+
+                    if (!prev_inuse(p)) {
+                        prevsize = prev_size(p);
+                        size += prevsize;
+                        p = chunk_at_offset(p, -((long) prevsize));
+                        unlink(av, p, bck, fwd);
+                    }
+
+                    if (nextchunk != av->top) {
+                        nextinuse = inuse_bit_at_offset(nextchunk, nextsize);
+
+                        if (!nextinuse) {
+                            size += nextsize;
+                            unlink(av, nextchunk, bck, fwd);
+                        } else
+                            clear_inuse_bit_at_offset(nextchunk, 0);
+
+                        first_unsorted     = unsorted_bin->fd;
+                        unsorted_bin->fd   = p;
+                        first_unsorted->bk = p;
+
+                        if (!in_smallbin_range(size)) {
+                            p->fd_nextsize = NULL;
+                            p->bk_nextsize = NULL;
+                        }
+
+                        set_head(p, size | PREV_INUSE);
+                        p->bk = unsorted_bin;
+                        p->fd = first_unsorted;
+                        set_foot(p, size);
+                    }
+
+                    else {
+                        size += nextsize;
+                        set_head(p, size | PREV_INUSE);
+                        av->top = p;
+                    }
+
+                } while ((p = nextp) != 0);
+            }
+        } while (fb++ != maxfb);
+```
+
+#### 初始化
+
+说明 fastbin 还没有初始化。
+
+```c
+    } else {
+        malloc_init_state(av);
+        // 在非调试情况下没有什么用，在调试情况下，做一些检测。
+        check_malloc_state(av);
+    }
+```
+
+
+
+## 测试支持
+
+下面的代码用于支持测试，默认情况下 perturb_byte 是0。
+
+```c
+static int perturb_byte;
+
+static void alloc_perturb(char *p, size_t n) {
+    if (__glibc_unlikely(perturb_byte)) memset(p, perturb_byte ^ 0xff, n);
+}
+
+static void free_perturb(char *p, size_t n) {
+    if (__glibc_unlikely(perturb_byte)) memset(p, perturb_byte, n);
+}
+```
 

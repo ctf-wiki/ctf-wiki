@@ -1,7 +1,6 @@
 堆利用
 ======
 
-
 在该章节中，我们会按照如下的步骤进行介绍
 
 1. 介绍我们所熟知的动态内存分配的堆的宏观操作
@@ -28,22 +27,3 @@
 -  `sploitfun <https://sploitfun.wordpress.com/archives/>`__
 -  glibc 源码
 -  更多的参考文献请看ref目录下的文件
-
-
-
-.. toctree::
-   :maxdepth: 6
-   :caption: Heap Exploration
-
-   heap_overview.rst
-   heap_structure.rst
-   heap_implementation_details.rst
-   heapoverflow_basic.rst
-   off_by_one.rst
-   chunk_extend_shrink.rst
-   unlink.rst
-   use_after_free.rst
-   fastbin_attack.rst
-   house_of_force.rst
-   unsorted_bin_attack.rst
-   house_of_lore.rst
