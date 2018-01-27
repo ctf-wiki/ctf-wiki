@@ -1,4 +1,4 @@
-# Unicorn引擎指南
+# Unicorn Engine简介
 
 ## 什么是Unicorn引擎
 
@@ -125,5 +125,3 @@ Emulation done. Below is the CPU context
 
 * [Unicorn Official Site](http://www.unicorn-engine.org/)
 * [Quick tutorial on programming with Unicorn - with C & Python.](http://www.unicorn-engine.org/docs/)
-* [Unicorn Engine tutorial](http://eternal.red/2018/unicorn-engine-tutorial/)
-* [Avatao tool tutorials: Unicorn](https://platform.avatao.com/paths/8e720072-9169-4d4c-9569-c330ce7fd947/challenges/28f5ae81-6a01-11e6-bdf4-0800200c9a66)
