@@ -31,7 +31,7 @@ Unsorted Bin 回顾
 原理
 ----
 
-这里我以 shellfish 的 how2heap 仓库中的 `unsorted\_bin\_attack.c <https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c>`__ 为例进行介绍，这里我做一些简单的修改，如下
+这里我以 shellfish 的 how2heap 仓库中的 `unsorted_bin_attack.c <https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c>`__ 为例进行介绍，这里我做一些简单的修改，如下
 
 .. code:: c
 
@@ -108,8 +108,7 @@ Unsorted Bin 回顾
 
 这里我们可以使用一个图来描述一下具体发生的流程以及背后的原理。
 
-.. figure:: /pwn/heap/figure/unsorted_bin_attack_order.png
-   :alt: 
+|image0|
 
 **初始状态时**
 
@@ -155,10 +154,10 @@ unsorted bin的fd和bk均指向unsorted bin本身。
                 unsorted_chunks(av)->bk = bck;
                 bck->fd                 = unsorted_chunks(av);
 
--  victim = unsorted\_chunks(av)->bk=p
+-  victim = unsorted_chunks(av)->bk=p
 -  bck = victim->bk=p->bk = target addr-16
--  unsorted\_chunks(av)->bk = bck=target addr-16
--  bck->fd = \*(target addr -16+16) = unsorted\_chunks(av);
+-  unsorted_chunks(av)->bk = bck=target addr-16
+-  bck->fd = \*(target addr -16+16) = unsorted_chunks(av);
 
 即修改target处的值为unsorted bin的链表头部0x7f1c705ffb78，也就是之前输出的信息。
 
@@ -176,7 +175,7 @@ unsorted bin的fd和bk均指向unsorted bin本身。
 这看起来似乎并没有什么用处，但是其实还是有点卵用的，比如说
 
 -  我们通过修改循环的次数来使得，程序可以执行多次循环。
--  我们可以修改heap中的 global\_max\_fast 来使得更大的chunk可以被视为 fast bin，这样我们就可以去执行一些fast bin attack了。
+-  我们可以修改heap中的 global_max_fast 来使得更大的chunk可以被视为 fast bin，这样我们就可以去执行一些fast bin attack了。
 
 例子1-zerostorage
 -----------------
@@ -191,7 +190,7 @@ unsorted bin的fd和bk均指向unsorted bin本身。
 参考文章
 
 -  http://brieflyx.me/2016/ctf-writeups/0ctf-2016-zerostorage/
--  https://github.com/HQ1995/Heap\_Senior\_Driver/tree/master/0ctf2016/zerostorage
+-  https://github.com/HQ1995/Heap_Senior_Driver/tree/master/0ctf2016/zerostorage
 -  https://github.com/scwuaptx/CTF/blob/master/2016-writeup/0ctf/zerostorage.py
 
 安全性检查
@@ -232,10 +231,10 @@ insert-1
 1. 逐一查看 storage 数组，查找第一个未使用的元素，但是这个数组最大也就是32。
 2. 读取storage 元素所需要存储内容的长度。
 
--  如果长度不大于0，直接退出；
--  否则如果申请的字节数小于128，那就设置为128；
--  否则，如果申请的字节数不大于4096，那就设置为对应的数值；
--  否则，设置为4096。
+   -  如果长度不大于0，直接退出；
+   -  否则如果申请的字节数小于128，那就设置为128；
+   -  否则，如果申请的字节数不大于4096，那就设置为对应的数值；
+   -  否则，设置为4096。
 
 3. 使用 calloc 分配指定长度，注意 calloc 会初始化 chunk 为0。
 4. 将 calloc 分配的内存地址与 bss 段的一个内存（初始时刻为一个随机数）进行抑或，得到一个新的内存地址。
@@ -250,10 +249,10 @@ update-2
 2. 读入要更新的storage元素的id，如果id大于31或者目前处于不处于使用状态，说明不对，直接返回。
 3. 读取\ **更新后**\ storage 元素所需要存储内容的长度。
 
--  如果长度不大于0，直接退出；
--  否则如果申请的字节数小于128，那就设置为128；
--  否则，如果申请的字节数不大于4096，那就设置为对应的数值；
--  否则，设置为4096。
+   -  如果长度不大于0，直接退出；
+   -  否则如果申请的字节数小于128，那就设置为128；
+   -  否则，如果申请的字节数不大于4096，那就设置为对应的数值；
+   -  否则，设置为4096。
 
 4. 根据 bss 段对应的随机数获取原先storage 存储内容的地址，
 5. 如果更新后所需的长度不等于更新前的长度，就使用realloc为其重新分配内存。
@@ -264,10 +263,10 @@ merge-3
 
 1. 如果正在使用的元素不大于1个，那么无法合并，直接退出即可。
 2. 判断storage是否已经满了，如果不满，找出空闲的那一块。
-3. 分别读取merge\_from的id以及merge\_to的id号，并进行相应大小以及使用状态的检测。
+3. 分别读取merge_from的id以及merge_to的id号，并进行相应大小以及使用状态的检测。
 4. 根据最初用户输入的大小来计算两个 merge 到一起后所需要的空间，\ **如果不大于128，那就不会申请新的空间**\ ，否则就申请相应大小的新的空间。
-5. 依次将merge\_to与merge\_from的内容拷贝到相对应的位置。
-6. **最后存储merge\_from内容的内存地址被释放了，但并没有被置为NULL。同时，存放merge\_to内容的内存地址并没有被释放，相应的storage的抑或后的地址只是被置为了NULL。**
+5. 依次将merge_to与merge_from的内容拷贝到相对应的位置。
+6. **最后存储merge_from内容的内存地址被释放了，但并没有被置为NULL。同时，存放merge_to内容的内存地址并没有被释放，相应的storage的抑或后的地址只是被置为了NULL。**
 
 **但是需要注意的是，，在merge的时候，并没有检测两个storage的ID是否相同。**
 
@@ -315,3 +314,5 @@ bin范围内，所以只会被放到unsorted bin中（而且此时只有一个�
 
 题目
 ----
+
+.. |image0| image:: /pwn/heap/figure/unsorted_bin_attack_order.png

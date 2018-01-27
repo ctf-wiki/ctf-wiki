@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>House of Lore &#8212; CTF Wiki </title>
+    <title>堆利用 &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -31,9 +31,7 @@
     <script type="text/javascript" src="../../_static/cloud.base.js"></script>
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
-    <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="ELF文件" href="../../executable/elf/index.html" />
-    <link rel="prev" title="Unsorted Bin Attack" href="unsorted_bin_attack.html" /> 
+    <link rel="search" title="搜索" href="../../search.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -45,15 +43,8 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
-        <li class="right" >
-          <a href="../../executable/elf/index.html" title="ELF文件"
-             accesskey="N">下一页</a> &nbsp; &nbsp;</li>
-        <li class="right" >
-          <a href="unsorted_bin_attack.html" title="Unsorted Bin Attack"
-             accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
-
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">堆利用</a> &#187;</li> 
+ 
       </ul>
     </div>
     </div>
@@ -64,88 +55,32 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="house-of-lore">
-<h1>House of Lore<a class="headerlink" href="#house-of-lore" title="永久链接至标题">¶</a></h1>
-<div class="section" id="id1">
-<h2>概述<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>House of Lore 攻击与 Glibc 堆管理中的的 Small Bin 的机制紧密相关。</p>
-<p>House of Lore 可以实现分配任意指定位置的 chunk，从而修改任意地址的内存。</p>
-<p>House of Lore 利用的前提是需要控制 Small Bin Chunk 的 bk 指针，并且控制指定位置 chunk的 fd 指针。</p>
-</div>
-<div class="section" id="id2">
-<h2>基本原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>如果在 malloc 的时候，申请的内存块在 small bin 范围内，那么执行的流程如下</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span>/*
-   If a small request, check regular bin.  Since these &quot;smallbins&quot;
-   hold one size each, no searching within bins is necessary.
-   (For a large request, we need to wait until unsorted chunks are
-   processed to find best fit. But for small ones, fits are exact
-   anyway, so we can check now, which is faster.)
- */
-
-if (in_smallbin_range(nb)) {
-    // 获取 small bin 的索引
-    idx = smallbin_index(nb);
-    // 获取对应 small bin 中的 chunk 指针
-    bin = bin_at(av, idx);
-    // 先执行 victim= last(bin)，获取 small bin 的最后一个 chunk
-    // 如果 victim = bin ，那说明该 bin 为空。
-    // 如果不相等，那么会有两种情况
-    if ((victim = last(bin)) != bin) {
-        // 第一种情况，small bin 还没有初始化。
-        if (victim == 0) /* initialization check */
-            // 执行初始化，将 fast bins 中的 chunk 进行合并
-            malloc_consolidate(av);
-        // 第二种情况，small bin 中存在空闲的 chunk
-        else {
-            // 获取 small bin 中倒数第二个 chunk 。
-            bck = victim-&gt;bk;
-            // 检查 bck-&gt;fd 是不是 victim，防止伪造
-            if (__glibc_unlikely(bck-&gt;fd != victim)) {
-                errstr = &quot;malloc(): smallbin double linked list corrupted&quot;;
-                goto errout;
-            }
-            // 设置 victim 对应的 inuse 位
-            set_inuse_bit_at_offset(victim, nb);
-            // 修改 small bin 链表，将 small bin 的最后一个 chunk 取出来
-            bin-&gt;bk = bck;
-            bck-&gt;fd = bin;
-            // 如果不是 main_arena，设置对应的标志
-            if (av != &amp;main_arena) set_non_main_arena(victim);
-            // 细致的检查
-            check_malloced_chunk(av, victim, nb);
-            // 将申请到的 chunk 转化为对应的 mem 状态
-            void *p = chunk2mem(victim);
-            // 如果设置了 perturb_type , 则将获取到的chunk初始化为 perturb_type ^ 0xff
-            alloc_perturb(p, bytes);
-            return p;
-        }
-    }
-}
+  <div class="section" id="id1">
+<h1>堆利用<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<p>在该章节中，我们会按照如下的步骤进行介绍</p>
+<ol class="arabic simple">
+<li>介绍我们所熟知的动态内存分配的堆的宏观操作</li>
+<li>介绍为了达到这些操作所使用的数据结构</li>
+<li>介绍利用这些数据结构实现堆的分配与回收的具体操作</li>
+<li>由浅入深地介绍堆的各种利用技巧。</li>
+</ol>
+<p>对于不同的应用来说，由于内存的需求各不相同等特性，因此目前堆的实现有很多种，具体如下</p>
+<div class="code text highlight-default"><div class="highlight"><pre><span></span>dlmalloc  – General purpose allocator
+ptmalloc2 – glibc
+jemalloc  – FreeBSD and Firefox
+tcmalloc  – Google
+libumem   – Solaris
 </pre></div>
 </div>
-<p>从下面的这部分我们可以看出</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span>// 获取 small bin 中倒数第二个 chunk 。
-bck = victim-&gt;bk;
-// 检查 bck-&gt;fd 是不是 victim，防止伪造
-if (__glibc_unlikely(bck-&gt;fd != victim)) {
-    errstr = &quot;malloc(): smallbin double linked list corrupted&quot;;
-    goto errout;
-}
-// 设置 victim 对应的 inuse 位
-set_inuse_bit_at_offset(victim, nb);
-// 修改 small bin 链表，将 small bin 的最后一个 chunk 取出来
-bin-&gt;bk = bck;
-bck-&gt;fd = bin;
-</pre></div>
-</div>
-<p>如果我们可以修改 small bin 的最后一个 chunk 的 bk 为我们指定内存地址的fake chunk，并且同时满足之后的 bck-&gt;fd != victim 的检测，那么我们就可以使得 small bin 的 bk 恰好为我们构造的 fake
-chunk。也就是说，当下一次申请 small bin 的时候，我们就会分配到指定位置的 fake chunk。</p>
-</div>
-<div class="section" id="id3">
-<h2>例子<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<p>待补充。</p>
-</div>
+<p>这里我们主要以 glibc 中堆的实现为主进行介绍。如果后续有时间，会继续介绍其它堆的实现及其利用。</p>
+<p>该部分主要参考的资料如下，文中有很多内容会和参考资料中一致，以后就不一一说明了。</p>
+<ul class="simple">
+<li><a class="reference external" href="https://www.blackhat.com/presentations/bh-usa-07/Ferguson/Whitepaper/bh-usa-07-ferguson-WP.pdf">black hat heap exploitation</a></li>
+<li><a class="reference external" href="https://heap-exploitation.dhavalkapil.com/">github heap exploition</a></li>
+<li><a class="reference external" href="https://sploitfun.wordpress.com/archives/">sploitfun</a></li>
+<li>glibc 源码</li>
+<li>更多的参考文献请看ref目录下的文件</li>
+</ul>
 </div>
 
 
@@ -212,29 +147,10 @@ chunk。也就是说，当下一次申请 small bin 的时候，我们就会分�
 <li class="toctree-l1"><a class="reference internal" href="../../reverse/index.html">Reverse Engineering</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Pwn</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../stackoverflow/index.html">栈溢出</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fmtstr/index.html">格式化字符串漏洞</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">堆利用</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="heap_overview.html">堆概述</a></li>
-<li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
-<li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
-<li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
-<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
-<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">House of Lore</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">概述</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">基本原理</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">例子</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">堆利用</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Executable</span></p>
 <ul>
@@ -270,15 +186,8 @@ chunk。也就是说，当下一次申请 small bin 的时候，我们就会分�
         <li class="right" style="margin-right: 10px">
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
-        <li class="right" >
-          <a href="../../executable/elf/index.html" title="ELF文件"
-             >下一页</a> &nbsp; &nbsp;</li>
-        <li class="right" >
-          <a href="unsorted_bin_attack.html" title="Unsorted Bin Attack"
-             >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
-
-          <li class="nav-item nav-item-1"><a href="index.html" >堆利用</a> &#187;</li> 
+ 
       </ul>
     </div>
     </div>
