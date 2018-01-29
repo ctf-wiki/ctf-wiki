@@ -7,3 +7,4 @@ Anti Debug Tech
 
    NtGlobalFlag.rst
    Heap-Flags.rst
+   The-Heap.rst
