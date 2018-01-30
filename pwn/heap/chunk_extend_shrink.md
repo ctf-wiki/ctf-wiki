@@ -1,13 +1,13 @@
-﻿# chunk extend/shrink
+# Chunk Extend/Shrink
 
 ## 介绍
-chunk extend是堆上漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，chunk extend\shrink攻击同样需要有可以控制malloc_chunk的漏洞。这种利用方法需要以下的先决条件：
+chunk extend/shrink 是堆漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，chunk extend/shrink 攻击同样需要有可以控制 malloc_chunk 的漏洞。这种利用方法需要以下的先决条件：
 
 * 程序中存在基于堆的漏洞
 * 漏洞可以使得malloc_chunk能够被攻击者控制
 
 ## 原理
-extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的各种属性的校验。
+extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk 的各种属性的校验。
 
 在ptmalloc中，获取本chunk块大小的操作如下
 
@@ -28,7 +28,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的
 ```
 即使用当前块指针加上当前块大小。
 
-在ptmalloc中，获取前一个chunk信息的操作如下
+在ptmalloc中，获取前一个 chunk 信息的操作如下
 
 ```
 /* Size of the chunk below P.  Only valid if prev_inuse (P).  */
@@ -46,7 +46,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于malloc_chunk的
 ```
 即查看下一chunk的prev_inuse域，而下一块地址又如我们前面所述是根据当前chunk的size计算得出的。
 
-更多的操作详见`堆相关数据结构`一节。简而言之，extend\shrink chunk利用就是通过对size\pre_size域进行控制来实现的“放缩”利用。
+更多的操作详见`堆相关数据结构`一节。简而言之，extend/shrink chunk 利用就是通过对size/pre_size域进行控制来实现的“放缩”利用。
 
 ## 基本示例1
 简单来说，该利用的效果是通过更改第一个块的大小来控制第二个块的内容。
@@ -229,8 +229,8 @@ int main()
 ```
 此时再进行malloc分配就可以得到chunk1+chunk2的堆块，从而控制了chunk2的内容。
 
-## extend heap可以做什么  
-一般来说 extend heap并不能直接控制程序的执行流程。但是因为extend heap可以导致chunk overlapping，所以我们可以完整的控制这个堆块chunk中的内容。如果chunk存在字符串指针、函数指针等，就可以利用这些指针来进行信息泄漏和控制执行流程。如果不存在类似的域也可以通过控制chunk header中的数据来实现fastbin attack等利用。
+## extend chunk可以做什么  
+一般来说 extend chunk并不能直接控制程序的执行流程。但是因为 extend chunk 可以导致 chunk overlapping，所以我们可以完整的控制这个堆块 chunk 中的内容。如果 chunk 存在字符串指针、函数指针等，就可以利用这些指针来进行信息泄漏和控制执行流程。如果不存在类似的域也可以通过控制 chunk header 中的数据来实现 fastbin attack 等利用。
 
 
 

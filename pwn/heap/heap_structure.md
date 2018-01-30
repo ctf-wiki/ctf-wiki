@@ -437,7 +437,7 @@ typedef struct malloc_chunk *mfastbinptr;
 
 为了更加高效地利用 fast bin，glibc 采用单向链表对其中的每个 bin 进行组织，并且**每个 bin 采取 LIFO 策略**，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的 chunk 的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中相应的 bin 中是否有对应大小的空闲块，如果有的话，就会直接从这个 bin 中获取 chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
 
-默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为64字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为8字节开始一直到80字节，定义如下
+默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为8字节开始一直到80字节，定义如下
 
 ```c++
 #define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)
@@ -740,7 +740,7 @@ glibc 中对于 top chunk 的描述如下
 
 ### last remainder
 
-在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin也会存这一块。
+在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
 
 ## 宏观结构
 
