@@ -72,8 +72,8 @@ Use After Free
 
 故而程序应该主要有3个功能。之后程序会根据用户的输入执行相应的功能。
 
-add_note
-^^^^^^^^
+add\_note
+^^^^^^^^^
 
 根据程序，我们可以看出程序最多可以添加5个note。每个note有两个字段put与content，其中put会被设置为一个函数，其函数会输出 content 具体的内容。
 
@@ -126,10 +126,10 @@ add_note
       return __readgsdword(0x14u) ^ v5;
     }
 
-print_note
-^^^^^^^^^^
+print\_note
+^^^^^^^^^^^
 
-print_note就是简单的根据给定的note的索引来输出对应索引的note的内容。
+print\_note就是简单的根据给定的note的索引来输出对应索引的note的内容。
 
 .. code:: c
 
@@ -153,10 +153,10 @@ print_note就是简单的根据给定的note的索引来输出对应索引的not
       return __readgsdword(0x14u) ^ v3;
     }
 
-delete_note
-^^^^^^^^^^^
+delete\_note
+^^^^^^^^^^^^
 
-delete_note 会根据给定的索引来释放对应的note。但是值得注意的是，在 删除的时候，只是单纯进行了free，而没有设置为NULL，那么显然，这里是存在Use After Free的情况的。
+delete\_note 会根据给定的索引来释放对应的note。但是值得注意的是，在 删除的时候，只是单纯进行了free，而没有设置为NULL，那么显然，这里是存在Use After Free的情况的。
 
 .. code:: c
 
@@ -197,15 +197,15 @@ delete_note 会根据给定的索引来释放对应的note。但是值得注意�
 
    ::
 
-           +-----------------+                       
-           |   put           |                       
-           +-----------------+                       
-           |   content       |       size              
-           +-----------------+------------------->+----------------+
-                                                  |     real       |
-                                                  |    content     |
-                                                  |                |
-                                                  +----------------+
+          +-----------------+                       
+          |   put           |                       
+          +-----------------+                       
+          |   content       |       size              
+          +-----------------+------------------->+----------------+
+                                                 |     real       |
+                                                 |    content     |
+                                                 |                |
+                                                 +----------------+
 
 那么，根据我们之前在堆的实现中所学到的，显然note是一个fastbin
 chunk（大小为16字节）。我们的目的是希望一个note的put字段为magic的函数地址，那么我们必须想办法让某个note的put指针被覆盖为magic地址。由于程序中只有唯一的地方对put进行赋值。所以我们必须利用写real
@@ -217,10 +217,8 @@ content的时候来进行覆盖。具体采用的思路如下
 -  释放note1
 -  此时，大小为16的fast bin chunk中链表为note1->note0
 -  申请note2，并且设置real content的大小为8，那么根据堆的分配规则
-
-   -  note2其实会分配note1对应的内存块。
-   -  real content 对应的chunk其实是note0。
-
+-  note2其实会分配note1对应的内存块。
+-  real content 对应的chunk其实是note0。
 -  如果我们这时候向note3的chunk部分写入magic的地址，那么由于我们没有note1为NULL。当我们再次尝试输出note1的时候，程序就会调用magic函数。
 
 利用脚本

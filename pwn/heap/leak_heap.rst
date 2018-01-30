@@ -36,7 +36,7 @@
 
 首先第一个是主模块的基地址，因为只有在开启PIE(地址无关代码)的情况下主模块的基地址才会发生改变，因此通常情况下主模块的地址不需要泄漏。
 第二个是堆地址，堆地址对于进程来说是每次运行都会改变，当然需要控制堆中的数据时可能就需要先泄漏堆基地址。
-第三个是libc.so的地址，在很多情况下我们只有通过libc中的system等函数才能实现代码执行，并且malloc_hook、one_gadgets、IO_FILE等结构也都储存在libc中，因此libc的地址也是我们泄漏的目标。
+第三个是libc.so的地址，在很多情况下我们只有通过libc中的system等函数才能实现代码执行，并且malloc\_hook、one\_gadgets、IO\_FILE等结构也都储存在libc中，因此libc的地址也是我们泄漏的目标。
 
 通过什么进行泄漏
 ----------------
@@ -63,7 +63,7 @@ unsorted bin
     0x602120:   0x0000000000000000  0x0000000000000000
 
 因此我们知道通过unsorted
-bin我们可以获取到某个堆块的地址和main_areana的地址。一旦获取到某个堆块的地址就可以通过malloc的size进行计算从而获得堆基地址。一旦获取到main_arena的地址，因为main_arena存在于libc.so中就可以计算偏移得出libc.so的基地址。
+bin我们可以获取到某个堆块的地址和main\_areana的地址。一旦获取到某个堆块的地址就可以通过malloc的size进行计算从而获得堆基地址。一旦获取到main\_arena的地址，因为main\_arena存在于libc.so中就可以计算偏移得出libc.so的基地址。
 因此，通过unsorted bin可以获得：1.libc.so的基地址 2.heap基地址
 
 fastbin

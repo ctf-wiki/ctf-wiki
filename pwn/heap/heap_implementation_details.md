@@ -1,3 +1,7 @@
+---
+typora-root-url: ../../../ctf-wiki
+---
+
 # 深入理解堆的实现
 
 仔细想一下，任何堆的实现都离不开以下两个方面的问题
@@ -242,7 +246,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
 
 #### fast bin
 
-如果申请的 chunk 的大小位于 fastbin 范围内，**需要注意的是这里比较的是无符号整数**。
+如果申请的 chunk 的大小位于 fastbin 范围内，**需要注意的是这里比较的是无符号整数**。**此外，是从 fastbin 的头结点开始取 chunk**。
 
 ```c++
     /*
@@ -397,6 +401,8 @@ static void *_int_malloc(mstate av, size_t bytes) {
 ##### unsort bin 遍历
 
 先考虑 unsorted bin，再考虑 last remainder ，但是对于small bin chunk 的请求会有所例外。
+
+**注意 unsorted bin 的遍历顺序为 bk。**
 
 ```c++
         // 如果 unsorted bin 不为空
@@ -859,7 +865,7 @@ while 最多迭代10000次后退出。
         // 获取当前的top chunk，并计算其对应的大小
         victim = av->top;
         size   = chunksize(victim);
-        // 如果在分割之后，其大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
+        // 如果分割之后，top chunk大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
         if ((unsigned long) (size) >= (unsigned long) (nb + MINSIZE)) {
             remainder_size = size - nb;
             remainder      = chunk_at_offset(victim, nb);
@@ -995,7 +1001,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
         errstr = "free(): invalid size";
         goto errout;
     }
-    // 检查该chunk是否处于使用状态
+    // 检查该chunk是否处于使用状态，非调试状态下没有作用
     check_inuse_chunk(av, p);
 ```
 
@@ -1015,7 +1021,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 
 #### fast bin
 
-如果上述检查都合格的话，判断当前的 bin 是不是在 fast bin 范围内，在的话就插入到 fastbin 中
+如果上述检查都合格的话，判断当前的 bin 是不是在 fast bin 范围内，在的话就插入到 **fastbin 头部**，即成为对应 fastbin 链表的**第一个 free chunk**。
 
 ```c++
     /*
@@ -1025,14 +1031,15 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 
     if ((unsigned long) (size) <= (unsigned long) (get_max_fast())
 
-##if TRIM_FASTBINS
+#if TRIM_FASTBINS
         /*
       If TRIM_FASTBINS set, don't place chunks
       bordering top into fastbins
         */
+       //默认 #define TRIM_FASTBINS 0，因此默认情况下下面的语句不会执行
        // 如果当前chunk是fast chunk，并且下一个chunk是top chunk，则不能插入
         && (chunk_at_offset(p, size) != av->top)
-##endif
+#endif
             ) {
         // 下一个chunk的大小不能小于两倍的SIZE_SZ,并且
         // 下一个chunk的大小不能大于system_mem， 一般为132k
@@ -1164,7 +1171,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 ##### 释放填充
 
 ```c++
-        //将 指针的mem部分全部设置为perturb_byte 
+        //将指针的mem部分全部设置为perturb_byte 
 		free_perturb(chunk2mem(p), size - 2 * SIZE_SZ);
 ```
 
@@ -1182,7 +1189,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 
 ##### 下一块不是top chunk-前向合并-合并高地址chunk
 
-需要注意的是，如果下一块不是top chunk后，合并后的chunk会被放入到unsorted bin中。
+需要注意的是，如果下一块不是 top chunk 后，则合并高地址的 chunk ，并将合并后的 chunk 放入到unsorted bin中。
 
 ```c++
 		// 如果下一个chunk不是top chunk
@@ -1259,7 +1266,8 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
           consolidation is performed if FASTBIN_CONSOLIDATION_THRESHOLD
           is reached.
         */
-         // 如果合并后的chunk的大小大于FASTBIN_CONSOLIDATION_THRESHOLD
+         // 如果合并后的 chunk 的大小大于FASTBIN_CONSOLIDATION_THRESHOLD
+         // 一般合并到 top chunk 都会执行这部分代码。
          // 那就向系统返还内存
         if ((unsigned long) (size) >= FASTBIN_CONSOLIDATION_THRESHOLD) {
             // 如果有fast chunk 就进行合并
@@ -1397,7 +1405,7 @@ static void malloc_consolidate(mstate av) {
           until malloc is sure that chunks aren't immediately going to be
           reused anyway.
         */
-        // 依次遍历fastbin的每一个bin，将bin中的每一个 chunk 合并掉。
+        // 按照fd顺序遍历fastbin的每一个bin，将bin中的每一个 chunk 合并掉。
         maxfb = &fastbin(av, NFASTBINS - 1);
         fb    = &fastbin(av, 0);
         do {
@@ -1421,12 +1429,14 @@ static void malloc_consolidate(mstate av) {
                     }
 
                     if (nextchunk != av->top) {
+                        // 判断 nextchunk 是否是空闲的。
                         nextinuse = inuse_bit_at_offset(nextchunk, nextsize);
 
                         if (!nextinuse) {
                             size += nextsize;
                             unlink(av, nextchunk, bck, fwd);
                         } else
+                            // 设置nextchunk的prev inuse 为0，以表明可以合并该chunk。
                             clear_inuse_bit_at_offset(nextchunk, 0);
 
                         first_unsorted     = unsorted_bin->fd;
