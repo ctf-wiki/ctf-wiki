@@ -33,10 +33,10 @@
    misc/encode/index.rst
    misc/prefix.rst
    misc/picture/index.rst
+   misc/traffic/index.rst
    misc/archive/index.rst
    misc/audio/index.rst
    misc/disk_memory/index.rst
-   misc/cap.rst
    misc/others.rst
 
 
