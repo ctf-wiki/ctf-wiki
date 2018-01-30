@@ -16,58 +16,58 @@
 可以使用以下32位代码来检测32位环境:
 
 ``` asm
-xor ebx, ebx
-call GetVersion
-cmp al, 6
-sbb ebp, ebp
-jb l1
-;Process Environment Block
-mov eax, fs:[ebx+30h]
-mov eax, [eax+18h] ;get process heap base
-mov ecx, [eax+24h] ;check for protected heap
-jecxz l1
-mov ecx, [ecx]
-test [eax+4ch], ecx
-cmovne ebx, [eax+50h] ;conditionally get heap key
+    xor ebx, ebx
+    call GetVersion
+    cmp al, 6
+    sbb ebp, ebp
+    jb l1
+    ;Process Environment Block
+    mov eax, fs:[ebx+30h]
+    mov eax, [eax+18h] ;get process heap base
+    mov ecx, [eax+24h] ;check for protected heap
+    jecxz l1
+    mov ecx, [ecx]
+    test [eax+4ch], ecx
+    cmovne ebx, [eax+50h] ;conditionally get heap key
 l1: mov eax, <heap ptr>
-movzx edx, w [eax-8] ;size
-xor dx, bx
-movzx ecx, b [eax+ebp-1] ;overhead
-sub eax, ecx
-lea edi, [edx*8+eax]
-mov al, 0abh
-mov cl, 8
-repe scasb
-je being_debugged
+    movzx edx, w [eax-8] ;size
+    xor dx, bx
+    movzx ecx, b [eax+ebp-1] ;overhead
+    sub eax, ecx
+    lea edi, [edx*8+eax]
+    mov al, 0abh
+    mov cl, 8
+    repe scasb
+    je being_debugged
 ```
 
 或使用以下64位代码检测64位环境:
 
 ```
-xor ebx, ebx
-call GetVersion
-cmp al, 6
-sbb rbp, rbp
-jb l1
-;Process Environment Block
-mov rax, gs:[rbx+60h]
-mov eax, [rax+30h] ;get process heap base
-mov ecx, [rax+40h] ;check for protected heap
-jrcxz l1
-mov ecx, [rcx+8]
-test [rax+7ch], ecx
-cmovne ebx, [rax+88h] ;conditionally get heap key
+    xor ebx, ebx
+    call GetVersion
+    cmp al, 6
+    sbb rbp, rbp
+    jb l1
+    ;Process Environment Block
+    mov rax, gs:[rbx+60h]
+    mov eax, [rax+30h] ;get process heap base
+    mov ecx, [rax+40h] ;check for protected heap
+    jrcxz l1
+    mov ecx, [rcx+8]
+    test [rax+7ch], ecx
+    cmovne ebx, [rax+88h] ;conditionally get heap key
 l1: mov eax, <heap ptr>
-movzx edx, w [rax-8] ;size
-xor dx, bx
-add edx, edx
-movzx ecx, b [rax+rbp-1] ;overhead
-sub eax, ecx
-lea edi, [rdx*8+rax]
-mov al, 0abh
-mov cl, 10h
-repe scasb
-je being_debugged
+    movzx edx, w [rax-8] ;size
+    xor dx, bx
+    add edx, edx
+    movzx ecx, b [rax+rbp-1] ;overhead
+    sub eax, ecx
+    lea edi, [rdx*8+rax]
+    mov al, 0abh
+    mov cl, 10h
+    repe scasb
+    je being_debugged
 ```
 
 这里没有使用32位代码检测64位环境的样例, 因为64位的堆无法由32位的堆函数解析.
@@ -80,48 +80,48 @@ je being_debugged
 可以使用以下32位代码来检测32位环境:
 
 ``` asm
-mov ebx, offset l2
-;get a pointer to a heap block
+    mov ebx, offset l2
+    ;get a pointer to a heap block
 l1: push ebx
-mov eax, fs:[30h] ;Process Environment Block
-push d [eax+18h] ;save process heap base
-call HeapWalk
-cmp w [ebx+0ah], 4 ;find allocated block
-jne l1
-mov edi, [ebx] ;data pointer
-add edi, [ebx+4] ;data size
-mov al, 0abh
-push 8
-pop ecx
-repe scasb
-je being_debugged
-...
+    mov eax, fs:[30h] ;Process Environment Block
+    push d [eax+18h] ;save process heap base
+    call HeapWalk
+    cmp w [ebx+0ah], 4 ;find allocated block
+    jne l1
+    mov edi, [ebx] ;data pointer
+    add edi, [ebx+4] ;data size
+    mov al, 0abh
+    push 8
+    pop ecx
+    repe scasb
+    je being_debugged
+    ...
 l2: db 1ch dup (0) ;sizeof(PROCESS_HEAP_ENTRY)
 ```
 
 或使用以下64位代码检测64位环境:
 
 ``` asm
-mov rbx, offset l2
-;get a pointer to a heap block
+    mov rbx, offset l2
+    ;get a pointer to a heap block
 l1: push rbx
-pop rdx
-push 60h
-pop rsi
-gs:lodsq ;Process Environment Block
-;get a pointer to process heap base
-mov ecx, [rax+30h]
-call HeapWalk
-cmp w [rbx+0eh], 4 ;find allocated block
-jne l1
-mov edi, [rbx] ;data pointer
-add edi, [rbx+8] ;data size
-mov al, 0abh
-push 10h
-pop rcx
-repe scasb
-je being_debugged
-...
+    pop rdx
+    push 60h
+    pop rsi
+    gs:lodsq ;Process Environment Block
+    ;get a pointer to process heap base
+    mov ecx, [rax+30h]
+    call HeapWalk
+    cmp w [rbx+0eh], 4 ;find allocated block
+    jne l1
+    mov edi, [rbx] ;data pointer
+    add edi, [rbx+8] ;data size
+    mov al, 0abh
+    push 10h
+    pop rcx
+    repe scasb
+    je being_debugged
+    ...
 l2: db 28h dup (0) ;sizeof(PROCESS_HEAP_ENTRY)
 ```
 
