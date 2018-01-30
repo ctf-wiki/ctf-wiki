@@ -68,17 +68,13 @@
 <h1>深入理解堆的实现<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
 <p>仔细想一下，任何堆的实现都离不开以下两个方面的问题</p>
 <ul class="simple">
-<li>宏观角度<ul>
+<li>宏观角度</li>
 <li>创建堆</li>
 <li>堆初始化</li>
 <li>删除堆</li>
-</ul>
-</li>
-<li>微观角度<ul>
+<li>微观角度</li>
 <li>申请内存块</li>
 <li>释放内存块</li>
-</ul>
-</li>
 </ul>
 <p>当然，这些都还是比较高层面的想法，不同的堆的底层的实现会有所不同。</p>
 <div class="section" id="id2">
@@ -97,29 +93,21 @@
 <h3>unlink<a class="headerlink" href="#unlink" title="永久链接至标题">¶</a></h3>
 <p>unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在以下地方使用</p>
 <ul class="simple">
-<li>malloc<ul>
+<li>malloc</li>
 <li>从恰好大小合适的 large bin 中获取 chunk。<ul>
 <li><strong>这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。</strong></li>
 <li>依次遍历处理unsorted bin时也是没有unlink的。</li>
 </ul>
 </li>
 <li>从比所需要的 chunk 相应的 bin 大的 bin 中取 chunk。</li>
-</ul>
-</li>
-<li>Free<ul>
+<li>Free</li>
 <li>后向合并，合并物理相邻低地址空闲 chunk。</li>
 <li>前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。</li>
-</ul>
-</li>
-<li>malloc_consolidate<ul>
+<li>malloc_consolidate</li>
 <li>后向合并，合并物理相邻低地址空闲 chunk。</li>
 <li>前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。</li>
-</ul>
-</li>
-<li>realloc<ul>
+<li>realloc</li>
 <li>前向扩展，合并物理相邻高地址空闲 chunk（除了top chunk）。</li>
-</ul>
-</li>
 </ul>
 <p>由于 unlink 使用非常频繁，所以 unlink 被实现为了一个宏，如下</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span>/* Take a chunk off a bin list */
@@ -172,7 +160,9 @@
 </pre></div>
 </div>
 <p>这里我们只是以 small bin 的 unlink 为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize 的处理。</p>
-<p><img alt="image0" src="../../_images/unlink_smallbin_intro.png" /></p>
+<div class="figure">
+<img alt="" src="../../_images/unlink_smallbin_intro.png" />
+</div>
 <p>可以看出， P 最后的 fd 和 bk 指针并没有发生变化，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。</p>
 <p>同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都做了相应的检测。</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">fd</span> <span class="n">bk</span>
@@ -313,7 +303,7 @@ if (!victim &amp;&amp; ar_ptr != NULL) {
 </div>
 <div class="section" id="fast-bin">
 <h4>fast bin<a class="headerlink" href="#fast-bin" title="永久链接至标题">¶</a></h4>
-<p>如果申请的 chunk 的大小位于 fastbin 范围内，<strong>需要注意的是这里比较的是无符号整数</strong>。</p>
+<p>如果申请的 chunk 的大小位于 fastbin 范围内，<strong>需要注意的是这里比较的是无符号整数</strong>。<strong>此外，是从 fastbin 的头结点开始取 chunk</strong>。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/*
    If the size qualifies as a fastbin, first check corresponding bin.
    This code is safe to execute even if av is not yet initialized, so we
@@ -464,6 +454,7 @@ bin，我们并没有对fast bin 中的 chunk 进行合并，所以这里会进�
 <div class="section" id="unsort-bin">
 <h5>unsort bin 遍历<a class="headerlink" href="#unsort-bin" title="永久链接至标题">¶</a></h5>
 <p>先考虑 unsorted bin，再考虑 last remainder ，但是对于small bin chunk 的请求会有所例外。</p>
+<p><strong>注意 unsorted bin 的遍历顺序为 bk。</strong></p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>// 如果 unsorted bin 不为空
 // First In First Out
 while ((victim = unsorted_chunks(av)-&gt;bk) != unsorted_chunks(av)) {
@@ -894,7 +885,7 @@ if (victim == bin) {
     // 获取当前的top chunk，并计算其对应的大小
     victim = av-&gt;top;
     size   = chunksize(victim);
-    // 如果在分割之后，其大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
+    // 如果分割之后，top chunk大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
     if ((unsigned long) (size) &gt;= (unsigned long) (nb + MINSIZE)) {
         remainder_size = size - nb;
         remainder      = chunk_at_offset(victim, nb);
@@ -1028,7 +1019,7 @@ if (__glibc_unlikely(size &lt; MINSIZE || !aligned_OK(size))) {
     errstr = &quot;free(): invalid size&quot;;
     goto errout;
 }
-// 检查该chunk是否处于使用状态
+// 检查该chunk是否处于使用状态，非调试状态下没有作用
 check_inuse_chunk(av, p);
 </pre></div>
 </div>
@@ -1045,7 +1036,7 @@ check_inuse_chunk(av, p);
 </div>
 <div class="section" id="id10">
 <h4>fast bin<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h4>
-<p>如果上述检查都合格的话，判断当前的 bin 是不是在 fast bin 范围内，在的话就插入到 fastbin 中</p>
+<p>如果上述检查都合格的话，判断当前的 bin 是不是在 fast bin 范围内，在的话就插入到 <strong>fastbin 头部</strong>，即成为对应 fastbin 链表的<strong>第一个 free chunk</strong>。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>    /*
       If eligible, place chunk on a fastbin so it can be found
       and used quickly in malloc.
@@ -1053,14 +1044,15 @@ check_inuse_chunk(av, p);
 
     if ((unsigned long) (size) &lt;= (unsigned long) (get_max_fast())
 
-##if TRIM_FASTBINS
+#if TRIM_FASTBINS
         /*
       If TRIM_FASTBINS set, don&#39;t place chunks
       bordering top into fastbins
         */
+       //默认 #define TRIM_FASTBINS 0，因此默认情况下下面的语句不会执行
        // 如果当前chunk是fast chunk，并且下一个chunk是top chunk，则不能插入
         &amp;&amp; (chunk_at_offset(p, size) != av-&gt;top)
-##endif
+#endif
             ) {
         // 下一个chunk的大小不能小于两倍的SIZE_SZ,并且
         // 下一个chunk的大小不能大于system_mem， 一般为132k
@@ -1189,7 +1181,7 @@ if (__builtin_expect(chunksize_nomask(nextchunk) &lt;= 2 * SIZE_SZ, 0) ||
 </div>
 <div class="section" id="id12">
 <h5>释放填充<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h5>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span><span class="n">将</span> <span class="n">指针的mem部分全部设置为perturb_byte</span>
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span><span class="n">将指针的mem部分全部设置为perturb_byte</span>
 <span class="n">free_perturb</span><span class="p">(</span><span class="n">chunk2mem</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">size</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -1208,7 +1200,7 @@ if (!prev_inuse(p)) {
 </div>
 <div class="section" id="top-chunk-chunk">
 <h5>下一块不是top chunk-前向合并-合并高地址chunk<a class="headerlink" href="#top-chunk-chunk" title="永久链接至标题">¶</a></h5>
-<p>需要注意的是，如果下一块不是top chunk后，合并后的chunk会被放入到unsorted bin中。</p>
+<p>需要注意的是，如果下一块不是 top chunk 后，则合并高地址的 chunk ，并将合并后的 chunk 放入到unsorted bin中。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>// 如果下一个chunk不是top chunk
 if (nextchunk != av-&gt;top) {
     /* get and clear inuse bit */
@@ -1283,7 +1275,8 @@ else {
           consolidation is performed if FASTBIN_CONSOLIDATION_THRESHOLD
           is reached.
         */
-         // 如果合并后的chunk的大小大于FASTBIN_CONSOLIDATION_THRESHOLD
+         // 如果合并后的 chunk 的大小大于FASTBIN_CONSOLIDATION_THRESHOLD
+         // 一般合并到 top chunk 都会执行这部分代码。
          // 那就向系统返还内存
         if ((unsigned long) (size) &gt;= FASTBIN_CONSOLIDATION_THRESHOLD) {
             // 如果有fast chunk 就进行合并
@@ -1423,7 +1416,7 @@ if (get_max_fast() != 0) {
       until malloc is sure that chunks aren&#39;t immediately going to be
       reused anyway.
     */
-    // 依次遍历fastbin的每一个bin，将bin中的每一个 chunk 合并掉。
+    // 按照fd顺序遍历fastbin的每一个bin，将bin中的每一个 chunk 合并掉。
     maxfb = &amp;fastbin(av, NFASTBINS - 1);
     fb    = &amp;fastbin(av, 0);
     do {
@@ -1447,12 +1440,14 @@ if (get_max_fast() != 0) {
                 }
 
                 if (nextchunk != av-&gt;top) {
+                    // 判断 nextchunk 是否是空闲的。
                     nextinuse = inuse_bit_at_offset(nextchunk, nextsize);
 
                     if (!nextinuse) {
                         size += nextsize;
                         unlink(av, nextchunk, bck, fwd);
                     } else
+                        // 设置nextchunk的prev inuse 为0，以表明可以合并该chunk。
                         clear_inuse_bit_at_offset(nextchunk, 0);
 
                     first_unsorted     = unsorted_bin-&gt;fd;
@@ -1646,11 +1641,12 @@ if (get_max_fast() != 0) {
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
-<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的 Off-By-One</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">Fastbin Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html#id19">参考文献</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>

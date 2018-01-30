@@ -165,7 +165,9 @@ Let&#39;s malloc again to get the chunk we just free. During this time, target s
 </pre></div>
 </div>
 <p>这里我们可以使用一个图来描述一下具体发生的流程以及背后的原理。</p>
-<p><img alt="image0" src="../../_images/unsorted_bin_attack_order.png" /></p>
+<div class="figure">
+<img alt="" src="../../_images/unsorted_bin_attack_order.png" />
+</div>
 <p><strong>初始状态时</strong></p>
 <p>unsorted bin的fd和bk均指向unsorted bin本身。</p>
 <p><strong>执行free(p)</strong></p>
@@ -265,13 +267,15 @@ Let&#39;s malloc again to get the chunk we just free. During this time, target s
 <p>基本功能如下</p>
 <ol class="arabic simple">
 <li>逐一查看 storage 数组，查找第一个未使用的元素，但是这个数组最大也就是32。</li>
-<li>读取storage 元素所需要存储内容的长度。<ul>
+<li>读取storage 元素所需要存储内容的长度。</li>
+</ol>
+<ul class="simple">
 <li>如果长度不大于0，直接退出；</li>
 <li>否则如果申请的字节数小于128，那就设置为128；</li>
 <li>否则，如果申请的字节数不大于4096，那就设置为对应的数值；</li>
 <li>否则，设置为4096。</li>
 </ul>
-</li>
+<ol class="arabic simple" start="3">
 <li>使用 calloc 分配指定长度，注意 calloc 会初始化 chunk 为0。</li>
 <li>将 calloc 分配的内存地址与 bss 段的一个内存（初始时刻为一个随机数）进行抑或，得到一个新的内存地址。</li>
 <li>根据读取的storage的大小来读入内容。</li>
@@ -284,13 +288,15 @@ Let&#39;s malloc again to get the chunk we just free. During this time, target s
 <ol class="arabic simple">
 <li>如果没有任何存储，就直接返回。</li>
 <li>读入要更新的storage元素的id，如果id大于31或者目前处于不处于使用状态，说明不对，直接返回。</li>
-<li>读取<strong>更新后</strong>storage 元素所需要存储内容的长度。<ul>
+<li>读取<strong>更新后</strong>storage 元素所需要存储内容的长度。</li>
+</ol>
+<ul class="simple">
 <li>如果长度不大于0，直接退出；</li>
 <li>否则如果申请的字节数小于128，那就设置为128；</li>
 <li>否则，如果申请的字节数不大于4096，那就设置为对应的数值；</li>
 <li>否则，设置为4096。</li>
 </ul>
-</li>
+<ol class="arabic simple" start="4">
 <li>根据 bss 段对应的随机数获取原先storage 存储内容的地址，</li>
 <li>如果更新后所需的长度不等于更新前的长度，就使用realloc为其重新分配内存。</li>
 <li>再次读取数据，同时更新storage 元素。</li>
@@ -427,11 +433,12 @@ bin范围内，所以只会被放到unsorted bin中（而且此时只有一个�
 <li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
-<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的 Off-By-One</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">Fastbin Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html#id19">参考文献</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Unsorted Bin Attack</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id1">概述</a></li>

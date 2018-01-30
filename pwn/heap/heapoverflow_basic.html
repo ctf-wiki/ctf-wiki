@@ -32,7 +32,7 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="堆中的off-by-one" href="off_by_one.html" />
+    <link rel="next" title="堆中的 Off-By-One" href="off_by_one.html" />
     <link rel="prev" title="深入理解堆的实现" href="heap_implementation_details.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
@@ -46,7 +46,7 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="off_by_one.html" title="堆中的off-by-one"
+          <a href="off_by_one.html" title="堆中的 Off-By-One"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
           <a href="heap_implementation_details.html" title="深入理解堆的实现"
@@ -68,11 +68,13 @@
 <h1>堆溢出<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id2">
 <h2>介绍<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>堆溢出是指程序向某个堆块中写入的字节数超过了堆块本身可利用的字节数（<strong>之所以是可利用的是因为堆管理器会对用户所申请的字节数进行调整，这也导致可利用的字节数都不小于用户申请的字节数</strong>），因而导致了数据溢出，并覆盖到<strong>物理相邻</strong>的下一个堆块。对于攻击者来说，堆溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。不难发现，堆溢出漏洞发生的基本前提是</p>
+<p>堆溢出是指程序向某个堆块中写入的字节数超过了堆块本身可使用的字节数（<strong>之所以是可使用而不是用户申请的字节数，是因为堆管理器会对用户所申请的字节数进行调整，这也导致可利用的字节数都不小于用户申请的字节数</strong>），因而导致了数据溢出，并覆盖到<strong>物理相邻的高地址</strong>的下一个堆块。</p>
+<p>不难发现，堆溢出漏洞发生的基本前提是</p>
 <ul class="simple">
-<li>程序必须向堆上写入数据。</li>
+<li>程序向堆上写入数据。</li>
 <li>写入的数据大小没有被良好地控制。</li>
 </ul>
+<p>对于攻击者来说，堆溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。</p>
 <p>堆溢出是一种特定的缓冲区溢出（还有栈溢出， bss 段溢出等)。但是其与栈溢出所不同的是，堆上并不存在返回地址等可以让攻击者直接控制执行流程的数据，因此我们一般无法直接通过堆溢出来控制 EIP
 。一般来说，我们利用堆溢出的策略是</p>
 <ol class="arabic simple">
@@ -87,7 +89,7 @@
 <li>the True chunk size</li>
 </ul>
 </li>
-<li>chunk content</li>
+<li>chunk content，从而改变程序固有的执行流。</li>
 </ul>
 <ol class="arabic simple" start="2">
 <li>利用堆中的机制（如 unlink 等 ）来实现任意地址写入（ Write-Anything-Anywhere）或控制堆块中的内容等效果，从而来控制程序的执行流。</li>
@@ -108,8 +110,8 @@
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>这个程序的主要目的是调用malloc分配一块堆上的内存，之后向这个堆块中写入一个字符串，如果输入的字符串过长会导致溢出chunk的区域并覆盖到其后的top
-chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可能并不是top chunk)。</p>
+<p>这个程序的主要目的是调用 malloc 分配一块堆上的内存，之后向这个堆块中写入一个字符串，如果输入的字符串过长会导致溢出 chunk 的区域并覆盖到其后的 top chunk 之中(实际上 puts 内部会调用 malloc
+分配堆内存，覆盖到的可能并不是 top chunk)。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span><span class="n">chunk</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fe1</span> <span class="o">&lt;===</span><span class="n">top</span> <span class="n">chunk</span>
@@ -131,14 +133,14 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
 <p>堆溢出中比较重要的几个步骤:</p>
 <div class="section" id="id5">
 <h3>寻找堆分配函数<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<p>通常来说堆是通过调用 glibc 函数 malloc 进行分配的，在某些情况下会使用 calloc 分配。calloc 与 malloc 的区别是 calloc 在分配后会自动进行清空，这对于某些信息泄露漏洞的利用来说是致命的。</p>
+<p>通常来说堆是通过调用 glibc 函数 malloc 进行分配的，在某些情况下会使用 calloc 分配。calloc 与 malloc 的区别是 <strong>calloc 在分配后会自动进行清空，这对于某些信息泄露漏洞的利用来说是致命的</strong>。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">calloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
 <span class="o">//</span><span class="n">等同于</span>
 <span class="n">ptr</span><span class="o">=</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
 <span class="n">memset</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mh">0x20</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>除此之外，还有一种分配是经由realloc进行的，realloc函数可以身兼malloc和free两个函数的功能。</p>
+<p>除此之外，还有一种分配是经由 realloc 进行的，realloc 函数可以身兼 malloc 和 free 两个函数的功能。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
 
 <span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
@@ -194,8 +196,8 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
 </div>
 <div class="section" id="id7">
 <h3>确定填充长度<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<p>这一部分主要是计算<strong>我们开始写入的地址与我们所要覆盖的地址之间的距离</strong>。
-一个常见的误区是malloc的参数等于实际分配堆块的大小，但是事实上ptmalloc分配出来的堆块是存在对其长度的。这个长度一般是字长，比如32位系统是4个字节，64位系统是8个字节。但是对于小于2倍字长的请求，malloc会直接返回2倍字长的块也就是最小chunk，比如64位系统执行<code class="docutils literal"><span class="pre">malloc(0)</span></code>会返回用户区域为16字节的块。</p>
+<p>这一部分主要是计算<strong>我们开始写入的地址与我们所要覆盖的地址之间的距离</strong>。 一个常见的误区是malloc的参数等于实际分配堆块的大小，但是事实上 ptmalloc
+分配出来的大小是对齐的。这个长度一般是字长的2倍，比如32位系统是8个字节，64位系统是16个字节。但是对于不大于2倍字长的请求，malloc会直接返回2倍字长的块也就是最小chunk，比如64位系统执行<code class="docutils literal"><span class="pre">malloc(0)</span></code>会返回用户区域为16字节的块。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
 
 <span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
@@ -215,7 +217,7 @@ chunk之中(实际上puts内部会调用malloc分配堆内存，覆盖到的可�
 0x602030:   0x0000000000000000  0x0000000000000000
 </pre></div>
 </div>
-<p>注意用户区域的大小不等于chunk_hear.size，chunk_hear.size=用户区域大小+2*字长</p>
+<p>注意用户区域的大小不等于 chunk_hear.size，chunk_hear.size=用户区域大小+2*字长</p>
 <p>还有一点是之前所说的用户申请的内存大小会被修改，其有可能会使用与其物理相邻的下一个chunk的prev_size字段储存内容。回头再来看下之前的示例代码</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
 
@@ -333,11 +335,12 @@ ptmalloc 分配内存是以双字为基本单位，以64位系统为例，分配
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的 Off-By-One</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">Fastbin Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html#id19">参考文献</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>
@@ -379,7 +382,7 @@ ptmalloc 分配内存是以双字为基本单位，以64位系统为例，分配
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="off_by_one.html" title="堆中的off-by-one"
+          <a href="off_by_one.html" title="堆中的 Off-By-One"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
           <a href="heap_implementation_details.html" title="深入理解堆的实现"

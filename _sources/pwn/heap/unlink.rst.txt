@@ -8,7 +8,8 @@ unlink
 
 我们先来简单回顾一下 unlink 的目的与过程，其目的主要是想把一个双向链表中的空闲块拿出来，然后和目前free chunk 进行合并。其基本的过程如下
 
-|image0|
+.. figure:: /pwn/heap/figure/unlink_smallbin_intro.png
+   :alt: 
 
 下面我们会首先介绍一下 unlink 最初没有防护时的利用，然后介绍目前利用unlink 的方式。
 
@@ -35,7 +36,8 @@ unlink
 
 这里我们以32位为例，假设堆内存最初的布局是下面的样子
 
-|image1|
+.. figure:: /pwn/heap/figure/old_unlink_vul.png
+   :alt: 
 
 那么如果我们通过某种方式（\ **比如溢出**\ ）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时
 
@@ -49,7 +51,7 @@ unlink
 -  FD=P->fd = target addr -12
 -  BK=P->bk = expect value
 -  FD->bk = BK，即 \*(target addr-12+12)=BK=expect value
--  BK->fd = FD，即*(expect value +8) = FD = target addr-12
+-  BK->fd = FD，即\*(expect value +8) = FD = target addr-12
 
 **看起来我们似乎可以通过 unlink 直接实现任意地址读写的目的，但是我们还是需要确保 expect value +8 地址具有可写的权限。**
 
@@ -69,12 +71,12 @@ unlink
 
 此时
 
--  FD->bk = \*(target addr-12+12)=*target_addr
+-  FD->bk = \*(target addr-12+12)=\*target\_addr
 -  BK->fd = \*(expect value+8)
 
 那么，我们上面所利用的修改GOT表项的方法就不可用了。
 
-但是，如果我们使得*(expect value+8)还是*target_addr 等于 P，那么我们可以执行
+但是，如果我们使得\*(expect value+8)还是\*target\_addr 等于 P，那么我们可以执行
 
 -  \*P= expect value = P - 8
 -  \*P = target addr -12 = P - 12
@@ -83,7 +85,8 @@ unlink
 
 而如果我们想要使得两者都指向P，只需要我们改变原来的修改的策略如下
 
-|image2|
+.. figure:: /pwn/heap/figure/new_unlink_vul.png
+   :alt: 
 
 我们会通过之后的例子来说明，我们这样的修改是可以达到一定的效果的。
 
@@ -213,12 +216,12 @@ unlink
     # chunk2: a chunk to be overwrited and freed
     newnote(0x80, 'b' * 16)
 
-其中这三个note的大小分别为0x80，0，0x80，第二个chunk虽然申请的大小为0，但是glibc的要求chunk块至少可以存储4个必要的字段(prev_size,size,fd,bk)，所以会分配0x20的空间。同时，由于无符号整数的比较问题，可以为该note输入任意长的字符串。
+其中这三个note的大小分别为0x80，0，0x80，第二个chunk虽然申请的大小为0，但是glibc的要求chunk块至少可以存储4个必要的字段(prev\_size,size,fd,bk)，所以会分配0x20的空间。同时，由于无符号整数的比较问题，可以为该note输入任意长的字符串。
 
 这里需要注意的是，chunk1中一共构造了两个chunk
 
 -  chunk ptr[0]，这个是为了unlink时修改对应的值。
--  chunk ptr[0]’s nextchunk，这个是为了使得unlink时的第一个检查满足。
+-  chunk ptr[0]'s nextchunk，这个是为了使得unlink时的第一个检查满足。
 
 .. code:: c
 
@@ -390,14 +393,10 @@ get shell
 ----
 
 -  `HITCON CTF 2014-stkof <http://acez.re/ctf-writeup-hitcon-ctf-2014-stkof-or-modern-heap-overflow/>`__
--  `Insomni’hack 2017-Wheel of Robots <https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a>`__
+-  `Insomni'hack 2017-Wheel of Robots <https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a>`__
 -  `DEFCON 2017 Qualifiers beatmeonthedl <https://github.com/Owlz/CTF/raw/master/2017/DEFCON/beatmeonthedl/beatmeonthedl>`__
 
 参考
 ----
 
 -  malloc@angelboy
-
-.. |image0| image:: /pwn/heap/figure/unlink_smallbin_intro.png
-.. |image1| image:: /pwn/heap/figure/old_unlink_vul.png
-.. |image2| image:: /pwn/heap/figure/new_unlink_vul.png

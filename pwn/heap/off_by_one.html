@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>堆中的off-by-one &#8212; CTF Wiki </title>
+    <title>堆中的 Off-By-One &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -32,7 +32,7 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="chunk extend/shrink" href="chunk_extend_shrink.html" />
+    <link rel="next" title="Chunk Extend/Shrink" href="chunk_extend_shrink.html" />
     <link rel="prev" title="堆溢出" href="heapoverflow_basic.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
@@ -46,7 +46,7 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="chunk_extend_shrink.html" title="chunk extend/shrink"
+          <a href="chunk_extend_shrink.html" title="Chunk Extend/Shrink"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
           <a href="heapoverflow_basic.html" title="堆溢出"
@@ -65,20 +65,20 @@
           <div class="body" role="main">
             
   <div class="section" id="off-by-one">
-<h1>堆中的off-by-one<a class="headerlink" href="#off-by-one" title="永久链接至标题">¶</a></h1>
+<h1>堆中的 Off-By-One<a class="headerlink" href="#off-by-one" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id1">
 <h2>介绍<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
 <p>严格来说 off-by-one 漏洞是一种特殊的溢出漏洞，off-by-one 指程序向缓冲区中写入时，写入的字节数超过了这个缓冲区本身所申请的字节数并且只越界了一个字节。</p>
 </div>
 <div class="section" id="id2">
-<h2>off-by-one漏洞原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界验证不严和字符串操作有关，当然也不排除写入的size 正好就只多了一个字节的情况。其中边界验证不严通常指</p>
+<h2>off-by-one 漏洞原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界验证不严和字符串操作有关，当然也不排除写入的 size 正好就只多了一个字节的情况。其中边界验证不严通常包括</p>
 <ul class="simple">
-<li>使用循环向堆块中写入数据时，循环的次数设置错误(这在C语言初学者中很常见)导致多写入了一个字节。</li>
+<li>使用循环语句向堆块中写入数据时，循环的次数设置错误(这在C语言初学者中很常见)导致多写入了一个字节。</li>
 <li>字符串操作不合适</li>
 </ul>
-<p>一般来说，单字节溢出被认为是难以利用的，但是因为Linux的堆管理机制ptmalloc验证的松散性，基于Linux堆的off-by-one漏洞利用起来并不复杂，并且威力强大。
-此外还要说明的一点是off-by-one是可以基于各种缓冲区的，比如栈、bss段等等，但是堆上(heap based)的off-by-one是能够利用的也是CTF中最主要出现的。我们这里仅讨论堆上的off-by-one情况。</p>
+<p>一般来说，单字节溢出被认为是难以利用的，但是因为 Linux 的堆管理机制 ptmalloc 验证的松散性，基于Linux堆的 off-by-one 漏洞利用起来并不复杂，并且威力强大。 此外还要说明的一点是 off-by-one
+是可以基于各种缓冲区的，比如栈、bss 段等等，但是堆上(heap based)的off-by-one 是能够利用的，也是 CTF 中最主要出现的。我们这里仅讨论堆上的 off-by-one 情况。</p>
 <div class="section" id="id3">
 <h3>示例1<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">my_gets</span><span class="p">(</span><span class="n">char</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span><span class="nb">int</span> <span class="n">size</span><span class="p">)</span>
@@ -109,14 +109,14 @@
 </div>
 <p>最容易想到的答案10是错的。这个栅栏有10个间隔，11条栅栏柱。</p>
 </div></blockquote>
-<p>我们使用gdb对程序进行调试，在进行输入前可以看到分配的两个用户区域为16字节的堆块</p>
+<p>我们使用 gdb 对程序进行调试，在进行输入前可以看到分配的两个用户区域为16字节的堆块</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk2</span>
 <span class="mh">0x602030</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 </pre></div>
 </div>
-<p>当我们执行my_gets进行输入之后，可以看到数据发生了溢出覆盖到了下一个堆块的pre_inuse域 print ‘A’*17</p>
+<p>当我们执行my_gets进行输入之后，可以看到数据发生了溢出覆盖到了下一个堆块的prev_size域 print ‘A’*17</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000041</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk2</span>
@@ -126,7 +126,7 @@
 </div>
 <div class="section" id="id4">
 <h3>示例2<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
-<p>第二种常见的导致off-by-one的场景就是字符串操作了，常见的原因是字符串的结束符计算有误</p>
+<p>第二种常见的导致 off-by-one 的场景就是字符串操作了，常见的原因是字符串的结束符计算有误</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">40</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">;</span>
@@ -143,45 +143,45 @@
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>程序乍看上去没有任何问题(不考虑栈溢出)，可能很多人在实际的代码中也是这样写的。 但是strlen和strcpy的行为不一致却导致了off-by-one的发生。
-strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在计算字符串长度时是不把结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 计算在内的，但是strcpy在复制字符串时会拷贝结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code>
+<p>程序乍看上去没有任何问题(不考虑栈溢出)，可能很多人在实际的代码中也是这样写的。 但是 strlen 和 strcpy 的行为不一致却导致了off-by-one 的发生。 strlen 是我们很熟悉的计算 ascii
+字符串长度的函数，这个函数在计算字符串长度时是不把结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 计算在内的，但是strcpy在复制字符串时会拷贝结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code>
 。这就导致了我们向chunk1中写入了25个字节，我们使用gdb进行调试可以看到这一点。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000411</span> <span class="o">&lt;===</span> <span class="nb">next</span> <span class="n">chunk</span>
 </pre></div>
 </div>
-<p>在我们输入’A’<a href="#id5"><span class="problematic" id="id6">*</span></a>24后执行strcpy</p>
+<p>在我们输入’A’*24后执行strcpy</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x4141414141414141</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x4141414141414141</span>  <span class="mh">0x0000000000000400</span>
 </pre></div>
 </div>
-<p>可以看到next chunk的chunk_header.size域低字节被结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 覆盖，这种又属于off-by-one的一个分支称为NULL byte off-by-one，我们在后面会看到off-by-one与NULL byte off-by-one在利用上的区别。
+<p>可以看到 next chunk 的 size 域低字节被结束符 <code class="docutils literal"><span class="pre">'\x00'</span></code> 覆盖，这种又属于 off-by-one 的一个分支称为 NULL byte off-by-one，我们在后面会看到 off-by-one 与 NULL byte off-by-one 在利用上的区别。
 还是有一点就是为什么是低字节被覆盖呢，因为我们通常使用的CPU的字节序都是小端法的，比如一个DWORD值在使用小端法的内存中是这样储存的</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DWORD</span> <span class="mh">0x41424344</span>
 <span class="n">内存</span>  <span class="mh">0x44</span><span class="p">,</span><span class="mh">0x43</span><span class="p">,</span><span class="mh">0x42</span><span class="p">,</span><span class="mh">0x41</span>
 </pre></div>
 </div>
 </div>
+<div class="section" id="id5">
+<h3>小总结<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<p>上面的示例其实也展示了寻找 off-by-one 中比较重要的几个步骤:</p>
+<div class="section" id="id6">
+<h4>注意循环边界<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h4>
+<p>在进行诸如循环写入的操作时，要特别注意循环的次数是否存在边界问题导致的 off-by-one。</p>
+</div>
 <div class="section" id="id7">
-<h3>小总结<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<p>上面的示例其实也展示了寻找off-by-one中比较重要的几个步骤:</p>
+<h4>注意字符串操作<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h4>
+<p>字符串结束符处理的不严谨往往会导致 off-by-one 问题。</p>
+</div>
+</div>
+</div>
 <div class="section" id="id8">
-<h4>注意循环边界<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h4>
-<p>在进行诸如循环写入的操作时，要特别注意循环的次数是否存在边界问题导致的off-by-one。</p>
+<h2>例子<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h2>
 </div>
 <div class="section" id="id9">
-<h4>注意字符串操作<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h4>
-<p>字符串结束符处理的不严谨往往会导致off-by-one问题的发生。</p>
-</div>
-</div>
-</div>
-<div class="section" id="id10">
-<h2>例子<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h2>
-</div>
-<div class="section" id="id11">
-<h2>题目<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h2>
+<h2>题目<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h2>
 </div>
 </div>
 
@@ -257,26 +257,27 @@ strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在
 <li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">堆中的off-by-one</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">堆中的 Off-By-One</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id1">介绍</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">off-by-one漏洞原理</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">off-by-one 漏洞原理</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id3">示例1</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id4">示例2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id7">小总结</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#id8">注意循环边界</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#id9">注意字符串操作</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">小总结</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id6">注意循环边界</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id7">注意字符串操作</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id10">例子</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id11">题目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">例子</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">题目</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">chunk extend/shrink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">fastbin attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">Fastbin Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html#id19">参考文献</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>
@@ -318,7 +319,7 @@ strlen是我们很熟悉的计算ascii字符串长度的函数，这个函数在
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="chunk_extend_shrink.html" title="chunk extend/shrink"
+          <a href="chunk_extend_shrink.html" title="Chunk Extend/Shrink"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
           <a href="heapoverflow_basic.html" title="堆溢出"

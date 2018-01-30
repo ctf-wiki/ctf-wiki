@@ -146,7 +146,7 @@ HOF的利用思想可以概括为一句话： 当使用top chunk分配堆块的s
         malloc(0x10);
     }
 
-我们可以看到程序代码与简单示例1基本相同，除了第二次malloc的size有所不同。 这次我们的目标是malloc_hook，我们知道malloc_hook是位于libc.so里的全局变量值，首先查看内存布局
+我们可以看到程序代码与简单示例1基本相同，除了第二次malloc的size有所不同。 这次我们的目标是malloc\_hook，我们知道malloc\_hook是位于libc.so里的全局变量值，首先查看内存布局
 
 ::
 
@@ -171,8 +171,8 @@ HOF的利用思想可以概括为一句话： 当使用top chunk分配堆块的s
     0x00007ffffffde000 0x00007ffffffff000 0x0000000000000000 rw- [stack]
     0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
 
-可以看到heap的基址在0x602000，而libc的基址在0x7ffff7a0d000，因此我们需要通过HOF扩大top chunk指针的值来实现对malloc_hook的写。
-首先由调试得知__malloc_hook的地址位于0x7ffff7dd1b10，采取计算0x7ffff7dd1b00-0x602020-0x10=140737345551056 经过这次malloc之后，我们可以观察到top chunk的地址被抬高到了0x00007ffff7dd1b00
+可以看到heap的基址在0x602000，而libc的基址在0x7ffff7a0d000，因此我们需要通过HOF扩大top chunk指针的值来实现对malloc\_hook的写。
+首先由调试得知\_\_malloc\_hook的地址位于0x7ffff7dd1b10，采取计算0x7ffff7dd1b00-0x602020-0x10=140737345551056 经过这次malloc之后，我们可以观察到top chunk的地址被抬高到了0x00007ffff7dd1b00
 
 ::
 
@@ -184,7 +184,7 @@ HOF的利用思想可以概括为一句话： 当使用top chunk分配堆块的s
     0x7ffff7dd1b70 <main_arena+80>: 0x0000000000000000  0x00007ffff7dd1b00 <=== top chunk
     0x7ffff7dd1b80 <main_arena+96>: 0x0000000000000000  0x00007ffff7dd1b78
 
-之后，我们只要再次分配就可以控制0x7ffff7dd1b10处的__malloc_hook值了
+之后，我们只要再次分配就可以控制0x7ffff7dd1b10处的\_\_malloc\_hook值了
 
 ::
 
