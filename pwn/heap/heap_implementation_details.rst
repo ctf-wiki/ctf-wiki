@@ -937,6 +937,20 @@ large chunk
                 return p;
             }
 
+\_libc\_calloc
+~~~~~~~~~~~~~~
+
+calloc 也是 libc 中的一种申请内存块的函数。在 ``libc``\ 中的包装为 ``_libc_calloc``\ ，具体介绍如下
+
+.. code:: c
+
+    /*
+      calloc(size_t n_elements, size_t element_size);
+      Returns a pointer to n_elements * element_size bytes, with all locations
+      set to zero.
+    */
+    void*  __libc_calloc(size_t, size_t);
+
 sysmalloc
 ~~~~~~~~~
 
