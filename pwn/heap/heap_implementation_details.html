@@ -1133,8 +1133,9 @@ check_inuse_chunk(av, p);
 </pre></div>
 </div>
 </div>
-<div class="section" id="mmapchunk">
-<h4>合并非mmap的空闲chunk<a class="headerlink" href="#mmapchunk" title="永久链接至标题">¶</a></h4>
+<div class="section" id="mmap-chunk">
+<h4>合并非 mmap 的空闲 chunk<a class="headerlink" href="#mmap-chunk" title="永久链接至标题">¶</a></h4>
+<p><strong>只有不是 fast bin 的情况下才会触发unlink</strong></p>
 <p>首先我们先说一下为什么会合并chunk，这是为了避免heap中有太多零零碎碎的内存块，合并之后可以用来应对更大的内存块请求。合并的主要顺序为</p>
 <ul class="simple">
 <li>先考虑物理低地址空闲块</li>
@@ -1216,7 +1217,7 @@ if (!prev_inuse(p)) {
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>// 如果下一个chunk不是top chunk
 if (nextchunk != av-&gt;top) {
     /* get and clear inuse bit */
-    // 获取下一个chunk的使用状态
+    // 获取下一个 chunk 的使用状态
     nextinuse = inuse_bit_at_offset(nextchunk, nextsize);
     // 如果不在使用，合并，否则清空当前chunk的使用状态。
     /* consolidate forward */
@@ -1319,8 +1320,8 @@ else {
 </div>
 </div>
 </div>
-<div class="section" id="id15">
-<h4>释放mmap的chunk<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h4>
+<div class="section" id="mmapchunk">
+<h4>释放mmap的chunk<a class="headerlink" href="#mmapchunk" title="永久链接至标题">¶</a></h4>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
     <span class="o">//</span>  <span class="n">If</span> <span class="n">the</span> <span class="n">chunk</span> <span class="n">was</span> <span class="n">allocated</span> <span class="n">via</span> <span class="n">mmap</span><span class="p">,</span> <span class="n">release</span> <span class="n">via</span> <span class="n">munmap</span><span class="p">()</span><span class="o">.</span>
     <span class="n">munmap_chunk</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
@@ -1339,8 +1340,8 @@ else {
 <h3>munmap_chunk<a class="headerlink" href="#munmap-chunk" title="永久链接至标题">¶</a></h3>
 </div>
 </div>
-<div class="section" id="id16">
-<h2>删除堆<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id15">
+<h2>删除堆<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h2>
 </div>
 <div class="section" id="malloc-state">
 <h2>malloc_state 相关函数<a class="headerlink" href="#malloc-state" title="永久链接至标题">¶</a></h2>
@@ -1386,8 +1387,8 @@ else {
 <li>如果已经初始化的话，就合并 fastbin 中的 chunk。</li>
 </ol>
 <p>基本的流程如下</p>
-<div class="section" id="id17">
-<h4>初始<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id16">
+<h4>初始<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h4>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">static</span> <span class="n">void</span> <span class="n">malloc_consolidate</span><span class="p">(</span><span class="n">mstate</span> <span class="n">av</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">mfastbinptr</span> <span class="o">*</span><span class="n">fb</span><span class="p">;</span>             <span class="o">/*</span> <span class="n">current</span> <span class="n">fastbin</span> <span class="n">being</span> <span class="n">consolidated</span> <span class="o">*/</span>
     <span class="n">mfastbinptr</span> <span class="o">*</span><span class="n">maxfb</span><span class="p">;</span>          <span class="o">/*</span> <span class="n">last</span> <span class="n">fastbin</span> <span class="p">(</span><span class="k">for</span> <span class="n">loop</span> <span class="n">control</span><span class="p">)</span> <span class="o">*/</span>
@@ -1407,8 +1408,8 @@ else {
 </pre></div>
 </div>
 </div>
-<div class="section" id="id18">
-<h4>合并 chunk<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id17">
+<h4>合并 chunk<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h4>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span>/*
   If max_fast is 0, we know that av hasn&#39;t
   yet been initialized, in which case do so below
@@ -1489,8 +1490,8 @@ if (get_max_fast() != 0) {
 </pre></div>
 </div>
 </div>
-<div class="section" id="id19">
-<h4>初始化<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id18">
+<h4>初始化<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h4>
 <p>说明 fastbin 还没有初始化。</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span>} else {
     malloc_init_state(av);
@@ -1502,8 +1503,8 @@ if (get_max_fast() != 0) {
 </div>
 </div>
 </div>
-<div class="section" id="id20">
-<h2>测试支持<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id19">
+<h2>测试支持<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h2>
 <p>下面的代码用于支持测试，默认情况下 perturb_byte 是0。</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">static</span> <span class="nb">int</span> <span class="n">perturb_byte</span><span class="p">;</span>
 
@@ -1622,7 +1623,7 @@ if (get_max_fast() != 0) {
 <li class="toctree-l4"><a class="reference internal" href="#int-free">_int_free</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="#id9">简单的检查</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#id10">fast bin</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#mmapchunk">合并非mmap的空闲chunk</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#mmap-chunk">合并非 mmap 的空闲 chunk</a><ul>
 <li class="toctree-l6"><a class="reference internal" href="#id11">轻量级的检测</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#id12">释放填充</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#id13">后向合并-合并低地址chunk</a></li>
@@ -1631,7 +1632,7 @@ if (get_max_fast() != 0) {
 <li class="toctree-l6"><a class="reference internal" href="#id14">向系统返还内存</a></li>
 </ul>
 </li>
-<li class="toctree-l5"><a class="reference internal" href="#id15">释放mmap的chunk</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#mmapchunk">释放mmap的chunk</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="#systrim">systrim</a></li>
@@ -1639,24 +1640,24 @@ if (get_max_fast() != 0) {
 <li class="toctree-l4"><a class="reference internal" href="#munmap-chunk">munmap_chunk</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id16">删除堆</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">删除堆</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#malloc-state">malloc_state 相关函数</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#malloc-init-state">malloc_init_state</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#malloc-consolidate">malloc_consolidate</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#id17">初始</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#id18">合并 chunk</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#id19">初始化</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id16">初始</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id17">合并 chunk</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id18">初始化</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id20">测试支持</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id19">测试支持</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
 <li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的 Off-By-One</a></li>
 <li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unlink.html">unlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unlink.html">Unlink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">Fastbin Attack</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
