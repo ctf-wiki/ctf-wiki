@@ -1154,8 +1154,10 @@ fast bin
             }
         }
 
-合并非mmap的空闲chunk
-^^^^^^^^^^^^^^^^^^^^^
+合并非 mmap 的空闲 chunk
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+**只有不是 fast bin 的情况下才会触发unlink**
 
 首先我们先说一下为什么会合并chunk，这是为了避免heap中有太多零零碎碎的内存块，合并之后可以用来应对更大的内存块请求。合并的主要顺序为
 
@@ -1248,7 +1250,7 @@ fast bin
             // 如果下一个chunk不是top chunk
             if (nextchunk != av->top) {
                 /* get and clear inuse bit */
-                // 获取下一个chunk的使用状态
+                // 获取下一个 chunk 的使用状态
                 nextinuse = inuse_bit_at_offset(nextchunk, nextsize);
                 // 如果不在使用，合并，否则清空当前chunk的使用状态。
                 /* consolidate forward */
