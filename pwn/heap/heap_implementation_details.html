@@ -68,13 +68,17 @@
 <h1>深入理解堆的实现<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
 <p>仔细想一下，任何堆的实现都离不开以下两个方面的问题</p>
 <ul class="simple">
-<li>宏观角度</li>
+<li>宏观角度<ul>
 <li>创建堆</li>
 <li>堆初始化</li>
 <li>删除堆</li>
-<li>微观角度</li>
+</ul>
+</li>
+<li>微观角度<ul>
 <li>申请内存块</li>
 <li>释放内存块</li>
+</ul>
+</li>
 </ul>
 <p>当然，这些都还是比较高层面的想法，不同的堆的底层的实现会有所不同。</p>
 <div class="section" id="id2">
@@ -93,21 +97,29 @@
 <h3>unlink<a class="headerlink" href="#unlink" title="永久链接至标题">¶</a></h3>
 <p>unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在以下地方使用</p>
 <ul class="simple">
-<li>malloc</li>
+<li>malloc<ul>
 <li>从恰好大小合适的 large bin 中获取 chunk。<ul>
 <li><strong>这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。</strong></li>
 <li>依次遍历处理unsorted bin时也是没有unlink的。</li>
 </ul>
 </li>
 <li>从比所需要的 chunk 相应的 bin 大的 bin 中取 chunk。</li>
-<li>Free</li>
+</ul>
+</li>
+<li>Free<ul>
 <li>后向合并，合并物理相邻低地址空闲 chunk。</li>
 <li>前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。</li>
-<li>malloc_consolidate</li>
+</ul>
+</li>
+<li>malloc_consolidate<ul>
 <li>后向合并，合并物理相邻低地址空闲 chunk。</li>
 <li>前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。</li>
-<li>realloc</li>
+</ul>
+</li>
+<li>realloc<ul>
 <li>前向扩展，合并物理相邻高地址空闲 chunk（除了top chunk）。</li>
+</ul>
+</li>
 </ul>
 <p>由于 unlink 使用非常频繁，所以 unlink 被实现为了一个宏，如下</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span>/* Take a chunk off a bin list */
@@ -160,9 +172,7 @@
 </pre></div>
 </div>
 <p>这里我们只是以 small bin 的 unlink 为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize 的处理。</p>
-<div class="figure">
-<img alt="" src="../../_images/unlink_smallbin_intro.png" />
-</div>
+<p><img alt="image0" src="../../_images/unlink_smallbin_intro.png" /></p>
 <p>可以看出， P 最后的 fd 和 bk 指针并没有发生变化，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。</p>
 <p>同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都做了相应的检测。</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">fd</span> <span class="n">bk</span>
