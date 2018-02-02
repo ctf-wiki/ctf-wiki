@@ -11,7 +11,7 @@ House Of Einherjar
 house of einherjar 是一种堆利用技术，由 ``Hiroki Matsukuma`` 提出。该堆利用技术可以强制使得 ``malloc`` 返回一个几乎任意地址的 chunk 。其主要在于滥用 ``free``
 中的后向合并操作（合并低地址的chunk），从而使得尽可能避免碎片化。
 
-此外，需要注意的是，在一些特殊大小的堆块中，off by one 不仅可以修改下一个堆块的 prev\_size，还可以修改下一个堆块的 PREV\_INUSE 比特位。
+此外，需要注意的是，在一些特殊大小的堆块中，off by one 不仅可以修改下一个堆块的 prev_size，还可以修改下一个堆块的 PREV_INUSE 比特位。
 
 原理
 ----
@@ -33,8 +33,7 @@ house of einherjar 是一种堆利用技术，由 ``Hiroki Matsukuma`` 提出。
 
 这里借用原作者的一张图片说明
 
-.. figure:: /pwn/heap/figure/backward_consolidate.png
-   :alt: 
+|image0|
 
 关于整体的操作，请参考 ``深入理解堆的实现`` 那一章节。
 
@@ -45,10 +44,10 @@ house of einherjar 是一种堆利用技术，由 ``Hiroki Matsukuma`` 提出。
 
 -  两个物理相邻的 chunk 会共享 ``prev_size``\ 字段，尤其是当低地址的 chunk 处于使用状态时，高地址的chunk的该字段便可以被低地址的 chunk 使用。因此，我们有希望可以通过写低地址 chunk 覆盖高地址 chunk 的
    ``prev_size`` 字段。
--  一个 chunk PREV\_INUSE 位标记了其物理相邻的低地址 chunk 的使用状态，而且该位是和 prev\_size 物理相邻的。
+-  一个 chunk PREV_INUSE 位标记了其物理相邻的低地址 chunk 的使用状态，而且该位是和 prev_size 物理相邻的。
 -  后向合并时，新的 chunk 的位置取决于 ``chunk_at_offset(p, -((long) prevsize))`` 。
 
-**那么如果我们可以同时控制一个chunk prev\_size 与 PREV\_INUSE 字段，那么我们就可以将新的 chunk 指向几乎任何位置。**
+**那么如果我们可以同时控制一个chunk prev_size 与 PREV_INUSE 字段，那么我们就可以将新的 chunk 指向几乎任何位置。**
 
 利用过程
 ~~~~~~~~
@@ -58,34 +57,31 @@ house of einherjar 是一种堆利用技术，由 ``Hiroki Matsukuma`` 提出。
 
 假设溢出前的状态如下
 
-.. figure:: /pwn/heap/figure/einherjar_before_overflow.png
-   :alt: 
+|image1|
 
 溢出
 ^^^^
 
-这里我们假设 p0 堆块一方面可以写prev\_size字段，另一方面，存在off by one的漏洞，可以写下一个 chunk 的PREV\_INUSE 部分，那么
+这里我们假设 p0 堆块一方面可以写prev_size字段，另一方面，存在off by one的漏洞，可以写下一个 chunk 的PREV_INUSE 部分，那么
 
-.. figure:: /pwn/heap/figure/einherjar_overflowing.png
-   :alt: 
+|image2|
 
 溢出后
 ^^^^^^
 
-**假设我们将 p1的 prev\_size 字段设置为我们想要的目的 chunk 位置与p1的差值**\ 。在溢出后，我们释放p1，则我们所得到的新的 chunk 的位置 ``chunk_at_offset(p1, -((long) prevsize))`` 就是我们想要的 chunk
+**假设我们将 p1的 prev_size 字段设置为我们想要的目的 chunk 位置与p1的差值**\ 。在溢出后，我们释放p1，则我们所得到的新的 chunk 的位置 ``chunk_at_offset(p1, -((long) prevsize))`` 就是我们想要的 chunk
 位置了。
 
 当然，需要注意的是，由于这里会对新的 chunk 进行 unlink ，因此需要确保在对应 chunk 位置构造好了fake chunk 以便于绕过 unlink 的检测。
 
-.. figure:: /pwn/heap/figure/einherjar_after_overflow.png
-   :alt: 
+|image3|
 
 总结
 ~~~~
 
 这里我们总结下这个利用技术需要注意的地方
 
--  需要有溢出漏洞可以写物理相邻的高地址的 prev\_size 与 PREV\_INUSE 部分。
+-  需要有溢出漏洞可以写物理相邻的高地址的 prev_size 与 PREV_INUSE 部分。
 -  我们需要计算目的 chunk 与 p1 地址之间的差，所以需要泄漏地址。
 -  我们需要在目的 chunk 附近构造相应的 fake chunk，从而绕过 unlink 的检测。
 
@@ -133,7 +129,7 @@ house of einherjar 是一种堆利用技术，由 ``Hiroki Matsukuma`` 提出。
             *(_QWORD *)&tinypad[16 * (idx + 16LL)] = v5;
             *(_QWORD *)&tinypad[16 * (idx + 16LL) + 8] = malloc(v13);
 
-一方面，我们可以发现该 tinypad 最多存储四个；另一方面，我们可以知道，程序只是从 tinypad 起始偏移16\*16=256 处才开始使用，每个 tinypad 存储两个字段
+一方面，我们可以发现该 tinypad 最多存储四个；另一方面，我们可以知道，程序只是从 tinypad 起始偏移16*16=256 处才开始使用，每个 tinypad 存储两个字段
 
 -  该 tinypad 的大小
 -  该 tinypad 对应的指针
@@ -217,4 +213,9 @@ house of einherjar 是一种堆利用技术，由 ``Hiroki Matsukuma`` 提出。
 参考文献
 --------
 
--  https://www.slideshare.net/codeblue\_jp/cb16-matsukuma-en-68459606
+-  https://www.slideshare.net/codeblue_jp/cb16-matsukuma-en-68459606
+
+.. |image0| image:: /pwn/heap/figure/backward_consolidate.png
+.. |image1| image:: /pwn/heap/figure/einherjar_before_overflow.png
+.. |image2| image:: /pwn/heap/figure/einherjar_overflowing.png
+.. |image3| image:: /pwn/heap/figure/einherjar_after_overflow.png

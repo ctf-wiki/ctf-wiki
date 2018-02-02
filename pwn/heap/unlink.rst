@@ -8,8 +8,7 @@ Unlink
 
 我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来，然后和目前物理相邻的 free chunk 进行合并。其基本的过程如下
 
-.. figure:: /pwn/heap/figure/unlink_smallbin_intro.png
-   :alt: 
+|image0|
 
 下面我们首先介绍一下 unlink 最初没有防护时的利用方法，然后介绍目前利用 unlink 的方式。
 
@@ -36,8 +35,7 @@ Unlink
 
 **这里我们以 32 位为例**\ ，假设堆内存最初的布局是下面的样子
 
-.. figure:: /pwn/heap/figure/old_unlink_vul.png
-   :alt: 
+|image1|
 
 那么如果我们通过某种方式（\ **比如溢出**\ ）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时
 
@@ -51,7 +49,7 @@ Unlink
 -  FD=P->fd = target addr -12
 -  BK=P->bk = expect value
 -  FD->bk = BK，即 \*(target addr-12+12)=BK=expect value
--  BK->fd = FD，即\*(expect value +8) = FD = target addr-12
+-  BK->fd = FD，即*(expect value +8) = FD = target addr-12
 
 **看起来我们似乎可以通过 unlink 直接实现任意地址读写的目的，但是我们还是需要确保 expect value +8 地址具有可写的权限。**
 
@@ -70,10 +68,10 @@ Unlink
 
 此时
 
--  FD->bk = target addr - 12 + 12=target\_addr
+-  FD->bk = target addr - 12 + 12=target_addr
 -  BK->fd = expect value + 8
 
-那么我们上面所利用的修改 GOT 表项的方法就可能不可用了。但是，如果我们使得 expect value+8 以及 target\_addr 等于 P，那么我们就可以执行
+那么我们上面所利用的修改 GOT 表项的方法就可能不可用了。但是，如果我们使得 expect value+8 以及 target_addr 等于 P，那么我们就可以执行
 
 -  \*P= expect value = P - 8
 -  \*P = target addr -12 = P - 12
@@ -82,8 +80,7 @@ Unlink
 
 而如果我们想要使得两者都指向 P，只需要安装如下方式修改即可
 
-.. figure:: /pwn/heap/figure/new_unlink_vul.png
-   :alt: 
+|image2|
 
 我们会通过之后的例子来说明，我们这样的修改是可以达到一定的效果的。
 
@@ -476,6 +473,8 @@ Unlink
 
 其中i是unsigned类型，a2为int类型，所以两者在for循环相比较的时候，a2-1的结果-1会被视为unsigned类型，此时，即最大的整数。所以说可以读取任意长度的数据，这里也就是后面我们溢出所使用的办法。
 
+.. 基本思路-1:
+
 基本思路
 ~~~~~~~~
 
@@ -547,12 +546,12 @@ Unlink
     # chunk2: a chunk to be overwrited and freed
     newnote(0x80, 'b' * 16)
 
-其中这三个note的大小分别为0x80，0，0x80，第二个chunk虽然申请的大小为0，但是glibc的要求chunk块至少可以存储4个必要的字段(prev\_size,size,fd,bk)，所以会分配0x20的空间。同时，由于无符号整数的比较问题，可以为该note输入任意长的字符串。
+其中这三个note的大小分别为0x80，0，0x80，第二个chunk虽然申请的大小为0，但是glibc的要求chunk块至少可以存储4个必要的字段(prev_size,size,fd,bk)，所以会分配0x20的空间。同时，由于无符号整数的比较问题，可以为该note输入任意长的字符串。
 
 这里需要注意的是，chunk1中一共构造了两个chunk
 
 -  chunk ptr[0]，这个是为了unlink时修改对应的值。
--  chunk ptr[0]'s nextchunk，这个是为了使得unlink时的第一个检查满足。
+-  chunk ptr[0]’s nextchunk，这个是为了使得unlink时的第一个检查满足。
 
 .. code:: c
 
@@ -720,8 +719,10 @@ get shell
 
 此时如果我们再调用 atoi ，其实调用的就是 system 函数，所以就可以拿到shell了。
 
-2017 insomni'hack wheelofrobots
+2017 insomni’hack wheelofrobots
 -------------------------------
+
+.. 基本信息-1:
 
 基本信息
 ~~~~~~~~
@@ -740,16 +741,18 @@ get shell
 
 动态链接64位，主要开启了 canary 保护与 nx 保护。
 
+.. 基本功能-1:
+
 基本功能
 ~~~~~~~~
 
 大概分析程序，可以得知，这是一个配置机器人轮子的游戏，机器人一共需要添加 3 个轮子。
 
-程序非常依赖的一个功能是读取整数，该函数read\_num是读取指定的长度，将其转化为 int 类型的数字。
+程序非常依赖的一个功能是读取整数，该函数read_num是读取指定的长度，将其转化为 int 类型的数字。
 
 具体功能如下
 
--  添加轮子，一共有 6 个轮子可以选择。选择轮子时使用函数是read\_num，然而该函数在读取的时候\ ``read_num((char *)&choice, 5uLL);`` 读取的长度是 5 个字节，恰好覆盖了 bender\_inuse 的最低字节，即构成了
+-  添加轮子，一共有 6 个轮子可以选择。选择轮子时使用函数是read_num，然而该函数在读取的时候\ ``read_num((char *)&choice, 5uLL);`` 读取的长度是 5 个字节，恰好覆盖了 bender_inuse 的最低字节，即构成了
    off-by-one 漏洞。与此同时，在添加 Destructor 轮子的时候，并没有进行大小检测。如果读取的数为负数，那么在申请\ ``calloc(1uLL, 20 * v5);`` 时就可能导致 ``20*v5`` 溢出，但与此同时，
    ``destructor_size = v5`` 仍然会很大。
 -  移除轮子，直接将相应轮子移除，但是并没有将其对应的指针设置为 NULL ，其对应的大小也没有清空。
@@ -941,3 +944,7 @@ get shell
 
 -  malloc@angelboy
 -  https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a
+
+.. |image0| image:: /pwn/heap/figure/unlink_smallbin_intro.png
+.. |image1| image:: /pwn/heap/figure/old_unlink_vul.png
+.. |image2| image:: /pwn/heap/figure/new_unlink_vul.png

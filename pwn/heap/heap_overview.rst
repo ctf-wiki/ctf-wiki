@@ -52,7 +52,7 @@ malloc
 可以看出，malloc 函数返回对应大小字节的内存块的指针。此外，该函数还对一些异常情况进行了处理
 
 -  当 n=0 时，返回当前系统允许的堆的最小内存块。
--  当 n 为负数时，由于在大多数系统上，\ **size\_t 是无符号数（这一点非常重要）**\ ，所以程序就会申请很大的内存空间，但通常来说都会崩溃，因为系统没有那么多的内存可以分配。
+-  当 n 为负数时，由于在大多数系统上，\ **size_t 是无符号数（这一点非常重要）**\ ，所以程序就会申请很大的内存空间，但通常来说都会崩溃，因为系统没有那么多的内存可以分配。
 
 free
 ~~~~
@@ -88,8 +88,7 @@ free
 
 如下图所示，我们主要考虑对堆进行申请内存块的操作。
 
-.. figure:: /pwn/heap/figure/brk&mmap.png
-   :alt: 
+|image0|
 
 (s)brk
 ^^^^^^
@@ -97,16 +96,15 @@ free
 对于堆的操作，操作系统提供了 brk 函数，glibc 库提供了 sbrk 函数，我们可以通过增加 `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ (program break location,
 the program break is the address of the first location beyond the current end of the data region, https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
 
-初始时，堆的起始地址 `start\_brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ 以及堆的当前末尾
+初始时，堆的起始地址 `start_brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ 以及堆的当前末尾
 `brk <http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>`__ 指向同一地址。根据是否开启ASLR，两者的具体位置会有所不同
 
--  不开启 ASLR 保护时，start\_brk 以及 brk 会指向 data/bss 段的结尾。
--  开启 ASLR 保护时，start\_brk 以及 brk 也会指向同一位置，只是这个位置是在 data/bss 段结尾后的随机偏移处。
+-  不开启 ASLR 保护时，start_brk 以及 brk 会指向 data/bss 段的结尾。
+-  开启 ASLR 保护时，start_brk 以及 brk 也会指向同一位置，只是这个位置是在 data/bss 段结尾后的随机偏移处。
 
 具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示
 
-.. figure:: /pwn/heap/figure/program_virtual_address_memory_space.png
-   :alt: 
+|image1|
 
 **例子**
 
@@ -150,7 +148,7 @@ the program break is the address of the first location beyond the current end of
 
 从下面的输出可以看出，并没有出现堆。因此
 
--  start\_brk = brk = end\_data = 0x804b000
+-  start_brk = brk = end_data = 0x804b000
 
 .. code:: shell
 
@@ -169,7 +167,7 @@ the program break is the address of the first location beyond the current end of
 
 从下面的输出可以看出，已经出现了堆段
 
--  start\_brk = end\_data = 0x804b000
+-  start_brk = end_data = 0x804b000
 -  brk = 0x804c000
 
 .. code:: shell
@@ -359,7 +357,7 @@ malloc 会使用 `mmap <http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L12
 
 **第一次申请后**\ ，
 从下面的输出可以看出，堆段被建立了，并且它就紧邻着数据段，这说明malloc的背后是用brk函数来实现的。同时，需要注意的是，我们虽然只是申请了1000个字节，但是我们却得到了0x0806c000-0x0804b000=0x21000个字节的堆。\ **这说明虽然程序可能只是向操作系统申请很小的内存，但是为了方便，操作系统会把很大的内存分配给程序。这样的话，就避免了多次内核态与用户态的切换，提高了程序的效率。**\ 我们称这一块连续的内存区域为
-arena。此外，我们称由主线程申请的内存为 main\_arena。后续的申请的内存会一直从这个 arena 中获取，直到空间不足。当 arena 空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena 也可以通过减小
+arena。此外，我们称由主线程申请的内存为 main_arena。后续的申请的内存会一直从这个 arena 中获取，直到空间不足。当 arena 空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena 也可以通过减小
 brk 来缩小自己的空间。
 
 .. code:: shell
@@ -478,3 +476,6 @@ arena。
 --------
 
 -  `sploitfun <https://sploitfun.wordpress.com/archives/>`__
+
+.. |image0| image:: /pwn/heap/figure/brk&mmap.png
+.. |image1| image:: /pwn/heap/figure/program_virtual_address_memory_space.png

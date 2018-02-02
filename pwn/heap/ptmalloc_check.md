@@ -8,7 +8,15 @@
 | -------- | :-------------------------------------: | :--------------------------------: |
 | chunk 大小 | fastbin_index(chunksize(victim)) != idx | malloc(): memory corruption (fast) |
 
-## free
+## __libc_free
+
+| 检查目标                | 检查条件                 | 报错信息 |
+| ------------------- | -------------------- | ---- |
+| chunk 标记 IS_ MMAPED | chunk_is_mmapped (p) | 无    |
+
+1. 对于是 mmap 的 chunk 会特殊处理。
+
+## __int_free
 
 ### 初始检查
 

