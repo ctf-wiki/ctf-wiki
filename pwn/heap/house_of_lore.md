@@ -6,7 +6,7 @@ House of Lore 攻击与 Glibc 堆管理中的的 Small Bin 的机制紧密相关
 
 House of Lore 可以实现分配任意指定位置的 chunk，从而修改任意地址的内存。
 
-House of Lore 利用的前提是需要控制 Small Bin Chunk 的 bk 指针，并且控制指定位置 chunk的 fd 指针。
+House of Lore 利用的前提是需要控制 Small Bin Chunk 的 bk 指针，并且控制指定位置 chunk 的 fd 指针。
 
 ## 基本原理
 
