@@ -11,11 +11,11 @@ off-by-one 漏洞原理
 
 off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界验证不严和字符串操作有关，当然也不排除写入的 size 正好就只多了一个字节的情况。其中边界验证不严通常包括
 
--  使用循环语句向堆块中写入数据时，循环的次数设置错误(这在C语言初学者中很常见)导致多写入了一个字节。
+-  使用循环语句向堆块中写入数据时，循环的次数设置错误(这在 C 语言初学者中很常见)导致多写入了一个字节。
 -  字符串操作不合适
 
-一般来说，单字节溢出被认为是难以利用的，但是因为 Linux 的堆管理机制 ptmalloc 验证的松散性，基于Linux堆的 off-by-one 漏洞利用起来并不复杂，并且威力强大。 此外还要说明的一点是 off-by-one
-是可以基于各种缓冲区的，比如栈、bss 段等等，但是堆上(heap based)的off-by-one 是能够利用的，也是 CTF 中最主要出现的。我们这里仅讨论堆上的 off-by-one 情况。
+一般来说，单字节溢出被认为是难以利用的，但是因为 Linux 的堆管理机制 ptmalloc 验证的松散性，基于Linux堆的 off-by-one 漏洞利用起来并不复杂，并且威力强大。 此外，需要说明的一点是 off-by-one
+是可以基于各种缓冲区的，比如栈、bss 段等等，但是堆上(heap based)的off-by-one 是 CTF 中比较常见的。我们这里仅讨论堆上的 off-by-one 情况。
 
 示例1
 ~~~~~
@@ -41,7 +41,7 @@ off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界
         return 0;
     }
 
-我们自己编写的my_gets函数导致了一个off-by-one漏洞，原因是for循环的边界没有控制好导致写入多执行了一次，这也被称为栅栏错误
+我们自己编写的 my_gets 函数导致了一个off-by-one漏洞，原因是for循环的边界没有控制好导致写入多执行了一次，这也被称为栅栏错误
 
     wikipedia: 栅栏错误（有时也称为电线杆错误或者灯柱错误）是差一错误的一种。如以下问题：
 
@@ -60,7 +60,7 @@ off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界
     0x602020:   0x0000000000000000  0x0000000000000021 <=== chunk2
     0x602030:   0x0000000000000000  0x0000000000000000
 
-当我们执行my_gets进行输入之后，可以看到数据发生了溢出覆盖到了下一个堆块的prev_size域 print ‘A’\*17
+当我们执行 my_gets 进行输入之后，可以看到数据发生了溢出覆盖到了下一个堆块的 prev_size 域 print ‘A’\*17
 
 ::
 
@@ -92,7 +92,7 @@ off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界
     }
 
 程序乍看上去没有任何问题(不考虑栈溢出)，可能很多人在实际的代码中也是这样写的。 但是 strlen 和 strcpy 的行为不一致却导致了off-by-one 的发生。 strlen 是我们很熟悉的计算 ascii
-字符串长度的函数，这个函数在计算字符串长度时是不把结束符 ``'\x00'`` 计算在内的，但是strcpy在复制字符串时会拷贝结束符 ``'\x00'``
+字符串长度的函数，这个函数在计算字符串长度时是不把结束符 ``'\x00'`` 计算在内的，但是 strcpy 在复制字符串时会拷贝结束符 ``'\x00'``
 。这就导致了我们向chunk1中写入了25个字节，我们使用gdb进行调试可以看到这一点。
 
 ::
@@ -134,6 +134,30 @@ off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界
 
 例子
 ----
+
+基本信息
+~~~~~~~~
+
+.. code:: shell
+
+    ➜  2015_plaidctf_datastore git:(master) file datastore 
+    datastore: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=1a031710225e93b0b5985477c73653846c352add, stripped
+    ➜  2015_plaidctf_datastore git:(master) checksec datastore 
+    [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/off_by_one/2015_plaidctf_datastore/datastore'
+        Arch:     amd64-64-little
+        RELRO:    Full RELRO
+        Stack:    Canary found
+        NX:       NX enabled
+        PIE:      PIE enabled
+        FORTIFY:  Enabled
+    ➜  2015_plaidctf_datastore git:(master) 
+
+可以看出，该程序是64位动态链接的。保护全部开启。。。
+
+功能分析
+--------
+
+待完成。
 
 题目
 ----

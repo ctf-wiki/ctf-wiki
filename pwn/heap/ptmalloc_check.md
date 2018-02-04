@@ -1,20 +1,44 @@
 # 堆中的检查
 
-## malloc
+## _int_malloc
 
-### fastbin 
+## 初始检查
+
+| 检查目标  |                   检查条件                   |         信息          |
+| :---: | :--------------------------------------: | :-----------------: |
+| 申请的大小 | REQUEST_OUT_OF_RANGE(req) ：((unsigned long) (req) >= (unsigned long) (INTERNAL_SIZE_T)(-2 * MINSIZE)) | __set_errno(ENOMEM) |
+
+### fastbin ed
 
 | 检查目标     |                  检查条件                   |                报错信息                |
 | -------- | :-------------------------------------: | :--------------------------------: |
 | chunk 大小 | fastbin_index(chunksize(victim)) != idx | malloc(): memory corruption (fast) |
 
+### Unsorted bin
+
+|         检查目标          |                   检查条件                   |            报错信息             |
+| :-------------------: | :--------------------------------------: | :-------------------------: |
+| unsorted bin chunk 大小 | chunksize_nomask (victim) <= 2 * SIZE_SZ \|\| chunksize_nomask (victim)  av->system_mem | malloc(): memory corruption |
+
+
+
+### top chunk
+
+|      检查目标      |                   检查条件                   |  信息  |
+| :------------: | :--------------------------------------: | :--: |
+| top chunk size | (unsigned long) (size) >= (unsigned long) (nb + MINSIZE) | 方可进入 |
+
+
+
 ## __libc_free
 
-| 检查目标                | 检查条件                 | 报错信息 |
-| ------------------- | -------------------- | ---- |
-| chunk 标记 IS_ MMAPED | chunk_is_mmapped (p) | 无    |
+### mmap 块
 
-1. 对于是 mmap 的 chunk 会特殊处理。
+|      检查目标      |         检查条件         |  信息  |
+| :------------: | :------------------: | :--: |
+| chunk size 标记位 | chunk_is_mmapped (p) | 方可进入 |
+
+### 非mmap 块
 
 ## __int_free
 
@@ -33,7 +57,17 @@
 | 释放 chunk对应链表的第一个chunk | fb = &fastbin(av, idx)，old= *fb， old == p | double free or corruption (fasttop) |
 |       fastbin索引       |      old != NULL && old_idx != idx       |    invalid fastbin entry (free)     |
 
+### non-mmapped 块检查
 
+|     检查目标      |                   检查条件                   |                报错信息                |
+| :-----------: | :--------------------------------------: | :--------------------------------: |
+|   释放chunk位置   |               p == av->top               |  double free or corruption (top)   |
+| next chunk 位置 | contiguous (av) && (char *) nextchunk  >= ((char *) av->top + chunksize(av->top)) |  double free or corruption (out)   |
+| next chunk 大小 | chunksize_nomask (nextchunk) <= 2 * SIZE_SZ \|\|  nextsize >= av->system_mem | free(): invalid next size (normal) |
+
+
+
+#### 
 
 ## unlink
 

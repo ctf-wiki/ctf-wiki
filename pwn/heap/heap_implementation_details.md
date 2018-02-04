@@ -129,7 +129,7 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 ### __libc_malloc
 
-1. 该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。
+1. 该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。这里需要注意的是，**用户申请的字节一旦进入申请内存函数中就变成了无符号整数**。
 
 ```c++
 // wapper for int_malloc
@@ -842,7 +842,7 @@ while 最多迭代10000次后退出。
             }
 ```
 
-##### 使用top chunk
+##### 使用 top chunk
 
 如果所有的 bin 中的 chunk 都没有办法直接满足要求（即不合并），或者说都没有空闲的 chunk。那么我们就只能使用 top chunk 了。
 
@@ -865,11 +865,13 @@ while 最多迭代10000次后退出。
         // 获取当前的top chunk，并计算其对应的大小
         victim = av->top;
         size   = chunksize(victim);
-        // 如果分割之后，top chunk大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
+        // 如果分割之后，top chunk 大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
         if ((unsigned long) (size) >= (unsigned long) (nb + MINSIZE)) {
             remainder_size = size - nb;
             remainder      = chunk_at_offset(victim, nb);
             av->top        = remainder;
+            // 这里设置 PREV_INUSE 是因为 top chunk 的 chunk 如果不是 fastbin，就必然会和
+            // top chunk 合并，所以这里设置了 PREV_INUSE。
             set_head(victim, nb | PREV_INUSE |
                                  (av != &main_arena ? NON_MAIN_ARENA : 0));
             set_head(remainder, remainder_size | PREV_INUSE);

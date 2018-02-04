@@ -7,14 +7,14 @@ Chunk Extend/Shrink
 chunk extend/shrink 是堆漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，chunk extend/shrink 攻击同样需要有可以控制 malloc_chunk 的漏洞。这种利用方法需要以下的先决条件：
 
 -  程序中存在基于堆的漏洞
--  漏洞可以使得malloc_chunk能够被攻击者控制
+-  漏洞可以使得 malloc_chunk 能够被攻击者控制
 
 原理
 ----
 
-extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk 的各种属性的校验。
+该技术依赖于 ptmalloc(aka glibc) 获取 malloc_chunk 的各种属性的宏。
 
-在ptmalloc中，获取本chunk块大小的操作如下
+在 ptmalloc 中，获取 chunk 块大小的操作如下
 
 ::
 
@@ -24,7 +24,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     /* Like chunksize, but do not mask SIZE_BITS.  */
     #define chunksize_nomask(p) ((p)->mchunk_size)
 
-即取出 malloc_chunk 中的 size 字段并去除标志位。
+一种是直接获取 chunk 的大小，不忽略掩码部分，另外一种是忽略掩码部分。
 
 在 ptmalloc 中，获取下一 chunk 块地址的操作如下
 
@@ -35,7 +35,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
 
 即使用当前块指针加上当前块大小。
 
-在ptmalloc中，获取前一个 chunk 信息的操作如下
+在 ptmalloc 中，获取前一个 chunk 信息的操作如下
 
 ::
 
@@ -45,18 +45,20 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     /* Ptr to previous physical malloc_chunk.  Only valid if prev_inuse (P).  */
     #define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))
 
-即通过malloc_chunk->prev_size获取前一块大小，然后使用本chunk地址减去所得大小。
+即通过malloc_chunk->prev_size获取前一块大小，然后使用本 chunk 地址减去所得大小。
 
-在ptmalloc，判断当前chunk是否是use状态的操作如下：
+在 ptmalloc，判断当前 chunk 是否是use状态的操作如下：
 
 ::
 
     #define inuse(p)
         ((((mchunkptr)(((char *) (p)) + chunksize(p)))->mchunk_size) & PREV_INUSE)
 
-即查看下一chunk的prev_inuse域，而下一块地址又如我们前面所述是根据当前chunk的size计算得出的。
+即查看下一 chunk 的 prev_inuse 域，而下一块地址又如我们前面所述是根据当前 chunk 的 size 计算得出的。
 
-更多的操作详见\ ``堆相关数据结构``\ 一节。简而言之，extend/shrink chunk 利用就是通过对size/pre_size域进行控制来实现的“放缩”利用。
+更多的操作详见 ``堆相关数据结构`` 一节。简而言之，chunk extend/shrink 利用就是通过对 size/pre_size 域进行控制来实现的“放缩”利用。
+
+一般来说，我们很少见到进行 chunk shrink 的操作。所以这里主要介绍 chunk extend 的利用。
 
 基本示例1
 ---------
@@ -72,10 +74,10 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
         ptr=malloc(0x10);//分配第一个0x10的chunk
         malloc(0x10);//分配第二个0x10的chunk
         
-        *(long long *)((long long)ptr-0x8)=0x41;//修改第一个块的size域
+        *(long long *)((long long)ptr-0x8)=0x41;// 修改第一个块的size域
         
         free(ptr);
-        ptr1=malloc(0x30);//实现extend，控制了第二个块的内容
+        ptr1=malloc(0x30);// 实现 extend，控制了第二个块的内容
         return 0;
     }
 
@@ -89,7 +91,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     0x602030:   0x0000000000000000  0x0000000000000000
     0x602040:   0x0000000000000000  0x0000000000020fc1 <=== top chunk
 
-之后，我们把chunk1的size域更改为0x41，0x41是因为chunk的size域包含了用户控制的大小和header的大小。如上所示正好大小为0x40。在题目中这一步可以由堆溢出得到。
+之后，我们把 chunk1 的 size 域更改为 0x41，0x41 是因为 chunk 的 size 域包含了用户控制的大小和 header 的大小。如上所示正好大小为0x40。在题目中这一步可以由堆溢出得到。
 
 ::
 
@@ -99,7 +101,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     0x602030:   0x0000000000000000  0x0000000000000000
     0x602040:   0x0000000000000000  0x0000000000020fc1 
 
-执行free之后，我们可以看到chunk2与chunk1合成一个0x40大小的chunk，一起释放了。
+执行 free 之后，我们可以看到 chunk2 与 chunk1 合成一个 0x40 大小的 chunk，一起释放了。
 
 ::
 
@@ -111,7 +113,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     Fastbins[idx=5, size=0x60] 0x00
     Fastbins[idx=6, size=0x70] 0x00
 
-之后我们通过malloc(0x30)得到chunk1+chunk2的块，此时就可以直接控制chunk2中的内容，我们也把这种状态称为overlapping chunk。
+之后我们通过 malloc(0x30) 得到 chunk1+chunk2 的块，此时就可以直接控制chunk2中的内容，我们也把这种状态称为 overlapping chunk。
 
 ::
 
@@ -123,8 +125,8 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
 基本示例2
 ---------
 
-通过之前深入理解堆的实现部分的内容，我们得知处于 fastbin 范围的 chunk 释放后会被置入 fastbin 链表中，而不处于这个范围的chunk被释放后会被置于unsorted bin链表中。
-以下这个示例中，我们使用0x80这个大小来分配堆（作为对比fastbin的范围是0x70）
+通过之前深入理解堆的实现部分的内容，我们得知处于 fastbin 范围的 chunk 释放后会被置入 fastbin 链表中，而不处于这个范围的 chunk 被释放后会被置于unsorted bin链表中。 以下这个示例中，我们使用 0x80
+这个大小来分配堆（作为对比，fastbin 默认的最大的 chunk 可使用范围是0x70）
 
 ::
 
@@ -132,16 +134,16 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     {
         void *ptr,*ptr1;
         
-        ptr=malloc(0x80);//分配第一个0x80的chunk1
-        malloc(0x10);//分配第二个0x10的chunk2
-        malloc(0x10);//防止与top chunk合并
+        ptr=malloc(0x80);//分配第一个 0x80 的chunk1
+        malloc(0x10); //分配第二个 0x10 的chunk2
+        malloc(0x10); //防止与top chunk合并
         
         *(int *)((int)ptr-0x8)=0xb1;
         free(ptr);
         ptr1=malloc(0xa0);
     }
 
-在这个例子中，因为分配的size不处于fastbin的范围，因此在释放时如果与top chunk相连会导致和top chunk合并。所以我们需要额外分配一个chunk，把释放的块与top chunk隔开。
+在这个例子中，因为分配的 size 不处于 fastbin 的范围，因此在释放时如果与 top chunk 相连会导致和top chunk合并。所以我们需要额外分配一个chunk，把释放的块与top chunk隔开。
 
 ::
 
@@ -160,7 +162,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     0x6020c0:   0x0000000000000000  0x0000000000000000
     0x6020d0:   0x0000000000000000  0x0000000000020f31 <=== top chunk
 
-释放后，chunk1把chunk2的内容吞并掉并一起置入unsorted bin
+释放后，chunk1 把 chunk2 的内容吞并掉并一起置入unsorted bin
 
 ::
 
@@ -184,7 +186,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     [+] unsorted_bins[0]: fw=0x602000, bk=0x602000
      →   Chunk(addr=0x602010, size=0xb0, flags=PREV_INUSE)
 
-再次进行分配的时候就会取回chunk1和chunk2的空间，此时我们就可以控制chunk2中的内容
+再次进行分配的时候就会取回 chunk1 和 chunk2 的空间，此时我们就可以控制 chunk2 中的内容
 
 ::
 
@@ -196,7 +198,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
 基本示例3
 ---------
 
-示例3是在示例2的基础上进行的，这次我们先释放chunk1，然后再修改处于unsorted bin中的chunk1的size域。
+示例3是在示例2的基础上进行的，这次我们先释放 chunk1，然后再修改处于 unsorted bin 中的 chunk1 的size域。
 
 ::
 
@@ -213,7 +215,7 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
         ptr1=malloc(0xa0);
     }
 
-两次malloc之后的结果如下
+两次 malloc 之后的结果如下
 
 ::
 
@@ -267,10 +269,94 @@ extend 利用之所以能够产生在于ptmalloc(aka glibc)对于 malloc_chunk �
     0x6020a0:   0x0000000000000000  0x0000000000000000
     0x6020b0:   0x0000000000000000  0x0000000000020f51
 
-此时再进行malloc分配就可以得到chunk1+chunk2的堆块，从而控制了chunk2的内容。
+此时再进行 malloc 分配就可以得到 chunk1+chunk2 的堆块，从而控制了chunk2 的内容。
 
-extend chunk可以做什么
-----------------------
+Chunk Extend/Shrink 可以做什么
+------------------------------
 
-一般来说 extend chunk并不能直接控制程序的执行流程。但是因为 extend chunk 可以导致 chunk overlapping，所以我们可以完整的控制这个堆块 chunk 中的内容。如果 chunk
+一般来说，这种技术并不能直接控制程序的执行流程，但是可以导致 chunk overlapping，所以我们可以完整的控制这个堆块 chunk 中的内容。如果 chunk
 存在字符串指针、函数指针等，就可以利用这些指针来进行信息泄漏和控制执行流程。如果不存在类似的域也可以通过控制 chunk header 中的数据来实现 fastbin attack 等利用。
+
+2015 hacklu bookstore
+---------------------
+
+基本信息
+~~~~~~~~
+
+.. code:: shell
+
+    ➜  2015_hacklu_bookstore git:(master) file books    
+    books: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=3a15f5a8e83e55c535d220473fa76c314d26b124, stripped
+    ➜  2015_hacklu_bookstore git:(master) checksec books    
+    [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/chunk_extend_shrink/2015_hacklu_bookstore/books'
+        Arch:     amd64-64-little
+        RELRO:    No RELRO
+        Stack:    Canary found
+        NX:       NX enabled
+        PIE:      No PIE (0x400000)
+
+可以看出该程序是动态链接的 64 位程序，主要开启了 Canary 与 NX 保护。
+
+基本功能
+~~~~~~~~
+
+该程序的主要功能是订书，具体如下
+
+-  最多可以订购两本书。
+-  根据编号来选择订购第几本书，可以为每本书添加对应的名字。然而在添加名字处出现了任意长度堆溢出的漏洞。
+-  根据编号来删除 order，但是这里只是单纯地 free 掉，并没有置为 NULL，因此会出现 use after free 的漏洞。
+-  提交订单，将两本书的名字合在一起。这里由于上面堆溢出的问题，这里也会出现堆溢出的漏洞。
+-  此外，在程序退出之前存在一个\ **格式化字符串漏洞**\ 。
+
+这里虽然程序的漏洞能力很强，但是所有进行 malloc 的大小都是完全固定的，我们只能借助这些分配的 chunk 来进行操作。
+
+利用思路
+~~~~~~~~
+
+程序中主要的漏洞在于堆溢出和格式化字符串漏洞，但是如果想要利用格式化字符串漏洞，必然需要溢出对应的dest 数组。具体思路如下
+
+1. 利用堆溢出进行 chunk extend，使得在 submit 中 ``malloc(0x140uLL)`` 时，恰好返回第二个订单处的位置。在 submit 之前，布置好堆内存布局，使得把字符串拼接后恰好可以覆盖 dest 为指定的格式化字符串。
+2. 通过构造 dest 为指定的格式化字符串：一方面泄漏 \__libc_start_main_ret 的地址，\ **一方面控制程序重新返回执行**\ 。这时，便可以知道 libc 基地址，system 等地址。需要注意的是由于一旦 submit
+   之后，程序就会直接直接退出，所以我们比较好的思路就是修改 fini_array 中的变量，以便于达到程序执行完毕后，\ **重新返回我们期待的位置**\ 。这里我们会使用一个trick，程序每次读取选择的时候会读取 128
+   大小，在栈上。而程序最后在输出 dest 的时候，之前所读取的那部分选择必然是在栈上的，所以我们如果我们在栈上预先布置好一些控制流指针，那就可以来控制程序的执行流程。
+3. 再次利用格式化字符串漏洞，覆盖 free@got 为 system 地址，从而达到任意命令执行的目的。
+
+这里，各个参数的偏移是
+
+-  Fini_array0 : 5+8=13
+-  \__libc_start_main_ret : 5+0x1a=31。
+
+::
+
+    00:0000│ rsp  0x7ffe6a7f3ec8 —▸ 0x400c93 ◂— mov    eax, 0
+    01:0008│      0x7ffe6a7f3ed0 ◂— 0x100000000
+    02:0010│      0x7ffe6a7f3ed8 —▸ 0x9f20a0 ◂— 0x3a3120726564724f ('Order 1:')
+    03:0018│      0x7ffe6a7f3ee0 —▸ 0x400d38 ◂— pop    rcx
+    04:0020│      0x7ffe6a7f3ee8 —▸ 0x9f2010 ◂— 0x6666666666667325 ('%sffffff')
+    05:0028│      0x7ffe6a7f3ef0 —▸ 0x9f20a0 ◂— 0x3a3120726564724f ('Order 1:')
+    06:0030│      0x7ffe6a7f3ef8 —▸ 0x9f2130 ◂— 0x6564724f203a3220 (' 2: Orde')
+    07:0038│      0x7ffe6a7f3f00 ◂— 0xa35 /* '5\n' */
+    08:0040│      0x7ffe6a7f3f08 ◂— 0x0
+    ... ↓
+    0b:0058│      0x7ffe6a7f3f20 ◂— 0xff00000000000000
+    0c:0060│      0x7ffe6a7f3f28 ◂— 0x0
+    ... ↓
+    0f:0078│      0x7ffe6a7f3f40 ◂— 0x5f5f00656d697474 /* 'ttime' */
+    10:0080│      0x7ffe6a7f3f48 ◂— 0x7465675f6f736476 ('vdso_get')
+    11:0088│      0x7ffe6a7f3f50 ◂— 0x1
+    12:0090│      0x7ffe6a7f3f58 —▸ 0x400cfd ◂— add    rbx, 1
+    13:0098│      0x7ffe6a7f3f60 ◂— 0x0
+    ... ↓
+    15:00a8│      0x7ffe6a7f3f70 —▸ 0x400cb0 ◂— push   r15
+    16:00b0│      0x7ffe6a7f3f78 —▸ 0x400780 ◂— xor    ebp, ebp
+    17:00b8│      0x7ffe6a7f3f80 —▸ 0x7ffe6a7f4070 ◂— 0x1
+    18:00c0│      0x7ffe6a7f3f88 ◂— 0xd8d379f22453ff00
+    19:00c8│ rbp  0x7ffe6a7f3f90 —▸ 0x400cb0 ◂— push   r15
+    1a:00d0│      0x7ffe6a7f3f98 —▸ 0x7f9db2113830 (__libc_start_main+240) ◂— mov    edi, eax
+
+**！！！待补充！！！**
+
+题目
+----
+
+-  2016 Nuit du Hack CTF Quals : night deamonic heap
