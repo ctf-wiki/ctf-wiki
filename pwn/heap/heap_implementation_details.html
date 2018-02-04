@@ -199,7 +199,7 @@ bk，从而可以很容易地达到任意地址写的效果。关于更加详细
 <div class="section" id="libc-malloc">
 <h3>__libc_malloc<a class="headerlink" href="#libc-malloc" title="永久链接至标题">¶</a></h3>
 <ol class="arabic simple">
-<li>该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。</li>
+<li>该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。这里需要注意的是，<strong>用户申请的字节一旦进入申请内存函数中就变成了无符号整数</strong>。</li>
 </ol>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>// wapper for int_malloc
 void *__libc_malloc(size_t bytes) {
@@ -875,7 +875,7 @@ if (victim == bin) {
 </div>
 </div>
 <div class="section" id="top-chunk">
-<h5>使用top chunk<a class="headerlink" href="#top-chunk" title="永久链接至标题">¶</a></h5>
+<h5>使用 top chunk<a class="headerlink" href="#top-chunk" title="永久链接至标题">¶</a></h5>
 <p>如果所有的 bin 中的 chunk 都没有办法直接满足要求（即不合并），或者说都没有空闲的 chunk。那么我们就只能使用 top chunk 了。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>use_top:
     /*
@@ -895,11 +895,13 @@ if (victim == bin) {
     // 获取当前的top chunk，并计算其对应的大小
     victim = av-&gt;top;
     size   = chunksize(victim);
-    // 如果分割之后，top chunk大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
+    // 如果分割之后，top chunk 大小仍然满足 chunk 的最小大小，那么就可以直接进行分割。
     if ((unsigned long) (size) &gt;= (unsigned long) (nb + MINSIZE)) {
         remainder_size = size - nb;
         remainder      = chunk_at_offset(victim, nb);
         av-&gt;top        = remainder;
+        // 这里设置 PREV_INUSE 是因为 top chunk 的 chunk 如果不是 fastbin，就必然会和
+        // top chunk 合并，所以这里设置了 PREV_INUSE。
         set_head(victim, nb | PREV_INUSE |
                              (av != &amp;main_arena ? NON_MAIN_ARENA : 0));
         set_head(remainder, remainder_size | PREV_INUSE);
@@ -1619,7 +1621,7 @@ if (get_max_fast() != 0) {
 <li class="toctree-l6"><a class="reference internal" href="#unsort-bin">unsort bin 遍历</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#large-chunk">large chunk</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#chunk">寻找较大 chunk</a></li>
-<li class="toctree-l6"><a class="reference internal" href="#top-chunk">使用top chunk</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#top-chunk">使用 top chunk</a></li>
 </ul>
 </li>
 </ul>

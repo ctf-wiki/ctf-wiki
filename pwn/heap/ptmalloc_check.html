@@ -57,10 +57,32 @@
             
   <div class="section" id="id1">
 <h1>堆中的检查<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
-<div class="section" id="malloc">
-<h2>malloc<a class="headerlink" href="#malloc" title="永久链接至标题">¶</a></h2>
-<div class="section" id="fastbin">
-<h3>fastbin<a class="headerlink" href="#fastbin" title="永久链接至标题">¶</a></h3>
+<div class="section" id="int-malloc">
+<h2>_int_malloc<a class="headerlink" href="#int-malloc" title="永久链接至标题">¶</a></h2>
+</div>
+<div class="section" id="id2">
+<h2>初始检查<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="9%" />
+<col width="76%" />
+<col width="16%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">检查目标</th>
+<th class="head">检查条件</th>
+<th class="head">信息</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>申请的大小</td>
+<td>REQUEST_OUT_OF_RANGE(req) ：((unsigned long) (req) &gt;= (unsigned long) (INTERNAL_SIZE_T)(-2 * MINSIZE))</td>
+<td>__set_errno(ENOMEM)</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="fastbin-ed">
+<h3>fastbin ed<a class="headerlink" href="#fastbin-ed" title="永久链接至标题">¶</a></h3>
 <table border="1" class="docutils">
 <colgroup>
 <col width="13%" />
@@ -81,14 +103,13 @@
 </tbody>
 </table>
 </div>
-</div>
-<div class="section" id="libc-free">
-<h2>__libc_free<a class="headerlink" href="#libc-free" title="永久链接至标题">¶</a></h2>
+<div class="section" id="unsorted-bin">
+<h3>Unsorted bin<a class="headerlink" href="#unsorted-bin" title="永久链接至标题">¶</a></h3>
 <table border="1" class="docutils">
 <colgroup>
-<col width="43%" />
-<col width="39%" />
-<col width="18%" />
+<col width="17%" />
+<col width="62%" />
+<col width="20%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">检查目标</th>
@@ -97,20 +118,68 @@
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>chunk 标记 IS_ MMAPED</td>
-<td>chunk_is_mmapped (p)</td>
-<td>无</td>
+<tr class="row-even"><td>unsorted bin chunk 大小</td>
+<td>chunksize_nomask (victim) &lt;= 2 * SIZE_SZ || chunksize_nomask (victim) av-&gt;system_mem</td>
+<td>malloc(): memory corruption</td>
 </tr>
 </tbody>
 </table>
-<ol class="arabic simple">
-<li>对于是 mmap 的 chunk 会特殊处理。</li>
-</ol>
+</div>
+<div class="section" id="top-chunk">
+<h3>top chunk<a class="headerlink" href="#top-chunk" title="永久链接至标题">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="69%" />
+<col width="12%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">检查目标</th>
+<th class="head">检查条件</th>
+<th class="head">信息</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>top chunk size</td>
+<td>(unsigned long) (size) &gt;= (unsigned long) (nb + MINSIZE)</td>
+<td>方可进入</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="libc-free">
+<h2>__libc_free<a class="headerlink" href="#libc-free" title="永久链接至标题">¶</a></h2>
+<div class="section" id="mmap">
+<h3>mmap 块<a class="headerlink" href="#mmap" title="永久链接至标题">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="43%" />
+<col width="20%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">检查目标</th>
+<th class="head">检查条件</th>
+<th class="head">信息</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>chunk size 标记位</td>
+<td>chunk_is_mmapped (p)</td>
+<td>方可进入</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id3">
+<h3>非mmap 块<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
+</div>
 </div>
 <div class="section" id="int-free">
 <h2>__int_free<a class="headerlink" href="#int-free" title="永久链接至标题">¶</a></h2>
-<div class="section" id="id2">
-<h3>初始检查<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id4">
+<h3>初始检查<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
 <table border="1" class="docutils">
 <colgroup>
 <col width="17%" />
@@ -135,8 +204,8 @@
 </tbody>
 </table>
 </div>
-<div class="section" id="id3">
-<h3>fastbin<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
+<div class="section" id="fastbin">
+<h3>fastbin<a class="headerlink" href="#fastbin" title="永久链接至标题">¶</a></h3>
 <table border="1" class="docutils">
 <colgroup>
 <col width="18%" />
@@ -161,6 +230,36 @@
 <tr class="row-even"><td>fastbin索引</td>
 <td>old != NULL &amp;&amp; old_idx != idx</td>
 <td>invalid fastbin entry (free)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="non-mmapped">
+<h3>non-mmapped 块检查<a class="headerlink" href="#non-mmapped" title="永久链接至标题">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="13%" />
+<col width="61%" />
+<col width="27%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">检查目标</th>
+<th class="head">检查条件</th>
+<th class="head">报错信息</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>释放chunk位置</td>
+<td>p == av-&gt;top</td>
+<td>double free or corruption (top)</td>
+</tr>
+<tr class="row-odd"><td>next chunk 位置</td>
+<td>contiguous (av) &amp;&amp; (char <a href="#id5"><span class="problematic" id="id6">*</span></a>) nextchunk &gt;= ((char <a href="#id7"><span class="problematic" id="id8">*</span></a>) av-&gt;top + chunksize(av-&gt;top))</td>
+<td>double free or corruption (out)</td>
+</tr>
+<tr class="row-even"><td>next chunk 大小</td>
+<td>chunksize_nomask (nextchunk) &lt;= 2 * SIZE_SZ || nextsize &gt;= av-&gt;system_mem</td>
+<td>free(): invalid next size (normal)</td>
 </tr>
 </tbody>
 </table>
