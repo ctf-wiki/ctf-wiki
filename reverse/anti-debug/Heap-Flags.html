@@ -1,0 +1,513 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Heap flags &#8212; CTF Wiki </title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="The Heap" href="The-Heap.html" />
+    <link rel="prev" title="NtGlobalFlag" href="NtGlobalFlag.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             accesskey="C">toc</a></li>
+        <li class="right" >
+          <a href="The-Heap.html" title="The Heap"
+             accesskey="N">下一页</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="NtGlobalFlag.html" title="NtGlobalFlag"
+             accesskey="P">上一页</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../index.html" >Reverse Engineering</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Anti Debug Tech</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="heap-flags">
+<h1>Heap flags<a class="headerlink" href="#heap-flags" title="永久链接至标题">¶</a></h1>
+<div class="section" id="id1">
+<h2>关于Heap flags<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">Heap</span> <span class="pre">flags</span></code>包含有两个与<code class="docutils literal"><span class="pre">NtGlobalFlag</span></code>一起初始化的标志:
+<code class="docutils literal"><span class="pre">Flags</span></code>和<code class="docutils literal"><span class="pre">ForceFlags</span></code>. 这两个字段的值不仅会受调试器的影响,
+还会由windows版本而不同, 字段的位置也取决于windows的版本.</p>
+<ul class="simple">
+<li>Flags字段:<ul>
+<li>在32位Windows NT, Windows 2000和Windows XP中,
+<code class="docutils literal"><span class="pre">Flags</span></code>位于堆的<code class="docutils literal"><span class="pre">0x0C</span></code>偏移处. 在32位Windows
+Vista及更新的系统中, 它位于<code class="docutils literal"><span class="pre">0x40</span></code>偏移处.</li>
+<li>在64位Windows XP中, <code class="docutils literal"><span class="pre">Flags</span></code>字段位于堆的<code class="docutils literal"><span class="pre">0x14</span></code>偏移处,
+而在64位Windows Vista及更新的系统中, 它则是位于<code class="docutils literal"><span class="pre">0x70</span></code>偏移处.</li>
+</ul>
+</li>
+<li>ForceFlags字段:<ul>
+<li>在32位Windows NT, Windows 2000和Windows XP中,
+<code class="docutils literal"><span class="pre">ForceFlags</span></code>位于堆的<code class="docutils literal"><span class="pre">0x10</span></code>偏移处. 在32位Windows
+Vista及更新的系统中, 它位于<code class="docutils literal"><span class="pre">0x44</span></code>偏移处.</li>
+<li>在64位Windows XP中,
+<code class="docutils literal"><span class="pre">ForceFlags</span></code>字段位于堆的<code class="docutils literal"><span class="pre">0x18</span></code>偏移处, 而在64位Windows
+Vista及更新的系统中, 它则是位于<code class="docutils literal"><span class="pre">0x74</span></code>偏移处.</li>
+</ul>
+</li>
+</ul>
+<p>在所有版本的Windows中,
+<code class="docutils literal"><span class="pre">Flags</span></code>字段的值正常情况都设为<code class="docutils literal"><span class="pre">HEAP_GROWABLE(2)</span></code>,
+而<code class="docutils literal"><span class="pre">ForceFlags</span></code>字段正常情况都设为<code class="docutils literal"><span class="pre">0</span></code>.
+然而对于一个32位进程(64位程序不会有此困扰), 这两个默认值,
+都取决于它的宿主进程(host
+process)的<code class="docutils literal"><span class="pre">`subsystem</span></code> &lt;<a class="reference external" href="https://msdn.microsoft.com/en-us/library/ms933120.aspx">https://msdn.microsoft.com/en-us/library/ms933120.aspx</a>&gt;`__版本(这里不是指所说的比如win10的linux子系统).
+只有当<code class="docutils literal"><span class="pre">subsystem</span></code>在<code class="docutils literal"><span class="pre">3.51</span></code>及更高的版本,
+字段的默认值才如前所述. 如果是在<code class="docutils literal"><span class="pre">3.10-3.50</span></code>版本之间,
+则两个字段的<code class="docutils literal"><span class="pre">HEAP_CREATE_ALIGN_16</span> <span class="pre">(0x10000)</span></code>都会被设置.
+如果版本低于<code class="docutils literal"><span class="pre">3.10</span></code>, 那么这个程序文件就根本不会被运行.</p>
+<p>如果某操作将<code class="docutils literal"><span class="pre">Flags</span></code>和<code class="docutils literal"><span class="pre">ForgeFlags</span></code>字段的值分别设为<code class="docutils literal"><span class="pre">2</span></code>和<code class="docutils literal"><span class="pre">0</span></code>,
+但是却未对<code class="docutils literal"><span class="pre">subsystem</span></code>版本进行检查,
+那么就可以表明该动作是为了隐藏调试器而进行的.</p>
+<p>当调试器存在时, 在<code class="docutils literal"><span class="pre">Windows</span> <span class="pre">NT</span></code>,
+<code class="docutils literal"><span class="pre">Windows</span> <span class="pre">2000</span></code>和32位<code class="docutils literal"><span class="pre">Windows</span> <span class="pre">XP</span></code>系统下,
+<code class="docutils literal"><span class="pre">Flags</span></code>字段会设置以下标志:</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">HEAP_GROWABLE</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">HEAP_TAIL_CHECKING_ENABLED</span> <span class="p">(</span><span class="mh">0x20</span><span class="p">)</span>
+<span class="n">HEAP_FREE_CHECKING_ENABLED</span> <span class="p">(</span><span class="mh">0x40</span><span class="p">)</span>
+<span class="n">HEAP_SKIP_VALIDATION_CHECKS</span> <span class="p">(</span><span class="mh">0x10000000</span><span class="p">)</span>
+<span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span> <span class="p">(</span><span class="mh">0x40000000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>在64位<code class="docutils literal"><span class="pre">Windows</span> <span class="pre">XP</span></code>系统, <code class="docutils literal"><span class="pre">Windows</span> <span class="pre">Vista</span></code>及更新的系统版本,
+<code class="docutils literal"><span class="pre">Flags</span></code>字段则会设置以下标志(少了<code class="docutils literal"><span class="pre">HEAP_SKIP_VALIDATION_CHECKS</span> <span class="pre">(0x10000000)</span></code>):</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">HEAP_GROWABLE</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">HEAP_TAIL_CHECKING_ENABLED</span> <span class="p">(</span><span class="mh">0x20</span><span class="p">)</span>
+<span class="n">HEAP_FREE_CHECKING_ENABLED</span> <span class="p">(</span><span class="mh">0x40</span><span class="p">)</span>
+<span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span> <span class="p">(</span><span class="mh">0x40000000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>而对于<code class="docutils literal"><span class="pre">ForgeFlags</span></code>字段, 正常情况则会设置以下标志:</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">HEAP_TAIL_CHECKING_ENABLED</span> <span class="p">(</span><span class="mh">0x20</span><span class="p">)</span>
+<span class="n">HEAP_FREE_CHECKING_ENABLED</span> <span class="p">(</span><span class="mh">0x40</span><span class="p">)</span>
+<span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span> <span class="p">(</span><span class="mh">0x40000000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>因为<code class="docutils literal"><span class="pre">NtGlobalFlag</span></code>标志的关系, <code class="docutils literal"><span class="pre">heap</span></code>也会设置一些标志位</p>
+<ul class="simple">
+<li>如果在<code class="docutils literal"><span class="pre">NtGlobalFlag</span></code>字段中有设置<code class="docutils literal"><span class="pre">FLG_HEAP_ENABLE_TAIL_CHECK</span></code>标志,
+那么在<code class="docutils literal"><span class="pre">heap</span></code>字段中就会设置<code class="docutils literal"><span class="pre">HEAP_TAIL_CHECKING_ENABLED</span></code>标志.</li>
+<li>如果在<code class="docutils literal"><span class="pre">NtGlobalFlag</span></code>字段中有设置<code class="docutils literal"><span class="pre">FLG_HEAP_ENABLE_FREE_CHECK</span></code>标志,
+那么在<code class="docutils literal"><span class="pre">heap</span></code>字段中就会设置<code class="docutils literal"><span class="pre">FLG_HEAP_ENABLE_FREE_CHECK</span></code>标志.</li>
+<li>如果在<code class="docutils literal"><span class="pre">NtGlobalFlag</span></code>字段中有设置<code class="docutils literal"><span class="pre">FLG_HEAP_VALIDATE_PARAMETERS</span></code>标志,
+那么在<code class="docutils literal"><span class="pre">heap</span></code>字段中就会设置<code class="docutils literal"><span class="pre">HEAP_VALIDATE_PARAMETERS_ENABLED</span></code>标志(在<code class="docutils literal"><span class="pre">Windows</span> <span class="pre">NT</span></code>和<code class="docutils literal"><span class="pre">Windows</span> <span class="pre">2000</span></code>中还会设置<code class="docutils literal"><span class="pre">HEAP_CREATE_ALIGN_16</span> <span class="pre">(0x10000)</span></code>标志).</li>
+</ul>
+<p><code class="docutils literal"><span class="pre">heap</span> <span class="pre">flags</span></code>同样也如上节的<code class="docutils literal"><span class="pre">NtGlobalFlag</span></code>那样,
+不过它受到注册表<code class="docutils literal"><span class="pre">HKLM\Software\Microsoft\Windows</span> <span class="pre">NT\CurrentVersion\Image</span> <span class="pre">File</span> <span class="pre">Execution</span> <span class="pre">Options\&lt;filename&gt;</span></code>位置的<code class="docutils literal"><span class="pre">PageHeapFlags&quot;</span></code>键的控制.</p>
+</div>
+<div class="section" id="heap">
+<h2>获取heap位置<a class="headerlink" href="#heap" title="永久链接至标题">¶</a></h2>
+<p>有多种方法能获知<code class="docutils literal"><span class="pre">heap</span></code>的位置,
+方法之一就是<code class="docutils literal"><span class="pre">kernel32</span></code>的<code class="docutils literal"><span class="pre">GetProcessHeap()</span></code>函数,
+当然也可以用以下的32位汇编代码来检测32位环境(实际上就有一些壳避免使用该api函数,
+直接查询PEB):</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">18</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+</pre></div>
+</div>
+<p>或使用以下64位代码来检测64位环境</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="mi">60</span><span class="n">h</span>
+<span class="n">pop</span> <span class="n">rsi</span>
+<span class="n">gs</span><span class="p">:</span><span class="n">lodsq</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">rax</span><span class="o">+</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+</pre></div>
+</div>
+<p>或使用以下32位代码检测64位环境</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="n">follows</span> <span class="mi">32</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">1030</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+</pre></div>
+</div>
+<p>另外一种方法则是使用<code class="docutils literal"><span class="pre">kernel32</span></code>的<code class="docutils literal"><span class="pre">GetProcessHeaps()</span></code>函数,
+其实它只是简单的转给了<code class="docutils literal"><span class="pre">ntdll</span></code>的<code class="docutils literal"><span class="pre">RtlGetProcessHeaps()</span></code>函数,
+这个函数会返回属于当前进程的堆的数组, 而数组的第一个堆,
+就跟<code class="docutils literal"><span class="pre">kernel32</span></code>的<code class="docutils literal"><span class="pre">GetProcessHeap()</span></code>函数所返回的是一样的.</p>
+<p>这个过程可以用32位代码检测32位windows环境来实现:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="mi">30</span><span class="n">h</span>
+<span class="n">pop</span> <span class="n">esi</span>
+<span class="n">fs</span><span class="p">:</span><span class="n">lodsd</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heaps</span> <span class="nb">list</span> <span class="n">base</span>
+<span class="n">mov</span> <span class="n">esi</span><span class="p">,</span> <span class="p">[</span><span class="n">esi</span><span class="o">+</span><span class="n">eax</span><span class="o">+</span><span class="mi">5</span><span class="n">ch</span><span class="p">]</span>
+<span class="n">lodsd</span>
+</pre></div>
+</div>
+<p>同上, 用64位代码检测64位windows环境的代码是:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="mi">60</span><span class="n">h</span>
+<span class="n">pop</span> <span class="n">rsi</span>
+<span class="n">gs</span><span class="p">:</span><span class="n">lodsq</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heaps</span> <span class="nb">list</span> <span class="n">base</span>
+<span class="n">mov</span> <span class="n">esi</span><span class="p">,</span> <span class="p">[</span><span class="n">rsi</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="n">rax</span><span class="o">+</span><span class="mi">20</span><span class="n">h</span><span class="p">]</span>
+<span class="n">lodsd</span>
+</pre></div>
+</div>
+<p>或使用32位代码检测64位window环境:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="n">follows</span> <span class="mi">32</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">esi</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">10</span><span class="n">f0h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heaps</span> <span class="nb">list</span> <span class="n">base</span>
+<span class="n">lodsd</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="flags">
+<h2>检测Flags字段<a class="headerlink" href="#flags" title="永久链接至标题">¶</a></h2>
+<p>那么显然,
+检测调试器我们就可以从检测那几个<code class="docutils literal"><span class="pre">Flags</span></code>和<code class="docutils literal"><span class="pre">ForgeFlags</span></code>的标志位入手.</p>
+<p>先看<code class="docutils literal"><span class="pre">Flags</span></code>字段的检测代码, 用32位代码检测32位windows环境,
+且<code class="docutils literal"><span class="pre">subsystem</span></code>版本在<code class="docutils literal"><span class="pre">3.10-3.50</span></code>之间:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span> <span class="n">GetVersion</span>
+<span class="nb">cmp</span> <span class="n">al</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">cmc</span>
+<span class="n">sbb</span> <span class="n">ebx</span><span class="p">,</span> <span class="n">ebx</span>
+<span class="ow">and</span> <span class="n">ebx</span><span class="p">,</span> <span class="mi">34</span><span class="n">h</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">18</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="n">ebx</span><span class="o">+</span><span class="mi">0</span><span class="n">ch</span><span class="p">]</span> <span class="p">;</span><span class="n">Flags</span>
+<span class="p">;</span><span class="n">neither</span> <span class="n">HEAP_CREATE_ALIGN_16</span>
+<span class="p">;</span><span class="n">nor</span> <span class="n">HEAP_SKIP_VALIDATION_CHECKS</span>
+<span class="ow">and</span> <span class="n">eax</span><span class="p">,</span> <span class="mi">0</span><span class="n">effeffffh</span>
+<span class="p">;</span><span class="n">HEAP_GROWABLE</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_TAIL_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_FREE_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span>
+<span class="nb">cmp</span> <span class="n">eax</span><span class="p">,</span> <span class="mi">40000062</span><span class="n">h</span>
+<span class="n">je</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>32位代码检测32位windows环境,
+且<code class="docutils literal"><span class="pre">subsystem</span></code>为<code class="docutils literal"><span class="pre">3.51</span></code>及更高版本:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span> <span class="n">GetVersion</span>
+<span class="nb">cmp</span> <span class="n">al</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">cmc</span>
+<span class="n">sbb</span> <span class="n">ebx</span><span class="p">,</span> <span class="n">ebx</span>
+<span class="ow">and</span> <span class="n">ebx</span><span class="p">,</span> <span class="mi">34</span><span class="n">h</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">18</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="n">ebx</span><span class="o">+</span><span class="mi">0</span><span class="n">ch</span><span class="p">]</span> <span class="p">;</span><span class="n">Flags</span>
+<span class="p">;</span><span class="ow">not</span> <span class="n">HEAP_SKIP_VALIDATION_CHECKS</span>
+<span class="n">bswap</span> <span class="n">eax</span>
+<span class="ow">and</span> <span class="n">al</span><span class="p">,</span> <span class="mi">0</span><span class="n">efh</span>
+<span class="p">;</span><span class="n">HEAP_GROWABLE</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_TAIL_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_FREE_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span>
+<span class="p">;</span><span class="nb">reversed</span> <span class="n">by</span> <span class="n">bswap</span>
+<span class="nb">cmp</span> <span class="n">eax</span><span class="p">,</span> <span class="mi">62000040</span><span class="n">h</span>
+<span class="n">je</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>64位代码检测64位windows环境(64位进程不必受<code class="docutils literal"><span class="pre">subsystem</span></code>版本困扰):</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="mi">60</span><span class="n">h</span>
+<span class="n">pop</span> <span class="n">rsi</span>
+<span class="n">gs</span><span class="p">:</span><span class="n">lodsq</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">ebx</span><span class="p">,</span> <span class="p">[</span><span class="n">rax</span><span class="o">+</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+<span class="n">call</span> <span class="n">GetVersion</span>
+<span class="nb">cmp</span> <span class="n">al</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">sbb</span> <span class="n">rax</span><span class="p">,</span> <span class="n">rax</span>
+<span class="ow">and</span> <span class="n">al</span><span class="p">,</span> <span class="mi">0</span><span class="n">a4h</span>
+<span class="p">;</span><span class="n">HEAP_GROWABLE</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_TAIL_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_FREE_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span>
+<span class="nb">cmp</span> <span class="n">d</span> <span class="p">[</span><span class="n">rbx</span><span class="o">+</span><span class="n">rax</span><span class="o">+</span><span class="mi">70</span><span class="n">h</span><span class="p">],</span> <span class="mi">40000062</span><span class="n">h</span> <span class="p">;</span><span class="n">Flags</span>
+<span class="n">je</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>用32位代码检测64位windows环境:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="mi">30</span><span class="n">h</span>
+<span class="n">pop</span> <span class="n">eax</span>
+<span class="n">mov</span> <span class="n">ebx</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="n">eax</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="n">follows</span> <span class="mi">32</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">ah</span><span class="p">,</span> <span class="mi">10</span><span class="n">h</span>
+<span class="n">mov</span> <span class="n">ebx</span><span class="p">,</span> <span class="p">[</span><span class="n">ebx</span><span class="o">+</span><span class="n">eax</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+<span class="n">call</span> <span class="n">GetVersion</span>
+<span class="nb">cmp</span> <span class="n">al</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">sbb</span> <span class="n">eax</span><span class="p">,</span> <span class="n">eax</span>
+<span class="ow">and</span> <span class="n">al</span><span class="p">,</span> <span class="mi">0</span><span class="n">a4h</span>
+<span class="p">;</span><span class="n">Flags</span>
+<span class="p">;</span><span class="n">HEAP_GROWABLE</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_TAIL_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_FREE_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span>
+<span class="nb">cmp</span> <span class="p">[</span><span class="n">ebx</span><span class="o">+</span><span class="n">eax</span><span class="o">+</span><span class="mi">70</span><span class="n">h</span><span class="p">],</span> <span class="mi">40000062</span><span class="n">h</span>
+<span class="n">je</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>如果是直接通过<code class="docutils literal"><span class="pre">KUSER_SHARED_DATA</span></code>结构的<code class="docutils literal"><span class="pre">NtMajorVersion</span></code>字段(位于2G用户空间的<code class="docutils literal"><span class="pre">0x7ffe026c</span></code>偏移处)获取该值(在所有32位/64位版本的Windows都可以获取该值),
+可以进一步混淆<code class="docutils literal"><span class="pre">kernel32</span></code>的<code class="docutils literal"><span class="pre">GetVersion()</span></code>函数调用操作.</p>
+</div>
+<div class="section" id="forgeflags">
+<h2>检测ForgeFlags字段<a class="headerlink" href="#forgeflags" title="永久链接至标题">¶</a></h2>
+<p>当然另一个方法就是检测<code class="docutils literal"><span class="pre">ForgeFlags</span></code>字段,
+以下是32位代码检测32位Windows环境,
+<code class="docutils literal"><span class="pre">subsystem</span></code>版本在<code class="docutils literal"><span class="pre">3.10-3.50</span></code>之间:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span> <span class="n">GetVersion</span>
+<span class="nb">cmp</span> <span class="n">al</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">cmc</span>
+<span class="n">sbb</span> <span class="n">ebx</span><span class="p">,</span> <span class="n">ebx</span>
+<span class="ow">and</span> <span class="n">ebx</span><span class="p">,</span> <span class="mi">34</span><span class="n">h</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">18</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="n">ebx</span><span class="o">+</span><span class="mi">10</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">ForceFlags</span>
+<span class="p">;</span><span class="ow">not</span> <span class="n">HEAP_CREATE_ALIGN_16</span>
+<span class="n">btr</span> <span class="n">eax</span><span class="p">,</span> <span class="mi">10</span><span class="n">h</span>
+<span class="p">;</span><span class="n">HEAP_TAIL_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_FREE_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span>
+<span class="nb">cmp</span> <span class="n">eax</span><span class="p">,</span> <span class="mi">40000060</span><span class="n">h</span>
+<span class="n">je</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>32位代码检测32位windows环境,
+且<code class="docutils literal"><span class="pre">subsystem</span></code>为<code class="docutils literal"><span class="pre">3.51</span></code>及更高版本:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span> <span class="n">GetVersion</span>
+<span class="nb">cmp</span> <span class="n">al</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">cmc</span>
+<span class="n">sbb</span> <span class="n">ebx</span><span class="p">,</span> <span class="n">ebx</span>
+<span class="ow">and</span> <span class="n">ebx</span><span class="p">,</span> <span class="mi">34</span><span class="n">h</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">18</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+<span class="p">;</span><span class="n">ForceFlags</span>
+<span class="p">;</span><span class="n">HEAP_TAIL_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_FREE_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span>
+<span class="nb">cmp</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="n">ebx</span><span class="o">+</span><span class="mi">10</span><span class="n">h</span><span class="p">],</span> <span class="mi">40000060</span><span class="n">h</span>
+<span class="n">je</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>64位代码检测64位windows环境(64位进程不必受<code class="docutils literal"><span class="pre">subsystem</span></code>版本困扰):</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="mi">60</span><span class="n">h</span>
+<span class="n">pop</span> <span class="n">rsi</span>
+<span class="n">gs</span><span class="p">:</span><span class="n">lodsq</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">ebx</span><span class="p">,</span> <span class="p">[</span><span class="n">rax</span><span class="o">+</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+<span class="n">call</span> <span class="n">GetVersion</span>
+<span class="nb">cmp</span> <span class="n">al</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">sbb</span> <span class="n">rax</span><span class="p">,</span> <span class="n">rax</span>
+<span class="ow">and</span> <span class="n">al</span><span class="p">,</span> <span class="mi">0</span><span class="n">a4h</span>
+<span class="p">;</span><span class="n">ForceFlags</span>
+<span class="p">;</span><span class="n">HEAP_TAIL_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_FREE_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span>
+<span class="nb">cmp</span> <span class="n">d</span> <span class="p">[</span><span class="n">rbx</span><span class="o">+</span><span class="n">rax</span><span class="o">+</span><span class="mi">74</span><span class="n">h</span><span class="p">],</span> <span class="mi">40000060</span><span class="n">h</span>
+<span class="n">je</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>用32位代码检测64位windows环境:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span> <span class="n">GetVersion</span>
+<span class="nb">cmp</span> <span class="n">al</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">push</span> <span class="mi">30</span><span class="n">h</span>
+<span class="n">pop</span> <span class="n">eax</span>
+<span class="n">mov</span> <span class="n">ebx</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="n">eax</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="n">follows</span> <span class="mi">32</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="n">mov</span> <span class="n">ah</span><span class="p">,</span> <span class="mi">10</span><span class="n">h</span>
+<span class="n">mov</span> <span class="n">ebx</span><span class="p">,</span> <span class="p">[</span><span class="n">ebx</span><span class="o">+</span><span class="n">eax</span><span class="p">]</span> <span class="p">;</span><span class="n">get</span> <span class="n">process</span> <span class="n">heap</span> <span class="n">base</span>
+<span class="n">sbb</span> <span class="n">eax</span><span class="p">,</span> <span class="n">eax</span>
+<span class="ow">and</span> <span class="n">al</span><span class="p">,</span> <span class="mi">0</span><span class="n">a4h</span>
+<span class="p">;</span><span class="n">ForceFlags</span>
+<span class="p">;</span><span class="n">HEAP_TAIL_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_FREE_CHECKING_ENABLED</span>
+<span class="p">;</span><span class="o">+</span> <span class="n">HEAP_VALIDATE_PARAMETERS_ENABLED</span>
+<span class="nb">cmp</span> <span class="p">[</span><span class="n">ebx</span><span class="o">+</span><span class="n">eax</span><span class="o">+</span><span class="mi">74</span><span class="n">h</span><span class="p">],</span> <span class="mi">40000060</span><span class="n">h</span>
+<span class="n">je</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>参考链接<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="http://anti-reversing.com/Downloads/Anti-Reversing/The_Ultimate_Anti-Reversing_Reference.pdf">The “Ultimate” Anti-Debugging
+Reference</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>快速搜索</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="转向" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../../index.html">內容目录</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/about.html">杂项简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/prefix.html">取证隐写</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/traffic/index.html">流量包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reverse</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Reverse Engineering</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../introduction.html">软件逆向工程简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unpack/index.html">Unpack Tricks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unicorn/index.html">Unicorn Engine</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Anti Debug Tech</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="NtGlobalFlag.html">NtGlobalFlag</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Heap flags</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">关于Heap flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#heap">获取heap位置</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flags">检测Flags字段</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#forgeflags">检测ForgeFlags字段</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">参考链接</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="The-Heap.html">The Heap</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             >toc</a></li>
+        <li class="right" >
+          <a href="The-Heap.html" title="The Heap"
+             >下一页</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="NtGlobalFlag.html" title="NtGlobalFlag"
+             >上一页</a> &nbsp; &nbsp;</li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../index.html" >Reverse Engineering</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Anti Debug Tech</a> &#187;</li> 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      由 <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.7 创建。
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>
