@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>IsDebuggerPresent &#8212; CTF Wiki </title>
+    <title>Anti Debug Tech &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -32,8 +32,8 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="CheckRemoteDebuggerPresent" href="checkremotedebuggerpresent.html" />
-    <link rel="prev" title="Interrupt 3" href="int_3.html" /> 
+    <link rel="next" title="NtGlobalFlag" href="ntglobalflag.html" />
+    <link rel="prev" title="Unicorn Engine简介" href="../unicorn/unicorn_intro.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -46,14 +46,13 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="checkremotedebuggerpresent.html" title="CheckRemoteDebuggerPresent"
+          <a href="ntglobalflag.html" title="NtGlobalFlag"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="int_3.html" title="Interrupt 3"
+          <a href="../unicorn/unicorn_intro.html" title="Unicorn Engine简介"
              accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
-
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Anti Debug Tech</a> &#187;</li> 
+ 
       </ul>
     </div>
     </div>
@@ -64,53 +63,66 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="isdebuggerpresent">
-<h1>IsDebuggerPresent<a class="headerlink" href="#isdebuggerpresent" title="永久链接至标题">¶</a></h1>
-<div class="section" id="id1">
-<h2>关于IsDebuggerPresent<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>当调试器存在时,
-<code class="docutils literal"><span class="pre">kernel32</span></code>的<code class="docutils literal"><span class="pre">IsDebuggerPresent()</span></code>函数返回的是一个<code class="docutils literal"><span class="pre">非0值</span></code>.</p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="n">BOOL</span> <span class="n">WINAPI</span> <span class="n">IsDebuggerPresent</span><span class="p">(</span><span class="n">void</span><span class="p">);</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="id2">
-<h2>检测代码<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>它的检测方法非常简单,
-比如用以下代码(32位还是64位都是相同的这份代码)在32位/64位环境中检测:</p>
-<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span> <span class="n">IsDebuggerPresent</span>
-<span class="n">test</span> <span class="n">al</span><span class="p">,</span> <span class="n">al</span>
-<span class="n">jne</span> <span class="n">being_debugged</span>
-</pre></div>
-</div>
-<p>实际上, 这个函数只是单纯地返回了<code class="docutils literal"><span class="pre">BeingDebugged</span></code>标志的值.
-检查<code class="docutils literal"><span class="pre">BeingDebugged</span></code>标志位的方法也可以用以下32代码位代码检查32位环境来实现:</p>
-<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
-<span class="nb">cmp</span> <span class="n">b</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span> <span class="mi">0</span> <span class="p">;</span><span class="n">check</span> <span class="n">BeingDebugged</span>
-<span class="n">jne</span> <span class="n">being_debugged</span>
-</pre></div>
-</div>
-<p>或使用64位代码检测64位环境</p>
-<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="mi">60</span><span class="n">h</span>
-<span class="n">pop</span> <span class="n">rsi</span>
-<span class="n">gs</span><span class="p">:</span><span class="n">lodsq</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
-<span class="nb">cmp</span> <span class="n">b</span> <span class="p">[</span><span class="n">rax</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span> <span class="mi">0</span> <span class="p">;</span><span class="n">check</span> <span class="n">BeingDebugged</span>
-<span class="n">jne</span> <span class="n">being_debugged</span>
-</pre></div>
-</div>
-<p>或使用32位代码检测64位环境</p>
-<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
-<span class="p">;</span><span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
-<span class="p">;</span><span class="n">follows</span> <span class="mi">32</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
-<span class="nb">cmp</span> <span class="n">b</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">1002</span><span class="n">h</span><span class="p">],</span> <span class="mi">0</span> <span class="p">;</span><span class="n">check</span> <span class="n">BeingDebugged</span>
-<span class="n">jne</span> <span class="n">being_debugged</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="id3">
-<h2>如何绕过<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<p>想要克服这些检测,
-只需要将<code class="docutils literal"><span class="pre">BeingDebugged</span></code>标志设为<code class="docutils literal"><span class="pre">0</span></code>即可(或改变一下返回值).</p>
+  <div class="section" id="anti-debug-tech">
+<h1>Anti Debug Tech<a class="headerlink" href="#anti-debug-tech" title="永久链接至标题">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Anti Debug Tech</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ntglobalflag.html">NtGlobalFlag</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ntglobalflag.html#id1">关于NtGlobalFlag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntglobalflag.html#id2">检测代码</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntglobalflag.html#id3">改变NtGlobalFlag初值</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntglobalflag.html#id4">如何绕过检测?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntglobalflag.html#id5">手动绕过示例</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntglobalflag.html#id6">参考链接</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="heap_flags.html">Heap flags</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="heap_flags.html#id1">关于Heap flags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_flags.html#heap">获取heap位置</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_flags.html#flags">检测Flags字段</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_flags.html#forgeflags">检测ForgeFlags字段</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_flags.html#id2">参考链接</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="the_heap.html">The Heap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="the_heap.html#id1">堆指针已知</a></li>
+<li class="toctree-l2"><a class="reference internal" href="the_heap.html#id2">堆指针未知</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="int_3.html">Interrupt 3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="isdebuggerpresent.html">IsDebuggerPresent</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="isdebuggerpresent.html#id1">关于IsDebuggerPresent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="isdebuggerpresent.html#id2">检测代码</a></li>
+<li class="toctree-l2"><a class="reference internal" href="isdebuggerpresent.html#id3">如何绕过</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="checkremotedebuggerpresent.html">CheckRemoteDebuggerPresent</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="checkremotedebuggerpresent.html#id1">关于CheckRemoteDebuggerPresent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="checkremotedebuggerpresent.html#id2">检测代码</a></li>
+<li class="toctree-l2"><a class="reference internal" href="checkremotedebuggerpresent.html#id3">如何绕过</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ntqueryinformationprocess.html">NtQueryInformationProcess</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ntqueryinformationprocess.html#processdebugport">ProcessDebugPort</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntqueryinformationprocess.html#processdebugobjecthandle">ProcessDebugObjectHandle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntqueryinformationprocess.html#processdebugflags">ProcessDebugFlags</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Anti debug的例题</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example.html#id1">比较明文字符串</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#isdebuggerpresent">IsDebuggerPresent()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#ntglobalflag">NtGlobalFlag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#checkremotedebuggerpresent">CheckRemoteDebuggerPresent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#id2">时间差检测</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#processmonitor">ProcessMonitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#id3">检测进程名</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#vmware">检测VMware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#seh">SEH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html#flag">获取flag</a></li>
+</ul>
+</li>
+</ul>
 </div>
 </div>
 
@@ -178,18 +190,15 @@
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">软件逆向工程简介</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../unpack/index.html">Unpack Tricks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../unicorn/index.html">Unicorn Engine</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Anti Debug Tech</a><ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Anti Debug Tech</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ntglobalflag.html">NtGlobalFlag</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_flags.html">Heap flags</a></li>
 <li class="toctree-l2"><a class="reference internal" href="the_heap.html">The Heap</a></li>
 <li class="toctree-l2"><a class="reference internal" href="int_3.html">Interrupt 3</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">IsDebuggerPresent</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">关于IsDebuggerPresent</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">检测代码</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">如何绕过</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="isdebuggerpresent.html">IsDebuggerPresent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="checkremotedebuggerpresent.html">CheckRemoteDebuggerPresent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ntqueryinformationprocess.html">NtQueryInformationProcess</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html">Anti debug的例题</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../linux/index.html">Linux RE</a></li>
@@ -235,14 +244,13 @@
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="checkremotedebuggerpresent.html" title="CheckRemoteDebuggerPresent"
+          <a href="ntglobalflag.html" title="NtGlobalFlag"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="int_3.html" title="Interrupt 3"
+          <a href="../unicorn/unicorn_intro.html" title="Unicorn Engine简介"
              >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
-
-          <li class="nav-item nav-item-1"><a href="index.html" >Anti Debug Tech</a> &#187;</li> 
+ 
       </ul>
     </div>
     </div>

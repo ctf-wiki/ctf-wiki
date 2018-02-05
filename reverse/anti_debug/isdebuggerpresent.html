@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>CheckRemoteDebuggerPresent &#8212; CTF Wiki </title>
+    <title>IsDebuggerPresent &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -32,8 +32,8 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="NtQueryInformationProcess" href="ntqueryinformationprocess.html" />
-    <link rel="prev" title="IsDebuggerPresent" href="isdebuggerpresent.html" /> 
+    <link rel="next" title="CheckRemoteDebuggerPresent" href="checkremotedebuggerpresent.html" />
+    <link rel="prev" title="Interrupt 3" href="int_3.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -46,10 +46,10 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="ntqueryinformationprocess.html" title="NtQueryInformationProcess"
+          <a href="checkremotedebuggerpresent.html" title="CheckRemoteDebuggerPresent"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="isdebuggerpresent.html" title="IsDebuggerPresent"
+          <a href="int_3.html" title="Interrupt 3"
              accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
@@ -64,68 +64,53 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="checkremotedebuggerpresent">
-<h1>CheckRemoteDebuggerPresent<a class="headerlink" href="#checkremotedebuggerpresent" title="永久链接至标题">¶</a></h1>
+  <div class="section" id="isdebuggerpresent">
+<h1>IsDebuggerPresent<a class="headerlink" href="#isdebuggerpresent" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id1">
-<h2>关于CheckRemoteDebuggerPresent<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p><code class="docutils literal"><span class="pre">kernel32</span></code>的<code class="docutils literal"><span class="pre">CheckRemoteDebuggerPresent()</span></code>函数用于检测指定进程是否正在被调试.
-<code class="docutils literal"><span class="pre">Remote</span></code>在单词里是指同一个机器中的不同进程.</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">BOOL</span> <span class="n">WINAPI</span> <span class="n">CheckRemoteDebuggerPresent</span><span class="p">(</span>
-  <span class="n">_In_</span>    <span class="n">HANDLE</span> <span class="n">hProcess</span><span class="p">,</span>
-  <span class="n">_Inout_</span> <span class="n">PBOOL</span>  <span class="n">pbDebuggerPresent</span>
-<span class="p">);</span>
+<h2>关于IsDebuggerPresent<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
+<p>当调试器存在时,
+<code class="docutils literal"><span class="pre">kernel32</span></code>的<code class="docutils literal"><span class="pre">IsDebuggerPresent()</span></code>函数返回的是一个<code class="docutils literal"><span class="pre">非0值</span></code>.</p>
+<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="n">BOOL</span> <span class="n">WINAPI</span> <span class="n">IsDebuggerPresent</span><span class="p">(</span><span class="n">void</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>如果调试器存在(通常是检测自己是否正在被调试),
-该函数会将<code class="docutils literal"><span class="pre">pbDebuggerPresent</span></code>指向的值设为<code class="docutils literal"><span class="pre">0xffffffff</span></code>.</p>
 </div>
 <div class="section" id="id2">
 <h2>检测代码<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>可以用以下32位代码检测32位环境</p>
-<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="n">eax</span>
-<span class="n">push</span> <span class="n">esp</span>
-<span class="n">push</span> <span class="o">-</span><span class="mi">1</span> <span class="p">;</span><span class="n">GetCurrentProcess</span><span class="p">()</span>
-<span class="n">call</span> <span class="n">CheckRemoteDebuggerPresent</span>
-<span class="n">pop</span> <span class="n">eax</span>
-<span class="n">test</span> <span class="n">eax</span><span class="p">,</span> <span class="n">eax</span>
+<p>它的检测方法非常简单,
+比如用以下代码(32位还是64位都是相同的这份代码)在32位/64位环境中检测:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">call</span> <span class="n">IsDebuggerPresent</span>
+<span class="n">test</span> <span class="n">al</span><span class="p">,</span> <span class="n">al</span>
 <span class="n">jne</span> <span class="n">being_debugged</span>
 </pre></div>
 </div>
-<p>或64位代码检测64位环境</p>
-<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">enter</span> <span class="mi">20</span><span class="n">h</span><span class="p">,</span> <span class="mi">0</span>
-<span class="n">mov</span> <span class="n">edx</span><span class="p">,</span> <span class="n">ebp</span>
-<span class="ow">or</span> <span class="n">rcx</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span> <span class="p">;</span><span class="n">GetCurrentProcess</span><span class="p">()</span>
-<span class="n">call</span> <span class="n">CheckRemoteDebuggerPresent</span>
-<span class="n">leave</span>
-<span class="n">test</span> <span class="n">ebp</span><span class="p">,</span> <span class="n">ebp</span>
+<p>实际上, 这个函数只是单纯地返回了<code class="docutils literal"><span class="pre">BeingDebugged</span></code>标志的值.
+检查<code class="docutils literal"><span class="pre">BeingDebugged</span></code>标志位的方法也可以用以下32代码位代码检查32位环境来实现:</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="nb">cmp</span> <span class="n">b</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span> <span class="mi">0</span> <span class="p">;</span><span class="n">check</span> <span class="n">BeingDebugged</span>
+<span class="n">jne</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>或使用64位代码检测64位环境</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">push</span> <span class="mi">60</span><span class="n">h</span>
+<span class="n">pop</span> <span class="n">rsi</span>
+<span class="n">gs</span><span class="p">:</span><span class="n">lodsq</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="nb">cmp</span> <span class="n">b</span> <span class="p">[</span><span class="n">rax</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span> <span class="mi">0</span> <span class="p">;</span><span class="n">check</span> <span class="n">BeingDebugged</span>
+<span class="n">jne</span> <span class="n">being_debugged</span>
+</pre></div>
+</div>
+<p>或使用32位代码检测64位环境</p>
+<div class="code asm highlight-default"><div class="highlight"><pre><span></span><span class="n">mov</span> <span class="n">eax</span><span class="p">,</span> <span class="n">fs</span><span class="p">:[</span><span class="mi">30</span><span class="n">h</span><span class="p">]</span> <span class="p">;</span><span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="mi">64</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="p">;</span><span class="n">follows</span> <span class="mi">32</span><span class="o">-</span><span class="n">bit</span> <span class="n">Process</span> <span class="n">Environment</span> <span class="n">Block</span>
+<span class="nb">cmp</span> <span class="n">b</span> <span class="p">[</span><span class="n">eax</span><span class="o">+</span><span class="mi">1002</span><span class="n">h</span><span class="p">],</span> <span class="mi">0</span> <span class="p">;</span><span class="n">check</span> <span class="n">BeingDebugged</span>
 <span class="n">jne</span> <span class="n">being_debugged</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="id3">
 <h2>如何绕过<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
-<p>比如有如下的代码</p>
-<div class="code cpp highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">(</span><span class="nb">int</span> <span class="n">argc</span><span class="p">,</span> <span class="n">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
-<span class="p">{</span>
-    <span class="n">BOOL</span> <span class="n">isDebuggerPresent</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">CheckRemoteDebuggerPresent</span><span class="p">(</span><span class="n">GetCurrentProcess</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">isDebuggerPresent</span> <span class="p">))</span>
-    <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">isDebuggerPresent</span> <span class="p">)</span>
-        <span class="p">{</span>
-            <span class="n">std</span><span class="p">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;Stop debugging program!&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
-            <span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>我们可以直接修改<code class="docutils literal"><span class="pre">isDebuggerPresent</span></code>的值或修改跳转条件来绕过(注意不是<code class="docutils literal"><span class="pre">CheckRemoteDebuggerPresent</span></code>的izhi,
-它的返回值是用于表示函数是否正确执行).</p>
-<p>但如果要针对<code class="docutils literal"><span class="pre">CheckRemoteDebuggerPresent</span></code>这个api函数进行修改的话.
-首先要知道<code class="docutils literal"><span class="pre">CheckRemoteDebuggerPresent</span></code>内部其实是通过调用<code class="docutils literal"><span class="pre">NtQueryInformationProcess</span></code>来完成功能的.
-而我们就需要对<code class="docutils literal"><span class="pre">NtQueryInformationProcess</span></code>的返回值进行修改.
-我们将在<code class="docutils literal"><span class="pre">NtQueryInformationProcess</span></code>进行介绍.</p>
+<p>想要克服这些检测,
+只需要将<code class="docutils literal"><span class="pre">BeingDebugged</span></code>标志设为<code class="docutils literal"><span class="pre">0</span></code>即可(或改变一下返回值).</p>
 </div>
 </div>
 
@@ -194,17 +179,19 @@
 <li class="toctree-l1"><a class="reference internal" href="../unpack/index.html">Unpack Tricks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../unicorn/index.html">Unicorn Engine</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Anti Debug Tech</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ntglobalflag.html">NtGlobalFlag</a></li>
 <li class="toctree-l2"><a class="reference internal" href="heap_flags.html">Heap flags</a></li>
 <li class="toctree-l2"><a class="reference internal" href="the_heap.html">The Heap</a></li>
 <li class="toctree-l2"><a class="reference internal" href="int_3.html">Interrupt 3</a></li>
-<li class="toctree-l2"><a class="reference internal" href="isdebuggerpresent.html">IsDebuggerPresent</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">CheckRemoteDebuggerPresent</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">关于CheckRemoteDebuggerPresent</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">IsDebuggerPresent</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">关于IsDebuggerPresent</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">检测代码</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id3">如何绕过</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="checkremotedebuggerpresent.html">CheckRemoteDebuggerPresent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ntqueryinformationprocess.html">NtQueryInformationProcess</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html">Anti debug的例题</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../linux/index.html">Linux RE</a></li>
@@ -250,10 +237,10 @@
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="ntqueryinformationprocess.html" title="NtQueryInformationProcess"
+          <a href="checkremotedebuggerpresent.html" title="CheckRemoteDebuggerPresent"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="isdebuggerpresent.html" title="IsDebuggerPresent"
+          <a href="int_3.html" title="Interrupt 3"
              >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
