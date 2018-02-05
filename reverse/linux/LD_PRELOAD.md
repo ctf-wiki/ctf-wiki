@@ -8,19 +8,19 @@
 
 当然为避免用于恶意攻击, 在`ruid != euid`的情况下加载器是不会使用`LD_PRELOAD`进行预装载的. 
 
-更多阅读: https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
+更多阅读: [https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4](https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4)
 
 ## 例题
 
-下面以2014年`Hack In The Box Amsterdam: Bin 100`为例. 题目下载链接: [hitb-bin100.elf](/reverse/linux/example/2014-hitb/hitb-bin100.elf)
+下面以2014年`Hack In The Box Amsterdam: Bin 100`为例. 题目下载链接: [hitb_bin100.elf](/reverse/linux/example/2014_hitb/hitb_bin100.elf)
 
 这是一个64位的ELF文件. 运行结果如下图所示:
 
-![run.png](/reverse/linux/figure/2014-hitb/run.png)
+![run.png](/reverse/linux/figure/2014_hitb/run.png)
 
 程序似乎在一直打印着一些句子. 并且没有停止下来的迹象. 我们就用IDA打开来看一下. 首先按下`Shift+F12`查找字符串. 
 
-![ida-strings.png](/reverse/linux/figure/2014-hitb/ida-strings.png)
+![ida_strings.png](/reverse/linux/figure/2014_hitb/ida_strings.png)
 
 显然, 除开一直在打印的句子外, 我们发现了一些有趣的字符串:
 
@@ -117,13 +117,13 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 
 将光标点在`call    ___printf_chk`上, 然后选择菜单`Edit->Patch Program->Assemble`(当然你可以使用其他patch方式. 效果都一样).  然后将其修改为`nop(0x90)`, 如下图所示
 
-![ida-patch.png](/reverse/linux/figure/2014-hitb/ida-patch.png)
+![ida_patch.png](/reverse/linux/figure/2014_hitb/ida_patch.png)
 
-将`4007B7`到`4007BD`之间的汇编代码全部修改为`nop`即可. 然后选择菜单`Edit->Patch Program->Apply patches to input file`. 当然最好做一个备份(即勾选`Create a backup`), 然后点击OK即可(我重命名为了`patched.elf`, 下载链接: [patched.elf](/reverse/linux/example/2014-hitb/patched.elf)). 
+将`4007B7`到`4007BD`之间的汇编代码全部修改为`nop`即可. 然后选择菜单`Edit->Patch Program->Apply patches to input file`. 当然最好做一个备份(即勾选`Create a backup`), 然后点击OK即可(我重命名为了`patched.elf`, 下载链接: [patched.elf](/reverse/linux/example/2014_hitb/patched.elf)). 
 
-![ida-apply.png](/reverse/linux/figure/2014-hitb/ida-apply.png)
+![ida_apply.png](/reverse/linux/figure/2014_hitb/ida_apply.png)
 
-现在进入`LD_PRELOAD`部分. 这里我们简单编写一下c代码, 下载链接: [time.c](/reverse/linux/example/2014-hitb/time.c)
+现在进入`LD_PRELOAD`部分. 这里我们简单编写一下c代码, 下载链接: [time.c](/reverse/linux/example/2014_hitb/time.c)
 
 ``` c
 static int t = 0x31337;
@@ -137,10 +137,10 @@ int time() {
 }
 ```
 
-然后使用命令`gcc --shared time.c -o time.so`生成动态链接文件. 当然也给出了下载链接: [time.so](/reverse/linux/example/2014-hitb/time.so)
+然后使用命令`gcc --shared time.c -o time.so`生成动态链接文件. 当然也给出了下载链接: [time.so](/reverse/linux/example/2014_hitb/time.so)
 
 然后打开linux终端, 运行命令: `LD_PRELOAD=./time.so ./patched.elf`
 
-![LD_PRELOAD.png](/reverse/linux/figure/2014-hitb/LD_PRELOAD.png)
+![LD_PRELOAD.png](/reverse/linux/figure/2014_hitb/ld_preload.png)
 
 过一会, 你就能听到CPU疯狂运转的声音, 然后很快就出来了flag.

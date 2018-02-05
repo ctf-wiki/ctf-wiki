@@ -5,10 +5,10 @@ Unpack Tricks
    :maxdepth: 2
    :caption: Unpack Tricks
 
-   packer-intro.rst
+   packer_intro.rst
    trace.rst
    esp.rst
-   direct-oep.rst
+   direct_oep.rst
    memory.rst
-   last-exception.rst
+   last_exception.rst
    sfx.rst

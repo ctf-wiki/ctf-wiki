@@ -24,16 +24,16 @@
 ----
 
 示例程序可以点击此处下载:
-`5-last-exception.zip <https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/example/5-last-exception.zip>`__
+`5_last_exception.zip </reverse/unpack/example/5_last_exception.zip>`__
 
 OD载入程序,
 在菜单\ ``选项->调试设置->异常标签页``\ 中取消勾选所有的忽略异常,
 然后重载程序.
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/exception-01.png
-   :alt: exception-01.png
+.. figure:: /reverse/unpack/figure/exception_01.png
+   :alt: exception_01.png
 
-   exception-01.png
+   exception_01.png
 
 我们按下\ ``Shift+F9``, 记录按了多少次, 程序正常运行.
 我们要得到的是倒数第二次按下是按了多少次. 在本例中
@@ -45,34 +45,34 @@ OD载入程序,
 来到\ ``0040CCD2``\ 的位置, 观察堆栈窗口,
 这里有一个\ ``SE处理程序: 0040CCD7``
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/exception-02.png
-   :alt: exception-02.png
+.. figure:: /reverse/unpack/figure/exception_02.png
+   :alt: exception_02.png
 
-   exception-02.png
+   exception_02.png
 
 我们在CPU窗口(汇编指令), 按\ ``Ctrl+G``, 输入\ ``0040CCD7``,
 然后在此处按下F2. 也就是在\ ``0040CCD7``\ 处设置断点,
 然后按下\ ``Shift+F9``\ 运行, 触发断点.
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/exception-03.png
-   :alt: exception-03.png
+.. figure:: /reverse/unpack/figure/exception_03.png
+   :alt: exception_03.png
 
-   exception-03.png
+   exception_03.png
 
 触发断点后, 来单步跟踪. 向下都是一些循环和跳转, 我们使用F4跳过循环.
 最后到达如下位置
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/exception-04.png
-   :alt: exception-04.png
+.. figure:: /reverse/unpack/figure/exception_04.png
+   :alt: exception_04.png
 
-   exception-04.png
+   exception_04.png
 
 显然在最后的\ ``mov ebp, 0041010CC; jmp ebp``\ 是在跳转向OEP,
 我们跳转过去如下图所示:
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/exception-05.png
-   :alt: exception-05.png
+.. figure:: /reverse/unpack/figure/exception_05.png
+   :alt: exception_05.png
 
-   exception-05.png
+   exception_05.png
 
 显然, 我们幸运地来到了OEP处.

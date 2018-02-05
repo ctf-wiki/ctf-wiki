@@ -10,16 +10,16 @@
 
 ## 示例
 
-示例程序可以点击此处下载: [6-sfx.zip](/reverse/unpack/example/6-sfx.zip)
+示例程序可以点击此处下载: [6_sfx.zip](/reverse/unpack/example/6_sfx.zip)
 
 首先我们在菜单`选项->调试设置->异常标签页`中勾选所有忽略异常.
 
-![sfx-01.png](/reverse/unpack/figure/sfx-01.png)
+![sfx_01.png](/reverse/unpack/figure/sfx_01.png)
 
 然后切换到`SFX`标签页, 点选"字节方式跟踪真正入口处(速度非常慢)"
 
-![sfx-02.png](/reverse/unpack/figure/sfx-02.png)
+![sfx_02.png](/reverse/unpack/figure/sfx_02.png)
 
 重载程序，程序已经停在了代码入口点, 并且也不需要对OEP进行重新分析.
 
-![sfx-03.png](/reverse/unpack/figure/sfx-03.png)
+![sfx_03.png](/reverse/unpack/figure/sfx_03.png)
