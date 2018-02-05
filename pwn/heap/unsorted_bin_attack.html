@@ -69,8 +69,8 @@
 <div class="section" id="id1">
 <h2>概述<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
 <p>Unsorted Bin Attack，顾名思义，该攻击与 Glibc 堆管理中的的 Unsorted Bin 的机制紧密相关。</p>
-<p>Unsorted Bin Attack 被利用的前提是需要控制Unsorted Bin Chunk 的 bk 指针。</p>
-<p>Unsorted Bin Attack 可以达到的效果是实现修改任意地址内存数值。</p>
+<p>Unsorted Bin Attack 被利用的前提是控制 Unsorted Bin Chunk 的 bk 指针。</p>
+<p>Unsorted Bin Attack 可以达到的效果是实现修改任意地址值为一个较大的数值。</p>
 </div>
 <div class="section" id="unsorted-bin">
 <h2>Unsorted Bin 回顾<a class="headerlink" href="#unsorted-bin" title="永久链接至标题">¶</a></h2>
@@ -78,16 +78,17 @@
 <div class="section" id="id2">
 <h3>基本来源<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h3>
 <ol class="arabic simple">
-<li>当一个较大的 chunk 被分割成两半后，如果剩下的部分大于MINSIZE，就会被放到unsorted bin中。</li>
-<li>释放一个不属于 fast bin 的chunk，并且该 chunk 不和 top chunk紧邻时，该chunk会被首先放到 unsorted bin中。关于top chunk的解释，请参考下面的介绍。</li>
+<li>当一个较大的 chunk 被分割成两半后，如果剩下的部分大于 MINSIZE，就会被放到 unsorted bin 中。</li>
+<li>释放一个不属于 fast bin 的 chunk，并且该 chunk 不和 top chunk 紧邻时，该 chunk 会被首先放到 unsorted bin 中。关于top chunk的解释，请参考下面的介绍。</li>
+<li>当进行 malloc_consolidate 时，可能会把合并后的 chunk 放到 unsorted bin 中，如果不是和 top chunk 近邻的话。</li>
 </ol>
 </div>
 <div class="section" id="id3">
 <h3>基本使用情况<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
 <ol class="arabic simple">
-<li>Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO 。</li>
-<li>在程序 malloc 时，如果在fastbin，以及small bin中找不到对应大小的chunk，就会尝试从 Unsorted Bin中寻找chunk。如果取出来的chunk大小刚好满足，就会直接返回给用户，否则就会把这些 chunk 分别插入到对应的
-bin 中。</li>
+<li>Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO，<strong>即插入的时候插入到 unsorted bin 的头部，取出的时候从链表尾获取</strong>。</li>
+<li>在程序 malloc 时，如果在 fastbin，small bin 中找不到对应大小的 chunk，就会尝试从 Unsorted Bin 中寻找 chunk。如果取出来的 chunk 大小刚好满足，就会直接返回给用户，否则就会把这些 chunk
+分别插入到对应的 bin 中。</li>
 </ol>
 </div>
 </div>
@@ -167,13 +168,13 @@ Let&#39;s malloc again to get the chunk we just free. During this time, target s
 <p>这里我们可以使用一个图来描述一下具体发生的流程以及背后的原理。</p>
 <p><img alt="image0" src="../../_images/unsorted_bin_attack_order.png" /></p>
 <p><strong>初始状态时</strong></p>
-<p>unsorted bin的fd和bk均指向unsorted bin本身。</p>
+<p>unsorted bin 的 fd 和 bk 均指向 unsorted bin 本身。</p>
 <p><strong>执行free(p)</strong></p>
-<p>由于释放的chunk大小不属于fast bin范围内，所以会首先放入到unsorted bin中。</p>
+<p>由于释放的 chunk 大小不属于 fast bin 范围内，所以会首先放入到 unsorted bin 中。</p>
 <p><strong>修改p[1]</strong></p>
-<p>经过修改之后，原来在unsorted bin中的p的bk指针就会指向 target addr-16处伪造的chunk，即Target Value 处于伪造 chunk 的 fd 处。</p>
+<p>经过修改之后，原来在 unsorted bin 中的 p 的 bk 指针就会指向 target addr-16 处伪造的 chunk，即 Target Value 处于伪造 chunk 的 fd 处。</p>
 <p><strong>申请400大小的chunk</strong></p>
-<p>此时，所申请的 chunk 处于 small bin所在的范围，其对应的bin中暂时没有chunk，所以会去unsorted bin中找，发现unsorted bin不空，于是把unsorted bin 中的最后一个chunk 拿出来。</p>
+<p>此时，所申请的 chunk 处于 small bin 所在的范围，其对应的 bin 中暂时没有 chunk，所以会去unsorted bin中找，发现 unsorted bin 不空，于是把 unsorted bin 中的最后一个 chunk 拿出来。</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span>while ((victim = unsorted_chunks(av)-&gt;bk) != unsorted_chunks(av)) {
     bck = victim-&gt;bk;
     if (__builtin_expect(chunksize_nomask(victim) &lt;= 2 * SIZE_SZ, 0) ||
@@ -207,7 +208,9 @@ Let&#39;s malloc again to get the chunk we just free. During this time, target s
 <li>unsorted_chunks(av)-&gt;bk = bck=target addr-16</li>
 <li>bck-&gt;fd = *(target addr -16+16) = unsorted_chunks(av);</li>
 </ul>
-<p>即修改target处的值为unsorted bin的链表头部0x7f1c705ffb78，也就是之前输出的信息。</p>
+<p><strong>可以看出，在将 unsorted bin 的最后一个 chunk 拿出来的过程中，victim 的 fd 并没有发挥作用，所以即使我们修改了其为一个不合法的值也没有关系。</strong>然而，需要注意的是，unsorted bin
+链表可能就此破坏，在插入 chunk 时，可能会出现问题。</p>
+<p>即修改 target 处的值为 unsorted bin 的链表头部 0x7f1c705ffb78，也就是之前输出的信息。</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">We</span> <span class="n">free</span> <span class="n">the</span> <span class="n">first</span> <span class="n">chunk</span> <span class="n">now</span> <span class="ow">and</span> <span class="n">it</span> <span class="n">will</span> <span class="n">be</span> <span class="n">inserted</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">unsorted</span> <span class="nb">bin</span> <span class="k">with</span> <span class="n">its</span> <span class="n">bk</span> <span class="n">pointer</span> <span class="n">point</span> <span class="n">to</span> <span class="mh">0x7f1c705ffb78</span>
 <span class="n">Now</span> <span class="n">emulating</span> <span class="n">a</span> <span class="n">vulnerability</span> <span class="n">that</span> <span class="n">can</span> <span class="n">overwrite</span> <span class="n">the</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="n">pointer</span>
 <span class="n">And</span> <span class="n">we</span> <span class="n">write</span> <span class="n">it</span> <span class="k">with</span> <span class="n">the</span> <span class="n">target</span> <span class="n">address</span><span class="o">-</span><span class="mi">16</span> <span class="p">(</span><span class="ow">in</span> <span class="mi">32</span><span class="o">-</span><span class="n">bits</span> <span class="n">machine</span><span class="p">,</span> <span class="n">it</span> <span class="n">should</span> <span class="n">be</span> <span class="n">target</span> <span class="n">address</span><span class="o">-</span><span class="mi">8</span><span class="p">):</span><span class="mh">0x7ffe0d232508</span>
@@ -219,24 +222,66 @@ Let&#39;s malloc again to get the chunk we just free. During this time, target s
 <p>这里我们可以看到 unsorted bin attack 确实可以修改任意地址的值，但是所修改成的值却不受我们控制，唯一可以知道的是，这个值比较大。<strong>而且，需要注意的是，</strong></p>
 <p>这看起来似乎并没有什么用处，但是其实还是有点卵用的，比如说</p>
 <ul class="simple">
-<li>我们通过修改循环的次数来使得，程序可以执行多次循环。</li>
-<li>我们可以修改heap中的 global_max_fast 来使得更大的chunk可以被视为 fast bin，这样我们就可以去执行一些fast bin attack了。</li>
+<li>我们通过修改循环的次数来使得程序可以执行多次循环。</li>
+<li>我们可以修改 heap 中的 global_max_fast 来使得更大的 chunk 可以被视为 fast bin，这样我们就可以去执行一些 fast bin attack了。</li>
 </ul>
 </div>
-<div class="section" id="zerostorage">
-<h2>例子1-zerostorage<a class="headerlink" href="#zerostorage" title="永久链接至标题">¶</a></h2>
+<div class="section" id="hitcon-training-lab14-magic-heap">
+<h2>HITCON Training lab14 magic heap<a class="headerlink" href="#hitcon-training-lab14-magic-heap" title="永久链接至标题">¶</a></h2>
+<p>这里我们修改一下源程序中的 l33t 函数，以便于可以正常运行。</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">l33t</span><span class="p">()</span> <span class="p">{</span> <span class="n">system</span><span class="p">(</span><span class="s2">&quot;cat ./flag&quot;</span><span class="p">);</span> <span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id5">
+<h3>基本信息<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  hitcontraining_lab14 git:(master) file magicheap
+magicheap: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=9f84548d48f7baa37b9217796c2ced6e6281bb6f, not stripped
+➜  hitcontraining_lab14 git:(master) checksec magicheap
+[*] &#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unsorted_bin_attack/hitcontraining_lab14/magicheap&#39;
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+</pre></div>
+</div>
+<p>可以看出，该程序是一个动态链接的64程序，主要开启了 NX 保护与 Canary 保护。</p>
+</div>
+<div class="section" id="id6">
+<h3>基本功能<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
+<p>程序大概就是自己写的堆管理器，主要有以下功能</p>
+<ol class="arabic simple">
+<li>创建堆。根据用户指定大小申请相应堆，并且读入指定长度的内容，但是并没有设置 NULL。</li>
+<li>编辑堆。根据指定的索引判断对应堆是不是非空，如果非空，就根据用户读入的大小，来修改堆的内容，这里其实就出现了任意长度堆溢出的漏洞。</li>
+<li>删除堆。根据指定的索引判断对应堆是不是非空，如果非空，就将对应堆释放并置为 NULL。</li>
+</ol>
+<p>同时，我们看到，当我们控制 v3 为 4869，同时控制 magic 大于 4869，就可以得到 flag 了。</p>
+</div>
+<div class="section" id="id7">
+<h3>利用<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
+<p>很显然， 我们直接利用 unsorted bin attack 即可。</p>
+<ol class="arabic simple">
+<li>释放一个堆块到 unsorted bin 中。</li>
+<li>利用堆溢出漏洞修改 unsorted bin 中对应堆块的 bk 指针为 &amp;magic-16。</li>
+<li>触发漏洞即可。</li>
+</ol>
+<p>代码如下</p>
+</div>
+</div>
+<div class="section" id="ctf-zerostorage">
+<h2>2016 0CTF zerostorage<a class="headerlink" href="#ctf-zerostorage" title="永久链接至标题">¶</a></h2>
 <p><strong>注：待进一步完成。</strong></p>
 <p>这里我们以 2016 年 0CTF 的zerostorage为例，进行介绍。</p>
 <p><strong>这个题当时给了服务器的系统版本和内核版本，所以自己可以下一个一模一样的进行调试，这里我们就直接用自己的本地机器调试了。但是在目前的Ubuntu 16.04
-中，由于进一步的随机化，导致libc加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX的策略就无法再次使用，似乎只能用 angelboy 的策略了。</strong></p>
+中，由于进一步的随机化，导致libc加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX 的策略就无法再次使用，似乎只能用 angelboy 的策略了。</strong></p>
 <p>参考文章</p>
 <ul class="simple">
 <li><a class="reference external" href="http://brieflyx.me/2016/ctf-writeups/0ctf-2016-zerostorage/">http://brieflyx.me/2016/ctf-writeups/0ctf-2016-zerostorage/</a></li>
 <li><a class="reference external" href="https://github.com/HQ1995/Heap_Senior_Driver/tree/master/0ctf2016/zerostorage">https://github.com/HQ1995/Heap_Senior_Driver/tree/master/0ctf2016/zerostorage</a></li>
 <li><a class="reference external" href="https://github.com/scwuaptx/CTF/blob/master/2016-writeup/0ctf/zerostorage.py">https://github.com/scwuaptx/CTF/blob/master/2016-writeup/0ctf/zerostorage.py</a></li>
 </ul>
-<div class="section" id="id5">
-<h3>安全性检查<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id8">
+<h3>安全性检查<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
 <p>可以看出，该程序开启了所有的保护</p>
 <div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">pwndbg</span><span class="o">&gt;</span> <span class="n">checksec</span>
 <span class="p">[</span><span class="o">*</span><span class="p">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unsorted_bin_attack/zerostorage/zerostorage&#39;</span>
@@ -249,8 +294,8 @@ Let&#39;s malloc again to get the chunk we just free. During this time, target s
 </pre></div>
 </div>
 </div>
-<div class="section" id="id6">
-<h3>基本功能分析<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id9">
+<h3>基本功能分析<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
 <p>程序管理在 bss 段的存储空间 storage ，具有插入，删除，合并，删除，查看，枚举，退出功能。这个storage的结构体如下</p>
 <div class="code text highlight-default"><div class="highlight"><pre><span></span>00000000 Storage         struc ; (sizeof=0x18, mappedto_7)
 00000000                                         ; XREF: .bss:storage_list/r
@@ -335,8 +380,8 @@ Let&#39;s malloc again to get the chunk we just free. During this time, target s
 </ol>
 </div>
 </div>
-<div class="section" id="id7">
-<h3>漏洞确定<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id10">
+<h3>漏洞确定<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
 <p>通过这么简单的分析，我们可以 基本确定漏洞主要就是集中在insert操作与merge操作中，尤其是当我们merge两个较小size的storage时，会出现一些问题。</p>
 <p>我们来具体分析一下，如果我们在insert过程中插入较小的size（比如8）的storage A，那么，当我们进行merge时，假设我们选择merge的两个storage
 都为A，那么此时程序会直接把就会直接把A的内容再添加到A的原有内容的后面，然后接着就会把A对应的存储数据部分的内存free掉，但是这并没有什么作用，因为A存储内容的地址被赋给了另外一个storage，当再访问merge
@@ -345,13 +390,13 @@ bin范围内，所以只会被放到unsorted bin中（而且此时只有一个�
 <p>如果我们在merge之前曾经删除过一个storage C，那么在我们merge A后，A就会插在unsorted bin的双向链表的首部，所以其fd则是C对应的地址，bk则是unsorted bin的一个基地址。这样我们就可以直接泄露两个地址。</p>
 <p>而且需要注意的是，我们还是可以去修改merge后的B的内容的，所以这其实就是个Use After Free。</p>
 </div>
-<div class="section" id="id8">
-<h3>利用流程<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id11">
+<h3>利用流程<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
 <p>。。。。</p>
 </div>
 </div>
-<div class="section" id="id9">
-<h2>题目<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id12">
+<h2>题目<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h2>
 </div>
 </div>
 
@@ -447,9 +492,15 @@ bin范围内，所以只会被放到unsorted bin中（而且此时只有一个�
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#id4">原理</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#zerostorage">例子1-zerostorage</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id5">安全性检查</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id6">基本功能分析</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hitcon-training-lab14-magic-heap">HITCON Training lab14 magic heap</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id5">基本信息</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">基本功能</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">利用</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ctf-zerostorage">2016 0CTF zerostorage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id8">安全性检查</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id9">基本功能分析</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="#insert-1">insert-1</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#update-2">update-2</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#merge-3">merge-3</a></li>
@@ -458,11 +509,11 @@ bin范围内，所以只会被放到unsorted bin中（而且此时只有一个�
 <li class="toctree-l5"><a class="reference internal" href="#list-6">list-6</a></li>
 </ul>
 </li>
-<li class="toctree-l4"><a class="reference internal" href="#id7">漏洞确定</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id8">利用流程</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id10">漏洞确定</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id11">利用流程</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id9">题目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">题目</a></li>
 </ul>
 </li>
 </ul>
