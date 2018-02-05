@@ -27,7 +27,7 @@ https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
 
 下面以2014年\ ``Hack In The Box Amsterdam: Bin 100``\ 为例.
 题目下载链接:
-`hitb_bin100.elf </reverse/linux/example/2014_hitb/hitb_bin100.elf>`__
+`hitb_bin100.elf <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/hitb_bin100.elf>`__
 
 这是一个64位的ELF文件. 运行结果如下图所示:
 
@@ -158,7 +158,7 @@ https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
 然后选择菜单\ ``Edit->Patch Program->Apply patches to input file``.
 当然最好做一个备份(即勾选\ ``Create a backup``),
 然后点击OK即可(我重命名为了\ ``patched.elf``, 下载链接:
-`patched.elf </reverse/linux/example/2014_hitb/patched.elf>`__).
+`patched.elf <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/patched.elf>`__).
 
 .. figure:: /reverse/linux/figure/2014_hitb/ida_apply.png
    :alt: ida_apply.png
@@ -166,7 +166,7 @@ https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
    ida_apply.png
 
 现在进入\ ``LD_PRELOAD``\ 部分. 这里我们简单编写一下c代码, 下载链接:
-`time.c </reverse/linux/example/2014_hitb/time.c>`__
+`time.c <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/time.c>`__
 
 .. code:: c
 
@@ -182,7 +182,7 @@ https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
 
 然后使用命令\ ``gcc --shared time.c -o time.so``\ 生成动态链接文件.
 当然也给出了下载链接:
-`time.so </reverse/linux/example/2014_hitb/time.so>`__
+`time.so <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/time.so>`__
 
 然后打开linux终端, 运行命令: ``LD_PRELOAD=./time.so ./patched.elf``
 

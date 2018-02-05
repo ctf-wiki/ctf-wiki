@@ -24,7 +24,7 @@
 ----
 
 示例程序可以点击此处下载:
-`5_last_exception.zip </reverse/unpack/example/5_last_exception.zip>`__
+`5_last_exception.zip <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/unpack/example/5_last_exception.zip>`__
 
 OD载入程序,
 在菜单\ ``选项->调试设置->异常标签页``\ 中取消勾选所有的忽略异常,

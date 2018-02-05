@@ -36,7 +36,7 @@
 
 这里`popad`可以恢复在程序入口点处保存的寄存器状态, 然后`jnz`跳转到`0040D3BA`处, 这里是利用`push`和`retn`来将`EIP`改变为`004010CC`, 也就是说在壳解压完代码等资源完毕后, 将通过`jnz`跳转到`push`处, 然后通过`push`和`ret`将`EIP`设置为程序原来的入口点(OEP)并返回到OEP处, 然后继续执行原程序的代码. 我们执行到`retn`返回后, 可以看到如下:
 
-![trace_03.png](/reverse/unpack/figure/trace_03.png)
+![trace_03.png](https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/unpack/figure/trace_03.png)
 
 显然, 我们到了一堆被`Ollydbg`误认为是数据的地方继续执行, 显然`Ollydbg`分析错误了, 我们需要让`Ollydbg`重新分析, 我们可以右键选择`分析->从模块中删除分析`, 或是按下`ctrl+a`, 这时正确地显示出OEP处的汇编指令. 
 
