@@ -19,7 +19,7 @@
 ----
 
 示例程序可以点击此处下载:
-`1_trace.zip </reverse/unpack/example/1_trace.zip>`__
+`1_trace.zip <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/unpack/example/1_trace.zip>`__
 
 单步跟踪法其实就是一步一步尽量从程序入口点往下走,
 在单步的过程中注意EIP不要跑偏了, 但是对于一些比较复杂的壳而言,

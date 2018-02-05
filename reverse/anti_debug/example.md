@@ -1,6 +1,6 @@
 # Anti debug的例题
 
-我们现在来分析一道2016年SecCon的`anti-debugging`题, 题目下载链接: [bin.exe](/reverse/anti_debug/example/2016_seccon/anti_debugging_100/bin.exe)
+我们现在来分析一道2016年SecCon的`anti-debugging`题, 题目下载链接: [bin.exe](https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/anti_debug/example/2016_seccon/anti_debugging_100/bin.exe)
 
 这是一个32位的PE文件, 是一个控制台程序, 我们直接运行, 会要求输入`password`. 当你输入一个错误的`password`时则会提示你`password is wrong`.
 
