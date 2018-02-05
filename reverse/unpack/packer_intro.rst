@@ -10,7 +10,7 @@
 
 它们一般都是先于程序运行，拿到控制权，然后完成它们保护软件的任务。
 
-.. figure:: /reverse/images/what-is-pack.png
+.. figure:: /reverse/unpack/figure/what_is_pack.png
    :alt: 什么是壳
 
 由于这段程序和自然界的壳在功能上有很多相同的地方，基于命名的规则，就把这样的程序称为 ``壳`` 了。
