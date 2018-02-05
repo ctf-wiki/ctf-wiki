@@ -5,7 +5,7 @@ Anti Debug Tech
    :maxdepth: 2
    :caption: Anti Debug Tech
 
-   ntglobalFfag.rst
+   NtGlobalFlag.rst
    heap_flags.rst
    the_heap.rst
    int_3.rst

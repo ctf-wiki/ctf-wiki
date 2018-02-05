@@ -48,3 +48,5 @@
    house_of_lore.rst
    house_of_force.rst
    unsorted_bin_attack.rst
+   leak_heap.rst
+   ptmalloc_check.rst
