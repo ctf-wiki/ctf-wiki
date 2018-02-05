@@ -69,11 +69,11 @@
    :maxdepth: 6
    :caption: Reverse
 
-   introduction.rst
-   unpack/index.rst
-   unicorn/index.rst
-   anti-debug/index.rst
-   linux/index.rst
+   reverse/introduction.rst
+   reverse/unpack/index.rst
+   reverse/unicorn/index.rst
+   reverse/anti-debug/index.rst
+   reverse/linux/index.rst
 
 .. toctree::
    :maxdepth: 6
