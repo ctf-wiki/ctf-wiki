@@ -19,7 +19,7 @@
 ----
 
 示例程序可以点击此处下载:
-`1-trace.zip <https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/example/1-trace.zip>`__
+`1_trace.zip </reverse/unpack/example/1_trace.zip>`__
 
 单步跟踪法其实就是一步一步尽量从程序入口点往下走,
 在单步的过程中注意EIP不要跑偏了, 但是对于一些比较复杂的壳而言,
@@ -36,19 +36,19 @@
 对于近call我们选择步进, 按下F7(当然你也只能选择步进,
 不然EIP就跑偏程序停止了).
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/trace-01.png
-   :alt: trace-01.png
+.. figure:: /reverse/unpack/figure/trace_01.png
+   :alt: trace_01.png
 
-   trace-01.png
+   trace_01.png
 
 步进后又是一个\ ``call``, 我们继续步进, 按F7, 跟进后发现没有近call了,
 我们可以看到程序在调\ ``GetModuleHandleA``, ``GetProcAddress``\ 等API,
 继续向下分析.
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/trace-02.png
-   :alt: trace-02.png
+.. figure:: /reverse/unpack/figure/trace_02.png
+   :alt: trace_02.png
 
-   trace-02.png
+   trace_02.png
 
 之后会遇到多个跳转，我们尽量满足向下的跳转，对于向上的跳转不予实现并利用F4跳出循环，直到\ ``0040D3AF``\ 处,
 我们看以下的代码
@@ -70,17 +70,17 @@
 然后通过\ ``push``\ 和\ ``ret``\ 将\ ``EIP``\ 设置为程序原来的入口点(OEP)并返回到OEP处,
 然后继续执行原程序的代码. 我们执行到\ ``retn``\ 返回后, 可以看到如下:
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/trace-03.png
-   :alt: trace-03.png
+.. figure:: /reverse/unpack/figure/trace_03.png
+   :alt: trace_03.png
 
-   trace-03.png
+   trace_03.png
 
 显然, 我们到了一堆被\ ``Ollydbg``\ 误认为是数据的地方继续执行,
 显然\ ``Ollydbg``\ 分析错误了, 我们需要让\ ``Ollydbg``\ 重新分析,
 我们可以右键选择\ ``分析->从模块中删除分析``, 或是按下\ ``ctrl+a``,
 这时正确地显示出OEP处的汇编指令.
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/trace-04.png
-   :alt: trace-04.png
+.. figure:: /reverse/unpack/figure/trace_04.png
+   :alt: trace_04.png
 
-   trace-04.png
+   trace_04.png

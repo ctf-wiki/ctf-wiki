@@ -25,41 +25,41 @@
 ----
 
 示例程序可以点击此处下载:
-`4-memory.zip <https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/example/4-memory.zip>`__
+`4_memory.zip </reverse/unpack/example/4_memory.zip>`__
 
 OD载入程序,
 在菜单栏的\ ``选项->调试设置->异常标签页``\ 中勾选所有的忽略异常
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/memory-01.png
-   :alt: memory-01.png
+.. figure:: /reverse/unpack/figure/memory_01.png
+   :alt: memory_01.png
 
-   memory-01.png
+   memory_01.png
 
 按下\ ``Alt+M``\ 打开内存镜像, 找到资源段, 也就是\ ``地址=00407000``,
 ``大小=00005000``\ 的\ ``.rsrc``\ 段, 选中F2下断
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/memory-02.png
-   :alt: memory-02.png
+.. figure:: /reverse/unpack/figure/memory_02.png
+   :alt: memory_02.png
 
-   memory-02.png
+   memory_02.png
 
 回到CPU窗口, 按下F9运行, 程序断在了\ ``0040D75F``\ 处
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/memory-03.png
-   :alt: memory-03.png
+.. figure:: /reverse/unpack/figure/memory_03.png
+   :alt: memory_03.png
 
-   memory-03.png
+   memory_03.png
 
 再次按下\ ``Alt+M``\ 打开内存镜像, 对\ ``.text``\ 代码段下断
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/memory-04.png
-   :alt: memory-04.png
+.. figure:: /reverse/unpack/figure/memory_04.png
+   :alt: memory_04.png
 
-   memory-04.png
+   memory_04.png
 
 再继续运行, 程序断在了\ ``004010CC``\ 处, 也就是OEP
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/memory-05.png
-   :alt: memory-05.png
+.. figure:: /reverse/unpack/figure/memory_05.png
+   :alt: memory_05.png
 
-   memory-05.png
+   memory_05.png

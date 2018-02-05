@@ -21,7 +21,7 @@
 ----
 
 示例程序可以点击此处下载:
-`3-direct2oep.zip <https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/example/3-direct2oep.zip>`__
+`3_direct2oep.zip </reverse/unpack/example/3_direct2oep.zip>`__
 
 还是用的原先的notepad.exe来示例, 用\ ``Ollydbg``\ 打开后,
 我们按下\ ``ctrl+f``\ 来查找指定的字符串,
@@ -29,16 +29,16 @@
 有部分壳它就常用\ ``popad``\ 来恢复状态,
 所以如下图所示来搜索\ ``popad``.
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/direct2oep-01.png
-   :alt: direct2oep-01.png
+.. figure:: /reverse/unpack/figure/direct2oep_01.png
+   :alt: direct2oep_01.png
 
-   direct2oep-01.png
+   direct2oep_01.png
 
 在本例中, 当搜索到的\ ``popad``\ 不符合我们的要求时,
 可以按下\ ``ctrl+l``\ 来搜索下一个匹配处, 大概按下个三四次,
 我们找到了跳转到OEP的位置处.
 
-.. figure:: https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/direct2oep-02.png
-   :alt: direct2oep-02.png
+.. figure:: /reverse/unpack/figure/direct2oep_02.png
+   :alt: direct2oep_02.png
 
-   direct2oep-02.png
+   direct2oep_02.png

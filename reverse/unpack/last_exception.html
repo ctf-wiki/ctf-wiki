@@ -1,0 +1,237 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>0x05 最后一次异常法 &#8212; CTF Wiki </title>
+    <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noticia+Text|Open+Sans|Droid+Sans+Mono" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.base.js"></script>
+    <script type="text/javascript" src="../../_static/cloud.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="搜索" href="../../search.html" /> 
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="relbar-top">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             accesskey="C">toc</a></li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="x05">
+<h1>0x05 最后一次异常法<a class="headerlink" href="#x05" title="永久链接至标题">¶</a></h1>
+<p>最后一次异常法的原理是, 程序在自解压或自解密过程中,
+可能会触发无数次的异常. 如果能定位到最后一次程序异常的位置,
+可能就会很接近自动脱壳完成位置.
+现在最后一次异常法脱壳可以利用Ollydbg的异常计数器插件, 先记录异常数目,
+然后重新载入, 自动停在最后一次异常处.</p>
+<div class="section" id="id1">
+<h2>要点<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
+<ol class="arabic simple">
+<li>点击<code class="docutils literal"><span class="pre">选项-&gt;调试选项—&gt;异常</span></code>, 把里面的√全部去掉!
+按下<code class="docutils literal"><span class="pre">CTRL+F2</span></code>重载下程序</li>
+<li>开始程序就是一个跳转, 在这里我们按<code class="docutils literal"><span class="pre">SHIFT+F9</span></code>, 直到程序运行,
+记下从开始按<code class="docutils literal"><span class="pre">SHIFT+F9</span></code>到程序运行的次数<code class="docutils literal"><span class="pre">m</span></code>!</li>
+<li><code class="docutils literal"><span class="pre">CTRL+F2</span></code>重载程序,
+按<code class="docutils literal"><span class="pre">SHIFT+F9</span></code>(这次按的次数为程序运行的次数``m-1``次)</li>
+<li>在OD的右下角我们看见有一个“<code class="docutils literal"><span class="pre">SE</span> <span class="pre">句柄</span></code>”, 这时我们按<code class="docutils literal"><span class="pre">CTRL+G</span></code>,
+输入<code class="docutils literal"><span class="pre">SE</span> <span class="pre">句柄</span></code>前的地址!</li>
+<li>按F2下断点!然后按<code class="docutils literal"><span class="pre">SHIFT+F9</span></code>来到断点处, F8单步跟踪</li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h2>示例<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>示例程序可以点击此处下载:
+<a class="reference external" href="/reverse/unpack/example/5_last_exception.zip">5_last_exception.zip</a></p>
+<p>OD载入程序,
+在菜单<code class="docutils literal"><span class="pre">选项-&gt;调试设置-&gt;异常标签页</span></code>中取消勾选所有的忽略异常,
+然后重载程序.</p>
+<div class="figure" id="id3">
+<img alt="exception_01.png" src="../../_images/exception_01.png" />
+<p class="caption"><span class="caption-text">exception_01.png</span></p>
+</div>
+<p>我们按下<code class="docutils literal"><span class="pre">Shift+F9</span></code>, 记录按了多少次, 程序正常运行.
+我们要得到的是倒数第二次按下是按了多少次. 在本例中</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">shift+F9</span></code>一次, 到了<code class="docutils literal"><span class="pre">0040CCD2</span></code>的位置</li>
+<li><code class="docutils literal"><span class="pre">shift+F9</span></code>两次, 程序正常运行</li>
+</ul>
+<p>那么我们重载程序, 只需按下1次(<code class="docutils literal"><span class="pre">2-1=1</span></code>)<code class="docutils literal"><span class="pre">Shift+F9</span></code>,
+来到<code class="docutils literal"><span class="pre">0040CCD2</span></code>的位置, 观察堆栈窗口,
+这里有一个<code class="docutils literal"><span class="pre">SE处理程序:</span> <span class="pre">0040CCD7</span></code></p>
+<div class="figure" id="id4">
+<img alt="exception_02.png" src="../../_images/exception_02.png" />
+<p class="caption"><span class="caption-text">exception_02.png</span></p>
+</div>
+<p>我们在CPU窗口(汇编指令), 按<code class="docutils literal"><span class="pre">Ctrl+G</span></code>, 输入<code class="docutils literal"><span class="pre">0040CCD7</span></code>,
+然后在此处按下F2. 也就是在<code class="docutils literal"><span class="pre">0040CCD7</span></code>处设置断点,
+然后按下<code class="docutils literal"><span class="pre">Shift+F9</span></code>运行, 触发断点.</p>
+<div class="figure" id="id5">
+<img alt="exception_03.png" src="../../_images/exception_03.png" />
+<p class="caption"><span class="caption-text">exception_03.png</span></p>
+</div>
+<p>触发断点后, 来单步跟踪. 向下都是一些循环和跳转, 我们使用F4跳过循环.
+最后到达如下位置</p>
+<div class="figure" id="id6">
+<img alt="exception_04.png" src="../../_images/exception_04.png" />
+<p class="caption"><span class="caption-text">exception_04.png</span></p>
+</div>
+<p>显然在最后的<code class="docutils literal"><span class="pre">mov</span> <span class="pre">ebp,</span> <span class="pre">0041010CC;</span> <span class="pre">jmp</span> <span class="pre">ebp</span></code>是在跳转向OEP,
+我们跳转过去如下图所示:</p>
+<div class="figure" id="id7">
+<img alt="exception_05.png" src="../../_images/exception_05.png" />
+<p class="caption"><span class="caption-text">exception_05.png</span></p>
+</div>
+<p>显然, 我们幸运地来到了OEP处.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>快速搜索</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="转向" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="sphinx-toc sphinxglobaltoc">
+<h3><a href="../../index.html">內容目录</a></h3>
+<p class="caption"><span class="caption-text">CTF 介绍</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/history.html">CTF 竞赛的历史</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/mode.html">CTF 竞赛模式简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/content.html">CTF 竞赛内容</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/experience.html">线下攻防经验小结</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/cgc.html">CGC 网络超级挑战赛</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction/resources.html">学习资源</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Misc</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/about.html">杂项简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/recon.html">信息搜集技术</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/encode/index.html">编码分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/prefix.html">取证隐写</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/picture/index.html">图片分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/traffic/index.html">流量包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/archive/index.html">压缩包分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/audio/index.html">音频分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/disk_memory/index.html">磁盘 / 内存分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc/others.html">其他</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Crypto</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/introduction.html">密码学简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/classical/index.html">古典密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/symmetric/index.html">对称加密</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/asymmetric/index.html">非对称密码</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/hash/index.html">哈希函数</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/signature/index.html">数字签名</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/others/others.html">证书格式</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Web</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../web/index.html">WEB 简介</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/sqli.html">SQL 注入</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/xss.html">XSS 跨站脚本攻击</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/csrf.html">CSRF 跨站请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/ssrf.html">SSRF 服务端请求伪造</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../web/php.html">PHP 代码审计</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Pwn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/stackoverflow/index.html">栈溢出</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/fmtstr/index.html">格式化字符串漏洞</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pwn/heap/index.html">堆利用</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Executable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../executable/elf/index.html">ELF文件</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    
+    
+        <div class="sidebar-toggle-group no-js">
+            
+            <button class="sidebar-toggle" id="sidebar-hide" title="Hide the sidebar menu">
+                 «
+                <span class="show-for-small">hide menu</span>
+                
+            </button>
+            <button class="sidebar-toggle" id="sidebar-show" title="Show the sidebar menu">
+                
+                <span class="show-for-small">menu</span>
+                <span class="hide-for-small">sidebar</span>
+                 »
+            </button>
+        </div>
+    
+      <div class="clearer"></div>
+    </div>
+    <div class="relbar-bottom">
+        
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>导航</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../index.html" title="內容目录"
+             >toc</a></li>
+    <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
+ 
+      </ul>
+    </div>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2017, CTF Wiki.
+      由 <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.7 创建。
+    </div>
+    <!-- cloud_sptheme 1.4 -->
+  </body>
+</html>

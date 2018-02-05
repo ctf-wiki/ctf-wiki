@@ -77,7 +77,7 @@ NtGlobalFlag
    尽管它随后还可能由Windows改变(以下会介绍),
    注册表键值会对系统中所有进程产生影响并在重启后生效.
 
-   .. figure:: ./figure/GlobalFlag.png
+   .. figure:: /reverse/anti_debug/figure/globalflag.png
       :alt: GlobalFlag.png
 
       GlobalFlag.png
@@ -144,10 +144,10 @@ NtGlobalFlag
 在Ollydbg中在偏移\ ``0x40359A``\ 设置断点, 运行程序触发断点.
 然后打开\ ``CommandLine``\ 插件用\ ``dump fs:[30]+0x68``\ dump出\ ``NtGlobalFlag``\ 的内容
 
-.. figure:: ./figure/Manually-set-peb-ntglobalflag.png
-   :alt: Manually-set-peb-ntglobalflag
+.. figure:: /reverse/anti_debug/figure/manually_set_peb_ntglobalflag.png
+   :alt: Manually-set-peb-ntglobalflag.png
 
-   Manually-set-peb-ntglobalflag
+   Manually-set-peb-ntglobalflag.png
 
 右键选择\ ``Binary->Fill with 00's``\ 将值\ ``0x70``\ 替换为\ ``0x00``\ 即可.
 
