@@ -612,7 +612,7 @@ place chunk in large bin
 
 .. code:: c
 
-                // 放到对应的bin中，构成 bk<-->victim<-->fwd。
+                // 放到对应的 bin 中，构成 bk<-->victim<-->fwd。
                 mark_bin(av, victim_index);
                 victim->bk = bck;
                 victim->fd = fwd;
@@ -1278,7 +1278,7 @@ fast bin
               not placed into regular bins until after they have
               been given one chance to be used in malloc.
                 */
-                // 把chunk放在unsorted chunk链表的头部
+                // 把 chunk 放在 unsorted chunk 链表的头部
                 bck = unsorted_chunks(av);
                 fwd = bck->fd;
                 // 简单的检查
