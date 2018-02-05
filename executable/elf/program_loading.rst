@@ -33,5 +33,5 @@
 
 另一方面，共享目标文件通常包含地址独立代码。这使得在不同的进程中，同一段的虚拟地址可能会有所不同，但这并不会影响程序的执行行为。尽管系统会为不同的进程选择不同的虚拟地址，但是它仍旧维持了段的相对地址。因为地址独立代码在不同的段中使用相对地址，因此在虚拟内存中的虚拟地址之间的差肯定和在文件中的相应的虚拟地址的差相同。下面给出了可能的对于同一共享目标文件不同进程的情况，描述了相对地址寻址，此外这个表还给出了基地址的计算方法。
 
-.. figure:: /executable/ELF/figure/shared_object_segments_addresses.png
+.. figure:: /executable/elf/figure/shared_object_segments_addresses.png
    :alt:
