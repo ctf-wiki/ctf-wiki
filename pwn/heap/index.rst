@@ -40,10 +40,11 @@
    heap_implementation_details.rst
    heapoverflow_basic.rst
    off_by_one.rst
-   chunk_extend_shrink.rst
    unlink.rst
    use_after_free.rst
    fastbin_attack.rst
+   chunk_extend_shrink.rst
+   house_of_einherjar.rst
+   house_of_lore.rst
    house_of_force.rst
    unsorted_bin_attack.rst
-   house_of_lore.rst

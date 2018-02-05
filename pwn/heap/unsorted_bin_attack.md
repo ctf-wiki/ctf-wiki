@@ -8,7 +8,7 @@ typora-root-url: ..\..
 
 Unsorted Bin Attack，顾名思义，该攻击与 Glibc 堆管理中的的 Unsorted Bin 的机制紧密相关。
 
-Unsorted Bin Attack 被利用的前提是需要控制Unsorted Bin Chunk 的 bk 指针。
+Unsorted Bin Attack 被利用的前提是需要控制 Unsorted Bin Chunk 的 bk 指针。
 
 Unsorted Bin Attack 可以达到的效果是实现修改任意地址内存数值。
 
@@ -180,7 +180,7 @@ Let's malloc again to get the chunk we just free. During this time, target shoul
 
 这里我们以 2016 年 0CTF 的zerostorage为例，进行介绍。
 
-**这个题当时给了服务器的系统版本和内核版本，所以自己可以下一个一模一样的进行调试，这里我们就直接用自己的本地机器调试了。但是在目前的Ubuntu 16.04 中，由于进一步的随机化，导致libc加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX的策略就无法再次使用，似乎只能用 angelboy 的策略了。**
+**这个题当时给了服务器的系统版本和内核版本，所以自己可以下一个一模一样的进行调试，这里我们就直接用自己的本地机器调试了。但是在目前的Ubuntu 16.04 中，由于进一步的随机化，导致libc加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX 的策略就无法再次使用，似乎只能用 angelboy 的策略了。**
 
 参考文章
 
