@@ -102,7 +102,7 @@ unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在�
 
 ![](/pwn/heap/figure/unlink_smallbin_intro.png)
 
-可以看出， P 最后的 fd 和 bk 指针并没有发生变化，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。
+可以看出， **P 最后的 fd 和 bk 指针并没有发生变化**，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。这一点没有变化还是很有用处的。
 
 同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都做了相应的检测。
 
@@ -1131,7 +1131,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 - 先考虑物理低地址空闲块
 - 后考虑物理高地址空闲块
 
-**合并后的chunk指向合并的chunk的低地址。**
+**合并后的 chunk 指向合并的 chunk 的低地址。**
 
 在没有锁的情况下，先获得锁。
 
@@ -1192,7 +1192,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 		free_perturb(chunk2mem(p), size - 2 * SIZE_SZ);
 ```
 
-##### 后向合并-合并低地址chunk
+##### 后向合并-合并低地址 chunk
 
 ```c++
         /* consolidate backward */
@@ -1287,7 +1287,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
          // 一般合并到 top chunk 都会执行这部分代码。
          // 那就向系统返还内存
         if ((unsigned long) (size) >= FASTBIN_CONSOLIDATION_THRESHOLD) {
-            // 如果有fast chunk 就进行合并
+            // 如果有 fast chunk 就进行合并
             if (have_fastchunks(av)) malloc_consolidate(av);
             // 主分配区
             if (av == &main_arena) {
@@ -1422,7 +1422,7 @@ static void malloc_consolidate(mstate av) {
           until malloc is sure that chunks aren't immediately going to be
           reused anyway.
         */
-        // 按照fd顺序遍历fastbin的每一个bin，将bin中的每一个 chunk 合并掉。
+        // 按照 fd 顺序遍历 fastbin 的每一个 bin，将 bin 中的每一个 chunk 合并掉。
         maxfb = &fastbin(av, NFASTBINS - 1);
         fb    = &fastbin(av, 0);
         do {
@@ -1453,7 +1453,7 @@ static void malloc_consolidate(mstate av) {
                             size += nextsize;
                             unlink(av, nextchunk, bck, fwd);
                         } else
-                            // 设置nextchunk的prev inuse 为0，以表明可以合并该chunk。
+                         // 设置 nextchunk 的 prev inuse 为0，以表明可以合并当前 fast chunk。
                             clear_inuse_bit_at_offset(nextchunk, 0);
 
                         first_unsorted     = unsorted_bin->fd;
