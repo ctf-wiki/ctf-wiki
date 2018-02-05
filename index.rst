@@ -72,7 +72,7 @@
    reverse/introduction.rst
    reverse/unpack/index.rst
    reverse/unicorn/index.rst
-   reverse/anti-debug/index.rst
+   reverse/anti_debug/index.rst
    reverse/linux/index.rst
 
 .. toctree::
