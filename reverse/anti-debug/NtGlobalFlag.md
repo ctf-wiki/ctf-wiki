@@ -61,7 +61,7 @@ je being_debugged
 
 1. 注册表`HKLM\System\CurrentControlSet\Control\SessionManager`的`GlobalFlag`的值会替换进行`NtGlobalFlag`字段. 尽管它随后还可能由Windows改变(以下会介绍), 注册表键值会对系统中所有进程产生影响并在重启后生效.
 
-    ![GlobalFlag.png](./figure/GlobalFlag.png)
+    ![GlobalFlag.png](/reverse/anti_debug/figure/globalflag.png)
 
     当然这也产生了另一种检测调试器的方法: 如果一个调试器为了隐藏自己, 而将注册表中的键值复制到`NtGlobalFlag`字段中, 然而注册表中的键值事先已经替换并且尚未重启生效. 那么调试器只是复制了一个假的值, 而非真正需要的那个. 如果程序知道真正的值而非注册表中的那个假的值, 那么就可以察觉到调试器的存在.
 
@@ -100,7 +100,7 @@ je being_debugged
 
 在Ollydbg中在偏移`0x40359A`设置断点, 运行程序触发断点. 然后打开`CommandLine`插件用`dump fs:[30]+0x68`dump出`NtGlobalFlag `的内容
 
-![Manually-set-peb-ntglobalflag](./figure/Manually-set-peb-ntglobalflag.png)
+![Manually-set-peb-ntglobalflag.png](/reverse/anti_debug/figure/manually_set_peb_ntglobalflag.png)
 
 右键选择`Binary->Fill with 00's`将值`0x70`替换为`0x00`即可.
 

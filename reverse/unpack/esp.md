@@ -15,12 +15,12 @@ ESP定律的原理在于利用程序中堆栈平衡来快速找到OEP.
 
 ## 示例
 
-示例程序可以点击此处下载: [2-esp.zip](https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/example/2-esp.zip)
+示例程序可以点击此处下载: [2_esp.zip](/reverse/unpack/example/2_esp.zip)
 
 还是上一篇的示例, 入口一句`popad`, 我们按下F8执行`popad`保存寄存器状态, 我们可以在右边的寄存器窗口里发现`ESP`寄存器的值变为了红色, 也即值发生了改变. 
 
-![esp-01.png](https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/esp-01.png)
+![esp_01.png](/reverse/unpack/figure/esp_01.png)
 
 我们鼠标右击`ESP`寄存器的值, 也就是图中的`0019FF64`, 选择`HW break[ESP]`后, 按下`F9`运行程序, 程序会在触发断点时断下. 如图来到了`0040D3B0`的位置. 这里就是上一篇我们单步跟踪时到达的位置, 剩余的就不再赘述.
 
-![esp-02.png](https://github.com/ctf-wiki/ctf-wiki/raw/master/reverse/unpack/figure/esp-02.png)
+![esp_02.png](/reverse/unpack/figure/esp_02.png)
