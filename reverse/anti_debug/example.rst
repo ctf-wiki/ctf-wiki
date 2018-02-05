@@ -166,14 +166,14 @@ IsDebuggerPresent()
 
 一开始的是\ ``IsDebuggerPresent()``,
 根据返回结果判断是否存在调试.如果不太清楚的话,
-可以返回去看\ `IsDebuggerPresent()篇 </reverse/anti_debug/isdebuggerpresent.html>`__
+可以返回去看\ `IsDebuggerPresent()篇 <https://ctf-wiki.github.io/ctf-wiki/reverse/anti_debug/isdebuggerpresent.html>`__
 
 NtGlobalFlag
 ------------
 
 接下来是检测\ ``NtGlobalFlag``\ 这个字段的标志位.
 通过检测PEB的字段值是否为\ ``0x70``\ 来检测调试器, 如果不太清楚的话,
-可以返回去看\ `NtGlobalFlag篇 </reverse/anti_debug/ntglobalflag.html>`__
+可以返回去看\ `NtGlobalFlag篇 <https://ctf-wiki.github.io/ctf-wiki/reverse/anti_debug/ntglobalflag.html>`__
 
 .. code:: c
 
@@ -217,7 +217,7 @@ CheckRemoteDebuggerPresent
 
 这里我顺便在注释里列出了\ ``CheckRemoteDebuggerPresent()``\ 这个API的函数原型.
 如果检测到调试器的存在, 会将\ ``pbDebuggerPresent``\ 设置为一个非零值.
-根据其值检测调试器(\ `CheckRemoteDebuggerPresent()篇 </reverse/anti_debug/checkremotedebuggerpresent.html>`__)
+根据其值检测调试器(\ `CheckRemoteDebuggerPresent()篇 <https://ctf-wiki.github.io/ctf-wiki/reverse/anti_debug/checkremotedebuggerpresent.html>`__)
 
 时间差检测
 ----------
