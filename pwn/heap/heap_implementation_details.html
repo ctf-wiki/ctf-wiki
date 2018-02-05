@@ -173,7 +173,7 @@
 </div>
 <p>这里我们只是以 small bin 的 unlink 为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize 的处理。</p>
 <p><img alt="image0" src="../../_images/unlink_smallbin_intro.png" /></p>
-<p>可以看出， P 最后的 fd 和 bk 指针并没有发生变化，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。</p>
+<p>可以看出， <strong>P 最后的 fd 和 bk 指针并没有发生变化</strong>，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。这一点没有变化还是很有用处的。</p>
 <p>同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都做了相应的检测。</p>
 <div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">fd</span> <span class="n">bk</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">FD</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">!=</span> <span class="n">P</span> <span class="o">||</span> <span class="n">BK</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">!=</span> <span class="n">P</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>                      \
@@ -1153,7 +1153,7 @@ check_inuse_chunk(av, p);
 <li>先考虑物理低地址空闲块</li>
 <li>后考虑物理高地址空闲块</li>
 </ul>
-<p><strong>合并后的chunk指向合并的chunk的低地址。</strong></p>
+<p><strong>合并后的 chunk 指向合并的 chunk 的低地址。</strong></p>
 <p>在没有锁的情况下，先获得锁。</p>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/*
   Consolidate other non-mmapped chunks as they arrive.
@@ -1212,7 +1212,7 @@ if (__builtin_expect(chunksize_nomask(nextchunk) &lt;= 2 * SIZE_SZ, 0) ||
 </div>
 </div>
 <div class="section" id="id13">
-<h5>后向合并-合并低地址chunk<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h5>
+<h5>后向合并-合并低地址 chunk<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h5>
 <div class="code cpp highlight-default"><div class="highlight"><pre><span></span>/* consolidate backward */
 if (!prev_inuse(p)) {
     prevsize = prev_size(p);
@@ -1304,7 +1304,7 @@ else {
          // 一般合并到 top chunk 都会执行这部分代码。
          // 那就向系统返还内存
         if ((unsigned long) (size) &gt;= FASTBIN_CONSOLIDATION_THRESHOLD) {
-            // 如果有fast chunk 就进行合并
+            // 如果有 fast chunk 就进行合并
             if (have_fastchunks(av)) malloc_consolidate(av);
             // 主分配区
             if (av == &amp;main_arena) {
@@ -1441,7 +1441,7 @@ if (get_max_fast() != 0) {
       until malloc is sure that chunks aren&#39;t immediately going to be
       reused anyway.
     */
-    // 按照fd顺序遍历fastbin的每一个bin，将bin中的每一个 chunk 合并掉。
+    // 按照 fd 顺序遍历 fastbin 的每一个 bin，将 bin 中的每一个 chunk 合并掉。
     maxfb = &amp;fastbin(av, NFASTBINS - 1);
     fb    = &amp;fastbin(av, 0);
     do {
@@ -1472,7 +1472,7 @@ if (get_max_fast() != 0) {
                         size += nextsize;
                         unlink(av, nextchunk, bck, fwd);
                     } else
-                        // 设置nextchunk的prev inuse 为0，以表明可以合并该chunk。
+                     // 设置 nextchunk 的 prev inuse 为0，以表明可以合并当前 fast chunk。
                         clear_inuse_bit_at_offset(nextchunk, 0);
 
                     first_unsorted     = unsorted_bin-&gt;fd;
@@ -1642,7 +1642,7 @@ if (get_max_fast() != 0) {
 <li class="toctree-l5"><a class="reference internal" href="#mmap-chunk">合并非 mmap 的空闲 chunk</a><ul>
 <li class="toctree-l6"><a class="reference internal" href="#id11">轻量级的检测</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#id12">释放填充</a></li>
-<li class="toctree-l6"><a class="reference internal" href="#id13">后向合并-合并低地址chunk</a></li>
+<li class="toctree-l6"><a class="reference internal" href="#id13">后向合并-合并低地址 chunk</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#top-chunk-chunk">下一块不是top chunk-前向合并-合并高地址chunk</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#top-chunk-top-chunk">下一块是top chunk-合并到top chunk</a></li>
 <li class="toctree-l6"><a class="reference internal" href="#id14">向系统返还内存</a></li>
@@ -1672,13 +1672,14 @@ if (get_max_fast() != 0) {
 </li>
 <li class="toctree-l2"><a class="reference internal" href="heapoverflow_basic.html">堆溢出</a></li>
 <li class="toctree-l2"><a class="reference internal" href="off_by_one.html">堆中的 Off-By-One</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unlink.html">Unlink</a></li>
 <li class="toctree-l2"><a class="reference internal" href="use_after_free.html">Use After Free</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fastbin_attack.html">Fastbin Attack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chunk_extend_shrink.html">Chunk Extend/Shrink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="house_of_einherjar.html">House Of Einherjar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>
 <li class="toctree-l2"><a class="reference internal" href="house_of_force.html">House Of Force</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unsorted_bin_attack.html">Unsorted Bin Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="house_of_lore.html">House of Lore</a></li>
 </ul>
 </li>
 </ul>
