@@ -12,6 +12,7 @@ e 特别小，比如 e 为 3。
 $$
 c\equiv m^3 \bmod N
 $$
+
 则：
 $$
 \begin{align}
@@ -19,6 +20,7 @@ m^3 &= c+k\times N\\\\
 m &= \sqrt[3]{c+k\times n}
 \end{align}
 $$
+
 攻击者可以从小到大枚举 $n$，依次开三次根，直到开出整数为止。
 
 ### 范例
@@ -143,6 +145,7 @@ Rabin 算法的特征在于 $e=2$。
 $$
 c = m^2\bmod n
 $$
+
 解密：
 
 - 计算出 $m_p$ 和 $m_q$：

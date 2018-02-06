@@ -6,6 +6,7 @@
 $$
 F(x)=x^n + a_{n-1} x^{n-1} + \cdots + a_1x + a_0
 $$
+
 假设该多项式在模N意义下有一个根$x_0$ ，这里我们令$x_0 < M^{\frac{1}{n}}$ 。如果等号成立的话，显然只有$x^n$ 这一项，那0就是，也满足。
 
 **Coppersmith method** 主要是通过[Lenstra–Lenstra–Lovász lattice basis reduction algorithm](https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm) (LLL) 方法来找到与该函数具有相同根$x_0$ 但有更小系数的多项式。关于更加详细的介绍，请自行搜索。
@@ -21,22 +22,23 @@ $$
 这里我们假设e为3，并且加密者使用了三个不同的模数$n_1,n_2,n_3$ 给三个不同的用户发送了加密后的消息m，如下
 $$
 \begin{align}
-c\_1&=m^3\bmod n\_1 \\\\
-c\_2&=m^3\bmod n\_2 \\\\
-c\_3&=m^3\bmod n\_3 \\\\
+c_1&=m^3\bmod n_1 \\
+c_2&=m^3\bmod n_2 \\
+c_3&=m^3\bmod n_3 \\
 \end{align}
 $$
-这里我们假设$n_1,n_2,n_3$ 互相互素，不然，我们就可以直接进行分解，然后得到d，进而然后直接解密。
+
+这里我们假设$n_1,n_2,n_3​$ 互相互素，不然，我们就可以直接进行分解，然后得到d，进而然后直接解密。
 
 同时，我们假设$m<n_i, 1\leq i \leq 3$ 。如果这个条件不满足的话，就会使得情况变得比较复杂，这里我们暂不讨论。
 
 既然他们互素，那么我们可以根据中国剩余定理，可得$m^3 \equiv C \bmod n_1n_2n_3$ 。
 
-此外，既然$m<n_i, 1\leq i \leq 3$ ，那么我们知道$m^3 < n_1n_2n_3$ 并且$C<m^3 < n_1n_2n_3$ ，那么$m^3 = C $ ，我们对C开三次根即可得到m的值。
+此外，既然$m<n_i, 1\leq i \leq 3$ ，那么我们知道$m^3 < n_1n_2n_3$ 并且$C<m^3 < n_1n_2n_3$ ，那么$m^3 = C$ ，我们对C开三次根即可得到m的值。
 
 对于较大的e来说，我们只是需要更多的明密文对。
 
-### 例子
+### SCTF RSA3 LEVEL4
 
 参考http://ohroot.com/2016/07/11/rsa-in-ctf。
 
@@ -614,7 +616,7 @@ if roots:
     print binascii.unhexlify(flag)
 ```
 
-关于small_roots的使用，可以参考http://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots 。
+关于small_roots的使用，可以参考[SAGE 说明](http://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots)。
 
 结果如下
 
