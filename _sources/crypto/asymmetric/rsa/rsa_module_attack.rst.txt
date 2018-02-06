@@ -1,6 +1,4 @@
-.. role:: math(raw)
-   :format: html latex
-..
+
 
 模数相关攻击
 ============
@@ -293,13 +291,13 @@ SCTF RSA2
 
    c_1 = m^{e_1}\bmod N \\\\ c_2 = m^{e_2}\bmod N
 
- 当攻击者截获 :math:`c_1` 和 :math:`c_2` 后，就可以恢复出明文。用扩展欧几里得算法求出 :math:`re\_1+se\_2=1\bmod n` 的两个整数 :math:`r` 和 :math:`s`\ ，由此可得：
+当攻击者截获 :math:`c_1` 和 :math:`c_2` 后，就可以恢复出明文。用扩展欧几里得算法求出 :math:`re_1+se_2=1\bmod n` 的两个整数 :math:`r` 和 :math:`s`\ ，由此可得：
 
 .. math::
 
 
    \begin{align}
-   c\_{1}^{r}c\_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\\\
+   c_{1}^{r}c_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\\\
    &\equiv m^{(re_1+se_2)} \bmod n\\\\
    &\equiv m\bmod n
    \end{align}
