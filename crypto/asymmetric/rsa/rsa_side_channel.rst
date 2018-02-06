@@ -1,6 +1,4 @@
-.. role:: math(raw)
-   :format: html latex
-..
+
 
 侧信道攻击
 ==========

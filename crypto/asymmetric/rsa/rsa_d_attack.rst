@@ -1,10 +1,4 @@
-.. role:: math(raw)
-   :format: html latex
-..
 
-.. role:: raw-latex(raw)
-   :format: latex
-..
 
 私钥 d 相关攻击
 ===============
@@ -17,7 +11,7 @@ d 泄露攻击
 
 首先当d泄露之后，我们自然可以解密所有加密的消息。我们甚至还可以对模数N进行分解。其基本原理如下
 
-我们知道\ :math:`ed \equiv 1 \bmod \varphi(n)`\ ，那么$ :raw-latex:`\varphi`(n) \| k=ed-1\ :math:`。显然k是一个偶数，我们可以令`\ k=2^tr$
+我们知道\ :math:`ed \equiv 1 \bmod \varphi(n)`\ ，那么\ :math:`\varphi(n) | k=ed-1`\ 。显然k是一个偶数，我们可以令\ :math:`k=2^tr`
 ，其中r为奇数，t不小于1。那么对于任何的与N互素的数g，我们都有\ :math:`g^k \equiv 1 \bmod n` 。那么\ :math:`z=g^{\frac{k}{2}}` 是模N的二次方根。那么我们有
 
 :math:`z^2 \equiv 1 \bmod p`
@@ -44,17 +38,15 @@ d 泄露攻击
 -  RsaConverter.exe (https://sourceforge.net/projects/rsaconverter/ , for windows )
 -  `rsatool.py <https://github.com/ius/rsatool/blob/master/rsatool.py>`__
 
-例子
-~~~~
-
-HITB - hack in the card II
+2017 HITB - hack in the card II
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 题干为： > The second smart card sent to us has been added some countermeasures by that evil company. They also changed the public key(attachments -> publickey.pem). However it seems that they missed
 something…… Can you decrypt the following hex-encoded ciphertext this time?
 
     016d1d26a470fad51d52e5f3e90075ab77df69d2fb39905fe634ded81d10a5fd10c35e1277035a9efabb66e4d52fd2d1eaa845a93a4e0f1c4a4b70a0509342053728e89e977cfb9920d5150393fe9dcbf86bc63914166546d5ae04d83631594703db59a628de3b945f566bdc5f0ca7bdfa819a0a3d7248286154a6cc5199b99708423d0749d4e67801dff2378561dd3b0f10c8269dbef2630819236e9b0b3d3d8910f7f7afbbed29788e965a732efc05aef3194cd1f1cff97381107f2950c935980e8954f91ed2a653c91015abea2447ee2a3488a49cc9181a3b1d44f198ff9f0141badcae6a9ae45c6c75816836fb5f331c7f2eb784129a142f88b4dc22a0a977
 
-这题是接续HITB - hack in the card
+这题是接续 2017 HITB - hack in the card
 I的一道题，我们直接使用openssl查看\ ``publickey.pem``\ 的公钥，发现它的\ ``N``\ 与上一道题的\ ``N``\ 相同，并且上题的\ ``N``\ ，\ ``e``\ ，\ ``d``\ 已知。由此可直接使用上面的\ ``rsatool.py``\ 得到\ ``p``\ ，\ ``q``\ ，并通过本题的\ ``e``\ 计算出\ ``e``\ 得到明文。
 
 Wiener’s Attack

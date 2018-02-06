@@ -1,6 +1,4 @@
-.. role:: math(raw)
-   :format: html latex
-..
+
 
 选择密文攻击
 ============
