@@ -1,3 +1,5 @@
+.. role:: math(raw)
+   :format: html latex
 ..
 
 侧信道攻击
@@ -8,10 +10,7 @@
 
 能量分析攻击是安全领域内非常重要的一个部分，我们只在这里简单讨论下。
 
-能量分析攻击分为：
-
-- 简单能量分析攻击（SPA），即对能量迹进行直观分析，肉眼看即可。
-- 差分能量分析攻击（DPA），基于能量迹之间的相关系数进行分析。
+能量分析攻击分为： - 简单能量分析攻击（SPA），即对能量迹进行直观分析，肉眼看即可。 - 差分能量分析攻击（DPA），基于能量迹之间的相关系数进行分析。
 
 攻击条件
 --------
@@ -21,10 +20,9 @@
 例子
 ----
 
-这里我们以HITB 2017的 ``hack in the card I`` 作为例子。
+这里我们以HITB 2017的\ ``hack in the card I``\ 作为例子。
 
-题目给出了公钥文件 ``publickey.pem`` ，密文，测量智能卡功率的电路图，和 **解密** 过程中智能卡消耗的功率变化（通过在线网站给出
-`trace <http://47.74.147.53:20015/index.html>`_ ）。
+题目给出了公钥文件\ ``publickey.pem``\ ，密文，测量智能卡功率的电路图，和\ **解密**\ 过程中智能卡消耗的功率变化（通过在线网站给出 `trace <http://47.74.147.53:20015/index.html>`__\ ）。
 
 .. figure:: /crypto/asymmetric/rsa/figure/circuitdiagram.png
    :alt: Circuit diagram
@@ -40,14 +38,13 @@
 分析
 ~~~~
 
-由于网站只给出了一条能量迹，所以可以断定这是Simple channel
-analysis(SPA)攻击。那么我们可以直接通过观察能量迹的高低电平来获得RSA解密过程的密钥d。
+由于网站只给出了一条能量迹，所以可以断定这是Simple channel analysis(SPA)攻击。那么我们可以直接通过观察能量迹的高低电平来获得RSA解密过程的密钥d。
 RSA可被SPA攻击的理论基础来自于RSA中包含的快速幂取余算法。
 
 快速幂算法如下
 
-1. b为偶数时， :math:`a^b \bmod c = ({a^2}^{b/2}) \bmod c` 。
-2. b为奇数时， :math:`a^b \bmod c = ({a^2}^{b/2} \times a) \bmod c` 。
+1. b为偶数时，\ :math:`a^b \bmod c = ({a^2}^{b/2}) \bmod c` 。
+2. b为奇数时，\ :math:`a^b \bmod c = ({a^2}^{b/2} \times a) \bmod c` 。
 
 相应的C代码实现为：
 
@@ -68,12 +65,11 @@ RSA可被SPA攻击的理论基础来自于RSA中包含的快速幂取余算法�
 
 由于快速幂的计算过程中会逐位判断指数的取值，并会采取不同的操作，所以可从能量迹中还原出d的取值（从上面可知，直接得到的值是d的二进制取值的\ **逆序**\ ）。
 
-**注意** ：
+**注意**\ ：
 
     有时候模乘也可能会从高位向低位进行模乘。这里是从低位向高位模乘。
 
-.. figure:: /crypto/asymmetric/rsa/figure/trace.png
-   :alt: 
+|image0|
 
 由此可给出还原d的脚本如下：
 
@@ -122,5 +118,6 @@ RSA可被SPA攻击的理论基础来自于RSA中包含的快速幂取余算法�
 参考资料
 --------
 
-1. Mangard, S., Oswald, E., Popp, T., 冯登国, 周永彬, & 刘继业. (2010).
-   能量分析攻击.
+1. Mangard, S., Oswald, E., Popp, T., 冯登国, 周永彬, & 刘继业. (2010). 能量分析攻击.
+
+.. |image0| image:: /crypto/asymmetric/rsa/figure/trace.png

@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>公钥指数攻击 &#8212; CTF Wiki </title>
+    <title>公钥指数相关攻击 &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
@@ -32,8 +32,8 @@
     <script type="text/javascript" src="../../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../../search.html" />
-    <link rel="next" title="私钥 d 攻击" href="rsa_d_attack.html" />
-    <link rel="prev" title="模数" href="rsa_module_attack.html" /> 
+    <link rel="next" title="私钥 d 相关攻击" href="rsa_d_attack.html" />
+    <link rel="prev" title="模数相关攻击" href="rsa_module_attack.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -46,10 +46,10 @@
           <a href="../../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="rsa_d_attack.html" title="私钥 d 攻击"
+          <a href="rsa_d_attack.html" title="私钥 d 相关攻击"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="rsa_module_attack.html" title="模数"
+          <a href="rsa_module_attack.html" title="模数相关攻击"
              accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../../index.html">CTF Wiki </a> &#187;</li>
 
@@ -66,7 +66,7 @@
           <div class="body" role="main">
             
   <div class="section" id="id1">
-<h1>公钥指数攻击<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<h1>公钥指数相关攻击<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
 <div class="section" id="id2">
 <h2>小公钥指数攻击<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id3">
@@ -75,22 +75,18 @@
 </div>
 <div class="section" id="id4">
 <h3>攻击原理<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
-<p>假设用户使用的密钥 <span class="math">\(e=3\)</span> 。考虑到加密关系满足：</p>
+<p>假设用户使用的密钥 <span class="math">e=3</span>。考虑到加密关系满足：</p>
 <div class="math">
-\[c \equiv m^3 \bmod N\]</div>
-<p>则：</p>
+\[ \begin{align}\begin{aligned}  c\equiv m^3 \bmod N\\则：\end{aligned}\end{align} \]</div>
 <div class="math">
-\[\begin{split}\begin{align}
-m^3 &amp;= c+k\times N\\
-m &amp;= \sqrt[3]{c+k\times n}
-\end{align}\end{split}\]</div>
-<p>攻击者可以从小到大枚举 <span class="math">\(n\)</span> ，依次开三次根，直到开出整数为止。</p>
+\[ \begin{align}\begin{aligned}\begin{split}  \begin{align}
+  m^3 &amp;= c+k\times N\\\\
+  m &amp;= \sqrt[3]{c+k\times n}
+  \end{align}\end{split}\\攻击者可以从小到大枚举 :math:`n`\ ，依次开三次根，直到开出整数为止。\end{aligned}\end{align} \]</div>
 </div>
 <div class="section" id="id5">
 <h3>范例<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<p>这里我们以XMan 一期夏令营课堂练习为例进行介绍（Jarvis
-oj有复现），附件中有一个 <code class="docutils literal"><span class="pre">flag.enc</span></code> 和
-<code class="docutils literal"><span class="pre">pubkey.pem</span></code> ，很明显是密文和公钥了，先用 <code class="docutils literal"><span class="pre">openssl</span></code> 读一下公钥。</p>
+<p>这里我们以XMan 一期夏令营课堂练习为例进行介绍（Jarvis oj有复现），附件中有一个 <code class="docutils literal"><span class="pre">flag.enc</span></code> 和 <code class="docutils literal"><span class="pre">pubkey.pem</span></code>，很明显是密文和公钥了，先用 <code class="docutils literal"><span class="pre">openssl</span></code> 读一下公钥。</p>
 <div class="code bash highlight-default"><div class="highlight"><pre><span></span>➜  Jarvis OJ-Extremely hard RSA git:(master) ✗ openssl rsa -pubin -in pubkey.pem -text -modulus
 Public-Key: (4096 bit)
 Modulus:
@@ -148,7 +144,7 @@ EkP0OHRGzM6yIiqWXMMLOSkCAQM=
 -----END PUBLIC KEY-----
 </pre></div>
 </div>
-<p>看到 <span class="math">\(e=3\)</span> ，很明显是小公钥指数攻击了。这里我们使用Crypto库来读取公钥，使用multiprocessing来加快破解速度。</p>
+<p>看到 <span class="math">e=3</span>，很明显是小公钥指数攻击了。这里我们使用Crypto库来读取公钥，使用multiprocessing来加快破解速度。</p>
 <div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">#/usr/bin/python</span>
 <span class="c1"># coding=utf-8</span>
 <span class="kn">import</span> <span class="nn">gmpy2</span>
@@ -200,24 +196,23 @@ EkP0OHRGzM6yIiqWXMMLOSkCAQM=
 <h2>RSA 衍生算法——Rabin 算法<a class="headerlink" href="#rsa-rabin" title="永久链接至标题">¶</a></h2>
 <div class="section" id="id7">
 <h3>攻击条件<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<p>Rabin 算法的特征在于 <span class="math">\(e=2\)</span> 。</p>
+<p>Rabin 算法的特征在于 <span class="math">e=2</span>。</p>
 </div>
 <div class="section" id="id8">
 <h3>攻击原理<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
 <p>密文：</p>
 <div class="math">
-\[c = m^2\bmod n\]</div>
-<p>解密：</p>
+\[ \begin{align}\begin{aligned}  c = m^2\bmod n\\解密：\end{aligned}\end{align} \]</div>
 <ul class="simple">
-<li>计算出 <span class="math">\(m_p\)</span> 和 <span class="math">\(m_q\)</span> ：</li>
+<li>计算出 <span class="math">m_p</span> 和 <span class="math">m_q</span>：</li>
 </ul>
 <div class="math">
 \[\begin{split}\begin{align}
-m_p &amp;= \sqrt{c} \bmod p\\
+m_p &amp;= \sqrt{c} \bmod p\\\\
 m_q &amp;= \sqrt{c} \bmod q
 \end{align}\end{split}\]</div>
 <ul class="simple">
-<li>用扩展欧几里得计算出 <span class="math">\(y_p\)</span> 和 <span class="math">\(y_q\)</span> ：</li>
+<li>用扩展欧几里得计算出 <span class="math">y_p</span> 和 <span class="math">y_q</span>：</li>
 </ul>
 <div class="math">
 \[y_p \cdot p + y_q \cdot q = 1\]</div>
@@ -226,19 +221,18 @@ m_q &amp;= \sqrt{c} \bmod q
 </ul>
 <div class="math">
 \[\begin{split}\begin{align}
-a &amp;= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\
-b &amp;= n - a\\
-c &amp;= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\
+a &amp;= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\\\
+b &amp;= n - a\\\\
+c &amp;= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\\\
 d &amp;= n - c
 \end{align}\end{split}\]</div>
-<p>注意：如果 <span class="math">\(p \equiv q \equiv 3 \pmod 4\)</span> ，则</p>
+<p>注意：如果 <span class="math">p \equiv q \equiv 3 \pmod 4</span>，则</p>
 <div class="math">
 \[\begin{split}\begin{align}
-m_p &amp;= c^{\frac{1}{4}(p + 1)} \bmod p\\
+m_p &amp;= c^{\frac{1}{4}(p + 1)} \bmod p\\\\
 m_q &amp;= c^{\frac{1}{4}(q + 1)} \bmod q
 \end{align}\end{split}\]</div>
-<p>而一般情况下， <span class="math">\(p \equiv q \equiv 3 \pmod 4\)</span>
-是满足的，对于不满足的情况下，请参考相应的算法解决。</p>
+<p>而一般情况下，<span class="math">p \equiv q \equiv 3 \pmod 4</span> 是满足的，对于不满足的情况下，请参考相应的算法解决。</p>
 </div>
 <div class="section" id="id9">
 <h3>例子<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
@@ -258,7 +252,7 @@ yigb/+l/vjDdAgEC
 -----END PUBLIC KEY-----
 </pre></div>
 </div>
-<p><span class="math">\(e=2\)</span> ，考虑 Rabin 算法。首先我们先分解一下p和q，得到</p>
+<p><span class="math">e=2</span>，考虑 Rabin 算法。首先我们先分解一下p和q，得到</p>
 <div class="code text highlight-default"><div class="highlight"><pre><span></span><span class="n">p</span><span class="o">=</span><span class="mi">275127860351348928173285174381581152299</span>
 <span class="n">q</span><span class="o">=</span><span class="mi">319576316814478949870590164193048041239</span>
 </pre></div>
@@ -304,25 +298,7 @@ yigb/+l/vjDdAgEC
     <span class="nb">print</span> <span class="n">s</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>拿到 flag。</p>
-<div class="highlight-shell"><div class="highlight"><pre><span></span>➜  Jarvis OJ-hard RSA git:<span class="o">(</span>master<span class="o">)</span> ✗ python Rabin.py
-please input p
-<span class="m">275127860351348928173285174381581152299</span>
-please input q
-<span class="m">319576316814478949870590164193048041239</span>
-D�#���P�ޚe�cb�<span class="sb">`</span>ކ�P�/�V��
-<span class="o">}</span>�Y¾�S��Zv#�
-C<span class="o">]</span>�+��gq<span class="o">=</span>
-�<span class="sb">`</span>��8
-<span class="o">(</span>�<span class="nv">$X</span>�
-</pre></div>
-</div>
-<dl class="docutils">
-<dt>&#64;��i�{Y�=�`���w</dt>
-<dd>��
-�2�̻`�?</dd>
-</dl>
-<p>��PCTF{sp3ci4l_rsa}</p>
+<p>拿到 flag: PCTF{sp3ci4l_rsa}。</p>
 </div>
 <div class="section" id="id10">
 <h3>题目<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
@@ -378,8 +354,8 @@ C<span class="o">]</span>�+��gq<span class="o">=</span>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">非对称密码</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="rsa_index.html">RSA</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="rsa_theory.html">RSA 基本介绍</a></li>
-<li class="toctree-l3"><a class="reference internal" href="rsa_module_attack.html">模数</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">公钥指数攻击</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rsa_module_attack.html">模数相关攻击</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">公钥指数相关攻击</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id2">小公钥指数攻击</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="#id3">攻击条件</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#id4">攻击原理</a></li>
@@ -396,7 +372,7 @@ C<span class="o">]</span>�+��gq<span class="o">=</span>
 </li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="rsa_d_attack.html">私钥 d 攻击</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rsa_d_attack.html">私钥 d 相关攻击</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rsa_chosen_cipher.html">选择密文攻击</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rsa_coppersmith_attack.html">Coppersmith Related Attack</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rsa_side_channel.html">侧信道攻击</a></li>
@@ -470,10 +446,10 @@ C<span class="o">]</span>�+��gq<span class="o">=</span>
           <a href="../../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="rsa_d_attack.html" title="私钥 d 攻击"
+          <a href="rsa_d_attack.html" title="私钥 d 相关攻击"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="rsa_module_attack.html" title="模数"
+          <a href="rsa_module_attack.html" title="模数相关攻击"
              >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../../index.html">CTF Wiki </a> &#187;</li>
 
