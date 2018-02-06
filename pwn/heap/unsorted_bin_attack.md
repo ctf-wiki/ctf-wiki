@@ -223,19 +223,13 @@ magicheap: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically link
 
 
 
-## 2016 0CTF zerostorage
+## 2016 0CTF zerostorage-待完成
 
 **注：待进一步完成。**
 
 这里我们以 2016 年 0CTF 的zerostorage为例，进行介绍。
 
-**这个题当时给了服务器的系统版本和内核版本，所以自己可以下一个一模一样的进行调试，这里我们就直接用自己的本地机器调试了。但是在目前的Ubuntu 16.04 中，由于进一步的随机化，导致libc加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX 的策略就无法再次使用，似乎只能用 angelboy 的策略了。**
-
-参考文章
-
-- http://brieflyx.me/2016/ctf-writeups/0ctf-2016-zerostorage/
-- https://github.com/HQ1995/Heap_Senior_Driver/tree/master/0ctf2016/zerostorage
-- https://github.com/scwuaptx/CTF/blob/master/2016-writeup/0ctf/zerostorage.py
+**这个题当时给了服务器的系统版本和内核版本，所以自己可以下一个一模一样的进行调试，这里我们就直接用自己的本地机器调试了。但是在目前的Ubuntu 16.04 中，由于进一步的随机化，导致 libc 加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX 的策略就无法再次使用，似乎只能用 angelboy 的策略了。**
 
 ### 安全性检查
 
@@ -339,5 +333,10 @@ pwndbg> checksec
 
 。。。。
 
-
 ## 题目
+
+### 参考文献
+
+- http://brieflyx.me/2016/ctf-writeups/0ctf-2016-zerostorage/
+- https://github.com/HQ1995/Heap_Senior_Driver/tree/master/0ctf2016/zerostorage
+- https://github.com/scwuaptx/CTF/blob/master/2016-writeup/0ctf/zerostorage.py

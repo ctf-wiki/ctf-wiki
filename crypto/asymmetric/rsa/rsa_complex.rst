@@ -1,16 +1,18 @@
+.. role:: math(raw)
+   :format: html latex
 ..
 
 综合题目
 ========
 
-例 1
-^^^^^^
+2016 ASIS Find the flag
+-----------------------
 
-这里我们以ASIS 2016 线上赛中Find the flag为例进行介绍。
+这里我们以 ASIS 2016 线上赛中 Find the flag 为例进行介绍。
 
 文件解压出来，有一个密文，一个公钥，一个 py 脚本。看一下公钥。
 
-.. code-block:: bash
+.. code:: bash
 
     ➜  RSA openssl rsa -pubin -in pubkey.pem -text -modulus
     Public-Key: (256 bit)
@@ -21,7 +23,7 @@
     Exponent: 12405943493775545863 (0xac2ac3e0ca0f5607)
     Modulus=D8E24C12B7B99EFE0A9BC04A6A3DF58A2A944269B492B7376DF129023F2061B9
 
-这么小的一个 :math:`N` ，先分解一下。
+这么小的一个 :math:`N`\ ，先分解一下。
 
 ::
 
@@ -30,7 +32,7 @@
 
 再看给的 py 脚本。
 
-.. code-block:: python
+.. code:: python
 
     #!/usr/bin/python
     import gmpy
@@ -66,16 +68,13 @@
     g = open('flag.enc', 'w')
     g.write(ext_rsa_encrypt(p, q, e, flag))
 
-逻辑很简单，读取 flag，重复 30 遍为密文。随机取 :math:`p` 和
-:math:`q` ，生成一个公钥，写入 ``pubkey.pem`` ，再用脚本中的
-``ext_rsa_encrypt`` 函数进行加密，最后将密文写入 ``flag.enc`` 。
+逻辑很简单，读取 flag，重复 30 遍为密文。随机取 :math:`p` 和 :math:`q`\ ，生成一个公钥，写入 ``pubkey.pem``\ ，再用脚本中的 ``ext_rsa_encrypt`` 函数进行加密，最后将密文写入 ``flag.enc``\ 。
 
-尝试一下解密，提示密文过长，再看加密函数，原来当加密失败时，函数会跳到异常处理，以一定算法重新取更大的
-:math:`p` 和 :math:`q` ，直到加密成功。
+尝试一下解密，提示密文过长，再看加密函数，原来当加密失败时，函数会跳到异常处理，以一定算法重新取更大的 :math:`p` 和 :math:`q`\ ，直到加密成功。
 
 那么我们只要也写一个相应的解密函数即可。
 
-.. code-block:: python
+.. code:: python
 
     #!/usr/bin/python
     import gmpy
@@ -119,12 +118,12 @@
 
     ASIS{F4ct0R__N_by_it3rat!ng!}
 
-例 2
-^^^^^
+SCTF RSA1
+---------
 
 这里我们以SCTF RSA1为例进行介绍，首先解压压缩包后，得到如下文件
 
-.. code-block:: shell
+.. code:: shell
 
     ➜  level0 git:(master) ✗ ls -al
     总用量 4
@@ -136,7 +135,7 @@
 
 尝试解压缩了一下level1.zip发现需要密码。然后根据level1.passwd.enc可知，应该是我们需要解密这个文件才能得到对应的密码。查看公钥
 
-.. code-block:: shell
+.. code:: shell
 
     ➜  level0 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus 
     Public-Key: (2048 bit)
@@ -181,7 +180,7 @@
 
 然后就可以构造，并且解密，代码如下
 
-.. code-block:: python
+.. code:: python
 
     from Crypto.PublicKey import RSA
     import gmpy2
@@ -214,15 +213,14 @@
 
 发现不对
 
-.. code-block:: shell
+.. code:: shell
 
     ➜  level0 git:(master) ✗ python exp.py
-    a�*�ؠO�=�MK�&E=������)���۱'ﶓ��u����BG�0�6�@i���za�' ���y���t҃Nj���WK��'R.؞                                �d������8ވ���)}j'6kG�Dwu>�V����?:3o�u��Tr�����F���l��0Bp'Z<�tb�w��e���y_lNh3B����f�bT{6����9!�z$6
-
+    一堆乱码。。
 
 这时候就要考虑其他情况了，一般来说现实中实现的RSA都不会直接用原生的RSA，都会加一些填充比如OAEP，我们这里试试，修改代码
 
-.. code-block:: python
+.. code:: shell
 
     def decrypt1():
         with open('./level1.passwd.enc') as f:
@@ -235,14 +233,14 @@
 
 果然如此，得到
 
-.. code-block:: shell
+.. code:: shell
 
     ➜  level0 git:(master) ✗ python exp.py
     FaC5ori1ati0n_aTTA3k_p_tOO_sma11
 
 得到解压密码。继续，查看level1中的公钥
 
-.. code-block:: shell
+.. code:: shell
 
     ➜  level1 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus
     Public-Key: (2048 bit)
@@ -278,69 +276,59 @@
     fQIDAQAB
     -----END PUBLIC KEY-----
 
-似乎还是不是很大，再次分解，然后试了 factordb 不行，试试 yafu，结果分解出来了。
+似乎还是不是很大，再次分解，然后试了factordb不行，试试yafu。结果分解出来了。
 
-.. code-block:: shell
+.. code:: shell
 
     P309 = 156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496383
 
     P309 = 156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496259
 
-可以发现这两个数非常相近，可能是factordb没有实现这类分解。
+可以发现这两个数非常相近，可能是 factordb 没有实现这类分解。
 
 继而下面的操作类似于 level0。只是这次是直接解密就好，没啥填充，试了填充反而错
 
-.. code-block:: shell
+得到密码 fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS。继续下一步，查看公钥
 
-    ➜  level1 git:(master) ✗ python exp.py
-    ��XB�8m؏�ey�(���K��6�v�.ϿіD�S�
-    H@ʽ�ͫH�]<�9�65Y3��I�           �~S�`�F������\�"]�PXL��Hs��j����
-    kWeT3������X�\8id�]Pl.A���/�� ���N㰺��\Dr����ܘ�f�f����x
-    ���H"(��`�޷Dp   �#F$�L�gg�#m�fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS
+.. code:: shell
 
+    ➜  level2 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus
+    Public-Key: (1025 bit)
+    Modulus:
+        01:ba:0c:c2:45:b4:5c:e5:b5:f5:6c:d5:ca:a5:90:
+        c2:8d:12:3d:8a:6d:7f:b6:47:37:fb:7c:1f:5a:85:
+        8c:1e:35:13:8b:57:b2:21:4f:f4:b2:42:24:5f:33:
+        f7:2c:2c:0d:21:c2:4a:d4:c5:f5:09:94:c2:39:9d:
+        73:e5:04:a2:66:1d:9c:4b:99:d5:38:44:ab:13:d9:
+        cd:12:a4:d0:16:79:f0:ac:75:f9:a4:ea:a8:7c:32:
+        16:9a:17:d7:7d:80:fd:60:29:64:c7:ea:50:30:63:
+        76:59:c7:36:5e:98:d2:ea:5b:b3:3a:47:17:08:2d:
+        d5:24:7d:4f:a7:a1:f0:d5:73
+    Exponent:
+        01:00:8e:81:dd:a0:e3:19:28:e8:ee:51:11:08:c7:
+        50:5f:61:31:05:d2:e2:ff:9b:83:71:e4:29:c2:dd:
+        92:70:65:d4:09:6d:58:c3:76:31:07:f1:d4:fc:cf:
+        2d:b3:0a:6d:02:7c:56:61:7c:be:7e:0b:7e:d9:22:
+        28:66:9e:fb:3d:2f:2c:20:59:3c:21:ef:ff:31:00:
+        6a:fb:a7:68:de:4a:0a:4c:1a:a7:09:d5:48:98:c8:
+        1f:cf:fb:dd:f7:9c:ae:ae:0b:15:f4:b2:c7:e0:bc:
+        ba:31:4f:5e:07:83:ad:0e:7f:b9:82:a4:d2:01:fa:
+        68:29:6d:66:7c:cf:57:b9:4b
+    Modulus=1BA0CC245B45CE5B5F56CD5CAA590C28D123D8A6D7FB64737FB7C1F5A858C1E35138B57B2214FF4B242245F33F72C2C0D21C24AD4C5F50994C2399D73E504A2661D9C4B99D53844AB13D9CD12A4D01679F0AC75F9A4EAA87C32169A17D77D80FD602964C7EA5030637659C7365E98D2EA5BB33A4717082DD5247D4FA7A1F0D573
+    writing RSA key
+    -----BEGIN PUBLIC KEY-----
+    MIIBIDANBgkqhkiG9w0BAQEFAAOCAQ0AMIIBCAKBgQG6DMJFtFzltfVs1cqlkMKN
+    Ej2KbX+2Rzf7fB9ahYweNROLV7IhT/SyQiRfM/csLA0hwkrUxfUJlMI5nXPlBKJm
+    HZxLmdU4RKsT2c0SpNAWefCsdfmk6qh8MhaaF9d9gP1gKWTH6lAwY3ZZxzZemNLq
+    W7M6RxcILdUkfU+nofDVcwKBgQEAjoHdoOMZKOjuUREIx1BfYTEF0uL/m4Nx5CnC
+    3ZJwZdQJbVjDdjEH8dT8zy2zCm0CfFZhfL5+C37ZIihmnvs9LywgWTwh7/8xAGr7
+    p2jeSgpMGqcJ1UiYyB/P+933nK6uCxX0ssfgvLoxT14Hg60Of7mCpNIB+mgpbWZ8
+    z1e5Sw==
+    -----END PUBLIC KEY-----
 
-得到密码 ``fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS``。继续下一步，查看公钥。
+发现私钥 e 和 n 几乎一样大，考虑 d 比较小，使用 Wiener’s Attack。得到 d，当然也可以再次验证一遍。
 
-.. code-block:: shell
-
-   ➜  level2 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus
-   Public-Key: (1025 bit)
-   Modulus:
-    01:ba:0c:c2:45:b4:5c:e5:b5:f5:6c:d5:ca:a5:90:
-    c2:8d:12:3d:8a:6d:7f:b6:47:37:fb:7c:1f:5a:85:
-    8c:1e:35:13:8b:57:b2:21:4f:f4:b2:42:24:5f:33:
-    f7:2c:2c:0d:21:c2:4a:d4:c5:f5:09:94:c2:39:9d:
-    73:e5:04:a2:66:1d:9c:4b:99:d5:38:44:ab:13:d9:
-    cd:12:a4:d0:16:79:f0:ac:75:f9:a4:ea:a8:7c:32:
-    16:9a:17:d7:7d:80:fd:60:29:64:c7:ea:50:30:63:
-    76:59:c7:36:5e:98:d2:ea:5b:b3:3a:47:17:08:2d:
-    d5:24:7d:4f:a7:a1:f0:d5:73
-   Exponent:
-    01:00:8e:81:dd:a0:e3:19:28:e8:ee:51:11:08:c7:
-    50:5f:61:31:05:d2:e2:ff:9b:83:71:e4:29:c2:dd:
-    92:70:65:d4:09:6d:58:c3:76:31:07:f1:d4:fc:cf:
-    2d:b3:0a:6d:02:7c:56:61:7c:be:7e:0b:7e:d9:22:
-    28:66:9e:fb:3d:2f:2c:20:59:3c:21:ef:ff:31:00:
-    6a:fb:a7:68:de:4a:0a:4c:1a:a7:09:d5:48:98:c8:
-    1f:cf:fb:dd:f7:9c:ae:ae:0b:15:f4:b2:c7:e0:bc:
-    ba:31:4f:5e:07:83:ad:0e:7f:b9:82:a4:d2:01:fa:
-    68:29:6d:66:7c:cf:57:b9:4b
-   Modulus=1BA0CC245B45CE5B5F56CD5CAA590C28D123D8A6D7FB64737FB7C1F5A858C1E35138B57B2214FF4B242245F33F72C2C0D21C24AD4C5F50994C2399D73E504A2661D9C4B99D53844AB13D9CD12A4D01679F0AC75F9A4EAA87C32169A17D77D80FD602964C7EA5030637659C7365E98D2EA5BB33A4717082DD5247D4FA7A1F0D573
-   writing RSA key
-   -----BEGIN PUBLIC KEY-----
-   MIIBIDANBgkqhkiG9w0BAQEFAAOCAQ0AMIIBCAKBgQG6DMJFtFzltfVs1cqlkMKN
-   Ej2KbX+2Rzf7fB9ahYweNROLV7IhT/SyQiRfM/csLA0hwkrUxfUJlMI5nXPlBKJm
-   HZxLmdU4RKsT2c0SpNAWefCsdfmk6qh8MhaaF9d9gP1gKWTH6lAwY3ZZxzZemNLq
-   W7M6RxcILdUkfU+nofDVcwKBgQEAjoHdoOMZKOjuUREIx1BfYTEF0uL/m4Nx5CnC
-   3ZJwZdQJbVjDdjEH8dT8zy2zCm0CfFZhfL5+C37ZIihmnvs9LywgWTwh7/8xAGr7
-   p2jeSgpMGqcJ1UiYyB/P+933nK6uCxX0ssfgvLoxT14Hg60Of7mCpNIB+mgpbWZ8
-   z1e5Sw==
-   -----END PUBLIC KEY-----
-
-发现私钥e和n几乎一样大，考虑d比较小，使用Wiener’s
-Attack。得到d，当然也可以再次验证一遍。
-
-.. code-block:: shell
+.. code:: shell
 
     ➜  level2 git:(master) ✗ python RSAwienerHacker.py
     Testing Wiener Attack
@@ -362,7 +350,7 @@ Attack。得到d，当然也可以再次验证一遍。
 
 这时我们解密密文，解密代码如下
 
-.. code-block:: python
+.. code:: python
 
     from Crypto.PublicKey import RSA
     from Crypto.Cipher import PKCS1_v1_5, PKCS1_OAEP
@@ -392,16 +380,4 @@ Attack。得到d，当然也可以再次验证一遍。
     getprivatekey(n, e, d)
     decrypt()
 
-解密结果如下
-
-.. code-block:: shell
-
-    ➜  level2 git:(master) ✗ python exp.py            
-    j�������Ibq�[��.��i}#
-    s����'w+���
-               t�����5�dC��6���]���F���;��,��e��l�9L�q��ۉ�$$x��BwIe6ER1s_1TtA3k_e_t00_larg3
-
-利用末尾的字符串解密压缩包，注意去掉B。至此全部解密结束，得到flag。
-
-例3
-^^^^^
+利用末尾的字符串 wIe6ER1s_1TtA3k_e_t00_larg3 解密压缩包，注意去掉B。至此全部解密结束，得到flag。
