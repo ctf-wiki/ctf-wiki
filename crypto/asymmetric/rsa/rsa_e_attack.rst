@@ -1,43 +1,44 @@
+.. role:: math(raw)
+   :format: html latex
 ..
 
-公钥指数攻击
-============
+公钥指数相关攻击
+================
 
 小公钥指数攻击
-^^^^^^^^^^^^^^^^
+--------------
 
 攻击条件
---------
+~~~~~~~~
 
 e 特别小，比如 e 为 3。
 
 攻击原理
---------
+~~~~~~~~
 
-假设用户使用的密钥 :math:`e=3` 。考虑到加密关系满足：
+假设用户使用的密钥 :math:`e=3`\ 。考虑到加密关系满足：
+
+.. math::
+
+
+   c\equiv m^3 \bmod N
+
+ 则：
 
 .. math::
 
-   c \equiv m^3 \bmod N
-
-
-则：
-
-.. math::
 
    \begin{align}
-   m^3 &= c+k\times N\\
+   m^3 &= c+k\times N\\\\
    m &= \sqrt[3]{c+k\times n}
    \end{align}
 
-攻击者可以从小到大枚举 :math:`n` ，依次开三次根，直到开出整数为止。
+ 攻击者可以从小到大枚举 :math:`n`\ ，依次开三次根，直到开出整数为止。
 
 范例
-----
+~~~~
 
-这里我们以XMan 一期夏令营课堂练习为例进行介绍（Jarvis
-oj有复现），附件中有一个 ``flag.enc`` 和
-``pubkey.pem`` ，很明显是密文和公钥了，先用 ``openssl`` 读一下公钥。
+这里我们以XMan 一期夏令营课堂练习为例进行介绍（Jarvis oj有复现），附件中有一个 ``flag.enc`` 和 ``pubkey.pem``\ ，很明显是密文和公钥了，先用 ``openssl`` 读一下公钥。
 
 .. code:: bash
 
@@ -97,7 +98,7 @@ oj有复现），附件中有一个 ``flag.enc`` 和
     EkP0OHRGzM6yIiqWXMMLOSkCAQM=
     -----END PUBLIC KEY-----
 
-看到 :math:`e=3` ，很明显是小公钥指数攻击了。这里我们使用Crypto库来读取公钥，使用multiprocessing来加快破解速度。
+看到 :math:`e=3`\ ，很明显是小公钥指数攻击了。这里我们使用Crypto库来读取公钥，使用multiprocessing来加快破解速度。
 
 .. code:: python
 
@@ -145,18 +146,22 @@ oj有复现），附件中有一个 ``flag.enc`` 和
     Didn't you know RSA padding is really important? Now you see a non-padding message is so dangerous. And you should notice this in future.Fl4g: flag{Sm4ll_3xpon3nt_i5_W3ak}
 
 题目
-----
+~~~~
 
 RSA 衍生算法——Rabin 算法
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
+
+.. 攻击条件-1:
 
 攻击条件
---------
+~~~~~~~~
 
-Rabin 算法的特征在于 :math:`e=2` 。
+Rabin 算法的特征在于 :math:`e=2`\ 。
+
+.. 攻击原理-1:
 
 攻击原理
---------
+~~~~~~~~
 
 密文：
 
@@ -165,20 +170,19 @@ Rabin 算法的特征在于 :math:`e=2` 。
 
    c = m^2\bmod n
 
+ 解密：
 
-解密：
-
--  计算出 :math:`m_p` 和 :math:`m_q` ：
+-  计算出 :math:`m_p` 和 :math:`m_q`\ ：
 
 .. math::
 
 
    \begin{align}
-   m_p &= \sqrt{c} \bmod p\\
+   m_p &= \sqrt{c} \bmod p\\\\
    m_q &= \sqrt{c} \bmod q
    \end{align}
 
--  用扩展欧几里得计算出 :math:`y_p` 和 :math:`y_q` ：
+-  用扩展欧几里得计算出 :math:`y_p` 和 :math:`y_q`\ ：
 
 .. math::
 
@@ -191,27 +195,26 @@ Rabin 算法的特征在于 :math:`e=2` 。
 
 
    \begin{align}
-   a &= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\
-   b &= n - a\\
-   c &= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\
+   a &= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\\\
+   b &= n - a\\\\
+   c &= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\\\
    d &= n - c
    \end{align}
 
-注意：如果 :math:`p \equiv q \equiv 3 \pmod 4` ，则
+注意：如果 :math:`p \equiv q \equiv 3 \pmod 4`\ ，则
 
 .. math::
 
 
    \begin{align}
-   m_p &= c^{\frac{1}{4}(p + 1)} \bmod p\\
+   m_p &= c^{\frac{1}{4}(p + 1)} \bmod p\\\\
    m_q &= c^{\frac{1}{4}(q + 1)} \bmod q
    \end{align}
 
-而一般情况下， :math:`p \equiv q \equiv 3 \pmod 4`
-是满足的，对于不满足的情况下，请参考相应的算法解决。
+而一般情况下，\ :math:`p \equiv q \equiv 3 \pmod 4` 是满足的，对于不满足的情况下，请参考相应的算法解决。
 
 例子
-----
+~~~~
 
 这里我们以XMan 一期夏令营课堂练习（Jarvis oj有复现）为例，读一下公钥。
 
@@ -231,7 +234,7 @@ Rabin 算法的特征在于 :math:`e=2` 。
     yigb/+l/vjDdAgEC
     -----END PUBLIC KEY-----
 
-:math:`e=2` ，考虑 Rabin 算法。首先我们先分解一下p和q，得到
+:math:`e=2`\ ，考虑 Rabin 算法。首先我们先分解一下p和q，得到
 
 .. code:: text
 
@@ -281,22 +284,9 @@ Rabin 算法的特征在于 :math:`e=2` 。
             s = '0' + s
         print s.decode('hex')
 
-拿到 flag。
+拿到 flag: PCTF{sp3ci4l_rsa}。
 
-.. code-block:: shell
-
-    ➜  Jarvis OJ-hard RSA git:(master) ✗ python Rabin.py 
-    please input p
-    275127860351348928173285174381581152299
-    please input q
-    319576316814478949870590164193048041239
-    D�#���P�ޚe�cb�`ކ�P�/�V��
-    }�Y¾�S��Zv#�
-    C]�+��gq=
-    �`��8
-    (�$X�@��i�{Y�=�`���w
-    \��
-    �2�̻`�?��PCTF{sp3ci4l_rsa}
+.. 题目-1:
 
 题目
-----
+~~~~
