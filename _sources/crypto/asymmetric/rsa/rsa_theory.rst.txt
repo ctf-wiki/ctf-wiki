@@ -1,5 +1,3 @@
-
-
 RSA 基本介绍
 ============
 
@@ -198,10 +196,10 @@ pycrypto
 
 更多的细节请参考readme。
 
-简单练手
---------
+Jarvis OJ - Basic - veryeasyRSA
+-------------------------------
 
-这里我们以Jarvis OJ - Basic - veryeasyRSA为例进行介绍，题目如下
+题目如下
 
     p = 3487583947589437589237958723892346254777 q = 8767867843568934765983476584376578389
 
@@ -217,3 +215,85 @@ pycrypto
 
     ➜  Jarvis OJ-Basic-veryeasyRSA git:(master) ✗ python exp.py       
     19178568796155560423675975774142829153827883709027717723363077606260717434369
+
+2018 CodeGate CTF Rsababy
+-------------------------
+
+程序就是一个简单的 rsa，不过程序还生成了两个奇怪的数
+
+.. code:: python
+
+        e = 65537
+        n = p * q
+        pi_n = (p-1)*(q-1)
+        d = mulinv(e, pi_n)
+        h = (d+p)^(d-p)
+        g = d*(p-0xdeadbeef)
+
+所以，问题应该出自这里，所以我们就从此下手，不放这里先假设 const = 0xdeadbeef。那么
+
+.. math::
+
+
+   eg = ed*(p-const)
+
+进而，根据 RSA 可知
+
+.. math::
+
+
+   2^{eg}=2^{ed*(p-const)}=2^{p-const} \pmod n
+
+.. math::
+
+
+   2^{p-const}*2^{const-1} = 2^{p-1} \pmod n
+
+所以
+
+.. math::
+
+
+   2^{p-1} = 2^{eg}*2^{const-1}+kn
+
+而与此同时根据费马小定理，我们知道
+
+.. math::
+
+
+   2^{p-1} \equiv 1 \pmod p
+
+所以
+
+.. math::
+
+
+   p|2^{p-1}-1 | 2^{eg+const-1}-1+kn
+
+进而
+
+.. math::
+
+
+   p|2^{eg+const-1}-1
+
+所以
+
+.. math::
+
+
+   p|gcd(2^{eg+const-1}-1,n)
+
+因此，代码如下
+
+.. code:: shell
+
+    tmp = gmpy2.powmod(2,e*g+const-1,n)-1
+    p = gmpy2.gcd(tmp,n)
+    q = n/p
+    phin = (p-1)*(q-1)
+    d =gmpy2.invert(e,phin)
+    plain = gmpy2.powmod(data,d,n)
+    print hex(plain)[2:].decode('hex')
+
+这里就不标注常量了。

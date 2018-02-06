@@ -226,9 +226,9 @@
 </div>
 </div>
 </div>
-<div class="section" id="id8">
-<h2>简单练手<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h2>
-<p>这里我们以Jarvis OJ - Basic - veryeasyRSA为例进行介绍，题目如下</p>
+<div class="section" id="jarvis-oj-basic-veryeasyrsa">
+<h2>Jarvis OJ - Basic - veryeasyRSA<a class="headerlink" href="#jarvis-oj-basic-veryeasyrsa" title="永久链接至标题">¶</a></h2>
+<p>题目如下</p>
 <blockquote>
 <div><p>p = 3487583947589437589237958723892346254777 q = 8767867843568934765983476584376578389</p>
 <p>e = 65537</p>
@@ -240,6 +240,52 @@
 19178568796155560423675975774142829153827883709027717723363077606260717434369
 </pre></div>
 </div>
+</div>
+<div class="section" id="codegate-ctf-rsababy">
+<h2>2018 CodeGate CTF Rsababy<a class="headerlink" href="#codegate-ctf-rsababy" title="永久链接至标题">¶</a></h2>
+<p>程序就是一个简单的 rsa，不过程序还生成了两个奇怪的数</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">e</span> <span class="o">=</span> <span class="mi">65537</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="n">q</span>
+<span class="n">pi_n</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">q</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">mulinv</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">pi_n</span><span class="p">)</span>
+<span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span><span class="o">+</span><span class="n">p</span><span class="p">)</span><span class="o">^</span><span class="p">(</span><span class="n">d</span><span class="o">-</span><span class="n">p</span><span class="p">)</span>
+<span class="n">g</span> <span class="o">=</span> <span class="n">d</span><span class="o">*</span><span class="p">(</span><span class="n">p</span><span class="o">-</span><span class="mh">0xdeadbeef</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>所以，问题应该出自这里，所以我们就从此下手，不放这里先假设 const = 0xdeadbeef。那么</p>
+<div class="math">
+\[eg = ed*(p-const)\]</div>
+<p>进而，根据 RSA 可知</p>
+<div class="math">
+\[2^{eg}=2^{ed*(p-const)}=2^{p-const} \pmod n\]</div>
+<div class="math">
+\[2^{p-const}*2^{const-1} = 2^{p-1} \pmod n\]</div>
+<p>所以</p>
+<div class="math">
+\[2^{p-1} = 2^{eg}*2^{const-1}+kn\]</div>
+<p>而与此同时根据费马小定理，我们知道</p>
+<div class="math">
+\[2^{p-1} \equiv 1 \pmod p\]</div>
+<p>所以</p>
+<div class="math">
+\[p|2^{p-1}-1 | 2^{eg+const-1}-1+kn\]</div>
+<p>进而</p>
+<div class="math">
+\[p|2^{eg+const-1}-1\]</div>
+<p>所以</p>
+<div class="math">
+\[p|gcd(2^{eg+const-1}-1,n)\]</div>
+<p>因此，代码如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span><span class="n">tmp</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">e</span><span class="o">*</span><span class="n">g</span><span class="o">+</span><span class="n">const</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">gcd</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">n</span><span class="o">/</span><span class="n">p</span>
+<span class="n">phin</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">q</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">d</span> <span class="o">=</span><span class="n">gmpy2</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="n">phin</span><span class="p">)</span>
+<span class="n">plain</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">d</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+<span class="nb">print</span> <span class="nb">hex</span><span class="p">(</span><span class="n">plain</span><span class="p">)[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>这里就不标注常量了。</p>
 </div>
 </div>
 
@@ -312,7 +358,8 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l4"><a class="reference internal" href="#id8">简单练手</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#jarvis-oj-basic-veryeasyrsa">Jarvis OJ - Basic - veryeasyRSA</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#codegate-ctf-rsababy">2018 CodeGate CTF Rsababy</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rsa_module_attack.html">模数相关攻击</a></li>
