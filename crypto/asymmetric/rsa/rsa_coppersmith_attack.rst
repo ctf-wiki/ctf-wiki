@@ -4,35 +4,37 @@ Coppersmith Related Attack
 ==========================
 
 基本原理
-^^^^^^^^
+--------
 
-首先，我们来简单介绍一下 **Coppersmith method** 方法，该方法由 `Don Coppersmith <https://en.wikipedia.org/wiki/Don_Coppersmith>`_
+首先，我们来简单介绍一下\ **Coppersmith method** 方法，该方法由\ `Don Coppersmith <https://en.wikipedia.org/wiki/Don_Coppersmith>`__
 提出，可以用来找到单变量或者二元变量的多项式在模某个整数下的根，这里我们主要以单变量为主，假设我们有如下的一个在模N意义下的多项式F
 
-.. math:: F(x)=x^n+a_{n-1}x^{n-1} + \cdots + a_1x+a_0
+.. math::
 
-假设该多项式在模N意义下有一个根 :math:`x_0` ，这里我们令 :math:`x_0 < M^{\frac{1}{n}}` 。如果等号成立的话，显然只有 :math:`x^n` 这一项，那0就是，也满足。
 
-**Coppersmith method** 主要是通过\ `Lenstra–Lenstra–Lovász lattice basis
-reduction
-algorithm <https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm>`_
-(LLL) 方法来找到与该函数具有相同根 :math:`x_0` , 但有更小系数的多项式。关于更加详细的介绍，请自行搜索。
+   F(x)=x^n + a_{n-1} x^{n-1} + \cdots + a_1x + a_0
+
+假设该多项式在模N意义下有一个根\ :math:`x_0` ，这里我们令\ :math:`x_0 < M^{\frac{1}{n}}` 。如果等号成立的话，显然只有\ :math:`x^n` 这一项，那0就是，也满足。
+
+**Coppersmith method** 主要是通过\ `Lenstra–Lenstra–Lovász lattice basis reduction
+algorithm <https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm>`__ (LLL) 方法来找到与该函数具有相同根\ :math:`x_0`
+但有更小系数的多项式。关于更加详细的介绍，请自行搜索。
 
 Basic Broadcast Attack
-^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 攻击条件
---------
+~~~~~~~~
 
-如果一个用户使用同一个加密指数e加密了同一个密文，并发送给了其他e个用户。那么就会产生广播攻击。这一攻击由Håstad提出。
+如果一个用户使用同一个加密指数e加密了同一个密文，并发送给了其他e个用户。那么就会产生广播攻击。这一攻击由 Håstad 提出。
 
 攻击原理
---------
+~~~~~~~~
 
-这里我们假设e为3，并且加密者使用了三个不同的模数 :math:`n_1,n_2,n_3`
-给三个不同的用户发送了加密后的消息m，如下
+这里我们假设e为3，并且加密者使用了三个不同的模数\ :math:`n_1,n_2,n_3` 给三个不同的用户发送了加密后的消息m，如下
 
 .. math::
+
 
    \begin{align}
    c_1&=m^3\bmod n_1 \\
@@ -40,26 +42,22 @@ Basic Broadcast Attack
    c_3&=m^3\bmod n_3 \\
    \end{align}
 
-这里我们假设 :math:`n_1,n_2,n_3`
-互相互素，不然，我们就可以直接进行分解，然后得到d，进而然后直接解密。
+这里我们假设\ :math:`n_1,n_2,n_3​` 互相互素，不然，我们就可以直接进行分解，然后得到d，进而然后直接解密。
 
-同时，我们假设 :math:`m<n_i, 1\leq i \leq 3` 。如果这个条件不满足的话，就会使得情况变得比较复杂，这里我们暂不讨论。
+同时，我们假设\ :math:`m<n_i, 1\leq i \leq 3` 。如果这个条件不满足的话，就会使得情况变得比较复杂，这里我们暂不讨论。
 
-既然他们互素，那么我们可以根据中国剩余定理，可得 :math:`m^3 \equiv C \bmod n_1n_2n_3` 。
+既然他们互素，那么我们可以根据中国剩余定理，可得\ :math:`m^3 \equiv C \bmod n_1n_2n_3` 。
 
-此外，既然 :math:`m<n_i, 1\leq i \leq 3`
-，那么我们知道 :math:`m^3 < n_1n_2n_3` 并且\ :math:`C<m^3 < n_1n_2n_3`
-，那么 :math:`m^3 = C` ，我们对C开三次根即可得到m的值。
+此外，既然\ :math:`m<n_i, 1\leq i \leq 3` ，那么我们知道\ :math:`m^3 < n_1n_2n_3` 并且\ :math:`C<m^3 < n_1n_2n_3` ，那么\ :math:`m^3 = C` ，我们对C开三次根即可得到m的值。
 
 对于较大的e来说，我们只是需要更多的明密文对。
 
-例子
-----
+SCTF RSA3 LEVEL4
+~~~~~~~~~~~~~~~~
 
-参考 http://ohroot.com/2016/07/11/rsa-in-ctf。
+参考http://ohroot.com/2016/07/11/rsa-in-ctf。
 
-这里我们以SCTF
-RSA3中的level4为例进行介绍，首先编写代码提取cap包中的数据，如下
+这里我们以SCTF RSA3中的level4为例进行介绍，首先编写代码提取cap包中的数据，如下
 
 .. code:: shell
 
@@ -137,51 +135,52 @@ RSA3中的level4为例进行介绍，首先编写代码提取cap包中的数据�
 
     H1sTaDs_B40aDcadt_attaCk_e_are_same_and_smA9l
 
+题目
+~~~~
+
+-  2017 WHCTF OldDriver
+
 Broadcast Attack with Linear Padding
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
-对于具有线性填充的情况下，仍然可以攻击，这时候就会使用\ **Coppersmith
-method** 的方法了，这里暂不介绍。可以参考
+对于具有线性填充的情况下，仍然可以攻击，这时候就会使用\ **Coppersmith method** 的方法了，这里暂不介绍。可以参考
 
--  https://en.wikipedia.org/wiki/Coppersmith%27s\_attack#Generalizations
+-  https://en.wikipedia.org/wiki/Coppersmith%27s_attack#Generalizations
 
 Related Message Attack
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------
+
+.. 攻击条件-1:
 
 攻击条件
---------
+~~~~~~~~
 
-当Alice使用同一公钥对两个具有某种线性关系的消息M1与M2
-进行加密，并将加密后的消息C1，C2发送给了Bob时，我们就可能可以获得对应的消息M1与M2。这里我们假设模数为N，两者之间的线性关系如下
+当Alice使用同一公钥对两个具有某种线性关系的消息M1与M2 进行加密，并将加密后的消息C1，C2发送给了Bob时，我们就可能可以获得对应的消息M1与M2。这里我们假设模数为N，两者之间的线性关系如下
 
 :math:`M_1 \equiv f(M_2) \bmod N`
 
-其中f为一个线性函数，比如说 :math:`f=ax+b` 。
+其中f为一个线性函数，比如说\ :math:`f=ax+b`\ 。
 
-在具有较小错误概率下的情况下，其复杂度为 :math:`O(elog^2N)` 。
+在具有较小错误概率下的情况下，其复杂度为\ :math:`O(elog^2N)` 。
 
 这一攻击由Franklin，Reiter提出。
 
+.. 攻击原理-1:
+
 攻击原理
---------
+~~~~~~~~
 
-首先，我们知道 :math:`C_1 \equiv M_1 ^e \bmod N`
-，并且 :math:`M_1 \equiv f(M_2) \bmod N`
-，那么我们可以知道 :math:`M_2` 是 :math:`f(x)^e \equiv C_1 \bmod N`
-的一个解，即它是方程 :math:`f(x)^e-C_1`
-在模N意义下的一个根。同样的， :math:`M_2` 是 :math:`x^e - C_2`
-在模N意义下的一个根。所以说 :math:`x-M_2`
-同时整除以上两个多项式。因此，我们可以求得两个多项式的最大公因子，如果最大公因子恰好是线性的话，那么我们就求得了 :math:`M_2`
-。需要注意的是，在e=3的情况下，最大公因子一定是线性的。
+首先，我们知道\ :math:`C_1 \equiv M_1 ^e \bmod N` ，并且\ :math:`M_1 \equiv f(M_2) \bmod N` ，那么我们可以知道\ :math:`M_2` 是\ :math:`f(x)^e \equiv C_1 \bmod N`
+的一个解，即它是方程\ :math:`f(x)^e-C_1` 在模N意义下的一个根。同样的，\ :math:`M_2` 是\ :math:`x^e - C_2` 在模N意义下的一个根。所以说\ :math:`x-M_2`
+同时整除以上两个多项式。因此，我们可以求得两个多项式的最大公因子，如果最大公因子恰好是线性的话，那么我们就求得了\ :math:`M_2` 。需要注意的是，在e=3的情况下，最大公因子一定是线性的。
 
-这里我们关注一下e=3，且 :math:`f(x)=ax+b` 的情况。首先我们有
+这里我们关注一下e=3，且\ :math:`f(x)=ax+b` 的情况。首先我们有
 
-:math:`C_1 \equiv M_1 ^3 \bmod N` 且 :math:`M_1 \equiv aM_2+b \bmod N`
+:math:`C_1 \equiv M_1 ^3 \bmod N` 且\ :math:`M_1 \equiv aM_2+b \bmod N`
 
 那么我们有
 
-:math:`C_1 \equiv (aM_2+b)^3 \bmod N`
-且 :math:`C_2 \equiv M_2^3 \bmod N`
+:math:`C_1 \equiv (aM_2+b)^3 \bmod N` 且\ :math:`C_2 \equiv M_2^3 \bmod N`
 
 我们需要明确一下我们想要得到的是消息M，所以需要将其单独构造出来。
 
@@ -219,16 +218,13 @@ Related Message Attack
 
 上面的式子中右边所有的内容都是已知的内容，所以我们可以直接获取对应的消息。
 
-有兴趣的可以进一步阅读\ `A New Related Message Attack on
-RSA <https://www.iacr.org/archive/pkc2005/33860001/33860001.pdf>`__
+有兴趣的可以进一步阅读\ `A New Related Message Attack on RSA <https://www.iacr.org/archive/pkc2005/33860001/33860001.pdf>`__
 以及\ `paper <https://www.cs.unc.edu/~reiter/papers/1996/Eurocrypt.pdf>`__\ 这里暂不做过多的讲解。
 
 例子
-----
+~~~~
 
-这里我们以SCTF
-rsa3中的level3为例进行介绍。首先，跟踪TCP流可以知道，加密方式是将明文加上用户的user
-id进行加密，而且还存在多组。这里我们选择第0组和第9组，他们的模数一样，解密脚本如下
+这里我们以SCTF rsa3中的level3为例进行介绍。首先，跟踪TCP流可以知道，加密方式是将明文加上用户的user id进行加密，而且还存在多组。这里我们选择第0组和第9组，他们的模数一样，解密脚本如下
 
 .. code:: python
 
@@ -302,26 +298,31 @@ id进行加密，而且还存在多组。这里我们选择第0组和第9组，�
     Untrusted users could put files in this directory which might then be imported by your Python code. As a general precaution from similar exploits, you should not execute Python code from this directory
     F4An8LIn_rElT3r_rELa53d_Me33Age_aTtaCk_e_I2_s7aLL
 
+.. 题目-1:
+
 题目
-----
+~~~~
 
 -  hitcon 2014 rsaha
 
 Coppersmith’s short-pad attack
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
+
+.. 攻击条件-2:
 
 攻击条件
---------
+~~~~~~~~
 
-目前在大部分消息加密之前都会进行padding，但是如果padding的长度过短，也有 **可能** 被很容易地攻击。
+目前在大部分消息加密之前都会进行padding，但是如果padding的长度过短，也有\ **可能**\ 被很容易地攻击。
+
+.. 攻击原理-2:
 
 攻击原理
---------
+~~~~~~~~
 
 我们假设爱丽丝要给鲍勃发送消息，首先爱丽丝对要加密的消息M进行随机padding，然后加密得到密文C1，发送给鲍勃。这时，中间人皮特截获了密文。一段时间后，爱丽丝没有收到鲍勃的回复，再次对要加密的消息M进行随机padding，然后加密得到密文C2，发送给Bob。皮特再一次截获。这时，皮特就\ **可能**\ 可以利用如下原理解密。
 
-这里我们假设模数N的长度为k，并且padding的长度为 :math:`m=\lfloor \frac{k}{e^2} \rfloor`
-。此外，假设要加密的消息的长度最多为k-m比特，padding的方式如下
+这里我们假设模数N的长度为k，并且padding的长度为\ :math:`m=\lfloor \frac{k}{e^2} \rfloor` 。此外，假设要加密的消息的长度最多为k-m比特，padding的方式如下
 
 :math:`M_1=2^mM+r_1, 0\leq r_1\leq 2^m`
 
@@ -335,49 +336,51 @@ Coppersmith’s short-pad attack
 
 :math:`g_2(x,y)=(x+y)^e-C_2`
 
-其中 :math:`y=r_2-r_1`
-。显然这两个方程具有相同的根M1。然后还有一系列的推导。。。
+其中\ :math:`y=r_2-r_1` 。显然这两个方程具有相同的根M1。然后还有一系列的推导。。。
 
 Known High Bits Message Attack
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
+
+.. 攻击条件-3:
 
 攻击条件
---------
+~~~~~~~~
 
 这里我们假设我们首先加密了消息m，如下
 
 :math:`C\equiv m^d \bmod N`
 
-并且我们假设我们知道消息m的很大的一部分 :math:`m_0`
-，即 :math:`m=m_0+x` ，但是我们不知道 :math:`x`
-。那么我们就有可能通过该方法进行恢复消息。
+并且我们假设我们知道消息m的很大的一部分\ :math:`m_0` ，即\ :math:`m=m_0+x` ，但是我们不知道\ :math:`x` 。那么我们就有可能通过该方法进行恢复消息。
 
 例子1
------
+~~~~~
 
-可以参考 https://github.com/mimoo/RSA-and-LLL-attacks。
+可以参考https://github.com/mimoo/RSA-and-LLL-attacks。
 
 例子2
------
+~~~~~
 
 Factoring with High Bits Known
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
+
+.. 攻击条件-4:
 
 攻击条件
---------
+~~~~~~~~
 
 当我们知道一个公钥中模数N的一个因子的较高位时，我们就有一定几率来分解N。
 
 攻击工具
---------
+~~~~~~~~
 
-请参考 https://github.com/mimoo/RSA-and-LLL-attacks 。上面有使用教程。
+请参考https://github.com/mimoo/RSA-and-LLL-attacks 。上面有使用教程。
+
+.. 例子1-1:
 
 例子1
------
+~~~~~
 
-参考 https://github.com/mimoo/RSA-and-LLL-attacks
-。这里我们关注下面的代码
+参考https://github.com/mimoo/RSA-and-LLL-attacks 。这里我们关注下面的代码
 
 .. code:: python
 
@@ -391,14 +394,13 @@ Factoring with High Bits Known
 
 其中，
 
--  必须满足 :math:`q\geq N^{beta}` ，所以这里给出了 :math:`beta=0.5`
-   ，显然两个因数中必然有一个是大于的。
--  XX是 :math:`f(x)=q+x`
-   在模q意义下的根的上界，自然我们可以选择调整它，这里其实也表明了我们已知的 :math:`q`
-   与因数q之间可能的差距。
+-  必须满足 :math:`q\geq N^{beta}` ，所以这里给出了\ :math:`beta=0.5` ，显然两个因数中必然有一个是大于的。
+-  XX是$f(x)=q’+x $ 在模q意义下的根的上界，自然我们可以选择调整它，这里其实也表明了我们已知的\ :math:`q'` 与因数q之间可能的差距。
+
+.. 例子2-1:
 
 例子2
------
+~~~~~
 
 这里我们以2016年HCTF中的RSA2为例进行介绍。
 
@@ -484,7 +486,7 @@ Factoring with High Bits Known
             if gcd(e2, phi_n) == 1:
                 break
 
-我们的得到的n=p\*q。而p，q，以及我们已知的e都在gen\_key函数中生成。看一看gen\_key函数
+我们的得到的n=p*q。而p，q，以及我们已知的e都在gen_key函数中生成。看一看gen_key函数
 
 .. code:: python
 
@@ -517,9 +519,9 @@ Factoring with High Bits Known
 
 首先，程序先得到了1024比特位的素数p，并且gcd(2,p-1)=1。
 
-然后，程序又得到了一个1024比特位的素数q\_t，并且计算n\_t=p\*q\_t。
+然后，程序又得到了一个1024比特位的素数q_t，并且计算n_t=p*q_t。
 
-下面多次调用了get\_bit函数，我们来简单分析一下
+下面多次调用了get_bit函数，我们来简单分析一下
 
 .. code:: python
 
@@ -540,10 +542,8 @@ Factoring with High Bits Known
 
 可以看出根据dire(ction)的不同，会得到不同的数
 
--  dire=1时，程序首先计算number的二进制位数sn，如果不是8
-   的整数倍的话，就将sn增大为8的整数倍，然后返回number右移(sn-n\_bit)的数字。其实
-   就是最多保留number的n\_bit位。
--  dire=0时，程序直接获取number的低n\_bit位。
+-  dire=1时，程序首先计算number的二进制位数sn，如果不是8 的整数倍的话，就将sn增大为8的整数倍，然后返回number右移(sn-n_bit)的数字。其实 就是最多保留number的n_bit位。
+-  dire=0时，程序直接获取number的低n_bit位。
 
 然后我们再来看程序
 
@@ -555,8 +555,8 @@ Factoring with High Bits Known
 
 这三个操作分别做了如下的事情
 
--  t为n\_t的最多高k/16，即128位，位数不固定。
--  y为n\_t的低5\*k/8位，即1280位，位数固定。
+-  t为n_t的最多高k/16，即128位，位数不固定。
+-  y为n_t的低5*k/8位，即1280位，位数固定。
 -  p4为p的最多高5k/16位，即640位，位数不固定。
 
 此后，程序有如下操作
@@ -565,7 +565,7 @@ Factoring with High Bits Known
 
         u = pi_b(p4, 1)
 
-利用pi\_b对p4进行了加密
+利用pi_b对p4进行了加密
 
 .. code:: python
 
@@ -604,17 +604,15 @@ Factoring with High Bits Known
             q ^= m
         return (p, q, e)
 
-程序将t，u，y拼接在一起得到n，进而，程序得到了q，并对q的低k/16位做了抑或，然后返回q'。
+程序将t，u，y拼接在一起得到n，进而，程序得到了q，并对q的低k/16位做了抑或，然后返回q’。
 
-在主程序里，再一次得到了n'=p\*q'。这里我们仔细分析一下
+在主程序里，再一次得到了n’=p*q’。这里我们仔细分析一下
 
 :math:`n'=p*(q+random(2^{k/16}))`
 
-而p是k/2位的，所以说，random的部分最多可以影响原来的n的最低的 :math:`k/2+k/16=9k/16`
-比特位。
+而p是k/2位的，所以说，random的部分最多可以影响原来的n的最低的\ :math:`k/2+k/16=9k/16` 比特位。
 
-而，我们还知道n的最低的5k/8=10k/16
-比特为其实就是y，所以其并没有影响到u，即使影响到也就最多影响到一位。
+而，我们还知道n的最低的5k/8=10k/16 比特为其实就是y，所以其并没有影响到u，即使影响到也就最多影响到一位。
 
 所以我们首先可以利用我们得到的n来获取u，如下
 
@@ -670,8 +668,8 @@ Factoring with High Bits Known
         flag = hex(int(flag))[2:-1]
         print binascii.unhexlify(flag)
 
-关于small\_roots的使用，可以参考 http://doc.sagemath.org/html/en/reference/polynomial\_rings/sage/rings/polynomial/polynomial\_modn\_dense\_ntl.html#sage.rings.polynomial.polynomial\_modn\_dense\_ntl.small\_roots
-。
+关于small_roots的使用，可以参考\ `SAGE
+说明 <http://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots>`__\ 。
 
 结果如下
 
@@ -687,22 +685,28 @@ Factoring with High Bits Known
     1
     hctf{d8e8fca2dc0f896fd7cb4cb0031ba249}
 
+.. 题目-2:
+
 题目
-----
+~~~~
 
 -  2016 湖湘杯 简单的RSA
+-  2017 WHCTF Untitled
 
 Boneh and Durfee attack
-^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
+
+.. 攻击条件-5:
 
 攻击条件
---------
+~~~~~~~~
 
-当d较小时，满足 :math:`d \leq N^{0.292}`
-时，我们可以利用该工具，在一定程度上该要攻击比wiener attack要强一些。
+当d较小时，满足\ :math:`d\leq N^{0.292}` 时，我们可以利用该工具，在一定程度上该要攻击比wiener attack要强一些。
+
+.. 攻击原理-3:
 
 攻击原理
---------
+~~~~~~~~
 
 这里简单说一下原理
 
@@ -722,26 +726,29 @@ Boneh and Durfee attack
 
 :math:`k(N-p-q+1)+1 \equiv 0 \bmod e`
 
-我们假设 :math:`A=N+1` ， :math:`y=-p-q` 那么
+我们假设\ :math:`A=N+1`\ ，\ :math:`y=-p-q` 那么
 
 原式可化为
 
 :math:`f(k,y)=k(A+y)+1 \equiv 0 \bmod e`
 
-如果我们求得了该二元方程的根，那么我们自然也就可以解一元二次方程( :math:`N=pq,p+q=-y` )来得到p与q。
+如果我们求得了该二元方程的根，那么我们自然也就可以解一元二次方程(\ :math:`N=pq,p+q=-y`)来得到p与q。
+
+.. 攻击工具-1:
 
 攻击工具
---------
+~~~~~~~~
 
-请参考 https://github.com/mimoo/RSA-and-LLL-attacks 。上面有使用教程。
+请参考https://github.com/mimoo/RSA-and-LLL-attacks。上面有使用教程。
+
+.. 例子-1:
 
 例子
-----
+~~~~
 
 这里我们以2015年PlaidCTF-CTF-Curious为例进行介绍。
 
-首先题目给了一堆N，e，c。简单看一下可以发现该e比较大。这时候我们可以考虑使用wiener
-attack，这里我们使用更强的目前介绍的攻击。
+首先题目给了一堆N，e，c。简单看一下可以发现该e比较大。这时候我们可以考虑使用wiener attack，这里我们使用更强的目前介绍的攻击。
 
 核心代码如下
 

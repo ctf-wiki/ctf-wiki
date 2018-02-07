@@ -16,8 +16,7 @@ Unicorn是一个轻量级, 多平台, 多架构的CPU模拟器框架.
 
 -  支持多种架构: Arm, Arm64 (Armv8), M68K, Mips, Sparc, & X86 (include
    X86_64).
--  对Windows和\ *nix系统(已确认包含Mac OSX, Linux, *\ BSD &
-   Solaris)的原生支持
+-  对Windows和\*nix系统(已确认包含Mac OSX, Linux, *\BSD & Solaris)的原生支持
 -  具有平台独立且简洁易于使用的API
 -  使用JIT编译技术, 性能表现优异
 

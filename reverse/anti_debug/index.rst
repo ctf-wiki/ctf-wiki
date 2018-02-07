@@ -5,11 +5,11 @@ Anti Debug Tech
    :maxdepth: 2
    :caption: Anti Debug Tech
 
-   NtGlobalFlag.rst
+   ntglobalflag.rst
    heap_flags.rst
    the_heap.rst
    int_3.rst
    isdebuggerpresent.rst
    checkremotedebuggerpresent.rst
    ntqueryinformationprocess.rst
-   
+   example.rst

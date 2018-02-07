@@ -6,9 +6,9 @@ Unsorted Bin Attack
 
 Unsorted Bin Attack，顾名思义，该攻击与 Glibc 堆管理中的的 Unsorted Bin 的机制紧密相关。
 
-Unsorted Bin Attack 被利用的前提是需要控制Unsorted Bin Chunk 的 bk 指针。
+Unsorted Bin Attack 被利用的前提是控制 Unsorted Bin Chunk 的 bk 指针。
 
-Unsorted Bin Attack 可以达到的效果是实现修改任意地址内存数值。
+Unsorted Bin Attack 可以达到的效果是实现修改任意地址值为一个较大的数值。
 
 Unsorted Bin 回顾
 -----------------
@@ -18,15 +18,16 @@ Unsorted Bin 回顾
 基本来源
 ~~~~~~~~
 
-1. 当一个较大的 chunk 被分割成两半后，如果剩下的部分大于MINSIZE，就会被放到unsorted bin中。
-2. 释放一个不属于 fast bin 的chunk，并且该 chunk 不和 top chunk紧邻时，该chunk会被首先放到 unsorted bin中。关于top chunk的解释，请参考下面的介绍。
+1. 当一个较大的 chunk 被分割成两半后，如果剩下的部分大于 MINSIZE，就会被放到 unsorted bin 中。
+2. 释放一个不属于 fast bin 的 chunk，并且该 chunk 不和 top chunk 紧邻时，该 chunk 会被首先放到 unsorted bin 中。关于top chunk的解释，请参考下面的介绍。
+3. 当进行 malloc_consolidate 时，可能会把合并后的 chunk 放到 unsorted bin 中，如果不是和 top chunk 近邻的话。
 
 基本使用情况
 ~~~~~~~~~~~~
 
-1. Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO 。
-2. 在程序 malloc 时，如果在fastbin，以及small bin中找不到对应大小的chunk，就会尝试从 Unsorted Bin中寻找chunk。如果取出来的chunk大小刚好满足，就会直接返回给用户，否则就会把这些 chunk 分别插入到对应的
-   bin 中。
+1. Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO，\ **即插入的时候插入到 unsorted bin 的头部，取出的时候从链表尾获取**\ 。
+2. 在程序 malloc 时，如果在 fastbin，small bin 中找不到对应大小的 chunk，就会尝试从 Unsorted Bin 中寻找 chunk。如果取出来的 chunk 大小刚好满足，就会直接返回给用户，否则就会把这些 chunk
+   分别插入到对应的 bin 中。
 
 原理
 ----
@@ -112,19 +113,19 @@ Unsorted Bin 回顾
 
 **初始状态时**
 
-unsorted bin的fd和bk均指向unsorted bin本身。
+unsorted bin 的 fd 和 bk 均指向 unsorted bin 本身。
 
 **执行free(p)**
 
-由于释放的chunk大小不属于fast bin范围内，所以会首先放入到unsorted bin中。
+由于释放的 chunk 大小不属于 fast bin 范围内，所以会首先放入到 unsorted bin 中。
 
 **修改p[1]**
 
-经过修改之后，原来在unsorted bin中的p的bk指针就会指向 target addr-16处伪造的chunk，即Target Value 处于伪造 chunk 的 fd 处。
+经过修改之后，原来在 unsorted bin 中的 p 的 bk 指针就会指向 target addr-16 处伪造的 chunk，即 Target Value 处于伪造 chunk 的 fd 处。
 
 **申请400大小的chunk**
 
-此时，所申请的 chunk 处于 small bin所在的范围，其对应的bin中暂时没有chunk，所以会去unsorted bin中找，发现unsorted bin不空，于是把unsorted bin 中的最后一个chunk 拿出来。
+此时，所申请的 chunk 处于 small bin 所在的范围，其对应的 bin 中暂时没有 chunk，所以会去unsorted bin中找，发现 unsorted bin 不空，于是把 unsorted bin 中的最后一个 chunk 拿出来。
 
 .. code:: c
 
@@ -159,7 +160,10 @@ unsorted bin的fd和bk均指向unsorted bin本身。
 -  unsorted_chunks(av)->bk = bck=target addr-16
 -  bck->fd = \*(target addr -16+16) = unsorted_chunks(av);
 
-即修改target处的值为unsorted bin的链表头部0x7f1c705ffb78，也就是之前输出的信息。
+**可以看出，在将 unsorted bin 的最后一个 chunk 拿出来的过程中，victim 的 fd 并没有发挥作用，所以即使我们修改了其为一个不合法的值也没有关系。**\ 然而，需要注意的是，unsorted bin
+链表可能就此破坏，在插入 chunk 时，可能会出现问题。
+
+即修改 target 处的值为 unsorted bin 的链表头部 0x7f1c705ffb78，也就是之前输出的信息。
 
 .. code:: shell
 
@@ -174,18 +178,66 @@ unsorted bin的fd和bk均指向unsorted bin本身。
 
 这看起来似乎并没有什么用处，但是其实还是有点卵用的，比如说
 
--  我们通过修改循环的次数来使得，程序可以执行多次循环。
--  我们可以修改heap中的 global_max_fast 来使得更大的chunk可以被视为 fast bin，这样我们就可以去执行一些fast bin attack了。
+-  我们通过修改循环的次数来使得程序可以执行多次循环。
+-  我们可以修改 heap 中的 global_max_fast 来使得更大的 chunk 可以被视为 fast bin，这样我们就可以去执行一些 fast bin attack了。
 
-例子1-zerostorage
------------------
+HITCON Training lab14 magic heap
+--------------------------------
+
+这里我们修改一下源程序中的 l33t 函数，以便于可以正常运行。
+
+.. code:: c
+
+    void l33t() { system("cat ./flag"); }
+
+基本信息
+~~~~~~~~
+
+.. code:: shell
+
+    ➜  hitcontraining_lab14 git:(master) file magicheap 
+    magicheap: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=9f84548d48f7baa37b9217796c2ced6e6281bb6f, not stripped
+    ➜  hitcontraining_lab14 git:(master) checksec magicheap 
+    [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unsorted_bin_attack/hitcontraining_lab14/magicheap'
+        Arch:     amd64-64-little
+        RELRO:    Partial RELRO
+        Stack:    Canary found
+        NX:       NX enabled
+        PIE:      No PIE (0x400000)
+
+可以看出，该程序是一个动态链接的64程序，主要开启了 NX 保护与 Canary 保护。
+
+基本功能
+~~~~~~~~
+
+程序大概就是自己写的堆管理器，主要有以下功能
+
+1. 创建堆。根据用户指定大小申请相应堆，并且读入指定长度的内容，但是并没有设置 NULL。
+2. 编辑堆。根据指定的索引判断对应堆是不是非空，如果非空，就根据用户读入的大小，来修改堆的内容，这里其实就出现了任意长度堆溢出的漏洞。
+3. 删除堆。根据指定的索引判断对应堆是不是非空，如果非空，就将对应堆释放并置为 NULL。
+
+同时，我们看到，当我们控制 v3 为 4869，同时控制 magic 大于 4869，就可以得到 flag 了。
+
+利用
+~~~~
+
+很显然， 我们直接利用 unsorted bin attack 即可。
+
+1. 释放一个堆块到 unsorted bin 中。
+2. 利用堆溢出漏洞修改 unsorted bin 中对应堆块的 bk 指针为 &magic-16。
+3. 触发漏洞即可。
+
+代码如下
+
+2016 0CTF zerostorage
+---------------------
 
 **注：待进一步完成。**
 
 这里我们以 2016 年 0CTF 的zerostorage为例，进行介绍。
 
 **这个题当时给了服务器的系统版本和内核版本，所以自己可以下一个一模一样的进行调试，这里我们就直接用自己的本地机器调试了。但是在目前的Ubuntu 16.04
-中，由于进一步的随机化，导致libc加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX的策略就无法再次使用，似乎只能用 angelboy 的策略了。**
+中，由于进一步的随机化，导致libc加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX 的策略就无法再次使用，似乎只能用 angelboy 的策略了。**
 
 参考文章
 

@@ -21,7 +21,7 @@
 ----
 
 示例程序可以点击此处下载:
-`3_direct2oep.zip </reverse/unpack/example/3_direct2oep.zip>`__
+`3_direct2oep.zip <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/unpack/example/3_direct2oep.zip>`__
 
 还是用的原先的notepad.exe来示例, 用\ ``Ollydbg``\ 打开后,
 我们按下\ ``ctrl+f``\ 来查找指定的字符串,
