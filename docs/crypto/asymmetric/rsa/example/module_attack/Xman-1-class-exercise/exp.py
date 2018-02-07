@@ -1,0 +1,29 @@
+import gmpy2
+n = 6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249
+e1 = 773
+
+e2 = 839
+
+message1 = 3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
+
+message2 = 5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
+# s & t
+gcd, s, t = gmpy2.gcdext(e1, e2)
+if s < 0:
+    s = -s
+    message1 = gmpy2.invert(message1, n)
+if t < 0:
+    t = -t
+    message2 = gmpy2.invert(message2, n)
+plain = gmpy2.powmod(message1, s, n) * gmpy2.powmod(message2, t, n) % n
+i = 0
+flag = ""
+plain = str(plain)
+while i < len(plain):
+    if plain[i] == '1':
+        flag += chr(int(plain[i:i + 3]))
+        i += 3
+    else:
+        flag += chr(int(plain[i:i + 2]))
+        i += 2
+print flag
