@@ -66,22 +66,104 @@
             
   <div class="section" id="id1">
 <h1>总结<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
-<p>说了那么多，有一个关键点就是我们该如何识别这些密码，我认为有以下几种方法可以进行判断几个方面</p>
+<div class="section" id="id2">
+<h2>经验<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>说了那么多，古典密码的基本解题思路可以总结如下</p>
+<ul class="simple">
+<li>已知密码，识别密码，</li>
+<li>未知密码，分析密码特性，利用暴力破解或者相应思路求解。</li>
+</ul>
+<p>我认为有以下几种方法可以用来识别密码</p>
 <ul class="simple">
 <li>加密方式判别</li>
 <li>字符集判别</li>
 <li>加密结果样子判别</li>
 </ul>
-<div class="section" id="id2">
-<h2>例子<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>题目来自实验吧中围在栅栏里的爱，题目描述</p>
+</div>
+<div class="section" id="id3">
+<h2>实验吧 围在栅栏里的爱<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<p>题目描述</p>
 <blockquote>
-<div><p>最近一直在好奇一个问题，QWE 到底等不等于 ABC？</p>
+<div><p>最近一直在好奇一个问题，QWE到底等不等于ABC？</p>
 <p>-.- .. –.- .-.. .– - ..-. -.-. –.- –. -. … — —</p>
 <p>flag格式：CTF{xxx}</p>
 </div></blockquote>
-<p>首先，根据密码样式判断是摩斯电码，解密后得到 KIQLWTFCQGNSOO，看着也不像 flag，题目中还有还有栅栏与 <code class="docutils literal"><span class="pre">QWE到底等不等于ABC</span></code>，两个都试了试之后，发现是先 QWE 然后栅栏可得到结果。</p>
-<p>首先键盘 QWE 解密，试着解密得到 <code class="docutils literal"><span class="pre">IILYOAVNEBSAHR</span></code>，继而栅栏解密得到 <code class="docutils literal"><span class="pre">ILOVESHIYANBAR</span></code>。</p>
+<p>首先，根据密码样式判断是摩斯电码，解密后得到KIQLWTFCQGNSOO，看着也不像flag，题目中还有还有栅栏与<code class="docutils literal"><span class="pre">QWE到底等不等于ABC</span></code>，两个都试了试之后，发现是先QWE然后栅栏可得到结果。</p>
+<p>首先键盘QWE解密，试着解密得到<code class="docutils literal"><span class="pre">IILYOAVNEBSAHR</span></code> 。继而栅栏解密得到<code class="docutils literal"><span class="pre">ILOVESHIYANBAR</span></code> 。</p>
+</div>
+<div class="section" id="seccon-vigenere3d">
+<h2>2017 SECCON Vigenere3d<a class="headerlink" href="#seccon-vigenere3d" title="永久链接至标题">¶</a></h2>
+<p>程序如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span>----- Vigenere3d.py
+import sys
+def _l(idx, s):
+    return s[idx:] + s[:idx]
+def main(p, k1, k2):
+    s = &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_{}&quot;
+    t = [[_l((i+j) % len(s), s) for j in range(len(s))] for i in range(len(s))]
+    i1 = 0
+    i2 = 0
+    c = &quot;&quot;
+    for a in p:
+        c += t[s.find(a)][s.find(k1[i1])][s.find(k2[i2])]
+        i1 = (i1 + 1) % len(k1)
+        i2 = (i2 + 1) % len(k2)
+    return c
+print main(sys.argv[1], sys.argv[2], sys.argv[2][::-1])
+-----
+$ python Vigenere3d.py SECCON{**************************} **************
+POR4dnyTLHBfwbxAAZhe}}ocZR3Cxcftw9
+</pre></div>
+</div>
+<p>首先，我们先来分析一下 t 的构成</p>
+<p><span class="math">\(t[i][j]=s[i+j:]+s[:i+j]\)</span></p>
+<p><span class="math">\(t[i][k]=s[i+k:]+s[:i+k]\)</span></p>
+<p><span class="math">\(t[i][j][k]\)</span> 为 <span class="math">\(t[i][j]\)</span> 中的第 k 个字符，<span class="math">\(t[i][k][j]\)</span> 为 <span class="math">\(t[i][k]\)</span> 中的第 j 个字符。无论是 <span class="math">\(i+j+k\)</span> 是否超过 len(s) 两者都始终保持一致，即
+<span class="math">\(t[i][j][k]=t[i][k][j]\)</span> 。</p>
+<p>故而，其实对于相同的明文来说，可能有多个秘钥使其生成相同的密文。</p>
+<p>然而上面分析就是单纯地分析而已，，下面开始正题</p>
+<p>不难看出，密文的每一位只与明文的相应位相关，而且，秘钥的每一位的空间最大也就是 s 的大小，所以我们可以使用爆破来获取秘钥。这里根据上述命令行提示，可以知道秘钥长度为
+14，恰好明文前面7个字节已知。恢复秘钥的 exp 如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_key</span><span class="p">(</span><span class="n">plain</span><span class="p">,</span> <span class="n">cipher</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_</span><span class="si">{}</span><span class="s2">&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">[[</span><span class="n">_l</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">))]</span>
+         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">))]</span>
+    <span class="n">i1</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">i2</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">14</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plain</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">i1</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">i2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">t</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">plain</span><span class="p">[</span><span class="n">i</span><span class="p">])][</span><span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i1</span><span class="p">])][</span><span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i2</span><span class="p">])]</span> <span class="o">==</span> <span class="n">cipher</span><span class="p">[</span>
+                        <span class="n">i</span><span class="p">]:</span>
+                    <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i1</span><span class="p">]</span>
+                    <span class="n">key</span><span class="p">[</span><span class="mi">13</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>恢复明文的脚本如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">decrypt</span><span class="p">(</span><span class="n">cipher</span><span class="p">,</span> <span class="n">k1</span><span class="p">,</span> <span class="n">k2</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_</span><span class="si">{}</span><span class="s2">&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">[[</span><span class="n">_l</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">))]</span>
+         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">))]</span>
+    <span class="n">i1</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">i2</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">plain</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cipher</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">k1</span><span class="p">[</span><span class="n">i1</span><span class="p">])][</span><span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">k2</span><span class="p">[</span><span class="n">i2</span><span class="p">])]</span> <span class="o">==</span> <span class="n">a</span><span class="p">:</span>
+                <span class="n">plain</span> <span class="o">+=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">break</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="p">(</span><span class="n">i1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span>
+        <span class="n">i2</span> <span class="o">=</span> <span class="p">(</span><span class="n">i2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">k2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">plain</span>
+</pre></div>
+</div>
+<p>得到明文如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2017_seccon_vigenere3d git:(master) python exp.py
+SECCON{Welc0me_to_SECCON_CTF_2017}
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -133,7 +215,9 @@
 <li class="toctree-l2"><a class="reference internal" href="polyalphabetic.html">多表代换加密</a></li>
 <li class="toctree-l2"><a class="reference internal" href="others.html">其他类型</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">总结</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id2">例子</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">经验</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">实验吧 围在栅栏里的爱</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#seccon-vigenere3d">2017 SECCON Vigenere3d</a></li>
 </ul>
 </li>
 </ul>
