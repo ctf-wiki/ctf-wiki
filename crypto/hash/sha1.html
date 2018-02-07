@@ -70,11 +70,11 @@
 <h2>基本描述<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
 <p>SHA1的输入输出如下</p>
 <ul class="simple">
-<li>输入：任意长的消息，分为512比特长的分组，在消息右边增加若干比特，使其长度与448模512同余。</li>
-<li>输出：160比特的消息摘要。</li>
+<li>输入：任意长的消息，分为 <strong>512 比特</strong>长的分组。首先在消息右侧补比特 1，然后再补若干个比特 0，直到消息的比特长度满足对 512 取模后余数是 448，使其与 448 模 512 同余。</li>
+<li>输出：160 比特的消息摘要。</li>
 </ul>
 <p>关于详细的介绍，请自行搜索。</p>
-<p>一般来说，我们可以通过函数的初始化来判断是不是MD5函数。一般来说，如果一个函数有如下五个初始化的变量，可以猜测该函数为SHA1函数，因为这是SHA1函数的初始化IV。</p>
+<p>一般来说，我们可以通过函数的初始化来判断是不是 SHA1 函数。一般来说，如果一个函数有如下五个初始化的变量，可以猜测该函数为 SHA1 函数，因为这是 SHA1 函数的初始化IV。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x67452301</span>
 <span class="mh">0xEFCDAB89</span>
 <span class="mh">0x98BADCFE</span>
@@ -82,13 +82,61 @@
 <span class="mh">0xC3D2E1F0</span>
 </pre></div>
 </div>
-<p>前面四个与MD5类似，后面的是新加的。</p>
+<p>前面四个与 MD5 类似，后面的是新加的。</p>
 </div>
 <div class="section" id="id2">
 <h2>破解<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>就目前而言，SHA1 已经不再安全了，因为之前谷歌公布了求得两个 sha1 值一样的 pdf，具体请参考 <a class="reference external" href="https://shattered.io/">shattered</a> 。</p>
+<p>这里还有一个比较有意思的网站：<a class="reference external" href="https://alf.nu/SHA1">https://alf.nu/SHA1</a>。</p>
+</div>
+<div class="section" id="seccon-sha1-is-dead">
+<h2>2017 SECCON SHA1 is dead<a class="headerlink" href="#seccon-sha1-is-dead" title="永久链接至标题">¶</a></h2>
+<p>题目描述如下</p>
+<ol class="arabic simple">
+<li>file1 != file2</li>
+<li>SHA1(file1) == SHA1(file2)</li>
+<li>SHA256(file1) &lt;&gt; SHA256(file2)</li>
+<li>2017KiB &lt; sizeof(file1) &lt; 2018KiB</li>
+<li>2017KiB &lt; sizeof(file2) &lt; 2018KiB</li>
+</ol>
+<p>其中 1KiB = 1024 bytes</p>
+<p>即我们需要找到两个文件满足上述的约束。</p>
+<p>这里立马就想到谷歌之前公布的文档，而且，非常重要的是，只要使用给定的前 320 字节，后面任意添加一样的字节获取的哈希仍然一样，这里我们测试如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2017_seccon_sha1_is_dead git:(master) dd bs=1 count=320 &lt;shattered-1.pdf| sha1sum
+记录了320+0 的读入
+记录了320+0 的写出
+320 bytes copied, 0.00796817 s, 40.2 kB/s
+f92d74e3874587aaf443d1db961d4e26dde13e9c  -
+➜  2017_seccon_sha1_is_dead git:(master) dd bs=1 count=320 &lt;shattered-2.pdf| sha1sum
+记录了320+0 的读入
+记录了320+0 的写出
+320 bytes copied, 0.00397215 s, 80.6 kB/s
+f92d74e3874587aaf443d1db961d4e26dde13e9c  -
+</pre></div>
+</div>
+<p>进而我们直接写程序即可，如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">hashlib</span> <span class="k">import</span> <span class="n">sha1</span>
+<span class="kn">from</span> <span class="nn">hashlib</span> <span class="k">import</span> <span class="n">sha256</span>
+
+<span class="n">pdf1</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;./shattered-1.pdf&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">320</span><span class="p">)</span>
+<span class="n">pdf2</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;./shattered-2.pdf&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">320</span><span class="p">)</span>
+<span class="n">pdf1</span> <span class="o">=</span> <span class="n">pdf1</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">2017</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">320</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\00</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1">#padding pdf to 2017Kib + 1</span>
+<span class="n">pdf2</span> <span class="o">=</span> <span class="n">pdf2</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">2017</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">320</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\00</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">open</span><span class="p">(</span><span class="s2">&quot;upload1&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pdf1</span><span class="p">)</span>
+<span class="nb">open</span><span class="p">(</span><span class="s2">&quot;upload2&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pdf2</span><span class="p">)</span>
+
+<span class="nb">print</span> <span class="n">sha1</span><span class="p">(</span><span class="n">pdf1</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<span class="nb">print</span> <span class="n">sha1</span><span class="p">(</span><span class="n">pdf2</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<span class="nb">print</span> <span class="n">sha256</span><span class="p">(</span><span class="n">pdf1</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<span class="nb">print</span> <span class="n">sha256</span><span class="p">(</span><span class="n">pdf2</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="id3">
-<h2>题目<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<h2>参考文献<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="https://www.slideshare.net/herumi/googlesha1">https://www.slideshare.net/herumi/googlesha1</a></li>
+</ul>
 </div>
 </div>
 
@@ -143,7 +191,8 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">SHA1</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id1">基本描述</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">破解</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">题目</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#seccon-sha1-is-dead">2017 SECCON SHA1 is dead</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">参考文献</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="attack.html">Hash Attack</a></li>
