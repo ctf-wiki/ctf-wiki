@@ -1,34 +1,34 @@
-# 程序执行流程
+## 程序执行流程
 
 **参考 Execution Angleboye@Bamboofox 。**
 
-# 基本概述
+## 基本概述
 
-## 静态执行
+### 静态执行
 
 这里给出程序静态执行的基本过程。
 
 ![](/executable/elf/figure/run_static_linking.png)
 
-## 动态执行
+### 动态执行
 
 ![](/executable/elf/figure/run_dynamic_linking.png)
 
-## 基本操作说明
+### 基本操作说明
 
-### sys_execve
+#### sys_execve
 
 该函数主要用于执行一个新的程序，即执行我们想要执行的程序，会检查相应的argv以及envp等参数。
 
-### do_execve
+#### do_execve
 
 该函数打开目标映像文件，并从目标文件的开始处读入指定长度的（目前为128）字节来获取相应目标文件的基本信息。
 
-### search_binary_handler
+#### search_binary_handler
 
 该函数会搜索支持处理当前类型的二进制文件类型队列，以便于让各种可执行程序的处理程序进行相应的处理。
 
-### load_elf_binary
+#### load_elf_binary
 
 该函数的主要处理流程如下
 
@@ -51,7 +51,7 @@
   - 动态链接情况下，将sys_execve的返回地址改为loader(ld.so)的entry point。
   - 静态链接情况下，将sys_execve的返回地址改为程序的入口点。
 
-### ld.so
+#### ld.so
 
 该文件有以下功能
 
@@ -60,7 +60,7 @@
   - 初始化GOT表。
   - 将symbol table合并到global symbol table。
 
-### _start
+#### _start
 
 _start函数会将以下项目交给libc_start_main
 
