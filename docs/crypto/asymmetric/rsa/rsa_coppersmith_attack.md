@@ -1,5 +1,3 @@
-# Coppersmith Related  Attack
-
 ## 基本原理
 
 首先，我们来简单介绍一下**Coppersmith method** 方法，该方法由[Don Coppersmith](https://en.wikipedia.org/wiki/Don_Coppersmith) 提出，可以用来找到单变量或者二元变量的多项式在模某个整数下的根，这里我们主要以单变量为主，假设我们有如下的一个在模N意义下的多项式F

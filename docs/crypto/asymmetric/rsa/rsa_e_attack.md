@@ -1,5 +1,3 @@
-# 公钥指数相关攻击
-
 ## 小公钥指数攻击
 
 ### 攻击条件
@@ -9,23 +7,25 @@ e 特别小，比如 e 为 3。
 ### 攻击原理
 
 假设用户使用的密钥 $e=3$。考虑到加密关系满足：
+
 $$
 c\equiv m^3 \bmod N
 $$
 
 则：
+
 $$
-\begin{align}
-m^3 &= c+k\times N\\\\
+\begin{align*}
+m^3 &= c+k\times N\\
 m &= \sqrt[3]{c+k\times n}
-\end{align}
+\end{align*}
 $$
 
 攻击者可以从小到大枚举 $n$，依次开三次根，直到开出整数为止。
 
 ### 范例
 
-这里我们以XMan 一期夏令营课堂练习为例进行介绍（Jarvis oj有复现），附件中有一个 `flag.enc` 和 `pubkey.pem`，很明显是密文和公钥了，先用 `openssl` 读一下公钥。
+这里我们以 XMan 一期夏令营课堂练习为例进行介绍（Jarvis OJ 有复现），附件中有一个 `flag.enc` 和 `pubkey.pem`，很明显是密文和公钥了，先用 `openssl` 读一下公钥。
 
 ```bash
 ➜  Jarvis OJ-Extremely hard RSA git:(master) ✗ openssl rsa -pubin -in pubkey.pem -text -modulus       
@@ -85,7 +85,7 @@ EkP0OHRGzM6yIiqWXMMLOSkCAQM=
 -----END PUBLIC KEY-----
 ```
 
-看到 $e=3$，很明显是小公钥指数攻击了。这里我们使用Crypto库来读取公钥，使用multiprocessing来加快破解速度。
+看到 $e=3$，很明显是小公钥指数攻击了。这里我们使用 Crypto 库来读取公钥，使用 multiprocessing 来加快破解速度。
 
 ```python
 #/usr/bin/python
@@ -131,6 +131,7 @@ if __name__ == '__main__':
 ```
 Didn't you know RSA padding is really important? Now you see a non-padding message is so dangerous. And you should notice this in future.Fl4g: flag{Sm4ll_3xpon3nt_i5_W3ak}
 ```
+
 ### 题目
 
 ## RSA 衍生算法——Rabin 算法
@@ -142,6 +143,7 @@ Rabin 算法的特征在于 $e=2$。
 ### 攻击原理
 
 密文：
+
 $$
 c = m^2\bmod n
 $$
@@ -151,10 +153,10 @@ $$
 - 计算出 $m_p$ 和 $m_q$：
 
 $$
-\begin{align}
-m_p &= \sqrt{c} \bmod p\\\\
+\begin{align*}
+m_p &= \sqrt{c} \bmod p\\
 m_q &= \sqrt{c} \bmod q
-\end{align}
+\end{align*}
 $$
 
 - 用扩展欧几里得计算出 $y_p$ 和 $y_q$：
@@ -166,27 +168,28 @@ $$
 - 解出四个明文：
 
 $$
-\begin{align}
-a &= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\\\
-b &= n - a\\\\
-c &= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\\\
+\begin{align*}
+a &= (y_p \cdot p \cdot m_q + y_q \cdot q \cdot m_p) \bmod n\\
+b &= n - a\\
+c &= (y_p \cdot p \cdot m_q - y_q \cdot q \cdot m_p) \bmod n\\
 d &= n - c
-\end{align}
+\end{align*}
 $$
 
 注意：如果 $p \equiv q \equiv 3 \pmod 4$，则
+
 $$
-\begin{align}
-m_p &= c^{\frac{1}{4}(p + 1)} \bmod p\\\\
+\begin{align*}
+m_p &= c^{\frac{1}{4}(p + 1)} \bmod p\\
 m_q &= c^{\frac{1}{4}(q + 1)} \bmod q
-\end{align}
+\end{align*}
 $$
 
 而一般情况下，$p \equiv q \equiv 3 \pmod 4$ 是满足的，对于不满足的情况下，请参考相应的算法解决。
 
 ### 例子
 
-这里我们以XMan 一期夏令营课堂练习（Jarvis oj有复现）为例，读一下公钥。
+这里我们以 XMan 一期夏令营课堂练习（Jarvis OJ 有复现）为例，读一下公钥。
 
 ```bash
 ➜  Jarvis OJ-hard RSA git:(master) ✗ openssl rsa -pubin -in pubkey.pem -text -modulus 
@@ -204,7 +207,7 @@ yigb/+l/vjDdAgEC
 -----END PUBLIC KEY-----
 ```
 
-$e=2$，考虑 Rabin 算法。首先我们先分解一下p和q，得到
+$e=2$，考虑 Rabin 算法。首先我们先分解一下 p 和 q，得到
 
 ```text
 p=275127860351348928173285174381581152299
@@ -254,6 +257,6 @@ for i in (a, b, c, d):
     print s.decode('hex')
 ```
 
-拿到 flag: PCTF{sp3ci4l_rsa}。
+拿到 flag，`PCTF{sp3ci4l_rsa}`。
 
 ### 题目

@@ -1,28 +1,30 @@
-# 私钥 d 相关攻击
-
 ## d 泄露攻击
 
 ### 攻击原理
 
-首先当d泄露之后，我们自然可以解密所有加密的消息。我们甚至还可以对模数N进行分解。其基本原理如下
+首先当 d 泄露之后，我们自然可以解密所有加密的消息。我们甚至还可以对模数 N 进行分解。其基本原理如下
 
-我们知道$ed \equiv 1 \bmod \varphi(n)$，那么$\varphi(n) | k=ed-1$。显然k是一个偶数，我们可以令$k=2^tr$ ，其中r为奇数，t不小于1。那么对于任何的与N互素的数g，我们都有$g^k \equiv 1 \bmod n$ 。那么$z=g^{\frac{k}{2}}$ 是模N的二次方根。那么我们有
+我们知道 $ed \equiv 1 \bmod \varphi(n)$，那么 $\varphi(n) | k=ed-1$。显然 k 是一个偶数，我们可以令 $k=2^tr$ ，其中 r 为奇数，t 不小于 1。那么对于任何的与 N 互素的数 g，我们都有 $g^k \equiv 1 \bmod n$。那么 $z=g^{\frac{k}{2}}$ 是模 N 的二次方根。那么我们有
 
-$z^2 \equiv 1 \bmod p$
-
-$z^2 \equiv 1 \bmod q$
+$$
+z^2 \equiv 1 \bmod p \\
+z^2 \equiv 1 \bmod q
+$$
 
 进而我们我们知道方程有以下四个解，前两个是
 
-$x \equiv \pm1 \bmod N$ 
+$$
+x \equiv \pm1 \bmod N
+$$
 
-后两个是$\pm x$ ，其中x满足以下条件
+后两个是 $\pm x$ ，其中 x 满足以下条件
 
-$x \equiv 1 \bmod p$
+$$
+x \equiv 1 \bmod p \\
+x \equiv -1 \bmod q
+$$
 
-$x \equiv -1 \bmod q$
-
-显然，$z=g^{\frac{k}{2}}$ 满足的是后面那个条件，我们可以计算$gcd(z-1,N)$ 来对N进行分解。
+显然，$z=g^{\frac{k}{2}}$ 满足的是后面那个条件，我们可以计算 $gcd(z-1,N)$ 来对 N 进行分解。
 
 ### 工具
 
@@ -33,19 +35,20 @@ $x \equiv -1 \bmod q$
 
 
 ### 2017 HITB - hack in the card II
-题干为：
-> The second smart card sent to us has been added some countermeasures by that evil company. They also changed the public key(attachments -> publickey.pem). However it seems that they missed something...... Can you decrypt the following hex-encoded ciphertext this time?
 
+> The second smart card sent to us has been added some countermeasures by that evil company. They also changed the public key(attachments -> publickey.pem). However it seems that they missed something......  
+> Can you decrypt the following hex-encoded ciphertext this time?  
+> ```
 > 016d1d26a470fad51d52e5f3e90075ab77df69d2fb39905fe634ded81d10a5fd10c35e1277035a9efabb66e4d52fd2d1eaa845a93a4e0f1c4a4b70a0509342053728e89e977cfb9920d5150393fe9dcbf86bc63914166546d5ae04d83631594703db59a628de3b945f566bdc5f0ca7bdfa819a0a3d7248286154a6cc5199b99708423d0749d4e67801dff2378561dd3b0f10c8269dbef2630819236e9b0b3d3d8910f7f7afbbed29788e965a732efc05aef3194cd1f1cff97381107f2950c935980e8954f91ed2a653c91015abea2447ee2a3488a49cc9181a3b1d44f198ff9f0141badcae6a9ae45c6c75816836fb5f331c7f2eb784129a142f88b4dc22a0a977
+> ```
 
-这题是接续 2017 HITB - hack in the card I的一道题，我们直接使用openssl查看`publickey.pem`的公钥，发现它的`N`与上一道题的`N`相同，并且上题的`N`，`e`，`d`已知。由此可直接使用上面的`rsatool.py`得到`p`，`q`，并通过本题的`e`计算出`e`得到明文。
-
+这题是接续 2017 HITB - hack in the card I 的一道题，我们直接使用 `openssl` 查看 `publickey.pem` 的公钥，发现它的 `N` 与上一道题的 `N` 相同，并且上题的 `N`，`e`，`d` 已知。由此可直接使用上面的 `rsatool.py` 得到`p`，`q`，并通过本题的 `e` 计算出 `e` 得到明文。
 
 ## Wiener's Attack
 
 ### 攻击条件
 
-在d比较小( $d<\frac{1}{3}N^{\frac{1}{4}}$ )时，攻击者可以使用**wiener's attack** 来获得RSA的私钥。
+在 d 比较小（$d<\frac{1}{3}N^{\frac{1}{4}}$）时，攻击者可以使用 **Wiener's Attack** 来获得私钥。
 
 ### 攻击原理
 
@@ -61,13 +64,11 @@ $x \equiv -1 \bmod q$
 
 ### 2016 HCTF RSA1
 
-这里我们以2016年HCTF中rsa1(**Crypto So Interesting**) 为例进行分析。源代码链接
+这里我们以 2016 年 HCTF 中 RSA 1 - Crypto So Interesting 为例进行分析，[源代码链接](https://github.com/Hcamael/ctf-library/tree/master/RSA1)。
 
-- https://github.com/Hcamael/ctf-library/tree/master/RSA1
+首先先绕过程序的 proof 部分，差不多使用一些随机的数据就可以绕过。
 
-首先先绕过程序的proof部分，差不多使用一些随机的数据就可以绕过。
-
-其次，我们来分析一下具体的代码部分，程序是根据我们的token来获取flag的，这里我们就直接利用源代码中提供的token。
+其次，我们来分析一下具体的代码部分，程序是根据我们的 token 来获取 flag 的，这里我们就直接利用源代码中提供的 token。
 
 ```python
 	print "This is a RSA Decryption System"
@@ -79,10 +80,9 @@ $x \equiv -1 \bmod q$
 	except:
 		print "Token error!"
 		m_exit(-1)
-		
 ```
 
-接下来我们首先知道$n=pq$ ，我们再来你仔细分析一下这个e，d是如何得到的。
+接下来我们首先知道 $n=pq$ ，我们再来你仔细分析一下这个 e，d 是如何得到的。
 
 ```python
 	p=getPrime(2048)
@@ -112,23 +112,21 @@ def get_ed(p, q):
 	return (e, d)
 ```
 
-可以看出，我们得到的u的位数比n的位数的四分之一还要少，这里其实就差不多满足了wiener攻击了。而且我们计算出来的u,t,e,d还满足以下条件
+可以看出，我们得到的 u 的位数比 n 的位数的四分之一还要少，这里其实就差不多满足了 wiener 攻击了。而且我们计算出来的 u，t，e，d 还满足以下条件
 
-$ut \equiv 1  \bmod \varphi(n)$
+$$
+\begin{align*}
+ut &\equiv 1  \bmod \varphi(n) \\
+et &\equiv 1 \bmod bt \\
+ed &\equiv 1 \bmod \varphi(n)
+\end{align*}
+$$
 
-$et\equiv 1 \bmod bt$
+根据题中给出的条件，我们已经知道了 n，e，bt。
 
-$ed \equiv 1 \bmod \varphi(n)$
+所以首先我们可以根据上面的第二个式子知道 e。这时候，可以利用第一个式子进行 wiener 攻击，获取 u。进而这时我们可以利用私钥指数泄露攻击的方法来分解n从而得到 p，q。进而我们就可以得到 d 了。
 
-根据题中给出的条件，我们已经知道了
-
-- n
-- e
-- bt
-
-所以首先我们可以根据上面的第二个式子知道e。这时候，可以利用第一个式子进行wiener攻击，获取u。进而这时我们可以利用私钥指数泄露攻击的方法来分解n从而得到p，q。进而我们就可以得到d了。
-
-首先我们绕过proof得到了n,e,加密后的flag如下
+首先我们绕过 proof 得到了 n，e，加密后的 flag 如下
 
 ```shell
 n:  0x4b4403cd5ac8bdfaa3bbf83decdc97db1fbc7615fd52f67a8acf7588945cd8c3627211ffd3964d979cb1ab3850348a453153710337c6fe3baa15d986c87fca1c97c6d270335b8a7ecae81ae0ebde48aa957e7102ce3e679423f29775eef5935006e8bc4098a52a168e07b75e431a796e3dcd29c98dab6971d3eac5b5b19fb4d2b32f8702ef97d92da547da2e22387f7555531af4327392ef9c82227c5a2479623dde06b525969e9480a39015a3ed57828162ca67e6d41fb7e79e1b25e56f1cff487c1d0e0363dc105512d75c83ad0085b75ede688611d489c1c2ea003c3b2f81722cdb307a3647f2da01fb3ba0918cc1ab88c67e1b6467775fa412de7be0b44f2e19036471b618db1415f6b656701f692c5e841d2f58da7fd2bc33e7c3c55fcb8fd980c9e459a6df44b0ef70b4b1d813a57530446aa054cbfb9d1a86ffb6074b6b7398a83b5f0543b910dcb9f111096b07a98830a3ce6da47cd36b7c1ac1b2104ea60dc198c34f1c50faa5b697f2f195afe8af5d455e8ac7ca6eda669a5a1e3bfbd290a4480376abd1ff21298d529b26a4e614ab24c776a10f5f5d8e8809467a3e81f04cf5d5b23eb4a3412886797cab4b3c5724c077354b2d11d19ae4e301cd2ca743e56456d2a785b650c7e1a727b1bd881ee85c8d109792393cc1a92a66b0bc23b164146548f4e184b10c80ec458b776df10405b65399e32d657bc83e1451
@@ -137,7 +135,7 @@ flag:  0x2517d1866acc5b7b802a51d6251673262e9e6b2d0e0e14a87b838c2751dee91e4ea2901
 
 ```
 
-其次使用如下方法进行wiener攻击得到u，如下
+其次使用如下方法进行 wiener 攻击得到 u，如下
 
 ```python
 if __name__ == "__main__":
@@ -148,9 +146,9 @@ if __name__ == "__main__":
     solve(n, t)
 ```
 
-其中solve函数就是对应的wiener攻击的函数。
+其中 solve 函数就是对应的 wiener 攻击的函数。
 
-我们得到了u，如下
+我们得到了 u，如下
 
 ```shell
 ➜  rsa-wiener-attack git:(master) ✗ python RSAwienerHacker.py
@@ -172,14 +170,14 @@ Hacked!
 
 ```
 
-接着利用RsaConverter以及u,t,n获取对应的p和q。如下
+接着利用 RsaConverter 以及 u，t，n 获取对应的 p 和 q。如下
 
 ```shell
 94121F49C0E7A37A60FDE4D13F021675ED91032EB16CB070975A3EECECE8697ED161A27D86BCBC4F45AA6CDC128EB878802E0AD3B95B2961138C8CD04D28471B558CD816279BDCCF8FA1513A444AF364D8FDA8176A4E459B1B939EBEC6BB164F06CDDE9C203C612541E79E8B6C266436AB903209F5C63C8F0DA192F129F0272090CBE1A37E2615EF7DFBB05D8D88B9C964D5A42A7E0D6D0FF344303C4364C894AB7D912065ABC30815A3B8E0232D1B3D7F6B80ED7FE4B71C3477E4D6C2C78D733CF23C694C535DB172D2968483E63CC031DFC5B27792E2235C625EC0CFDE33FD3E53915357772975D264D24A7F31308D72E1BD7656B1C16F58372E7682660381
 8220863F1CFDA6EDE52C56B4036485DB53F57A4629F5727EDC4C5637603FE059EB44751FC49EC846C0B8B50966678DFFB1CFEB350EC44B57586A81D35E4887F1722367CE99116092463079A63E3F29D4F4BC416E7728B26248EE8CD2EFEA6925EC6F455DF966CEE13C808BC15CA2A6AAC7FEA69DB7C9EB9786B50EBD437D38B73D44F3687AEB5DF03B6F425CF3171B098AAC6708D534F4D3A9B3D43BAF70316812EF95FC7EBB7E224A7016D7692B52CB0958951BAB4FB5CB1ABB4DAC606F03FA15697CC3E9DF26DE5F6D6EC45A683CD5AAFD58D416969695067795A2CF7899F61669BC7543151AB700A593BF5A1E5C2AFBCE45A08A2A9CC1685FAF1F96B138D1
 ```
 
-然后我们直接去获得d，进而就可以恢复明文
+然后我们直接去获得 d，进而就可以恢复明文
 
 ```python
     p = 0x94121F49C0E7A37A60FDE4D13F021675ED91032EB16CB070975A3EECECE8697ED161A27D86BCBC4F45AA6CDC128EB878802E0AD3B95B2961138C8CD04D28471B558CD816279BDCCF8FA1513A444AF364D8FDA8176A4E459B1B939EBEC6BB164F06CDDE9C203C612541E79E8B6C266436AB903209F5C63C8F0DA192F129F0272090CBE1A37E2615EF7DFBB05D8D88B9C964D5A42A7E0D6D0FF344303C4364C894AB7D912065ABC30815A3B8E0232D1B3D7F6B80ED7FE4B71C3477E4D6C2C78D733CF23C694C535DB172D2968483E63CC031DFC5B27792E2235C625EC0CFDE33FD3E53915357772975D264D24A7F31308D72E1BD7656B1C16F58372E7682660381
