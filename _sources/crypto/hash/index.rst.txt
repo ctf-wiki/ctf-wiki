@@ -58,3 +58,4 @@
    md5.rst
    sha1.rst
    attack.rst
+   complex.rst

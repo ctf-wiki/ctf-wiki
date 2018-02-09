@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>SHA1 &#8212; CTF Wiki </title>
+    <title>综合题目 &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -32,8 +32,8 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="Hash Attack" href="attack.html" />
-    <link rel="prev" title="MD5" href="md5.html" /> 
+    <link rel="next" title="数字签名" href="../signature/index.html" />
+    <link rel="prev" title="Hash Attack" href="attack.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -46,10 +46,10 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="attack.html" title="Hash Attack"
+          <a href="../signature/index.html" title="数字签名"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="md5.html" title="MD5"
+          <a href="attack.html" title="Hash Attack"
              accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
@@ -64,78 +64,71 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="sha1">
-<h1>SHA1<a class="headerlink" href="#sha1" title="永久链接至标题">¶</a></h1>
-<div class="section" id="id1">
-<h2>基本描述<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
-<p>SHA1的输入输出如下</p>
-<ul class="simple">
-<li>输入：任意长的消息，分为 <strong>512 比特</strong>长的分组。首先在消息右侧补比特 1，然后再补若干个比特 0，直到消息的比特长度满足对 512 取模后余数是 448，使其与 448 模 512 同余。</li>
-<li>输出：160 比特的消息摘要。</li>
-</ul>
-<p>关于详细的介绍，请自行搜索。</p>
-<p>一般来说，我们可以通过函数的初始化来判断是不是 SHA1 函数。一般来说，如果一个函数有如下五个初始化的变量，可以猜测该函数为 SHA1 函数，因为这是 SHA1 函数的初始化IV。</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mh">0x67452301</span>
-<span class="mh">0xEFCDAB89</span>
-<span class="mh">0x98BADCFE</span>
-<span class="mh">0x10325476</span>
-<span class="mh">0xC3D2E1F0</span>
+  <div class="section" id="id1">
+<h1>综合题目<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<div class="section" id="c3-software-update">
+<h2>2017 34c3 Software_update<a class="headerlink" href="#c3-software-update" title="永久链接至标题">¶</a></h2>
+<p>可以看出，程序的大概意思是上传一个 zip 压缩包，然后对 signed_data 目录下的文件进行签名验证。其中，最后验证的手法是大概是将每一个文件进行 sha256 哈希，然后<strong>异或</strong>起来作为输入传递给 rsa
+进行签名。如果通过验证的话，就会执行对应的 pre-copy.py 和 post-copy.py 文件。</p>
+<p>很自然的想法是我们修改 pre-copy.py 或者 post-copy.py 文件，使其可以读取 flag，然后再次绕过签名即可。主要有两种思路</p>
+<ol class="arabic simple">
+<li>根据给定的公钥文件获取对应的私钥，进而再修改文件后伪造签名，然后大概看了看公钥文件几乎不可破，所以这一点，基本上可以放弃。</li>
+<li>修改对应文件后，利用<strong>异或的特性使得其哈希值仍然与原来相同</strong>，从而绕过签名检测。即使得 signed_data 目录下包含多个文件，使得这些文件的哈希值最后异或起来可以抵消修改 pre-copy.py 或者
+post-copy.py文件所造成的哈希值的不同。</li>
+</ol>
+<p>这里，我们选择第二种方法，这里我们选择修改 pre-copy.py 文件，具体思路如下</p>
+<ol class="arabic simple">
+<li>计算 pre-copy.py 的原 hash 值。</li>
+<li>修改 pre-copy.py 文件，使其可以读取 flag。与此同时，计算新的 hash 值。将两者异或，求得异或差值 delta。</li>
+<li>寻找一系列的文件，使其 hash 值异或起来正好为 delta。</li>
+</ol>
+<p>关键的步骤在于第三步，而其实这个文件可以看做是一个线性组合的问题，即寻找若干个 256 维01向量使其异或值为 delta。而</p>
+<div class="math">
+\[ \begin{align}\begin{aligned}  (F=\{0,1\},F^{256},\oplus ,\cdot)\\是一个 256 维的向量空间。如果我们可以求得该向量空间的一个基，那么我们就可以求得该空间中任意指定值的所需要的向量。\end{aligned}\end{align} \]</div>
+<p>我们可以使用 sage 来辅助我们求，如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># generage the base of &lt;{0,1},F^256,xor,*&gt;</span>
+<span class="k">def</span> <span class="nf">gen_gf2_256_base</span><span class="p">():</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">VectorSpace</span><span class="p">(</span><span class="n">GF</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="mi">256</span><span class="p">)</span>
+    <span class="n">tmphash</span> <span class="o">=</span> <span class="n">compute_file_hash</span><span class="p">(</span><span class="s2">&quot;0.py&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">tmphash_bin</span> <span class="o">=</span> <span class="n">hash2bin</span><span class="p">(</span><span class="n">tmphash</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="p">[</span><span class="n">tmphash_bin</span><span class="p">]</span>
+    <span class="n">filelist</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0.py&#39;</span><span class="p">]</span>
+    <span class="nb">print</span> <span class="n">base</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">subspace</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">dimension</span><span class="p">()</span>
+    <span class="n">cnt</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">dim</span> <span class="o">!=</span> <span class="mi">256</span><span class="p">:</span>
+        <span class="n">tmpfile</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cnt</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.py&quot;</span>
+        <span class="n">tmphash</span> <span class="o">=</span> <span class="n">compute_file_hash</span><span class="p">(</span><span class="n">tmpfile</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">tmphash_bin</span> <span class="o">=</span> <span class="n">hash2bin</span><span class="p">(</span><span class="n">tmphash</span><span class="p">)</span>
+        <span class="n">old_dim</span> <span class="o">=</span> <span class="n">dim</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">subspace</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="p">[</span><span class="n">tmphash_bin</span><span class="p">])</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">dimension</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="o">&gt;</span> <span class="n">old_dim</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">+=</span> <span class="p">[</span><span class="n">tmphash_bin</span><span class="p">]</span>
+            <span class="n">filelist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmpfile</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;dimension &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">dimension</span><span class="p">()))</span>
+        <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">cnt</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">(</span><span class="n">GF</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">filelist</span>
 </pre></div>
 </div>
-<p>前面四个与 MD5 类似，后面的是新加的。</p>
+<p>关于更加详细的解答，请参考 <code class="docutils literal"><span class="pre">exp.py</span></code>。</p>
+<p>这里我修改 pre-copy 多输出 <code class="docutils literal"><span class="pre">!!!!come</span> <span class="pre">here!!!!</span></code> 字眼，如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  software_update git:(master) python3 installer.py now.zip
+Preparing to copy data...
+!!!!come here!!!!
+Software update installed successfully.
+</pre></div>
+</div>
 </div>
 <div class="section" id="id2">
-<h2>破解<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
-<p>就目前而言，SHA1 已经不再安全了，因为之前谷歌公布了求得两个 sha1 值一样的 pdf，具体请参考 <a class="reference external" href="https://shattered.io/">shattered</a> 。</p>
-<p>这里还有一个比较有意思的网站：<a class="reference external" href="https://alf.nu/SHA1">https://alf.nu/SHA1</a>。</p>
-</div>
-<div class="section" id="seccon-sha1-is-dead">
-<h2>2017 SECCON SHA1 is dead<a class="headerlink" href="#seccon-sha1-is-dead" title="永久链接至标题">¶</a></h2>
-<p>题目描述如下</p>
-<ol class="arabic simple">
-<li>file1 != file2</li>
-<li>SHA1(file1) == SHA1(file2)</li>
-<li>SHA256(file1) &lt;&gt; SHA256(file2)</li>
-<li>2017KiB &lt; sizeof(file1) &lt; 2018KiB</li>
-<li>2017KiB &lt; sizeof(file2) &lt; 2018KiB</li>
-</ol>
-<p>其中 1KiB = 1024 bytes</p>
-<p>即我们需要找到两个文件满足上述的约束。</p>
-<p>这里立马就想到谷歌之前公布的文档，而且，非常重要的是，只要使用给定的前 320 字节，后面任意添加一样的字节获取的哈希仍然一样，这里我们测试如下</p>
-<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2017_seccon_sha1_is_dead git:(master) dd bs=1 count=320 &lt;shattered-1.pdf| sha1sum
-记录了320+0 的读入
-记录了320+0 的写出
-320 bytes copied, 0.00796817 s, 40.2 kB/s
-f92d74e3874587aaf443d1db961d4e26dde13e9c  -
-➜  2017_seccon_sha1_is_dead git:(master) dd bs=1 count=320 &lt;shattered-2.pdf| sha1sum
-记录了320+0 的读入
-记录了320+0 的写出
-320 bytes copied, 0.00397215 s, 80.6 kB/s
-f92d74e3874587aaf443d1db961d4e26dde13e9c  -
-</pre></div>
-</div>
-<p>进而我们直接写程序即可，如下</p>
-<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">hashlib</span> <span class="k">import</span> <span class="n">sha1</span>
-<span class="kn">from</span> <span class="nn">hashlib</span> <span class="k">import</span> <span class="n">sha256</span>
-
-<span class="n">pdf1</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;./shattered-1.pdf&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">320</span><span class="p">)</span>
-<span class="n">pdf2</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;./shattered-2.pdf&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">320</span><span class="p">)</span>
-<span class="n">pdf1</span> <span class="o">=</span> <span class="n">pdf1</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">2017</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">320</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\00</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1">#padding pdf to 2017Kib + 1</span>
-<span class="n">pdf2</span> <span class="o">=</span> <span class="n">pdf2</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">2017</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">320</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\00</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">open</span><span class="p">(</span><span class="s2">&quot;upload1&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pdf1</span><span class="p">)</span>
-<span class="nb">open</span><span class="p">(</span><span class="s2">&quot;upload2&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pdf2</span><span class="p">)</span>
-
-<span class="nb">print</span> <span class="n">sha1</span><span class="p">(</span><span class="n">pdf1</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-<span class="nb">print</span> <span class="n">sha1</span><span class="p">(</span><span class="n">pdf2</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-<span class="nb">print</span> <span class="n">sha256</span><span class="p">(</span><span class="n">pdf1</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-<span class="nb">print</span> <span class="n">sha256</span><span class="p">(</span><span class="n">pdf2</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="id3">
-<h2>参考文献<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<h2>参考文献<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
 <ul class="simple">
-<li><a class="reference external" href="https://www.slideshare.net/herumi/googlesha1">https://www.slideshare.net/herumi/googlesha1</a></li>
+<li><a class="reference external" href="https://sectt.github.io/writeups/34C3CTF/crypto_182_software_update/Readme">https://sectt.github.io/writeups/34C3CTF/crypto_182_software_update/Readme</a></li>
+<li><a class="reference external" href="https://github.com/OOTS/34c3ctf/blob/master/software_update/solution/exploit.py">https://github.com/OOTS/34c3ctf/blob/master/software_update/solution/exploit.py</a></li>
 </ul>
 </div>
 </div>
@@ -188,15 +181,13 @@ f92d74e3874587aaf443d1db961d4e26dde13e9c  -
 <li class="toctree-l1"><a class="reference internal" href="../asymmetric/index.html">非对称密码</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">哈希函数</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="md5.html">MD5</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">SHA1</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">基本描述</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id2">破解</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#seccon-sha1-is-dead">2017 SECCON SHA1 is dead</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">参考文献</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sha1.html">SHA1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attack.html">Hash Attack</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">综合题目</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c3-software-update">2017 34c3 Software_update</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">参考文献</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="attack.html">Hash Attack</a></li>
-<li class="toctree-l2"><a class="reference internal" href="complex.html">综合题目</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../signature/index.html">数字签名</a></li>
@@ -260,10 +251,10 @@ f92d74e3874587aaf443d1db961d4e26dde13e9c  -
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="attack.html" title="Hash Attack"
+          <a href="../signature/index.html" title="数字签名"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="md5.html" title="MD5"
+          <a href="attack.html" title="Hash Attack"
              >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
