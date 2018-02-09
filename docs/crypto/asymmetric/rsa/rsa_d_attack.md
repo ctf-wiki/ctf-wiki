@@ -4,7 +4,7 @@
 
 首先当 d 泄露之后，我们自然可以解密所有加密的消息。我们甚至还可以对模数 N 进行分解。其基本原理如下
 
-我们知道 $ed \equiv 1 \bmod \varphi(n)$，那么 $\varphi(n) | k=ed-1$。显然 k 是一个偶数，我们可以令 $k=2^tr$ ，其中 r 为奇数，t 不小于 1。那么对于任何的与 N 互素的数 g，我们都有 $g^k \equiv 1 \bmod n$。那么 $z=g^{\frac{k}{2}}$ 是模 N 的二次方根。那么我们有
+我们知道 $ed \equiv 1 \bmod \varphi(n)$，那么 $\varphi(n) | k=ed-1$。显然 k 是一个偶数，我们可以令 $k=2^tr$，其中 r 为奇数，t 不小于 1。那么对于任何的与 N 互素的数 g，我们都有 $g^k \equiv 1 \bmod n$。那么 $z=g^{\frac{k}{2}}$ 是模 N 的二次方根。那么我们有
 
 $$
 z^2 \equiv 1 \bmod p \\
@@ -17,7 +17,7 @@ $$
 x \equiv \pm1 \bmod N
 $$
 
-后两个是 $\pm x$ ，其中 x 满足以下条件
+后两个是 $\pm x$，其中 x 满足以下条件
 
 $$
 x \equiv 1 \bmod p \\
@@ -42,7 +42,7 @@ $$
 > 016d1d26a470fad51d52e5f3e90075ab77df69d2fb39905fe634ded81d10a5fd10c35e1277035a9efabb66e4d52fd2d1eaa845a93a4e0f1c4a4b70a0509342053728e89e977cfb9920d5150393fe9dcbf86bc63914166546d5ae04d83631594703db59a628de3b945f566bdc5f0ca7bdfa819a0a3d7248286154a6cc5199b99708423d0749d4e67801dff2378561dd3b0f10c8269dbef2630819236e9b0b3d3d8910f7f7afbbed29788e965a732efc05aef3194cd1f1cff97381107f2950c935980e8954f91ed2a653c91015abea2447ee2a3488a49cc9181a3b1d44f198ff9f0141badcae6a9ae45c6c75816836fb5f331c7f2eb784129a142f88b4dc22a0a977
 > ```
 
-这题是接续 2017 HITB - hack in the card I 的一道题，我们直接使用 `openssl` 查看 `publickey.pem` 的公钥，发现它的 `N` 与上一道题的 `N` 相同，并且上题的 `N`，`e`，`d` 已知。由此可直接使用上面的 `rsatool.py` 得到`p`，`q`，并通过本题的 `e` 计算出 `e` 得到明文。
+这题是接续 2017 HITB - hack in the card I 的一道题，我们直接使用 `openssl` 查看 `publickey.pem` 的公钥，发现它的 N 与上一道题的 N 相同，并且上题的 N，e，d 已知。由此可直接使用上面的 `rsatool.py` 得到 p，q，并通过本题的 e 计算出 e 得到明文。
 
 ## Wiener's Attack
 
@@ -82,7 +82,7 @@ $$
 		m_exit(-1)
 ```
 
-接下来我们首先知道 $n=pq$ ，我们再来你仔细分析一下这个 e，d 是如何得到的。
+接下来我们首先知道 $n=pq$，我们再来你仔细分析一下这个 e，d 是如何得到的。
 
 ```python
 	p=getPrime(2048)
@@ -112,7 +112,7 @@ def get_ed(p, q):
 	return (e, d)
 ```
 
-可以看出，我们得到的 u 的位数比 n 的位数的四分之一还要少，这里其实就差不多满足了 wiener 攻击了。而且我们计算出来的 u，t，e，d 还满足以下条件
+可以看出，我们得到的 u 的位数比 n 的位数的四分之一还要少，这里其实就差不多满足了 Wiener's Attack 了。而且我们计算出来的 u，t，e，d 还满足以下条件
 
 $$
 \begin{align*}
@@ -124,9 +124,9 @@ $$
 
 根据题中给出的条件，我们已经知道了 n，e，bt。
 
-所以首先我们可以根据上面的第二个式子知道 e。这时候，可以利用第一个式子进行 wiener 攻击，获取 u。进而这时我们可以利用私钥指数泄露攻击的方法来分解n从而得到 p，q。进而我们就可以得到 d 了。
+所以首先我们可以根据上面的第二个式子知道 e。这时候，可以利用第一个式子进行 Wiener's Attack，获取 u。进而这时我们可以利用私钥指数泄露攻击的方法来分解 N 从而得到 p，q。进而我们就可以得到 d 了。
 
-首先我们绕过 proof 得到了 n，e，加密后的 flag 如下
+首先我们绕过 proof 得到了 N，e，加密后的 flag 如下
 
 ```shell
 n:  0x4b4403cd5ac8bdfaa3bbf83decdc97db1fbc7615fd52f67a8acf7588945cd8c3627211ffd3964d979cb1ab3850348a453153710337c6fe3baa15d986c87fca1c97c6d270335b8a7ecae81ae0ebde48aa957e7102ce3e679423f29775eef5935006e8bc4098a52a168e07b75e431a796e3dcd29c98dab6971d3eac5b5b19fb4d2b32f8702ef97d92da547da2e22387f7555531af4327392ef9c82227c5a2479623dde06b525969e9480a39015a3ed57828162ca67e6d41fb7e79e1b25e56f1cff487c1d0e0363dc105512d75c83ad0085b75ede688611d489c1c2ea003c3b2f81722cdb307a3647f2da01fb3ba0918cc1ab88c67e1b6467775fa412de7be0b44f2e19036471b618db1415f6b656701f692c5e841d2f58da7fd2bc33e7c3c55fcb8fd980c9e459a6df44b0ef70b4b1d813a57530446aa054cbfb9d1a86ffb6074b6b7398a83b5f0543b910dcb9f111096b07a98830a3ce6da47cd36b7c1ac1b2104ea60dc198c34f1c50faa5b697f2f195afe8af5d455e8ac7ca6eda669a5a1e3bfbd290a4480376abd1ff21298d529b26a4e614ab24c776a10f5f5d8e8809467a3e81f04cf5d5b23eb4a3412886797cab4b3c5724c077354b2d11d19ae4e301cd2ca743e56456d2a785b650c7e1a727b1bd881ee85c8d109792393cc1a92a66b0bc23b164146548f4e184b10c80ec458b776df10405b65399e32d657bc83e1451
@@ -135,7 +135,7 @@ flag:  0x2517d1866acc5b7b802a51d6251673262e9e6b2d0e0e14a87b838c2751dee91e4ea2901
 
 ```
 
-其次使用如下方法进行 wiener 攻击得到 u，如下
+其次使用如下方法进行 Wiener's Attack 得到 u，如下
 
 ```python
 if __name__ == "__main__":
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     solve(n, t)
 ```
 
-其中 solve 函数就是对应的 wiener 攻击的函数。
+其中 solve 函数就是对应的 Wiener's Attack 的函数。
 
 我们得到了 u，如下
 
@@ -191,7 +191,7 @@ Hacked!
     print long_to_bytes(flag)
 ```
 
-得到flag
+得到 flag
 
 ```shell
 true

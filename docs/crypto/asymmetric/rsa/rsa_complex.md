@@ -1,5 +1,3 @@
-# 综合题目
-
 ## 2016 ASIS Find the flag
 
 这里我们以 ASIS 2016 线上赛中 Find the flag 为例进行介绍。
@@ -114,7 +112,7 @@ ASIS{F4ct0R__N_by_it3rat!ng!}
 
 ## SCTF RSA1
 
-这里我们以SCTF RSA1为例进行介绍，首先解压压缩包后，得到如下文件
+这里我们以 SCTF RSA1 为例进行介绍，首先解压压缩包后，得到如下文件
 
 ```shell
 ➜  level0 git:(master) ✗ ls -al
@@ -126,7 +124,7 @@ drwxrwxrwx 1 root root    0 7月  30 16:34 ..
 -rwxrwxrwx 1 root root  451 5月   2  2016 public.key
 ```
 
-尝试解压缩了一下level1.zip发现需要密码。然后根据level1.passwd.enc可知，应该是我们需要解密这个文件才能得到对应的密码。查看公钥
+尝试解压缩了一下 level1.zip 现需要密码。然后根据 level1.passwd.enc 可知，应该是我们需要解密这个文件才能得到对应的密码。查看公钥
 
 ```shell
 ➜  level0 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus 
@@ -164,7 +162,7 @@ gQIDAQAB
 -----END PUBLIC KEY-----
 ```
 
-发现虽然说是2048位，但是显然模数没有那么长，尝试分解下，得到
+发现虽然说是 2048 位，但是显然模数没有那么长，尝试分解下，得到
 
 ```
 p=250527704258269
@@ -213,7 +211,7 @@ decrypt()
 
 ```
 
-这时候就要考虑其他情况了，一般来说现实中实现的RSA都不会直接用原生的RSA，都会加一些填充比如OAEP，我们这里试试，修改代码
+这时候就要考虑其他情况了，一般来说现实中实现的 RSA 都不会直接用原生的 RSA，都会加一些填充比如 OAEP，我们这里试试，修改代码
 
 ```shell
 def decrypt1():
@@ -234,7 +232,7 @@ def decrypt1():
 FaC5ori1ati0n_aTTA3k_p_tOO_sma11
 ```
 
-得到解压密码。继续，查看level1中的公钥
+得到解压密码。继续，查看 level1 中的公钥
 
 ```shell
 ➜  level1 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus
@@ -273,7 +271,7 @@ fQIDAQAB
 
 ```
 
-似乎还是不是很大，再次分解，然后试了factordb不行，试试yafu。结果分解出来了。
+似乎还是不是很大，再次分解，然后试了 factordb 不行，试试 yafu。结果分解出来了。
 
 ```shell
 P309 = 156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496383
@@ -286,7 +284,7 @@ P309 = 1569566188447068203970128911685125610161729262744064093516052048758488941
 
 继而下面的操作类似于 level0。只是这次是直接解密就好，没啥填充，试了填充反而错
 
-得到密码 fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS。继续下一步，查看公钥
+得到密码 `fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS`。继续下一步，查看公钥
 
 ```shell
 ➜  level2 git:(master) ✗ openssl rsa -pubin -in public.key -text -modulus
@@ -325,7 +323,7 @@ z1e5Sw==
 
 ```
 
-发现私钥 e 和 n 几乎一样大，考虑 d 比较小，使用 Wiener’s Attack。得到 d，当然也可以再次验证一遍。
+发现私钥 e 和 n 几乎一样大，考虑 d 比较小，使用 Wiener's Attack。得到 d，当然也可以再次验证一遍。
 
 ```shell
 ➜  level2 git:(master) ✗ python RSAwienerHacker.py
@@ -377,7 +375,6 @@ def decrypt():
 
 getprivatekey(n, e, d)
 decrypt()
-
 ```
 
-利用末尾的字符串 wIe6ER1s_1TtA3k_e_t00_larg3 解密压缩包，注意去掉B。至此全部解密结束，得到flag。	
+利用末尾的字符串 `wIe6ER1s_1TtA3k_e_t00_larg3` 解密压缩包，注意去掉 B。至此全部解密结束，得到 flag。

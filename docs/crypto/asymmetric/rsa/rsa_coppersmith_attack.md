@@ -1,46 +1,48 @@
 ## 基本原理
 
-首先，我们来简单介绍一下**Coppersmith method** 方法，该方法由[Don Coppersmith](https://en.wikipedia.org/wiki/Don_Coppersmith) 提出，可以用来找到单变量或者二元变量的多项式在模某个整数下的根，这里我们主要以单变量为主，假设我们有如下的一个在模N意义下的多项式F
+首先，我们来简单介绍一下 **Coppersmith method** 方法，该方法由 [Don Coppersmith](https://en.wikipedia.org/wiki/Don_Coppersmith) 提出，可以用来找到单变量或者二元变量的多项式在模某个整数下的根，这里我们主要以单变量为主，假设我们有如下的一个在模 N 意义下的多项式 F
+
 $$
 F(x)=x^n + a_{n-1} x^{n-1} + \cdots + a_1x + a_0
 $$
 
-假设该多项式在模N意义下有一个根$x_0$ ，这里我们令$x_0 < M^{\frac{1}{n}}$ 。如果等号成立的话，显然只有$x^n$ 这一项，那0就是，也满足。
+假设该多项式在模 N 意义下有一个根 $x_0$，这里我们令 $x_0 < M^{\frac{1}{n}}$。如果等号成立的话，显然只有 $x^n$ 这一项，那 0 就是，也满足。
 
-**Coppersmith method** 主要是通过[Lenstra–Lenstra–Lovász lattice basis reduction algorithm](https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm) (LLL) 方法来找到与该函数具有相同根$x_0$ 但有更小系数的多项式。关于更加详细的介绍，请自行搜索。
+**Coppersmith method** 主要是通过 [Lenstra–Lenstra–Lovász lattice basis reduction algorithm](https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm)（LLL）方法来找到与该函数具有相同根 $x_0$ 但有更小系数的多项式。关于更加详细的介绍，请自行搜索。
 
 ## Basic Broadcast Attack
 
 ### 攻击条件
 
-如果一个用户使用同一个加密指数e加密了同一个密文，并发送给了其他e个用户。那么就会产生广播攻击。这一攻击由 Håstad 提出。
+如果一个用户使用同一个加密指数 e 加密了同一个密文，并发送给了其他 e 个用户。那么就会产生广播攻击。这一攻击由 Håstad 提出。
 
 ### 攻击原理
 
-这里我们假设e为3，并且加密者使用了三个不同的模数$n_1,n_2,n_3$ 给三个不同的用户发送了加密后的消息m，如下
+这里我们假设 e 为 3，并且加密者使用了三个不同的模数 $n_1,n_2,n_3$ 给三个不同的用户发送了加密后的消息 m，如下
+
 $$
-\begin{align}
+\begin{align*}
 c_1&=m^3\bmod n_1 \\
 c_2&=m^3\bmod n_2 \\
-c_3&=m^3\bmod n_3 \\
-\end{align}
+c_3&=m^3\bmod n_3
+\end{align*}
 $$
 
-这里我们假设$n_1,n_2,n_3​$ 互相互素，不然，我们就可以直接进行分解，然后得到d，进而然后直接解密。
+这里我们假设 $n_1,n_2,n_3​$ 互素，不然，我们就可以直接进行分解，然后得到 d，进而然后直接解密。
 
-同时，我们假设$m<n_i, 1\leq i \leq 3$ 。如果这个条件不满足的话，就会使得情况变得比较复杂，这里我们暂不讨论。
+同时，我们假设 $m<n_i, 1\leq i \leq 3$。如果这个条件不满足的话，就会使得情况变得比较复杂，这里我们暂不讨论。
 
-既然他们互素，那么我们可以根据中国剩余定理，可得$m^3 \equiv C \bmod n_1n_2n_3$ 。
+既然他们互素，那么我们可以根据中国剩余定理，可得$m^3 \equiv C \bmod n_1n_2n_3$。
 
-此外，既然$m<n_i, 1\leq i \leq 3$ ，那么我们知道$m^3 < n_1n_2n_3$ 并且$C<m^3 < n_1n_2n_3$ ，那么$m^3 = C$ ，我们对C开三次根即可得到m的值。
+此外，既然 $m<n_i, 1\leq i \leq 3$，那么我们知道 $m^3 < n_1n_2n_3$ 并且 $C<m^3 < n_1n_2n_3$，那么 $m^3 = C$，我们对 C 开三次根即可得到 m 的值。
 
-对于较大的e来说，我们只是需要更多的明密文对。
+对于较大的 e 来说，我们只是需要更多的明密文对。
 
 ### SCTF RSA3 LEVEL4
 
-参考http://ohroot.com/2016/07/11/rsa-in-ctf。
+参考 http://ohroot.com/2016/07/11/rsa-in-ctf。
 
-这里我们以SCTF RSA3中的level4为例进行介绍，首先编写代码提取cap包中的数据，如下
+这里我们以 SCTF RSA3 中的 level4 为例进行介绍，首先编写代码提取 cap 包中的数据，如下
 
 ```shell
 #!/usr/bin/env python
@@ -114,7 +116,7 @@ print binascii.unhexlify(hex(m)[2:-1])
 
 ```
 
-得到密文，然后再次解密即可得到flag。
+得到密文，然后再次解密即可得到 flag。
 
 ```shell
 H1sTaDs_B40aDcadt_attaCk_e_are_same_and_smA9l
@@ -126,7 +128,7 @@ H1sTaDs_B40aDcadt_attaCk_e_are_same_and_smA9l
 
 ## Broadcast Attack with Linear Padding
 
-对于具有线性填充的情况下，仍然可以攻击，这时候就会使用**Coppersmith method** 的方法了，这里暂不介绍。可以参考
+对于具有线性填充的情况下，仍然可以攻击，这时候就会使用 **Coppersmith method** 的方法了，这里暂不介绍。可以参考
 
 - https://en.wikipedia.org/wiki/Coppersmith%27s_attack#Generalizations
 
@@ -134,69 +136,91 @@ H1sTaDs_B40aDcadt_attaCk_e_are_same_and_smA9l
 
 ### 攻击条件
 
-当Alice使用同一公钥对两个具有某种线性关系的消息M1与M2 进行加密，并将加密后的消息C1，C2发送给了Bob时，我们就可能可以获得对应的消息M1与M2。这里我们假设模数为N，两者之间的线性关系如下
+当 Alice 使用同一公钥对两个具有某种线性关系的消息 M1 与 M2 进行加密，并将加密后的消息 C1，C2 发送给了 Bob 时，我们就可能可以获得对应的消息 M1 与 M2。这里我们假设模数为 N，两者之间的线性关系如下
 
-$M_1 \equiv f(M_2) \bmod N$
+$$
+M_1 \equiv f(M_2) \bmod N
+$$
 
-其中f为一个线性函数，比如说$f=ax+b$。
+其中 f 为一个线性函数，比如说 $f=ax+b$。
 
-在具有较小错误概率下的情况下，其复杂度为$O(elog^2N)$ 。
+在具有较小错误概率下的情况下，其复杂度为 $O(elog^2N)$。
 
-这一攻击由Franklin，Reiter提出。
+这一攻击由 Franklin，Reiter 提出。
 
 ### 攻击原理
 
-首先，我们知道$C_1 \equiv M_1 ^e \bmod N$ ，并且$M_1 \equiv f(M_2) \bmod N$ ，那么我们可以知道$M_2$ 是$f(x)^e \equiv C_1 \bmod N$ 的一个解，即它是方程$f(x)^e-C_1$ 在模N意义下的一个根。同样的，$M_2$ 是$x^e - C_2$ 在模N意义下的一个根。所以说$x-M_2$ 同时整除以上两个多项式。因此，我们可以求得两个多项式的最大公因子，如果最大公因子恰好是线性的话，那么我们就求得了$M_2$ 。需要注意的是，在e=3的情况下，最大公因子一定是线性的。
+首先，我们知道 $C_1 \equiv M_1 ^e \bmod N$，并且 $M_1 \equiv f(M_2) \bmod N$，那么我们可以知道 $M_2$ 是 $f(x)^e \equiv C_1 \bmod N$ 的一个解，即它是方程 $f(x)^e-C_1$ 在模 N 意义下的一个根。同样的，$M_2$ 是 $x^e - C_2$ 在模 N 意义下的一个根。所以说 $x-M_2$ 同时整除以上两个多项式。因此，我们可以求得两个多项式的最大公因子，如果最大公因子恰好是线性的话，那么我们就求得了 $M_2$。需要注意的是，在 $e=3$ 的情况下，最大公因子一定是线性的。
 
-这里我们关注一下e=3，且$f(x)=ax+b$ 的情况。首先我们有
+这里我们关注一下 $e=3$，且 $f(x)=ax+b$ 的情况。首先我们有
 
-$C_1 \equiv M_1 ^3 \bmod N$ 且$M_1 \equiv aM_2+b \bmod N$
+$$
+C_1 \equiv M_1 ^3 \bmod N$ 且$M_1 \equiv aM_2+b \bmod N
+$$
 
 那么我们有
 
-$C_1 \equiv (aM_2+b)^3 \bmod N$ 且$C_2 \equiv M_2^3 \bmod N$
+$$
+C_1 \equiv (aM_2+b)^3 \bmod N$ 且$C_2 \equiv M_2^3 \bmod N
+$$
 
-我们需要明确一下我们想要得到的是消息M，所以需要将其单独构造出来。
+我们需要明确一下我们想要得到的是消息 m，所以需要将其单独构造出来。
 
-首先，我们有式1
+首先，我们有式 1
 
-$(aM_2+b)^3=a^3M_2^3+3a^2M^2b+3aM_2b^2+b^3$ 
+$$
+(aM_2+b)^3=a^3M_2^3+3a^2M^2b+3aM_2b^2+b^3
+$$
 
-再者我们构造如下式2
+再者我们构造如下式 2
 
-$(aM_2)^3-b^3 \equiv (aM_2-b)(a^2M_2^2+aM_2b+b^2) \bmod N$
+$$
+(aM_2)^3-b^3 \equiv (aM_2-b)(a^2M_2^2+aM_2b+b^2) \bmod N
+$$
 
-根据式1我们有
+根据式 1 我们有
 
-$a^3M_2^3-2b^3+3b(a^2M_2^2+aM_2b+b^2) \equiv C_1 \bmod N$
+$$
+a^3M_2^3-2b^3+3b(a^2M_2^2+aM_2b+b^2) \equiv C_1 \bmod N
+$$
 
-继而我们有式3
+继而我们有式 3
 
-$3b(a^2M_2^2+aM_2b+b^2) \equiv C_1-a^3C_2+2b^3 \bmod N$
+$$
+3b(a^2M_2^2+aM_2b+b^2) \equiv C_1-a^3C_2+2b^3 \bmod N
+$$
 
-那么我们根据式2与式3可得
+那么我们根据式 2 与式 3 可得
 
-$(a^3C_2-b^3)*3b \equiv (aM_2-b)( C_1-a^3C_2+2b^3 ) \bmod N$
+$$
+(a^3C_2-b^3)*3b \equiv (aM_2-b)( C_1-a^3C_2+2b^3 ) \bmod N
+$$
 
 进而我们有
 
-$aM_2-b=\frac{3a^3bC_2-3b^4}{C_1-a^3C_2+2b^3}$
+$$
+aM_2-b=\frac{3a^3bC_2-3b^4}{C_1-a^3C_2+2b^3}
+$$
 
 进而
 
-$aM_2\equiv  \frac{2a^3bC_2-b^4+C_1b}{C_1-a^3C_2+2b^3}$
+$$
+aM_2\equiv  \frac{2a^3bC_2-b^4+C_1b}{C_1-a^3C_2+2b^3}
+$$
 
 进而
 
-$M_2 \equiv\frac{2a^3bC_2-b^4+C_1b}{aC_1-a^4C_2+2ab^3}=\frac{b}{a}\frac{C_1+2a^3C_2-b^3}{C_1-a^3C_2+2b^3}$
+$$
+M_2 \equiv\frac{2a^3bC_2-b^4+C_1b}{aC_1-a^4C_2+2ab^3}=\frac{b}{a}\frac{C_1+2a^3C_2-b^3}{C_1-a^3C_2+2b^3}
+$$
 
 上面的式子中右边所有的内容都是已知的内容，所以我们可以直接获取对应的消息。
 
-有兴趣的可以进一步阅读[A New Related Message Attack on RSA](https://www.iacr.org/archive/pkc2005/33860001/33860001.pdf) 以及[paper](https://www.cs.unc.edu/~reiter/papers/1996/Eurocrypt.pdf)这里暂不做过多的讲解。
+有兴趣的可以进一步阅读 [A New Related Message Attack on RSA](https://www.iacr.org/archive/pkc2005/33860001/33860001.pdf) 以及 [paper](https://www.cs.unc.edu/~reiter/papers/1996/Eurocrypt.pdf) 这里暂不做过多的讲解。
 
 ### 例子
 
-这里我们以SCTF rsa3中的level3为例进行介绍。首先，跟踪TCP流可以知道，加密方式是将明文加上用户的user id进行加密，而且还存在多组。这里我们选择第0组和第9组，他们的模数一样，解密脚本如下
+这里我们以 SCTF RSA3 中的 level3 为例进行介绍。首先，跟踪 TCP 流可以知道，加密方式是将明文加上用户的 user id 进行加密，而且还存在多组。这里我们选择第 0 组和第 9 组，他们的模数一样，解密脚本如下
 
 ```python
 import gmpy2
@@ -234,7 +258,7 @@ print message.decode('hex')
 F4An8LIn_rElT3r_rELa53d_Me33Age_aTtaCk_e_I2_s7aLL
 ```
 
-当然，我们也可以直接使用sage来做，会更加简单一点。
+当然，我们也可以直接使用 sage 来做，会更加简单一点。
 
 ```python
 import binascii
@@ -279,57 +303,54 @@ F4An8LIn_rElT3r_rELa53d_Me33Age_aTtaCk_e_I2_s7aLL
 
 ### 攻击条件
 
-目前在大部分消息加密之前都会进行padding，但是如果padding的长度过短，也有**可能**被很容易地攻击。
+目前在大部分消息加密之前都会进行 padding，但是如果 padding 的长度过短，也有**可能**被很容易地攻击。
 
 ### 攻击原理
 
-我们假设爱丽丝要给鲍勃发送消息，首先爱丽丝对要加密的消息M进行随机padding，然后加密得到密文C1，发送给鲍勃。这时，中间人皮特截获了密文。一段时间后，爱丽丝没有收到鲍勃的回复，再次对要加密的消息M进行随机padding，然后加密得到密文C2，发送给Bob。皮特再一次截获。这时，皮特就**可能**可以利用如下原理解密。
+我们假设爱丽丝要给鲍勃发送消息，首先爱丽丝对要加密的消息 M 进行随机 padding，然后加密得到密文 C1，发送给鲍勃。这时，中间人皮特截获了密文。一段时间后，爱丽丝没有收到鲍勃的回复，再次对要加密的消息 M 进行随机 padding，然后加密得到密文 C2，发送给 Bob。皮特再一次截获。这时，皮特就**可能**可以利用如下原理解密。
 
-这里我们假设模数N的长度为k，并且padding的长度为$m=\lfloor \frac{k}{e^2} \rfloor$ 。此外，假设要加密的消息的长度最多为k-m比特，padding的方式如下
+这里我们假设模数 N 的长度为 k，并且 padding 的长度为 $m=\lfloor \frac{k}{e^2} \rfloor$。此外，假设要加密的消息的长度最多为 k-m 比特，padding 的方式如下
 
-$M_1=2^mM+r_1, 0\leq r_1\leq 2^m$ 
+$$
+M_1=2^mM+r_1, 0\leq r_1\leq 2^m
+$$
 
-消息M2的padding方式类似。
+消息 M2 的 padding 方式类似。
 
 那么我们可以利用如下的方式来解密。
 
 首先定义
 
-$g_1(x,y)=x^e-C_1$
+$$
+g_1(x,y)=x^e-C_1
+g_2(x,y)=(x+y)^e-C_2
+$$
 
-$g_2(x,y)=(x+y)^e-C_2$
-
-其中$y=r_2-r_1$ 。显然这两个方程具有相同的根M1。然后还有一系列的推导。。。
+其中 $y=r_2-r_1$。显然这两个方程具有相同的根 M1。然后还有一系列的推导。
 
 ## Known High Bits Message Attack
 
 ### 攻击条件
 
-这里我们假设我们首先加密了消息m，如下
+这里我们假设我们首先加密了消息 m，如下
 
-$C\equiv m^d \bmod N$
+$$
+C\equiv m^d \bmod N
+$$
 
-并且我们假设我们知道消息m的很大的一部分$m_0$ ，即$m=m_0+x$ ，但是我们不知道$x$ 。那么我们就有可能通过该方法进行恢复消息。
+并且我们假设我们知道消息 m 的很大的一部分 $m_0$，即 $m=m_0+x$，但是我们不知道 $x$。那么我们就有可能通过该方法进行恢复消息。
 
-### 例子1
-
-可以参考https://github.com/mimoo/RSA-and-LLL-attacks。
-
-### 例子2
+可以参考 https://github.com/mimoo/RSA-and-LLL-attacks。
 
 ## Factoring with High Bits Known
 
 ### 攻击条件
 
-当我们知道一个公钥中模数N的一个因子的较高位时，我们就有一定几率来分解N。
+当我们知道一个公钥中模数 N 的一个因子的较高位时，我们就有一定几率来分解 N。
 
 ### 攻击工具
 
-请参考https://github.com/mimoo/RSA-and-LLL-attacks 。上面有使用教程。
-
-### 例子1
-
-参考https://github.com/mimoo/RSA-and-LLL-attacks 。这里我们关注下面的代码
+请参考 https://github.com/mimoo/RSA-and-LLL-attacks。上面有使用教程。关注下面的代码
 
 ```python
 beta = 0.5
@@ -343,14 +364,14 @@ roots = coppersmith_howgrave_univariate(f, N, beta, mm, tt, XX)
 
 其中，
 
-- 必须满足 $q\geq N^{beta}$ ，所以这里给出了$beta=0.5$ ，显然两个因数中必然有一个是大于的。
-- XX是$f(x)=q'+x $ 在模q意义下的根的上界，自然我们可以选择调整它，这里其实也表明了我们已知的$q'$ 与因数q之间可能的差距。
+- 必须满足 $q\geq N^{beta}$，所以这里给出了$beta=0.5$，显然两个因数中必然有一个是大于的。
+- XX 是 $f(x)=q'+x $在模 q 意义下的根的上界，自然我们可以选择调整它，这里其实也表明了我们已知的 $q'$ 与因数 q 之间可能的差距。
 
-### 例子2
+### 例题
 
-这里我们以2016年HCTF中的RSA2为例进行介绍。
+这里我们以 2016 年 HCTF 中的 RSA2 为例进行介绍。
 
-首先程序的开头是一个绕过验证的，我们大概搞搞，绕过即可，代码如下
+首先程序的开头是一个绕过验证的，绕过即可，代码如下
 
 ```python
 from pwn import *
@@ -410,14 +431,13 @@ if __name__ == '__main__':
     print "flag: ", hex(enc_flag)
 ```
 
-这里我们也已经得到n，e，e2，加密后的flag了，如下
+这里我们也已经得到 n，e，e2，加密后的 flag 了，如下
 
 ```python
 n:  0x724d41149e1bd9d2aa9b333d467f2dfa399049a5d0b4ee770c9d4883123be11a52ff1bd382ad37d0ff8d58c8224529ca21c86e8a97799a31ddebd246aeeaf0788099b9c9c718713561329a8e529dfeae993036921f036caa4bdba94843e0a2e1254c626abe54dc3129e2f6e6e73bbbd05e7c6c6e9f44fcd0a496f38218ab9d52bf1f266004180b6f5b9bee7988c4fe5ab85b664280c3cfe6b80ae67ed8ba37825758b24feb689ff247ee699ebcc4232b4495782596cd3f29a8ca9e0c2d86ea69372944d027a0f485cea42b74dfd74ec06f93b997a111c7e18017523baf0f57ae28126c8824bd962052623eb565cee0ceee97a35fd8815d2c5c97ab9653c4553f
 e:  0x10001
 e2:  0xf93b
 flag:  0xf11e932fa420790ca3976468dc4df1e6b20519ebfdc427c09e06940e1ef0ca566d41714dc1545ddbdcae626eb51c7fa52608384a36a2a021960d71023b5d0f63e6b38b46ac945ddafea42f01d24cc33ce16825df7aa61395d13617ae619dca2df15b5963c77d6ededf2fe06fd36ae8c5ce0e3c21d72f2d7f20cd9a8696fbb628df29299a6b836c418cbfe91e2b5be74bdfdb4efdd1b33f57ebb72c5246d5dce635529f1f69634d565a631e950d4a34a02281cbed177b5a624932c2bc02f0c8fd9afd332ccf93af5048f02b8bd72213d6a52930b0faa0926973883136d8530b8acf732aede8bb71cb187691ebd93a0ea8aeec7f82d0b8b74bcf010c8a38a1fa8
-
 ```
 
 接下来我们来分析主程序。可以看出
@@ -433,7 +453,7 @@ flag:  0xf11e932fa420790ca3976468dc4df1e6b20519ebfdc427c09e06940e1ef0ca566d41714
 			break
 ```
 
-我们的得到的n=p*q。而p，q，以及我们已知的e都在gen_key函数中生成。看一看gen_key函数
+我们得到的 $n=p \times q$。而 p，q 以及我们已知的 e 都在 `gen_key` 函数中生成。看一看 `gen_key` 函数
 
 ```python
 def gen_key():
@@ -461,14 +481,16 @@ def gen_key():
 
 其中我们已知如下参数
 
-- k=2048
-- e=0x10001
+$$
+k=2048
+e=0x10001
+$$
 
-首先，程序先得到了1024比特位的素数p，并且gcd(2,p-1)=1。
+首先，程序先得到了 1024 比特位的素数 p，并且 `gcd(2,p-1)=1`。
 
-然后，程序又得到了一个1024比特位的素数q_t，并且计算n_t=p*q_t。
+然后，程序又得到了一个 1024 比特位的素数 $q_t$，并且计算 $n_t=p \times q_t$。
 
-下面多次调用了get_bit函数，我们来简单分析一下
+下面多次调用了 `get_bit` 函数，我们来简单分析一下
 
 ```python
 def get_bit(number, n_bit, dire):
@@ -487,10 +509,10 @@ def get_bit(number, n_bit, dire):
 		return number & (pow(2, n_bit) - 1)
 ```
 
-可以看出根据dire(ction)的不同，会得到不同的数
+可以看出根据 `dire(ction)` 的不同，会得到不同的数
 
-- dire=1时，程序首先计算number的二进制位数sn，如果不是8 的整数倍的话，就将sn增大为8的整数倍，然后返回number右移(sn-n_bit)的数字。其实 就是最多保留number的n_bit位。
-- dire=0时，程序直接获取number的低n_bit位。
+- `dire=1` 时，程序首先计算 `number` 的二进制位数 `sn`，如果不是 8 的整数倍的话，就将 `sn` 增大为 8 的整数倍，然后返回 `number` 右移 `sn-n_bit` 的数字。其实 就是最多保留 `number` 的 `n_bit` 位。
+- `dire=0` 时，程序直接获取 `number` 的低 `n_bit` 位。
 
 然后我们再来看程序
 
@@ -502,9 +524,9 @@ def get_bit(number, n_bit, dire):
 
 这三个操作分别做了如下的事情
 
-- t为n_t的最多高k/16，即128位，位数不固定。
-- y为n_t的低5*k/8位，即1280位，位数固定。
-- p4为p的最多高5k/16位，即640位，位数不固定。
+- `t` 为 `n_t` 的最多高 k/16 位，即 128 位，位数不固定。
+- `y` 为 `n_t` 的低 5*k/8 位，即 1280 位，位数固定。
+- `p4` 为 p 的最多高 5*k/16 位，即 640 位，位数不固定。
 
 此后，程序有如下操作
 
@@ -512,7 +534,7 @@ def get_bit(number, n_bit, dire):
 	u = pi_b(p4, 1)
 ```
 
-利用pi_b对p4进行了加密
+利用 `pi_b` 对 `p4` 进行了加密
 
 ```python
 def pi_b(x, m):
@@ -534,7 +556,7 @@ def pi_b(x, m):
 	return bytes_to_long(r)
 ```
 
-其中，我们已知了秘钥key，所以只要我们有密文就可以解密。此外，可以看到的是程序是对传入的消息进行8字节分组，采用密码本方式加密，所以密文之间互不影响。
+其中，我们已知了秘钥 key，所以只要我们有密文就可以解密。此外，可以看到的是程序是对传入的消息进行 8 字节分组，采用密码本方式加密，所以密文之间互不影响。
 
 下面
 
@@ -551,21 +573,25 @@ def pi_b(x, m):
 	return (p, q, e)
 ```
 
-程序将t，u，y拼接在一起得到n，进而，程序得到了q，并对q的低k/16位做了抑或，然后返回q'。
+程序将 t，u，y 拼接在一起得到 n，进而，程序得到了 q，并对 q 的低 k/16 位做了抑或，然后返回 `q'`。
 
-在主程序里，再一次得到了n'=p*q'。这里我们仔细分析一下
+在主程序里，再一次得到了 `n'=p*q'`。这里我们仔细分析一下
 
-$n'=p*(q+random(2^{k/16}))$
+```
+n'=p * ( q + random(2^{k/16}))
+```
 
-而p是k/2位的，所以说，random的部分最多可以影响原来的n的最低的$k/2+k/16=9k/16$ 比特位。
+而 p 是 k/2 位的，所以说，random 的部分最多可以影响原来的 n 的最低的 $k/2+k/16=9k/16$ 比特位。
 
-而，我们还知道n的最低的5k/8=10k/16 比特为其实就是y，所以其并没有影响到u，即使影响到也就最多影响到一位。
+而，我们还知道 n 的最低的 5k/8=10k/16 比特为其实就是 y，所以其并没有影响到 u，即使影响到也就最多影响到一位。
 
-所以我们首先可以利用我们得到的n来获取u，如下
+所以我们首先可以利用我们得到的 n 来获取 u，如下
 
-$u=hex(n)[2:-1][-480:-320]$
+```
+u=hex(n)[2:-1][-480:-320]
+```
 
-虽然，这样可能会获得较多位数的u，但是这样并不影响，我们对u解密的时候每一分组都互不影响，所以我们只可能影响最高位数的p4。而p4的的高8位也有可能是填充的。但这也并不影响，我们已经得到了因子p的的很多部分了，我们可以去 尝试着解密了。如下
+虽然，这样可能会获得较多位数的 u，但是这样并不影响，我们对 u 解密的时候每一分组都互不影响，所以我们只可能影响最高位数的 p4。而 p4 的的高 8 位也有可能是填充的。但这也并不影响，我们已经得到了因子 p 的的很多部分了，我们可以去尝试着解密了。如下
 
 ```python
 if __name__=="__main__":
@@ -583,7 +609,7 @@ if __name__=="__main__":
 0xa37302107c17fb4ef5c3443f4ef9e220ac659670077b9aa9ff7381d11073affe9183e88acae0ab61fb75a3c7815ffcb1b756b27c4d90b2e0ada753fa17cc108c1d0de82c747db81b9e6f49bde1362693L
 ```
 
-下面，我们直接使用sage来解密，这里sage里面已经实现了这个攻击，我们直接拿来用就好
+下面，我们直接使用 sage 来解密，这里 sage 里面已经实现了这个攻击，我们直接拿来用就好
 
 ```python
 from sage.all import *
@@ -614,7 +640,7 @@ if roots:
     print binascii.unhexlify(flag)
 ```
 
-关于small_roots的使用，可以参考[SAGE 说明](http://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots)。
+关于 `small_roots` 的使用，可以参考 [SAGE 说明](http://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots)。
 
 结果如下
 
@@ -632,14 +658,14 @@ hctf{d8e8fca2dc0f896fd7cb4cb0031ba249}
 
 ### 题目
 
-- 2016 湖湘杯 简单的RSA
+- 2016 湖湘杯 简单的 RSA
 - 2017 WHCTF Untitled
 
 ## Boneh and Durfee attack
 
 ### 攻击条件
 
-当d较小时，满足$d\leq N^{0.292}$ 时，我们可以利用该工具，在一定程度上该要攻击比wiener attack要强一些。
+当 d 较小时，满足 $d\leq N^{0.292}$ 时，我们可以利用该工具，在一定程度上该要攻击比 Wiener's Attack要强一些。
 
 ### 攻击原理
 
@@ -647,37 +673,47 @@ hctf{d8e8fca2dc0f896fd7cb4cb0031ba249}
 
 首先我们有
 
-$ed \equiv 1 \bmod  \varphi(N)$
+$$
+ed \equiv 1 \bmod  \varphi(N)
+$$
 
 进而我们有
 
-$ed =k\varphi(N)+1$ 即 $k \varphi(N) +1 \equiv 0 \bmod e$ 。
+$$
+ed =k\varphi(N)+1$ 即 $k \varphi(N) +1 \equiv 0 \bmod e
+$$
 
 又
 
-$\varphi(N)=(p-1)(q-1)=qp-p-q+1=N-p-q+1$
+$$
+\varphi(N)=(p-1)(q-1)=qp-p-q+1=N-p-q+1
+$$
 
 所以
 
-$k(N-p-q+1)+1 \equiv 0 \bmod e$ 
+$$
+k(N-p-q+1)+1 \equiv 0 \bmod e
+$$
 
-我们假设$A=N+1$，$y=-p-q$ 那么
+我们假设 $A=N+1$，$y=-p-q$ 那么
 
 原式可化为
 
-$f(k,y)=k(A+y)+1 \equiv 0 \bmod e$
+$$
+f(k,y)=k(A+y)+1 \equiv 0 \bmod e
+$$
 
-如果我们求得了该二元方程的根，那么我们自然也就可以解一元二次方程($N=pq,p+q=-y$)来得到p与q。
+如果我们求得了该二元方程的根，那么我们自然也就可以解一元二次方程 $N=pq,p+q=-y$ 来得到 p 与 q。
 
 ### 攻击工具
 
-请参考https://github.com/mimoo/RSA-and-LLL-attacks。上面有使用教程。
+请参考 https://github.com/mimoo/RSA-and-LLL-attacks。上面有使用教程。
 
 ### 例子
 
-这里我们以2015年PlaidCTF-CTF-Curious为例进行介绍。
+这里我们以 2015 年 PlaidCTF-CTF-Curious 为例进行介绍。
 
-首先题目给了一堆N，e，c。简单看一下可以发现该e比较大。这时候我们可以考虑使用wiener attack，这里我们使用更强的目前介绍的攻击。
+首先题目给了一堆 N，e，c。简单看一下可以发现该 e 比较大。这时候我们可以考虑使用 Wiener's Attack，这里我们使用更强的目前介绍的攻击。
 
 核心代码如下
 
