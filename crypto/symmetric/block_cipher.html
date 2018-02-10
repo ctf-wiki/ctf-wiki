@@ -66,24 +66,77 @@
             
   <div class="section" id="id1">
 <h1>分组模式<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
-<p>在分组加密中，会将明文消息划分为固定大小的块，每块分别在密钥控制下加密为等长的密文。当然并不是每个消息都会是相应大小的整数倍，所以我们可能需要进行填充。</p>
+<p>分组加密会将明文消息划分为固定大小的块，每块明文分别在密钥控制下加密为密文。当然并不是每个消息都是相应块大小的整数倍，所以我们可能需要进行填充。</p>
+<div class="section" id="id2">
+<h2>常见填充规则<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>正如我们之前所说，在分组加密中，明文的长度往往并不满足要求，需要进行 padding，而如何 padding 目前也已经有了不少的规定。</p>
+<p>常见的 <a class="reference external" href="https://www.di-mgt.com.au/cryptopad.html">填充规则</a> 如下。<strong>需要注意的是，即使消息的长度是块大小的整数倍，仍然需要填充。</strong></p>
+<p>一般来说，如果在解密之后发现 Padding 不正确，则往往会抛出异常。我们也因此可以知道 Paddig 是否正确。</p>
+<div class="section" id="pad-with-bytes-all-of-the-same-value-as-the-number-of-padding-bytes-pkcs5-padding">
+<h3>Pad with bytes all of the same value as the number of padding bytes (PKCS5 padding)<a class="headerlink" href="#pad-with-bytes-all-of-the-same-value-as-the-number-of-padding-bytes-pkcs5-padding" title="永久链接至标题">¶</a></h3>
+<p>举例子如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DES</span> <span class="n">INPUT</span> <span class="n">BLOCK</span>  <span class="o">=</span> <span class="n">f</span>  <span class="n">o</span>  <span class="n">r</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>
+<span class="p">(</span><span class="n">IN</span> <span class="n">HEX</span><span class="p">)</span>           <span class="mi">66</span> <span class="mi">6</span><span class="n">F</span> <span class="mi">72</span> <span class="mi">05</span> <span class="mi">05</span> <span class="mi">05</span> <span class="mi">05</span> <span class="mi">05</span>
+<span class="n">KEY</span>              <span class="o">=</span> <span class="mi">01</span> <span class="mi">23</span> <span class="mi">45</span> <span class="mi">67</span> <span class="mi">89</span> <span class="n">AB</span> <span class="n">CD</span> <span class="n">EF</span>
+<span class="n">DES</span> <span class="n">OUTPUT</span> <span class="n">BLOCK</span> <span class="o">=</span> <span class="n">FD</span> <span class="mi">29</span> <span class="mi">85</span> <span class="n">C9</span> <span class="n">E8</span> <span class="n">DF</span> <span class="mi">41</span> <span class="mi">40</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pad-with-0x80-followed-by-zero-bytes-oneandzeroes-padding">
+<h3>Pad with 0x80 followed by zero bytes (OneAndZeroes Padding)<a class="headerlink" href="#pad-with-0x80-followed-by-zero-bytes-oneandzeroes-padding" title="永久链接至标题">¶</a></h3>
+<p>举例子如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DES</span> <span class="n">INPUT</span> <span class="n">BLOCK</span>  <span class="o">=</span> <span class="n">f</span>  <span class="n">o</span>  <span class="n">r</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>
+<span class="p">(</span><span class="n">IN</span> <span class="n">HEX</span><span class="p">)</span>           <span class="mi">66</span> <span class="mi">6</span><span class="n">F</span> <span class="mi">72</span> <span class="mi">80</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">00</span>
+<span class="n">KEY</span>              <span class="o">=</span> <span class="mi">01</span> <span class="mi">23</span> <span class="mi">45</span> <span class="mi">67</span> <span class="mi">89</span> <span class="n">AB</span> <span class="n">CD</span> <span class="n">EF</span>
+<span class="n">DES</span> <span class="n">OUTPUT</span> <span class="n">BLOCK</span> <span class="o">=</span> <span class="n">BE</span> <span class="mi">62</span> <span class="mi">5</span><span class="n">D</span> <span class="mi">9</span><span class="n">F</span> <span class="n">F3</span> <span class="n">C6</span> <span class="n">C8</span> <span class="mi">40</span>
+</pre></div>
+</div>
+<p>这里其实就是和 md5 和 sha1 的 padding 差不多。</p>
+</div>
+<div class="section" id="pad-with-zeroes-except-make-the-last-byte-equal-to-the-number-of-padding-bytes">
+<h3>Pad with zeroes except make the last byte equal to the number of padding bytes<a class="headerlink" href="#pad-with-zeroes-except-make-the-last-byte-equal-to-the-number-of-padding-bytes" title="永久链接至标题">¶</a></h3>
+<p>举例子如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DES</span> <span class="n">INPUT</span> <span class="n">BLOCK</span>  <span class="o">=</span> <span class="n">f</span>  <span class="n">o</span>  <span class="n">r</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>
+<span class="p">(</span><span class="n">IN</span> <span class="n">HEX</span><span class="p">)</span>           <span class="mi">66</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">72</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">05</span>
+<span class="n">KEY</span>              <span class="o">=</span> <span class="mi">01</span> <span class="mi">23</span> <span class="mi">45</span> <span class="mi">67</span> <span class="mi">89</span> <span class="n">AB</span> <span class="n">CD</span> <span class="n">EF</span>
+<span class="n">DES</span> <span class="n">OUTPUT</span> <span class="n">BLOCK</span> <span class="o">=</span> <span class="mi">91</span> <span class="mi">19</span> <span class="mi">2</span><span class="n">C</span> <span class="mi">64</span> <span class="n">B5</span> <span class="mi">5</span><span class="n">C</span> <span class="mi">5</span><span class="n">D</span> <span class="n">B8</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pad-with-zero-null-characters">
+<h3>Pad with zero (null) characters<a class="headerlink" href="#pad-with-zero-null-characters" title="永久链接至标题">¶</a></h3>
+<p>举例子如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DES</span> <span class="n">INPUT</span> <span class="n">BLOCK</span>  <span class="o">=</span> <span class="n">f</span>  <span class="n">o</span>  <span class="n">r</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>
+<span class="p">(</span><span class="n">IN</span> <span class="n">HEX</span><span class="p">)</span>           <span class="mi">66</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">72</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">00</span> <span class="mi">00</span>
+<span class="n">KEY</span>              <span class="o">=</span> <span class="mi">01</span> <span class="mi">23</span> <span class="mi">45</span> <span class="mi">67</span> <span class="mi">89</span> <span class="n">AB</span> <span class="n">CD</span> <span class="n">EF</span>
+<span class="n">DES</span> <span class="n">OUTPUT</span> <span class="n">BLOCK</span> <span class="o">=</span> <span class="mi">9</span><span class="n">E</span> <span class="mi">14</span> <span class="n">FB</span> <span class="mi">96</span> <span class="n">C5</span> <span class="n">FE</span> <span class="n">EB</span> <span class="mi">75</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pad-with-spaces">
+<h3>Pad with spaces<a class="headerlink" href="#pad-with-spaces" title="永久链接至标题">¶</a></h3>
+<p>举例子如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">DES</span> <span class="n">INPUT</span> <span class="n">BLOCK</span>  <span class="o">=</span> <span class="n">f</span>  <span class="n">o</span>  <span class="n">r</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>  <span class="n">_</span>
+<span class="p">(</span><span class="n">IN</span> <span class="n">HEX</span><span class="p">)</span>           <span class="mi">66</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">72</span> <span class="mi">20</span> <span class="mi">20</span> <span class="mi">20</span> <span class="mi">20</span> <span class="mi">20</span>
+<span class="n">KEY</span>              <span class="o">=</span> <span class="mi">01</span> <span class="mi">23</span> <span class="mi">45</span> <span class="mi">67</span> <span class="mi">89</span> <span class="n">AB</span> <span class="n">CD</span> <span class="n">EF</span>
+<span class="n">DES</span> <span class="n">OUTPUT</span> <span class="n">BLOCK</span> <span class="o">=</span> <span class="n">E3</span> <span class="n">FF</span> <span class="n">EC</span> <span class="n">E5</span> <span class="mi">21</span> <span class="mi">1</span><span class="n">F</span> <span class="mi">35</span> <span class="mi">25</span>
+</pre></div>
+</div>
+</div>
+</div>
 <div class="section" id="ecb">
 <h2>ECB<a class="headerlink" href="#ecb" title="永久链接至标题">¶</a></h2>
 <p>ECB模式全称为电子密码本模式（Electronic codebook）。</p>
-<div class="section" id="id2">
-<h3>加密<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="ECB 加密" src="../../_images/ecb_encryption.png" />
-</div>
-</div>
 <div class="section" id="id3">
-<h3>解密<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="ECB 解密" src="../../_images/ecb_decryption.png" />
-</div>
+<h3>加密<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
+<p><img alt="image0" src="../../_images/ecb_encryption.png" /></p>
 </div>
 <div class="section" id="id4">
-<h3>缺点<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
+<h3>解密<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
+<p><img alt="image1" src="../../_images/ecb_decryption.png" /></p>
+</div>
+<div class="section" id="id5">
+<h3>缺点<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
 <ul class="simple">
 <li>同样的明文块会被加密成相同的密文块</li>
 </ul>
@@ -92,54 +145,43 @@
 <div class="section" id="cbc">
 <h2>CBC<a class="headerlink" href="#cbc" title="永久链接至标题">¶</a></h2>
 <p>CBC全称为密码分组链接（Cipher-block chaining） 模式。</p>
-<div class="section" id="id5">
-<h3>加密<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CBC 加密" src="../../_images/cbc_encryption.png" />
-</div>
-</div>
 <div class="section" id="id6">
-<h3>解密<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CBC 解密" src="../../_images/cbc_decryption.png" />
-</div>
+<h3>加密<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
+<p><img alt="image2" src="../../_images/cbc_encryption.png" /></p>
 </div>
 <div class="section" id="id7">
-<h3>特点<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
+<h3>解密<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
+<p><img alt="image3" src="../../_images/cbc_decryption.png" /></p>
+</div>
+<div class="section" id="id8">
+<h3>特点<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
 <ul class="simple">
 <li>密文块中的一位变化只会影响当前密文块和下一密文块。</li>
 <li>加密过程难以并行化</li>
 </ul>
 </div>
-<div class="section" id="id8">
-<h3>攻击<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
 <div class="section" id="id9">
-<h4>字节反转攻击<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h4>
+<h3>攻击<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h3>
 <ul class="simple">
-<li>iv向量，影响第一个明文分组</li>
-<li>第n个密文分组，影响第n+1个明文分组</li>
+<li>字节反转攻击<ul>
+<li>IV 向量，影响第一个明文分组</li>
+<li>第 n 个密文分组，影响第 n + 1 个明文分组</li>
 </ul>
-</div>
-<div class="section" id="padding-oracle-attack">
-<h4>padding oracle attack<a class="headerlink" href="#padding-oracle-attack" title="永久链接至标题">¶</a></h4>
-</div>
+</li>
+<li>Padding Oracle Attack，具体参见下面介绍。</li>
+</ul>
 </div>
 </div>
 <div class="section" id="pcbc">
 <h2>PCBC<a class="headerlink" href="#pcbc" title="永久链接至标题">¶</a></h2>
-<p>PCBC的全称为明文密码块链接（Plaintext cipher-block
-chaining）。也称为填充密码块链接（Propagating cipher-block chaining）。</p>
+<p>PCBC的全称为明文密码块链接（Plaintext cipher-block chaining）。也称为填充密码块链接（Propagating cipher-block chaining）。</p>
 <div class="section" id="id10">
 <h3>加密<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="PCBC 加密" src="../../_images/pcbc_encryption.png" />
-</div>
+<p><img alt="image4" src="../../_images/pcbc_encryption.png" /></p>
 </div>
 <div class="section" id="id11">
 <h3>解密<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="PCBC 解密" src="../../_images/pcbc_decryption.png" />
-</div>
+<p><img alt="image5" src="../../_images/pcbc_decryption.png" /></p>
 </div>
 <div class="section" id="id12">
 <h3>特点<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h3>
@@ -154,15 +196,11 @@ chaining）。也称为填充密码块链接（Propagating cipher-block chaining
 <p>CFB全称为密文反馈模式（Cipher feedback）。</p>
 <div class="section" id="id13">
 <h3>加密<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CFB 加密" src="../../_images/cfb_encryption.png" />
-</div>
+<p><img alt="image6" src="../../_images/cfb_encryption.png" /></p>
 </div>
 <div class="section" id="id14">
 <h3>解密<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CFB 解密" src="../../_images/cfb_decryption.png" />
-</div>
+<p><img alt="image7" src="../../_images/cfb_decryption.png" /></p>
 </div>
 <div class="section" id="id15">
 <h3>特点<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
@@ -174,7 +212,6 @@ chaining）。也称为填充密码块链接（Propagating cipher-block chaining
 <h3>攻击<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h3>
 <ul class="simple">
 <li>HITCONCTF-Quals-2015-Simple-(Crypto-100)</li>
-<li>​</li>
 </ul>
 </div>
 </div>
@@ -183,15 +220,11 @@ chaining）。也称为填充密码块链接（Propagating cipher-block chaining
 <p>OFB全称为输出反馈模式（Output feedback）。</p>
 <div class="section" id="id17">
 <h3>加密<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="OFB 加密" src="../../_images/ofb_encryption.png" />
-</div>
+<p><img alt="image8" src="../../_images/ofb_encryption.png" /></p>
 </div>
 <div class="section" id="id18">
 <h3>解密<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="OFB 解密" src="../../_images/ofb_decryption.png" />
-</div>
+<p><img alt="image9" src="../../_images/ofb_decryption.png" /></p>
 </div>
 </div>
 <div class="section" id="ctr">
@@ -199,20 +232,275 @@ chaining）。也称为填充密码块链接（Propagating cipher-block chaining
 <p>CTR全称为计数器模式（Counter mode）。</p>
 <div class="section" id="id19">
 <h3>加密<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CTR 加密" src="../../_images/ctr_encryption.png" />
-</div>
+<p><img alt="image10" src="../../_images/ctr_encryption.png" /></p>
 </div>
 <div class="section" id="id20">
 <h3>解密<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CTR 解密" src="../../_images/ctr_decryption.png" />
+<p><img alt="image11" src="../../_images/ctr_decryption.png" /></p>
 </div>
-<p>参考链接</p>
+</div>
+<div class="section" id="padding-oracle-attack">
+<h2>Padding Oracle Attack<a class="headerlink" href="#padding-oracle-attack" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id21">
+<h3>介绍<a class="headerlink" href="#id21" title="永久链接至标题">¶</a></h3>
+<p>Padding Oracle Attack 攻击一般需要满足以下几个条件</p>
 <ul class="simple">
-<li><a class="reference external" href="https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F">分组加密模式</a></li>
+<li>加密算法<ul>
+<li>采用 PKCS5 Padding 的加密算法。 当然，非对称加密中 OAEP 的填充方式也有可能会受到影响。</li>
+<li>分组模式为 CBC 模式。</li>
+</ul>
+</li>
+<li>攻击者能力<ul>
+<li>攻击者可以拦截上述加密算法加密的消息。</li>
+<li>攻击者可以和 padding oracle（即服务器） 进行交互：客户端向服务器端发送密文，服务器端告知客户端 padding 是否正常。</li>
+</ul>
+</li>
+</ul>
+<p>Padding Oracle Attack 攻击可以达到的效果如下</p>
+<ul class="simple">
+<li>在不清楚 key 和 IV 的前提下解密任意给定的密文。</li>
 </ul>
 </div>
+<div class="section" id="id22">
+<h3>原理<a class="headerlink" href="#id22" title="永久链接至标题">¶</a></h3>
+<p>Padding Oracle Attack 攻击的基本原理如下</p>
+<ul class="simple">
+<li>对于很长的消息，可以一块一块解密。</li>
+<li>对于每一块消息，先解密消息的最后一个字节，然后解密倒数第二个字节，依次类推。</li>
+</ul>
+<p>这里我们回顾一下 CBC 的</p>
+<ul class="simple">
+<li>加密</li>
+</ul>
+<div class="math">
+\[\begin{split}C_i=E_K(P_i \oplus C_{i-1})\\
+C_0=IV\end{split}\]</div>
+<ul class="simple">
+<li>解密</li>
+</ul>
+<div class="math">
+\[\begin{split}P_{i}=D_{K}(C_{i})\oplus C_{i-1}\\ C_{0}=IV\end{split}\]</div>
+<p>我们主要关注于解密，这里我们并不知道 IV 和 key。这里我们假设密文块的长度为 n 个字节。</p>
+<p>假设我们截获了密文 Y，以获取密文 Y 的最后一个字节为例子进行分析。为了获取 Y 的内容，我们首先需要伪造一块密文 F 以便于可以修改 Y 对应明文的最后一个字节。这是因为若我们构造密文 <code class="docutils literal"><span class="pre">F|Y</span></code> ，那么解密 Y
+时具体为</p>
+<div class="math">
+\[P=D_K(Y)\oplus F\]</div>
+<p>所以修改密文 <span class="math">\(F_{n}\)</span> 可以修改 Y 对应的明文的最后一个字节。下面给出获取 P 最后一个字节的过程</p>
+<ol class="arabic simple">
+<li>i=0，设置 F 的每个字节为<strong>随机字节</strong>。</li>
+<li>设置 <span class="math">\(F_n=i \oplus 0x01\)</span></li>
+<li>将 F|Y 发送给服务器，如果 P 的最后一个字节是 i 的话，那么最后的 padding 就是 0x01，不会出现错误。否则，只有 P 的最后 <span class="math">\(P_n \oplus i \oplus 0x01\)</span> 字节都是 <span class="math">\(P_n \oplus i \oplus 0x01\)</span>
+才不会报错。<strong>而且，需要注意的是 padding 的字节只能是 0 到 n。</strong> 因此，若想要使得在 F 随机地情况下，并且满足padding
+字节大小的约束情况下还不报错<strong>概率很小</strong>。所以在服务器端不报错的情况下，我们可以认为我们确实获取了正确的字节。</li>
+<li>在出现错误的情况下，i=i+1，跳转到2。</li>
+</ol>
+<p>当获取了 P 的最后一个字节后，我们可以继续获取 P 的倒数第二个字节，此时需要设置 <span class="math">\(F_n=P_n\oplus 0x02\)</span> ，同时设置 <span class="math">\(F_{n-1}=i \oplus 0x02\)</span> 去枚举 i。</p>
+<p>所以，综上所示，Padding Oracle Attack 其实在一定程度上是一种具有很大概率成功的攻击方法。</p>
+<p>然而，需要注意的是，往往遇到的一些现实问题并不是标准的 Padding Oracle Attack 模式，我们往往需要进行一些变形。</p>
+</div>
+<div class="section" id="hitcon-secret-server">
+<h3>2017 HITCON Secret Server<a class="headerlink" href="#hitcon-secret-server" title="永久链接至标题">¶</a></h3>
+<div class="section" id="id23">
+<h4>分析<a class="headerlink" href="#id23" title="永久链接至标题">¶</a></h4>
+<p>程序中采用的加密是 AES CBC，其中采用的 padding 与 PKCS5 类似</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="n">pad_length</span> <span class="o">=</span> <span class="mi">16</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">%</span><span class="mi">16</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="o">+</span><span class="nb">chr</span><span class="p">(</span><span class="n">pad_length</span><span class="p">)</span><span class="o">*</span><span class="n">pad_length</span>
+
+<span class="k">def</span> <span class="nf">unpad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="p">[:</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
+</pre></div>
+</div>
+<p>但是，在每次 unpad 时并没有进行检测，而是直接进行 unpad。</p>
+<p>其中，需要注意的是，每次和用户交互的函数是</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">send_msg</span></code> ，接受用户的明文，使用固定的 <code class="docutils literal"><span class="pre">2jpmLoSsOlQrqyqE</span></code> 作为 IV，进行加密，并将加密结果输出。</li>
+<li><code class="docutils literal"><span class="pre">recv_msg</span></code> ，接受用户的 IV 和密文，对密文进行解密，并返回。根据返回的结果会有不同的操作</li>
+</ul>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">msg</span> <span class="o">=</span> <span class="n">recv_msg</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;exit-here&#39;</span><span class="p">):</span>
+    <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="k">elif</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;get-flag&#39;</span><span class="p">):</span>
+    <span class="n">send_msg</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
+<span class="k">elif</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;get-md5&#39;</span><span class="p">):</span>
+    <span class="n">send_msg</span><span class="p">(</span><span class="n">MD5</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">7</span><span class="p">:])</span><span class="o">.</span><span class="n">digest</span><span class="p">())</span>
+<span class="k">elif</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;get-time&#39;</span><span class="p">):</span>
+    <span class="n">send_msg</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+<span class="k">elif</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;get-sha1&#39;</span><span class="p">):</span>
+    <span class="n">send_msg</span><span class="p">(</span><span class="n">SHA</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">8</span><span class="p">:])</span><span class="o">.</span><span class="n">digest</span><span class="p">())</span>
+<span class="k">elif</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;get-sha256&#39;</span><span class="p">):</span>
+    <span class="n">send_msg</span><span class="p">(</span><span class="n">SHA256</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">10</span><span class="p">:])</span><span class="o">.</span><span class="n">digest</span><span class="p">())</span>
+<span class="k">elif</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;get-hmac&#39;</span><span class="p">):</span>
+    <span class="n">send_msg</span><span class="p">(</span><span class="n">HMAC</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">8</span><span class="p">:])</span><span class="o">.</span><span class="n">digest</span><span class="p">())</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">send_msg</span><span class="p">(</span><span class="s1">&#39;command not found&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id24">
+<h4>主要漏洞<a class="headerlink" href="#id24" title="永久链接至标题">¶</a></h4>
+<p>这里我们再简单总结一下我们已有的部分</p>
+<ul class="simple">
+<li>加密<ul>
+<li>加密时的 IV 是固定的而且已知。</li>
+<li>‘Welcome!!’ 加密后的结果。</li>
+</ul>
+</li>
+<li>解密<ul>
+<li>我们可以控制 IV。</li>
+</ul>
+</li>
+</ul>
+<p>首先，既然我们知道 <code class="docutils literal"><span class="pre">Welcome!!</span></code> 加密后的结果，还可以 recv_msg 中的 IV，那么根据解密过程</p>
+<div class="math">
+\[\begin{split}P_{i}=D_{K}(C_{i})\oplus C_{i-1}\\ C_{0}=IV\end{split}\]</div>
+<p>如果我们将 <code class="docutils literal"><span class="pre">Welcome!!</span></code> 加密后的结果输入给 recv_msg，那么其得到的结果便是 <code class="docutils literal"><span class="pre">（Welcome!!+'\x07'*7)</span> <span class="pre">xor</span> <span class="pre">iv_encrypt</span></code>，如果我们<strong>恰当的控制解密过程中传递的
+iv</strong>，那么我们就可以控制解密后的结果。也就是说我们可以执行<strong>上述所说的任意命令</strong>。从而，我们也就可以知道 <code class="docutils literal"><span class="pre">flag</span></code> 解密后的结果。</p>
+<p>其次，在上面的基础之上，如果我们在任何密文 C 后面添加自定义的 IV 和 Welcome 加密后的结果，作为输入传递给 recv_msg，那么我们便可以控制解密之后的消息的最后一个字节，<strong>那么由于 unpad
+操作，我们便可以控制解密后的消息的长度减小 0 到 255</strong>。</p>
+</div>
+<div class="section" id="id25">
+<h4>利用思路<a class="headerlink" href="#id25" title="永久链接至标题">¶</a></h4>
+<p>基本利用思路如下</p>
+<ol class="arabic simple">
+<li>绕过 proof of work</li>
+<li>根据执行任意命令的方式获取加密后的 flag。</li>
+<li>由于 flag 的开头是 <code class="docutils literal"><span class="pre">hitcon{</span></code>，一共有7个字节，所以我们任然可以通过控制 iv 来使得解密后的前 7 个字节为指定字节。这使得我们可以对于解密后的消息执行 <code class="docutils literal"><span class="pre">get-md5</span></code> 命令。而根据 unpad
+操作，我们可以控制解密后的消息恰好在消息的第几个字节处。所以我们可以开始时将控制解密后的消息为 <code class="docutils literal"><span class="pre">hitcon{x</span></code>，即只保留<code class="docutils literal"><span class="pre">hitcon{</span></code>
+后的一个字节。这样便可以获得带一个字节哈希后的加密结果。类似地，我们也可以获得带制定个字节哈希后的加密结果。</li>
+<li>这样的话，我们可以在本地逐字节爆破，计算对应
+<code class="docutils literal"><span class="pre">md5</span></code>，然后再次利用任意命令执行的方式，控制解密后的明文为任意指定命令，如果控制不成功，那说明该字节不对，需要再次爆破；如果正确，那么就可以直接执行对应的命令。</li>
+</ol>
+<p>具体代码如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1">#coding=utf-8</span>
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">base64</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">random</span><span class="o">,</span> <span class="nn">string</span>
+<span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="k">import</span> <span class="n">AES</span>
+<span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="k">import</span> <span class="n">SHA256</span><span class="p">,</span> <span class="n">MD5</span>
+<span class="c1">#context.log_level = &#39;debug&#39;</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;52.193.157.19&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7777</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">strxor</span><span class="p">(</span><span class="n">str1</span><span class="p">,</span> <span class="n">str2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">c1</span><span class="p">)</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="n">c2</span><span class="p">))</span> <span class="k">for</span> <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">str1</span><span class="p">,</span> <span class="n">str2</span><span class="p">)])</span>
+
+
+<span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="n">pad_length</span> <span class="o">=</span> <span class="mi">16</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">%</span> <span class="mi">16</span>
+    <span class="k">return</span> <span class="n">msg</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">pad_length</span><span class="p">)</span> <span class="o">*</span> <span class="n">pad_length</span>
+
+
+<span class="k">def</span> <span class="nf">unpad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="p">[:</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>  <span class="c1"># 去掉pad</span>
+
+
+<span class="k">def</span> <span class="nf">flipplain</span><span class="p">(</span><span class="n">oldplain</span><span class="p">,</span> <span class="n">newplain</span><span class="p">,</span> <span class="n">iv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;flip oldplain to new plain, return proper iv&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">strxor</span><span class="p">(</span><span class="n">strxor</span><span class="p">(</span><span class="n">oldplain</span><span class="p">,</span> <span class="n">newplain</span><span class="p">),</span> <span class="n">iv</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">bypassproof</span><span class="p">():</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;SHA256(XXXX+&#39;</span><span class="p">)</span>
+    <span class="n">lastdata</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; == &#39;</span><span class="p">)</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Give me XXXX:&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">proof</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SHA256</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="n">lastdata</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span> <span class="o">==</span> <span class="n">digest</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pwnlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">iters</span><span class="o">.</span><span class="n">mbruteforce</span><span class="p">(</span>
+        <span class="n">proof</span><span class="p">,</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fixed&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Done!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="n">iv_encrypt</span> <span class="o">=</span> <span class="s1">&#39;2jpmLoSsOlQrqyqE&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">getmd5enc</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cipher_flag</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;return encrypt( md5( flag[7:7+i] ) )&quot;&quot;&quot;</span>
+    <span class="c1">## keep iv[7:] do not change, so decrypt won&#39;t change</span>
+    <span class="n">new_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span><span class="s2">&quot;hitcon{&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span> <span class="s2">&quot;get-md5&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span>
+        <span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">new_iv</span> <span class="o">+</span> <span class="n">cipher_flag</span>
+    <span class="c1">## calculate the proper last byte number</span>
+    <span class="n">last_byte_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span>
+        <span class="n">pad</span><span class="p">(</span><span class="s2">&quot;Welcome!!&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;a&quot;</span> <span class="o">*</span> <span class="mi">15</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cipher_flag</span><span class="p">)</span> <span class="o">+</span> <span class="mi">16</span> <span class="o">+</span> <span class="mi">16</span> <span class="o">-</span> <span class="p">(</span><span class="mi">7</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">+=</span> <span class="n">last_byte_iv</span> <span class="o">+</span> <span class="n">cipher_welcome</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">bypassproof</span><span class="p">()</span>
+
+    <span class="c1"># result of encrypted Welcome!!</span>
+    <span class="n">cipher</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">cipher_welcome</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">cipher</span><span class="p">)[</span><span class="mi">16</span><span class="p">:]</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;cipher welcome is : &quot;</span> <span class="o">+</span> <span class="n">cipher_welcome</span><span class="p">)</span>
+
+    <span class="c1"># execute get-flag</span>
+    <span class="n">get_flag_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span><span class="n">pad</span><span class="p">(</span><span class="s2">&quot;Welcome!!&quot;</span><span class="p">),</span> <span class="n">pad</span><span class="p">(</span><span class="s2">&quot;get-flag&quot;</span><span class="p">),</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">get_flag_iv</span> <span class="o">+</span> <span class="n">cipher_welcome</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="n">cipher</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">cipher_flag</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">cipher</span><span class="p">)[</span><span class="mi">16</span><span class="p">:]</span>
+    <span class="n">flaglen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cipher_flag</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;cipher flag is : &quot;</span> <span class="o">+</span> <span class="n">cipher_flag</span><span class="p">)</span>
+
+    <span class="c1"># get command not found cipher</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">iv_encrypt</span> <span class="o">+</span> <span class="n">cipher_welcome</span><span class="p">))</span>
+    <span class="n">cipher_notfound</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">flag</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="c1"># brute force for every byte of flag</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flaglen</span> <span class="o">-</span> <span class="mi">7</span><span class="p">):</span>
+        <span class="n">md5_indexi</span> <span class="o">=</span> <span class="n">getmd5enc</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cipher_flag</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">)</span>
+        <span class="n">md5_indexi</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">md5_indexi</span><span class="p">)[</span><span class="mi">16</span><span class="p">:]</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;get encrypt(md5(flag[7:7+i])): &quot;</span> <span class="o">+</span> <span class="n">md5_indexi</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">guess</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">):</span>
+            <span class="c1"># locally compute md5 hash</span>
+            <span class="n">guess_md5</span> <span class="o">=</span> <span class="n">MD5</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">flag</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">guess</span><span class="p">))</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+            <span class="c1"># try to null out the md5 plaintext and execute a command</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span><span class="n">guess_md5</span><span class="p">,</span> <span class="s1">&#39;get-time&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x01</span><span class="s1">&#39;</span><span class="p">),</span>
+                                <span class="n">iv_encrypt</span><span class="p">)</span>
+            <span class="n">payload</span> <span class="o">+=</span> <span class="n">md5_indexi</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># if we receive the block for &#39;command not found&#39;, the hash was wrong</span>
+            <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="n">cipher_notfound</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s1">&#39;Guess </span><span class="si">{}</span><span class="s1"> is wrong.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span>
+            <span class="c1"># otherwise we correctly guessed the hash and the command was executed</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s1">&#39;Found!&#39;</span>
+                <span class="n">flag</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span>
+                <span class="nb">print</span> <span class="s1">&#39;Flag so far:&#39;</span><span class="p">,</span> <span class="n">flag</span>
+                <span class="k">break</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>最后结果如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>Flag so far: Paddin9_15_ve3y_h4rd__!!}\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="id26">
+<h2>参考链接<a class="headerlink" href="#id26" title="永久链接至标题">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F">分组加密模式</a></li>
+<li><a class="reference external" href="https://en.wikipedia.org/wiki/Padding_oracle_attack">https://en.wikipedia.org/wiki/Padding_oracle_attack</a></li>
+<li><a class="reference external" href="http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf">http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf</a></li>
+<li><a class="reference external" href="https://ctftime.org/writeup/7975">https://ctftime.org/writeup/7975</a></li>
+</ul>
 </div>
 </div>
 
@@ -265,21 +553,25 @@ chaining）。也称为填充密码块链接（Propagating cipher-block chaining
 <li class="toctree-l2"><a class="reference internal" href="aes.html">AES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="simon_speck.html">Simon and Speck Block Ciphers</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">分组模式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">常见填充规则</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pad-with-bytes-all-of-the-same-value-as-the-number-of-padding-bytes-pkcs5-padding">Pad with bytes all of the same value as the number of padding bytes (PKCS5 padding)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pad-with-0x80-followed-by-zero-bytes-oneandzeroes-padding">Pad with 0x80 followed by zero bytes (OneAndZeroes Padding)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pad-with-zeroes-except-make-the-last-byte-equal-to-the-number-of-padding-bytes">Pad with zeroes except make the last byte equal to the number of padding bytes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pad-with-zero-null-characters">Pad with zero (null) characters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pad-with-spaces">Pad with spaces</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#ecb">ECB</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">加密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id3">解密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id4">缺点</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">加密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">解密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">缺点</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#cbc">CBC</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id5">加密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id6">解密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id7">特点</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id8">攻击</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#id9">字节反转攻击</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#padding-oracle-attack">padding oracle attack</a></li>
-</ul>
-</li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">加密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">解密</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id8">特点</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id9">攻击</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#pcbc">PCBC</a><ul>
@@ -305,6 +597,18 @@ chaining）。也称为填充密码块链接（Propagating cipher-block chaining
 <li class="toctree-l4"><a class="reference internal" href="#id20">解密</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#padding-oracle-attack">Padding Oracle Attack</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id21">介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id22">原理</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hitcon-secret-server">2017 HITCON Secret Server</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id23">分析</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id24">主要漏洞</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id25">利用思路</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id26">参考链接</a></li>
 </ul>
 </li>
 </ul>
