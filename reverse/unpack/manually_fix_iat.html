@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Unicorn Engine &#8212; CTF Wiki </title>
+    <title>手动查找IAT并使用ImportREC重建 &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -32,8 +32,8 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="Unicorn Engine简介" href="unicorn_intro.html" />
-    <link rel="prev" title="DLL文件脱壳" href="../unpack/unpack_dll.html" /> 
+    <link rel="next" title="DLL文件脱壳" href="unpack_dll.html" />
+    <link rel="prev" title="dump及IAT重建" href="fix_iat.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -46,13 +46,14 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="unicorn_intro.html" title="Unicorn Engine简介"
+          <a href="unpack_dll.html" title="DLL文件脱壳"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="../unpack/unpack_dll.html" title="DLL文件脱壳"
+          <a href="fix_iat.html" title="dump及IAT重建"
              accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
- 
+
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Unpack Tricks</a> &#187;</li> 
       </ul>
     </div>
     </div>
@@ -63,21 +64,77 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="unicorn-engine">
-<h1>Unicorn Engine<a class="headerlink" href="#unicorn-engine" title="永久链接至标题">¶</a></h1>
-<div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Unicorn Engine</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="unicorn_intro.html">Unicorn Engine简介</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="unicorn_intro.html#unicorn">什么是Unicorn引擎</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unicorn_intro.html#id3">应用的情景</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unicorn_intro.html#id4">如何安装</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unicorn_intro.html#id5">使用unicorn的快速指南</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unicorn_intro.html#id6">参考链接</a></li>
-</ul>
-</li>
-</ul>
+  <div class="section" id="iatimportrec">
+<h1>手动查找IAT并使用ImportREC重建<a class="headerlink" href="#iatimportrec" title="永久链接至标题">¶</a></h1>
+<p>示例程序可以从此链接下载:
+<a class="reference external" href="https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/unpack/example/manually_fix_iat.zip">manually_fix_iat.zip</a></p>
+<p>我们常用的<code class="docutils literal"><span class="pre">ImportREC</span></code>脱壳是使用的软件自带的<code class="docutils literal"><span class="pre">IAT</span> <span class="pre">auto</span> <span class="pre">search</span></code>,
+但是如果我们要手动查找<code class="docutils literal"><span class="pre">IAT</span></code>的地址并<code class="docutils literal"><span class="pre">dump</span></code>出来,
+又该怎么操作呢？</p>
+<p>首先使用ESP定律, 可以很快地跳转到<code class="docutils literal"><span class="pre">OEP:</span> <span class="pre">00401110</span></code>.</p>
+<div class="figure" id="id1">
+<img alt="1.png" src="../../_images/upx-dll-unpack-1.png" />
+<p class="caption"><span class="caption-text">1.png</span></p>
 </div>
+<p>我们右键点击, 选择<code class="docutils literal"><span class="pre">查找-&gt;所有模块间的调用</span></code></p>
+<div class="figure" id="id2">
+<img alt="2.png" src="../../_images/upx-dll-unpack-2.png" />
+<p class="caption"><span class="caption-text">2.png</span></p>
+</div>
+<p>显示出调用的函数列表,
+我们双击其中的某个函数(注意这里要双击的应该是程序的函数而不是系统函数)</p>
+<div class="figure" id="id3">
+<img alt="3.png" src="../../_images/upx-dll-unpack-3.png" />
+<p class="caption"><span class="caption-text">3.png</span></p>
+</div>
+<p>我们来到了函数调用处</p>
+<div class="figure" id="id4">
+<img alt="4.png" src="../../_images/upx-dll-unpack-4.png" />
+<p class="caption"><span class="caption-text">4.png</span></p>
+</div>
+<p>右键点击<code class="docutils literal"><span class="pre">跟随</span></code>, 进入函数</p>
+<div class="figure" id="id5">
+<img alt="5.png" src="../../_images/upx-dll-unpack-5.png" />
+<p class="caption"><span class="caption-text">5.png</span></p>
+</div>
+<p>然后再右键点击<code class="docutils literal"><span class="pre">数据窗口中跟随-&gt;内存地址</span></code></p>
+<div class="figure" id="id6">
+<img alt="6.png" src="../../_images/upx-dll-unpack-6.png" />
+<p class="caption"><span class="caption-text">6.png</span></p>
+</div>
+<p>这里因为显示是十六进制值, 不方便查看,
+我们可以在数据窗口点击右键选择<code class="docutils literal"><span class="pre">长型-&gt;地址</span></code>, 就可以显示函数名</p>
+<div class="figure" id="id7">
+<img alt="7.png" src="../../_images/upx-dll-unpack-7.png" />
+<p class="caption"><span class="caption-text">7.png</span></p>
+</div>
+<p>注意我们要向上翻到IAT表的起始位置,
+可以看到最开始的函数地址是<code class="docutils literal"><span class="pre">004050D8</span></code>的<code class="docutils literal"><span class="pre">kernel.AddAtomA</span></code>,
+我们向下找到最后一个函数, 也就是<code class="docutils literal"><span class="pre">user32.MessageBoxA</span></code>函数,
+计算一下整个IAT表的大小。在OD的最下方有显示<code class="docutils literal"><span class="pre">块大小：0x7C</span></code>,
+所以我们整个IAT块大小就是<code class="docutils literal"><span class="pre">0x7C</span></code></p>
+<div class="figure" id="id8">
+<img alt="8.png" src="../../_images/upx-dll-unpack-8.png" />
+<p class="caption"><span class="caption-text">8.png</span></p>
+</div>
+<p>打开<code class="docutils literal"><span class="pre">ImportREC</span></code>, 选择我们正在调试的这个程序,
+然后分别输入<code class="docutils literal"><span class="pre">OEP：1110,</span> <span class="pre">RVA:50D8,</span> <span class="pre">SIZE:7C</span></code>, 然后点击<code class="docutils literal"><span class="pre">获取输入表</span></code></p>
+<div class="figure" id="id9">
+<img alt="9.png" src="../../_images/upx-dll-unpack-9.png" />
+<p class="caption"><span class="caption-text">9.png</span></p>
+</div>
+<p>这里在输入表窗口中右键选择<code class="docutils literal"><span class="pre">高级命令-&gt;选择代码块</span></code>.</p>
+<div class="figure" id="id10">
+<img alt="10.png" src="../../_images/upx-dll-unpack-10.png" />
+<p class="caption"><span class="caption-text">10.png</span></p>
+</div>
+<p>然后会弹出窗口, 选择完整转储, 保存为<code class="docutils literal"><span class="pre">dump.exe</span></code>文件</p>
+<div class="figure" id="id11">
+<img alt="11.png" src="../../_images/upx-dll-unpack-11.png" />
+<p class="caption"><span class="caption-text">11.png</span></p>
+</div>
+<p>dump完成后, 选择<code class="docutils literal"><span class="pre">转储到文件</span></code>, 这里选择修复我们刚刚dump出的dump.exe,
+<a href="#id12"><span class="problematic" id="id13">得到一个dump_</span></a>.exe。这时整个脱壳就完成了</p>
 </div>
 
 
@@ -142,11 +199,20 @@
 <p class="caption"><span class="caption-text">Reverse</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">软件逆向工程简介</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../unpack/index.html">Unpack Tricks</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Unicorn Engine</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="unicorn_intro.html">Unicorn Engine简介</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Unpack Tricks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="packer_intro.html">保护壳简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trace.html">0x01 单步跟踪法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="esp.html">0x02 ESP定律</a></li>
+<li class="toctree-l2"><a class="reference internal" href="direct_oep.html">0x03 一步到达OEP法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="memory.html">0x04 内存镜像法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="last_exception.html">0x05 最后一次异常法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sfx.html">0x06 SFX法</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fix_iat.html">dump及IAT重建</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">手动查找IAT并使用ImportREC重建</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unpack_dll.html">DLL文件脱壳</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../unicorn/index.html">Unicorn Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../anti_debug/index.html">Anti Debug Tech</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../linux/index.html">Linux RE</a></li>
 </ul>
@@ -191,13 +257,14 @@
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="unicorn_intro.html" title="Unicorn Engine简介"
+          <a href="unpack_dll.html" title="DLL文件脱壳"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="../unpack/unpack_dll.html" title="DLL文件脱壳"
+          <a href="fix_iat.html" title="dump及IAT重建"
              >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
- 
+
+          <li class="nav-item nav-item-1"><a href="index.html" >Unpack Tricks</a> &#187;</li> 
       </ul>
     </div>
     </div>

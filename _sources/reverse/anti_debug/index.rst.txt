@@ -12,5 +12,6 @@ Anti Debug Tech
    isdebuggerpresent.rst
    checkremotedebuggerpresent.rst
    ntqueryinformationprocess.rst
+   junk_code.rst
    example.rst
    
