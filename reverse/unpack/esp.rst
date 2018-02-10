@@ -23,7 +23,7 @@ ESP定律的原理在于利用程序中堆栈平衡来快速找到OEP.
 ----
 
 示例程序可以点击此处下载:
-`2_esp.zip </reverse/unpack/example/2_esp.zip>`__
+`2_esp.zip <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/unpack/example/2_esp.zip>`__
 
 还是上一篇的示例, 入口一句\ ``popad``,
 我们按下F8执行\ ``popad``\ 保存寄存器状态,
