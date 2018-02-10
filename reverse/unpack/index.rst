@@ -3,7 +3,6 @@ Unpack Tricks
 
 .. toctree::
    :maxdepth: 2
-   :caption: Unpack Tricks
 
    packer_intro.rst
    trace.rst

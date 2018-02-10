@@ -34,15 +34,12 @@ https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
 .. figure:: /reverse/linux/figure/2014_hitb/run.png
    :alt: run.png
 
-   run.png
 
 程序似乎在一直打印着一些句子. 并且没有停止下来的迹象.
 我们就用IDA打开来看一下. 首先按下\ ``Shift+F12``\ 查找字符串.
 
 .. figure:: /reverse/linux/figure/2014_hitb/ida_strings.png
    :alt: ida_strings.png
-
-   ida_strings.png
 
 显然, 除开一直在打印的句子外, 我们发现了一些有趣的字符串:
 
@@ -152,8 +149,6 @@ https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
 .. figure:: /reverse/linux/figure/2014_hitb/ida_patch.png
    :alt: ida_patch.png
 
-   ida_patch.png
-
 将\ ``4007B7``\ 到\ ``4007BD``\ 之间的汇编代码全部修改为\ ``nop``\ 即可.
 然后选择菜单\ ``Edit->Patch Program->Apply patches to input file``.
 当然最好做一个备份(即勾选\ ``Create a backup``),
@@ -162,8 +157,6 @@ https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
 
 .. figure:: /reverse/linux/figure/2014_hitb/ida_apply.png
    :alt: ida_apply.png
-
-   ida_apply.png
 
 现在进入\ ``LD_PRELOAD``\ 部分. 这里我们简单编写一下c代码, 下载链接:
 `time.c <https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/time.c>`__
@@ -188,7 +181,5 @@ https://blog.fpmurphy.com/2012/09/all-about-ld_preload.html#ixzz569cbyze4
 
 .. figure:: /reverse/linux/figure/2014_hitb/ld_preload.png
    :alt: LD_PRELOAD.png
-
-   LD_PRELOAD.png
 
 过一会, 你就能听到CPU疯狂运转的声音, 然后很快就出来了flag.

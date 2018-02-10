@@ -48,4 +48,4 @@
 
 ![11.png](/reverse/unpack/figure/manually_fix_iat/upx-dll-unpack-11.png)
 
-dump完成后, 选择`转储到文件`, 这里选择修复我们刚刚dump出的dump.exe, 得到一个dump_.exe。这时整个脱壳就完成了
+dump完成后, 选择`转储到文件`, 这里选择修复我们刚刚dump出的dump.exe, 得到一个`dump\_.exe`. 这时整个脱壳就完成了

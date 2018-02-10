@@ -33,7 +33,6 @@ ESP定律的原理在于利用程序中堆栈平衡来快速找到OEP.
 .. figure:: /reverse/unpack/figure/esp_01.png
    :alt: esp_01.png
 
-   esp_01.png
 
 我们鼠标右击\ ``ESP``\ 寄存器的值, 也就是图中的\ ``0019FF64``,
 选择\ ``HW break[ESP]``\ 后, 按下\ ``F9``\ 运行程序,
@@ -42,5 +41,3 @@ ESP定律的原理在于利用程序中堆栈平衡来快速找到OEP.
 
 .. figure:: /reverse/unpack/figure/esp_02.png
    :alt: esp_02.png
-
-   esp_02.png

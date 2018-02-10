@@ -3,7 +3,6 @@ Anti Debug Tech
 
 .. toctree::
    :maxdepth: 2
-   :caption: Anti Debug Tech
 
    ntglobalflag.rst
    heap_flags.rst

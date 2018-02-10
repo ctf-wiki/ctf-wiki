@@ -80,7 +80,6 @@ NtGlobalFlag
    .. figure:: /reverse/anti_debug/figure/globalflag.png
       :alt: GlobalFlag.png
 
-      GlobalFlag.png
 
    当然这也产生了另一种检测调试器的方法: 如果一个调试器为了隐藏自己,
    而将注册表中的键值复制到\ ``NtGlobalFlag``\ 字段中,
@@ -147,7 +146,6 @@ NtGlobalFlag
 .. figure:: /reverse/anti_debug/figure/manually_set_peb_ntglobalflag.png
    :alt: Manually-set-peb-ntglobalflag.png
 
-   Manually-set-peb-ntglobalflag.png
 
 右键选择\ ``Binary->Fill with 00's``\ 将值\ ``0x70``\ 替换为\ ``0x00``\ 即可.
 
