@@ -8,7 +8,7 @@
 
 比如如下, 我们找到了OEP, 到达了程序的真正入口点. 我们这时就需要将程序dump出来. 我们右键, 选择`"用OllyDump脱壳调试进程"`(不过你也可以使用`LoadPE`来dump出来):
 
-![right_click.png](/reverse/unpack/figure/fix_iat/right_click.jpg)
+![right_click.jpg](/reverse/unpack/figure/fix_iat/right_click.jpg)
 
 弹出一个窗口, 看一下地址是否正确, 主要就是看看`入口点地址`有没有选对. 然后取消勾选`重建输入表`. 
 

@@ -33,7 +33,6 @@ OD载入程序,
 .. figure:: /reverse/unpack/figure/exception_01.png
    :alt: exception_01.png
 
-   exception_01.png
 
 我们按下\ ``Shift+F9``, 记录按了多少次, 程序正常运行.
 我们要得到的是倒数第二次按下是按了多少次. 在本例中
@@ -48,7 +47,6 @@ OD载入程序,
 .. figure:: /reverse/unpack/figure/exception_02.png
    :alt: exception_02.png
 
-   exception_02.png
 
 我们在CPU窗口(汇编指令), 按\ ``Ctrl+G``, 输入\ ``0040CCD7``,
 然后在此处按下F2. 也就是在\ ``0040CCD7``\ 处设置断点,
@@ -57,7 +55,6 @@ OD载入程序,
 .. figure:: /reverse/unpack/figure/exception_03.png
    :alt: exception_03.png
 
-   exception_03.png
 
 触发断点后, 来单步跟踪. 向下都是一些循环和跳转, 我们使用F4跳过循环.
 最后到达如下位置
@@ -65,7 +62,6 @@ OD载入程序,
 .. figure:: /reverse/unpack/figure/exception_04.png
    :alt: exception_04.png
 
-   exception_04.png
 
 显然在最后的\ ``mov ebp, 0041010CC; jmp ebp``\ 是在跳转向OEP,
 我们跳转过去如下图所示:
@@ -73,6 +69,5 @@ OD载入程序,
 .. figure:: /reverse/unpack/figure/exception_05.png
    :alt: exception_05.png
 
-   exception_05.png
 
 显然, 我们幸运地来到了OEP处.

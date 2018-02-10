@@ -32,7 +32,6 @@
 .. figure:: /reverse/unpack/figure/direct2oep_01.png
    :alt: direct2oep_01.png
 
-   direct2oep_01.png
 
 在本例中, 当搜索到的\ ``popad``\ 不符合我们的要求时,
 可以按下\ ``ctrl+l``\ 来搜索下一个匹配处, 大概按下个三四次,
@@ -41,4 +40,3 @@
 .. figure:: /reverse/unpack/figure/direct2oep_02.png
    :alt: direct2oep_02.png
 
-   direct2oep_02.png

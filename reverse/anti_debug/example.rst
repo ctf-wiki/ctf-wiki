@@ -11,7 +11,6 @@ Anti debug的例题
 .. figure:: /reverse/anti_debug/figure/2016_seccon/run.png
    :alt: run.png
 
-   run.png
 
 我们用IDA打开来看下, 最快速的方式就是直接查看字符串,
 根据\ ``password is wrong``\ 找到关键代码. IDA显示的结果如下图:
@@ -19,7 +18,7 @@ Anti debug的例题
 .. figure:: /reverse/anti_debug/figure/2016_seccon/ida_strings.png
    :alt: ida_strings.png
 
-   ida_strings.png
+
 
 显然, 字符串表明程序中可能有各种检测, 比如检测进程名\ ``ollydbg.exe``,
 ``ImmunityDebugger.exe``, ``idaq.exe``\ 和\ ``Wireshark.exe``.
@@ -433,7 +432,7 @@ SEH
 .. figure:: /reverse/anti_debug/figure/2016_seccon/jmp.png
    :alt: jmp.png
 
-   jmp.png
+
 
 这里是输入\ ``I have a pen.``\ 后的跳转部分, 因为正常跳转到的部分,
 全是一些检测调试的内容, 所以我们直接跳到代码解密的部分.
@@ -442,7 +441,6 @@ SEH
 .. figure:: /reverse/anti_debug/figure/2016_seccon/target.png
    :alt: target.png
 
-   target.png
 
 在\ ``00401663``\ 以上的\ ``mov-cmp-jnz``\ 也是一个验证部分, 就不管了,
 直接跳到\ ``00401663``\ 这里的\ ``mov ecx, 7``\ 这里运行解密代码,
@@ -451,4 +449,3 @@ SEH
 .. figure:: /reverse/anti_debug/figure/2016_seccon/flag.png
    :alt: flag.png
 
-   flag.png

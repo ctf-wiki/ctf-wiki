@@ -15,9 +15,8 @@ dump及IAT重建
 选择\ ``"用OllyDump脱壳调试进程"``\ (不过你也可以使用``LoadPE``\ 来dump出来):
 
 .. figure:: /reverse/unpack/figure/fix_iat/right_click.jpg
-   :alt: right_click.png
+   :alt: right_click.jpg
 
-   right_click.png
 
 弹出一个窗口, 看一下地址是否正确,
 主要就是看看\ ``入口点地址``\ 有没有选对. 然后取消勾选\ ``重建输入表``.
@@ -25,7 +24,6 @@ dump及IAT重建
 .. figure:: /reverse/unpack/figure/fix_iat/dump.png
    :alt: dump.png
 
-   dump.png
 
 将dump出的文件命名, 我这里是命名为\ ``dump.exe``\ 啦.
 我们尝试来运行一下\ ``dump.exe``, 可以发现程序无法正常运行,
@@ -46,7 +44,6 @@ OD中的\ ``EIP``\ 正处在\ ``OEP``\ 位置,
 .. figure:: /reverse/unpack/figure/fix_iat/importrec.png
    :alt: importrec.png
 
-   importrec.png
 
 我们所知, 在Ollydbg里我们知道程序目前在的入口点是\ ``0049C25C``,
 而镜像基址是\ ``00400000``
@@ -59,7 +56,6 @@ OD中的\ ``EIP``\ 正处在\ ``OEP``\ 位置,
 .. figure:: /reverse/unpack/figure/fix_iat/auto_search.png
    :alt: auto_search.png
 
-   auto_search.png
 
 我们点击\ ``"Get Imports"``\ 按钮便可以重建\ ``IAT``.
 左侧会显示\ ``IAT``\ 中各导入函数的地址以及是否有效.
@@ -68,7 +64,6 @@ OD中的\ ``EIP``\ 正处在\ ``OEP``\ 位置,
 .. figure:: /reverse/unpack/figure/fix_iat/get_imports.png
    :alt: get_imports.png
 
-   get_imports.png
 
 我们点击\ ``Fix Dump``,
 然后打开先前使用\ ``OllyDump``\ 插件转储出来的文件，也就是\ ``dump.exe``\ 文件。
