@@ -12,3 +12,6 @@ Unpack Tricks
    memory.rst
    last_exception.rst
    sfx.rst
+   fix_iat.rst
+   manually_fix_iat.rst
+   unpack_dll.rst
