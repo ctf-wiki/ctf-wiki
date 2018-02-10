@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>分组模式 &#8212; CTF Wiki </title>
+    <title>Simon and Speck Block Ciphers &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -32,8 +32,8 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="非对称密码" href="../asymmetric/index.html" />
-    <link rel="prev" title="Simon and Speck Block Ciphers" href="simon_speck.html" /> 
+    <link rel="next" title="分组模式" href="block_cipher.html" />
+    <link rel="prev" title="AES" href="aes.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -46,10 +46,10 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="../asymmetric/index.html" title="非对称密码"
+          <a href="block_cipher.html" title="分组模式"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="simon_speck.html" title="Simon and Speck Block Ciphers"
+          <a href="aes.html" title="AES"
              accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
@@ -64,155 +64,102 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="id1">
-<h1>分组模式<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
-<p>在分组加密中，会将明文消息划分为固定大小的块，每块分别在密钥控制下加密为等长的密文。当然并不是每个消息都会是相应大小的整数倍，所以我们可能需要进行填充。</p>
-<div class="section" id="ecb">
-<h2>ECB<a class="headerlink" href="#ecb" title="永久链接至标题">¶</a></h2>
-<p>ECB模式全称为电子密码本模式（Electronic codebook）。</p>
+  <div class="section" id="simon-and-speck-block-ciphers">
+<h1>Simon and Speck Block Ciphers<a class="headerlink" href="#simon-and-speck-block-ciphers" title="永久链接至标题">¶</a></h1>
+<p>这是一组姐妹轻量级加密。</p>
+<div class="section" id="simon-block-cipher">
+<h2>Simon Block Cipher<a class="headerlink" href="#simon-block-cipher" title="永久链接至标题">¶</a></h2>
+<div class="section" id="id1">
+<h3>基本介绍<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h3>
+<p>Simon 块加密算法由 NSA 2013 年 6 月公布，主要在<strong>硬件实现</strong>上进行了优化。</p>
+<p>Simon Block Cipher 是平衡的 <a class="reference external" href="https://en.wikipedia.org/wiki/Feistel_cipher">Feistel cipher</a> 加密，一共有两块，若每块加密的大小为 n bits，那么明文的大小就是 2n
+bits。此外，一般来说，该加密中所使用的秘钥长度是块长度的整数倍，比如 2n，4n等。常见的 Simon 加密算法有</p>
+<div class="figure">
+<img alt="" src="../../_images/simon_cipher_mode.png" />
+</div>
+<p>一般来说，Simon 算法称之为 Simon 2<em>n</em>/nm，n 为块大小，m 是块大小与秘钥之间的倍数。比如说 Simon 48/96 就是指明文是 48 比特，秘钥是 96 比特的加密算法。</p>
+<p>此外，对于 Simon 块加密算法来说，每轮的加密过程一样，如下</p>
+<div class="figure">
+<img alt="" src="../../_images/Simon_block_cipher.png" />
+</div>
+<p>当然，对于每一轮以及不同的 m 来说，秘钥也会有所不同</p>
+<div class="figure">
+<img alt="" src="../../_images/simon_key_schedule.svg" /></div>
+<p>其中， <span class="math">\(z_j\)</span> 是由 Linear Feedback Shift Register (LFSR) 生成的，虽然对于不同的 <span class="math">\(z_j\)</span> 的逻辑不同，但是初始向量是固定的。</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="100%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Constant</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><span class="math">\(z_{0}\)</span>=11111010001001010110000111001101111101000100101011000011100110</td>
+</tr>
+<tr class="row-odd"><td><span class="math">\(z_{1}\)</span>=10001110111110010011000010110101000111011111001001100001011010</td>
+</tr>
+<tr class="row-even"><td><span class="math">\(z_{2}\)</span>=10101111011100000011010010011000101000010001111110010110110011</td>
+</tr>
+<tr class="row-odd"><td><span class="math">\(z_{3}\)</span>=11011011101011000110010111100000010010001010011100110100001111</td>
+</tr>
+<tr class="row-even"><td><span class="math">\(z_{4}\)</span>=11010001111001101011011000100000010111000011001010010011101111</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="seccon-simon-and-speck-block-ciphers">
+<h3>2017 SECCON Simon and Speck Block Ciphers<a class="headerlink" href="#seccon-simon-and-speck-block-ciphers" title="永久链接至标题">¶</a></h3>
+<p>题目描述如下</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Simon</span> <span class="ow">and</span> <span class="n">Speck</span> <span class="n">Block</span> <span class="n">Ciphers</span>
+
+<span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">eprint</span><span class="o">.</span><span class="n">iacr</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="mi">2013</span><span class="o">/</span><span class="mf">404.</span><span class="n">pdf</span> <span class="n">Simon_96_64</span><span class="p">,</span> <span class="n">ECB</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;SECCON</span><span class="si">{xxxx}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">plain</span><span class="o">=</span><span class="mh">0x6d564d37426e6e71</span><span class="p">,</span> <span class="n">cipher</span><span class="o">=</span><span class="mh">0xbb5d12ba422834b5</span>
+</pre></div>
+</div>
+<p>从名字中可以看出秘钥是 96 比特（12 byte），明文是 48 比特（6字节），而秘钥已经给出了 8 个字节，只剩下四个字节未知。那我们可以使用暴力破解的方法。这里从
+<a class="reference external" href="https://github.com/bozhu/NSA-ciphers/blob/master/simon.py">https://github.com/bozhu/NSA-ciphers/blob/master/simon.py</a> 获取了一份 simon 加密算法。</p>
+<p>具体如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">simon</span> <span class="k">import</span> <span class="n">SIMON</span>
+
+<span class="n">plain</span> <span class="o">=</span> <span class="mh">0x6d564d37426e6e71</span>
+<span class="n">cipher</span> <span class="o">=</span> <span class="mh">0xbb5d12ba422834b5</span>
+
+
+<span class="k">def</span> <span class="nf">compare</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;SECCON{&quot;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">)</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+    <span class="n">my_simon</span> <span class="o">=</span> <span class="n">SIMON</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">my_simon</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">plain</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">test</span> <span class="o">==</span> <span class="n">cipher</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span> <span class="nf">solve</span><span class="p">():</span>
+    <span class="n">visible</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">uppercase</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">lowercase</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">punctuation</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">pwnlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">iters</span><span class="o">.</span><span class="n">mbruteforce</span><span class="p">(</span><span class="n">compare</span><span class="p">,</span> <span class="n">visible</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fixed&quot;</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="n">key</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">solve</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>结果如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>➜  2017_seccon_simon_and_speck_block_ciphers git:(master) python exp.py
+[+] MBruteforcing: Found key: &quot;6Pz0&quot;
+</pre></div>
+</div>
+</div>
+</div>
 <div class="section" id="id2">
-<h3>加密<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="ECB 加密" src="../../_images/ecb_encryption.png" />
-</div>
-</div>
-<div class="section" id="id3">
-<h3>解密<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="ECB 解密" src="../../_images/ecb_decryption.png" />
-</div>
-</div>
-<div class="section" id="id4">
-<h3>缺点<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h3>
+<h2>参考文献<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
 <ul class="simple">
-<li>同样的明文块会被加密成相同的密文块</li>
+<li><a class="reference external" href="https://en.wikipedia.org/wiki/Simon_(cipher">https://en.wikipedia.org/wiki/Simon_(cipher</a>)</li>
 </ul>
-</div>
-</div>
-<div class="section" id="cbc">
-<h2>CBC<a class="headerlink" href="#cbc" title="永久链接至标题">¶</a></h2>
-<p>CBC全称为密码分组链接（Cipher-block chaining） 模式。</p>
-<div class="section" id="id5">
-<h3>加密<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CBC 加密" src="../../_images/cbc_encryption.png" />
-</div>
-</div>
-<div class="section" id="id6">
-<h3>解密<a class="headerlink" href="#id6" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CBC 解密" src="../../_images/cbc_decryption.png" />
-</div>
-</div>
-<div class="section" id="id7">
-<h3>特点<a class="headerlink" href="#id7" title="永久链接至标题">¶</a></h3>
-<ul class="simple">
-<li>密文块中的一位变化只会影响当前密文块和下一密文块。</li>
-<li>加密过程难以并行化</li>
-</ul>
-</div>
-<div class="section" id="id8">
-<h3>攻击<a class="headerlink" href="#id8" title="永久链接至标题">¶</a></h3>
-<div class="section" id="id9">
-<h4>字节反转攻击<a class="headerlink" href="#id9" title="永久链接至标题">¶</a></h4>
-<ul class="simple">
-<li>iv向量，影响第一个明文分组</li>
-<li>第n个密文分组，影响第n+1个明文分组</li>
-</ul>
-</div>
-<div class="section" id="padding-oracle-attack">
-<h4>padding oracle attack<a class="headerlink" href="#padding-oracle-attack" title="永久链接至标题">¶</a></h4>
-</div>
-</div>
-</div>
-<div class="section" id="pcbc">
-<h2>PCBC<a class="headerlink" href="#pcbc" title="永久链接至标题">¶</a></h2>
-<p>PCBC的全称为明文密码块链接（Plaintext cipher-block
-chaining）。也称为填充密码块链接（Propagating cipher-block chaining）。</p>
-<div class="section" id="id10">
-<h3>加密<a class="headerlink" href="#id10" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="PCBC 加密" src="../../_images/pcbc_encryption.png" />
-</div>
-</div>
-<div class="section" id="id11">
-<h3>解密<a class="headerlink" href="#id11" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="PCBC 解密" src="../../_images/pcbc_decryption.png" />
-</div>
-</div>
-<div class="section" id="id12">
-<h3>特点<a class="headerlink" href="#id12" title="永久链接至标题">¶</a></h3>
-<ul class="simple">
-<li>解密过程难以并行化</li>
-<li>互换邻接的密文块不会对后面的密文块造成影响</li>
-</ul>
-</div>
-</div>
-<div class="section" id="cfb">
-<h2>CFB<a class="headerlink" href="#cfb" title="永久链接至标题">¶</a></h2>
-<p>CFB全称为密文反馈模式（Cipher feedback）。</p>
-<div class="section" id="id13">
-<h3>加密<a class="headerlink" href="#id13" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CFB 加密" src="../../_images/cfb_encryption.png" />
-</div>
-</div>
-<div class="section" id="id14">
-<h3>解密<a class="headerlink" href="#id14" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CFB 解密" src="../../_images/cfb_decryption.png" />
-</div>
-</div>
-<div class="section" id="id15">
-<h3>特点<a class="headerlink" href="#id15" title="永久链接至标题">¶</a></h3>
-<ul class="simple">
-<li>加解密均不能并行化。</li>
-</ul>
-</div>
-<div class="section" id="id16">
-<h3>攻击<a class="headerlink" href="#id16" title="永久链接至标题">¶</a></h3>
-<ul class="simple">
-<li>HITCONCTF-Quals-2015-Simple-(Crypto-100)</li>
-<li>​</li>
-</ul>
-</div>
-</div>
-<div class="section" id="ofb">
-<h2>OFB<a class="headerlink" href="#ofb" title="永久链接至标题">¶</a></h2>
-<p>OFB全称为输出反馈模式（Output feedback）。</p>
-<div class="section" id="id17">
-<h3>加密<a class="headerlink" href="#id17" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="OFB 加密" src="../../_images/ofb_encryption.png" />
-</div>
-</div>
-<div class="section" id="id18">
-<h3>解密<a class="headerlink" href="#id18" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="OFB 解密" src="../../_images/ofb_decryption.png" />
-</div>
-</div>
-</div>
-<div class="section" id="ctr">
-<h2>CTR<a class="headerlink" href="#ctr" title="永久链接至标题">¶</a></h2>
-<p>CTR全称为计数器模式（Counter mode）。</p>
-<div class="section" id="id19">
-<h3>加密<a class="headerlink" href="#id19" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CTR 加密" src="../../_images/ctr_encryption.png" />
-</div>
-</div>
-<div class="section" id="id20">
-<h3>解密<a class="headerlink" href="#id20" title="永久链接至标题">¶</a></h3>
-<div class="figure">
-<img alt="CTR 解密" src="../../_images/ctr_decryption.png" />
-</div>
-<p>参考链接</p>
-<ul class="simple">
-<li><a class="reference external" href="https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F">分组加密模式</a></li>
-</ul>
-</div>
 </div>
 </div>
 
@@ -263,50 +210,16 @@ chaining）。也称为填充密码块链接（Propagating cipher-block chaining
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">对称加密</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="des.html">DES</a></li>
 <li class="toctree-l2"><a class="reference internal" href="aes.html">AES</a></li>
-<li class="toctree-l2"><a class="reference internal" href="simon_speck.html">Simon and Speck Block Ciphers</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">分组模式</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#ecb">ECB</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">加密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id3">解密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id4">缺点</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Simon and Speck Block Ciphers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simon-block-cipher">Simon Block Cipher</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">基本介绍</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#seccon-simon-and-speck-block-ciphers">2017 SECCON Simon and Speck Block Ciphers</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#cbc">CBC</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id5">加密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id6">解密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id7">特点</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id8">攻击</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#id9">字节反转攻击</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#padding-oracle-attack">padding oracle attack</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">参考文献</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#pcbc">PCBC</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id10">加密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id11">解密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id12">特点</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#cfb">CFB</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id13">加密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id14">解密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id15">特点</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id16">攻击</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#ofb">OFB</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id17">加密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id18">解密</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#ctr">CTR</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id19">加密</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id20">解密</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="block_cipher.html">分组模式</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../asymmetric/index.html">非对称密码</a></li>
@@ -372,10 +285,10 @@ chaining）。也称为填充密码块链接（Propagating cipher-block chaining
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="../asymmetric/index.html" title="非对称密码"
+          <a href="block_cipher.html" title="分组模式"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="simon_speck.html" title="Simon and Speck Block Ciphers"
+          <a href="aes.html" title="AES"
              >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
