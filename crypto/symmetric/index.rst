@@ -1,4 +1,3 @@
-..
 
 对称加密
 ========
@@ -15,4 +14,5 @@
 
    des.rst
    aes.rst
+   simon_speck.rst
    block_cipher.rst
