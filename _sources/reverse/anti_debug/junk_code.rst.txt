@@ -20,7 +20,6 @@
 .. figure:: /reverse/anti_debug/figure/2017_pediy/main.png
    :alt: main.png
 
-   main.png
 
 这里使用了不安全的\ ``scanf``\ 函数, 用户输入的缓冲区只有\ ``0xCh``\ 长,
 我们双击\ ``v1``\ 进入栈帧视图
@@ -28,7 +27,7 @@
 .. figure:: /reverse/anti_debug/figure/2017_pediy/stack.png
    :alt: stack.png
 
-   stack.png
+
 
 因此我们可以通过溢出数据, 覆盖掉返回地址, 从而转移到任意地址继续执行.
 
@@ -42,7 +41,7 @@
 .. figure:: /reverse/anti_debug/figure/2017_pediy/block.png
    :alt: block.png
 
-   block.png
+
 
 因为IDA没能很好的识别数据, 因此我们可以将光标移到数据块的起始位置,
 然后按下\ ``C``\ 键(code)将这块数据反汇编成代码
@@ -50,7 +49,7 @@
 .. figure:: /reverse/anti_debug/figure/2017_pediy/real_code.png
    :alt: real_code.png
 
-   real_code.png
+
 
 值得注意的是, 这段代码的位置是\ ``0x00413131``,
 ``0x41``\ 是\ ``'A'``\ 的ascii码，而\ ``0x31``\ 是\ ``'1'``\ 的ascii码.
@@ -65,7 +64,7 @@
 .. figure:: /reverse/anti_debug/figure/2017_pediy/entry.png
    :alt: entry.png
 
-   entry.png
+
 
 断在\ ``0x413131``\ 处后, 点击菜单栏的\ ``"查看"``, 选择\ ``"RUN跟踪"``,
 然后再点击\ ``"调试"``, 选择\ ``"跟踪步入"``,
@@ -74,7 +73,7 @@
 .. figure:: /reverse/anti_debug/figure/2017_pediy/trace.png
    :alt: trace.png
 
-   trace.png
+
 
 这段花指令本来很长, 但是使用OD的跟踪功能后, 花指令的执行流程就非常清楚.
 整个过程中进行了大量的跳转, 我们只要取其中的有效指令拿出来分析即可.
@@ -88,7 +87,7 @@
 .. figure:: /reverse/anti_debug/figure/2017_pediy/jnz.png
    :alt: jnz.png
 
-   jnz.png
+
 
 通过修改标志寄存器来满足跳转.
 继续跟踪步入(之后还有\ ``0041362E  jnz ctf2017_.00413B03``\ 需要满足).
@@ -97,4 +96,3 @@
 .. figure:: /reverse/anti_debug/figure/2017_pediy/register.png
    :alt: register.png
 
-   register.png

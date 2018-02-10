@@ -32,7 +32,7 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="栈溢出" href="../../pwn/stackoverflow/index.html" />
+    <link rel="next" title="False Disassembly" href="false_disasm.html" />
     <link rel="prev" title="Linux RE" href="index.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
@@ -46,7 +46,7 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="../../pwn/stackoverflow/index.html" title="栈溢出"
+          <a href="false_disasm.html" title="False Disassembly"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
           <a href="index.html" title="Linux RE"
@@ -89,15 +89,13 @@ Linux动态加载器<code class="docutils literal"><span class="pre">ld-linux</s
 题目下载链接:
 <a class="reference external" href="https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/hitb_bin100.elf">hitb_bin100.elf</a></p>
 <p>这是一个64位的ELF文件. 运行结果如下图所示:</p>
-<div class="figure" id="id3">
+<div class="figure">
 <img alt="run.png" src="../../_images/run1.png" />
-<p class="caption"><span class="caption-text">run.png</span></p>
 </div>
 <p>程序似乎在一直打印着一些句子. 并且没有停止下来的迹象.
 我们就用IDA打开来看一下. 首先按下<code class="docutils literal"><span class="pre">Shift+F12</span></code>查找字符串.</p>
-<div class="figure" id="id4">
+<div class="figure">
 <img alt="ida_strings.png" src="../../_images/ida_strings1.png" />
-<p class="caption"><span class="caption-text">ida_strings.png</span></p>
 </div>
 <p>显然, 除开一直在打印的句子外, 我们发现了一些有趣的字符串:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">rodata</span><span class="p">:</span><span class="mi">0000000000400</span><span class="n">A53</span> <span class="mi">00000006</span> <span class="n">C</span> <span class="n">KEY</span><span class="p">:</span>
@@ -195,18 +193,16 @@ Linux动态加载器<code class="docutils literal"><span class="pre">ld-linux</s
 <p>将光标点在<code class="docutils literal"><span class="pre">call</span>&#160;&#160;&#160; <span class="pre">___printf_chk</span></code>上,
 然后选择菜单<code class="docutils literal"><span class="pre">Edit-&gt;Patch</span> <span class="pre">Program-&gt;Assemble</span></code>(当然你可以使用其他patch方式.
 效果都一样). 然后将其修改为<code class="docutils literal"><span class="pre">nop(0x90)</span></code>, 如下图所示</p>
-<div class="figure" id="id5">
+<div class="figure">
 <img alt="ida_patch.png" src="../../_images/ida_patch.png" />
-<p class="caption"><span class="caption-text">ida_patch.png</span></p>
 </div>
 <p>将<code class="docutils literal"><span class="pre">4007B7</span></code>到<code class="docutils literal"><span class="pre">4007BD</span></code>之间的汇编代码全部修改为<code class="docutils literal"><span class="pre">nop</span></code>即可.
 然后选择菜单<code class="docutils literal"><span class="pre">Edit-&gt;Patch</span> <span class="pre">Program-&gt;Apply</span> <span class="pre">patches</span> <span class="pre">to</span> <span class="pre">input</span> <span class="pre">file</span></code>.
 当然最好做一个备份(即勾选<code class="docutils literal"><span class="pre">Create</span> <span class="pre">a</span> <span class="pre">backup</span></code>),
 然后点击OK即可(我重命名为了<code class="docutils literal"><span class="pre">patched.elf</span></code>, 下载链接:
 <a class="reference external" href="https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/patched.elf">patched.elf</a>).</p>
-<div class="figure" id="id6">
+<div class="figure">
 <img alt="ida_apply.png" src="../../_images/ida_apply.png" />
-<p class="caption"><span class="caption-text">ida_apply.png</span></p>
 </div>
 <p>现在进入<code class="docutils literal"><span class="pre">LD_PRELOAD</span></code>部分. 这里我们简单编写一下c代码, 下载链接:
 <a class="reference external" href="https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/time.c">time.c</a></p>
@@ -225,9 +221,8 @@ Linux动态加载器<code class="docutils literal"><span class="pre">ld-linux</s
 当然也给出了下载链接:
 <a class="reference external" href="https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/linux/example/2014_hitb/time.so">time.so</a></p>
 <p>然后打开linux终端, 运行命令: <code class="docutils literal"><span class="pre">LD_PRELOAD=./time.so</span> <span class="pre">./patched.elf</span></code></p>
-<div class="figure" id="id7">
+<div class="figure">
 <img alt="LD_PRELOAD.png" src="../../_images/ld_preload.png" />
-<p class="caption"><span class="caption-text">LD_PRELOAD.png</span></p>
 </div>
 <p>过一会, 你就能听到CPU疯狂运转的声音, 然后很快就出来了flag.</p>
 </div>
@@ -304,6 +299,9 @@ Linux动态加载器<code class="docutils literal"><span class="pre">ld-linux</s
 <li class="toctree-l3"><a class="reference internal" href="#id2">例题</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="false_disasm.html">False Disassembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="detect_bp.html">Detecting Breakpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="detect_dbg.html">Detecting debugging</a></li>
 </ul>
 </li>
 </ul>
@@ -348,7 +346,7 @@ Linux动态加载器<code class="docutils literal"><span class="pre">ld-linux</s
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="../../pwn/stackoverflow/index.html" title="栈溢出"
+          <a href="false_disasm.html" title="False Disassembly"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
           <a href="index.html" title="Linux RE"

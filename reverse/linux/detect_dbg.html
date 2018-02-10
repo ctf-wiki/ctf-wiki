@@ -7,7 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh_CN">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>手动查找IAT并使用ImportREC重建 &#8212; CTF Wiki </title>
+    <title>Detecting debugging &#8212; CTF Wiki </title>
     <link rel="stylesheet" href="../../_static/cloud.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
@@ -32,8 +32,8 @@
     <script type="text/javascript" src="../../_static/cloud.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="search" title="搜索" href="../../search.html" />
-    <link rel="next" title="DLL文件脱壳" href="unpack_dll.html" />
-    <link rel="prev" title="dump及IAT重建" href="fix_iat.html" /> 
+    <link rel="next" title="栈溢出" href="../../pwn/stackoverflow/index.html" />
+    <link rel="prev" title="Detecting Breakpoints" href="detect_bp.html" /> 
         <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -46,14 +46,14 @@
           <a href="../../index.html" title="內容目录"
              accesskey="C">toc</a></li>
         <li class="right" >
-          <a href="unpack_dll.html" title="DLL文件脱壳"
+          <a href="../../pwn/stackoverflow/index.html" title="栈溢出"
              accesskey="N">下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="fix_iat.html" title="dump及IAT重建"
+          <a href="detect_bp.html" title="Detecting Breakpoints"
              accesskey="P">上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Unpack Tricks</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Linux RE</a> &#187;</li> 
       </ul>
     </div>
     </div>
@@ -64,66 +64,114 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="iatimportrec">
-<h1>手动查找IAT并使用ImportREC重建<a class="headerlink" href="#iatimportrec" title="永久链接至标题">¶</a></h1>
-<p>示例程序可以从此链接下载:
-<a class="reference external" href="https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/unpack/example/manually_fix_iat.zip">manually_fix_iat.zip</a></p>
-<p>我们常用的<code class="docutils literal"><span class="pre">ImportREC</span></code>脱壳是使用的软件自带的<code class="docutils literal"><span class="pre">IAT</span> <span class="pre">auto</span> <span class="pre">search</span></code>,
-但是如果我们要手动查找<code class="docutils literal"><span class="pre">IAT</span></code>的地址并<code class="docutils literal"><span class="pre">dump</span></code>出来,
-又该怎么操作呢？</p>
-<p>首先使用ESP定律, 可以很快地跳转到<code class="docutils literal"><span class="pre">OEP:</span> <span class="pre">00401110</span></code>.</p>
-<div class="figure">
-<img alt="1.png" src="../../_images/upx-dll-unpack-1.png" />
+  <div class="section" id="detecting-debugging">
+<h1>Detecting debugging<a class="headerlink" href="#detecting-debugging" title="永久链接至标题">¶</a></h1>
+<p>检测调试器的方法很多, 比如检测进程名之类. 这里我们介绍一种方法,
+就是通过检测一些函数的调用情况来分析程序当前是否处于被调试状态</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ptrace</span><span class="p">(</span><span class="n">PTRACE_TRACEME</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;DEBUGGING... Bye</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s2">&quot;Hello</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
 </div>
-<p>我们右键点击, 选择<code class="docutils literal"><span class="pre">查找-&gt;所有模块间的调用</span></code></p>
-<div class="figure">
-<img alt="2.png" src="../../_images/upx-dll-unpack-2.png" />
+<p>一个进程只能被一个进程ptrace, 如果你自己调用ptrace,
+那么其它程序就无法通过ptrace调试或向你的程序注入代码.</p>
+<p>如果程序当前被gdb调试, 那么ptrace函数就会返回错误,
+也就侧面表明了检测到了调试器的存在.</p>
+<div class="section" id="id1">
+<h2>绕过方法1<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h2>
+<p>显然ptrace只能作用于使用ptrace的调试器, 我们可以用不使用ptrace的调试器.</p>
+<p>我们也可以通过打补丁的方式将ptrace函数擦除,
+更简单就是将ptrace的调用代码或是之后的校验给擦除了.</p>
+<p>如果可执行文件(实际情况下不太可能)在编译时并没有启用-s选项(-s
+选项能移除所有的符号表信息和重定位信息), 那么情况会变得简单很多.
+我们从这个简单的情况来分析</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># objdump -t test_debug | grep ptrace</span>
+<span class="mi">080482</span><span class="n">c0</span>    <span class="n">F</span> <span class="o">*</span><span class="n">UND</span><span class="o">*</span>     <span class="mi">00000075</span>    <span class="n">ptrace</span><span class="o">@</span><span class="nd">@GLIBC_2</span><span class="o">.</span><span class="mi">0</span>
+</pre></div>
 </div>
-<p>显示出调用的函数列表,
-我们双击其中的某个函数(注意这里要双击的应该是程序的函数而不是系统函数)</p>
-<div class="figure">
-<img alt="3.png" src="../../_images/upx-dll-unpack-3.png" />
+<p>ptrace在<code class="docutils literal"><span class="pre">0x080482c0</span></code>位置被调用</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># objdump -d -M intel test_debug |grep 80482c0</span>
+<span class="mi">80482</span><span class="n">c0</span><span class="p">:</span>    <span class="n">ff</span> <span class="mi">25</span> <span class="mi">04</span> <span class="mi">96</span> <span class="mi">04</span> <span class="mi">08</span>   <span class="n">jmp</span> <span class="n">ds</span><span class="p">:</span><span class="mh">0x8049604</span>
+<span class="mi">80483</span><span class="n">d4</span><span class="p">:</span>    <span class="n">e8</span> <span class="n">e7</span> <span class="n">fe</span> <span class="n">ff</span> <span class="n">ff</span>  <span class="n">call</span> <span class="mi">80482</span><span class="n">c0</span> <span class="o">&lt;</span><span class="n">_init</span><span class="o">+</span><span class="mh">0x28</span><span class="o">&gt;</span>
+</pre></div>
 </div>
-<p>我们来到了函数调用处</p>
-<div class="figure">
-<img alt="4.png" src="../../_images/upx-dll-unpack-4.png" />
+<p>那要是有启用-s选项, 该怎么处理呢? 这时我们需要使用gdb</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span># gdb test_debug
+gdb&gt; bp ptrace
+Breakpoint 1 at 0x80482c0
+gdb&gt; run
+Breakpoint 1 at 0x400e02f0
+......
+0x400e02f0 &lt;ptrace&gt;: push %ebp
+0x400e02f1 &lt;ptrace+1&gt;: mov %esp,%ebp
+0x400e02f3 &lt;ptrace+3&gt;: sub $0x10,%esp
+0x400e02f6 &lt;ptrace+6&gt;: mov %edi,0xfffffffc(%ebp)
+0x400e02f9 &lt;ptrace+9&gt;: mov 0x8(%ebp),%edi
+0x400e02fc &lt;ptrace+12&gt;: mov 0xc(%ebp),%ecx
+------------------------------------------------------------------------------
+Breakpoint 1, 0x400e02f0 in ptrace () from /lib/tls/libc.so.6
+</pre></div>
 </div>
-<p>右键点击<code class="docutils literal"><span class="pre">跟随</span></code>, 进入函数</p>
-<div class="figure">
-<img alt="5.png" src="../../_images/upx-dll-unpack-5.png" />
+<p>我们简单地断在了ptrace处, 现在输入finish执行到当前函数返回,
+回到main函数里</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span># gdb test_debug
+gdb&gt; finish
+00x80483d9 &lt;main+29&gt;:   add $0x10,%esp
+0x80483dc   &lt;main+32&gt;:  test %eax,%eax
+0x80483de   &lt;main+34&gt;:  jns 0x80483fa &lt;main+62&gt;
+0x80483e0   &lt;main+36&gt;:  sub $0xc,%esp
+0x80483e3   &lt;main+39&gt;:  push $0x80484e8
+0x80483e8   &lt;main+44&gt;:  call 0x80482e0
+------------------------------------------------------------------------------
+0x080483d9 in main ()
+</pre></div>
 </div>
-<p>然后再右键点击<code class="docutils literal"><span class="pre">数据窗口中跟随-&gt;内存地址</span></code></p>
-<div class="figure">
-<img alt="6.png" src="../../_images/upx-dll-unpack-6.png" />
+<p>将函数返回结果eax修改为正确的返回结果, 就可以了</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>gdb&gt; set $eax=0
+gdb&gt; c
+everything ok
+Program exited with code 016.
+_______________________________________________________________________________
+No registers.
+gdb&gt;
+</pre></div>
 </div>
-<p>这里因为显示是十六进制值, 不方便查看,
-我们可以在数据窗口点击右键选择<code class="docutils literal"><span class="pre">长型-&gt;地址</span></code>, 就可以显示函数名</p>
-<div class="figure">
-<img alt="7.png" src="../../_images/upx-dll-unpack-7.png" />
 </div>
-<p>注意我们要向上翻到IAT表的起始位置,
-可以看到最开始的函数地址是<code class="docutils literal"><span class="pre">004050D8</span></code>的<code class="docutils literal"><span class="pre">kernel.AddAtomA</span></code>,
-我们向下找到最后一个函数, 也就是<code class="docutils literal"><span class="pre">user32.MessageBoxA</span></code>函数,
-计算一下整个IAT表的大小。在OD的最下方有显示<code class="docutils literal"><span class="pre">块大小：0x7C</span></code>,
-所以我们整个IAT块大小就是<code class="docutils literal"><span class="pre">0x7C</span></code></p>
-<div class="figure">
-<img alt="8.png" src="../../_images/upx-dll-unpack-8.png" />
+<div class="section" id="id2">
+<h2>绕过方法2<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>方法2就是编写自己的ptrace函数</p>
+<p>如前几篇所述,
+<code class="docutils literal"><span class="pre">LD_PRELOAD</span></code>环境变量可以将可执行文件指向我们自己的ptrace函数.</p>
+<p>我们写一个ptrace函数并生成目标文件</p>
+<div class="code c highlight-default"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="o">--</span> <span class="n">ptrace</span><span class="o">.</span><span class="n">c</span> <span class="o">--</span>
+<span class="o">//</span> <span class="n">gcc</span> <span class="o">-</span><span class="n">shared</span> <span class="n">ptrace</span><span class="o">.</span><span class="n">c</span> <span class="o">-</span><span class="n">o</span> <span class="n">ptrace</span><span class="o">.</span><span class="n">so</span>
+<span class="nb">int</span> <span class="n">ptrace</span><span class="p">(</span><span class="nb">int</span> <span class="n">i</span><span class="p">,</span> <span class="nb">int</span> <span class="n">j</span><span class="p">,</span> <span class="nb">int</span> <span class="n">k</span><span class="p">,</span> <span class="nb">int</span> <span class="n">l</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s2">&quot; PTRACE CALLED!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
 </div>
-<p>打开<code class="docutils literal"><span class="pre">ImportREC</span></code>, 选择我们正在调试的这个程序,
-然后分别输入<code class="docutils literal"><span class="pre">OEP：1110,</span> <span class="pre">RVA:50D8,</span> <span class="pre">SIZE:7C</span></code>, 然后点击<code class="docutils literal"><span class="pre">获取输入表</span></code></p>
-<div class="figure">
-<img alt="9.png" src="../../_images/upx-dll-unpack-9.png" />
+<p>我们接下来就可以通过设置环境变量LD_PRELOAD来使用我们自己的ptrace函数,
+当然这里是可以在gdb中进行设置</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>gdb&gt; set environment LD_PRELOAD ./ptrace.so
+gdb&gt; run
+PTRACE CALLED!
+Hello World!
+Program exited with code 015.
+gdb&gt;
+</pre></div>
 </div>
-<p>这里在输入表窗口中右键选择<code class="docutils literal"><span class="pre">高级命令-&gt;选择代码块</span></code>.</p>
-<div class="figure">
-<img alt="10.png" src="../../_images/upx-dll-unpack-10.png" />
+<p>可以看到程序无法检测到调试器了.</p>
+<blockquote>
+<div>Reference: <a class="reference external" href="http://www.stonedcoder.org/~kd/lib/14-61-1-PB.pdf">Beginners Guide to Basic Linux Anti Anti Debugging
+Techniques</a></div></blockquote>
 </div>
-<p>然后会弹出窗口, 选择完整转储, 保存为<code class="docutils literal"><span class="pre">dump.exe</span></code>文件</p>
-<div class="figure">
-<img alt="11.png" src="../../_images/upx-dll-unpack-11.png" />
-</div>
-<p>dump完成后, 选择<code class="docutils literal"><span class="pre">转储到文件</span></code>, 这里选择修复我们刚刚dump出的dump.exe,
-得到一个<code class="docutils literal"><span class="pre">dump\_.exe</span></code>. 这时整个脱壳就完成了</p>
 </div>
 
 
@@ -188,22 +236,20 @@
 <p class="caption"><span class="caption-text">Reverse</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">软件逆向工程简介</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Unpack Tricks</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="packer_intro.html">保护壳简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="trace.html">0x01 单步跟踪法</a></li>
-<li class="toctree-l2"><a class="reference internal" href="esp.html">0x02 ESP定律</a></li>
-<li class="toctree-l2"><a class="reference internal" href="direct_oep.html">0x03 一步到达OEP法</a></li>
-<li class="toctree-l2"><a class="reference internal" href="memory.html">0x04 内存镜像法</a></li>
-<li class="toctree-l2"><a class="reference internal" href="last_exception.html">0x05 最后一次异常法</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sfx.html">0x06 SFX法</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fix_iat.html">dump及IAT重建</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">手动查找IAT并使用ImportREC重建</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unpack_dll.html">DLL文件脱壳</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../unpack/index.html">Unpack Tricks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../unicorn/index.html">Unicorn Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../anti_debug/index.html">Anti Debug Tech</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../linux/index.html">Linux RE</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux RE</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ld_preload.html">LD_PRELOAD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="false_disasm.html">False Disassembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="detect_bp.html">Detecting Breakpoints</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Detecting debugging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">绕过方法1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">绕过方法2</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption"><span class="caption-text">Pwn</span></p>
 <ul>
@@ -246,14 +292,14 @@
           <a href="../../index.html" title="內容目录"
              >toc</a></li>
         <li class="right" >
-          <a href="unpack_dll.html" title="DLL文件脱壳"
+          <a href="../../pwn/stackoverflow/index.html" title="栈溢出"
              >下一页</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="fix_iat.html" title="dump及IAT重建"
+          <a href="detect_bp.html" title="Detecting Breakpoints"
              >上一页</a> &nbsp; &nbsp;</li>
     <li><a href="../../index.html">CTF Wiki </a> &#187;</li>
 
-          <li class="nav-item nav-item-1"><a href="index.html" >Unpack Tricks</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="index.html" >Linux RE</a> &#187;</li> 
       </ul>
     </div>
     </div>

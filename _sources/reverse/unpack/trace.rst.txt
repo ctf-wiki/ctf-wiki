@@ -39,7 +39,7 @@
 .. figure:: /reverse/unpack/figure/trace_01.png
    :alt: trace_01.png
 
-   trace_01.png
+
 
 步进后又是一个\ ``call``, 我们继续步进, 按F7, 跟进后发现没有近call了,
 我们可以看到程序在调\ ``GetModuleHandleA``, ``GetProcAddress``\ 等API,
@@ -48,7 +48,7 @@
 .. figure:: /reverse/unpack/figure/trace_02.png
    :alt: trace_02.png
 
-   trace_02.png
+
 
 之后会遇到多个跳转，我们尽量满足向下的跳转，对于向上的跳转不予实现并利用F4跳出循环，直到\ ``0040D3AF``\ 处,
 我们看以下的代码
@@ -73,7 +73,6 @@
 .. figure:: /reverse/unpack/figure/trace_03.png
    :alt: trace_03.png
 
-   trace_03.png
 
 显然, 我们到了一堆被\ ``Ollydbg``\ 误认为是数据的地方继续执行,
 显然\ ``Ollydbg``\ 分析错误了, 我们需要让\ ``Ollydbg``\ 重新分析,
@@ -83,4 +82,3 @@
 .. figure:: /reverse/unpack/figure/trace_04.png
    :alt: trace_04.png
 
-   trace_04.png

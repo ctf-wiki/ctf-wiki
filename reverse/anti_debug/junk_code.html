@@ -78,15 +78,13 @@
 <a class="reference external" href="https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/anti_debug/example/2017_pediy/ctf2017_Fpc.exe">ctf2017_Fpc.exe</a></p>
 <p>程序写了几个函数混淆视听, 将关键的验证逻辑加花指令防止了IDA的静态分析.
 我们用IDA打开Fpc这道题, 程序会先打印一些提示信息, 然后获取用户的输入.</p>
-<div class="figure" id="id4">
+<div class="figure">
 <img alt="main.png" src="../../_images/main.png" />
-<p class="caption"><span class="caption-text">main.png</span></p>
 </div>
 <p>这里使用了不安全的<code class="docutils literal"><span class="pre">scanf</span></code>函数, 用户输入的缓冲区只有<code class="docutils literal"><span class="pre">0xCh</span></code>长,
 我们双击<code class="docutils literal"><span class="pre">v1</span></code>进入栈帧视图</p>
-<div class="figure" id="id5">
+<div class="figure">
 <img alt="stack.png" src="../../_images/stack.png" />
-<p class="caption"><span class="caption-text">stack.png</span></p>
 </div>
 <p>因此我们可以通过溢出数据, 覆盖掉返回地址, 从而转移到任意地址继续执行.</p>
 <p>这里我还需要解释一下, 就是<code class="docutils literal"><span class="pre">scanf</span></code>之前写的几个混淆视听的函数,
@@ -94,15 +92,13 @@
 导致IDA无法很好的进行反编译. 所以我们这道题的思路就是,
 通过溢出转到真正的验证代码处继续执行.</p>
 <p>我们在分析时可以在代码不远处发现以下数据块.</p>
-<div class="figure" id="id6">
+<div class="figure">
 <img alt="block.png" src="../../_images/block.png" />
-<p class="caption"><span class="caption-text">block.png</span></p>
 </div>
 <p>因为IDA没能很好的识别数据, 因此我们可以将光标移到数据块的起始位置,
 然后按下<code class="docutils literal"><span class="pre">C</span></code>键(code)将这块数据反汇编成代码</p>
-<div class="figure" id="id7">
+<div class="figure">
 <img alt="real_code.png" src="../../_images/real_code.png" />
-<p class="caption"><span class="caption-text">real_code.png</span></p>
 </div>
 <p>值得注意的是, 这段代码的位置是<code class="docutils literal"><span class="pre">0x00413131</span></code>,
 <code class="docutils literal"><span class="pre">0x41</span></code>是<code class="docutils literal"><span class="pre">'A'</span></code>的ascii码，而<code class="docutils literal"><span class="pre">0x31</span></code>是<code class="docutils literal"><span class="pre">'1'</span></code>的ascii码.
@@ -112,16 +108,14 @@
 运行后输入<code class="docutils literal"><span class="pre">12345612345611A</span></code>回车,
 程序成功地到达<code class="docutils literal"><span class="pre">0x00413131</span></code>处.
 然后<code class="docutils literal"><span class="pre">右键分析-&gt;从模块中删除分析</span></code>识别出正确代码</p>
-<div class="figure" id="id8">
+<div class="figure">
 <img alt="entry.png" src="../../_images/entry.png" />
-<p class="caption"><span class="caption-text">entry.png</span></p>
 </div>
 <p>断在<code class="docutils literal"><span class="pre">0x413131</span></code>处后, 点击菜单栏的<code class="docutils literal"><span class="pre">&quot;查看&quot;</span></code>, 选择<code class="docutils literal"><span class="pre">&quot;RUN跟踪&quot;</span></code>,
 然后再点击<code class="docutils literal"><span class="pre">&quot;调试&quot;</span></code>, 选择<code class="docutils literal"><span class="pre">&quot;跟踪步入&quot;</span></code>,
 程序会记录这段花指令执行的过程, 如下图所示:</p>
-<div class="figure" id="id9">
+<div class="figure">
 <img alt="trace.png" src="../../_images/trace1.png" />
-<p class="caption"><span class="caption-text">trace.png</span></p>
 </div>
 <p>这段花指令本来很长, 但是使用OD的跟踪功能后, 花指令的执行流程就非常清楚.
 整个过程中进行了大量的跳转, 我们只要取其中的有效指令拿出来分析即可.</p>
@@ -129,16 +123,14 @@
 这样程序才能在正确的逻辑上一直执行下去.</p>
 <p>比如<code class="docutils literal"><span class="pre">0x413420</span></code>处的<code class="docutils literal"><span class="pre">jnz</span> <span class="pre">ctf2017_.00413B03</span></code>. 我们就要重新来过,
 并在<code class="docutils literal"><span class="pre">0x413420</span></code>设下断点</p>
-<div class="figure" id="id10">
+<div class="figure">
 <img alt="jnz.png" src="../../_images/jnz.png" />
-<p class="caption"><span class="caption-text">jnz.png</span></p>
 </div>
 <p>通过修改标志寄存器来满足跳转.
 继续跟踪步入(之后还有<code class="docutils literal"><span class="pre">0041362E</span>&#160; <span class="pre">jnz</span> <span class="pre">ctf2017_.00413B03</span></code>需要满足).
 保证逻辑正确后, 将有效指令取出继续分析就好了</p>
-<div class="figure" id="id11">
+<div class="figure">
 <img alt="register.png" src="../../_images/register1.png" />
-<p class="caption"><span class="caption-text">register.png</span></p>
 </div>
 </div>
 </div>
