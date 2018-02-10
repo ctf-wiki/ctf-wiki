@@ -1,0 +1,97 @@
+wp-crackme5_2
+
+    pdf@sym.main
+    / function: sym.main (99)
+    |     0x08048607  sym.main:
+    |     0x08048607     55               push ebp
+    |     0x08048608     89e5             mov ebp, esp
+    |     0x0804860a     81ec88000000     sub esp, 0x88
+    |     0x08048610     83e4f0           and esp, 0xfffffff0
+    |     0x08048613     b800000000       mov eax, 0x0
+    |     0x08048618     83c00f           add eax, 0xf
+    |     0x0804861b     83c00f           add eax, 0xf
+    |     0x0804861e     c1e804           shr eax, 0x4
+    |     0x08048621     c1e004           shl eax, 0x4
+    |     0x08048624     29c4             sub esp, eax
+    |     0x08048626     c7042463870408   mov dword [esp], str.IOLICrackmeLevel0x06
+    |     0x0804862d     e886fdffff       call dword imp.printf
+    |        ; imp.printf()
+    |     0x08048632     c704247c870408   mov dword [esp], str.Password
+    |     0x08048639     e87afdffff       call dword imp.printf
+    |        ; imp.printf()
+    |     0x0804863e     8d4588           lea eax, [ebp-0x78]
+    |     0x08048641     89442404         mov [esp+0x4], eax
+    |     0x08048645     c7042487870408   mov dword [esp], 0x8048787
+    |     0x0804864c     e847fdffff       call dword imp.scanf
+    |        ; imp.scanf()
+    |     0x08048651     8b4510           mov eax, [ebp+0x10]
+    |     0x08048654     89442404         mov [esp+0x4], eax
+    |     0x08048658     8d4588           lea eax, [ebp-0x78]
+    |     0x0804865b     890424           mov [esp], eax
+    |     0x0804865e     e825ffffff       call dword sym.check
+    |        ; sym.check()
+    |     0x08048663     b800000000       mov eax, 0x0
+    |     0x08048668     c9               leave
+    \     0x08048669     c3               ret
+          ; ------------
+
+也是与之前类似，但这一次我们在check函数这里发现，他取了两个参数
+1. 我们的输入的字符串的地址
+2. main函数的第三个参数envp（lea eax, [ebp-0x78]然后mov [esp], eax）
+这里我们要知道
+    [esp + 0x10] - envp
+    [esp + 0x0c] - argv
+    [esp + 0x08] - argc
+    [esp + 0x04] - return address
+继续分析
+
+    [0x08048400]> pdf@sym.dummy
+             ; CODE (CALL) XREF 0x08048547 (sym.parell)
+    / function: sym.dummy (102)
+    |        0x080484b4  sym.dummy:
+    |        0x080484b4     55               push ebp
+    |        0x080484b5     89e5             mov ebp, esp
+    |        0x080484b7     83ec18           sub esp, 0x18
+    |        0x080484ba     c745fc00000000   mov dword [ebp-0x4], 0x0
+    |   .    ; CODE (JMP) XREF 0x08048503 (sym.dummy)
+    / loc: loc.080484c1 (89)
+    |   .    0x080484c1  loc.080484c1:
+    |   .--> 0x080484c1     8b45fc           mov eax, [ebp-0x4]
+    |   |    0x080484c4     8d148500000000   lea edx, [eax*4+0x0]
+    |   |    0x080484cb     8b450c           mov eax, [ebp+0xc]
+    |   |    0x080484ce     833c0200         cmp dword [edx+eax], 0x0
+    |   |,=< 0x080484d2     743a             jz loc.0804850e
+    |   ||   0x080484d4     8b45fc           mov eax, [ebp-0x4]
+    |   ||   0x080484d7     8d0c8500000000   lea ecx, [eax*4+0x0]
+    |   ||   0x080484de     8b550c           mov edx, [ebp+0xc]
+    |   ||   0x080484e1     8d45fc           lea eax, [ebp-0x4]
+    |   ||   0x080484e4     ff00             inc dword [eax]
+    |   ||   0x080484e6     c744240803000000 mov dword [esp+0x8], 0x3
+    |   ||   0x080484ee     c744240438870408 mov dword [esp+0x4], str.LOLO
+    |   ||   0x080484f6     8b0411           mov eax, [ecx+edx]
+    |   ||   0x080484f9     890424           mov [esp], eax
+    |   ||   0x080484fc     e8d7feffff       call dword imp.strncmp
+    |   ||      ; imp.strncmp()
+    |   ||   0x08048501     85c0             test eax, eax
+    |   `==< 0x08048503     75bc             jnz loc.080484c1
+    |    |   0x08048505     c745f801000000   mov dword [ebp-0x8], 0x1
+    |  ,===< 0x0804850c     eb07             jmp loc.08048515
+    |  | |   ; CODE (JMP) XREF 0x080484d2 (sym.dummy)
+    / loc: loc.0804850e (12)
+    |  | |   0x0804850e  loc.0804850e:
+    |  | `-> 0x0804850e     c745f800000000   mov dword [ebp-0x8], 0x0
+    |  |     ; CODE (JMP) XREF 0x0804850c (sym.dummy)
+    / loc: loc.08048515 (5)
+    |  |     0x08048515  loc.08048515:
+    |  `---> 0x08048515     8b45f8           mov eax, [ebp-0x8]
+    |        0x08048518     c9               leave
+    \        0x08048519     c3               ret
+             ; ------------
+
+这里可以看出程序大致与上一个crackme类似，但这次是希望加上一个“LOLO”的环境变量
+
+    $ LOLO= ./crackme5_2
+    IOLI Crackme Level 0x06
+    Password: 664
+    Password OK!
+
