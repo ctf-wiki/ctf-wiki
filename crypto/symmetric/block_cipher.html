@@ -492,14 +492,279 @@ iv</strong>，那么我们就可以控制解密后的结果。也就是说我们
 </div>
 </div>
 </div>
-</div>
+<div class="section" id="hitcon-secret-server-revenge">
+<h3>2017 HITCON Secret Server Revenge<a class="headerlink" href="#hitcon-secret-server-revenge" title="永久链接至标题">¶</a></h3>
 <div class="section" id="id26">
-<h2>参考链接<a class="headerlink" href="#id26" title="永久链接至标题">¶</a></h2>
+<h4>描述<a class="headerlink" href="#id26" title="永久链接至标题">¶</a></h4>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">password</span> <span class="n">of</span> <span class="nb">zip</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">flag</span> <span class="n">of</span> <span class="s2">&quot;Secret Server&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id27">
+<h4>分析<a class="headerlink" href="#id27" title="永久链接至标题">¶</a></h4>
+<p>这个程序时接着上面的程序继续搞的，不过这次进行的简单的修改</p>
+<ul class="simple">
+<li>加密算法的 iv 未知，不过可以根据 Welcome 加密后的消息推算出来。</li>
+<li>程序多了一个 56 字节的 token。</li>
+<li>程序最多能进行 340 操作，因此上述的爆破自然不可行</li>
+</ul>
+<p>程序的大概流程如下</p>
+<ol class="arabic simple">
+<li>经过 proof of work</li>
+<li>发送 “Welcome!!” 加密后的消息</li>
+<li>在 340 次操作中，需要猜中 token 的值，然后会自动将 flag 输出。</li>
+</ol>
+</div>
+<div class="section" id="id28">
+<h4>漏洞<a class="headerlink" href="#id28" title="永久链接至标题">¶</a></h4>
+<p>当然，在上个题目中存在的漏洞，在这个题目中仍然存在，即</p>
+<ol class="arabic simple">
+<li>任意执行给定命令</li>
+<li>长度截断</li>
+</ol>
+</div>
+<div class="section" id="id29">
+<h4>利用思路<a class="headerlink" href="#id29" title="永久链接至标题">¶</a></h4>
+<p>由于 340 的次数限制，虽然我们仍然可以获得 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 加密后的值（<strong>这里需要注意的是这部分加密后恰好是 32 个字节，前 16 个字节是 md5 后加密的值，后面的 16
+个字节完全是填充的加密后的字节。</strong>这里<code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 特指前16个字节。）。但是，我们不能再次为了获得一个字符去爆破 256 次了。</p>
+<p>既然不能够爆破，那么我们有没有可能一次获取一个字节的大小呢？这里，我们再来梳理一下该程序可能可以泄漏的信息</p>
+<ol class="arabic simple">
+<li>某些消息的 md5 值加密后的值，这里我们可以获取 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 加密后的值。</li>
+<li>unpad 每次会对解密后的消息进行 unpad，这个字节是根据解密后的消息的最后一个字节来决定的。如果我们可以计算出这个字节的大小，那么我们就可能可以知道一个字节的值。</li>
+</ol>
+<p>这里我们深入分析一下 unpad 的信息泄漏。如果我们将加密 IV 和 <code class="docutils literal"><span class="pre">encrypt(md5(token[:i]))</span></code> 放在某个密文 C 的后面，构成 <code class="docutils literal"><span class="pre">C|IV|encrypt(md5(token[:i]))</span></code>，那么解密出来的消息的最后一个明文块就是
+<code class="docutils literal"><span class="pre">md5(token[:i])</span></code>。进而，在 unpad 的时候就是利用 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 的最后一个字节（ 0-255）进行 unpad，之后对 unpad
+后的字符串执行指定的命令（比如md5）。那么，如果我们<strong>事先构造一些消息哈希后加密的样本</strong>，然后将上述执行后的结果与样本比较，如果相同，那么我们基本可以确定 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code>
+的<strong>最后一个字节</strong>。然而，如果 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 的最后一个字节小于16，那么在 unpad 时就会利用一些 md5 中的值，而这部分值，由于对于不同长度的 <code class="docutils literal"><span class="pre">token[:i]</span></code> 几乎都不会相同。所以可能需要特殊处理。</p>
+<p>我们已经知道了这个问题的关键，即生成与 unpad 字节大小对应的加密结果样本，以便于查表。</p>
+<p>具体利用思路如下</p>
+<ol class="arabic simple">
+<li>绕过 proof of work。</li>
+<li>获取 token 加密后的结果 <code class="docutils literal"><span class="pre">token_enc</span></code> ，这里会在 token 前面添加 7 个字节 <code class="docutils literal"><span class="pre">&quot;token:</span> <span class="pre">&quot;</span></code> 。 因此加密后的长度为 64。</li>
+<li>依次获取 <code class="docutils literal"><span class="pre">encrypt(md5(token[:i]))</span></code> 的结果，一共是 57 个，包括最后一个 token 的 padding。</li>
+<li>构造与 unpad 大小对应的样本。这里我们构造密文 <code class="docutils literal"><span class="pre">token_enc|padding|IV_indexi|welcome_enc</span></code>。由于 <code class="docutils literal"><span class="pre">IV_indexi</span></code>
+是为了修改最后一个明文块的最后一个字节，所以该字节处于变化之中。我们若想获取一些固定字节的哈希值，这部分自然不能添加。因此这里产生样本时 unpad 的大小范围为 17 ~ 255。如果最后测试时
+<code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 的最后一个字节小于17的话，基本就会出现一些未知的样本。很自然的一个想法是我们直接获取 255-17+1个这么多个样本，然而，如果这样做的话，根据上面 340
+的次数（255-17+1+57+56&gt;340）限制，我们显然不能获取到 token 的所有字节。所以这里我们需要想办法复用一些内容，这里我们选择复用 <code class="docutils literal"><span class="pre">encrypt(md5(token[:i]))</span></code> 的结果。那么我们在补充 padding
+时需要确保一方面次数够用，另一方面可以复用之前的结果。这里我们设置 unpad 的循环为 17 到 208，并使得 unpad 大于 208 时恰好 unpad 到我们可以复用的地方。这里需要注意的是，当 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code>
+的最后一个字节为 0 时，会将所有解密后的明文 unpad 掉，因此会出现 command not found 的密文。</li>
+<li>再次构造密文 <code class="docutils literal"><span class="pre">token_enc|padding|IV|encrypt(md5(token[:i]))</span></code> ，那么，解密时即使用 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 的最后一个字节进行
+unpad。如果这个字节不小于17或者为0，则可以处理。如果这个字节小于17，那么显然，最后返回给用户的 md5 的结果并不在样本范围内，那么我们修改其最后一个字节的最高比特位，使其 unpad
+后可以落在样本范围内。这样，我们就可以猜出 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 的最后一个字节。</li>
+<li>在猜出 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 的最后一个字节后，我们可以在本地暴力破解 256 次，找出所有哈希值末尾为 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 的最后一个字节的字符。</li>
+<li>但是，在第六步中，对于一个 <code class="docutils literal"><span class="pre">md5(token[:i])</span></code> 可能会找出多个备选字符，因为我们只需要使得其末尾字节是给定字节即可。</li>
+<li>那么，问题来了，如何删除一些多余的备选字符串呢？这里我就选择了一个小 trick，即在逐字节枚举时，同时枚举出 token 的 padding。由于 padding 是 0x01 是固定的，所以我们只需要过滤出所有结尾不是 0x01
+的token 即可。</li>
+</ol>
+<p>这里，在测试时，将代码中 <code class="docutils literal"><span class="pre">sleep</span></code> 注释掉了。以便于加快交互速度。利用代码如下</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">base64</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">random</span><span class="o">,</span> <span class="nn">string</span>
+<span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="k">import</span> <span class="n">AES</span>
+<span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="k">import</span> <span class="n">SHA256</span><span class="p">,</span> <span class="n">MD5</span>
+<span class="c1">#context.log_level = &#39;debug&#39;</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7777</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">strxor</span><span class="p">(</span><span class="n">str1</span><span class="p">,</span> <span class="n">str2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">c1</span><span class="p">)</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="n">c2</span><span class="p">))</span> <span class="k">for</span> <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">str1</span><span class="p">,</span> <span class="n">str2</span><span class="p">)])</span>
+
+
+<span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="n">pad_length</span> <span class="o">=</span> <span class="mi">16</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">%</span> <span class="mi">16</span>
+    <span class="k">return</span> <span class="n">msg</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">pad_length</span><span class="p">)</span> <span class="o">*</span> <span class="n">pad_length</span>
+
+
+<span class="k">def</span> <span class="nf">unpad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="p">[:</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>  <span class="c1"># remove pad</span>
+
+
+<span class="k">def</span> <span class="nf">flipplain</span><span class="p">(</span><span class="n">oldplain</span><span class="p">,</span> <span class="n">newplain</span><span class="p">,</span> <span class="n">iv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;flip oldplain to new plain, return proper iv&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">strxor</span><span class="p">(</span><span class="n">strxor</span><span class="p">(</span><span class="n">oldplain</span><span class="p">,</span> <span class="n">newplain</span><span class="p">),</span> <span class="n">iv</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">bypassproof</span><span class="p">():</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;SHA256(XXXX+&#39;</span><span class="p">)</span>
+    <span class="n">lastdata</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; == &#39;</span><span class="p">)</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Give me XXXX:&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">proof</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SHA256</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="n">lastdata</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span> <span class="o">==</span> <span class="n">digest</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pwnlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">iters</span><span class="o">.</span><span class="n">mbruteforce</span><span class="p">(</span>
+        <span class="n">proof</span><span class="p">,</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fixed&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">sendmsg</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">cipher</span><span class="p">):</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">iv</span> <span class="o">+</span> <span class="n">cipher</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">recvmsg</span><span class="p">():</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="p">[:</span><span class="mi">16</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">16</span><span class="p">:]</span>
+
+
+<span class="k">def</span> <span class="nf">getmd5enc</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cipher_token</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">,</span> <span class="n">iv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;return encrypt( md5( token[:i+1] ) )&quot;&quot;&quot;</span>
+    <span class="c1">## keep iv[7:] do not change, so decrypt msg[7:] won&#39;t change</span>
+    <span class="n">get_md5_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span><span class="s2">&quot;token: &quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span> <span class="s2">&quot;get-md5&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span>
+        <span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">iv</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">cipher_token</span>
+    <span class="c1">## calculate the proper last byte number</span>
+    <span class="n">last_byte_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span>
+        <span class="n">pad</span><span class="p">(</span><span class="s2">&quot;Welcome!!&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;a&quot;</span> <span class="o">*</span> <span class="mi">15</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cipher_token</span><span class="p">)</span> <span class="o">+</span> <span class="mi">16</span> <span class="o">+</span> <span class="mi">16</span> <span class="o">-</span> <span class="p">(</span><span class="mi">7</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">iv</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">+=</span> <span class="n">last_byte_iv</span> <span class="o">+</span> <span class="n">cipher_welcome</span>
+    <span class="n">sendmsg</span><span class="p">(</span><span class="n">get_md5_iv</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">recvmsg</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">get_md5_token_indexi</span><span class="p">(</span><span class="n">iv_encrypt</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">,</span> <span class="n">cipher_token</span><span class="p">):</span>
+    <span class="n">md5_token_idxi</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cipher_token</span><span class="p">)</span> <span class="o">-</span> <span class="mi">7</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;idx i: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">md5_indexi</span> <span class="o">=</span> <span class="n">getmd5enc</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cipher_token</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">,</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">md5_indexi</span><span class="p">)</span> <span class="o">==</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="c1"># remove the last 16 byte for padding</span>
+        <span class="n">md5_token_idxi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">md5_indexi</span><span class="p">[:</span><span class="mi">16</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">md5_token_idxi</span>
+
+
+<span class="k">def</span> <span class="nf">doin</span><span class="p">(</span><span class="n">unpadcipher</span><span class="p">,</span> <span class="n">md5map</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">flag</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">unpadcipher</span> <span class="ow">in</span> <span class="n">md5map</span><span class="p">:</span>
+        <span class="n">lastbyte</span> <span class="o">=</span> <span class="n">md5map</span><span class="p">[</span><span class="n">unpadcipher</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lastbyte</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">flag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">lastbyte</span> <span class="o">^=</span> <span class="mh">0x80</span>
+    <span class="n">newcandidates</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">256</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">MD5</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">))</span><span class="o">.</span><span class="n">digest</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="n">lastbyte</span><span class="p">):</span>
+                <span class="n">newcandidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">newcandidates</span>
+    <span class="nb">print</span> <span class="n">candidates</span>
+    <span class="k">return</span> <span class="n">candidates</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">bypassproof</span><span class="p">()</span>
+
+    <span class="c1"># result of encrypted Welcome!!</span>
+    <span class="n">iv_encrypt</span><span class="p">,</span> <span class="n">cipher_welcome</span> <span class="o">=</span> <span class="n">recvmsg</span><span class="p">()</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;cipher welcome is : &quot;</span> <span class="o">+</span> <span class="n">cipher_welcome</span><span class="p">)</span>
+
+    <span class="c1"># execute get-token</span>
+    <span class="n">get_token_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span><span class="n">pad</span><span class="p">(</span><span class="s2">&quot;Welcome!!&quot;</span><span class="p">),</span> <span class="n">pad</span><span class="p">(</span><span class="s2">&quot;get-token&quot;</span><span class="p">),</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+    <span class="n">sendmsg</span><span class="p">(</span><span class="n">get_token_iv</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">cipher_token</span> <span class="o">=</span> <span class="n">recvmsg</span><span class="p">()</span>
+    <span class="n">token_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cipher_token</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;cipher token is : &quot;</span> <span class="o">+</span> <span class="n">cipher_token</span><span class="p">)</span>
+
+    <span class="c1"># get command not found cipher</span>
+    <span class="n">sendmsg</span><span class="p">(</span><span class="n">iv_encrypt</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">cipher_notfound</span> <span class="o">=</span> <span class="n">recvmsg</span><span class="p">()</span>
+
+    <span class="c1"># get encrypted(token[:i+1]),57 times</span>
+    <span class="n">md5_token_idx_list</span> <span class="o">=</span> <span class="n">get_md5_token_indexi</span><span class="p">(</span><span class="n">iv_encrypt</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">,</span>
+                                              <span class="n">cipher_token</span><span class="p">)</span>
+    <span class="c1"># get md5map for each unpadsize, 209-17 times</span>
+    <span class="c1"># when upadsize&gt;208, it will unpad ciphertoken</span>
+    <span class="c1"># then we can reuse</span>
+    <span class="n">md5map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">unpadsize</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">17</span><span class="p">,</span> <span class="mi">209</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;get unpad size </span><span class="si">{}</span><span class="s2"> cipher&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">unpadsize</span><span class="p">))</span>
+        <span class="n">get_md5_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span><span class="s2">&quot;token: &quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span> <span class="s2">&quot;get-md5&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span>
+            <span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+        <span class="c1">## padding 16*11 bytes</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">11</span> <span class="o">*</span> <span class="s2">&quot;a&quot;</span>
+        <span class="c1">## calculate the proper last byte number, only change the last byte</span>
+        <span class="c1">## set last_byte_iv = iv_encrypted[:15] | proper byte</span>
+        <span class="n">last_byte_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span>
+            <span class="n">pad</span><span class="p">(</span><span class="s2">&quot;Welcome!!&quot;</span><span class="p">),</span>
+            <span class="n">pad</span><span class="p">(</span><span class="s2">&quot;Welcome!!&quot;</span><span class="p">)[:</span><span class="mi">15</span><span class="p">]</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">unpadsize</span><span class="p">),</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+        <span class="n">cipher</span> <span class="o">=</span> <span class="n">cipher_token</span> <span class="o">+</span> <span class="n">padding</span> <span class="o">+</span> <span class="n">last_byte_iv</span> <span class="o">+</span> <span class="n">cipher_welcome</span>
+        <span class="n">sendmsg</span><span class="p">(</span><span class="n">get_md5_iv</span><span class="p">,</span> <span class="n">cipher</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">unpadcipher</span> <span class="o">=</span> <span class="n">recvmsg</span><span class="p">()</span>
+        <span class="n">md5map</span><span class="p">[</span><span class="n">unpadcipher</span><span class="p">]</span> <span class="o">=</span> <span class="n">unpadsize</span>
+
+    <span class="c1"># reuse encrypted(token[:i+1])</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">209</span><span class="p">,</span> <span class="mi">256</span><span class="p">):</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">md5_token_idx_list</span><span class="p">[</span><span class="mi">56</span> <span class="o">-</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="mi">209</span><span class="p">)]</span>
+        <span class="n">md5map</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span>
+    <span class="c1"># get the byte token[i], only 56 byte</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">token_len</span> <span class="o">-</span> <span class="mi">7</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;get token[</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="n">get_md5_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span><span class="s2">&quot;token: &quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span> <span class="s2">&quot;get-md5&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span>
+            <span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+        <span class="c1">## padding 16*11 bytes</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">11</span> <span class="o">*</span> <span class="s2">&quot;a&quot;</span>
+        <span class="n">cipher</span> <span class="o">=</span> <span class="n">cipher_token</span> <span class="o">+</span> <span class="n">padding</span> <span class="o">+</span> <span class="n">iv_encrypt</span> <span class="o">+</span> <span class="n">md5_token_idx_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">sendmsg</span><span class="p">(</span><span class="n">get_md5_iv</span><span class="p">,</span> <span class="n">cipher</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">unpadcipher</span> <span class="o">=</span> <span class="n">recvmsg</span><span class="p">()</span>
+        <span class="c1"># already in or md5[token[:i]][-1]=&#39;\x00&#39;</span>
+        <span class="k">if</span> <span class="n">unpadcipher</span> <span class="ow">in</span> <span class="n">md5map</span> <span class="ow">or</span> <span class="n">unpadcipher</span> <span class="o">==</span> <span class="n">cipher_notfound</span><span class="p">:</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="n">doin</span><span class="p">(</span><span class="n">unpadcipher</span><span class="p">,</span> <span class="n">md5map</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;unpad size 1-16&quot;</span><span class="p">)</span>
+            <span class="c1"># flip most significant bit of last byte to move it in a good range</span>
+            <span class="n">cipher</span> <span class="o">=</span> <span class="n">cipher</span><span class="p">[:</span><span class="o">-</span><span class="mi">17</span><span class="p">]</span> <span class="o">+</span> <span class="n">strxor</span><span class="p">(</span><span class="n">cipher</span><span class="p">[</span><span class="o">-</span><span class="mi">17</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\x80</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">cipher</span><span class="p">[</span><span class="o">-</span><span class="mi">16</span><span class="p">:]</span>
+            <span class="n">sendmsg</span><span class="p">(</span><span class="n">get_md5_iv</span><span class="p">,</span> <span class="n">cipher</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">unpadcipher</span> <span class="o">=</span> <span class="n">recvmsg</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">unpadcipher</span> <span class="ow">in</span> <span class="n">md5map</span> <span class="ow">or</span> <span class="n">unpadcipher</span> <span class="o">==</span> <span class="n">cipher_notfound</span><span class="p">:</span>
+                <span class="n">candidates</span> <span class="o">=</span> <span class="n">doin</span><span class="p">(</span><span class="n">unpadcipher</span><span class="p">,</span> <span class="n">md5map</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;oh my god,,,, it must be in...&#39;</span><span class="p">)</span>
+                <span class="n">exit</span><span class="p">()</span>
+    <span class="nb">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    <span class="c1"># padding 0x01</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="nb">chr</span><span class="p">(</span><span class="mh">0x01</span><span class="p">),</span> <span class="n">candidates</span><span class="p">)</span>
+    <span class="c1"># only 56 bytes</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
+    <span class="nb">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">56</span><span class="p">)</span>
+
+    <span class="c1"># check-token</span>
+    <span class="n">check_token_iv</span> <span class="o">=</span> <span class="n">flipplain</span><span class="p">(</span>
+        <span class="n">pad</span><span class="p">(</span><span class="s2">&quot;Welcome!!&quot;</span><span class="p">),</span> <span class="n">pad</span><span class="p">(</span><span class="s2">&quot;check-token&quot;</span><span class="p">),</span> <span class="n">iv_encrypt</span><span class="p">)</span>
+    <span class="n">sendmsg</span><span class="p">(</span><span class="n">check_token_iv</span><span class="p">,</span> <span class="n">cipher_welcome</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;Give me the token!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="nb">print</span> <span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>效果如下</p>
+<div class="code shell highlight-default"><div class="highlight"><pre><span></span>...
+79
+1
+hitcon{uNp@d_M3th0D_i5_am4Z1n9!}
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="id30">
+<h2>参考链接<a class="headerlink" href="#id30" title="永久链接至标题">¶</a></h2>
 <ul class="simple">
 <li><a class="reference external" href="https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F">分组加密模式</a></li>
 <li><a class="reference external" href="https://en.wikipedia.org/wiki/Padding_oracle_attack">https://en.wikipedia.org/wiki/Padding_oracle_attack</a></li>
 <li><a class="reference external" href="http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf">http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf</a></li>
 <li><a class="reference external" href="https://ctftime.org/writeup/7975">https://ctftime.org/writeup/7975</a></li>
+<li><a class="reference external" href="https://ctftime.org/writeup/7974">https://ctftime.org/writeup/7974</a></li>
 </ul>
 </div>
 </div>
@@ -605,9 +870,16 @@ iv</strong>，那么我们就可以控制解密后的结果。也就是说我们
 <li class="toctree-l5"><a class="reference internal" href="#id25">利用思路</a></li>
 </ul>
 </li>
+<li class="toctree-l4"><a class="reference internal" href="#hitcon-secret-server-revenge">2017 HITCON Secret Server Revenge</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#id26">描述</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id27">分析</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id28">漏洞</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#id29">利用思路</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#id26">参考链接</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id30">参考链接</a></li>
 </ul>
 </li>
 </ul>

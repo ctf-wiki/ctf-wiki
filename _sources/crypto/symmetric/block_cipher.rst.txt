@@ -508,6 +508,283 @@ iv**\ ，那么我们就可以控制解密后的结果。也就是说我们可�
 
     Flag so far: Paddin9_15_ve3y_h4rd__!!}\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10
 
+2017 HITCON Secret Server Revenge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+描述
+^^^^
+
+::
+
+    The password of zip is the flag of "Secret Server"
+
+.. 分析-1:
+
+分析
+^^^^
+
+这个程序时接着上面的程序继续搞的，不过这次进行的简单的修改
+
+-  加密算法的 iv 未知，不过可以根据 Welcome 加密后的消息推算出来。
+-  程序多了一个 56 字节的 token。
+-  程序最多能进行 340 操作，因此上述的爆破自然不可行
+
+程序的大概流程如下
+
+1. 经过 proof of work
+2. 发送 “Welcome!!” 加密后的消息
+3. 在 340 次操作中，需要猜中 token 的值，然后会自动将 flag 输出。
+
+漏洞
+^^^^
+
+当然，在上个题目中存在的漏洞，在这个题目中仍然存在，即
+
+1. 任意执行给定命令
+2. 长度截断
+
+.. 利用思路-1:
+
+利用思路
+^^^^^^^^
+
+由于 340 的次数限制，虽然我们仍然可以获得 ``md5(token[:i])`` 加密后的值（\ **这里需要注意的是这部分加密后恰好是 32 个字节，前 16 个字节是 md5 后加密的值，后面的 16
+个字节完全是填充的加密后的字节。**\ 这里\ ``md5(token[:i])`` 特指前16个字节。）。但是，我们不能再次为了获得一个字符去爆破 256 次了。
+
+既然不能够爆破，那么我们有没有可能一次获取一个字节的大小呢？这里，我们再来梳理一下该程序可能可以泄漏的信息
+
+1. 某些消息的 md5 值加密后的值，这里我们可以获取 ``md5(token[:i])`` 加密后的值。
+
+2. unpad 每次会对解密后的消息进行 unpad，这个字节是根据解密后的消息的最后一个字节来决定的。如果我们可以计算出这个字节的大小，那么我们就可能可以知道一个字节的值。
+
+这里我们深入分析一下 unpad 的信息泄漏。如果我们将加密 IV 和 ``encrypt(md5(token[:i]))`` 放在某个密文 C 的后面，构成 ``C|IV|encrypt(md5(token[:i]))``\ ，那么解密出来的消息的最后一个明文块就是
+``md5(token[:i])``\ 。进而，在 unpad 的时候就是利用 ``md5(token[:i])`` 的最后一个字节（ 0-255）进行 unpad，之后对 unpad
+后的字符串执行指定的命令（比如md5）。那么，如果我们\ **事先构造一些消息哈希后加密的样本**\ ，然后将上述执行后的结果与样本比较，如果相同，那么我们基本可以确定 ``md5(token[:i])``
+的\ **最后一个字节**\ 。然而，如果 ``md5(token[:i])`` 的最后一个字节小于16，那么在 unpad 时就会利用一些 md5 中的值，而这部分值，由于对于不同长度的 ``token[:i]`` 几乎都不会相同。所以可能需要特殊处理。
+
+我们已经知道了这个问题的关键，即生成与 unpad 字节大小对应的加密结果样本，以便于查表。
+
+具体利用思路如下
+
+1. 绕过 proof of work。
+2. 获取 token 加密后的结果 ``token_enc`` ，这里会在 token 前面添加 7 个字节 ``"token: "`` 。 因此加密后的长度为 64。
+3. 依次获取 ``encrypt(md5(token[:i]))`` 的结果，一共是 57 个，包括最后一个 token 的 padding。
+4. 构造与 unpad 大小对应的样本。这里我们构造密文 ``token_enc|padding|IV_indexi|welcome_enc``\ 。由于 ``IV_indexi``
+   是为了修改最后一个明文块的最后一个字节，所以该字节处于变化之中。我们若想获取一些固定字节的哈希值，这部分自然不能添加。因此这里产生样本时 unpad 的大小范围为 17 ~ 255。如果最后测试时
+   ``md5(token[:i])`` 的最后一个字节小于17的话，基本就会出现一些未知的样本。很自然的一个想法是我们直接获取 255-17+1个这么多个样本，然而，如果这样做的话，根据上面 340
+   的次数（255-17+1+57+56>340）限制，我们显然不能获取到 token 的所有字节。所以这里我们需要想办法复用一些内容，这里我们选择复用 ``encrypt(md5(token[:i]))`` 的结果。那么我们在补充 padding
+   时需要确保一方面次数够用，另一方面可以复用之前的结果。这里我们设置 unpad 的循环为 17 到 208，并使得 unpad 大于 208 时恰好 unpad 到我们可以复用的地方。这里需要注意的是，当 ``md5(token[:i])``
+   的最后一个字节为 0 时，会将所有解密后的明文 unpad 掉，因此会出现 command not found 的密文。
+5. 再次构造密文 ``token_enc|padding|IV|encrypt(md5(token[:i]))`` ，那么，解密时即使用 ``md5(token[:i])`` 的最后一个字节进行
+   unpad。如果这个字节不小于17或者为0，则可以处理。如果这个字节小于17，那么显然，最后返回给用户的 md5 的结果并不在样本范围内，那么我们修改其最后一个字节的最高比特位，使其 unpad
+   后可以落在样本范围内。这样，我们就可以猜出 ``md5(token[:i])`` 的最后一个字节。
+6. 在猜出 ``md5(token[:i])`` 的最后一个字节后，我们可以在本地暴力破解 256 次，找出所有哈希值末尾为 ``md5(token[:i])`` 的最后一个字节的字符。
+7. 但是，在第六步中，对于一个 ``md5(token[:i])`` 可能会找出多个备选字符，因为我们只需要使得其末尾字节是给定字节即可。
+8. 那么，问题来了，如何删除一些多余的备选字符串呢？这里我就选择了一个小 trick，即在逐字节枚举时，同时枚举出 token 的 padding。由于 padding 是 0x01 是固定的，所以我们只需要过滤出所有结尾不是 0x01
+   的token 即可。
+
+这里，在测试时，将代码中 ``sleep`` 注释掉了。以便于加快交互速度。利用代码如下
+
+.. code:: python
+
+    from pwn import *
+    import base64, time, random, string
+    from Crypto.Cipher import AES
+    from Crypto.Hash import SHA256, MD5
+    #context.log_level = 'debug'
+
+    p = remote('127.0.0.1', 7777)
+
+
+    def strxor(str1, str2):
+        return ''.join([chr(ord(c1) ^ ord(c2)) for c1, c2 in zip(str1, str2)])
+
+
+    def pad(msg):
+        pad_length = 16 - len(msg) % 16
+        return msg + chr(pad_length) * pad_length
+
+
+    def unpad(msg):
+        return msg[:-ord(msg[-1])]  # remove pad
+
+
+    def flipplain(oldplain, newplain, iv):
+        """flip oldplain to new plain, return proper iv"""
+        return strxor(strxor(oldplain, newplain), iv)
+
+
+    def bypassproof():
+        p.recvuntil('SHA256(XXXX+')
+        lastdata = p.recvuntil(')', drop=True)
+        p.recvuntil(' == ')
+        digest = p.recvuntil('\nGive me XXXX:', drop=True)
+
+        def proof(s):
+            return SHA256.new(s + lastdata).hexdigest() == digest
+
+        data = pwnlib.util.iters.mbruteforce(
+            proof, string.ascii_letters + string.digits, 4, method='fixed')
+        p.sendline(data)
+
+
+    def sendmsg(iv, cipher):
+        payload = iv + cipher
+        payload = base64.b64encode(payload)
+        p.sendline(payload)
+
+
+    def recvmsg():
+        data = p.recvuntil("\n", drop=True)
+        data = base64.b64decode(data)
+        return data[:16], data[16:]
+
+
+    def getmd5enc(i, cipher_token, cipher_welcome, iv):
+        """return encrypt( md5( token[:i+1] ) )"""
+        ## keep iv[7:] do not change, so decrypt msg[7:] won't change
+        get_md5_iv = flipplain("token: ".ljust(16, '\x00'), "get-md5".ljust(
+            16, '\x00'), iv)
+        payload = cipher_token
+        ## calculate the proper last byte number
+        last_byte_iv = flipplain(
+            pad("Welcome!!"),
+            "a" * 15 + chr(len(cipher_token) + 16 + 16 - (7 + i + 1)), iv)
+        payload += last_byte_iv + cipher_welcome
+        sendmsg(get_md5_iv, payload)
+        return recvmsg()
+
+
+    def get_md5_token_indexi(iv_encrypt, cipher_welcome, cipher_token):
+        md5_token_idxi = []
+        for i in range(len(cipher_token) - 7):
+            log.info("idx i: {}".format(i))
+            _, md5_indexi = getmd5enc(i, cipher_token, cipher_welcome, iv_encrypt)
+            assert (len(md5_indexi) == 32)
+            # remove the last 16 byte for padding
+            md5_token_idxi.append(md5_indexi[:16])
+        return md5_token_idxi
+
+
+    def doin(unpadcipher, md5map, candidates, flag):
+        if unpadcipher in md5map:
+            lastbyte = md5map[unpadcipher]
+        else:
+            lastbyte = 0
+        if flag == 0:
+            lastbyte ^= 0x80
+        newcandidates = []
+        for x in candidates:
+            for c in range(256):
+                if MD5.new(x + chr(c)).digest()[-1] == chr(lastbyte):
+                    newcandidates.append(x + chr(c))
+        candidates = newcandidates
+        print candidates
+        return candidates
+
+
+    def main():
+        bypassproof()
+
+        # result of encrypted Welcome!!
+        iv_encrypt, cipher_welcome = recvmsg()
+        log.info("cipher welcome is : " + cipher_welcome)
+
+        # execute get-token
+        get_token_iv = flipplain(pad("Welcome!!"), pad("get-token"), iv_encrypt)
+        sendmsg(get_token_iv, cipher_welcome)
+        _, cipher_token = recvmsg()
+        token_len = len(cipher_token)
+        log.info("cipher token is : " + cipher_token)
+
+        # get command not found cipher
+        sendmsg(iv_encrypt, cipher_welcome)
+        _, cipher_notfound = recvmsg()
+
+        # get encrypted(token[:i+1]),57 times
+        md5_token_idx_list = get_md5_token_indexi(iv_encrypt, cipher_welcome,
+                                                  cipher_token)
+        # get md5map for each unpadsize, 209-17 times
+        # when upadsize>208, it will unpad ciphertoken
+        # then we can reuse
+        md5map = dict()
+        for unpadsize in range(17, 209):
+            log.info("get unpad size {} cipher".format(unpadsize))
+            get_md5_iv = flipplain("token: ".ljust(16, '\x00'), "get-md5".ljust(
+                16, '\x00'), iv_encrypt)
+            ## padding 16*11 bytes
+            padding = 16 * 11 * "a"
+            ## calculate the proper last byte number, only change the last byte
+            ## set last_byte_iv = iv_encrypted[:15] | proper byte
+            last_byte_iv = flipplain(
+                pad("Welcome!!"),
+                pad("Welcome!!")[:15] + chr(unpadsize), iv_encrypt)
+            cipher = cipher_token + padding + last_byte_iv + cipher_welcome
+            sendmsg(get_md5_iv, cipher)
+            _, unpadcipher = recvmsg()
+            md5map[unpadcipher] = unpadsize
+
+        # reuse encrypted(token[:i+1])
+        for i in range(209, 256):
+            target = md5_token_idx_list[56 - (i - 209)]
+            md5map[target] = i
+
+        candidates = [""]
+        # get the byte token[i], only 56 byte
+        for i in range(token_len - 7):
+            log.info("get token[{}]".format(i))
+            get_md5_iv = flipplain("token: ".ljust(16, '\x00'), "get-md5".ljust(
+                16, '\x00'), iv_encrypt)
+            ## padding 16*11 bytes
+            padding = 16 * 11 * "a"
+            cipher = cipher_token + padding + iv_encrypt + md5_token_idx_list[i]
+            sendmsg(get_md5_iv, cipher)
+            _, unpadcipher = recvmsg()
+            # already in or md5[token[:i]][-1]='\x00'
+            if unpadcipher in md5map or unpadcipher == cipher_notfound:
+                candidates = doin(unpadcipher, md5map, candidates, 1)
+            else:
+                log.info("unpad size 1-16")
+                # flip most significant bit of last byte to move it in a good range
+                cipher = cipher[:-17] + strxor(cipher[-17], '\x80') + cipher[-16:]
+                sendmsg(get_md5_iv, cipher)
+                _, unpadcipher = recvmsg()
+                if unpadcipher in md5map or unpadcipher == cipher_notfound:
+                    candidates = doin(unpadcipher, md5map, candidates, 0)
+                else:
+                    log.info('oh my god,,,, it must be in...')
+                    exit()
+        print len(candidates)
+        # padding 0x01
+        candidates = filter(lambda x: x[-1] == chr(0x01), candidates)
+        # only 56 bytes
+        candidates = [x[:-1] for x in candidates]
+        print len(candidates)
+        assert (len(candidates[0]) == 56)
+
+        # check-token
+        check_token_iv = flipplain(
+            pad("Welcome!!"), pad("check-token"), iv_encrypt)
+        sendmsg(check_token_iv, cipher_welcome)
+        p.recvuntil("Give me the token!\n")
+        p.sendline(base64.b64encode(candidates[0]))
+        print p.recv()
+
+        p.interactive()
+
+
+    if __name__ == "__main__":
+        main()
+
+效果如下
+
+.. code:: shell
+
+    ...
+    79
+    1
+    hitcon{uNp@d_M3th0D_i5_am4Z1n9!}
+
 参考链接
 --------
 
@@ -515,6 +792,7 @@ iv**\ ，那么我们就可以控制解密后的结果。也就是说我们可�
 -  https://en.wikipedia.org/wiki/Padding_oracle_attack
 -  http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf
 -  https://ctftime.org/writeup/7975
+-  https://ctftime.org/writeup/7974
 
 .. |image0| image:: /crypto/symmetric/figure/ecb_encryption.png
 .. |image1| image:: /crypto/symmetric/figure/ecb_decryption.png
