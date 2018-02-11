@@ -155,7 +155,11 @@ HTTP
 
 **例题**
 
-江苏省领航杯-2017:hack
+查看 :download:`this example script <../example.py>`.
+
+查看 :download: `this example script <file/hack.pcap>
+
+查看 :download:`this example script <../example.py>`__
 
 总体观察可以得出:
 
