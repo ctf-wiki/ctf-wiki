@@ -1,9 +1,6 @@
-PCAP文件修复
-===
-
 ## PCAP文件结构
 
-一般来说,对于`PCAP`文件格式考察较少,且通常都能借助于现成的工具如`pcapfix`直接修复,这里大致介绍下几个常见的块,详细可以翻看[Here](http://www.tcpdump.org/pcap/pcap.html)
+一般来说,对于 `PCAP` 文件格式考察较少，且通常都能借助于现成的工具如 `pcapfix` 直接修复，这里大致介绍下几个常见的块，详细可以翻看[Here](http://www.tcpdump.org/pcap/pcap.html)。
 
 - Tools
     - [PcapFix Online](https://f00l.de/hacking/pcapfix.php)
@@ -35,8 +32,6 @@ PCAP文件修复
 5. Name Resolution Block: it defines the mapping from numeric addresses present in the packet dump and the canonical name counterpart.
 6. Capture Statistics Block: it defines how to store some statistical data (e.g. packet dropped, etc) which can be useful to undestand the conditions in which the capture has been made.
 
-
-
 ## 常见块
 
 ### Section Header BlocK(文件头)
@@ -59,7 +54,6 @@ PCAP文件修复
    /                      Options (variable)                       /
    /                                                               /
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
 ```
 
 ### Interface Description Block(接口描述)
@@ -102,7 +96,6 @@ PCAP文件修复
    /                      Options (variable)                       /
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
-
 
 **参考**
 

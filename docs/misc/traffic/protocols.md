@@ -1,14 +1,12 @@
- 协议分析
-===
-
-
 ## Wireshark 常用功能介绍
 
 ### 显示过滤器
 
 显示过滤器可以用很多不同的参数来作为匹配标准，比如IP地址、协议、端口号、某些协议头部的参数。此外，用户也用一些条件工具和串联运算符创建出更加复杂的表达式。用户可以将不同的表达式组合起来，让软件显示的数据包范围更加精确。在数据包列表面板中显示的所有数据包都可以用数据包中包含的字段进行过滤。
 
-`[not] Expression [and|or] [not] Expression`
+```
+[not] Expression [and|or] [not] Expression
+```
 
 经常要用到各种运算符
 
@@ -28,19 +26,18 @@
 
 1. 借助于过滤器窗口
 
-
-![filter_window](figure/filter_window.png)
+    ![filter_window](figure/filter_window.png)
 
 2. 借助于工具条的输入栏
 
-
-![filter_tool](figure/filter_tool.png)
+    ![filter_tool](figure/filter_tool.png)
 
 3. 将数据包某个属性值指定为过滤条件
 
-![filter_select](figure/filter_select.png)
+    ![filter_select](figure/filter_select.png)
 
-- Notes: 复杂的过滤命令可以直接通过第三种方式得到过滤语法
+!!! note
+    复杂的过滤命令可以直接通过第三种方式得到过滤语法
 
 ### 信息统计
 
@@ -63,7 +60,6 @@
 | End Bytes：   | 该协议中的字节数（作为文件中的最高协议层）     |
 | End Mbit/s：  | 抓包时间内的协议带宽（作为文件中的最高协议层） |
 
-
 这一功能可以为分析数据包的主要方向提供依据
 
 #### Conversation(对话)
@@ -72,7 +68,7 @@
 
 ![Conversation](figure/conversation.png)
 
-- Notes
+!!! note
     - 查看收发大量数据流的IP地址。如果是你知道的服务器（你记得服务器的地址或地址范围），那问题就解决了；但也有可能只是某台设备正在扫描网络，或仅是一台产生过多数据的PC。
     - 查看扫描模式（scan pattern）。这可能是一次正常的扫描，如SNMP软件发送ping报文以查找网络，但通常扫描都不是好事情
 
@@ -86,7 +82,7 @@
 
 - Packet Counter
 
-![pac_count](figure/pac_count.png)
+    ![pac_count](figure/pac_count.png)
 
 
 **参考**
@@ -146,7 +142,7 @@ with open('log') as f:
 ```
 
 
-#### HTTPs
+#### HTTPS
 
 `HTTPs = HTTP + SSL / TLS`.服务端和客户端的信息传输都会通过TLS进行加密，所以传输的数据都是加密后的数据
 
@@ -243,7 +239,7 @@ print find
 
 - 发现几条关键信息
 
-```xml
+```
 Welcome to dnscap! The flag is below, have fun!!
 Welcome to dnscap! The flag is below, have fun!!
 !command (sirvimes)
