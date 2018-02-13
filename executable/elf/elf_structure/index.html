@@ -1,0 +1,4535 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="CTF Wiki">
+      
+      
+        <link rel="canonical" href="https://ctf-wiki.github.io/ctf-wiki/executable/elf/elf_structure/">
+      
+      
+        <meta name="author" content="CTF Wiki Team">
+      
+      
+        <meta name="lang:clipboard.copy" content="复制">
+      
+        <meta name="lang:clipboard.copied" content="已复制">
+      
+        <meta name="lang:search.language" content="jp">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="没有找到符合条件的结果">
+      
+        <meta name="lang:search.result.one" content="找到 1 个符合条件的结果">
+      
+        <meta name="lang:search.result.other" content="# 个符合条件的结果">
+      
+        <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
+      
+      <link rel="shortcut icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-0.17.2, mkdocs-material-2.6.2">
+    
+    
+      
+        <title>ELF文件基本结构 - CTF Wiki</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.9b572555.css">
+      
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.6079476c.css">
+      
+    
+    
+      <script src="../../../assets/javascripts/modernizr.1aa3b519.js"></script>
+    
+    
+      
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Sans:300,400,400i,700|Fira+Mono">
+        <style>body,input{font-family:"Fira Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Fira Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+      <link rel="stylesheet" href="../../../_static/css/extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="white" data-md-color-accent="red">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <a href="#elf" tabindex="1" class="md-skip">
+        跳转至
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon">school</i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                CTF Wiki
+              </span>
+              <span class="md-header-nav__topic">
+                ELF文件基本结构
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            键入以开始搜索
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 Github 仓库" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      ctf-wiki/ctf-wiki
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+        
+
+  
+
+<nav class="md-tabs md-tabs--active" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../.." title="Introduction" class="md-tabs__link">
+          Introduction
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../misc/introduction/" title="Misc" class="md-tabs__link">
+          Misc
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../crypto/introduction/" title="Crypto" class="md-tabs__link">
+          Crypto
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../web/introduction/" title="Web" class="md-tabs__link">
+          Web
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../reverse/introduction/" title="Reverse" class="md-tabs__link">
+          Reverse
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../pwn/stackoverflow/stack_intro/" title="Pwn" class="md-tabs__link">
+          Pwn
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="./" title="Executable" class="md-tabs__link md-tabs__link--active">
+          Executable
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+    </ul>
+  </div>
+</nav>
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <span class="md-nav__button md-logo">
+      
+        <i class="md-icon">school</i>
+      
+    </span>
+    CTF Wiki
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 Github 仓库" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      ctf-wiki/ctf-wiki
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1">
+    
+    <label class="md-nav__link" for="nav-1">
+      Introduction
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-1">
+        Introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../.." title="Getting Started" class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/history/" title="CTF 历史" class="md-nav__link">
+      CTF 历史
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/mode/" title="CTF 竞赛模式简介" class="md-nav__link">
+      CTF 竞赛模式简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/content/" title="CTF 竞赛内容" class="md-nav__link">
+      CTF 竞赛内容
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/experience/" title="线下攻防经验小结" class="md-nav__link">
+      线下攻防经验小结
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/cgc/" title="CGC 超级挑战赛" class="md-nav__link">
+      CGC 超级挑战赛
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/resources/" title="学习资源" class="md-nav__link">
+      学习资源
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Misc
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Misc
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/introduction/" title="杂项简介" class="md-nav__link">
+      杂项简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/recon/" title="信息搜集技术" class="md-nav__link">
+      信息搜集技术
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3">
+    
+    <label class="md-nav__link" for="nav-2-3">
+      编码分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-3">
+        编码分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/communication/" title="通信领域常用编码" class="md-nav__link">
+      通信领域常用编码
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/computer/" title="计算机相关的编码" class="md-nav__link">
+      计算机相关的编码
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/modern/" title="现实世界中常用的编码" class="md-nav__link">
+      现实世界中常用的编码
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/prefix/" title="取证隐写前置技术" class="md-nav__link">
+      取证隐写前置技术
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-5" type="checkbox" id="nav-2-5">
+    
+    <label class="md-nav__link" for="nav-2-5">
+      图片分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-5">
+        图片分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/introduction/" title="图片分析简介" class="md-nav__link">
+      图片分析简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/png/" title="PNG" class="md-nav__link">
+      PNG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/jpg/" title="JPG" class="md-nav__link">
+      JPG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/gif/" title="GIF" class="md-nav__link">
+      GIF
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-6" type="checkbox" id="nav-2-6">
+    
+    <label class="md-nav__link" for="nav-2-6">
+      流量包分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-6">
+        流量包分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/introduction/" title="流量包分析简介" class="md-nav__link">
+      流量包分析简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/fix/" title="PCAP 文件修复" class="md-nav__link">
+      PCAP 文件修复
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/protocols/" title="协议分析" class="md-nav__link">
+      协议分析
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/data/" title="数据提取" class="md-nav__link">
+      数据提取
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-7" type="checkbox" id="nav-2-7">
+    
+    <label class="md-nav__link" for="nav-2-7">
+      压缩包分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-7">
+        压缩包分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/archive/zip/" title="ZIP 格式" class="md-nav__link">
+      ZIP 格式
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/archive/rar/" title="RAR 格式" class="md-nav__link">
+      RAR 格式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/audio/introduction/" title="音频隐写" class="md-nav__link">
+      音频隐写
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/disk-memory/introduction/" title="磁盘内存分析" class="md-nav__link">
+      磁盘内存分析
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Crypto
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Crypto
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/introduction/" title="密码学简介" class="md-nav__link">
+      密码学简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-2" type="checkbox" id="nav-3-2">
+    
+    <label class="md-nav__link" for="nav-3-2">
+      古典密码
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-2">
+        古典密码
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/introduction/" title="古典密码简介" class="md-nav__link">
+      古典密码简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/monoalphabetic/" title="单表代换加密" class="md-nav__link">
+      单表代换加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/polyalphabetic/" title="多表代换加密" class="md-nav__link">
+      多表代换加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/others/" title="其他类型加密" class="md-nav__link">
+      其他类型加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/summary/" title="总结" class="md-nav__link">
+      总结
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-3" type="checkbox" id="nav-3-3">
+    
+    <label class="md-nav__link" for="nav-3-3">
+      对称加密
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-3">
+        对称加密
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/symmetric/introduction/" title="对称加密简介" class="md-nav__link">
+      对称加密简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/symmetric/des/" title="DES" class="md-nav__link">
+      DES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/symmetric/aes/" title="AES" class="md-nav__link">
+      AES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/symmetric/block_cipher/" title="分组模式" class="md-nav__link">
+      分组模式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4" type="checkbox" id="nav-3-4">
+    
+    <label class="md-nav__link" for="nav-3-4">
+      非对称加密
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-4">
+        非对称加密
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/introduction/" title="非对称加密简介" class="md-nav__link">
+      非对称加密简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-2" type="checkbox" id="nav-3-4-2">
+    
+    <label class="md-nav__link" for="nav-3-4-2">
+      RSA
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-2">
+        RSA
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_theory/" title="RSA 基本介绍" class="md-nav__link">
+      RSA 基本介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_module_attack/" title="模数相关攻击" class="md-nav__link">
+      模数相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_e_attack/" title="公钥指数相关攻击" class="md-nav__link">
+      公钥指数相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_d_attack/" title="私钥 d 相关攻击" class="md-nav__link">
+      私钥 d 相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_chosen_cipher/" title="选择密文攻击" class="md-nav__link">
+      选择密文攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_coppersmith_attack/" title="Coppersmith 相关攻击" class="md-nav__link">
+      Coppersmith 相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_side_channel/" title="侧信道攻击" class="md-nav__link">
+      侧信道攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_pkcs_attack/" title="Bleichenbacher 攻击" class="md-nav__link">
+      Bleichenbacher 攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_complex/" title="综合" class="md-nav__link">
+      综合
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/knapsack/knapsack/" title="背包加密" class="md-nav__link">
+      背包加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/discrete-log/discrete-log/" title="离散对数相关" class="md-nav__link">
+      离散对数相关
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5" type="checkbox" id="nav-3-5">
+    
+    <label class="md-nav__link" for="nav-3-5">
+      哈希函数
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-5">
+        哈希函数
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/introduction/" title="哈希函数简介" class="md-nav__link">
+      哈希函数简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/md5/" title="MD5" class="md-nav__link">
+      MD5
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/sha1/" title="SHA1" class="md-nav__link">
+      SHA1
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/attack/" title="Hash Attack" class="md-nav__link">
+      Hash Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/complex/" title="综合" class="md-nav__link">
+      综合
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-6" type="checkbox" id="nav-3-6">
+    
+    <label class="md-nav__link" for="nav-3-6">
+      数字签名
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-6">
+        数字签名
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/signature/introduction/" title="数字签名简介" class="md-nav__link">
+      数字签名简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/signature/rsa/" title="RSA 数字签名" class="md-nav__link">
+      RSA 数字签名
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/signature/elgamal/" title="ElGamal 数字签名" class="md-nav__link">
+      ElGamal 数字签名
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/signature/dsa/" title="DSA 数字签名" class="md-nav__link">
+      DSA 数字签名
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/others/others/" title="证书格式" class="md-nav__link">
+      证书格式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Web
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Web
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/introduction/" title="Web 应用简介" class="md-nav__link">
+      Web 应用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/sqli/" title="SQL 注入" class="md-nav__link">
+      SQL 注入
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/xss/" title="XSS 跨站脚本攻击" class="md-nav__link">
+      XSS 跨站脚本攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/csrf/" title="CSRF 跨站请求伪造" class="md-nav__link">
+      CSRF 跨站请求伪造
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/ssrf/" title="SSRF 服务端请求伪造" class="md-nav__link">
+      SSRF 服务端请求伪造
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/php/" title="PHP 代码审计" class="md-nav__link">
+      PHP 代码审计
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/introduction/" title="软件逆向工程简介" class="md-nav__link">
+      软件逆向工程简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      脱壳技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        脱壳技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/packer-introduction/" title="保护壳简介" class="md-nav__link">
+      保护壳简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/trace/" title="单步跟踪法" class="md-nav__link">
+      单步跟踪法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/esp/" title="ESP 定律法" class="md-nav__link">
+      ESP 定律法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/direct-oep/" title="一步到达 OEP 法" class="md-nav__link">
+      一步到达 OEP 法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/memory/" title="内存镜像法" class="md-nav__link">
+      内存镜像法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/last-exception/" title="最后一次异常法" class="md-nav__link">
+      最后一次异常法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/sfx/" title="SFX 法" class="md-nav__link">
+      SFX 法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/fix-iat/" title="DUMP 及 IAT 重建" class="md-nav__link">
+      DUMP 及 IAT 重建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/manually-fix-iat/" title="手动查找 IAT 并使用 ImportREC 重建" class="md-nav__link">
+      手动查找 IAT 并使用 ImportREC 重建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/unpack-dll/" title="DLL 文件脱壳" class="md-nav__link">
+      DLL 文件脱壳
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unicorn/introduction/" title="Unicorn Engine 简介" class="md-nav__link">
+      Unicorn Engine 简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      反调试技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        反调试技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/ntglobalflag/" title="NtGlobalFlag" class="md-nav__link">
+      NtGlobalFlag
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/heap-flags/" title="Heap Flags" class="md-nav__link">
+      Heap Flags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/the-heap/" title="The Heap" class="md-nav__link">
+      The Heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/int-3/" title="Interrupt 3" class="md-nav__link">
+      Interrupt 3
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/isdebuggerpresent/" title="IsDebuggerPresent" class="md-nav__link">
+      IsDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/checkremotedebuggerpresent/" title="CheckRemoteDebuggerPresent" class="md-nav__link">
+      CheckRemoteDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/ntqueryinformationprocess/" title="NtQueryInformationProcess" class="md-nav__link">
+      NtQueryInformationProcess
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/junk-code/" title="花指令" class="md-nav__link">
+      花指令
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/example/" title="反调试技术例题" class="md-nav__link">
+      反调试技术例题
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-5" type="checkbox" id="nav-5-5">
+    
+    <label class="md-nav__link" for="nav-5-5">
+      Linux 逆向技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-5">
+        Linux 逆向技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/ld_preload/" title="LD_PRELOAD" class="md-nav__link">
+      LD_PRELOAD
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/false-disasm/" title="False Disassembly" class="md-nav__link">
+      False Disassembly
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/detect-bp/" title="Detecting Breakpoints" class="md-nav__link">
+      Detecting Breakpoints
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/detect-dbg/" title="Detecting debugging" class="md-nav__link">
+      Detecting debugging
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-1" type="checkbox" id="nav-6-1">
+    
+    <label class="md-nav__link" for="nav-6-1">
+      StackOverflow 栈溢出
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-1">
+        StackOverflow 栈溢出
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/stack_intro/" title="栈介绍" class="md-nav__link">
+      栈介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/stackoverflow_basic/" title="栈溢出原理" class="md-nav__link">
+      栈溢出原理
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/basic_rop/" title="基本 ROP" class="md-nav__link">
+      基本 ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/others/" title="花式栈溢出技巧" class="md-nav__link">
+      花式栈溢出技巧
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/medium_rop/" title="中级 ROP" class="md-nav__link">
+      中级 ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/advanced_rop/" title="高级 ROP" class="md-nav__link">
+      高级 ROP
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-2" type="checkbox" id="nav-6-2">
+    
+    <label class="md-nav__link" for="nav-6-2">
+      格式化字符串
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-2">
+        格式化字符串
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/fmtstr/fmtstr_intro/" title="格式化字符串漏洞原理介绍" class="md-nav__link">
+      格式化字符串漏洞原理介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/fmtstr/fmtstr_exploit/" title="格式化字符串漏洞利用" class="md-nav__link">
+      格式化字符串漏洞利用
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/fmtstr/fmtstr_example/" title="格式化字符串漏洞例子" class="md-nav__link">
+      格式化字符串漏洞例子
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/fmtstr/fmtstr_detect/" title="格式化字符串漏洞检测" class="md-nav__link">
+      格式化字符串漏洞检测
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-3" type="checkbox" id="nav-6-3">
+    
+    <label class="md-nav__link" for="nav-6-3">
+      堆利用
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-3">
+        堆利用
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/heap_overview/" title="堆概述" class="md-nav__link">
+      堆概述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/heap_structure/" title="堆相关数据结构" class="md-nav__link">
+      堆相关数据结构
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/heap_implementation_details/" title="深入理解堆的实现" class="md-nav__link">
+      深入理解堆的实现
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/heapoverflow_basic/" title="堆溢出" class="md-nav__link">
+      堆溢出
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/off_by_one/" title="堆中的 Off-By-One" class="md-nav__link">
+      堆中的 Off-By-One
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/unlink/" title="Unlink" class="md-nav__link">
+      Unlink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/use_after_free/" title="Use After Free" class="md-nav__link">
+      Use After Free
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/fastbin_attack/" title="Fastbin Attack" class="md-nav__link">
+      Fastbin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/chunk_extend_shrink/" title="Chunk Extend / Shrink" class="md-nav__link">
+      Chunk Extend / Shrink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/house_of_einherjar/" title="House Of Einherjar" class="md-nav__link">
+      House Of Einherjar
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/house_of_lore/" title="House of Lore" class="md-nav__link">
+      House of Lore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/house_of_force/" title="House Of Force" class="md-nav__link">
+      House Of Force
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/unsorted_bin_attack/" title="Unsorted Bin Attack" class="md-nav__link">
+      Unsorted Bin Attack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" checked>
+    
+    <label class="md-nav__link" for="nav-7">
+      Executable
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Executable
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-1" type="checkbox" id="nav-7-1" checked>
+    
+    <label class="md-nav__link" for="nav-7-1">
+      ELF 文件
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-1">
+        ELF 文件
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        ELF文件基本结构
+      </label>
+    
+    <a href="./" title="ELF文件基本结构" class="md-nav__link md-nav__link--active">
+      ELF文件基本结构
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#elf" title="ELF文件" class="md-nav__link">
+    ELF文件
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" title="简介" class="md-nav__link">
+    简介
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" title="文件格式" class="md-nav__link">
+    文件格式
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="数据形式" class="md-nav__link">
+    数据形式
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="字符表示" class="md-nav__link">
+    字符表示
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#elf-header" title="ELF Header" class="md-nav__link">
+    ELF Header
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#program-header-table" title="Program Header Table" class="md-nav__link">
+    Program Header Table
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="概述" class="md-nav__link">
+    概述
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="段类型" class="md-nav__link">
+    段类型
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-base-address" title="基地址-Base Address" class="md-nav__link">
+    基地址-Base Address
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" title="段权限" class="md-nav__link">
+    段权限
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" title="段内容" class="md-nav__link">
+    段内容
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-header-table" title="Section Header Table" class="md-nav__link">
+    Section Header Table
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="概述" class="md-nav__link">
+    概述
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" title="数据结构" class="md-nav__link">
+    数据结构
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" title="特殊下标" class="md-nav__link">
+    特殊下标
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" title="部分节头字段" class="md-nav__link">
+    部分节头字段
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sh_type" title="sh_type" class="md-nav__link">
+    sh_type
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sh_flags" title="sh_flags" class="md-nav__link">
+    sh_flags
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sh_link-sh_info" title="sh_link &amp; sh_info" class="md-nav__link">
+    sh_link &amp; sh_info
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sections" title="Sections" class="md-nav__link">
+    Sections
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-segment" title="Code Segment" class="md-nav__link">
+    Code Segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-segment" title="Data Segment" class="md-nav__link">
+    Data Segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rodata-segment" title="Rodata Segment" class="md-nav__link">
+    Rodata Segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bss-segment" title="BSS Segment" class="md-nav__link">
+    BSS Segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string-table" title="String Table" class="md-nav__link">
+    String Table
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#symbol-table" title="Symbol Table" class="md-nav__link">
+    Symbol Table
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#st_name" title="st_name" class="md-nav__link">
+    st_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#st_info" title="st_info" class="md-nav__link">
+    st_info
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" title="符号类型" class="md-nav__link">
+    符号类型
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" title="符号绑定" class="md-nav__link">
+    符号绑定
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" title="符号取值" class="md-nav__link">
+    符号取值
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-segment" title="dynamic segment" class="md-nav__link">
+    dynamic segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#misc" title="Misc" class="md-nav__link">
+    Misc
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#note-section" title="Note Section" class="md-nav__link">
+    Note Section
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hash-table" title="Hash Table" class="md-nav__link">
+    Hash Table
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_16" title="初始化以及结束函数" class="md-nav__link">
+    初始化以及结束函数
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_17" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../program_loading/" title="程序加载" class="md-nav__link">
+      程序加载
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../program_linking/" title="程序链接" class="md-nav__link">
+      程序链接
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../running_overview/" title="程序执行流程" class="md-nav__link">
+      程序执行流程
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#elf" title="ELF文件" class="md-nav__link">
+    ELF文件
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" title="简介" class="md-nav__link">
+    简介
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" title="文件格式" class="md-nav__link">
+    文件格式
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="数据形式" class="md-nav__link">
+    数据形式
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="字符表示" class="md-nav__link">
+    字符表示
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#elf-header" title="ELF Header" class="md-nav__link">
+    ELF Header
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#program-header-table" title="Program Header Table" class="md-nav__link">
+    Program Header Table
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="概述" class="md-nav__link">
+    概述
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="段类型" class="md-nav__link">
+    段类型
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-base-address" title="基地址-Base Address" class="md-nav__link">
+    基地址-Base Address
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" title="段权限" class="md-nav__link">
+    段权限
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" title="段内容" class="md-nav__link">
+    段内容
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-header-table" title="Section Header Table" class="md-nav__link">
+    Section Header Table
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="概述" class="md-nav__link">
+    概述
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" title="数据结构" class="md-nav__link">
+    数据结构
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" title="特殊下标" class="md-nav__link">
+    特殊下标
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" title="部分节头字段" class="md-nav__link">
+    部分节头字段
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sh_type" title="sh_type" class="md-nav__link">
+    sh_type
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sh_flags" title="sh_flags" class="md-nav__link">
+    sh_flags
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sh_link-sh_info" title="sh_link &amp; sh_info" class="md-nav__link">
+    sh_link &amp; sh_info
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sections" title="Sections" class="md-nav__link">
+    Sections
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-segment" title="Code Segment" class="md-nav__link">
+    Code Segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-segment" title="Data Segment" class="md-nav__link">
+    Data Segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rodata-segment" title="Rodata Segment" class="md-nav__link">
+    Rodata Segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bss-segment" title="BSS Segment" class="md-nav__link">
+    BSS Segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string-table" title="String Table" class="md-nav__link">
+    String Table
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#symbol-table" title="Symbol Table" class="md-nav__link">
+    Symbol Table
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#st_name" title="st_name" class="md-nav__link">
+    st_name
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#st_info" title="st_info" class="md-nav__link">
+    st_info
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" title="符号类型" class="md-nav__link">
+    符号类型
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" title="符号绑定" class="md-nav__link">
+    符号绑定
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" title="符号取值" class="md-nav__link">
+    符号取值
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-segment" title="dynamic segment" class="md-nav__link">
+    dynamic segment
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#misc" title="Misc" class="md-nav__link">
+    Misc
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#note-section" title="Note Section" class="md-nav__link">
+    Note Section
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hash-table" title="Hash Table" class="md-nav__link">
+    Hash Table
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_16" title="初始化以及结束函数" class="md-nav__link">
+    初始化以及结束函数
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_17" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/executable/elf/elf_structure.md" title="编辑此页" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                  <h1>ELF文件基本结构</h1>
+                
+                <h2 id="elf">ELF文件<a class="headerlink" href="#elf" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>本部分内容来源于ELF 1.2 标准，内容经过一定的修改与整理。本文档主要参考文献如下</p>
+<ol>
+<li>ELF文件格式分析，北京大学，滕启明</li>
+<li>ELF-摧毁圣诞</li>
+<li>待补充。</li>
+</ol>
+</blockquote>
+<h2 id="_1">简介<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>ELF文件，也就是在Linux中的目标文件，主要有以下三种类型</p>
+<ul>
+<li>可重定位文件（Relocatable File），包含由编译器生成的代码以及数据。链接器会将它与其它目标文件链接起来从而创建可执行文件或者共享目标文件。在Linux系统中，这种文件的后缀一般为 <code>.o</code> 。</li>
+<li>
+<p>可执行文件（Executable File），就是我们通常在Linux中执行的程序。</p>
+</li>
+<li>
+<p>共享目标文件（Shared Object File），包含代码和数据，这种文件是我们所称的库文件，一般以 <code>.so</code> 结尾。一般情况下，它有以下两种使用情景</p>
+</li>
+<li>链接器（Link eDitor, ld）可能会处理它和其它可重定位文件以及共享目标文件，生成另外一个目标文件。</li>
+<li>动态链接器（Dynamic Linker）将它与可执行文件以及其它共享目标组合在一起生成进程映像。</li>
+</ul>
+<blockquote>
+<p>关于Link eDitor的命名，<a href="https://en.wikipedia.org/wiki/GNU_linker">https://en.wikipedia.org/wiki/GNU_linker</a></p>
+</blockquote>
+<p>目标文件由汇编器和链接器创建，是文本程序的二进制形式，其目的是希望可以直接在处理器上运行。那些需要虚拟机才能够执行的程序(Java)不属于这一范围。</p>
+<p>这里我们主要关注于文件格式以及它和生成程序的关系。</p>
+<h3 id="_2">文件格式<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>目标文件既会参与程序链接又会参与程序执行。出于方便性和效率考虑，根据过程的不同，目标文件格式提供了其内容的两种并行视图，如下</p>
+<p><img alt="" src="../../../executable/elf/figure/object_file_format.png" /></p>
+<p>文件开始处是 ELF 头部（ <strong>ELF  Header</strong>），它给出了整个文件的组织情况。节区部分包含在链接视图中要使用的大部分信息：指令、数据、符号表、重定位信息等等。关于其它部分，我们后面再详细叙述。这里我们主要关注链接视图。</p>
+<p>如果程序头部表（Program Header Table）存在的话，它会告诉系统如何创建进程映像。用于生成进程映像的目标文件必须具有程序头部表，但是重定位文件不需要这个表。</p>
+<p>节区头部表（Section Header Table）包含了描述文件节区的信息，每个节区在表中都有一个表项，每一项会给出节区名称、节区大小等信息。用于链接的目标文件必须有节区头部表，其它目标文件则无所谓，可以有，也可以没有。</p>
+<p>注意:</p>
+<blockquote>
+<p>尽管图中是按照ELF头，程序头部表，节区，节区头部表的顺序排列的。但实际上除了 ELF  头部表以外，其它部分都没有严格的的顺序。</p>
+</blockquote>
+<h3 id="_3">数据形式<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>目标文件格式支持 8 位/32 位体系结构。当然，这种格式是可以扩展的，也可以支持更小的或者更大位数的处理器架构。因此，目标文件会包含一些控制数据，这部分数据表明了目标文件所使用的架构，这也使得它可以被通用的方式来识别和解释。目标文件中的其它数据采用目的处理器的格式进行编码，与在何种机器上创建没有关系。这里其实想表明的意思目标文件可以进行交叉编译，我们可以在X86平台生成arm平台的可执行代码。</p>
+<p>目标文件中的所有数据结构都遵从“自然”大小和对齐规则。如下</p>
+<table>
+<thead>
+<tr>
+<th align="left">名称</th>
+<th align="center">长度</th>
+<th align="center">对齐方式</th>
+<th align="center">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">Elf32_Addr</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">无符号程序地址</td>
+</tr>
+<tr>
+<td align="left">Elf32_Half</td>
+<td align="center">2</td>
+<td align="center">2</td>
+<td align="center">无符号半整型</td>
+</tr>
+<tr>
+<td align="left">Elf32_Off</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">无符号文件偏移</td>
+</tr>
+<tr>
+<td align="left">Elf32_Sword</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">有符号大整型</td>
+</tr>
+<tr>
+<td align="left">Elf32_Word</td>
+<td align="center">4</td>
+<td align="center">4</td>
+<td align="center">无符号大整型</td>
+</tr>
+<tr>
+<td align="left">unsigned char</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">无符号小整型</td>
+</tr>
+</tbody>
+</table>
+<p>如果必要，数据结构可以包含显式的补齐来确保 4 字节对象按 4 字节对齐，强制数据结构的大小是4的整数倍等等。数据同样适用是对齐的。因此，包含一个Elf32_Addr类型成员的结构体会在文件中的4字节边界处对齐。</p>
+<p>为了具有可移植性，ELF文件不使用位域。</p>
+<h3 id="_4">字符表示<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>待。</p>
+<h2 id="elf-header">ELF Header<a class="headerlink" href="#elf-header" title="Permanent link">&para;</a></h2>
+<p>有些目标文件控制结构的大小可以变化，因为ELF头有它们的实际大小。如果目标文件格式改变，程序可能会遇到比预期大或者小的控制结构。程序可能因此忽略“额外”的信息。至于如何处理“丢失”的信息，这取决于相应的环境，有时候也会在定义扩展时被明确地指定如何处理。</p>
+<p>ELF Header部分的数据结构如下：</p>
+<div class="codehilite"><pre><span></span><span class="cp">##define EI_NIDENT  16</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">char</span>   <span class="n">e_ident</span><span class="p">[</span><span class="n">EI_NIDENT</span><span class="p">];</span>
+    <span class="n">ELF32_Half</span>      <span class="n">e_type</span><span class="p">;</span>
+    <span class="n">ELF32_Half</span>      <span class="n">e_machine</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">e_version</span><span class="p">;</span>
+    <span class="n">ELF32_Addr</span>      <span class="n">e_entry</span><span class="p">;</span>
+    <span class="n">ELF32_Off</span>       <span class="n">e_phoff</span><span class="p">;</span>
+    <span class="n">ELF32_Off</span>       <span class="n">e_shoff</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">e_flags</span><span class="p">;</span>
+    <span class="n">ELF32_Half</span>      <span class="n">e_ehsize</span><span class="p">;</span>
+    <span class="n">ELF32_Half</span>      <span class="n">e_phentsize</span><span class="p">;</span>
+    <span class="n">ELF32_Half</span>      <span class="n">e_phnum</span><span class="p">;</span>
+    <span class="n">ELF32_Half</span>      <span class="n">e_shentsize</span><span class="p">;</span>
+    <span class="n">ELF32_Half</span>      <span class="n">e_shnum</span><span class="p">;</span>
+    <span class="n">ELF32_Half</span>      <span class="n">e_shstrndx</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">Elf32_Ehdr</span><span class="p">;</span>
+</pre></div>
+
+<p>其中每个成员都是e开头的，它们应该都是ELF的缩写。关于每个成员具体的说明如下</p>
+<p><strong>e_ident</strong></p>
+<p>正如之前所说，ELF提供了一个目标文件框架，以便于支持多种处理器，多种编码格式的机器。这部分字节就提供了用于解码和解释文件中与机器无关的数据的方式。这个数组对于不同的下标的含义如下</p>
+<table>
+<thead>
+<tr>
+<th>宏名称</th>
+<th>取值</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EI_MAG0</td>
+<td>0</td>
+<td>文件标识</td>
+</tr>
+<tr>
+<td>EI_MAG1</td>
+<td>1</td>
+<td>文件标识</td>
+</tr>
+<tr>
+<td>EI_MAG2</td>
+<td>2</td>
+<td>文件标识</td>
+</tr>
+<tr>
+<td>EI_MAG3</td>
+<td>3</td>
+<td>文件标识</td>
+</tr>
+<tr>
+<td>EI_CLASS</td>
+<td>4</td>
+<td>文件类</td>
+</tr>
+<tr>
+<td>EI_DATA</td>
+<td>5</td>
+<td>数据编码</td>
+</tr>
+<tr>
+<td>EI_VERSION</td>
+<td>6</td>
+<td>文件版本</td>
+</tr>
+<tr>
+<td>EI_PAD</td>
+<td>7</td>
+<td>补齐字节开始处</td>
+</tr>
+</tbody>
+</table>
+<p>其中，</p>
+<p><code>e_ident[EI_MAG0]</code>  到 <code>e_ident[EI_MAG3]</code>，即文件的头4个字节，被称作“魔数”，标识该文件是一个ELF目标文件。<strong>至于开头为什么是0x7f，并没有仔细去查过</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ELFMAG0</td>
+<td>0x7f</td>
+<td>e_ident[EI_MAG0]</td>
+</tr>
+<tr>
+<td>ELFMAG1</td>
+<td>‘E’</td>
+<td>e_ident[EI_MAG1]</td>
+</tr>
+<tr>
+<td>ELFMAG2</td>
+<td>‘L’</td>
+<td>e_ident[EI_MAG2]</td>
+</tr>
+<tr>
+<td>ELFMAG3</td>
+<td>‘F’</td>
+<td>e_ident[EI_MAG3]</td>
+</tr>
+</tbody>
+</table>
+<p><code>e_ident[EI_CLASS]</code> 为 <code>e_ident[EI_MAG3]</code>的下一个字节，标识文件的类型或容量。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ELFCLASSNONE</td>
+<td>0</td>
+<td>无效类型</td>
+</tr>
+<tr>
+<td>ELFCLASS32</td>
+<td>1</td>
+<td>32位文件</td>
+</tr>
+<tr>
+<td>ELFCLASS64</td>
+<td>2</td>
+<td>64位文件</td>
+</tr>
+</tbody>
+</table>
+<p>ELF 文件的设计使得它可以在多种字节长度的机器之间移植，而不需要强制规定机器的最长字节长度和最短字节长度。<code>ELFCLASS32</code>类型支持文件大小和虚拟地址空间上限为4GB的机器；它使用上述定义中的基本类型。</p>
+<p><code>ELFCLASS64</code>类型被保留用于64位架构。它表明目标文件可能会改变。在必要时，会定义附带有不同的基本类型和目标文件数据大小的其它类型，可能是128位？</p>
+<p><code>e_ident[EI_DATA]</code>字节给出了目标文件中的特定处理器数据的编码方式。下面是目前已定义的编码：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ELFDATANONE</td>
+<td>0</td>
+<td>无效数据编码</td>
+</tr>
+<tr>
+<td>ELFDATA2LSB</td>
+<td>1</td>
+<td>小端</td>
+</tr>
+<tr>
+<td>ELFDATA2MSB</td>
+<td>2</td>
+<td>大端</td>
+</tr>
+</tbody>
+</table>
+<p>其它值被保留，在未来必要时将被赋予新的编码。</p>
+<p>文件数据编码方式表明了文件内容的解析方式。正如之前所述，<code>ELFCLASS32</code>类型文件使用了具有1，2和4字节的变量类型。对于已定义的不同的编码方式，其表示如下所示，其中字节号在左上角。</p>
+<p><code>ELFDATA2LSB</code>编码使用补码，最低有效位（Least Significant Byte）占用最低地址。</p>
+<p><img alt="" src="../../../executable/elf/figure/elfdata2lsb.png" /></p>
+<p><code>ELFDATA2MSB</code>编码使用补码，最高有效位（Most Significant Byte）占用最低地址。</p>
+<p><img alt="" src="../../../executable/elf/figure/elfdata2msb.png" /></p>
+<p><code>e_ident[EI_DATA]</code>给出了ELF头的版本号。目前这个值必须是<code>EV_CURRENT</code>，即之前已经给出的<code>e_version</code>。</p>
+<p><code>e_ident[EI_PAD]</code> 给出了 <code>e_ident</code> 中未使用字节的开始地址。这些字节被保留并置为0；处理目标文件的程序应该忽略它们。如果之后这些字节被使用，EI_PAD的值就会改变。</p>
+<p><strong>e_type</strong></p>
+<p><code>e_type</code>标识目标文件类型。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ET_NONE</td>
+<td>0</td>
+<td>无文件类型</td>
+</tr>
+<tr>
+<td>ET_REL</td>
+<td>1</td>
+<td>可重定位文件</td>
+</tr>
+<tr>
+<td>ET_EXEC</td>
+<td>2</td>
+<td>可执行文件</td>
+</tr>
+<tr>
+<td>ET_DYN</td>
+<td>3</td>
+<td>共享目标文件</td>
+</tr>
+<tr>
+<td>ET_CORE</td>
+<td>4</td>
+<td>核心转储文件</td>
+</tr>
+<tr>
+<td>ET_LOPROC</td>
+<td>0xff00</td>
+<td>处理器指定</td>
+</tr>
+<tr>
+<td>ET_HIPROC</td>
+<td>0xffff</td>
+<td>处理器指定</td>
+</tr>
+</tbody>
+</table>
+<p>虽然核心转储文件的内容没有被详细说明，但 <code>ET_CORE</code> 还是被保留用于标志此类文件。从<code>ET_LOPROC</code>到<code>ET_HIPROC</code>(包括边界)被保留用于处理器指定的场景。其它值在未来必要时可被赋予新的目标文件类型。</p>
+<p><strong>e_machine</strong></p>
+<p>这一项指定了当前文件的机器架构。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EM_NONE</td>
+<td>0</td>
+<td>无机器类型</td>
+</tr>
+<tr>
+<td>EM_M32</td>
+<td>1</td>
+<td>AT&amp;T WE 32100</td>
+</tr>
+<tr>
+<td>EM_SPARC</td>
+<td>2</td>
+<td>SPARC</td>
+</tr>
+<tr>
+<td>EM_386</td>
+<td>3</td>
+<td>Intel 80386</td>
+</tr>
+<tr>
+<td>EM_68K</td>
+<td>4</td>
+<td>Motorola 68000</td>
+</tr>
+<tr>
+<td>EM_88K</td>
+<td>5</td>
+<td>Motorola 88000</td>
+</tr>
+<tr>
+<td>EM_860</td>
+<td>7</td>
+<td>Intel 80860</td>
+</tr>
+<tr>
+<td>EM_MIPS</td>
+<td>8</td>
+<td>MIPS RS3000</td>
+</tr>
+</tbody>
+</table>
+<p>其中EM应该是 <code>ELF Machine</code> 的简写。</p>
+<p>其它值被在未来必要时用于新的机器。 此外，特定处理器的ELF名称使用机器名称来进行区分，一般标志会有个前缀<code>EF_</code> （ELF Flag）。例如，在<code>EM_XYZ</code>机器上名叫 <code>WIDGET</code> 的标志将被称为 <code>EF_XYZ_WIDGET</code>。</p>
+<p><strong>e_version</strong></p>
+<p>标识目标文件的版本。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EV_NONE</td>
+<td>0</td>
+<td>无效版本</td>
+</tr>
+<tr>
+<td>EV_CURRENT</td>
+<td>1</td>
+<td>当前版本</td>
+</tr>
+</tbody>
+</table>
+<p>1表示初始文件格式；未来扩展新的版本的时候(extensions)将使用更大的数字。虽然在上面值<code>EV_CURRENT</code>为1，但是为了反映当前版本号，它可能会改变，<strong>比如ELF到现在也就是1.2版本。</strong></p>
+<p><strong>e_entry</strong></p>
+<p>这一项给出系统转交控制权给ELF中的代码时的虚拟地址。如果没有相关的入口项，则这一项为0。</p>
+<p><strong>e_phoff</strong></p>
+<p>这一项给出<strong>程序头部表</strong>在文件中的字节偏移（<strong>Program Header table OFFset</strong>）。如果文件中没有程序头部表，则为0。</p>
+<p><strong>e_shoff</strong></p>
+<p>这一项给出<strong>节头表</strong>在文件中的字节偏移（ <strong>Section Header table OFFset</strong> ）。如果文件中没有节头表，则为0。</p>
+<p><strong>e_flags</strong></p>
+<p>这一项给出文件中与特定处理器相关的标志，这些标志命名格式为<code>EF_machine_flag</code>。</p>
+<p><strong>e_ehsize</strong></p>
+<p>这一项给出ELF文件头部的字节长度（ELF Header Size）。</p>
+<p><strong>e_phentsize</strong></p>
+<p>这一项给出程序头部表中每个表项的字节长度（<strong>Program Header ENTry SIZE</strong>）。每个表项的大小相同。</p>
+<p><strong>e_phnum</strong></p>
+<p>这一项给出程序头部表的项数（ <strong>Program Header entry NUMber</strong> ）。因此，<code>e_phnum</code> 与 <code>e_phentsize</code> 的乘积即为程序头部表的字节长度。如果文件中没有程序头部表，则该项值为0。</p>
+<p><strong>e_shentsize</strong></p>
+<p>这一项给出节头的字节长度（<strong>Section Header ENTry SIZE</strong>）。一个节头是节头表中的一项；节头表中所有项占据的空间大小相同。</p>
+<p><strong>e_shnum</strong></p>
+<p>这一项给出节头表中的项数（<strong>Section Header NUMber</strong>）。因此， <code>e_shnum</code> 与 <code>e_shentsize</code> 的乘积即为节头表的字节长度。如果文件中没有节头表，则该项值为0。</p>
+<p><strong>e_shstrndx</strong></p>
+<p>这一项给出节头表中与节名字符串表相关的表项的索引值（<strong>Section Header table InDeX related with section  name STRing table</strong>）。如果文件中没有节名字符串表，则该项值为<code>SHN_UNDEF</code>。关于细节的介绍，请参考后面的“节”和“字符串表”部分。</p>
+<h2 id="program-header-table">Program Header Table<a class="headerlink" href="#program-header-table" title="Permanent link">&para;</a></h2>
+<h3 id="_5">概述<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p>可执行文件或者共享目标文件的头部是一个结构体数组，每一个元素都描述了一个段或者其它系统在准备程序执行时所需要的信息。一个目标文件的段包含一个或者多个节。<strong>程序的头部只有对于可执行文件和共享目标文件有意义。</strong>其中，ELF文件的头中的<code>e_phentsize</code>和<code>e_phnum</code>项指定了相应的程序头的大小。程序头的数据结构如下</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">ELF32_Word</span>  <span class="n">p_type</span><span class="p">;</span>
+    <span class="n">ELF32_Off</span>   <span class="n">p_offset</span><span class="p">;</span>
+    <span class="n">ELF32_Addr</span>  <span class="n">p_vaddr</span><span class="p">;</span>
+    <span class="n">ELF32_Addr</span>  <span class="n">p_paddr</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>  <span class="n">p_filesz</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>  <span class="n">p_memsz</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>  <span class="n">p_flags</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>  <span class="n">p_align</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">Elf32_Phdr</span><span class="p">;</span>
+</pre></div>
+
+<p>每个字段的说明如下</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>p_type</td>
+<td>该字段表明了对应数组元素的类型，或者表明了该如何解释该数组元素。具体信息可以参见下面的描述。</td>
+</tr>
+<tr>
+<td>p_offset</td>
+<td>该字段给出了从文件开始到该段开头的第一个字节的偏移。</td>
+</tr>
+<tr>
+<td>p_vaddr</td>
+<td>该字段给出了该段的第一个字节在内存中的虚拟地址。</td>
+</tr>
+<tr>
+<td>p_paddr</td>
+<td>该字段仅用于物理地址寻址相关的系统中， 由于”System V”忽略了应用程序的物理寻址，可执行文件和共享目标文件的该项内容并未被限定。</td>
+</tr>
+<tr>
+<td>p_filesz</td>
+<td>该字段给出了文件镜像中该段的大小，可能为0。</td>
+</tr>
+<tr>
+<td>p_memsz</td>
+<td>该字段给出了内存镜像中该段的大小，可能为0。</td>
+</tr>
+<tr>
+<td>p_flags</td>
+<td>该字段给出了与段相关的标记。</td>
+</tr>
+<tr>
+<td>p_align</td>
+<td>可加载的程序的段的p_vaddr以及p_offset的大小必须是page 的整数倍。该成员给出了段在文件以及内存中的对齐方式。如果该值为0或1的话，表示不需要对齐。除此之外，p_align应该是2的整数指数次方，并且p_vaddr与p_offset在模p_align的意义下，应该相等。</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">段类型<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<p>可执行文件中的段类型如下</p>
+<table>
+<thead>
+<tr>
+<th>名字</th>
+<th>取值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PT_NULL</td>
+<td>0</td>
+<td>表明段未使用，其结构中其他成员都是未定义的。</td>
+</tr>
+<tr>
+<td>PT_LOAD</td>
+<td>1</td>
+<td>此类型段为一个可加载的段，大小由 p_filesz 和 p_memsz  描述。文件中的字节被映射到相应内存段开始处。如果 p_memsz  大于  p_filesz，“剩余”的字节都要被置为0。p_filesz 不能大于 p_memsz。可加载的段在程序头部中按照 p_vaddr 的升序排列。</td>
+</tr>
+<tr>
+<td>PT_DYNAMIC</td>
+<td>2</td>
+<td>此类型段给出动态链接信息。</td>
+</tr>
+<tr>
+<td>PT_INTERP</td>
+<td>3</td>
+<td>此类型段给出了一个以 NULL  结尾的字符串的位置和长度，该字符串将被当作解释器调用。这种段类型仅对可执行文件有意义（也可能出现在共享目标文件中）。此外，这种段在一个文件中最多出现一次。而且这种类型的段存在的话，它必须在所有可加载段项的前面。</td>
+</tr>
+<tr>
+<td>PT_NOTE</td>
+<td>4</td>
+<td>此类型段给出附加信息的位置和大小。</td>
+</tr>
+<tr>
+<td>PT_SHLIB</td>
+<td>5</td>
+<td>该段类型被保留，不过语义未指定。而且，包含这种类型的段的程序不符合ABI标准。</td>
+</tr>
+<tr>
+<td>PT_PHDR</td>
+<td>6</td>
+<td>该段类型的数组元素如果存在的话，则给出了程序头部表自身的大小和位置，既包括在文件中也包括在内存中的信息。此类型的段在文件中最多出现一次。此外，只有程序头部表是程序的内存映像的一部分时，它才会出现。如果此类型段存在，则必须在所有可加载段项目的前面。</td>
+</tr>
+<tr>
+<td>PT_LOPROC~PT_HIPROC</td>
+<td>0x70000000  ~0x7fffffff</td>
+<td>此范围的类型保留给处理器专用语义。</td>
+</tr>
+</tbody>
+</table>
+<h3 id="-base-address">基地址-Base Address<a class="headerlink" href="#-base-address" title="Permanent link">&para;</a></h3>
+<p>程序头部的虚拟地址可能并不是程序内存镜像中实际的虚拟地址。可执行程序通常来说，都会包含绝对地址的代码。为了使得程序可以正常执行，段必须在相应的虚拟地址处。另一方面，共享目标文件通常来说包含与地址无关的代码。这可以使得共享目标文件可以被多个进程加载，同时保持程序执行的正确性。尽管系统会为不同的进程选择不同的虚拟地址，但是它仍然保留段的相对地址，因为地址无关代码使用段之间的相对地址来进行寻址，内存中的虚拟地址之间的差必须与文件中的虚拟地址之间的差相匹配。内存中任何段的虚拟地址与文件中对应的虚拟地址之间的差值对于任何一个可执行文件或共享对象来说是一个单一常量值。这个差值就是基地址，基地址的一个用途就是在动态链接期间重新定位程序。</p>
+<p>可执行文件或者共享目标文件的基地址是在执行过程中由以下三个数值计算的</p>
+<ul>
+<li>虚拟内存加载地址</li>
+<li>最大页面大小</li>
+<li>程序可加载段的最低虚拟地址</li>
+</ul>
+<p>要计算基地址，首先要确定可加载段中p_vaddr最小的内存虚拟地址，之后把该内存虚拟地址缩小为与之最近的最大页面的整数倍即是基地址。根据要加载到内存中的文件的类型，内存地址可能与 p_vaddr 相同也可能不同。</p>
+<h3 id="_7">段权限<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p>被系统加载到内存中的程序必须至少有一个可加载的段。当系统为可加载的段创建内存镜像时，它会按照p_flags将段设置为对应的权限。</p>
+<p>可能的段权限位有</p>
+<p><img alt="" src="../../../executable/elf/figure/segment_flag_bits.png" /></p>
+<p>其中，所有在PF_MASKPROC中的比特位都是被保留用于与处理器相关的语义信息。</p>
+<p>如果一个权限位被设置为0，这种类型的段是不可访问的。实际的内存权限取决于相应的内存管理单元，不同的系统可能操作方式不一样。尽管所有的权限组合都是可以的，但是系统一般会授予比请求更多的权限。在任何情况下，除非明确说明，一个段不会有写权限。下面给出了所有的可能组合。</p>
+<p><img alt="" src="../../../executable/elf/figure/segment-permission.png" /></p>
+<p>例如，一般来说，.text段一般具有读和执行权限，但是不会有写权限。数据段一般具有写，读，以及执行权限。</p>
+<h3 id="_8">段内容<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>一个段可能包括一到多个节区，但是这并不会影响程序的加载。尽管如此，我们也必须需要各种各样的数据来使得程序可以执行以及动态链接等等。下面会给出一般情况下的段的内容。对于不同的段来说，它的节的顺序以及所包含的节的个数有所不同。此外，与处理相关的约束可能会改变对应的段的结构。</p>
+<p>如下所示，代码段只包含只读的指令以及数据。其它节可能在可加载的段中。当然这个例子并没有给出所有的可能的段。</p>
+<p><img alt="" src="../../../executable/elf/figure/text_segment.png" /></p>
+<p>数据段包含可写的数据以及以及指令，通常来说，包含以下内容</p>
+<p><img alt="" src="../../../executable/elf/figure/data_segment.png" /></p>
+<p>程序头部的PT_DYNAMIC元素指向.dynamic节。其中，got表和plt表包含与地址无关的代码相关信息。尽管在这里给出的例子中，plt节出现在代码段，但是对于不同的处理器来说，可能会有所变动。</p>
+<p>.bss节的类型为SHT_NOBITS，这表明它在ELF文件中不占用空间，但是它却占用可执行文件的内存镜像的空间。通常情况下，没有被初始化的数据在段的尾部，因此，<code>p_memsz</code> 才会比 <code>p_filesz</code> 大。</p>
+<h2 id="section-header-table">Section Header Table<a class="headerlink" href="#section-header-table" title="Permanent link">&para;</a></h2>
+<h3 id="_9">概述<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>其实这个数据结构是在ELF文件的尾部（ <strong>为什么要放在尾部呢？？</strong> ），但是为了讲解方便，这里将这个表放在这里进行讲解。目标文件的节头表可以帮助定位文件中的所有节。节头表是一个 <code>ELF32_Shdr</code> 类型的数组，节头表索引是数组中元素的下标。ELF头中的 <code>e_shoff</code> 项给出了从文件开头到节头表位置的字节偏移；这样就方便直接定位到节头表，从而定位到每一个节了。 <code>e_shnum</code> 告诉了我们节头表包含的项数；<code>e_shentsize</code> 给出了每一项的字节大小。</p>
+<h4 id="_10">数据结构<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h4>
+<p>每个节区头部可以用下面的数据结构进行描述：</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">ELF32_Word</span>      <span class="n">sh_name</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">sh_type</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">sh_flags</span><span class="p">;</span>
+    <span class="n">ELF32_Addr</span>      <span class="n">sh_addr</span><span class="p">;</span>
+    <span class="n">ELF32_Off</span>       <span class="n">sh_offset</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">sh_size</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">sh_link</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">sh_info</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">sh_addralign</span><span class="p">;</span>
+    <span class="n">ELF32_Word</span>      <span class="n">sh_entsize</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">Elf32_Shdr</span><span class="p">;</span>
+</pre></div>
+
+<p>每个字段的含义如下</p>
+<table>
+<thead>
+<tr>
+<th align="left">成员</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">sh_name</td>
+<td>节名称，是节区头部字符串表节区（Section Header String Table Section）的索引，其内容是以NULL结尾的字符串。</td>
+</tr>
+<tr>
+<td align="left">sh_type</td>
+<td>根据节的内容和语义进行分类，具体的类型下面介绍。</td>
+</tr>
+<tr>
+<td align="left">sh_flags</td>
+<td>每一比特代表不同的标志，从来描述多种属性。</td>
+</tr>
+<tr>
+<td align="left">sh_addr</td>
+<td>如果节区将出现在进程的内存映像中，此成员给出节区的第一个字节应该在进程镜像中的位置。否则，此字段为 0。</td>
+</tr>
+<tr>
+<td align="left">sh_offset</td>
+<td>给出节区的第一个字节与文件开始处之间的偏移。SHT_NOBITS 类型的节区不占用文件的空间，因此其 sh_offset 成员给出的是概念性的偏移。</td>
+</tr>
+<tr>
+<td align="left">sh_size</td>
+<td>此成员给出节区的字节大小。除非节区的类型是 SHT_NOBITS ，否则该节占用文件中的 sh_size  字节。类型为SHT_NOBITS 的节区长度可能非零，不过却不占用文件中的空间。</td>
+</tr>
+<tr>
+<td align="left">sh_link</td>
+<td>此成员给出节区头部表索引链接，其具体的解释依赖于节区类型。</td>
+</tr>
+<tr>
+<td align="left">sh_info</td>
+<td>此成员给出附加信息，其解释依赖于节区类型。</td>
+</tr>
+<tr>
+<td align="left">sh_addralign</td>
+<td>某些节区的地址需要对齐。例如，如果一个节区有一个doubleword类型的变量，那么系统必须保证整个节区按双字对齐。也就是说，<span><span class="MathJax_Preview">sh\_addr \% sh\_addralign</span><script type="math/tex">sh\_addr \% sh\_addralign</script></span>=0。目前它仅允许为0，以及2的正整数幂数。 0 和 1 表示没有对齐约束。</td>
+</tr>
+<tr>
+<td align="left">sh_entsize</td>
+<td>某些节区中存在具有固定大小的表项的表，如符号表。对于这类节区，该成员给出每个表项的字节大小。反之，此成员取值为0。</td>
+</tr>
+</tbody>
+</table>
+<p>正如之前所说，索引为零（SHN_UNDEF）的节区头也存在，尽管此索引标记的是未定义的节区引用。这一项的信息如下</p>
+<table>
+<thead>
+<tr>
+<th>字段名称</th>
+<th>取值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sh_name</td>
+<td>0</td>
+<td>无名称</td>
+</tr>
+<tr>
+<td>sh_type</td>
+<td>SHT_NULL</td>
+<td>限制</td>
+</tr>
+<tr>
+<td>sh_flags</td>
+<td>0</td>
+<td>无标志</td>
+</tr>
+<tr>
+<td>sh_addr</td>
+<td>0</td>
+<td>无地址</td>
+</tr>
+<tr>
+<td>sh_offset</td>
+<td>0</td>
+<td>无文件偏移</td>
+</tr>
+<tr>
+<td>sh_size</td>
+<td>0</td>
+<td>无大小</td>
+</tr>
+<tr>
+<td>sh_link</td>
+<td>SHN_UNDEF</td>
+<td>无链接信息</td>
+</tr>
+<tr>
+<td>sh_info</td>
+<td>0</td>
+<td>无辅助信息</td>
+</tr>
+<tr>
+<td>sh_addralign</td>
+<td>0</td>
+<td>无对齐要求</td>
+</tr>
+<tr>
+<td>sh_entsize</td>
+<td>0</td>
+<td>无表项</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_11">特殊下标<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h4>
+<p>节头表中比较特殊的几个下标如下</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SHN_UNDEF</td>
+<td>0</td>
+<td>标志未定义的，丢失的，不相关的或者其它没有意义的节引用。例如，与节号SHN_UNDEF相关的“定义"的符号就是一个未定义符号。<strong>注：虽然0号索引被保留用于未定义值，节头表仍然包含索引0的项。也就是说，如果ELF头的e_shnum为6，那么索引应该为0~5。更加详细的内容在后面会说明。</strong></td>
+</tr>
+<tr>
+<td>SHN_LORESERVE</td>
+<td>0xff00</td>
+<td>保留索引值范围的下界。</td>
+</tr>
+<tr>
+<td>SHN_LOPROC</td>
+<td>0xff00</td>
+<td>处理器相关的下界</td>
+</tr>
+<tr>
+<td>SHN_HIPROC</td>
+<td>0xff1f</td>
+<td>处理器相关的上界</td>
+</tr>
+<tr>
+<td>SHN_ABS</td>
+<td>0xfff1</td>
+<td>相关引用的绝对值。例如与节号SHN_ABS相关的符号拥有绝对值，它们不受重定位的影响</td>
+</tr>
+<tr>
+<td>SHN_COMMON</td>
+<td>0xfff2</td>
+<td>这一节区相定义的符号是通用符号，例如FORTRAN COMMON，C语言中未分配的外部变量。</td>
+</tr>
+<tr>
+<td>SHN_HIRESERVE</td>
+<td>0xffff</td>
+<td>保留索引值范围的上界。</td>
+</tr>
+</tbody>
+</table>
+<p><strong>系统保留在<code>SHN_LORESERVE</code>到<code>SHN_HIRESERVE</code>之间(包含边界)的索引值，这些值不在节头表中引用。也就是说，节头表不包含保留索引项。没特别理解。</strong></p>
+<h3 id="_12">部分节头字段<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<h4 id="sh_type">sh_type<a class="headerlink" href="#sh_type" title="Permanent link">&para;</a></h4>
+<p>节类型目前有下列可选范围，其中SHT是<strong>Section Header Table</strong> 的简写。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>取值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SHT_NULL</td>
+<td>0</td>
+<td>该类型节区是非活动的，这种类型的节头中的其它成员取值无意义。</td>
+</tr>
+<tr>
+<td>SHT_PROGBITS</td>
+<td>1</td>
+<td>该类型节区包含程序定义的信息，它的格式和含义都由程序来决定。</td>
+</tr>
+<tr>
+<td>SHT_SYMTAB</td>
+<td>2</td>
+<td>该类型节区包含一个符号表（<strong>SYMbol TABle</strong>）。目前目标文件对每种类型的节区都只  能包含一个，不过这个限制将来可能发生变化。  一般，SHT_SYMTAB 节区提供用于链接编辑（指 ld  而言） 的符号，尽管也可用来实现动态链接。</td>
+</tr>
+<tr>
+<td>SHT_STRTAB</td>
+<td>3</td>
+<td>该类型节区包含字符串表（ <strong>STRing TABle</strong> ）。</td>
+</tr>
+<tr>
+<td>SHT_RELA</td>
+<td>4</td>
+<td>该类型节区包含显式指定位数的重定位项（ <strong>RELocation entry with Addends</strong> ），例如，32 位目标文件中的 Elf32_Rela 类型。此外，目标文件可能拥有多个重定位节区。</td>
+</tr>
+<tr>
+<td>SHT_HASH</td>
+<td>5</td>
+<td>该类型节区包含符号哈希表（ <strong>HASH table</strong> ）。</td>
+</tr>
+<tr>
+<td>SHT_DYNAMIC</td>
+<td>6</td>
+<td>该类型节区包含动态链接的信息（ <strong>DYNAMIC linking</strong> ）。</td>
+</tr>
+<tr>
+<td>SHT_NOTE</td>
+<td>7</td>
+<td>该类型节区包含以某种方式标记文件的信息（<strong>NOTE</strong>）。</td>
+</tr>
+<tr>
+<td>SHT_NOBITS</td>
+<td>8</td>
+<td>该类型节区不占用文件的空间，其它方面和SHT_PROGBITS相似。尽管该类型节区不包含任何字节，其对应的节头成员sh_offset 中还是会包含概念性的文件偏移。</td>
+</tr>
+<tr>
+<td>SHT_REL</td>
+<td>9</td>
+<td>该类型节区包含重定位表项（<strong>RELocation entry without Addends</strong>），不过并没有指定位数。例如，32位目标文件中的 Elf32_rel 类型。目标文件中可以拥有多个重定位节区。</td>
+</tr>
+<tr>
+<td>SHT_SHLIB</td>
+<td>10</td>
+<td>该类型此节区被保留，不过其语义尚未被定义。</td>
+</tr>
+<tr>
+<td>SHT_DYNSYM</td>
+<td>11</td>
+<td>作为一个完整的符号表，它可能包含很多对动态链接而言不必  要的符号。因此，目标文件也可以包含一个 SHT_DYNSYM  节区，其中保存动态链接符号的一个最小集合，以节省空间。</td>
+</tr>
+<tr>
+<td>SHT_LOPROC</td>
+<td>0X70000000</td>
+<td>此值指定保留给处理器专用语义的下界（ <strong>LOw PROCessor-specific semantics</strong> ）。</td>
+</tr>
+<tr>
+<td>SHT_HIPROC</td>
+<td>OX7FFFFFFF</td>
+<td>此值指定保留给处理器专用语义的上界（ <strong>HIgh PROCessor-specific semantics</strong> ）。</td>
+</tr>
+<tr>
+<td>SHT_LOUSER</td>
+<td>0X80000000</td>
+<td>此值指定保留给应用程序的索引下界。</td>
+</tr>
+<tr>
+<td>SHT_HIUSER</td>
+<td>0X8FFFFFFF</td>
+<td>此值指定保留给应用程序的索引上界。</td>
+</tr>
+</tbody>
+</table>
+<h4 id="sh_flags">sh_flags<a class="headerlink" href="#sh_flags" title="Permanent link">&para;</a></h4>
+<p>节头中 <code>sh_flags</code>  字段的每一个比特位都可以给出其相应的标记信息，其定义了对应的节区的内容是否可以被修改、被执行等信息。如果一个标志位被设置，则该位取值为1，未定义的位都为0。目前已定义值如下，其他值保留。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SHF_WRITE</td>
+<td>0x1</td>
+<td>这种节包含了进程运行过程中可以被写的数据。</td>
+</tr>
+<tr>
+<td>SHF_ALLOC</td>
+<td>0x2</td>
+<td>这种节在进程运行时占用内存。对于不占用目标文件的内存镜像空间的某些控制节，该属性处于关闭状态(off)。</td>
+</tr>
+<tr>
+<td>SHF_EXECINSTR</td>
+<td>0x4</td>
+<td>这种节包含可执行的机器指令（<strong>EXECutable INSTRuction</strong>）。</td>
+</tr>
+<tr>
+<td>SHF_MASKPROC</td>
+<td>0xf0000000</td>
+<td>所有在这个掩码中的比特位用于特定处理器语义。</td>
+</tr>
+</tbody>
+</table>
+<h4 id="sh_link-sh_info">sh_link &amp; sh_info<a class="headerlink" href="#sh_link-sh_info" title="Permanent link">&para;</a></h4>
+<p>当节区类型的不同的时候，sh_link 和 sh_info 也会具有不同的含义。</p>
+<table>
+<thead>
+<tr>
+<th>sh_type</th>
+<th>sh_link</th>
+<th>sh_info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SHT_DYNAMIC</td>
+<td>节区中使用的字符串表的节头索引</td>
+<td>0</td>
+</tr>
+<tr>
+<td>SHT_HASH</td>
+<td>此哈希表所使用的符号表的节头索引</td>
+<td>0</td>
+</tr>
+<tr>
+<td>SHT_REL/SHT_RELA</td>
+<td>与符号表相关的的节头索引</td>
+<td>重定位应用到的节的节头索引</td>
+</tr>
+<tr>
+<td>SHT_SYMTAB/SHT_DYNSYM</td>
+<td>操作系统特定信息</td>
+<td>操作系统特定信息</td>
+</tr>
+<tr>
+<td>other</td>
+<td><code>SHN_UNDEF</code></td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sections">Sections<a class="headerlink" href="#sections" title="Permanent link">&para;</a></h2>
+<p>节区包含目标文件中除了ELF 头部、程序头部表、节区头部表的所有信息。节区满足以下条件</p>
+<ul>
+<li>每个节区都有对应的节头来描述它。但是反过来，节区头部并不一定会对应着一个节区。</li>
+<li>每个节区在目标文件是连续的，但是大小可能为 0。</li>
+<li>任意两个节区不能重叠，即一个字节不能同时存在于两个节区中。</li>
+<li>目标文件中可能会有闲置空间（inactive space），各种头和节不一定会覆盖到目标文件中的所有字节，闲置区域的内容未指定。</li>
+</ul>
+<p>许多在ELF文件中的节都是预定义的，它们包含程序和控制信息。这些节被操作系统使用，但是对于不同的操作系统，同一节区可能会有不同的类型以及属性。</p>
+<p>可执行文件是由链接器将一些单独的目标文件以及库文件链接起来而得到的。其中，链接器会解析引用（不同文件中的子例程的引用以及数据的引用，调整对象文件中的绝对引用）并且重定位指令。加载与链接过程需要目标文件中的信息，并且会将处理后的信息存储在一些特定的节区中，比如 <code>.dynamic</code> 。</p>
+<p>每一种操作系统都会支持一组链接模型，但这些模型都大致可以分为两种</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>静态链接</td>
+<td>静态链接的文件中所使用的库文件或者第三方库都被静态绑定了，其引用已经被解析了。</td>
+</tr>
+<tr>
+<td>动态链接</td>
+<td>动态链接的文件中所使用的库文件或者第三方库只是单纯地被链接到可执行文件中。当可执行文件执行时，使用到相应函数时，相应的函数地址才会被解析。</td>
+</tr>
+</tbody>
+</table>
+<p>有一些特殊的节可以支持调试，比如说.debug以及.line节；支持程序控制的节有.bss，.data， .data1， .rodata， .rodata1。下面给出一些具体的特殊的节的例子。</p>
+<table>
+<thead>
+<tr>
+<th align="left">名称</th>
+<th align="left">类型</th>
+<th align="left">属性</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">.bss</td>
+<td align="left">SHT_NOBITS</td>
+<td align="left">SHF_ALLOC  SHF_WRITE</td>
+<td align="left">此节区不占用ELF文件空间，但占用程序的内存映像中的空间。当程序开始执行时，系统将把这些数据初始化为0。bss其实是block started by symbol的简写，说明该节区中单纯地说明了有哪些变量。</td>
+</tr>
+<tr>
+<td align="left">.comment</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left"></td>
+<td align="left">包含版本控制信息。</td>
+</tr>
+<tr>
+<td align="left">.data  .data1</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left">SHF_ALLOC  SHF_WRITE</td>
+<td align="left">这些节区包含初始化了的数据，会在程序的内存映像中出现。</td>
+</tr>
+<tr>
+<td align="left">.debug</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left"></td>
+<td align="left">此节区包含用于符号调试的信息。</td>
+</tr>
+<tr>
+<td align="left">.dynamic</td>
+<td align="left">SHT_DYNAMIC</td>
+<td align="left">SHF_ALLOC  SHF_WRITE</td>
+<td align="left">此节区包含动态链接信息。SHF_WRITE 位设置与否是否被设置取决于具体的处理器。</td>
+</tr>
+<tr>
+<td align="left">.dynstr</td>
+<td align="left">SHT_STRTAB</td>
+<td align="left">SHF_ALLOC</td>
+<td align="left">此节区包含用于动态链接的字符串，大多数 情况下这些字符串代表了与符号表项相关的名称。</td>
+</tr>
+<tr>
+<td align="left">.dynsym</td>
+<td align="left">SHT_DYNSYM</td>
+<td align="left">SHF_ALLOC</td>
+<td align="left">此节区包含动态链接符号表。</td>
+</tr>
+<tr>
+<td align="left">.fini</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left">SHF_ALLOC  SHF_EXECINSTR</td>
+<td align="left">此节区包含可执行的指令，是进程终止代码的一部分。程序正常退出时，系统将执行这里的代码。</td>
+</tr>
+<tr>
+<td align="left">.got</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left"></td>
+<td align="left">此节区包含全局偏移表。</td>
+</tr>
+<tr>
+<td align="left">.hash</td>
+<td align="left">SHT_HASH</td>
+<td align="left">SHF_ALLOC</td>
+<td align="left">此节区包含一个符号哈希表。</td>
+</tr>
+<tr>
+<td align="left">.init</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left">SHF_ALLOC SHF_EXECINSTR</td>
+<td align="left">此节区包含可执行指令，是进程初始化代码的一部分。程序开始执行时，系统会在开始调用主程序入口（通常指 C 语言的 main 函数）前执行这些代码。</td>
+</tr>
+<tr>
+<td align="left">.interp</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left"></td>
+<td align="left">此节区包含程序解释器的路径名。如果程序包含一个可加载的段，段中包含此节区，那么节区的属性将包含 SHF_ALLOC 位，否则该位为 0。</td>
+</tr>
+<tr>
+<td align="left">.line</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left"></td>
+<td align="left">此节区包含符号调试的行号信息，描述了源程序与机器指令之间的对应关系，其内容是未定义的。</td>
+</tr>
+<tr>
+<td align="left">.note</td>
+<td align="left">SHT_NOTE</td>
+<td align="left"></td>
+<td align="left">此节区中包含注释信息，有独立的格式。</td>
+</tr>
+<tr>
+<td align="left">.plt</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left"></td>
+<td align="left">此节区包含过程链接表（procedure  linkage  table）。</td>
+</tr>
+<tr>
+<td align="left">.relname</td>
+<td align="left">SHT_REL</td>
+<td align="left"></td>
+<td align="left">这些节区中包含重定位信息。如果文件中包含可加载的段，段中有重定位内容，节区的属性将包含SHF_ALLOC位，否则该位置 0。传统上 name 根据重定位所适用的节区给定。例如 .text 节区的重定位节区名字将是：.rel.text 或者 .rela.text。</td>
+</tr>
+<tr>
+<td align="left">.relaname</td>
+<td align="left">SHT_RELA</td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">.rodata&amp; .rodata1</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left">SHF_ALLOC</td>
+<td align="left">这些节区包含只读数据，这些数据通常参与进程映像的不可写段。</td>
+</tr>
+<tr>
+<td align="left">.shstrtab</td>
+<td align="left">SHT_STRTAB</td>
+<td align="left"></td>
+<td align="left">此节区包含节区名称。</td>
+</tr>
+<tr>
+<td align="left">.strtab</td>
+<td align="left">SHT_STRTAB</td>
+<td align="left"></td>
+<td align="left">此节区包含字符串，通常是代表与符号表项相关的名称。如果文件拥有一个可加载的段，段中包含符号串表，节区的属性的  SHF_ALLOC 位将被置1，否则该位为 0。</td>
+</tr>
+<tr>
+<td align="left">.symtab</td>
+<td align="left">SHT_SYMTAB</td>
+<td align="left"></td>
+<td align="left">此节区包含符号表。如果文件中包含一个可加载的段，并且该段中包含符号表，那么节区的属性的 SHF_ALLOC  位将被置1，否则该位置为  0。</td>
+</tr>
+<tr>
+<td align="left">.text</td>
+<td align="left">SHT_PROGBITS</td>
+<td align="left">SHF_ALLOC  SHF_EXECINSTR</td>
+<td align="left">此节区包含程序的可执行指令。</td>
+</tr>
+</tbody>
+</table>
+<p>注意：</p>
+<ul>
+<li>以“.”开头的节区名称是系统保留的，当然应用程序也可以使用这些节区。为了避免与系统节区冲突，应用程序应该尽量使用没有前缀的节区名称。</li>
+<li>目标文件格式允许定义不在上述列表中的节区，可以包含多个名字相同的节区。</li>
+<li>保留给处理器体系结构的节区名称一般命名规则为：处理器体系结构名称简写+ 节区名称。其中，处理器名称应该与 e_machine 中使用的名称相同。例如 .FOO.psect 节区是由FOO 体系结构中的psect 节区。</li>
+</ul>
+<p>这里我们主要以链接视图中的分类进行介绍，同时也会加上自己的一些简单分类。</p>
+<h3 id="code-segment">Code Segment<a class="headerlink" href="#code-segment" title="Permanent link">&para;</a></h3>
+<p>代码段中主要包含程序中可执行的指令。</p>
+<h3 id="data-segment">Data Segment<a class="headerlink" href="#data-segment" title="Permanent link">&para;</a></h3>
+<p>数据段用来存放程序中需要操作的数据，主要包括已经初始化的全局变量和局部静态变量（初始化值不为0的变量，为0的在bss段）。数据段在程序执行过程中大致可以分为栈，堆，静态数据区三个部分。这里，data段对应的就只有data节。</p>
+<h3 id="rodata-segment">Rodata Segment<a class="headerlink" href="#rodata-segment" title="Permanent link">&para;</a></h3>
+<p>类似于上面的说法，这里对应的就是ELF文件中只读节。主要存储一些只读的数据，比如说const修饰的常量。</p>
+<h3 id="bss-segment">BSS Segment<a class="headerlink" href="#bss-segment" title="Permanent link">&para;</a></h3>
+<h3 id="string-table">String Table<a class="headerlink" href="#string-table" title="Permanent link">&para;</a></h3>
+<p>该节区描述默认的字符串表，包含了一系列的以null结尾的字符串。ELF文件使用这些字符串来表示符号以及节区名。一般通过对字符串的首个字母在字符串表中的下标来索引字符串。</p>
+<p>字符串表的首尾字节都是NULL。此外，索引为0的字符串要么没有名字，要么就是名字为空，其解释依赖于上下文。字符串表也可以为空，相应的，其节区头部的sh_size成员将为0。在空字符串表中索引大于0的下标显然是非法的。</p>
+<p>一个节区头部的sh_name成员的值为其相应的节区头部字符串表节区的索引，此节区由 ELF 头的 e_shstrndx 成员给出。下图给出了一个包含 25 个字节的字符串表，以及与不同索引相关的字符串。</p>
+<table>
+<thead>
+<tr>
+<th>索引</th>
+<th>+0</th>
+<th>+1</th>
+<th>+2</th>
+<th>+3</th>
+<th>+4</th>
+<th>+5</th>
+<th>+6</th>
+<th>+7</th>
+<th>+8</th>
+<th>+9</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>\0</td>
+<td>n</td>
+<td>a</td>
+<td>m</td>
+<td>e</td>
+<td>.</td>
+<td>\0</td>
+<td>V</td>
+<td>a</td>
+<td>r</td>
+</tr>
+<tr>
+<td>10</td>
+<td>i</td>
+<td>a</td>
+<td>b</td>
+<td>l</td>
+<td>e</td>
+<td>\0</td>
+<td>a</td>
+<td>b</td>
+<td>l</td>
+<td>e</td>
+</tr>
+<tr>
+<td>20</td>
+<td>\0</td>
+<td>\0</td>
+<td>x</td>
+<td>x</td>
+<td>\0</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>其中包含的字符串有</p>
+<table>
+<thead>
+<tr>
+<th>索引</th>
+<th>字符串</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>none</td>
+</tr>
+<tr>
+<td>1</td>
+<td>name.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Variable</td>
+</tr>
+<tr>
+<td>11</td>
+<td>able</td>
+</tr>
+<tr>
+<td>16</td>
+<td>able</td>
+</tr>
+<tr>
+<td>24</td>
+<td>空字符串</td>
+</tr>
+</tbody>
+</table>
+<p>可以看出</p>
+<ul>
+<li>字符串表索引可以引用节区中任意字节。</li>
+<li>字符串可以出现多次。</li>
+<li>可以存在对子字符串的引用。</li>
+<li>同一个字符串可以被引用多次。</li>
+<li>字符串表中也可以存在未引用的字符串。</li>
+</ul>
+<h3 id="symbol-table">Symbol Table<a class="headerlink" href="#symbol-table" title="Permanent link">&para;</a></h3>
+<p>目标文件中的符号表包含了如何定义以及重定位一个程序中定义的符号和引用的符号。符号表的索引其实就是对应符号在符号表的下标。索引0不仅代表表中的第一个项，同时也是未定义的符号的索引。符号表项的初始化在后面会进行介绍。</p>
+<p>符号表项的格式如下</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">Elf32_Word</span>      <span class="n">st_name</span><span class="p">;</span>
+    <span class="n">Elf32_Addr</span>      <span class="n">st_value</span><span class="p">;</span>
+    <span class="n">Elf32_Word</span>      <span class="n">st_size</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">char</span>   <span class="n">st_info</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">char</span>   <span class="n">st_other</span><span class="p">;</span>
+    <span class="n">Elf32_Half</span>      <span class="n">st_shndx</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">Elf32_Sym</span><span class="p">;</span>
+</pre></div>
+
+<p>每个字段的含义如下</p>
+<table>
+<thead>
+<tr>
+<th align="left">字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">st_name</td>
+<td>符号在字符串表中对应的索引。如果该值非 0，则它表示了给出符号名的字符串表索引，否则符号表项没有名称。  注：外部  C  符号在 C 语言和目标文件的符号表中具有相同的名称。</td>
+</tr>
+<tr>
+<td align="left">st_value</td>
+<td>给出与符号相关联的数值，具体取值依赖于上下文，可能是一个正常的数值、一个地址等等。</td>
+</tr>
+<tr>
+<td align="left">st_size</td>
+<td>给出对应符号所占用的大小。如果符号没有大小或者大小未知，则此成员为0。</td>
+</tr>
+<tr>
+<td align="left">st_info</td>
+<td>给出符号的类型和绑定属性。之后会给出若干取值和含义的绑定关系。</td>
+</tr>
+<tr>
+<td align="left">st_other</td>
+<td>目前为0，其含义没有被定义。</td>
+</tr>
+<tr>
+<td align="left">st_shndx</td>
+<td>每个符号表项都会和某个节区有所关系。此成员给出相关的节区头部表索引。某些索引具有特殊含义。</td>
+</tr>
+</tbody>
+</table>
+<h4 id="st_name"><strong>st_name</strong><a class="headerlink" href="#st_name" title="Permanent link">&para;</a></h4>
+<p>特殊的索引及其意义如下</p>
+<ul>
+<li>SHN_ABS： 符号的取值具有绝对性，不会因为重定位而发生变化。</li>
+<li>SHN_COMMON：  符号标记了一个尚未分配的公共块。符号的取值给出了对齐约束，与节区的sh_addralign 成员类似。就是说，链接编辑器将在地址位于 st_value 的倍数处为符号分配空间。符号的大小给出了所需要的字节数。</li>
+<li>SHN_UNDEF：  此节区表索引值表示符号没有定义。  当链接编辑器将此目标文件与其他定义了该符号的目标文件进行组合时，此文件中对该符号的引用将被链接到实际定义的位置。其具体取值如下</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>取值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>st_name</td>
+<td>0</td>
+<td>无名称</td>
+</tr>
+<tr>
+<td>st_value</td>
+<td>0</td>
+<td>0 值</td>
+</tr>
+<tr>
+<td>st_size</td>
+<td>0</td>
+<td>无大小</td>
+</tr>
+<tr>
+<td>st_info</td>
+<td>0</td>
+<td>无类型，局部绑定</td>
+</tr>
+<tr>
+<td>st_other</td>
+<td>0</td>
+<td>无附加信息</td>
+</tr>
+<tr>
+<td>st_shndx</td>
+<td>0</td>
+<td>无节区</td>
+</tr>
+</tbody>
+</table>
+<h4 id="st_info"><strong>st_info</strong><a class="headerlink" href="#st_info" title="Permanent link">&para;</a></h4>
+<p>st_info 中包含符号类型和绑定信息，这里给出了控制它的值的方式具体信息如下</p>
+<div class="codehilite"><pre><span></span>##define ELF32_ST_TYPE(i)   ((i)&amp;0xf)
+##define ELF32_ST_INFO(b, t) (((b)&lt;&lt;4) + ((t)&amp;0xf))
+</pre></div>
+
+<h4 id="_13"><strong>符号类型</strong><a class="headerlink" href="#_13" title="Permanent link">&para;</a></h4>
+<p>可以看出st_info的低4位表示符号的类型，具体定义如下</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>取值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>STT_NOTYPE</td>
+<td>0</td>
+<td>符号的类型没有定义。</td>
+</tr>
+<tr>
+<td>STT_OBJECT</td>
+<td>1</td>
+<td>符号与某个数据对象相关，比如一个变量、数组等等。</td>
+</tr>
+<tr>
+<td>STT_FUNC</td>
+<td>2</td>
+<td>符号与某个函数或者其他可执行代码相关。</td>
+</tr>
+<tr>
+<td>STT_SECTION</td>
+<td>3</td>
+<td>符号与某个节区相关。这种类型的符号表项主要用于重定位，通常具有 STB_LOCAL 绑定。</td>
+</tr>
+<tr>
+<td>STT_FILE</td>
+<td>4</td>
+<td>一般情况下，符号的名称给出了生成该目标文件相关的源文件的名称。如果存在的话，该符号具有 STB_LOCAL  绑定，其节区索引是 SHN_ABS 且优先级比其他<code>STB_LOCAL</code>符号高。</td>
+</tr>
+<tr>
+<td><code>STT_LOPROC</code>～<code>STT_HIPROC</code></td>
+<td>13~15</td>
+<td>保留用于特定处理器</td>
+</tr>
+</tbody>
+</table>
+<p>共享目标文件中的函数符号有比较特殊，当另一个目标文件从共享目标中引用一个函数时，链接器自动为被引用符号创建过程链接表项。共享目标中除了<code>STT_FUNC</code> ， 其它符号将不会通过过程链接表自动被引用。</p>
+<p>如果一个符号的值指向节内的特定位置，则它的节索引号<code>st_shndx</code>，包含了它在节头表中的索引。当一个节在重定位过程中移动时，该符号值也做相应改变，对该符号的引用继续指向程序中的相同位置。有些特定节索引值具有其他语义。</p>
+<h4 id="_14"><strong>符号绑定</strong><a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>
+<p>根据 <code>#define ELF32_ST_BIND(i)    ((i)&gt;&gt;4)</code>可以看出st_info 的高4位表示符号绑定的信息。而这部分信息确定了符号的链接可见性以及其行为，具体的取值如下</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th align="left">取值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>STB_LOCAL</td>
+<td align="left">0</td>
+<td>表明该符号为局部符号，在包含该符号定义的目标文件以外不可见。相同名称的局部符号可以存在于多个文件中，互不影响。</td>
+</tr>
+<tr>
+<td>STB_GLOBAL</td>
+<td align="left">1</td>
+<td>表明该符号为全局符号，对所有将被组合在一起的目标文件都是可见的。一个文件中对某个全局符号的定义将满足另一个文件对相同全局符号的未定义引用。</td>
+</tr>
+<tr>
+<td>STB_WEAK</td>
+<td align="left">2</td>
+<td>弱符号与全局符号类似，不过它们的定义优先级比较低。</td>
+</tr>
+<tr>
+<td>STB_LOPROC  ~STB_HIPROC</td>
+<td align="left">13</td>
+<td>这个范围的取值是保留给处理器专用语义的。</td>
+</tr>
+</tbody>
+</table>
+<p>在每个符号表中，所有具有 STB_LOCAL 绑定的符号都优先于弱符号和全局符号。符号表节区中的 sh_info 项所对应的头部的成员包含第一个非局部符号的符号表索引。</p>
+<p>此外，全局符号与弱符号的主要区别如下：</p>
+<ul>
+<li>当链接器在链接多个可重定位目标文件时，不允许定义多个相同名字的<code>STB_GLOBAL</code>符号。另一方面，如果一个已定义全局符号存在，则同名的弱符号的存在不会引起错误。链接器会选择全局定义，忽略弱符号定义。类似的，如果一个公共符号存在(就是<code>st_shndx</code>域为<code>SHN_COMMON</code>的符号)，则同名的弱符号的存在不会引起错误。链接器会选择公共定义，忽略弱符号定义。</li>
+<li>当链接器寻找文件库时，它会提取包含未定义全局符号的成员，可能是一个全局符号或者弱符号。链接器不会为了解决未定义的弱符号问题而提取文件，未定义的弱符号的值为0。</li>
+</ul>
+<h4 id="_15">符号取值<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h4>
+<p>不同的目标文件类型对符号表项中 st_value 成员的解释不同：</p>
+<ul>
+<li>在可重定位文件中，st_value 保存了节区索引为 SHN_COMMON 的符号的对齐约束。</li>
+<li>在可重定位文件中，st_value 保存了已定义符号的节区偏移。也就是说，st_value保留了st_shndx 所标识的节区的头部到符号位置的偏移。</li>
+<li>在可执行和共享目标文件中，st_value 包含一个虚地址。为了使得这些文件的符号对动态链接器更有用，节区偏移（针对文件的解释）给出了与节区号无关的虚拟地址（针对内存的解释）。</li>
+</ul>
+<p>符号表取值在不同的目标文件中具有相似的含义，可以有适当的程序可以采取高效的方法来访问数据。</p>
+<h3 id="dynamic-segment">dynamic segment<a class="headerlink" href="#dynamic-segment" title="Permanent link">&para;</a></h3>
+<p>请参考程序链接部分。</p>
+<h3 id="misc">Misc<a class="headerlink" href="#misc" title="Permanent link">&para;</a></h3>
+<p>这里主要给出一些比较奇怪的节。</p>
+<h4 id="note-section">Note Section<a class="headerlink" href="#note-section" title="Permanent link">&para;</a></h4>
+<p>有时候生产厂商或者系统构建者可能需要使用一些特殊的信息来标记ELF文件，从而其它程序可以来检查该ELF文件的一致性以及兼容性。节区类型为SHT_NOTE或者程序头部类型为PT_NOTE的元素用于来实现这个目的，它们中对象的表项可能包含一到多个，每一个表项都是目标处理器格式的4字节数组。下面给出了一些可能的注释信息。但是这并不在ELF文件的规范内。</p>
+<p><img alt="" src="../../../executable/elf/figure/note_information.png" /></p>
+<ul>
+<li>namesz与name</li>
+<li>name的前namesz字节包含了一个以NULL结尾的字符串，这表示该项的拥有者或者发起人。但是目前并没有避免冲突的格式化的命名机制。一般来说，生产厂商会使用他们自己公司的名字，例如“XYZ Computer Company”来当做对应的标志。如果没有任何名字的话，namesz应该是0。那么在name的地方应该填充到4字节对齐。</li>
+<li>descsz与desc</li>
+<li>desc的前descsz字节包含了注释的描述。ELF文件对于描述的内容没有任何约束。如果没有任何描述的话，descsz应该为0。当然，应该在desc处填充到4字节对齐。</li>
+<li>type</li>
+<li>这个字段给出了描述的解释，对于不同那个的发起者来说，他们都必须控制自己的类型，对于同一类型来说，有可能有多个描述与其对应。因此，发起者必须能够识别名字以及类型以便于来理解对应的描述。目前来说，类型不能够为非负值，ELF文件的规范里并不定义描述符的意思。这也是为什么type在前面。</li>
+</ul>
+<p>下面给出一个简单的例子来说明一下</p>
+<p><img alt="" src="../../../executable/elf/figure/note_segment_example.png" /></p>
+<p>这里包含了两个表项。</p>
+<h4 id="hash-table">Hash Table<a class="headerlink" href="#hash-table" title="Permanent link">&para;</a></h4>
+<p>ELF文件中的哈希表由Elf32_Word对象构成，用来支持符号表访问。下面的符号可以用来辅助解释符号表的组织情况，但是他们并不是ELF文件说明的一部分。</p>
+<p><img alt="" src="../../../executable/elf/figure/symbol_hash_table.png" /></p>
+<p>bucket数组包含了nbucket个元素，chain数组包含了nchain个元素，所有的数组的下标都是以0开始。bucket和chain都包含符号表索引。chain数组中的元素是和符号表中的元素一一对应的，因此符号表的元素个数必须和nchain的大小相同，故而符号表的索引同样可以作为chain表的索引。下面展示的哈希函数接受一个符号名作为输入，然后返回一个值，这个值可能被用于计算bucket的索引。因此，如果哈希函数针对于某个名字返回值x，那么<code>bucket[x%nbucket]</code> 给出了一个索引y，可以用来索引符号表，也可以用来索引chain表。如果符号表的对应索引并不是所想要的哪一个，那么chain[y]就会给出给出同一个哈希值的下一个符号表中表项的位置，即可以用来防止出现哈希值一样的情况。因此我们可以跟着chain链一直搜索直到遇到所想要的符号，或者遇到值为<code>STN_UNDEF</code> 的chain的表项。</p>
+<p><img alt="" src="../../../executable/elf/figure/hash_function.png" /></p>
+<h4 id="_16">初始化以及结束函数<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h4>
+<p>在动态链接器创建了进程镜像，并且执行了重定位后，每一个共享目标文件都有机会去执行一些初始化的代码。所有的共享目标文件会在可执行文件获得权限之前进行初始化。</p>
+<p>在调用目标文件A的初始化代码之前，会首先调用所有A依赖的共享目标文件的初始化代码。比如说，如果目标文件A依赖于另外一个目标文件B，那么B就会在A的依赖列表中，这会被记录在动态结构的DT_NEEDED中。循环依赖的初始化是未被定义的。</p>
+<p>目标文件的初始化通过递归每一个被依赖的表项来完成。只有当一个目标文件依赖的所有的目标文件都处理完自己的依赖后，这个目标文件才会执行初始化代码。</p>
+<p>下面的例子解释了两种正确的可以用来生成给定例子的顺序。在这个例子中，a.out依赖于b，d以及e。b依赖于d和f，并且d依赖于e和g。根据这个信息，我们可以画出如下的依赖图。那么我们上面所说的算法，将允许我们按照如下的顺序进行初始化。</p>
+<p><img alt="" src="../../../executable/elf/figure/initialization_ordering_example.png" /></p>
+<p>类似的，共享目标文件也会有结束的函数，这些函数在进程完成自己的终止序列时通过atexit机制来执行。动态链接器调用终止函数的顺序恰好与上面初始化的顺序相反。动态链接器将会确保它只会执行初始化或者终止函数最多一次。</p>
+<p>共享目标文件通过动态结构中的DT_INIT和DT_FINI来指定它们的初始化以及结束函数。在一般情况下，这些函数在.init节与.fini节中。</p>
+<p>注意：</p>
+<blockquote>
+<p>尽管ateixt终止处理函数通常来说会被执行，但它并不会保证在程序消亡时被执行。更特殊的是，如果程序调用了_exit函数或者进程由于接收到一个信号后消亡了，那么它将不会执行对应的函数。</p>
+</blockquote>
+<p>动态链接器并不负责调用可执行文件的.init节或者利用atexit注册可执行文件的.fini节。由用户通过atexit机制指定的终止函数必须在所有共享目标文件的结束函数前执行。</p>
+<h2 id="_17">例子<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h2>
+<p>这里给出一个elf文件比较经典的例子。</p>
+<p><img alt="" src="../../../executable/elf/figure/ELF-Walkthrough.png" /></p>
+<p><strong>有时间会结合具体的程序，给出一个更好的例子。</strong></p>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../../../pwn/heap/unsorted_bin_attack/" title="Unsorted Bin Attack" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  后退
+                </span>
+                Unsorted Bin Attack
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../program_loading/" title="程序加载" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  前进
+                </span>
+                程序加载
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 - 2018 CTF Wiki Team
+          </div>
+        
+        powered by
+        <a href="http://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../../assets/javascripts/application.abd7b172.js"></script>
+      
+        
+        
+          
+          <script src="../../../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          
+            
+              
+                <script src="../../../assets/javascripts/lunr/tinyseg.js"></script>
+              
+              
+                <script src="../../../assets/javascripts/lunr/lunr.jp.js"></script>
+              
+            
+          
+          
+        
+      
+      <script>app.initialize({version:"0.17.2",url:{base:"../../.."}})</script>
+      
+        <script src="../../../_static/js/extra.js"></script>
+      
+        <script src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+      
+    
+    
+      
+    
+  </body>
+</html>

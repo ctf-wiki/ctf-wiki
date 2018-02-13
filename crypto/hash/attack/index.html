@@ -1,0 +1,2960 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="CTF Wiki">
+      
+      
+        <link rel="canonical" href="https://ctf-wiki.github.io/ctf-wiki/crypto/hash/attack/">
+      
+      
+        <meta name="author" content="CTF Wiki Team">
+      
+      
+        <meta name="lang:clipboard.copy" content="复制">
+      
+        <meta name="lang:clipboard.copied" content="已复制">
+      
+        <meta name="lang:search.language" content="jp">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="没有找到符合条件的结果">
+      
+        <meta name="lang:search.result.one" content="找到 1 个符合条件的结果">
+      
+        <meta name="lang:search.result.other" content="# 个符合条件的结果">
+      
+        <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
+      
+      <link rel="shortcut icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-0.17.2, mkdocs-material-2.6.2">
+    
+    
+      
+        <title>Hash Attack - CTF Wiki</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.9b572555.css">
+      
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.6079476c.css">
+      
+    
+    
+      <script src="../../../assets/javascripts/modernizr.1aa3b519.js"></script>
+    
+    
+      
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Sans:300,400,400i,700|Fira+Mono">
+        <style>body,input{font-family:"Fira Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Fira Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+      <link rel="stylesheet" href="../../../_static/css/extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="white" data-md-color-accent="red">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <a href="#hash-attack" tabindex="1" class="md-skip">
+        跳转至
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon">school</i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                CTF Wiki
+              </span>
+              <span class="md-header-nav__topic">
+                Hash Attack
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            键入以开始搜索
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 Github 仓库" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      ctf-wiki/ctf-wiki
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+        
+
+  
+
+<nav class="md-tabs md-tabs--active" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../.." title="Introduction" class="md-tabs__link">
+          Introduction
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../misc/introduction/" title="Misc" class="md-tabs__link">
+          Misc
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../introduction/" title="Crypto" class="md-tabs__link md-tabs__link--active">
+          Crypto
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../web/introduction/" title="Web" class="md-tabs__link">
+          Web
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../reverse/introduction/" title="Reverse" class="md-tabs__link">
+          Reverse
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../pwn/stackoverflow/stack_intro/" title="Pwn" class="md-tabs__link">
+          Pwn
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../executable/elf/elf_structure/" title="Executable" class="md-tabs__link">
+          Executable
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+    </ul>
+  </div>
+</nav>
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <span class="md-nav__button md-logo">
+      
+        <i class="md-icon">school</i>
+      
+    </span>
+    CTF Wiki
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 Github 仓库" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      ctf-wiki/ctf-wiki
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1">
+    
+    <label class="md-nav__link" for="nav-1">
+      Introduction
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-1">
+        Introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../.." title="Getting Started" class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/history/" title="CTF 历史" class="md-nav__link">
+      CTF 历史
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/mode/" title="CTF 竞赛模式简介" class="md-nav__link">
+      CTF 竞赛模式简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/content/" title="CTF 竞赛内容" class="md-nav__link">
+      CTF 竞赛内容
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/experience/" title="线下攻防经验小结" class="md-nav__link">
+      线下攻防经验小结
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/cgc/" title="CGC 超级挑战赛" class="md-nav__link">
+      CGC 超级挑战赛
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/resources/" title="学习资源" class="md-nav__link">
+      学习资源
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Misc
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Misc
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/introduction/" title="杂项简介" class="md-nav__link">
+      杂项简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/recon/" title="信息搜集技术" class="md-nav__link">
+      信息搜集技术
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3">
+    
+    <label class="md-nav__link" for="nav-2-3">
+      编码分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-3">
+        编码分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/communication/" title="通信领域常用编码" class="md-nav__link">
+      通信领域常用编码
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/computer/" title="计算机相关的编码" class="md-nav__link">
+      计算机相关的编码
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/modern/" title="现实世界中常用的编码" class="md-nav__link">
+      现实世界中常用的编码
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/prefix/" title="取证隐写前置技术" class="md-nav__link">
+      取证隐写前置技术
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-5" type="checkbox" id="nav-2-5">
+    
+    <label class="md-nav__link" for="nav-2-5">
+      图片分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-5">
+        图片分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/introduction/" title="图片分析简介" class="md-nav__link">
+      图片分析简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/png/" title="PNG" class="md-nav__link">
+      PNG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/jpg/" title="JPG" class="md-nav__link">
+      JPG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/gif/" title="GIF" class="md-nav__link">
+      GIF
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-6" type="checkbox" id="nav-2-6">
+    
+    <label class="md-nav__link" for="nav-2-6">
+      流量包分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-6">
+        流量包分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/introduction/" title="流量包分析简介" class="md-nav__link">
+      流量包分析简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/fix/" title="PCAP 文件修复" class="md-nav__link">
+      PCAP 文件修复
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/protocols/" title="协议分析" class="md-nav__link">
+      协议分析
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/data/" title="数据提取" class="md-nav__link">
+      数据提取
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-7" type="checkbox" id="nav-2-7">
+    
+    <label class="md-nav__link" for="nav-2-7">
+      压缩包分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-7">
+        压缩包分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/archive/zip/" title="ZIP 格式" class="md-nav__link">
+      ZIP 格式
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/archive/rar/" title="RAR 格式" class="md-nav__link">
+      RAR 格式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/audio/introduction/" title="音频隐写" class="md-nav__link">
+      音频隐写
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/disk-memory/introduction/" title="磁盘内存分析" class="md-nav__link">
+      磁盘内存分析
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+    
+    <label class="md-nav__link" for="nav-3">
+      Crypto
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Crypto
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../introduction/" title="密码学简介" class="md-nav__link">
+      密码学简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-2" type="checkbox" id="nav-3-2">
+    
+    <label class="md-nav__link" for="nav-3-2">
+      古典密码
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-2">
+        古典密码
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../classical/introduction/" title="古典密码简介" class="md-nav__link">
+      古典密码简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../classical/monoalphabetic/" title="单表代换加密" class="md-nav__link">
+      单表代换加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../classical/polyalphabetic/" title="多表代换加密" class="md-nav__link">
+      多表代换加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../classical/others/" title="其他类型加密" class="md-nav__link">
+      其他类型加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../classical/summary/" title="总结" class="md-nav__link">
+      总结
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-3" type="checkbox" id="nav-3-3">
+    
+    <label class="md-nav__link" for="nav-3-3">
+      对称加密
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-3">
+        对称加密
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../symmetric/introduction/" title="对称加密简介" class="md-nav__link">
+      对称加密简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../symmetric/des/" title="DES" class="md-nav__link">
+      DES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../symmetric/aes/" title="AES" class="md-nav__link">
+      AES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../symmetric/block_cipher/" title="分组模式" class="md-nav__link">
+      分组模式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4" type="checkbox" id="nav-3-4">
+    
+    <label class="md-nav__link" for="nav-3-4">
+      非对称加密
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-4">
+        非对称加密
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/introduction/" title="非对称加密简介" class="md-nav__link">
+      非对称加密简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-2" type="checkbox" id="nav-3-4-2">
+    
+    <label class="md-nav__link" for="nav-3-4-2">
+      RSA
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-2">
+        RSA
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_theory/" title="RSA 基本介绍" class="md-nav__link">
+      RSA 基本介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_module_attack/" title="模数相关攻击" class="md-nav__link">
+      模数相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_e_attack/" title="公钥指数相关攻击" class="md-nav__link">
+      公钥指数相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_d_attack/" title="私钥 d 相关攻击" class="md-nav__link">
+      私钥 d 相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_chosen_cipher/" title="选择密文攻击" class="md-nav__link">
+      选择密文攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_coppersmith_attack/" title="Coppersmith 相关攻击" class="md-nav__link">
+      Coppersmith 相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_side_channel/" title="侧信道攻击" class="md-nav__link">
+      侧信道攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_pkcs_attack/" title="Bleichenbacher 攻击" class="md-nav__link">
+      Bleichenbacher 攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/rsa/rsa_complex/" title="综合" class="md-nav__link">
+      综合
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/knapsack/knapsack/" title="背包加密" class="md-nav__link">
+      背包加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/discrete-log/discrete-log/" title="离散对数相关" class="md-nav__link">
+      离散对数相关
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5" type="checkbox" id="nav-3-5" checked>
+    
+    <label class="md-nav__link" for="nav-3-5">
+      哈希函数
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-5">
+        哈希函数
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../introduction/" title="哈希函数简介" class="md-nav__link">
+      哈希函数简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../md5/" title="MD5" class="md-nav__link">
+      MD5
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../sha1/" title="SHA1" class="md-nav__link">
+      SHA1
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Hash Attack
+      </label>
+    
+    <a href="./" title="Hash Attack" class="md-nav__link md-nav__link--active">
+      Hash Attack
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" title="暴力攻击" class="md-nav__link">
+    暴力攻击
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hash-length-extension-attacks" title="哈希长度拓展攻击（hash length extension attacks）" class="md-nav__link">
+    哈希长度拓展攻击（hash length extension attacks）
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" title="介绍" class="md-nav__link">
+    介绍
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="攻击原理" class="md-nav__link">
+    攻击原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="工具" class="md-nav__link">
+    工具
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hash" title="hash算法设计有误" class="md-nav__link">
+    hash算法设计有误
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hashinator" title="Hashinator" class="md-nav__link">
+    Hashinator
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="分析" class="md-nav__link">
+    分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hash_1" title="原hash算法" class="md-nav__link">
+    原hash算法
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../complex/" title="综合" class="md-nav__link">
+      综合
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-6" type="checkbox" id="nav-3-6">
+    
+    <label class="md-nav__link" for="nav-3-6">
+      数字签名
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-6">
+        数字签名
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../signature/introduction/" title="数字签名简介" class="md-nav__link">
+      数字签名简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../signature/rsa/" title="RSA 数字签名" class="md-nav__link">
+      RSA 数字签名
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../signature/elgamal/" title="ElGamal 数字签名" class="md-nav__link">
+      ElGamal 数字签名
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../signature/dsa/" title="DSA 数字签名" class="md-nav__link">
+      DSA 数字签名
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../others/others/" title="证书格式" class="md-nav__link">
+      证书格式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Web
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Web
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/introduction/" title="Web 应用简介" class="md-nav__link">
+      Web 应用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/sqli/" title="SQL 注入" class="md-nav__link">
+      SQL 注入
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/xss/" title="XSS 跨站脚本攻击" class="md-nav__link">
+      XSS 跨站脚本攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/csrf/" title="CSRF 跨站请求伪造" class="md-nav__link">
+      CSRF 跨站请求伪造
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/ssrf/" title="SSRF 服务端请求伪造" class="md-nav__link">
+      SSRF 服务端请求伪造
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/php/" title="PHP 代码审计" class="md-nav__link">
+      PHP 代码审计
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/introduction/" title="软件逆向工程简介" class="md-nav__link">
+      软件逆向工程简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      脱壳技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        脱壳技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/packer-introduction/" title="保护壳简介" class="md-nav__link">
+      保护壳简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/trace/" title="单步跟踪法" class="md-nav__link">
+      单步跟踪法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/esp/" title="ESP 定律法" class="md-nav__link">
+      ESP 定律法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/direct-oep/" title="一步到达 OEP 法" class="md-nav__link">
+      一步到达 OEP 法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/memory/" title="内存镜像法" class="md-nav__link">
+      内存镜像法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/last-exception/" title="最后一次异常法" class="md-nav__link">
+      最后一次异常法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/sfx/" title="SFX 法" class="md-nav__link">
+      SFX 法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/fix-iat/" title="DUMP 及 IAT 重建" class="md-nav__link">
+      DUMP 及 IAT 重建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/manually-fix-iat/" title="手动查找 IAT 并使用 ImportREC 重建" class="md-nav__link">
+      手动查找 IAT 并使用 ImportREC 重建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/unpack-dll/" title="DLL 文件脱壳" class="md-nav__link">
+      DLL 文件脱壳
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unicorn/introduction/" title="Unicorn Engine 简介" class="md-nav__link">
+      Unicorn Engine 简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      反调试技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        反调试技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/ntglobalflag/" title="NtGlobalFlag" class="md-nav__link">
+      NtGlobalFlag
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/heap-flags/" title="Heap Flags" class="md-nav__link">
+      Heap Flags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/the-heap/" title="The Heap" class="md-nav__link">
+      The Heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/int-3/" title="Interrupt 3" class="md-nav__link">
+      Interrupt 3
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/isdebuggerpresent/" title="IsDebuggerPresent" class="md-nav__link">
+      IsDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/checkremotedebuggerpresent/" title="CheckRemoteDebuggerPresent" class="md-nav__link">
+      CheckRemoteDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/ntqueryinformationprocess/" title="NtQueryInformationProcess" class="md-nav__link">
+      NtQueryInformationProcess
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/junk-code/" title="花指令" class="md-nav__link">
+      花指令
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/example/" title="反调试技术例题" class="md-nav__link">
+      反调试技术例题
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-5" type="checkbox" id="nav-5-5">
+    
+    <label class="md-nav__link" for="nav-5-5">
+      Linux 逆向技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-5">
+        Linux 逆向技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/ld_preload/" title="LD_PRELOAD" class="md-nav__link">
+      LD_PRELOAD
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/false-disasm/" title="False Disassembly" class="md-nav__link">
+      False Disassembly
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/detect-bp/" title="Detecting Breakpoints" class="md-nav__link">
+      Detecting Breakpoints
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/detect-dbg/" title="Detecting debugging" class="md-nav__link">
+      Detecting debugging
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-1" type="checkbox" id="nav-6-1">
+    
+    <label class="md-nav__link" for="nav-6-1">
+      StackOverflow 栈溢出
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-1">
+        StackOverflow 栈溢出
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/stack_intro/" title="栈介绍" class="md-nav__link">
+      栈介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/stackoverflow_basic/" title="栈溢出原理" class="md-nav__link">
+      栈溢出原理
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/basic_rop/" title="基本 ROP" class="md-nav__link">
+      基本 ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/others/" title="花式栈溢出技巧" class="md-nav__link">
+      花式栈溢出技巧
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/medium_rop/" title="中级 ROP" class="md-nav__link">
+      中级 ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/stackoverflow/advanced_rop/" title="高级 ROP" class="md-nav__link">
+      高级 ROP
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-2" type="checkbox" id="nav-6-2">
+    
+    <label class="md-nav__link" for="nav-6-2">
+      格式化字符串
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-2">
+        格式化字符串
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/fmtstr/fmtstr_intro/" title="格式化字符串漏洞原理介绍" class="md-nav__link">
+      格式化字符串漏洞原理介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/fmtstr/fmtstr_exploit/" title="格式化字符串漏洞利用" class="md-nav__link">
+      格式化字符串漏洞利用
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/fmtstr/fmtstr_example/" title="格式化字符串漏洞例子" class="md-nav__link">
+      格式化字符串漏洞例子
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/fmtstr/fmtstr_detect/" title="格式化字符串漏洞检测" class="md-nav__link">
+      格式化字符串漏洞检测
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-3" type="checkbox" id="nav-6-3">
+    
+    <label class="md-nav__link" for="nav-6-3">
+      堆利用
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-3">
+        堆利用
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/heap_overview/" title="堆概述" class="md-nav__link">
+      堆概述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/heap_structure/" title="堆相关数据结构" class="md-nav__link">
+      堆相关数据结构
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/heap_implementation_details/" title="深入理解堆的实现" class="md-nav__link">
+      深入理解堆的实现
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/heapoverflow_basic/" title="堆溢出" class="md-nav__link">
+      堆溢出
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/off_by_one/" title="堆中的 Off-By-One" class="md-nav__link">
+      堆中的 Off-By-One
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/unlink/" title="Unlink" class="md-nav__link">
+      Unlink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/use_after_free/" title="Use After Free" class="md-nav__link">
+      Use After Free
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/fastbin_attack/" title="Fastbin Attack" class="md-nav__link">
+      Fastbin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/chunk_extend_shrink/" title="Chunk Extend / Shrink" class="md-nav__link">
+      Chunk Extend / Shrink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/house_of_einherjar/" title="House Of Einherjar" class="md-nav__link">
+      House Of Einherjar
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/house_of_lore/" title="House of Lore" class="md-nav__link">
+      House of Lore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/house_of_force/" title="House Of Force" class="md-nav__link">
+      House Of Force
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../pwn/heap/unsorted_bin_attack/" title="Unsorted Bin Attack" class="md-nav__link">
+      Unsorted Bin Attack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Executable
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Executable
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-1" type="checkbox" id="nav-7-1">
+    
+    <label class="md-nav__link" for="nav-7-1">
+      ELF 文件
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-1">
+        ELF 文件
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../executable/elf/elf_structure/" title="ELF文件基本结构" class="md-nav__link">
+      ELF文件基本结构
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../executable/elf/program_loading/" title="程序加载" class="md-nav__link">
+      程序加载
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../executable/elf/program_linking/" title="程序链接" class="md-nav__link">
+      程序链接
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../executable/elf/running_overview/" title="程序执行流程" class="md-nav__link">
+      程序执行流程
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" title="暴力攻击" class="md-nav__link">
+    暴力攻击
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hash-length-extension-attacks" title="哈希长度拓展攻击（hash length extension attacks）" class="md-nav__link">
+    哈希长度拓展攻击（hash length extension attacks）
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" title="介绍" class="md-nav__link">
+    介绍
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="攻击原理" class="md-nav__link">
+    攻击原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="工具" class="md-nav__link">
+    工具
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hash" title="hash算法设计有误" class="md-nav__link">
+    hash算法设计有误
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hashinator" title="Hashinator" class="md-nav__link">
+    Hashinator
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="分析" class="md-nav__link">
+    分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hash_1" title="原hash算法" class="md-nav__link">
+    原hash算法
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/crypto/hash/attack.md" title="编辑此页" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="hash-attack">Hash Attack<a class="headerlink" href="#hash-attack" title="Permanent link">&para;</a></h1>
+<p>常见的Hash函数的攻击方法主要有</p>
+<ul>
+<li>暴力攻击：不依赖于任何算法细节，仅与Hash值长度有关；</li>
+<li>生日攻击法(Birthday Attack)：没有利用Hash函数的结构和任何代数弱性质，只依赖于消息摘要的长度，即Hash值的长度。</li>
+<li>中点交会攻击法(Meet-In-The-Middle)：是生日攻击的一种变形，不比较Hash值，而是比较中间变量。这种攻击主要适用于攻击具有分组链结构的Hash方案。</li>
+<li>密码分析：依赖于具体算法的设计缺点。</li>
+</ul>
+<h2 id="_1">暴力攻击<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p><strong>HashCat 工具</strong> 可以说是目前最好的基于 CPU 和 GPU 破解 Hash 的软件，相关链接如下</p>
+<p><a href="http://www.hashcat.net/hashcat/">HashCat 官网</a></p>
+<p><a href="http://www.freebuf.com/sectool/112479.html">HashCat 简单使用</a></p>
+<h2 id="hash-length-extension-attacks">哈希长度拓展攻击（hash length extension attacks）<a class="headerlink" href="#hash-length-extension-attacks" title="Permanent link">&para;</a></h2>
+<h3 id="_2">介绍<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>基本定义如下，源自<a href="https://zh.wikipedia.org/wiki/%E9%95%BF%E5%BA%A6%E6%89%A9%E5%B1%95%E6%94%BB%E5%87%BB">维基百科</a>。</p>
+<p>哈希长度扩展攻击(Hash Length Extension Attacks)是指针对某些允许包含额外信息的加密散列函数的攻击手段。该攻击适用于在<strong>消息与密钥的长度已知</strong>的情形下，所有采取了 H(key ∥ message) 此类构造的散列函数。MD5和SHA-1 等基于 Merkle–Damgård 构造的算法均对此类攻击显示出脆弱性。</p>
+<p>这类哈希函数有以下特点</p>
+<ul>
+<li>消息填充方式都比较类似，首先在消息后面添加一个1，然后填充若干个0，直至总长度与 448 同余，最后在其后附上64位的消息长度（填充前）。</li>
+<li>每一块得到的链接变量都会被作为下一次执行hash函数的初始向量IV。在最后一块的时候，才会将其对应的链接变量转换为hash值。</li>
+</ul>
+<p>一般攻击时应满足如下条件</p>
+<ul>
+<li>我们已知 key 的长度，如果不知道的话，需要爆破出来</li>
+<li>我们可以控制 message 的消息。</li>
+<li>我们已经知道了包含 key 的一个消息的hash值。</li>
+</ul>
+<p>这样我们就可以得到一对(messge,x)满足x=H(key ∥ message)虽然我们并不清楚key的内容。</p>
+<h3 id="_3">攻击原理<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>这里不妨假设我们我们知道了 hash(key+s) 的 hash 值，其中 s 是已知的，那么其本身在计算的时候，必然会进行填充。那么我们首先可以得到 key+s 扩展后的字符串 now，即</p>
+<p>now=key|s|padding</p>
+<p>那么如果我们在 now 的后面再次附加上一部分信息extra，即</p>
+<p>key|s|padding|extra</p>
+<p>这样再去计算hash值的时候，</p>
+<ol>
+<li>会对 extra 进行填充直到满足条件。</li>
+<li>先计算 now 对应的链接变量 IV1，而我们已经知道这部分的 hash 值，并且链接变量产生 hash 值的算法是可逆的，所以我们可以得到链接变量。</li>
+<li>下面会根据得到的链接变量 IV1，对 extra 部分进行哈希算法，并返回hash值。</li>
+</ol>
+<p>那么既然我们已经知道了第一部分的 hash 值，并且，我们还知道 extra 的值，那么我们便可以得到最后的hash值。</p>
+<p>而之前我们也说了我们可以控制 message 的值。那么其实 s，padding，extra 我们都是可以控制的。所以我们自然可以找到对应的(message,x)满足x=hash(key|message)。</p>
+<h3 id="_4">例子<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>似乎大都是web里面的，，不太懂web，暂时先不给例子了。</p>
+<h3 id="_5">工具<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://github.com/bwall/HashPump">hashpump</a></li>
+</ul>
+<p>如何使用请参考github上的readme。</p>
+<h2 id="hash">hash算法设计有误<a class="headerlink" href="#hash" title="Permanent link">&para;</a></h2>
+<p>一些自定义的hash算法可能是可逆的。</p>
+<h3 id="hashinator">Hashinator<a class="headerlink" href="#hashinator" title="Permanent link">&para;</a></h3>
+<p>题目的逻辑很简单，从一个知名的密码字典"rockyou"挑选出一个<code>password</code>，并且使用多种hash算法随机的哈希32轮。我们需要从最后的hash结果中破解出原始的<code>password</code>。</p>
+<h4 id="_6">分析<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
+<p>题目采用的hash算法有：<code>md5</code>，<code>sha1</code>，<code>blake</code>，<code>scrypt</code>。
+关键的代码如下：
+<div class="codehilite"><pre><span></span>    <span class="n">password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_password</span><span class="p">()</span>     <span class="c1"># from rock_you.txt</span>
+    <span class="n">salt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_salt</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>     <span class="c1"># 与password的长度有关</span>
+    <span class="n">hash_rounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_rounds</span><span class="p">()</span>    <span class="c1"># 生成进行hash算法的顺序</span>
+    <span class="n">password_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_hash</span><span class="p">(</span><span class="n">salt</span> <span class="o">+</span> <span class="n">password</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">)</span>
+</pre></div>
+1. 程序首先通过从<code>rockyou.txt</code>中随机抽取一个<code>password</code>，作为加密的明文。
+2. 然后根据抽取的<code>password</code>的长度，生成一个长度为<code>128 - len(password)</code>的<code>salt</code>。
+3. 从之前列举的4种hash算法中抽取，组成32轮的哈希运算。
+4. 根据之前得到的<code>password</code>、<code>salt</code>计算出最后给我们的<code>password_hash</code>。</p>
+<p>很明显，我们不可能通过逆向hash算法来完成题目。
+我们知道所有的可能的明文，首先考虑能否通过构造彩虹表来完成穷举。但是注意到<code>generate_salt()</code>函数中，<code>salt</code>和<code>password</code>的长度组合超过了128byte的长度，并且被注释了
+<div class="codehilite"><pre><span></span>    msize = 128 # f-you hashcat :D
+</pre></div>
+so，只能无奈放弃。</p>
+<p>那这样的话，只存在一种可能，也即算法可逆。查看<code>calculate_hash()</code>函数的具体实现，可以发现如下可疑的代码：
+<div class="codehilite"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hash_rounds</span><span class="p">)):</span>
+    <span class="n">interim_salt</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">interim_salt</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="p">](</span><span class="n">interim_hash</span><span class="p">))</span>
+    <span class="n">interim_hash</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">interim_hash</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">interim_salt</span><span class="p">))</span>
+<span class="n">final_hash</span> <span class="o">=</span> <span class="n">interim_salt</span> <span class="o">+</span> <span class="n">interim_hash</span>
+</pre></div>
+重新梳理一下我们知道的信息：
+1. hash_rounds中保存了32轮，即每轮要使用的hash函数句柄。
+2. final_hash是最后给我们的hash结果。
+3. hash_rounds中的内容也会在生成之后打印给我们。
+4. 我们希望得到<code>interim_salt</code>和<code>interim_hash</code>在第一轮的值。
+5. <code>interim_salt</code>和<code>interim_hash</code>的长度均为64byte。</p>
+<p>仔细观察一下<code>interim_salt</code>和<code>interim_hash</code>的计算方法，可以发现它是可逆的。
+$$
+interim_hash_1 = interim_hash_2 \oplus hash_rounds<a href="../interim_salt_3">i</a>
+$$</p>
+<p>这行代码里，我们已知 <span><span class="MathJax_Preview">interim\_hash_1</span><script type="math/tex">interim\_hash_1</script></span> 和 <span><span class="MathJax_Preview">interim\_salt_3</span><script type="math/tex">interim\_salt_3</script></span>，由此可以推出<span><span class="MathJax_Preview">interim\_hash_2</span><script type="math/tex">interim\_hash_2</script></span>的值，而<span><span class="MathJax_Preview">interim\_hash_2</span><script type="math/tex">interim\_hash_2</script></span>则是上一轮的<code>interim_hash</code>。
+以此方法逆推32次，则可以得到最初的<code>password</code>和<code>salt</code>。</p>
+<p>具体的解密脚本为：
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">socketserver</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="c1"># import pyscrypt</span>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span><span class="p">,</span> <span class="n">b64decode</span>
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="k">def</span> <span class="nf">md5</span><span class="p">(</span><span class="n">bytestring</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">bytestring</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">sha</span><span class="p">(</span><span class="n">bytestring</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">bytestring</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">blake</span><span class="p">(</span><span class="n">bytestring</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">blake2b</span><span class="p">(</span><span class="n">bytestring</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">scrypt</span><span class="p">(</span><span class="n">bytestring</span><span class="p">):</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bytestring</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">salt</span> <span class="o">=</span> <span class="n">bytestring</span><span class="p">[:</span><span class="n">l</span><span class="p">]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">bytestring</span><span class="p">[</span><span class="n">l</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">scrypt</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">salt</span><span class="o">=</span><span class="n">salt</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxmem</span><span class="o">=</span><span class="mi">67111936</span><span class="p">)</span>
+    <span class="c1"># return pyscrypt.hash(p, salt, 2**16, 8, 1, dkLen=64)</span>
+<span class="k">def</span> <span class="nf">xor</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">bytes</span><span class="p">([</span><span class="n">s1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">^</span> <span class="n">s2</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">s2</span><span class="p">)]])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s1</span><span class="p">))])</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># io = socket.socket(family=socket.AF_INET)</span>
+    <span class="c1"># io.connect((&#39;47.88.216.38&#39;, 20013))</span>
+    <span class="n">io</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;47.88.216.38&#39;</span><span class="p">,</span> <span class="mi">20013</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1000</span><span class="p">))</span>
+    <span class="n">ans_array</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">buf</span><span class="p">:</span>
+            <span class="n">ans_array</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">buf</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;!&#39;</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="n">password_hash_base64</span> <span class="o">=</span> <span class="n">ans_array</span><span class="p">[</span><span class="n">ans_array</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;b&#39;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span> <span class="n">ans_array</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)]</span>
+    <span class="n">password_hash</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">password_hash_base64</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;password:&#39;</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">)</span>
+    <span class="n">method_bytes</span> <span class="o">=</span> <span class="n">ans_array</span><span class="p">[</span>
+        <span class="n">ans_array</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;used:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">6</span> <span class="p">:</span> <span class="n">ans_array</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Your&#39;</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">methods</span> <span class="o">=</span> <span class="n">method_bytes</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">methods</span> <span class="o">=</span> <span class="p">[</span><span class="nb">bytes</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;- &#39;</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">]</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">methods</span><span class="p">)</span>
+    <span class="n">in_salt</span> <span class="o">=</span> <span class="n">password_hash</span><span class="p">[:</span><span class="mi">64</span><span class="p">]</span>
+    <span class="n">in_hash</span> <span class="o">=</span> <span class="n">password_hash</span><span class="p">[</span><span class="mi">64</span><span class="p">:]</span>
+    <span class="k">for</span> <span class="n">pos</span><span class="p">,</span> <span class="n">neg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">methods</span><span class="p">,</span> <span class="n">methods</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            interim_salt = xor(interim_salt, hash_rounds[-1-i](interim_hash))</span>
+<span class="sd">            interim_hash = xor(interim_hash, hash_rounds[i](interim_salt))</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">in_hash</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">in_hash</span><span class="p">,</span> <span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;{}(in_salt)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">neg</span><span class="p">)))</span>
+        <span class="n">in_salt</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">in_salt</span><span class="p">,</span> <span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;{}(in_hash)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pos</span><span class="p">)))</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">in_hash</span><span class="p">,</span> <span class="n">in_salt</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">in_hash</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">:])</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+<span class="n">main</span><span class="p">()</span>
+</pre></div></p>
+<h4 id="hash_1">原hash算法<a class="headerlink" href="#hash_1" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">socketserver</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="c1"># import pyscrypt</span>
+
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span>
+
+<span class="k">def</span> <span class="nf">md5</span><span class="p">(</span><span class="n">bytestring</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">bytestring</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">sha</span><span class="p">(</span><span class="n">bytestring</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">bytestring</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">blake</span><span class="p">(</span><span class="n">bytestring</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">blake2b</span><span class="p">(</span><span class="n">bytestring</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">scrypt</span><span class="p">(</span><span class="n">bytestring</span><span class="p">):</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bytestring</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">salt</span> <span class="o">=</span> <span class="n">bytestring</span><span class="p">[:</span><span class="n">l</span><span class="p">]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">bytestring</span><span class="p">[</span><span class="n">l</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">scrypt</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">salt</span><span class="o">=</span><span class="n">salt</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxmem</span><span class="o">=</span><span class="mi">67111936</span><span class="p">)</span>
+    <span class="c1"># return pyscrypt.hash(p, salt, 2**16, 8, 1)</span>
+
+<span class="k">def</span> <span class="nf">xor</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">bytes</span><span class="p">([</span><span class="n">s1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">^</span> <span class="n">s2</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">s2</span><span class="p">)]])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s1</span><span class="p">))])</span>
+
+<span class="k">class</span> <span class="nc">HashHandler</span><span class="p">(</span><span class="n">socketserver</span><span class="o">.</span><span class="n">BaseRequestHandler</span><span class="p">):</span>
+
+    <span class="n">welcome_message</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">Welcome, young wanna-be Cracker, to the Hashinator.</span>
+
+<span class="s2">To prove your worthiness, you must display the power of your cracking skills.</span>
+
+<span class="s2">The test is easy:</span>
+<span class="s2">1. We send you a password from the rockyou list, hashed using multiple randomly chosen algorithms.</span>
+<span class="s2">2. You crack the hash and send back the original password.</span>
+
+<span class="s2">As you already know the dictionary and won&#39;t need any fancy password rules, {} seconds should be plenty, right?</span>
+
+<span class="s2">Please wait while we generate your hash...</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="n">hashes</span> <span class="o">=</span> <span class="p">[</span><span class="n">md5</span><span class="p">,</span> <span class="n">sha</span><span class="p">,</span> <span class="n">blake</span><span class="p">,</span> <span class="n">scrypt</span><span class="p">]</span>
+    <span class="n">timeout</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">total_rounds</span> <span class="o">=</span> <span class="mi">32</span>
+
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">welcome_message</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+
+        <span class="n">password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_password</span><span class="p">()</span>     <span class="c1"># from rock_you.txt</span>
+        <span class="n">salt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_salt</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>     <span class="c1"># 与password的长度有关</span>
+        <span class="n">hash_rounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_rounds</span><span class="p">()</span>    <span class="c1"># 生成进行hash算法的顺序</span>
+        <span class="n">password_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_hash</span><span class="p">(</span><span class="n">salt</span> <span class="o">+</span> <span class="n">password</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_delay</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;Challenge password hash: {}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">b64encode</span><span class="p">(</span><span class="n">password_hash</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;Rounds used:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="n">test_rounds</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">hash_rounds</span><span class="p">:</span>
+            <span class="n">test_rounds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">hash_rounds</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;- {}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;Your time starts now!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">password</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;Congratulations! You are a true cracking master!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;Welcome to the club: {}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+                <span class="k">return</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;Your cracking skills are bad, and you should feel bad!&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+
+
+    <span class="k">def</span> <span class="nf">generate_password</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">rand</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">4</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="mi">14344391</span> <span class="c1"># size of rockyou</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">rand</span> <span class="o">%</span> <span class="n">lines</span>
+        <span class="n">password</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;rockyou.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="n">password</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">password</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">generate_salt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">msize</span> <span class="o">=</span> <span class="mi">128</span> <span class="c1"># f-you hashcat :D</span>
+        <span class="n">salt_size</span> <span class="o">=</span> <span class="n">msize</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="n">salt_size</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">generate_rounds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">rand</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">8</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">rounds</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_rounds</span><span class="p">):</span>
+            <span class="n">rounds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hashes</span><span class="p">[</span><span class="n">rand</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hashes</span><span class="p">)])</span>
+            <span class="n">rand</span> <span class="o">=</span> <span class="n">rand</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">rounds</span>
+
+    <span class="k">def</span> <span class="nf">calculate_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">):</span>
+        <span class="n">interim_salt</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">64</span><span class="p">]</span>
+        <span class="n">interim_hash</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="mi">64</span><span class="p">:]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hash_rounds</span><span class="p">)):</span>
+            <span class="n">interim_salt</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">interim_salt</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="p">](</span><span class="n">interim_hash</span><span class="p">))</span>
+            <span class="n">interim_hash</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">interim_hash</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">interim_salt</span><span class="p">))</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            interim_hash = xor(</span>
+<span class="sd">                interim_hash, </span>
+<span class="sd">                hash_rounds[i](</span>
+<span class="sd">                    xor(interim_salt, hash_rounds[-1-i](interim_hash))</span>
+<span class="sd">                )</span>
+<span class="sd">            )</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+        <span class="n">final_hash</span> <span class="o">=</span> <span class="n">interim_salt</span> <span class="o">+</span> <span class="n">interim_hash</span>
+        <span class="k">return</span> <span class="n">final_hash</span>
+
+    <span class="k">def</span> <span class="nf">generate_delay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">rand</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">4</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">rand</span> <span class="o">/</span> <span class="mf">1000000000.0</span><span class="p">)</span>
+
+
+
+<span class="k">class</span> <span class="nc">ThreadedTCPServer</span><span class="p">(</span><span class="n">socketserver</span><span class="o">.</span><span class="n">ThreadingMixIn</span><span class="p">,</span> <span class="n">socketserver</span><span class="o">.</span><span class="n">TCPServer</span><span class="p">):</span>
+    <span class="n">allow_reuse_address</span> <span class="o">=</span> <span class="bp">True</span>
+
+<span class="n">PORT</span> <span class="o">=</span> <span class="mi">1337</span>
+<span class="n">HOST</span> <span class="o">=</span> <span class="s1">&#39;0.0.0.0&#39;</span>
+<span class="n">flag</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;flag.txt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">flag</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">ThreadedTCPServer</span><span class="p">((</span><span class="n">HOST</span><span class="p">,</span> <span class="n">PORT</span><span class="p">),</span> <span class="n">HashHandler</span><span class="p">)</span>
+    <span class="n">server_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">server</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">)</span>
+    <span class="n">server_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">server_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../sha1/" title="SHA1" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  后退
+                </span>
+                SHA1
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../complex/" title="综合" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  前进
+                </span>
+                综合
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 - 2018 CTF Wiki Team
+          </div>
+        
+        powered by
+        <a href="http://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../../assets/javascripts/application.abd7b172.js"></script>
+      
+        
+        
+          
+          <script src="../../../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          
+            
+              
+                <script src="../../../assets/javascripts/lunr/tinyseg.js"></script>
+              
+              
+                <script src="../../../assets/javascripts/lunr/lunr.jp.js"></script>
+              
+            
+          
+          
+        
+      
+      <script>app.initialize({version:"0.17.2",url:{base:"../../.."}})</script>
+      
+        <script src="../../../_static/js/extra.js"></script>
+      
+        <script src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+      
+    
+    
+      
+    
+  </body>
+</html>

