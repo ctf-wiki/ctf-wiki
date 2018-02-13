@@ -2,7 +2,7 @@
 # Push HTML files to gh-pages automatically.
 
 # Fill this out with the correct org/repo
-ORG=40huo
+ORG=ctf-wiki
 REPO=ctf-wiki
 # This probably should match an email for one of your users.
 EMAIL=git@40huo.cn
