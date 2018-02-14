@@ -2487,6 +2487,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../../heap/introduction/" title="堆利用简介" class="md-nav__link">
+      堆利用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../../heap/heap_overview/" title="堆概述" class="md-nav__link">
       堆概述
     </a>
@@ -3271,30 +3283,35 @@ The index of format argument : <span class="m">10</span>
 <ul>
 <li>
 <p>确定函数A的GOT表地址。</p>
-</li>
-<li>
-<p>这一步我们利用的函数A一般在程序中已有，所以可以采用简单的寻找地址的方法来找。</p>
+<ul>
+<li>这一步我们利用的函数A一般在程序中已有，所以可以采用简单的寻找地址的方法来找。</li>
+</ul>
 </li>
 <li>
 <p>确定函数B的内存地址</p>
-</li>
-<li>
-<p>这一步通常来说，需要我们自己想办法来泄露对应函数B的地址。</p>
+<ul>
+<li>这一步通常来说，需要我们自己想办法来泄露对应函数B的地址。</li>
+</ul>
 </li>
 <li>
 <p>将函数B的内存地址写入到函数A的GOT表地址处。</p>
-</li>
+<ul>
 <li>
 <p>这一步一般来说需要我们利用函数的漏洞来进行触发。一般利用方法有如下两种</p>
 <ul>
 <li>写入函数：write函数。</li>
 <li>ROP</li>
 </ul>
-<p><div class="codehilite"><pre><span></span>pop eax; ret;           # printf@got -&gt; eax
+<div class="codehilite"><pre><span></span>pop eax; ret;           # printf@got -&gt; eax
 pop ebx; ret;           # (addr_offset = system_addr - printf_addr) -&gt; ebx
 add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 </pre></div>
-- 格式化字符串任意地址写</p>
+
+<ul>
+<li>格式化字符串任意地址写</li>
+</ul>
+</li>
+</ul>
 </li>
 </ul>
 <h3 id="_9">例子<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
@@ -3601,14 +3618,18 @@ Register Success!!
 <p>那么我们可以怎么做呢？我们还有之前在栈溢出讲的技巧，stack privot。而这里，我们可以控制的恰好是堆内存，所以我们可以把栈迁移到堆上去。这里我们通过leave指令来进行栈迁移，所以在迁移之前我们需要修改程序保存ebp的值为我们想要的值。 只有这样在执行leave指令的时候，esp才会成为我们想要的值。同时，因为我们是使用格式化字符串来进行修改，所以我们得知道保存ebp的地址为多少，而这时PrintInfo函数中存储ebp的地址每次都在变化，而我们也无法通过其他方法得知。但是，<strong>程序中压入栈中的ebp值其实保存的是上一个函数的保存ebp值的地址</strong>，所以我们可以修改其<strong>上层函数的保存的ebp的值，即上上层函数（即main函数）的ebp数值</strong>。这样当上层程序返回时，即实现了将栈迁移到堆的操作。</p>
 <p>基本思路如下</p>
 <ul>
-<li>首先获取system函数的地址</li>
+<li>首先获取system函数的地址<ul>
 <li>通过泄露某个libc函数的地址根据libc database确定。</li>
+</ul>
+</li>
 <li>构造基本联系人描述为system_addr+'bbbb'+binsh_addr</li>
 <li>修改上层函数保存的ebp(即上上层函数的ebp)为<strong>存储system_addr的地址-4</strong>。</li>
-<li>当主程序返回时，会有如下操作</li>
+<li>当主程序返回时，会有如下操作<ul>
 <li>move esp,ebp，将esp指向system_addr的地址-4</li>
 <li>pop ebp， 将esp指向system_addr</li>
 <li>ret，将eip指向system_addr，从而获取shell。</li>
+</ul>
+</li>
 </ul>
 <h4 id="_28">获取相关地址与偏移<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h4>
 <p>这里我们主要是获取system函数地址、/bin/sh地址，栈上存储联系人描述的地址，以及PrintInfo函数的地址。</p>

@@ -2068,6 +2068,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../introduction/" title="堆利用简介" class="md-nav__link">
+      堆利用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../heap_overview/" title="堆概述" class="md-nav__link">
       堆概述
     </a>
@@ -3285,13 +3297,17 @@
                 <h1 id="_1">深入理解堆的实现<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>仔细想一下，任何堆的实现都离不开以下两个方面的问题</p>
 <ul>
-<li>宏观角度</li>
+<li>宏观角度<ul>
 <li>创建堆</li>
 <li>堆初始化</li>
 <li>删除堆</li>
-<li>微观角度</li>
+</ul>
+</li>
+<li>微观角度<ul>
 <li>申请内存块</li>
 <li>释放内存块</li>
+</ul>
+</li>
 </ul>
 <p>当然，这些都还是比较高层面的想法，不同的堆的底层的实现会有所不同。</p>
 <h2 id="_2">堆实现概览<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
@@ -3302,25 +3318,33 @@
 <h3 id="unlink">unlink<a class="headerlink" href="#unlink" title="Permanent link">&para;</a></h3>
 <p>unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在以下地方使用</p>
 <ul>
-<li>malloc</li>
+<li>malloc<ul>
 <li>从恰好大小合适的 large bin 中获取 chunk。<ul>
 <li><strong>这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。</strong></li>
 <li>依次遍历处理unsorted bin时也是没有unlink的。</li>
 </ul>
 </li>
 <li>从比所需要的 chunk 相应的 bin 大的 bin 中取 chunk。</li>
-<li>Free</li>
+</ul>
+</li>
+<li>Free<ul>
 <li>后向合并，合并物理相邻低地址空闲 chunk。</li>
 <li>前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。</li>
-<li>malloc_consolidate</li>
+</ul>
+</li>
+<li>malloc_consolidate<ul>
 <li>后向合并，合并物理相邻低地址空闲 chunk。</li>
 <li>前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。</li>
-<li>realloc</li>
+</ul>
+</li>
+<li>realloc<ul>
 <li>前向扩展，合并物理相邻高地址空闲 chunk（除了top chunk）。</li>
+</ul>
+</li>
 </ul>
 <p>由于 unlink 使用非常频繁，所以 unlink 被实现为了一个宏，如下</p>
 <div class="codehilite"><pre><span></span><span class="cm">/* Take a chunk off a bin list */</span>
-<span class="cp">##define unlink(AV, P, BK, FD) {                                            \</span>
+<span class="cp">#define unlink(AV, P, BK, FD) {                                            \</span>
 <span class="cp">    </span><span class="c1">// 由于 P 已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_size</span> <span class="p">(</span><span class="n">next_chunk</span><span class="p">(</span><span class="n">P</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span>      \
       <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;corrupted size vs. prev_size&quot;</span><span class="p">);</span>               \
@@ -3389,9 +3413,7 @@
 <h2 id="_6">申请内存块<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>我们之前也说了，我们会使用 malloc 函数来申请内存块，可是当我们仔细看看 glibc 的源码实现时，其实并没有malloc 函数。其实该函数真正调用的是 __libc_malloc 函数。为什么不直接写个 malloc 函数呢，因为有时候我们可能需要不同的名称。此外，__libc_malloc 函数只是用来简单封装 _int_malloc 函数。_int_malloc 才是申请内存块的核心。下面我们来仔细分析一下实现。</p>
 <h3 id="__libc_malloc">__libc_malloc<a class="headerlink" href="#__libc_malloc" title="Permanent link">&para;</a></h3>
-<ol>
-<li>该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。这里需要注意的是，<strong>用户申请的字节一旦进入申请内存函数中就变成了无符号整数</strong>。</li>
-</ol>
+<p>该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。这里需要注意的是，<strong>用户申请的字节一旦进入申请内存函数中就变成了无符号整数</strong>。</p>
 <div class="codehilite"><pre><span></span><span class="c1">// wapper for int_malloc</span>
 <span class="kt">void</span> <span class="o">*</span><span class="nf">__libc_malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">mstate</span> <span class="n">ar_ptr</span><span class="p">;</span>
@@ -3402,21 +3424,15 @@
         <span class="k">return</span> <span class="p">(</span><span class="o">*</span><span class="n">hook</span><span class="p">)(</span><span class="n">bytes</span><span class="p">,</span> <span class="n">RETURN_ADDRESS</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
 </pre></div>
 
-<ol>
-<li>接着会寻找一个 arena 来试图分配内存。</li>
-</ol>
+<p>接着会寻找一个 arena 来试图分配内存。</p>
 <div class="codehilite"><pre><span></span>    <span class="n">arena_get</span><span class="p">(</span><span class="n">ar_ptr</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
 </pre></div>
 
-<ol>
-<li>然后调用 _int_malloc 函数去申请对应的内存。</li>
-</ol>
+<p>然后调用 _int_malloc 函数去申请对应的内存。</p>
 <div class="codehilite"><pre><span></span>    <span class="n">victim</span> <span class="o">=</span> <span class="n">_int_malloc</span><span class="p">(</span><span class="n">ar_ptr</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
 </pre></div>
 
-<ol>
-<li>如果分配失败的话，ptmalloc 会尝试再去寻找一个可用的 arena，并分配内存。</li>
-</ol>
+<p>如果分配失败的话，ptmalloc 会尝试再去寻找一个可用的 arena，并分配内存。</p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/* Retry with another arena only if we were able to find a usable arena</span>
 <span class="cm">       before.  */</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">victim</span> <span class="o">&amp;&amp;</span> <span class="n">ar_ptr</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
@@ -3426,22 +3442,16 @@
     <span class="p">}</span>
 </pre></div>
 
-<ol>
-<li>如果申请到了arena，那么在退出之前还得解锁。</li>
-</ol>
+<p>如果申请到了 arena，那么在退出之前还得解锁。</p>
 <div class="codehilite"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="n">ar_ptr</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="n">__libc_lock_unlock</span><span class="p">(</span><span class="n">ar_ptr</span><span class="o">-&gt;</span><span class="n">mutex</span><span class="p">);</span>
 </pre></div>
 
-<ol>
-<li>判断目前的状态是否满足以下条件，要么没有申请到内存，要么是 mmap 的内存，<strong>要么申请到的内存必须在其所分配的arena中</strong>。</li>
-</ol>
+<p>判断目前的状态是否满足以下条件，要么没有申请到内存，要么是 mmap 的内存，<strong>要么申请到的内存必须在其所分配的arena中</strong>。</p>
 <div class="codehilite"><pre><span></span>    <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">victim</span> <span class="o">||</span> <span class="n">chunk_is_mmapped</span><span class="p">(</span><span class="n">mem2chunk</span><span class="p">(</span><span class="n">victim</span><span class="p">))</span> <span class="o">||</span>
            <span class="n">ar_ptr</span> <span class="o">==</span> <span class="n">arena_for_chunk</span><span class="p">(</span><span class="n">mem2chunk</span><span class="p">(</span><span class="n">victim</span><span class="p">)));</span>
 </pre></div>
 
-<ol>
-<li>最后返回内存。</li>
-</ol>
+<p>最后返回内存。</p>
 <div class="codehilite"><pre><span></span>    <span class="k">return</span> <span class="n">victim</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></div>
@@ -4448,12 +4458,12 @@
             <span class="k">if</span> <span class="p">(</span><span class="n">have_fastchunks</span><span class="p">(</span><span class="n">av</span><span class="p">))</span> <span class="n">malloc_consolidate</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
             <span class="c1">// 主分配区</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="p">{</span>
-<span class="cp">##ifndef MORECORE_CANNOT_TRIM</span>
+<span class="cp">#ifndef MORECORE_CANNOT_TRIM</span>
                 <span class="c1">// top chunk 大于当前的收缩阙值</span>
                 <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span><span class="p">))</span> <span class="o">&gt;=</span>
                     <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">mp_</span><span class="p">.</span><span class="n">trim_threshold</span><span class="p">))</span>
                     <span class="n">systrim</span><span class="p">(</span><span class="n">mp_</span><span class="p">.</span><span class="n">top_pad</span><span class="p">,</span> <span class="n">av</span><span class="p">);</span>
-<span class="cp">##endif      </span><span class="c1">// 非主分配区，则直接收缩heap</span>
+<span class="cp">#endif      </span><span class="c1">// 非主分配区，则直接收缩heap</span>
             <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
                 <span class="cm">/* Always try heap_trim(), even if the top chunk is not</span>
 <span class="cm">                   large, because the corresponding heap might go away.  */</span>

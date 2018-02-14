@@ -2338,6 +2338,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../../heap/introduction/" title="堆利用简介" class="md-nav__link">
+      堆利用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../../heap/heap_overview/" title="堆概述" class="md-nav__link">
       堆概述
     </a>
@@ -2879,9 +2891,11 @@
 <p>要想弄懂这个ROP利用技巧，需要首先理解ELF文件的基本结构，以及动态链接的基本过程，请参考executable中elf对应的介绍。这里我只给出相应的利用方式。</p>
 <p>我们知道在linux中是利用_dl_runtime_resolve(link_map_obj, reloc_index)来对动态链接的函数进行重定位的。那么如果我们可以控制相应的参数以及其对应地址的内容是不是就可以控制解析的函数了呢？答案还肯定的。具体利用方式如下</p>
 <ol>
-<li>控制程序执行dl_resolve函数</li>
+<li>控制程序执行dl_resolve函数<ul>
 <li>给定Link_map以及index两个参数。</li>
 <li>当然我们可以直接给定 plt0对应的汇编代码，这时，我们就只需要一个index就足够了。</li>
+</ul>
+</li>
 <li>控制index的大小，以便于指向自己所控制的区域，从而伪造一个指定的重定位表项。</li>
 <li>伪造重定位表项，使得重定位表项所指的符号也在自己可以控制的范围内。</li>
 <li>伪造符号内容，使得符号对应的名称也在自己可以控制的范围内。</li>
@@ -2893,10 +2907,14 @@
 </ul>
 <p>注意：</p>
 <ul>
-<li>符号版本信息</li>
+<li>符号版本信息<ul>
 <li>最好使得ndx = VERSYM[ (reloc-&gt;r_info) &gt;&gt; 8] 的值为0，以便于防止找不到的情况。</li>
-<li>重定位表项</li>
+</ul>
+</li>
+<li>重定位表项<ul>
 <li>r_offset必须是可写的，因为当解析完函数后，必须把相应函数的地址填入到对应的地址。</li>
+</ul>
+</li>
 </ul>
 <h3 id="_2">攻击条件<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <p>说了这么多，这个利用技巧其实还是ROP，同样可以绕过NX和ASLR保护。但是，这个攻击更适于一些比较简单的栈溢出的情况，但同时又难以泄露获取更多信息的情况下。</p>
@@ -2912,12 +2930,12 @@
 
 <p>在下面的讲解过程中，我会按照以两种不同的方法来进行讲解。其中第一种方法比较麻烦，但是可以仔细理解ret2dlresolve的原理，第二种方法则是直接使用已有的工具，相对容易一点。</p>
 <ol>
-<li>利用正常的代码来使用该技巧从而获取shell。</li>
-</ol>
-<p>stage 1 测试控制程序执行write函数的效果。</p>
-<p>stage 2 测试控制程序执行dl_resolve函数，并且相应参数指向正常write函数的plt时的执行效果。</p>
-<p>stage 3 测试控制程序执行dl_resolve函数，并且相应参数指向伪造的write函数的plt时的执行效果。</p>
-<ol>
+<li>利用正常的代码来使用该技巧从而获取shell。<ul>
+<li>stage 1 测试控制程序执行write函数的效果。</li>
+<li>stage 2 测试控制程序执行dl_resolve函数，并且相应参数指向正常write函数的plt时的执行效果。</li>
+<li>stage 3 测试控制程序执行dl_resolve函数，并且相应参数指向伪造的write函数的plt时的执行效果。</li>
+</ul>
+</li>
 <li>利用roputils中已经集成好的工具来实现攻击，从而获取shell。</li>
 </ol>
 <h4 id="_4">正常攻击<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
@@ -3557,8 +3575,6 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 </li>
 <li>
 <p>内核会为该进程保存相应的上下文，<strong>主要是将所有寄存器压入栈中，以及压入signal信息，以及指向sigreturn的系统调用地址</strong>。此时栈的结构如下图所示，我们称ucontext以及siginfo这一段为Signal Frame。<strong>需要注意的是，这一部分是在用户进程的地址空间的。</strong>之后会跳转到注册过的signal handler中处理相应的signal。因此，当signal handler执行完之后，就会执行sigreturn代码。</p>
-</li>
-</ol>
 <p><img alt="signal2-stack" src="../../../pwn/stackoverflow/figure/signal2-stack.png" /></p>
 <p>对于signal Frame来说，不同会因为架构的不同而因此有所区别，这里给出分别给出x86以及x64的sigcontext</p>
 <ul>
@@ -3597,17 +3613,17 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">_fpstate</span>
 <span class="p">{</span>
   <span class="cm">/* FPU environment matching the 64-bit FXSAVE layout.  */</span>
-  <span class="n">__uint16_t</span>     <span class="n">cwd</span><span class="p">;</span>
-  <span class="n">__uint16_t</span>     <span class="n">swd</span><span class="p">;</span>
-  <span class="n">__uint16_t</span>     <span class="n">ftw</span><span class="p">;</span>
-  <span class="n">__uint16_t</span>     <span class="n">fop</span><span class="p">;</span>
-  <span class="n">__uint64_t</span>     <span class="n">rip</span><span class="p">;</span>
-  <span class="n">__uint64_t</span>     <span class="n">rdp</span><span class="p">;</span>
-  <span class="n">__uint32_t</span>     <span class="n">mxcsr</span><span class="p">;</span>
-  <span class="n">__uint32_t</span>     <span class="n">mxcr_mask</span><span class="p">;</span>
-  <span class="k">struct</span> <span class="n">_fpxreg</span> <span class="n">_st</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
-  <span class="k">struct</span> <span class="n">_xmmreg</span> <span class="n">_xmm</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
-  <span class="n">__uint32_t</span>     <span class="n">padding</span><span class="p">[</span><span class="mi">24</span><span class="p">];</span>
+  <span class="n">__uint16_t</span>        <span class="n">cwd</span><span class="p">;</span>
+  <span class="n">__uint16_t</span>        <span class="n">swd</span><span class="p">;</span>
+  <span class="n">__uint16_t</span>        <span class="n">ftw</span><span class="p">;</span>
+  <span class="n">__uint16_t</span>        <span class="n">fop</span><span class="p">;</span>
+  <span class="n">__uint64_t</span>        <span class="n">rip</span><span class="p">;</span>
+  <span class="n">__uint64_t</span>        <span class="n">rdp</span><span class="p">;</span>
+  <span class="n">__uint32_t</span>        <span class="n">mxcsr</span><span class="p">;</span>
+  <span class="n">__uint32_t</span>        <span class="n">mxcr_mask</span><span class="p">;</span>
+  <span class="k">struct</span> <span class="n">_fpxreg</span>    <span class="n">_st</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+  <span class="k">struct</span> <span class="n">_xmmreg</span>    <span class="n">_xmm</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
+  <span class="n">__uint32_t</span>        <span class="n">padding</span><span class="p">[</span><span class="mi">24</span><span class="p">];</span>
 <span class="p">};</span>
 
 <span class="k">struct</span> <span class="n">sigcontext</span>
@@ -3647,9 +3663,10 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <span class="p">};</span>
 </pre></div>
 
-<p>​</p>
-<ol>
-<li>signal handler返回后，内核为执行sigreturn系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的sigreturn的调用号为77，64位的系统调用号为15。</li>
+</li>
+<li>
+<p>signal handler返回后，内核为执行sigreturn系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的sigreturn的调用号为77，64位的系统调用号为15。</p>
+</li>
 </ol>
 <h3 id="_8">攻击原理<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>仔细回顾一下内核在signal信号处理的过程中的工作，我们可以发现，内核主要做的工作就是为进程保存上下文，并且恢复上下文。这个主要的变动都在Signal Frame中。但是需要注意的是：</p>
@@ -3674,11 +3691,13 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <p>需要注意的是，我们在构造ROP攻击的时候，需要满足下面的条件</p>
 <ul>
 <li><strong>可以通过栈溢出来控制栈的内容</strong></li>
-<li><strong>需要知道相应的地址</strong></li>
+<li><strong>需要知道相应的地址</strong><ul>
 <li><strong>"/bin/sh"</strong></li>
 <li><strong>Signal Frame</strong></li>
 <li><strong>syscal</strong></li>
 <li><strong>sigreturn</strong></li>
+</ul>
+</li>
 <li>需要有够大的空间来塞下整个sigal frame</li>
 </ul>
 <p>此外，关于sigreturn以及syscall;ret这两个gadget在上面并没有提及。提出该攻击的论文作者发现了这些gadgets出现的某些地址：</p>

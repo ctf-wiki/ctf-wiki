@@ -2068,6 +2068,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../introduction/" title="堆利用简介" class="md-nav__link">
+      堆利用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../heap_overview/" title="堆概述" class="md-nav__link">
       堆概述
     </a>
@@ -2501,12 +2513,8 @@
 <p>对于攻击者来说，堆溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。</p>
 <p>堆溢出是一种特定的缓冲区溢出（还有栈溢出， bss 段溢出等)。但是其与栈溢出所不同的是，堆上并不存在返回地址等可以让攻击者直接控制执行流程的数据，因此我们一般无法直接通过堆溢出来控制 EIP 。一般来说，我们利用堆溢出的策略是</p>
 <ol>
-<li>
-<p>覆盖与其<strong>物理相邻的下一个 chunk</strong> 的内容。</p>
-</li>
-<li>
-<p>prev_size</p>
-</li>
+<li>覆盖与其<strong>物理相邻的下一个 chunk</strong> 的内容。<ul>
+<li>prev_size</li>
 <li>size，主要有三个比特位，以及该堆块真正的大小。<ul>
 <li>NON_MAIN_ARENA </li>
 <li>IS_MAPPED  </li>
@@ -2515,6 +2523,8 @@
 </ul>
 </li>
 <li>chunk content，从而改变程序固有的执行流。</li>
+</ul>
+</li>
 <li>利用堆中的机制（如 unlink 等 ）来实现任意地址写入（ Write-Anything-Anywhere）或控制堆块中的内容等效果，从而来控制程序的执行流。</li>
 </ol>
 <h2 id="_3">基本示例<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
@@ -2647,7 +2657,7 @@ int main(void)
 16个字节的空间是如何装得下24个字节的内容呢？答案是借用了下一个块的pre_size域。我们可来看一下用户申请的内存大小与glibc中实际分配的内存大小之间的转换。</p>
 <div class="codehilite"><pre><span></span><span class="cm">/* pad request bytes into a usable size -- internal version */</span>
 <span class="c1">//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1</span>
-<span class="cp">##define request2size(req)                                                      \</span>
+<span class="cp">#define request2size(req)                                                      \</span>
 <span class="cp">    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)                           \</span>
 <span class="cp">         ? MINSIZE                                                             \</span>
 <span class="cp">         : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK)</span>
