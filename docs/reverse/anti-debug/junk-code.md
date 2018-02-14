@@ -4,7 +4,7 @@
 
 ## 例题
 
-这里以`看雪.TSRC 2017CTF秋季赛`第二题作为讲解. 题目下载链接: [ctf2017_Fpc.exe](https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/anti-debug/example/2017_pediy/ctf2017_Fpc.exe)
+这里以`看雪.TSRC 2017CTF秋季赛`第二题作为讲解. 题目下载链接: [ctf2017_Fpc.exe](/reverse/anti-debug/example/2017_pediy/ctf2017_Fpc.exe)
 
 程序写了几个函数混淆视听, 将关键的验证逻辑加花指令防止了IDA的静态分析. 我们用IDA打开Fpc这道题, 程序会先打印一些提示信息, 然后获取用户的输入.
 
