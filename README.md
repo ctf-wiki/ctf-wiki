@@ -34,6 +34,6 @@
 
 我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。 
 
-具体的贡献方式请参见 [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/blob/master/CONTRIBUTING.md)。 
+具体的贡献方式请参见 [CONTRIBUTING](.github/CONTRIBUTING.md)。 
 
 在你决定要贡献内容之前，请你务必看完这些内容。我们期待你的加入。
