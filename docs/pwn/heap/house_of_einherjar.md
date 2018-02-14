@@ -1,5 +1,5 @@
 ---
-typora-root-url: ../../../ctf-wiki
+typora-root-url: ../../../docs
 ---
 
 #  House Of Einherjar

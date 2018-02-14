@@ -87,19 +87,19 @@ struct malloc_chunk {
 
 每个字段的具体的解释如下
 
-- **prev_size**,  如果该 chunk 的**物理相邻的前一地址chunk（两个指针的地址差值为前一chunk大小）**是空闲的话，那该字段记录的是前一个 chunk 的大小(包括 chunk 头)。否则，该字段可以用来存储物理相邻的前一个chunk 的数据。**这里的前一 chunk 指的是较低地址的 chunk **。
-- **size** ，该 chunk 的大小，大小必须是 2 * SIZE_SZ 的整数倍。如果申请的内存大小不是 2 * SIZE_SZ 的整数倍，会被转换满足大小的最小的 2 * SIZE_SZ 的倍数。32 位系统中，SIZE_SZ 是 4；64 位系统中，SIZE_SZ 是 8。 该字段的低三个比特位对 chunk 的大小没有影响，它们从高到低分别表示
-  - NON_MAIN_ARENA，记录当前 chunk 是否不属于主线程，1表示不属于，0表示属于。
-  - IS_MAPPED，记录当前 chunk 是否是由 mmap 分配的。 
-  - PREV_INUSE，记录前一个 chunk 块是否被分配。一般来说，堆中第一个被分配的内存块的 size 字段的P位都会被设置为1，以便于防止访问前面的非法内存。当一个 chunk 的 size 的 P 位为 0 时，我们能通过 prev_size 字段来获取上一个 chunk 的大小以及地址。这也方便进行空闲chunk之间的合并。
-- **fd，bk**。 chunk 处于分配状态时，从 fd 字段开始是用户的数据。chunk 空闲时，会被添加到对应的空闲管理链表中，其字段的含义如下
-  - fd 指向下一个（非物理相邻）空闲的 chunk
-  - bk 指向上一个（非物理相邻）空闲的 chunk
-  - 通过 fd 和 bk 可以将空闲的 chunk 块加入到空闲的 chunk 块链表进行统一管理
-- **fd_nextsize， bk_nextsize**，也是只有 chunk 空闲的时候才使用，不过其用于较大的 chunk（large chunk）。
-  - fd_nextsize 指向前一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。
-  - bk_nextsize 指向后一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。
-  - 一般空闲的 large chunk 在 fd 的遍历顺序中，按照由大到小的顺序排列。**这样做可以避免在寻找合适chunk 时挨个遍历。**
+-   **prev_size**,  如果该 chunk 的**物理相邻的前一地址chunk（两个指针的地址差值为前一chunk大小）**是空闲的话，那该字段记录的是前一个 chunk 的大小(包括 chunk 头)。否则，该字段可以用来存储物理相邻的前一个chunk 的数据。**这里的前一 chunk 指的是较低地址的 chunk **。
+-   **size** ，该 chunk 的大小，大小必须是 2 * SIZE_SZ 的整数倍。如果申请的内存大小不是 2 * SIZE_SZ 的整数倍，会被转换满足大小的最小的 2 * SIZE_SZ 的倍数。32 位系统中，SIZE_SZ 是 4；64 位系统中，SIZE_SZ 是 8。 该字段的低三个比特位对 chunk 的大小没有影响，它们从高到低分别表示
+    -   NON_MAIN_ARENA，记录当前 chunk 是否不属于主线程，1表示不属于，0表示属于。
+    -   IS_MAPPED，记录当前 chunk 是否是由 mmap 分配的。 
+    -   PREV_INUSE，记录前一个 chunk 块是否被分配。一般来说，堆中第一个被分配的内存块的 size 字段的P位都会被设置为1，以便于防止访问前面的非法内存。当一个 chunk 的 size 的 P 位为 0 时，我们能通过 prev_size 字段来获取上一个 chunk 的大小以及地址。这也方便进行空闲chunk之间的合并。
+-   **fd，bk**。 chunk 处于分配状态时，从 fd 字段开始是用户的数据。chunk 空闲时，会被添加到对应的空闲管理链表中，其字段的含义如下
+    -   fd 指向下一个（非物理相邻）空闲的 chunk
+    -   bk 指向上一个（非物理相邻）空闲的 chunk
+    -   通过 fd 和 bk 可以将空闲的 chunk 块加入到空闲的 chunk 块链表进行统一管理
+-   **fd_nextsize， bk_nextsize**，也是只有 chunk 空闲的时候才使用，不过其用于较大的 chunk（large chunk）。
+    -   fd_nextsize 指向前一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。
+    -   bk_nextsize 指向后一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。
+    -   一般空闲的 large chunk 在 fd 的遍历顺序中，按照由大到小的顺序排列。**这样做可以避免在寻找合适chunk 时挨个遍历。**
 
 一个已经分配的 chunk 的样子如下。**我们称前两个字段称为 chunk header，后面的部分称为user data。每次 malloc 申请得到的内存指针，其实指向user data的起始处。** 
 
@@ -914,10 +914,11 @@ struct malloc_state {
 };
 ```
 
-- ​    __libc_lock_define(, mutex);
-  - 该变量用于控制程序串行访问同一个分配区，当一个线程获取了分配区之后，其它线程要想访问该分配区，就必须等待该线程分配完成候才能够使用。
-- flags
-  - flags记录了分配区的一些标志，比如 bit0 记录了分配区是否有 fast bin chunk ，bit1 标识分配区是否能返回连续的虚拟地址空间。具体如下
+-   __libc_lock_define(, mutex);
+    -   该变量用于控制程序串行访问同一个分配区，当一个线程获取了分配区之后，其它线程要想访问该分配区，就必须等待该线程分配完成候才能够使用。
+
+-   flags
+    -   flags记录了分配区的一些标志，比如 bit0 记录了分配区是否有 fast bin chunk ，bit1 标识分配区是否能返回连续的虚拟地址空间。具体如下
 
 ```c
 
@@ -962,18 +963,16 @@ struct malloc_state {
 
 ```
 
-- fastbinsY[NFASTBINS]
-  - 存放每个 fast chunk 链表头部的指针
-- top
-  - 指向分配区的 top chunk
-- last_reminder
-  - 最新的 chunk 分割之后剩下的那部分
-- bins
-  - 用于存储 unstored bin，small bins 和 large bins 的 chunk 链表。
-- binmap
-  - ptmalloc 用一个 bit 来标识某一个 bin 中是否包含空闲 chunk 。
-
-这里 chunk 就是一个内存块。关于其中每一个变量的具体意思，我们会在使用到的时候进行详细地说明。
+-   fastbinsY[NFASTBINS]
+    -   存放每个 fast chunk 链表头部的指针
+-   top
+    -   指向分配区的 top chunk
+-   last_reminder
+    -   最新的 chunk 分割之后剩下的那部分
+-   bins
+    -   用于存储 unstored bin，small bins 和 large bins 的 chunk 链表。
+-   binmap
+    -   ptmalloc 用一个 bit 来标识某一个 bin 中是否包含空闲 chunk 。
 
 ### malloc_par
 

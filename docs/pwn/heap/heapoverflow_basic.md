@@ -13,17 +13,15 @@
 
 堆溢出是一种特定的缓冲区溢出（还有栈溢出， bss 段溢出等)。但是其与栈溢出所不同的是，堆上并不存在返回地址等可以让攻击者直接控制执行流程的数据，因此我们一般无法直接通过堆溢出来控制 EIP 。一般来说，我们利用堆溢出的策略是
 
-1. 覆盖与其**物理相邻的下一个 chunk** 的内容。
-
-  - prev_size
-  - size，主要有三个比特位，以及该堆块真正的大小。
-    - NON_MAIN_ARENA 
-    - IS_MAPPED  
-    - PREV_INUSE 
-    - the True chunk size
-  - chunk content，从而改变程序固有的执行流。
-2. 利用堆中的机制（如 unlink 等 ）来实现任意地址写入（ Write-Anything-Anywhere）或控制堆块中的内容等效果，从而来控制程序的执行流。
-
+1.  覆盖与其**物理相邻的下一个 chunk** 的内容。
+    -   prev_size
+    -   size，主要有三个比特位，以及该堆块真正的大小。
+        -   NON_MAIN_ARENA 
+        -   IS_MAPPED  
+        -   PREV_INUSE 
+        -   the True chunk size
+    -   chunk content，从而改变程序固有的执行流。
+2.  利用堆中的机制（如 unlink 等 ）来实现任意地址写入（ Write-Anything-Anywhere）或控制堆块中的内容等效果，从而来控制程序的执行流。
 
 ## 基本示例
 
@@ -88,32 +86,31 @@ int main(void)
 ```
 realloc的操作并不是像字面意义上那么简单，其内部会根据不同的情况进行不同操作
 
-* 当realloc(ptr,size)的size不等于ptr的size时
-    * 如果申请size>原来size
-        * 如果chunk与top chunk相邻，直接扩展这个chunk到新size大小
-        * 如果chunk与top chunk不相邻，相当于free(ptr),malloc(new_size) 
-    * 如果申请size<原来size
-        * 如果相差不足以容得下一个最小chunk(64位下32个字节，32位下16个字节)，则保持不变
-        * 如果相差可以容得下一个最小chunk，则切割原chunk为两部分，free掉后一部分
-* 当realloc(ptr,size)的size等于0时，相当于free(ptr)
-* 当realloc(ptr,size)的size等于ptr的size，不进行任何操作
+-   当realloc(ptr,size)的size不等于ptr的size时
+    -   如果申请size>原来size
+        -   如果chunk与top chunk相邻，直接扩展这个chunk到新size大小
+        -   如果chunk与top chunk不相邻，相当于free(ptr),malloc(new_size) 
+    -   如果申请size<原来size
+        -   如果相差不足以容得下一个最小chunk(64位下32个字节，32位下16个字节)，则保持不变
+        -   如果相差可以容得下一个最小chunk，则切割原chunk为两部分，free掉后一部分
+-   当realloc(ptr,size)的size等于0时，相当于free(ptr)
+-   当realloc(ptr,size)的size等于ptr的size，不进行任何操作
 
 ### 寻找危险函数
 通过寻找危险函数，我们快速确定程序是否可能有堆溢出，以及有的话，堆溢出的位置在哪里。
 
 常见的危险函数如下
 
-* 输入
-    * gets，直接读取一行，忽略 `'\x00'`
-    * scanf
-    * vscanf
-* 输出
-    * sprintf
-* 字符串
-    * strcpy，字符串复制，遇到 `'\x00'` 停止
-    * strcat，字符串拼接，遇到 `'\x00'` 停止
-    * bcopy
-
+-   输入
+    -   gets，直接读取一行，忽略 `'\x00'`
+    -   scanf
+    -   vscanf
+-   输出
+    -   sprintf
+-   字符串
+    -   strcpy，字符串复制，遇到 `'\x00'` 停止
+    -   strcat，字符串拼接，遇到 `'\x00'` 停止
+    -   bcopy
 
 ### 确定填充长度
 这一部分主要是计算**我们开始写入的地址与我们所要覆盖的地址之间的距离**。
@@ -165,7 +162,7 @@ int main(void)
 ```c
 /* pad request bytes into a usable size -- internal version */
 //MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1
-##define request2size(req)                                                      \
+#define request2size(req)                                                      \
     (((req) + SIZE_SZ + MALLOC_ALIGN_MASK < MINSIZE)                           \
          ? MINSIZE                                                             \
          : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK)
