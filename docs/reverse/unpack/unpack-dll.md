@@ -1,5 +1,7 @@
 这里需要联系上篇的 [手动查找IAT并使用ImportREC重建](/reverse/unpack/manually-fix-iat/index.html)
 
+例题文件你可以点击此处下载: [unpack_dll.zip](/reverse/unpack/example/unpack_dll.zip)
+
 因为`Dll`脱壳需要这一步骤. `Dll`脱壳的最关键的步骤在于`使用LordPE修改其Dll的标志`, 用`LordPE`打开`UnpackMe.dll`, 然后在特征值那里点击`...`, 然后取消勾选`DLL`标志, 保存后, 系统就会将该文件视作一个可执行文件.
 
 ![12.png](/reverse/unpack/figure/unpack_dll/upx-dll-unpack-12.png)

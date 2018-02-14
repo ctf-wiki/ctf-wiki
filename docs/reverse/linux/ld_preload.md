@@ -121,7 +121,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 
 ![ida_apply.png](/reverse/linux/figure/2014_hitb/ida_apply.png)
 
-现在进入`LD_PRELOAD`部分. 这里我们简单编写一下c代码, 下载链接: [time.c](/master/reverse/linux/example/2014_hitb/time.c)
+现在进入`LD_PRELOAD`部分. 这里我们简单编写一下c代码, 下载链接: [time.c](/reverse/linux/example/2014_hitb/time.c)
 
 ``` c
 static int t = 0x31337;
