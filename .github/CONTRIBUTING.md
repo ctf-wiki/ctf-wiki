@@ -25,7 +25,7 @@
 
 ## 文档内容的基本格式
 
-这里主要是指 [中文排版指南](https://github.com/ctf-wiki/ctf-wiki/wiki/%E4%B8%AD%E6%96%87%E6%8E%92%E7%89%88%E6%8C%87%E5%8D%97) 与 [Sphinx 编写方式](https://github.com/ctf-wiki/ctf-wiki/wiki/Sphinx-%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9)。
+这里主要是指 [中文排版指南](https://github.com/ctf-wiki/ctf-wiki/wiki/%E4%B8%AD%E6%96%87%E6%8E%92%E7%89%88%E6%8C%87%E5%8D%97) 与 [MkDocs 使用说明](https://github.com/ctf-wiki/ctf-wiki/wiki/Mkdocs-%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E)。
 
 ## 文档的合理性
 
@@ -34,14 +34,14 @@
 - 由浅入深，内容的难度应该具有渐进性。
 - 逻辑性，对于每类内容的撰写应该尽量包含以下的内容
    - 原理，说明该内容对应的原理。
-   - 例子，给出1~2个典型的例子。
+   - 例子，给出 1 ~ 2 个典型的例子。
    - 题目，在该标题下， **只需要给出题目名字，相应的题目应该存储在 ctf-challenge 仓库中的对应目录中。**
 
 ## 文档存储的格式
 
 对于每类要编写的内容，对应的文档应该存储在合适的目录下
 
-- example，存储文档介绍时所使用的例子，请将每个例子在example下专门建立一个文件夹。
+- example，存储文档介绍时所使用的例子，请将每个例子在 example 下专门建立一个文件夹。
 - figure， 存储文档介绍时所使用的图片。
-- **文件名请务必都小写，以 `_` 分割， 如 `file_name`**
+- **文件名请务必都小写，以 `-` 分割， 如 `file-name`**
 
