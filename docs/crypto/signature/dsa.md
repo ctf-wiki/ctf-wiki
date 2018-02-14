@@ -37,7 +37,7 @@
 
 ### 正确性推导
 
-首先，g满足$g^k \equiv 1 \bmod p$ 的最小正整数k为q。所以$g^q \equiv 1 \bmod p$ 。所以 $ g^x \equiv g^{x \bmod q} \bmod p$  。进而
+首先，g 满足 $g^k \equiv 1 \bmod p$ 的最小正整数k为q。所以 $g^q \equiv 1 \bmod p$  。所以 $g^x \equiv g^{x \bmod q} \bmod p$ 。进而
 
 $v=(g^{u_1}y^{u_2} \bmod p) \bmod q=g^{u_1}g^{xu_2} \equiv g^{H(m)w}g^{xrw} \equiv g^{H(m)w+xrw}$
 

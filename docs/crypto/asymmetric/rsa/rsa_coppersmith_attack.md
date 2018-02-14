@@ -1,3 +1,5 @@
+# Coppersmith 相关攻击
+
 ## 基本原理
 
 首先，我们来简单介绍一下 **Coppersmith method** 方法，该方法由 [Don Coppersmith](https://en.wikipedia.org/wiki/Don_Coppersmith) 提出，可以用来找到单变量或者二元变量的多项式在模某个整数下的根，这里我们主要以单变量为主，假设我们有如下的一个在模 N 意义下的多项式 F
@@ -680,8 +682,15 @@ $$
 进而我们有
 
 $$
-ed =k\varphi(N)+1$ 即 $k \varphi(N) +1 \equiv 0 \bmod e
+ed =k\varphi(N)+1
 $$
+
+即
+
+$$
+k \varphi(N) +1 \equiv 0 \bmod e
+$$
+
 
 又
 

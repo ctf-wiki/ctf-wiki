@@ -25,26 +25,37 @@ $ sig_d(m,k)=(r,s)$
 ### 验证
 
 如果 $g^m \equiv y^rr^s \bmod p$ ，那么验证成功，否则验证失败。这里验证成功的原理如下，首先我们有
+
 $$
 y^rr^s \equiv g^{dr}g^{ks} \equiv g^{dr+ks}
 $$
+
 又因为
+
 $$
 s \equiv (m-dr)k^{-1} \bmod p-1
 $$
+
 所以
+
 $$
 ks \equiv m-dr \bmod p-1
 $$
+
 进而
+
 $$
-ks+dr=a\*(p-1)+m
+ks+dr=a*(p-1)+m
 $$
+
 所以
+
 $$
-g^{ks+dr}=g^{a\*(p-1)+m}=(g^{p-1})^a*g^m
+g^{ks+dr}=g^{a*(p-1)+m}=(g^{p-1})^a*g^m
 $$
+
 所以根据费马定理，可得
+
 $$
 g^{ks+dr} \equiv g^m \bmod p
 $$
@@ -64,18 +75,25 @@ $$
 如果签名者复用了随机数k，那么攻击者就可以轻而易举地计算出私钥。具体的原理如下：
 
 假设目前有两个签名都是使用同一个随机数进行签名的。那么我们有
+
 $$
 r \equiv g^k \bmod p \\\\ s _1\equiv (m_1-dr)k^{-1} \bmod p-1\\\\ r \equiv g^k \bmod p \\\\ s_2 \equiv (m_2-dr)k^{-1} \bmod p-1
 $$
+
 进而有
+
 $$
 s_1k \equiv m_1-dr \bmod p-1 \\\\ s_2k \equiv m_2-dr \bmod p-1
 $$
+
 两式相减
+
 $$
 k(s_1-s_2) \equiv m_1-m_2 \bmod p-1
 $$
+
 这里，$s_1,s_2,m_1,m_2,p-1$ 均已知，所以我们可以很容易算出k。当然，如果$gcd(s_1-s_2,p-1)!=1$ 的话，可能会存在多个解，这时我们只需要多试一试。进而，我们可以根据s的计算方法得到私钥d，如下
+
 $$
 d \equiv \frac{m-ks}{r}
 $$
@@ -92,26 +110,22 @@ $$
 
 这里我们假设，Alice的公钥为{p,g,y}。攻击者可以按照如下方式伪造
 
-1. 选择整数i，j，其中$gcd(j,p-1)=1$ 。
+1. 选择整数 i，j，其中$gcd(j,p-1)=1$ 。
 
-2. 计算签名
+2. 计算签名，$r \equiv g^iy^j \bmod p$ ，$s\equiv -rj^{-1} \bmod p-1$
 
-   $r \equiv g^iy^j \bmod p$
-
-   $s\equiv -rj^{-1} \bmod p-1$
-
-3. 计算消息
-
-   $m\equiv si \bmod p-1$
+3. 计算消息，$m\equiv si \bmod p-1$
 
 那么此时生成的签名与消息就是可以被正常通过验证，具体推导如下
 
 $y^rr^s \equiv g^{dr}g^{is}y^{js} \equiv g^{dr}g^{djs}g^{is} \equiv g^{dr+s(i+dj)} \equiv g^{dr} g^{-rj^{-1}(i+dj)} \equiv g^{dr-dr-rij^{-1}} \equiv g^{si} \bmod p$
 
 又由于消息m的构造方式，所以
+
 $$
 g^{si} \equiv g^m \bmod p-1
 $$
+
 需要注意的是，攻击者可以伪造通过签名验证的消息，但是他却无法伪造指定格式的消息。而且，一旦消息进行了哈希操作，这一攻击就不再可行。
 
 ### 已知签名伪造
