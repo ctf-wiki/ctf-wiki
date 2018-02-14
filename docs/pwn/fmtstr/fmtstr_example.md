@@ -123,27 +123,28 @@ sh.interactive()
 
 假设我们将函数A的地址覆盖为函数B的地址，那么这一攻击技巧可以分为以下步骤
 
-- 确定函数A的GOT表地址。
+-   确定函数A的GOT表地址。
 
-  - 这一步我们利用的函数A一般在程序中已有，所以可以采用简单的寻找地址的方法来找。
+    -   这一步我们利用的函数A一般在程序中已有，所以可以采用简单的寻找地址的方法来找。
 
-- 确定函数B的内存地址
+-   确定函数B的内存地址
 
-  - 这一步通常来说，需要我们自己想办法来泄露对应函数B的地址。
+    -   这一步通常来说，需要我们自己想办法来泄露对应函数B的地址。
 
-- 将函数B的内存地址写入到函数A的GOT表地址处。
+-   将函数B的内存地址写入到函数A的GOT表地址处。
 
-  - 这一步一般来说需要我们利用函数的漏洞来进行触发。一般利用方法有如下两种
+    -   这一步一般来说需要我们利用函数的漏洞来进行触发。一般利用方法有如下两种
 
-    - 写入函数：write函数。
-    - ROP
+        -   写入函数：write函数。
+        -   ROP
 
-    ```text
-    pop eax; ret; 			# printf@got -> eax
-    pop ebx; ret; 			# (addr_offset = system_addr - printf_addr) -> ebx
-    add [eax] ebx; ret; 	# [printf@got] = [printf@got] + addr_offset
-    ```
-    - 格式化字符串任意地址写
+        ```text
+        pop eax; ret; 			# printf@got -> eax
+        pop ebx; ret; 			# (addr_offset = system_addr - printf_addr) -> ebx
+        add [eax] ebx; ret; 	# [printf@got] = [printf@got] + addr_offset
+        ```
+
+        -   格式化字符串任意地址写
 
 ### 例子
 
@@ -510,14 +511,14 @@ int __cdecl PrintInfo(int a1, int a2, int a3, char *format)
 
 基本思路如下
 
-- 首先获取system函数的地址
-  - 通过泄露某个libc函数的地址根据libc database确定。
-- 构造基本联系人描述为system_addr+'bbbb'+binsh_addr
-- 修改上层函数保存的ebp(即上上层函数的ebp)为**存储system_addr的地址-4**。
-- 当主程序返回时，会有如下操作
-  - move esp,ebp，将esp指向system_addr的地址-4
-  - pop ebp， 将esp指向system_addr
-  - ret，将eip指向system_addr，从而获取shell。
+-   首先获取system函数的地址
+    -   通过泄露某个libc函数的地址根据libc database确定。
+-   构造基本联系人描述为system_addr+'bbbb'+binsh_addr
+-   修改上层函数保存的ebp(即上上层函数的ebp)为**存储system_addr的地址-4**。
+-   当主程序返回时，会有如下操作
+    -   move esp,ebp，将esp指向system_addr的地址-4
+    -   pop ebp， 将esp指向system_addr
+    -   ret，将eip指向system_addr，从而获取shell。
 
 #### 获取相关地址与偏移
 

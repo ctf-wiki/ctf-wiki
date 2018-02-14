@@ -11,12 +11,12 @@
 
 我们知道在linux中是利用_dl_runtime_resolve(link_map_obj, reloc_index)来对动态链接的函数进行重定位的。那么如果我们可以控制相应的参数以及其对应地址的内容是不是就可以控制解析的函数了呢？答案还肯定的。具体利用方式如下
 
-1. 控制程序执行dl_resolve函数
-   - 给定Link_map以及index两个参数。
-   - 当然我们可以直接给定 plt0对应的汇编代码，这时，我们就只需要一个index就足够了。
-2. 控制index的大小，以便于指向自己所控制的区域，从而伪造一个指定的重定位表项。
-3. 伪造重定位表项，使得重定位表项所指的符号也在自己可以控制的范围内。
-4. 伪造符号内容，使得符号对应的名称也在自己可以控制的范围内。
+1.  控制程序执行dl_resolve函数
+    -   给定Link_map以及index两个参数。
+    -   当然我们可以直接给定 plt0对应的汇编代码，这时，我们就只需要一个index就足够了。
+2.  控制index的大小，以便于指向自己所控制的区域，从而伪造一个指定的重定位表项。
+3.  伪造重定位表项，使得重定位表项所指的符号也在自己可以控制的范围内。
+4.  伪造符号内容，使得符号对应的名称也在自己可以控制的范围内。
 
 **此外，这个攻击成功的很必要的条件**
 
@@ -25,10 +25,10 @@
 
 注意：
 
-- 符号版本信息
-  - 最好使得ndx = VERSYM[ (reloc->r_info) >> 8] 的值为0，以便于防止找不到的情况。
-- 重定位表项
-  - r_offset必须是可写的，因为当解析完函数后，必须把相应函数的地址填入到对应的地址。
+-   符号版本信息
+    -   最好使得ndx = VERSYM[ (reloc->r_info) >> 8] 的值为0，以便于防止找不到的情况。
+-   重定位表项
+    -   r_offset必须是可写的，因为当解析完函数后，必须把相应函数的地址填入到对应的地址。
 
 ### 攻击条件
 
@@ -49,15 +49,11 @@
 
 在下面的讲解过程中，我会按照以两种不同的方法来进行讲解。其中第一种方法比较麻烦，但是可以仔细理解ret2dlresolve的原理，第二种方法则是直接使用已有的工具，相对容易一点。
 
-1. 利用正常的代码来使用该技巧从而获取shell。
-
-   stage 1 测试控制程序执行write函数的效果。
-
-   stage 2 测试控制程序执行dl_resolve函数，并且相应参数指向正常write函数的plt时的执行效果。
-
-   stage 3 测试控制程序执行dl_resolve函数，并且相应参数指向伪造的write函数的plt时的执行效果。
-
-2. 利用roputils中已经集成好的工具来实现攻击，从而获取shell。
+1.  利用正常的代码来使用该技巧从而获取shell。
+    -   stage 1 测试控制程序执行write函数的效果。
+    -   stage 2 测试控制程序执行dl_resolve函数，并且相应参数指向正常write函数的plt时的执行效果。
+    -   stage 3 测试控制程序执行dl_resolve函数，并且相应参数指向伪造的write函数的plt时的执行效果。
+2.  利用roputils中已经集成好的工具来实现攻击，从而获取shell。
 
 #### 正常攻击
 
@@ -752,104 +748,101 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 ![Process of Signal Handlering](/pwn/stackoverflow/figure/ProcessOfSignalHandlering.png)
 
-1. 内核向某个进程发送signal机制，该进程会被暂时挂起，进入内核态。
+1.  内核向某个进程发送signal机制，该进程会被暂时挂起，进入内核态。
 
-2. 内核会为该进程保存相应的上下文，**主要是将所有寄存器压入栈中，以及压入signal信息，以及指向sigreturn的系统调用地址**。此时栈的结构如下图所示，我们称ucontext以及siginfo这一段为Signal Frame。**需要注意的是，这一部分是在用户进程的地址空间的。**之后会跳转到注册过的signal handler中处理相应的signal。因此，当signal handler执行完之后，就会执行sigreturn代码。
+2.  内核会为该进程保存相应的上下文，**主要是将所有寄存器压入栈中，以及压入signal信息，以及指向sigreturn的系统调用地址**。此时栈的结构如下图所示，我们称ucontext以及siginfo这一段为Signal Frame。**需要注意的是，这一部分是在用户进程的地址空间的。**之后会跳转到注册过的signal handler中处理相应的signal。因此，当signal handler执行完之后，就会执行sigreturn代码。
 
-   ![signal2-stack](/pwn/stackoverflow/figure/signal2-stack.png)
+    ![signal2-stack](/pwn/stackoverflow/figure/signal2-stack.png)
 
-   对于signal Frame来说，不同会因为架构的不同而因此有所区别，这里给出分别给出x86以及x64的sigcontext
+    对于signal Frame来说，不同会因为架构的不同而因此有所区别，这里给出分别给出x86以及x64的sigcontext
 
-   - x86
+    -   x86
 
-   ```C
-   struct sigcontext
-   {
-     unsigned short gs, __gsh;
-     unsigned short fs, __fsh;
-     unsigned short es, __esh;
-     unsigned short ds, __dsh;
-     unsigned long edi;
-     unsigned long esi;
-     unsigned long ebp;
-     unsigned long esp;
-     unsigned long ebx;
-     unsigned long edx;
-     unsigned long ecx;
-     unsigned long eax;
-     unsigned long trapno;
-     unsigned long err;
-     unsigned long eip;
-     unsigned short cs, __csh;
-     unsigned long eflags;
-     unsigned long esp_at_signal;
-     unsigned short ss, __ssh;
-     struct _fpstate * fpstate;
-     unsigned long oldmask;
-     unsigned long cr2;
-   };
-   ```
+    ```c
+    struct sigcontext
+    {
+      unsigned short gs, __gsh;
+      unsigned short fs, __fsh;
+      unsigned short es, __esh;
+      unsigned short ds, __dsh;
+      unsigned long edi;
+      unsigned long esi;
+      unsigned long ebp;
+      unsigned long esp;
+      unsigned long ebx;
+      unsigned long edx;
+      unsigned long ecx;
+      unsigned long eax;
+      unsigned long trapno;
+      unsigned long err;
+      unsigned long eip;
+      unsigned short cs, __csh;
+      unsigned long eflags;
+      unsigned long esp_at_signal;
+      unsigned short ss, __ssh;
+      struct _fpstate * fpstate;
+      unsigned long oldmask;
+      unsigned long cr2;
+    };
+    ```
 
-   - x64
+    -   x64
 
-   ```C
-   struct _fpstate
-   {
-     /* FPU environment matching the 64-bit FXSAVE layout.  */
-     __uint16_t		cwd;
-     __uint16_t		swd;
-     __uint16_t		ftw;
-     __uint16_t		fop;
-     __uint64_t		rip;
-     __uint64_t		rdp;
-     __uint32_t		mxcsr;
-     __uint32_t		mxcr_mask;
-     struct _fpxreg	_st[8];
-     struct _xmmreg	_xmm[16];
-     __uint32_t		padding[24];
-   };
+    ```c
+    struct _fpstate
+    {
+      /* FPU environment matching the 64-bit FXSAVE layout.  */
+      __uint16_t		cwd;
+      __uint16_t		swd;
+      __uint16_t		ftw;
+      __uint16_t		fop;
+      __uint64_t		rip;
+      __uint64_t		rdp;
+      __uint32_t		mxcsr;
+      __uint32_t		mxcr_mask;
+      struct _fpxreg	_st[8];
+      struct _xmmreg	_xmm[16];
+      __uint32_t		padding[24];
+    };
 
-   struct sigcontext
-   {
-     __uint64_t r8;
-     __uint64_t r9;
-     __uint64_t r10;
-     __uint64_t r11;
-     __uint64_t r12;
-     __uint64_t r13;
-     __uint64_t r14;
-     __uint64_t r15;
-     __uint64_t rdi;
-     __uint64_t rsi;
-     __uint64_t rbp;
-     __uint64_t rbx;
-     __uint64_t rdx;
-     __uint64_t rax;
-     __uint64_t rcx;
-     __uint64_t rsp;
-     __uint64_t rip;
-     __uint64_t eflags;
-     unsigned short cs;
-     unsigned short gs;
-     unsigned short fs;
-     unsigned short __pad0;
-     __uint64_t err;
-     __uint64_t trapno;
-     __uint64_t oldmask;
-     __uint64_t cr2;
-     __extension__ union
-       {
-         struct _fpstate * fpstate;
-         __uint64_t __fpstate_word;
-       };
-     __uint64_t __reserved1 [8];
-   };
-   ```
+    struct sigcontext
+    {
+      __uint64_t r8;
+      __uint64_t r9;
+      __uint64_t r10;
+      __uint64_t r11;
+      __uint64_t r12;
+      __uint64_t r13;
+      __uint64_t r14;
+      __uint64_t r15;
+      __uint64_t rdi;
+      __uint64_t rsi;
+      __uint64_t rbp;
+      __uint64_t rbx;
+      __uint64_t rdx;
+      __uint64_t rax;
+      __uint64_t rcx;
+      __uint64_t rsp;
+      __uint64_t rip;
+      __uint64_t eflags;
+      unsigned short cs;
+      unsigned short gs;
+      unsigned short fs;
+      unsigned short __pad0;
+      __uint64_t err;
+      __uint64_t trapno;
+      __uint64_t oldmask;
+      __uint64_t cr2;
+      __extension__ union
+        {
+          struct _fpstate * fpstate;
+          __uint64_t __fpstate_word;
+        };
+      __uint64_t __reserved1 [8];
+    };
+    ```
 
-   ​
-
-
-1. signal handler返回后，内核为执行sigreturn系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的sigreturn的调用号为77，64位的系统调用号为15。
+3. signal handler返回后，内核为执行sigreturn系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的sigreturn的调用号为77，64位的系统调用号为15。
 
 ### 攻击原理
 
@@ -883,13 +876,13 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 需要注意的是，我们在构造ROP攻击的时候，需要满足下面的条件
 
-- **可以通过栈溢出来控制栈的内容**
-- **需要知道相应的地址**
-  - **"/bin/sh"**
-  - **Signal Frame**
-  - **syscal**
-  - **sigreturn**
-- 需要有够大的空间来塞下整个sigal frame
+-   **可以通过栈溢出来控制栈的内容**
+-   **需要知道相应的地址**
+    -   **"/bin/sh"**
+    -   **Signal Frame**
+    -   **syscal**
+    -   **sigreturn**
+-   需要有够大的空间来塞下整个sigal frame
 
 此外，关于sigreturn以及syscall;ret这两个gadget在上面并没有提及。提出该攻击的论文作者发现了这些gadgets出现的某些地址：
 

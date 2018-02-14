@@ -295,14 +295,14 @@ BROP是没有对应应用程序的源代码或者二进制文件下，对程序�
 
 在BROP中，基本的遵循的思路如下
 
-- 判断栈溢出字符串长度
-  - 暴力枚举
-- Stack Reading
-  - 获取栈上的数据来泄露canaries，以及ebp和返回地址。
-- Bind ROP
-  - 找到足够多的gadgets来控制输出函数的参数，并且对其进行调用，比如说常见的write函数以及puts函数。
-- Build the exploit
-  - 利用输出函数来dump出程序以便于来找到更多的gadgets，从而可以写出最后的exploit。
+-   判断栈溢出长度
+    -   暴力枚举
+-   Stack Reading
+    -   获取栈上的数据来泄露canaries，以及ebp和返回地址。
+-   Bind ROP
+    -   找到足够多的 gadgets 来控制输出函数的参数，并且对其进行调用，比如说常见的 write 函数以及puts函数。
+-   Build the exploit
+    -   利用输出函数来 dump 出程序以便于来找到更多的 gadgets，从而可以写出最后的 exploit。
 
 #### 栈溢出长度
 
@@ -364,10 +364,10 @@ pop rdx; ret
 
 那么接下来的问题，我们就可以分为两项
 
-- 寻找gadgets
-- 寻找PLT表
-  - write入口
-  - strcmp入口
+-   寻找gadgets
+-   寻找PLT表
+    -   write入口
+    -   strcmp入口
 
 ##### 寻找gadgets
 
@@ -395,27 +395,27 @@ pop rdx; ret
 
 那么，我们该如何识别这些gadgets呢？我们可以通过栈布局以及程序的行为来进行识别。为了更加容易地进行介绍，这里定义栈上的三种地址
 
-- **Probe**
-  - 探针，也就是我们想要探测的代码地址。一般来说，都是64位程序，可以直接从0x400000尝试，如果不成功，有可能程序开启了PIE保护，再不济，就可能是程序是32位了。。这里我还没有特别想明白，怎么可以快速确定远程的位数。
-- **Stop**
-  - 不会使得程序崩溃的stop gadget的地址。
-- **Trap**
-  - 可以导致程序崩溃的地址
+-   **Probe**
+    -   探针，也就是我们想要探测的代码地址。一般来说，都是64位程序，可以直接从0x400000尝试，如果不成功，有可能程序开启了PIE保护，再不济，就可能是程序是32位了。。这里我还没有特别想明白，怎么可以快速确定远程的位数。
+-   **Stop**
+    -   不会使得程序崩溃的stop gadget的地址。
+-   **Trap**
+    -   可以导致程序崩溃的地址
 
 我们可以通过在栈上摆放不同顺序的**Stop**与 **Trap**从而来识别出正在执行的指令。因为执行Stop意味着程序不会崩溃，执行Trap意味着程序会立即崩溃。这里给出几个例子
 
-- probe,stop,traps(traps,traps,...)
-  - 我们通过程序崩溃与否(**如果程序在probe处直接崩溃怎么判断**)可以找到不会对栈进行pop操作的gadget，如
-    - ret
-    - xor eax,eax; ret
-- probe,trap,stop,traps
-  - 我们可以通过这样的布局找到只是弹出一个栈变量的gadget。如
-    - pop rax; ret
-    - pop rdi; ret
-- probe, trap, trap, trap, trap, trap, trap, stop, traps
-  - 我们可以通过这样的布局来找到弹出6个栈变量的gadget，也就是与brop gadget相似的gadget。**这里感觉原文是有问题的，比如说如果遇到了只是pop一个栈变量的地址，其实也是不会崩溃的，，**这里一般来说会遇到两处比较有意思的地方
-    - plt处不会崩，，
-    - _start处不会崩，相当于程序重新执行。
+-   probe,stop,traps(traps,traps,...)
+    -   我们通过程序崩溃与否(**如果程序在probe处直接崩溃怎么判断**)可以找到不会对栈进行pop操作的gadget，如
+        -   ret
+        -   xor eax,eax; ret
+-   probe,trap,stop,traps
+    -   我们可以通过这样的布局找到只是弹出一个栈变量的gadget。如
+        -   pop rax; ret
+        -   pop rdi; ret
+-   probe, trap, trap, trap, trap, trap, trap, stop, traps
+    -   我们可以通过这样的布局来找到弹出6个栈变量的gadget，也就是与brop gadget相似的gadget。**这里感觉原文是有问题的，比如说如果遇到了只是pop一个栈变量的地址，其实也是不会崩溃的，，**这里一般来说会遇到两处比较有意思的地方
+        -   plt处不会崩，，
+        -   _start处不会崩，相当于程序重新执行。
 
 之所以要在每个布局的后面都放上trap，是为了能够识别出，当我们的probe处对应的地址执行的指令跳过了stop，程序立马崩溃的行为。
 

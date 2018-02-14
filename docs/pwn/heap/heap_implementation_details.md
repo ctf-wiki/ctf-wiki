@@ -1,18 +1,18 @@
 ---
-typora-root-url: ../../../ctf-wiki
+typora-root-url: ../../../docs
 ---
 
 # 深入理解堆的实现
 
 仔细想一下，任何堆的实现都离不开以下两个方面的问题
 
-- 宏观角度
-  - 创建堆
-  - 堆初始化
-  - 删除堆
-- 微观角度
-  - 申请内存块
-  - 释放内存块
+-   宏观角度
+    -   创建堆
+    -   堆初始化
+    -   删除堆
+-   微观角度
+    -   申请内存块
+    -   释放内存块
 
 当然，这些都还是比较高层面的想法，不同的堆的底层的实现会有所不同。
 
@@ -30,27 +30,26 @@ typora-root-url: ../../../ctf-wiki
 
 unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在以下地方使用
 
-- malloc
-  - 从恰好大小合适的 large bin 中获取 chunk。
-    - **这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。**
-    - 依次遍历处理unsorted bin时也是没有unlink的。
-  - 从比所需要的 chunk 相应的 bin 大的 bin 中取 chunk。
-- Free
-  - 后向合并，合并物理相邻低地址空闲 chunk。
-  - 前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
-- malloc_consolidate
-  - 后向合并，合并物理相邻低地址空闲 chunk。
-  - 前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
-- realloc
-  - 前向扩展，合并物理相邻高地址空闲 chunk（除了top chunk）。
-
+-   malloc
+    -   从恰好大小合适的 large bin 中获取 chunk。
+        -   **这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。**
+        -   依次遍历处理unsorted bin时也是没有unlink的。
+    -   从比所需要的 chunk 相应的 bin 大的 bin 中取 chunk。
+-   Free
+    -   后向合并，合并物理相邻低地址空闲 chunk。
+    -   前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
+-   malloc_consolidate
+    -   后向合并，合并物理相邻低地址空闲 chunk。
+    -   前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
+-   realloc
+    -   前向扩展，合并物理相邻高地址空闲 chunk（除了top chunk）。
 
 
 由于 unlink 使用非常频繁，所以 unlink 被实现为了一个宏，如下
 
 ```c
 /* Take a chunk off a bin list */
-##define unlink(AV, P, BK, FD) {                                            \
+#define unlink(AV, P, BK, FD) {                                            \
     // 由于 P 已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
     if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
       malloc_printerr ("corrupted size vs. prev_size");			      \
@@ -129,7 +128,7 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 ### __libc_malloc
 
-1. 该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。这里需要注意的是，**用户申请的字节一旦进入申请内存函数中就变成了无符号整数**。
+该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。这里需要注意的是，**用户申请的字节一旦进入申请内存函数中就变成了无符号整数**。
 
 ```c++
 // wapper for int_malloc
@@ -143,19 +142,19 @@ void *__libc_malloc(size_t bytes) {
 
 ```
 
-2. 接着会寻找一个 arena 来试图分配内存。
+接着会寻找一个 arena 来试图分配内存。
 
 ```c++
     arena_get(ar_ptr, bytes);
 ```
 
-3. 然后调用 _int_malloc 函数去申请对应的内存。
+然后调用 _int_malloc 函数去申请对应的内存。
 
-```C++
+```c++
     victim = _int_malloc(ar_ptr, bytes);
 ```
 
-4. 如果分配失败的话，ptmalloc 会尝试再去寻找一个可用的 arena，并分配内存。
+如果分配失败的话，ptmalloc 会尝试再去寻找一个可用的 arena，并分配内存。
 
 ```c++
     /* Retry with another arena only if we were able to find a usable arena
@@ -167,25 +166,27 @@ void *__libc_malloc(size_t bytes) {
     }
 ```
 
-5. 如果申请到了arena，那么在退出之前还得解锁。
+如果申请到了 arena，那么在退出之前还得解锁。
 
 ```c++
     if (ar_ptr != NULL) __libc_lock_unlock(ar_ptr->mutex);
 ```
 
-6.  判断目前的状态是否满足以下条件，要么没有申请到内存，要么是 mmap 的内存，**要么申请到的内存必须在其所分配的arena中**。
+判断目前的状态是否满足以下条件，要么没有申请到内存，要么是 mmap 的内存，**要么申请到的内存必须在其所分配的arena中**。
 
 ```c++
     assert(!victim || chunk_is_mmapped(mem2chunk(victim)) ||
            ar_ptr == arena_for_chunk(mem2chunk(victim)));
 ```
 
-7. 最后返回内存。
+最后返回内存。
 
 ```c++
     return victim;
 }
 ```
+
+
 
 ### _int_malloc
 
@@ -1291,12 +1292,12 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
             if (have_fastchunks(av)) malloc_consolidate(av);
             // 主分配区
             if (av == &main_arena) {
-##ifndef MORECORE_CANNOT_TRIM
+#ifndef MORECORE_CANNOT_TRIM
                 // top chunk 大于当前的收缩阙值
                 if ((unsigned long) (chunksize(av->top)) >=
                     (unsigned long) (mp_.trim_threshold))
                     systrim(mp_.top_pad, av);
-##endif      // 非主分配区，则直接收缩heap
+#endif      // 非主分配区，则直接收缩heap
             } else {
                 /* Always try heap_trim(), even if the top chunk is not
                    large, because the corresponding heap might go away.  */
@@ -1327,8 +1328,6 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 ### heap_trim
 
 ### munmap_chunk
-
-
 
 ## 删除堆
 

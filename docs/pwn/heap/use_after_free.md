@@ -332,8 +332,6 @@ IS_MMAPPED flag: Off
 NON_MAIN_ARENA flag: Off
 ```
 
-
-
 **申请note 0的content的地址为0x0804b018**
 
 ```asm
