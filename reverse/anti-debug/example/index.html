@@ -2518,7 +2518,7 @@
                 
                   <h1>反调试技术例题</h1>
                 
-                <p>我们现在来分析一道2016年SecCon的<code>anti-debugging</code>题, 题目下载链接: <a href="https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/anti-debug/example/2016_seccon/anti_debugging_100/bin.exe">bin.exe</a></p>
+                <p>我们现在来分析一道2016年SecCon的<code>anti-debugging</code>题, 题目下载链接: <a href="../../../reverse/anti-debug/example/2016_seccon/anti_debugging_100/bin.exe">bin.exe</a></p>
 <p>这是一个32位的PE文件, 是一个控制台程序, 我们直接运行, 会要求输入<code>password</code>. 当你输入一个错误的<code>password</code>时则会提示你<code>password is wrong</code>.</p>
 <p><img alt="run.png" src="../../../reverse/anti-debug/figure/2016_seccon/run.png" /></p>
 <p>我们用IDA打开来看下, 最快速的方式就是直接查看字符串, 根据<code>password is wrong</code>找到关键代码. IDA显示的结果如下图:</p>
@@ -2638,9 +2638,9 @@
 </pre></div>
 
 <p>显然, 输入的<code>password</code>正确, 就会输出提示<code>Your password is correct.</code>. ??? 不觉得奇怪吗. 难道<code>I have a pen.</code>就是我们的flag了吗? 不不不当然不是. 这其实是一个陷阱, 既然你知道了<code>I have a pen.</code>那么就肯定有通过某种逆向手段在对程序进行分析. 所以接下来的部分就开始进行一些反调试或其他的检测手段(实际中也可以出现这样的陷阱).</p>
-<p>一开始的是<code>IsDebuggerPresent()</code>, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看<a href="https://ctf-wiki.github.io/ctf-wiki/reverse/anti-debug/isdebuggerpresent.html">IsDebuggerPresent()篇</a></p>
+<p>一开始的是<code>IsDebuggerPresent()</code>, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看 <a href="../../../reverse/anti-debug/isdebuggerpresent/index.html">IsDebuggerPresent()</a> 篇</p>
 <h2 id="ntglobalflag">NtGlobalFlag<a class="headerlink" href="#ntglobalflag" title="Permanent link">&para;</a></h2>
-<p>接下来是检测<code>NtGlobalFlag</code>这个字段的标志位. 通过检测PEB的字段值是否为<code>0x70</code>来检测调试器, 如果不太清楚的话, 可以返回去看<a href="https://ctf-wiki.github.io/ctf-wiki/reverse/anti-debug/ntglobalflag.html">NtGlobalFlag篇</a></p>
+<p>接下来是检测<code>NtGlobalFlag</code>这个字段的标志位. 通过检测PEB的字段值是否为<code>0x70</code>来检测调试器, 如果不太清楚的话, 可以返回去看 <a href="../../../reverse/anti-debug/ntglobalflag/index.html">NtGlobalFlag</a> 篇</p>
 <div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span> <span class="n">sub_401120</span><span class="p">()</span> <span class="o">==</span> <span class="mh">0x70</span> <span class="p">)</span>         <span class="c1">// 3. 检测PEB的0x68偏移处是否为0x70. 检测NtGlobalFlag()</span>
 <span class="p">{</span>
     <span class="n">puts</span><span class="p">(</span><span class="s">&quot;But detected NtGlobalFlag!&quot;</span><span class="p">);</span>
@@ -2670,7 +2670,7 @@
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
-这里我顺便在注释里列出了<code>CheckRemoteDebuggerPresent()</code>这个API的函数原型. 如果检测到调试器的存在, 会将<code>pbDebuggerPresent</code>设置为一个非零值. 根据其值检测调试器(<a href="https://ctf-wiki.github.io/ctf-wiki/reverse/anti-debug/checkremotedebuggerpresent.html">CheckRemoteDebuggerPresent()篇</a>)</p>
+这里我顺便在注释里列出了<code>CheckRemoteDebuggerPresent()</code>这个API的函数原型. 如果检测到调试器的存在, 会将<code>pbDebuggerPresent</code>设置为一个非零值. 根据其值检测调试器(<a href="../../../reverse/anti-debug/checkremotedebuggerpresent/index.html">CheckRemoteDebuggerPresent()</a> 篇)</p>
 <h2 id="_2">时间差检测<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <div class="codehilite"><pre><span></span><span class="n">v13</span> <span class="o">=</span> <span class="n">GetTickCount</span><span class="p">();</span>
 <span class="k">for</span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">100</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>    <span class="c1">// 睡眠</span>
@@ -2685,12 +2685,12 @@
 
 <p><code>GetTickCount</code>会返回启动到现在的毫秒数, 循环里光是<code>sleep(1)</code>就进行了100次, 也就是100毫秒. 两次得到的时间作差如果大于1000毫秒, 时差明显大于所耗的时间, 也就间接检测到了调试. </p>
 <h2 id="processmonitor">ProcessMonitor<a class="headerlink" href="#processmonitor" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span>lpFileName = &quot;\\\\.\\Global\\ProcmonDebugLogger&quot;;
-if ( CreateFileA(&quot;\\\\.\\Global\\ProcmonDebugLogger&quot;, 0x80000000, 7u, 0, 3u, 0x80u, 0) != (HANDLE)-1 )
-{
-    printf(&quot;But detect %s.\n&quot;, &amp;lpFileName);      // 6. 检测ProcessMonitor
-    exit(1);
-}
+<div class="codehilite"><pre><span></span><span class="n">lpFileName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\\\\</span><span class="s">.</span><span class="se">\\</span><span class="s">Global</span><span class="se">\\</span><span class="s">ProcmonDebugLogger&quot;</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span> <span class="n">CreateFileA</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\\\\</span><span class="s">.</span><span class="se">\\</span><span class="s">Global</span><span class="se">\\</span><span class="s">ProcmonDebugLogger&quot;</span><span class="p">,</span> <span class="mh">0x80000000</span><span class="p">,</span> <span class="mi">7u</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3u</span><span class="p">,</span> <span class="mh">0x80u</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">HANDLE</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detect %s.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lpFileName</span><span class="p">);</span>      <span class="c1">// 6. 检测ProcessMonitor</span>
+    <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
 </pre></div>
 
 <p>这里通过检测设备文件<code>\\\\.\\Global\\ProcmonDebugLogger</code>来检测<code>ProcessMonitor</code></p>
