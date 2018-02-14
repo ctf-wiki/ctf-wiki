@@ -1,4 +1,4 @@
-我们现在来分析一道2016年SecCon的`anti-debugging`题, 题目下载链接: [bin.exe](https://github.com/ctf-wiki/ctf-wiki/blob/master/reverse/anti-debug/example/2016_seccon/anti_debugging_100/bin.exe)
+我们现在来分析一道2016年SecCon的`anti-debugging`题, 题目下载链接: [bin.exe](/reverse/anti-debug/example/2016_seccon/anti_debugging_100/bin.exe)
 
 这是一个32位的PE文件, 是一个控制台程序, 我们直接运行, 会要求输入`password`. 当你输入一个错误的`password`时则会提示你`password is wrong`.
 
@@ -133,11 +133,11 @@ if ( IsDebuggerPresent() == 1 )     // 2. API: IsDebuggerPresent()
 
 显然, 输入的`password`正确, 就会输出提示`Your password is correct.`. ??? 不觉得奇怪吗. 难道`I have a pen.`就是我们的flag了吗? 不不不当然不是. 这其实是一个陷阱, 既然你知道了`I have a pen.`那么就肯定有通过某种逆向手段在对程序进行分析. 所以接下来的部分就开始进行一些反调试或其他的检测手段(实际中也可以出现这样的陷阱).
 
-一开始的是`IsDebuggerPresent()`, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看[IsDebuggerPresent()篇](https://ctf-wiki.github.io/ctf-wiki/reverse/anti-debug/isdebuggerpresent.html)
+一开始的是`IsDebuggerPresent()`, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看 [IsDebuggerPresent()](/reverse/anti-debug/isdebuggerpresent/index.html) 篇
 
 ## NtGlobalFlag
 
-接下来是检测`NtGlobalFlag`这个字段的标志位. 通过检测PEB的字段值是否为`0x70`来检测调试器, 如果不太清楚的话, 可以返回去看[NtGlobalFlag篇](https://ctf-wiki.github.io/ctf-wiki/reverse/anti-debug/ntglobalflag.html)
+接下来是检测`NtGlobalFlag`这个字段的标志位. 通过检测PEB的字段值是否为`0x70`来检测调试器, 如果不太清楚的话, 可以返回去看 [NtGlobalFlag](/reverse/anti-debug/ntglobalflag/index.html) 篇
 
 ``` c
 if ( sub_401120() == 0x70 )         // 3. 检测PEB的0x68偏移处是否为0x70. 检测NtGlobalFlag()
@@ -175,7 +175,7 @@ if ( pbDebuggerPresent )            // 4. API: CheckRemoteDebuggerPresent()
     exit(1);
 }
 ```
-这里我顺便在注释里列出了`CheckRemoteDebuggerPresent()`这个API的函数原型. 如果检测到调试器的存在, 会将`pbDebuggerPresent`设置为一个非零值. 根据其值检测调试器([CheckRemoteDebuggerPresent()篇](https://ctf-wiki.github.io/ctf-wiki/reverse/anti-debug/checkremotedebuggerpresent.html))
+这里我顺便在注释里列出了`CheckRemoteDebuggerPresent()`这个API的函数原型. 如果检测到调试器的存在, 会将`pbDebuggerPresent`设置为一个非零值. 根据其值检测调试器([CheckRemoteDebuggerPresent()](/reverse/anti-debug/checkremotedebuggerpresent/index.html) 篇)
 
 
 ## 时间差检测
@@ -197,7 +197,7 @@ if ( GetTickCount() - v13 > 1000 )  // 5. 检测时间差
 
 ## ProcessMonitor
 
-```
+``` c
 lpFileName = "\\\\.\\Global\\ProcmonDebugLogger";
 if ( CreateFileA("\\\\.\\Global\\ProcmonDebugLogger", 0x80000000, 7u, 0, 3u, 0x80u, 0) != (HANDLE)-1 )
 {
