@@ -1,8 +1,5 @@
 # House of Orange
 
-标签（空格分隔）： wiki
-
----
 
 ## 介绍
 House of Orange与其他的House of XX利用方法不同，这种利用方法来自于Hitcon CTF 2016中的一道同名题目。由于这种利用方法在此前的CTF题目中没有出现过，因此之后出现的一系列衍生题目的利用方法我们称之为House of Orange。
