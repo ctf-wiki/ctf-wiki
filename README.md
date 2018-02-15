@@ -36,7 +36,7 @@
 
 ## How to build？
 
-本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 https://ctf-wiki.github.io/ctf-wiki/。当然本文档也可以部署在本地，具体方式如下
+本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 [https://ctf-wiki.github.io/ctf-wiki/](https://ctf-wiki.github.io/ctf-wiki/)。当然本文档也可以部署在本地，具体方式如下
 
 ### 安装依赖
 
