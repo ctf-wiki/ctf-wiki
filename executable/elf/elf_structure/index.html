@@ -3051,8 +3051,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#relocation-sections" title="Relocation Sections" class="md-nav__link">
-    Relocation Sections
+  <a href="#relocation-related-sections" title="Relocation Related Sections" class="md-nav__link">
+    Relocation Related Sections
   </a>
   
     <nav class="md-nav">
@@ -3742,8 +3742,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#relocation-sections" title="Relocation Sections" class="md-nav__link">
-    Relocation Sections
+  <a href="#relocation-related-sections" title="Relocation Related Sections" class="md-nav__link">
+    Relocation Related Sections
   </a>
   
     <nav class="md-nav">
@@ -5000,6 +5000,8 @@
 <p>该节区与 <code>.strtab</code> 的存储结构类似，不过该节区存储的是节区名的字符串。</p>
 <h3 id="symtab-symbol-table">.symtab: Symbol Table<a class="headerlink" href="#symtab-symbol-table" title="Permanent link">&para;</a></h3>
 <h4 id="_12">概述<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h4>
+<p>每个目标文件都会有一个符号表，熟悉编译原理的就会知道，在编译程序时，必须有相应的结构来管理程序中的符号以便于对函数和变量进行重定位。</p>
+<p>此外，链接本质就是把多个不同的目标文件相互“粘”在一起，实际上，目标文件相互粘合是目标文件之间对地址的引用，即函数和变量的地址的相互引用。而在粘合的过程中，符号就是其中的粘合剂。</p>
 <p>目标文件中的符号表包含了<strong>一些通用的符号</strong>，这部分信息在进行了 <code>strip</code> 操作后就会消失。包括</p>
 <ul>
 <li>变量名</li>
@@ -5047,7 +5049,7 @@
 </tr>
 <tr>
 <td>st_shndx</td>
-<td>每个符号表项都会和某个节区有所关系。此成员给出相关的节区头部表索引。某些索引具有特殊含义。</td>
+<td>如果符号定义在该文件中，那么该成员为符号所在节在节区头部表中的下标；如果符号不在本目标文件中国，或者对于某些特殊的符号，该成员具有一些特殊含义。</td>
 </tr>
 </tbody>
 </table>
@@ -5174,7 +5176,7 @@
 <tr>
 <td>STB_GLOBAL</td>
 <td>1</td>
-<td>表明该符号为全局符号，对所有将被组合在一起的目标文件都是可见的。一个文件中对某个全局符号的定义将满足另一个文件对相同全局符号的未定义引用。</td>
+<td>表明该符号为全局符号，对所有将被组合在一起的目标文件都是可见的。一个文件中对某个全局符号的定义将满足另一个文件对相同全局符号的未定义引用。我们称初始化非零变量的全局符号为强符号，只能定义一次。</td>
 </tr>
 <tr>
 <td>STB_WEAK</td>
@@ -5543,8 +5545,9 @@ extern Elf32_Dyn_DYNAMIC[];
 <h5 id="_17">符号版本<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h5>
 <p>动态符号与指向它的 Elf_Verdef 保存在 .gnu.version 段中，其中，由 Elf_Verneed 结构体构成的数组的每个元素对应动态符号表的一项。其实，这个结构体就只有一个域：那就是一个16位的整数，表示 gnu.verion_r 段中的下标。</p>
 <p>在这样的情况下，动态链接器使用 Elf_Rel 结构体成员 r_info 中的下标同时作为 .dynsym 段和 gnu.version 段的下标。这样就可以一一对应到每一个符号到底是那个版本的了。</p>
-<h3 id="relocation-sections">Relocation Sections<a class="headerlink" href="#relocation-sections" title="Permanent link">&para;</a></h3>
-<p>重定位其实就是将符号指向恰当的位置，确保程序正常执行。例如，当程序调用了一个函数时，相关的调用指令必须把控制流交给适当的目标执行地址。</p>
+<h3 id="relocation-related-sections">Relocation Related Sections<a class="headerlink" href="#relocation-related-sections" title="Permanent link">&para;</a></h3>
+<p>链接器在处理目标文件时，需要对目标文件中的某些位置进行重定位，即将符号指向恰当的位置，确保程序正常执行。例如，当程序调用了一个函数时，相关的调用指令必须把控制流交给适当的目标执行地址。</p>
+<p>在 ELF 文件中，对于每一个需要重定位的 ELF 节都有对应的重定位表，比如说 .text 节如果需要重定位，那么其对应的重定位表为 .rel.text。</p>
 <p>举个例子，当一个程序导入某个函数时，.dynstr 就会包含对应函数名称的字符串，.dynsym 中就会包含一个具有相应名称的动态字符串表的符号（Elf_Sym），在 rel.dyn 中就会包含一个指向这个符号的的重定位表项。</p>
 <h4 id="reladyn-relaplt">.rel(a).dyn &amp; .rel(a).plt<a class="headerlink" href="#reladyn-relaplt" title="Permanent link">&para;</a></h4>
 <p>.rel.dyn 包含了动态链接的二进制文件中需要重定位的变量的信息，这些信息在加载的时候必须完全确定。而 .rel.plt 包含了需要重定位的函数的信息。这两类重定位节都使用如下的结构</p>
@@ -5730,6 +5733,7 @@ typedef struct {
 <li><strong>.plt</strong>，与常见导入的函数有关，如 read 等函数。</li>
 <li><strong>.plt.got</strong>，与动态链接有关系。</li>
 </ul>
+<p>在动态链接下，程序模块之间包含了大量的函数引用，程序开始执行前，动态链接会耗费不少时间用于解决模块之间的函数引用的符号查找以及重定位。但是，在一个程序运行过程中，可能很多函数在程序执行完时都不会用到，因此一开始就把所有函数都链接好是一种浪费，所以 ELF 采用了一种延迟绑定的做法，其基本思想是函数第一次被用到时才进行绑定（符号查找，重定位等），如果没有用则不进行绑定。所以程序开始执行前，模块间的函数调用都没有进行绑定，而是需要用到时才由动态链接器负责绑定。</p>
 <p>链接编辑器不能够解析执行流转换（比如程序调用），即从一个可执行文件或者共享目标文件到另一个文件。链接器安排程序将控制权交给过程链接表中的表项。在 Intel 架构中，过程链接表存在于共享代码段中，但是他们会使用在 GOT 表中的数据。动态链接器会决定目标的绝对地址，并且会修改相应的 GOT 表中的内存镜像。因此，动态链接器可以在不违背位置独立以及程序代码段兼容的情况下，重定向 PLT 项。可执行文件和共享目标文件都有独立的 PLT 表。</p>
 <p>绝对地址的过程链接表如下</p>
 <div class="codehilite"><pre><span></span>.PLT0:pushl got_plus_4
@@ -5771,6 +5775,8 @@ typedef struct {
 <li>当动态链接器接收到控制权后，他将会进行出栈操作，查看重定位表项，找到对应的符号的值，将 name1 的地址存储在全局偏移表项中，然后将控制权交给目的地址。</li>
 <li>过程链接表执行之后，程序的控制权将会直接交给 name1 函数，而且此后再也不会调用动态链接器来解析这个函数。也就是说，在 .PLT1 处的 jmp 指令将会直接跳转到 name1 处，而不是再次执行 pushl 指令。</li>
 </ol>
+<p>总体流程如下图所示，蓝线表示首次执行的流程图，红线表示第二次以后调用的流程图：</p>
+<p><img alt="" src="../../../executable/elf/figure/lazy-plt.png" /></p>
 <p>LD_BIND_NOW 环境变量可以改变动态链接器的行为。如果它的值非空的话，动态链接器在将控制权交给程序之前会执行 PLT 表项。也就是说，动态链接器在进程初始化过程中执行类型为 R_3862_JMP_SLOT 的重定位表项。否则的话，动态链接表会对过程链接表项进行延迟绑定，直到第一次执行对应的表项时，才会今次那个符号解析以及重定位。</p>
 <p>注意</p>
 <blockquote>
@@ -5811,6 +5817,7 @@ typedef struct {
 <h2 id="_20">参考文献<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://blogs.oracle.com/ali/gnu-hash-elf-sections">https://blogs.oracle.com/ali/gnu-hash-elf-sections</a></li>
+<li><a href="https://bbs.pediy.com/thread-204642.htm">https://bbs.pediy.com/thread-204642.htm</a></li>
 </ul>
                 
                   
