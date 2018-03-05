@@ -107,6 +107,7 @@ final_hash = interim_salt + interim_hash
 5. `interim_salt`和`interim_hash`的长度均为64byte。
 
 仔细观察一下`interim_salt`和`interim_hash`的计算方法，可以发现它是可逆的。
+
 $$
 interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
 $$
@@ -153,7 +154,7 @@ def main():
             ans_array.extend(buf)
         if buf == b'!':
             break
-    
+
     password_hash_base64 = ans_array[ans_array.find(b"b'") + 2: ans_array.find(b"'\n")]
     password_hash = b64decode(password_hash_base64)
     print('password:', password_hash)
@@ -176,7 +177,7 @@ def main():
     print(in_hash[-20:])
     io.interactive()
 main()
-    
+
 ```
 
 #### 原hash算法
@@ -294,7 +295,7 @@ Please wait while we generate your hash...
             interim_hash = xor(interim_hash, hash_rounds[i](interim_salt))
             '''
             interim_hash = xor(
-                interim_hash, 
+                interim_hash,
                 hash_rounds[i](
                     xor(interim_salt, hash_rounds[-1-i](interim_hash))
                 )
