@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 我们利用如下命令对齐进行编译
 
 ```shell
-➜  stack-example gcc -m32 -fno-stack-protector stack_example.c -o stack_example
+➜  stack-example gcc -m32 -fno-stack-protector -no-pie stack_example.c -o stack_example 
 stack_example.c: In function ‘vulnerable’:
 stack_example.c:6:3: warning: implicit declaration of function ‘gets’ [-Wimplicit-function-declaration]
    gets(s);
@@ -45,7 +45,7 @@ stack_example.c:(.text+0x27): 警告： the `gets' function is dangerous and sho
 
 > 历史上，**莫里斯蠕虫**第一种蠕虫病毒就利用了gets这个危险函数实现了栈溢出。
 
-此外，`-m32` 指的是生成32位程序； `-fno-stack-protector` 指的是不开启堆栈溢出保护，即不生成canary。此外，该程序并没有开启ASLR保护。这是为了更加方便地介绍栈溢出的基本利用方式。之后，我们利用IDA来反编译一下二进制程序并查看vulnerable函数 。可以看到
+此外，`-m32` 指的是生成32位程序； `-fno-stack-protector` 指的是不开启堆栈溢出保护，即不生成canary。此外，该程序并没有开启ASLR保护（Linux下对应PIE），这是为了更加方便地介绍栈溢出的基本利用方式。之后，我们利用IDA来反编译一下二进制程序并查看vulnerable函数 。可以看到
 
 ```C
 int vulnerable()
