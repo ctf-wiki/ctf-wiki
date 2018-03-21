@@ -45,7 +45,8 @@ stack_example.c:(.text+0x27): 警告： the `gets' function is dangerous and sho
 
 > 历史上，**莫里斯蠕虫**第一种蠕虫病毒就利用了gets这个危险函数实现了栈溢出。
 
-此外，`-m32` 指的是生成32位程序； `-fno-stack-protector` 指的是不开启堆栈溢出保护，即不生成canary。此外，为了更加方便地介绍栈溢出的基本利用方式，这里还需要关闭PIE保护，避免加载基址被打乱。不同gcc版本对于PIE的默认配置不同，我们可以使用命令`gcc -v`查看gcc默认的开关情况。如果含有`--enable-default-pie`参数则代表PIE默认已开启，需要在编译指令中添加参数`-no-pie`。可以使用checksec检查编译出的文件：
+gcc编译指令中，`-m32` 指的是生成32位程序； `-fno-stack-protector` 指的是不开启堆栈溢出保护，即不生成canary。
+此外，为了更加方便地介绍栈溢出的基本利用方式，这里还需要关闭PIE（Position Independent Executable），避免加载基址被打乱。不同gcc版本对于PIE的默认配置不同，我们可以使用命令`gcc -v`查看gcc默认的开关情况。如果含有`--enable-default-pie`参数则代表PIE默认已开启，需要在编译指令中添加参数`-no-pie`。可以使用checksec检查编译出的文件：
 ```
 ➜  stack-example checksec stack_example
     Arch:     i386-32-little
@@ -54,6 +55,8 @@ stack_example.c:(.text+0x27): 警告： the `gets' function is dangerous and sho
     NX:       NX enabled
     PIE:      No PIE (0x8048000)
 ```
+> 提到编译时的PIE保护，Linux平台下还有地址空间分布随机化（ASLR）的机制。简单来说即使可执行文件开启了PIE保护，还需要系统开启ASLR才会真正打乱基址，否则程序运行时依旧会在加载一个固定的基址上（不过和No PIE时基址不同）。我们可以通过修改`/proc/sys/kernel/randomize_va_space`来控制ASLR启动与否（使用`echo 0 > /proc/sys/kernel/randomize_va_space`关闭Linux系统的ASLR，0替换为1或2则为开启）。为了降低后续教程复杂度，我们选择忽略ASLR的状态，直接在编译时关闭PIE。当然读者也可以尝试ASLR、PIE开关的不同组合，配合IDA及其动态调试功能观察程序地址变化情况（在ASLR关闭、PIE开启时也可以攻击成功）。
+
 确认栈溢出和PIE保护关闭后，我们利用IDA来反编译一下二进制程序并查看vulnerable函数 。可以看到
 
 ```C
@@ -207,3 +210,4 @@ $
 
 http://bobao.360.cn/learning/detail/3694.html
 
+https://www.cnblogs.com/rec0rd/p/7646857.html
