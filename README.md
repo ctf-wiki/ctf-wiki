@@ -7,9 +7,54 @@
 
 欢迎来到 **CTF Wiki**。
 
-**CTF**（Capture The Flag，夺旗赛）起源于 1996 年 DEFCON 全球黑客大会，是网络安全技术人员之间的竞技比赛。
+**CTF**（Capture The Flag，夺旗赛）起源于 1996 年 **DEFCON** 全球黑客大会，是网络安全爱好者之间的竞技游戏。
 
-**CTF Wiki** 是一个自由的站点，主要包含了 CTF 中的**基础知识、常见题型、解题思路以及常用工具等**，希望可以帮助你更快地了解 CTF 竞赛以及网络安全相关知识。
+**CTF** 竞赛涉及众多领域，内容繁杂。目前，安全技术发展地越来越快，**CTF** 题目的难度越来越高，初学者需要面对的门槛因此也越来越高。而网上资料大都零散琐碎，初学者往往并不知道该如何系统性地学习 **CTF** 相关领域知识，常常需要花费大量时间，苦不堪言。
+
+为了使得热爱 **CTF** 的小伙伴们更好地入门 **CTF**，2016 年 10 月份，**CTF Wiki** 在 Github 有了第一次 commit。随着内容不断完善，**CTF Wiki** 受到了越来越多安全爱好者的喜爱，也渐渐有素未谋面的小伙伴们参与其中。 
+
+围绕 **CTF** 近几年赛题，作为一个自由的站点，**CTF Wiki** 对 **CTF** 中的各个方向知识和技术进行介绍，以便于初学者更好地学习 **CTF** 相关的知识。
+
+目前，**CTF Wiki** 主要包含 **CTF** 各大方向的基础知识。
+
+当然，**CTF Wiki** 基于 **CTF**，却不会局限于 **CTF**，在未来，**CTF Wiki** 会更专注于完善于以下内容：
+
+- CTF 竞赛中的进阶知识
+- CTF 竞赛中的优质题目
+- 安全研究中的工具介绍
+- 更多地与安全实战结合
+
+与此同时，CTF Wiki 源于社区，提倡知识自由，在未来也绝不会商业化，将始终保持独立自由的性质。
+
+## How to build？
+
+本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 [https://ctf-wiki.github.io/ctf-wiki/](https://ctf-wiki.github.io/ctf-wiki/)。当然也可以部署在本地，具体方式如下：
+
+### 安装依赖
+
+```shell
+# mkdocs
+pip install mkdocs
+# extensions
+pip install pymdown-extensions
+# theme
+pip install mkdocs-material
+```
+
+### 本地部署
+
+```shell
+# generate static file in site/
+mkdocs build
+# deploy at http://127.0.0.1:8000
+mkdocs serve
+```
+
+**mkdocs 本地部署的网站是动态更新的，即当你修改并保存 md 文件后，刷新页面就能随之动态更新。**
+
+## How to practice？
+
+Wiki 中的所有题目在对应分类的 example 文件夹下，如 `Pwn` 中栈溢出的题目都在这个目录下 https://github.com/ctf-wiki/ctf-wiki/tree/master/docs/pwn/stackoverflow/example 。
 
 ## 我能收获什么？
 
@@ -20,7 +65,7 @@
 
 在阅读 Wiki 之前，我们希望能给予你几点建议：
 
-* 至少掌握一门编程语言
+* 至少掌握一门编程语言，比如 Python
 * 阅读短文 [提问的智慧](http://www.jianshu.com/p/60dd8e9cd12f)
 * 善用 Google 搜索能帮助你更好地提升自己
 * 动手实践比什么都要管用
@@ -32,8 +77,6 @@
 
 ## 想要帮助 Wiki 更加完善？
 
-我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。 
+我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见 [CONTRIBUTING](.github/CONTRIBUTING.md)。 
 
-具体的贡献方式请参见 [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/blob/master/CONTRIBUTING.md)。 
-
-在你决定要贡献内容之前，请你务必看完这些内容。我们期待你的加入。
+**在你决定要贡献内容之前，请你务必看完这些内容**。我们期待着你的加入。
