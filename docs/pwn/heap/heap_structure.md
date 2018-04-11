@@ -464,7 +464,7 @@ typedef struct malloc_chunk *mfastbinptr;
 
 为了更加高效地利用 fast bin，glibc 采用单向链表对其中的每个 bin 进行组织，并且**每个 bin 采取 LIFO 策略**，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的 chunk 的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中相应的 bin 中是否有对应大小的空闲块，如果有的话，就会直接从这个 bin 中获取 chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
 
-默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为8字节开始一直到80字节，定义如下
+默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为16字节开始一直到80字节，定义如下
 
 ```c++
 #define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)
@@ -572,7 +572,9 @@ ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fas
 #define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)
 ```
 
-**malloc_consolidate函数可以将fastbin中所有的chunk释放并合并在一起。？？？**
+malloc_consolidate 函数可以将 fastbin 中所有的 chunk 拆卸，在拆卸的同时将检查该 chunk 是否能和相邻 chunk 合并，如果能够合并，就合并，然后将合并后的 chunk （或者不能和相邻 chunk 合并的原 chunk）“该放哪里放哪里”（注意 fastbin 中 chunk 的 size 范围是 16 - 80 字节，而 small bin 中 chunk 的 size 范围是 16 - 504 字节。即使合并后的 chunk 大小超过了 504 字节，我们还有 large bin 和 unsorted bin）。
+
+将freed chunk 从 fastbin 移到其他 bins，即使不发生合并也需要修改 inuse 标识。
 
 ```
 /*
@@ -585,7 +587,7 @@ ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fas
 
 #### small bin
 
-small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为：chunk_size =2 * SIZE_SZ *index，具体如下
+small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为：chunk_size = 2 * SIZE_SZ *index，具体如下
 
 | 下标   | SIZE_SZ=4（32位） | SIZE_SZ=8（64位） |
 | ---- | -------------- | -------------- |
@@ -596,7 +598,9 @@ small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为�
 | x    | 2\*4\*x        | 2\*8\*x        |
 | 63   | 504            | 1008           |
 
-small bins 中一共有 62 个链表，每个链表中存储的 chunk 大小都一致。比如对于 32 位系统来说，下标 2 对应的双向链表中存储的 chunk 大小为均为 16 字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，**small bins 中每个 bin 对应的链表采用 FIFO 的规则**，所以同一个链表中先被释放的 chunk 会先被分配出去。
+small bins 中一共有 62 个循环双向链表，每个链表中存储的 chunk 大小都一致。比如对于 32 位系统来说，下标 2 对应的双向链表中存储的 chunk 大小为均为 16 字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，**small bins 中每个 bin 对应的链表采用 FIFO 的规则**，所以同一个链表中先被释放的 chunk 会先被分配出去。
+
+大家可能会产生疑惑：既然 small bins 和 fastbin 一样，都是每条链表中 chunk 大小一致，那么为什么不像 fastbin 一样也采用单链表结构呢？这里分析一下，当程序申请内存的时候，small bins 可以和 fastbin 一样采用 LIFO 规则，直接把链表头上的 chunk 拆卸下来交给程序就行了，没有必要到中间去拆卸，这是没错的。但是区别在于前面说的 fastbin 范围的 chunk 的 inuse 始终被置为 1，因此它们不会和其它被释放的chunk合并；而 small bins 范围的 chunk 的 inuse 是实时更新的，所以当相邻 chunk 被 free 或者 fastbin 被 malloc_consolidate 的时候，small bins 中每一个 chunk 都有被合并然后从链表中拆卸下来的可能，所以要用双向链表结构。
 
 small bin相关的宏如下
 
@@ -617,7 +621,7 @@ small bin相关的宏如下
      SMALLBIN_CORRECTION)
 ```
 
-**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到small bin中去的。
+**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin 中去的，例如 fastbin 被 malloc_consolidate 的时候，如果一个 16 字节的 chunk 恰好没有能和相邻 chunk 合并，或者两个相邻的 16 字节的 chunk 合并为 32 字节的一个 chunk，就需要放到 small bin 中相应位置。
 
 #### large bin
 
@@ -714,9 +718,9 @@ unsorted bin 可以视为空闲 chunk 回归其所属 bin 之前的缓冲区。
 #define unsorted_chunks(M) (bin_at(M, 1))
 ```
 
-unsorted bin 处于我们之前所说的bin数组下标1处。故而 unsorted bin只有一个链表。unsorted bin 中的空闲 chunk 处于乱序状态，主要有两个来源
+unsorted bin 处于我们之前所说的 bin 数组下标 1 处。故而 unsorted bin 只有一个链表。unsorted bin 中的空闲 chunk 处于乱序状态，主要有两个来源
 
-- 当一个较大的 chunk 被分割成两半后，如果剩下的部分大于MINSIZE，就会被放到 unsorted bin 中。
+- 当一个较大的 chunk 被分割成两半后，如果剩下的部分大于 MINSIZE，就会被放到 unsorted bin 中。
 - 释放一个不属于 fast bin 的 chunk，并且该 chunk 不和 top chunk 紧邻时，该 chunk 会被首先放到 unsorted bin 中。关于 top chunk 的解释，请参考下面的介绍。
 
 此外，Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO 。
@@ -767,7 +771,7 @@ glibc 中对于 top chunk 的描述如下
 
 ### last remainder
 
-在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
+在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin 也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
 
 ## 宏观结构
 
@@ -794,7 +798,7 @@ For 64 bit systems:
 
 #### 区别
 
-与 thread 不同的是，main_arena 并不在申请的 heap 中，而是一个全局变量，在 libc.so 的数据段。
+与 thread arena 不同的是，main_arena 并不在申请的 heap 中，而是一个全局变量，在 libc.so 的数据段。
 
 ### heap_info
 
