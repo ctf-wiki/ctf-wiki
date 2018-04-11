@@ -90,7 +90,7 @@ struct malloc_chunk {
 -   **prev_size**,  如果该 chunk 的**物理相邻的前一地址chunk（两个指针的地址差值为前一chunk大小）**是空闲的话，那该字段记录的是前一个 chunk 的大小(包括 chunk 头)。否则，该字段可以用来存储物理相邻的前一个chunk 的数据。**这里的前一 chunk 指的是较低地址的 chunk **。
 -   **size** ，该 chunk 的大小，大小必须是 2 * SIZE_SZ 的整数倍。如果申请的内存大小不是 2 * SIZE_SZ 的整数倍，会被转换满足大小的最小的 2 * SIZE_SZ 的倍数。32 位系统中，SIZE_SZ 是 4；64 位系统中，SIZE_SZ 是 8。 该字段的低三个比特位对 chunk 的大小没有影响，它们从高到低分别表示
     -   NON_MAIN_ARENA，记录当前 chunk 是否不属于主线程，1表示不属于，0表示属于。
-    -   IS_MAPPED，记录当前 chunk 是否是由 mmap 分配的。 
+    -   IS_MAPPED，记录当前 chunk 是否是由 mmap 分配的。
     -   PREV_INUSE，记录前一个 chunk 块是否被分配。一般来说，堆中第一个被分配的内存块的 size 字段的P位都会被设置为1，以便于防止访问前面的非法内存。当一个 chunk 的 size 的 P 位为 0 时，我们能通过 prev_size 字段来获取上一个 chunk 的大小以及地址。这也方便进行空闲chunk之间的合并。
 -   **fd，bk**。 chunk 处于分配状态时，从 fd 字段开始是用户的数据。chunk 空闲时，会被添加到对应的空闲管理链表中，其字段的含义如下
     -   fd 指向下一个（非物理相邻）空闲的 chunk
@@ -101,7 +101,7 @@ struct malloc_chunk {
     -   bk_nextsize 指向后一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。
     -   一般空闲的 large chunk 在 fd 的遍历顺序中，按照由大到小的顺序排列。**这样做可以避免在寻找合适chunk 时挨个遍历。**
 
-一个已经分配的 chunk 的样子如下。**我们称前两个字段称为 chunk header，后面的部分称为user data。每次 malloc 申请得到的内存指针，其实指向user data的起始处。** 
+一个已经分配的 chunk 的样子如下。**我们称前两个字段称为 chunk header，后面的部分称为user data。每次 malloc 申请得到的内存指针，其实指向user data的起始处。**
 
 当一个 chunk 处于使用状态时，它的下一个 chunk 的 prev_size 域无效，所以下一个 chunk 的该部分也可以被当前chunk使用。**这就是chunk中的空间复用。**
 
@@ -324,19 +324,6 @@ mem指向用户得到的内存的起始位置。
 #define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))
 ```
 
-**获取前一个chunk的信息**
-
-```c++
-/* Size of the chunk below P.  Only valid if prev_inuse (P).  */
-#define prev_size(p) ((p)->mchunk_prev_size)
-
-/* Set the size of the chunk below P.  Only valid if prev_inuse (P).  */
-#define set_prev_size(p, sz) ((p)->mchunk_prev_size = (sz))
-
-/* Ptr to previous physical malloc_chunk.  Only valid if prev_inuse (P).  */
-#define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))
-```
-
 **当前chunk使用状态相关操作**
 
 ```c++
@@ -447,7 +434,7 @@ typedef struct malloc_chunk *mbinptr;
 
 #### fast bin
 
-大多数程序经常会申请以及释放一些比较小的内存块。如果将一些较小的 chunk 释放之后发现存在与之相邻的空闲的 chunk 并将它们进行合并，那么当下一次再次申请相应大小的 chunk 时，就需要对 chunk 进行分割，这样就大大降低了堆的利用效率。**因为我们把大部分时间花在了合并、分割以及中间检查的过程中。**因此，ptmalloc 中专门设计了 fast bin，对应的变量就是 malloc state 中的 fastbinsY 
+大多数程序经常会申请以及释放一些比较小的内存块。如果将一些较小的 chunk 释放之后发现存在与之相邻的空闲的 chunk 并将它们进行合并，那么当下一次再次申请相应大小的 chunk 时，就需要对 chunk 进行分割，这样就大大降低了堆的利用效率。**因为我们把大部分时间花在了合并、分割以及中间检查的过程中。**因此，ptmalloc 中专门设计了 fast bin，对应的变量就是 malloc state 中的 fastbinsY
 
 ```c++
 /*
@@ -485,7 +472,7 @@ typedef struct malloc_chunk *mfastbinptr;
 #ifndef DEFAULT_MXFAST
 #define DEFAULT_MXFAST (64 * SIZE_SZ / 4)
 #endif
-  
+
 /* The maximum fastbin request size we support */
 #define MAX_FAST_SIZE (80 * SIZE_SZ / 4)
 
@@ -585,7 +572,7 @@ ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fas
 #define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)
 ```
 
-**malloc_consolidate函数可以将fastbin中所有的chunk释放并合并在一起。？？？** 
+**malloc_consolidate函数可以将fastbin中所有的chunk释放并合并在一起。？？？**
 
 ```
 /*
