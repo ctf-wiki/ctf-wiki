@@ -1,16 +1,15 @@
-# Chunk Extend/Shrink
+# Chunk Extend and Overlapping
 
 ## 介绍
-chunk extend/shrink 是堆漏洞的一种常见的利用手法，与其他堆漏洞的利用相同，chunk extend/shrink 攻击同样需要有可以控制 malloc_chunk 的漏洞。这种利用方法需要以下的先决条件：
+chunk extend是堆漏洞的一种常见利用手法，通过extend可以实现chunk overlapping的效果。这种利用方法需要以下的时机和条件：
 
 * 程序中存在基于堆的漏洞
-* 漏洞可以使得 malloc_chunk 能够被攻击者控制
+* 漏洞可以控制 chunk header 中的数据
 
 ## 原理
-该技术依赖于 ptmalloc(aka glibc) 获取 malloc_chunk 的各种属性的宏。
+chunk extend技术能够产生的原因在于ptmalloc在对堆chunk进行操作时使用的各种宏。
 
-在 ptmalloc 中，获取 chunk 块大小的操作如下
-
+在ptmalloc中，获取 chunk 块大小的操作如下
 ```
 /* Get size, ignoring use bits */
 #define chunksize(p) (chunksize_nomask(p) & ~(SIZE_BITS))
@@ -21,7 +20,6 @@ chunk extend/shrink 是堆漏洞的一种常见的利用手法，与其他堆漏
 一种是直接获取 chunk 的大小，不忽略掩码部分，另外一种是忽略掩码部分。
 
 在 ptmalloc 中，获取下一 chunk 块地址的操作如下
-
 ```
 /* Ptr to next physical malloc_chunk. */
 #define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))
@@ -29,7 +27,6 @@ chunk extend/shrink 是堆漏洞的一种常见的利用手法，与其他堆漏
 即使用当前块指针加上当前块大小。
 
 在 ptmalloc 中，获取前一个 chunk 信息的操作如下
-
 ```
 /* Size of the chunk below P.  Only valid if prev_inuse (P).  */
 #define prev_size(p) ((p)->mchunk_prev_size)
@@ -46,11 +43,13 @@ chunk extend/shrink 是堆漏洞的一种常见的利用手法，与其他堆漏
 ```
 即查看下一 chunk 的 prev_inuse 域，而下一块地址又如我们前面所述是根据当前 chunk 的 size 计算得出的。
 
-更多的操作详见 `堆相关数据结构` 一节。简而言之，chunk extend/shrink 利用就是通过对 size/pre_size 域进行控制来实现的“放缩”利用。
+更多的操作详见 `堆相关数据结构` 一节。
 
-一般来说，我们很少见到进行 chunk shrink 的操作。所以这里主要介绍 chunk extend 的利用。
+通过上面几个宏可以看出，ptmalloc通过chunk header的数据判断chunk的使用情况和对chunk的前后块进行定位。简而言之，chunk extend就是通过控制size和pre_size域来实现跨越块操作从而导致overlapping的。
 
-## 基本示例1
+与chunk extend类似的还有一种称为chunk shrink的操作。这里只介绍chunk extend的利用。
+
+## 基本示例1：对inuse的fastbin进行extend
 简单来说，该利用的效果是通过更改第一个块的大小来控制第二个块的内容。
 **注意，我们的示例都是在64位的程序。如果想在32位下进行测试，可以把8字节偏移改为4字节**。
 ```
@@ -102,7 +101,7 @@ mov    QWORD PTR [rbp-0x8], rax
 rax = 0x602010
 ```
 
-## 基本示例2
+## 基本示例2：对inuse的smallbin进行extend
 通过之前深入理解堆的实现部分的内容，我们得知处于 fastbin 范围的 chunk 释放后会被置入 fastbin 链表中，而不处于这个范围的 chunk 被释放后会被置于unsorted bin链表中。
 以下这个示例中，我们使用 0x80 这个大小来分配堆（作为对比，fastbin 默认的最大的 chunk 可使用范围是0x70）
 ```
@@ -165,7 +164,7 @@ int main()
      rax : 0x0000000000602010
 ```
 
-## 基本示例3
+## 基本示例3：对free的smallbin进行extend
 示例3是在示例2的基础上进行的，这次我们先释放 chunk1，然后再修改处于 unsorted bin 中的 chunk1 的size域。
 ```
 int main()
@@ -233,7 +232,48 @@ int main()
 
 ## Chunk Extend/Shrink 可以做什么  
 
-一般来说，这种技术并不能直接控制程序的执行流程，但是可以导致 chunk overlapping，所以我们可以完整的控制这个堆块 chunk 中的内容。如果 chunk 存在字符串指针、函数指针等，就可以利用这些指针来进行信息泄漏和控制执行流程。如果不存在类似的域也可以通过控制 chunk header 中的数据来实现 fastbin attack 等利用。
+一般来说，这种技术并不能直接控制程序的执行流程，但是可以控制chunk中的内容。如果 chunk 存在字符串指针、函数指针等，就可以利用这些指针来进行信息泄漏和控制执行流程。
+
+此外通过extend可以实现chunk overlapping，通过overlapping可以控制chunk的fd/bk指针从而可以实现 fastbin attack 等利用。
+
+## 基本示例4：通过extend后向overlapping
+这里展示通过extend进行后向overlapping，这也是在CTF中最常出现的情况，通过overlapping可以实现其它的一些利用。
+```
+int main()
+{
+    void *ptr,*ptr1;
+    
+    ptr=malloc(0x10);//分配第1个 0x80 的chunk1
+    malloc(0x10); //分配第2个 0x10 的chunk2
+    malloc(0x10); //分配第3个 0x10 的chunk3
+    malloc(0x10); //分配第4个 0x10 的chunk4    
+    *(int *)((int)ptr-0x8)=0x61;
+    free(ptr);
+    ptr1=malloc(0x50);
+}
+```
+在malloc(0x50)对extend区域重新占位后，其中0x10的fastbin块依然可以正常的分配和释放，此时已经构成overlapping，通过对overlapping的进行操作可以实现fastbin attack。
+
+## 基本示例5：通过extend前向overlapping
+这里展示通过修改pre_inuse域和pre_size域实现合并前面的块
+```
+int main(void)
+{
+	void *ptr1,*ptr2,*ptr3,*ptr4;
+	ptr1=malloc(128);//smallbin1
+	ptr2=malloc(0x10);//fastbin1
+	ptr3=malloc(0x10);//fastbin2
+	ptr4=malloc(128);//smallbin2
+	malloc(0x10);//防止与top合并
+	free(ptr1);
+	*(int *)((long long)ptr4-0x8)=0x90;//修改pre_inuse域
+	*(int *)((long long)ptr4-0x10)=0xd0;//修改pre_size域
+	free(ptr4);//unlink进行前向extend
+	malloc(0x150);//占位块
+	
+}
+```
+前向extend利用了smallbin的unlink机制，通过修改pre_size域可以跨越多个chunk进行合并实现overlapping。
 
 ## HITCON Trainging lab13
 
