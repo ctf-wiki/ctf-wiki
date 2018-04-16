@@ -127,7 +127,7 @@ size_t fread ( void *buffer, size_t size, size_t count, FILE *stream) ;
 
 * 返回值：返回读取到数据缓冲区中的记录个数
 
-dread的代码位于/libio/iofread.c中，函数名为_IO_fread，但真正的功能实现在子函数_IO_sgetn中。
+fread的代码位于/libio/iofread.c中，函数名为_IO_fread，但真正的功能实现在子函数_IO_sgetn中。
 
 ```
 _IO_size_t
