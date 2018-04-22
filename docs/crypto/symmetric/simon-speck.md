@@ -46,7 +46,7 @@ Simon and Speck Block Ciphers
 https://eprint.iacr.org/2013/404.pdf Simon_96_64, ECB, key="SECCON{xxxx}", plain=0x6d564d37426e6e71, cipher=0xbb5d12ba422834b5
 ```
 
-从名字中可以看出秘钥是 96 比特（12 byte），明文是 48 比特（6字节），而秘钥已经给出了 8 个字节，只剩下四个字节未知。那我们可以使用暴力破解的方法。这里从 https://github.com/bozhu/NSA-ciphers/blob/master/simon.py 获取了一份 simon 加密算法。
+从名字中可以看出秘钥是 96 比特（12 byte），明文是 64 比特（8字节），而秘钥已经给出了 8 个字节，只剩下四个字节未知。那我们可以使用暴力破解的方法。这里从 https://github.com/bozhu/NSA-ciphers/blob/master/simon.py 获取了一份 simon 加密算法。
 
 具体如下
 

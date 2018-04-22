@@ -127,6 +127,7 @@ H1sTaDs_B40aDcadt_attaCk_e_are_same_and_smA9l
 ### 题目
 
 - 2017 WHCTF OldDriver
+- 2018 N1CTF easy_fs
 
 ## Broadcast Attack with Linear Padding
 
@@ -220,7 +221,7 @@ $$
 
 有兴趣的可以进一步阅读 [A New Related Message Attack on RSA](https://www.iacr.org/archive/pkc2005/33860001/33860001.pdf) 以及 [paper](https://www.cs.unc.edu/~reiter/papers/1996/Eurocrypt.pdf) 这里暂不做过多的讲解。
 
-### 例子
+### SCTF RSA3
 
 这里我们以 SCTF RSA3 中的 level3 为例进行介绍。首先，跟踪 TCP 流可以知道，加密方式是将明文加上用户的 user id 进行加密，而且还存在多组。这里我们选择第 0 组和第 9 组，他们的模数一样，解密脚本如下
 
@@ -300,6 +301,7 @@ F4An8LIn_rElT3r_rELa53d_Me33Age_aTtaCk_e_I2_s7aLL
 ### 题目
 
 - hitcon 2014 rsaha
+- N1CTF 2018 rsa_padding
 
 ## Coppersmith’s short-pad attack
 
