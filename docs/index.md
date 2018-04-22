@@ -39,6 +39,7 @@
   Array.prototype.forEach.call(buttons, function(button) {
     button.addEventListener("click", function() {
       document.body.dataset.mdColorPrimary = this.dataset.mdColorPrimary;
+      localStorage.setItem("data-md-color-primary",this.dataset.mdColorPrimary);
     })
   })
 </script>
@@ -71,6 +72,7 @@
   Array.prototype.forEach.call(buttons, function(button) {
     button.addEventListener("click", function() {
       document.body.dataset.mdColorAccent = this.dataset.mdColorAccent;
+      localStorage.setItem("data-md-color-accent",this.dataset.mdColorAccent);
     })
   })
 </script>
