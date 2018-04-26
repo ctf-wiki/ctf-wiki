@@ -621,7 +621,10 @@ small bin相关的宏如下
      SMALLBIN_CORRECTION)
 ```
 
-**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin 中去的，例如 fastbin 被 malloc_consolidate 的时候，如果一个 16 字节的 chunk 恰好没有能和相邻 chunk 合并，或者两个相邻的 16 字节的 chunk 合并为 32 字节的一个 chunk，就需要放到 small bin 中相应位置。
+**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin 中的，例如当执行 malloc_consolidate 函数时，会对 fastbin 中的 chunk 从小到大依次合并，那么我们可以举两个例子
+
+1. 如果一个 16 字节大小的 chunk 恰好无法与相邻的 chunk 进行合并（前向与后向），那么该 chunk 就会被放到大小为 16 字节的 small bin 中。
+2. 两个相邻的 16 字节大小的 chunk 会被合并为一个 32 字节的 chunk，会被放到大小为 32 字节的 small bin 中。
 
 #### large bin
 
