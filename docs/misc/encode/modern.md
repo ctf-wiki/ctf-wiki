@@ -13,6 +13,6 @@
 -   堆叠式 / 行排式二维码：Code 16 k、Code 49、PDF417
 -   矩阵式二维码：QR CODE
 
-    ![](/misc/encode/img/qr1.jpg)
+    ![](/misc/encode/figure/qr1.jpg)
 
-    ![](/misc/encode/img/qr2.jpg)
+    ![](/misc/encode/figure/qr2.jpg)
