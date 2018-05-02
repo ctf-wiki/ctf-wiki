@@ -54,7 +54,9 @@ mkdocs serve
 
 ## How to practice？
 
-Wiki 中的所有题目在对应分类的 example 文件夹下，如 `Pwn` 中栈溢出的题目都在这个目录下 https://github.com/ctf-wiki/ctf-wiki/tree/master/docs/pwn/stackoverflow/example 。
+Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) 仓库中，请根据对应的分类自行寻找。
+
+注：目前仍有部分题目在该仓库下，正在迁移中。。。（misc，reverse，web）
 
 ## 我能收获什么？
 

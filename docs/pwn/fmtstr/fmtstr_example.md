@@ -88,7 +88,7 @@ Breakpoint 1, __printf (format=0x602830 "123456") at printf.c:28
 
 ```
 
-可以看到flag对应的栈上的偏移为5，除去对应的第一行为返回地址外，其偏移为4。此外，由于这是一个64位程序，所以前6个参数存在在对应的寄存器中，fmt字符串存储在RDI寄存器中，所以fmt字符串对应的地址的偏移为10。而fmt字符串中%order$s对应的order为fmt字符串后面的参数的顺序，所以我们只需要输入%9\$s即可得到flag的内容。当然，我们还有更简单的方法利用https://github.com/scwuaptx/Pwngdb中的fmtarg来判断某个参数的偏移。
+可以看到flag对应的栈上的偏移为5，除去对应的第一行为返回地址外，其偏移为4。此外，由于这是一个64位程序，所以前6个参数存在在对应的寄存器中，fmt字符串存储在RDI寄存器中，所以fmt字符串对应的地址的偏移为10。而fmt字符串中`%order$s`对应的order为fmt字符串后面的参数的顺序，所以我们只需要输入`%9$s`即可得到flag的内容。当然，我们还有更简单的方法利用https://github.com/scwuaptx/Pwngdb中的fmtarg来判断某个参数的偏移。
 
 ```shell
 gef➤  fmtarg 0x00007fffffffdb28
