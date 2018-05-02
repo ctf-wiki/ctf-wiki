@@ -324,6 +324,19 @@ mem指向用户得到的内存的起始位置。
 #define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))
 ```
 
+**获取前一个chunk的信息**
+
+```c++
+/* Size of the chunk below P.  Only valid if !prev_inuse (P).  */
+#define prev_size(p) ((p)->mchunk_prev_size)
+
+/* Set the size of the chunk below P.  Only valid if !prev_inuse (P).  */
+#define set_prev_size(p, sz) ((p)->mchunk_prev_size = (sz))
+
+/* Ptr to previous physical malloc_chunk.  Only valid if !prev_inuse (P).  */
+#define prev_chunk(p) ((mchunkptr) (((char *) (p)) - prev_size (p)))
+```
+
 **当前chunk使用状态相关操作**
 
 ```c++
@@ -464,7 +477,7 @@ typedef struct malloc_chunk *mfastbinptr;
 
 为了更加高效地利用 fast bin，glibc 采用单向链表对其中的每个 bin 进行组织，并且**每个 bin 采取 LIFO 策略**，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的 chunk 的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中相应的 bin 中是否有对应大小的空闲块，如果有的话，就会直接从这个 bin 中获取 chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
 
-默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为16字节开始一直到80字节，定义如下
+默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为 8 字节开始一直到 80 字节（注意这里说的是数据空间大小，也即除去 prev_size 和　size 字段部分的大小），定义如下
 
 ```c++
 #define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)
@@ -553,7 +566,7 @@ ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fas
     ((((unsigned int) (sz)) >> (SIZE_SZ == 8 ? 4 : 3)) - 2)
 ```
 
-**需要特别注意的是，fastbin 范围的 chunk 的 inuse 始终被置为 1。因此它们不会和其它被释放的chunk合并。**
+**需要特别注意的是，fastbin 范围的 chunk 的 inuse 始终被置为 1。因此它们不会和其它被释放的 chunk 合并。**
 
 但是当释放的 chunk 与该 chunk 相邻的空闲 chunk 合并后的大小大于FASTBIN_CONSOLIDATION_THRESHOLD时，内存碎片可能比较多了，我们就需要把 fast bins 中的chunk都进行合并，以减少内存碎片对系统的影响。
 
@@ -572,7 +585,7 @@ ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fas
 #define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)
 ```
 
-malloc_consolidate 函数可以将 fastbin 中所有的 chunk 拆卸，在拆卸的同时将检查该 chunk 是否能和相邻 chunk 合并，如果能够合并，就合并，然后将合并后的 chunk （或者不能和相邻 chunk 合并的原 chunk）“该放哪里放哪里”（注意 fastbin 中 chunk 的 size 范围是 16 - 80 字节，而 small bin 中 chunk 的 size 范围是 16 - 504 字节。即使合并后的 chunk 大小超过了 504 字节，我们还有 large bin 和 unsorted bin）。
+malloc_consolidate 函数可以将 fastbin 中所有的 chunk 拆卸，在拆卸的同时将检查该 chunk 是否能和相邻 chunk 合并，如果能够合并，就合并，然后将合并后的 chunk （或者不能和相邻 chunk 合并的原 chunk）“该放哪里放哪里”（如果和 top chunk 相邻，并入 top chunk，否则放入　unsorted bins）。
 
 将freed chunk 从 fastbin 移到其他 bins，即使不发生合并也需要修改 inuse 标识。
 
@@ -600,7 +613,7 @@ small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为�
 
 small bins 中一共有 62 个循环双向链表，每个链表中存储的 chunk 大小都一致。比如对于 32 位系统来说，下标 2 对应的双向链表中存储的 chunk 大小为均为 16 字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，**small bins 中每个 bin 对应的链表采用 FIFO 的规则**，所以同一个链表中先被释放的 chunk 会先被分配出去。
 
-大家可能会产生疑惑：既然 small bins 和 fastbin 一样，都是每条链表中 chunk 大小一致，那么为什么不像 fastbin 一样也采用单链表结构呢？这里分析一下，当程序申请内存的时候，small bins 可以和 fastbin 一样采用 LIFO 规则，直接把链表头上的 chunk 拆卸下来交给程序就行了，没有必要到中间去拆卸，这是没错的。但是区别在于前面说的 fastbin 范围的 chunk 的 inuse 始终被置为 1，因此它们不会和其它被释放的chunk合并；而 small bins 范围的 chunk 的 inuse 是实时更新的，所以当相邻 chunk 被 free 或者 fastbin 被 malloc_consolidate 的时候，small bins 中每一个 chunk 都有被合并然后从链表中拆卸下来的可能，所以要用双向链表结构。
+大家可能会产生疑惑：既然 small bins 和 fastbin 一样，都是每条链表中 chunk 大小一致，那么为什么不像 fastbin 一样也采用单链表结构呢？这里分析一下。当程序申请内存的时候，small bins 可以和 fastbin 一样采用 LIFO 规则，直接把链表头上的 chunk 拆卸下来交给程序就行了，没有必要到中间去拆卸，这是没错的。但是区别在于前面说的 fastbin 范围的 chunk 的 inuse 始终被置为 1，因此它们不会和其它被释放的chunk合并；而 small bins 范围的 chunk 的 inuse 是实时更新的，所以当相邻 chunk 被 free 或者 fastbin 被 malloc_consolidate 的时候，small bins 中每一个 chunk 都有被合并然后从链表中拆卸下来的可能，所以要用双向链表结构。
 
 small bin相关的宏如下
 
@@ -621,10 +634,7 @@ small bin相关的宏如下
      SMALLBIN_CORRECTION)
 ```
 
-**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin 中的，例如当执行 malloc_consolidate 函数时，会对 fastbin 中的 chunk 从小到大依次合并，那么我们可以举两个例子
-
-1. 如果一个 16 字节大小的 chunk 恰好无法与相邻的 chunk 进行合并（前向与后向），那么该 chunk 就会被放到大小为 16 字节的 small bin 中。
-2. 两个相邻的 16 字节大小的 chunk 会被合并为一个 32 字节的 chunk，会被放到大小为 32 字节的 small bin 中。
+**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin 中的。
 
 #### large bin
 
