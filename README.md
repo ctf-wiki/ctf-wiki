@@ -82,3 +82,6 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见 [CONTRIBUTING](.github/CONTRIBUTING.md)。 
 
 **在你决定要贡献内容之前，请你务必看完这些内容**。我们期待着你的加入。
+
+非常感谢一起完善 CTF Wiki 的小伙伴们
+<a href="graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890" />
