@@ -86,4 +86,4 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 
 非常感谢一起完善 CTF Wiki 的小伙伴们
 
-<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890" />
+<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890" /></a>
