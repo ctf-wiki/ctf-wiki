@@ -111,11 +111,11 @@ TAHCEIRPEHIESR
 
 将明文填入 5 行 7 列表（事先约定填充的行列数，如果明文不能填充完表格可以约定使用某个字母进行填充）
 
-![明文](/crypto/classical/figure/列移位加密-明文.png)
+![明文](/crypto/classical/figure/columnar-transposition-plaintext.png)
 
 密钥： `how are u`，按 `how are u` 在字母表中的出现的先后顺序进行编号，我们就有 a 为 1，e 为 2，h 为 3，o 为 4，r 为 5，u 为 6，w 为 7，所以先写出 a 列，其次 e 列，以此类推写出的结果便是密文：
 
-![秘钥](/crypto/classical/figure/列移位加密-秘钥.png)
+![密钥](/crypto/classical/figure/columnar-transposition-key.png)
 
 密文： `qoury inpho Tkool hbxva uwmtd cfseg erjez`
 

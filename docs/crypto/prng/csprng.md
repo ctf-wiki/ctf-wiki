@@ -6,7 +6,7 @@
 
 密码学的很多方面都需要随机数
 
--   秘钥生成
+-   密钥生成
 -   [nonces](https://en.wikipedia.org/wiki/Cryptographic_nonce)
 -   [one-time pads](https://en.wikipedia.org/wiki/One-time_pad)
 -   某些签名方案中的盐，如 [ECDSA](https://en.wikipedia.org/wiki/ECDSA)， [RSASSA-PSS](https://en.wikipedia.org/w/index.php?title=RSASSA-PSS&action=edit&redlink=1)
