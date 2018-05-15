@@ -3,7 +3,7 @@ typora-root-url: ../../../docs
 ---
 
 # Python沙盒
-所谓的 Python 沙盒，即以一定的方法模拟Python终端，实现用户对 Python 的使用。
+所谓的 Python 沙盒，即以一定的方法模拟 Python 终端，实现用户对 Python 的使用。
 
 # Python沙箱逃逸的一些方法
 我们通常所说的 Python 沙箱逃逸就是绕过模拟的 Python 终端，最终实现命令执行。
