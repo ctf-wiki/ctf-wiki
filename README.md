@@ -4,7 +4,6 @@
 [![Build Status](https://travis-ci.org/ctf-wiki/ctf-wiki.svg?branch=master)](https://travis-ci.org/ctf-wiki/ctf-wiki)
 [![Requirements Status](https://requires.io/github/ctf-wiki/ctf-wiki/requirements.svg?branch=master)](https://requires.io/github/ctf-wiki/ctf-wiki/requirements/?branch=master)
 [![BearyChat](https://img.shields.io/badge/bearychat-join_chat-green.svg)](https://ctf-wiki.bearychat.com)
-[![Backers on Open Collective](https://opencollective.com/ctf-wiki/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/ctf-wiki/sponsors/badge.svg)](#sponsors) 
 
 欢迎来到 **CTF Wiki**。
 
@@ -87,28 +86,4 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 非常感谢一起完善 CTF Wiki 的小伙伴们
 
 <a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" /></a>
-
-
-### Backers
-
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/ctf-wiki#backer)]
-
-<a href="https://opencollective.com/ctf-wiki#backers" target="_blank"><img src="https://opencollective.com/ctf-wiki/backers.svg?width=890"></a>
-
-
-### Sponsors
-
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/ctf-wiki#sponsor)]
-
-<a href="https://opencollective.com/ctf-wiki/sponsor/0/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/1/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/2/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/3/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/4/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/5/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/6/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/7/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/8/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/ctf-wiki/sponsor/9/website" target="_blank"><img src="https://opencollective.com/ctf-wiki/sponsor/9/avatar.svg"></a>
-
 
