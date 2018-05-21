@@ -622,7 +622,7 @@ sh.interactive()
     -   缺点
         -   **需要 3 个参数。**
 -   系统调用
-    -   系统调用号 11
+    -   系统调用号`__NR_execve`在IA-32中为11，x86-64为59
 
 ## 地址寻找小结
 
@@ -656,7 +656,7 @@ sh.interactive()
 
 下面是一些相应的方法
 
-#### DynELF
+#### `pwnlib.dynelf`
 
 前提是我们可以泄露任意地址的内容。
 
@@ -672,7 +672,7 @@ sh.interactive()
 ## Find all the libc's in the database that have the given names at the given addresses. 
 ./find function1 addr function2 addr
 ## Dump some useful offsets, given a libc ID. You can also provide your own names to dump.
-./Dump some useful offsets
+./dump __libc_start_main_ret system dup2
 ```
 
 去libc的数据库中找到对应的和已经出现的地址一样的libc，这时候很有可能是一样的。

