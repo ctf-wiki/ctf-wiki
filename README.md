@@ -9,7 +9,7 @@
 
 **CTF**（Capture The Flag，夺旗赛）起源于 1996 年 **DEFCON** 全球黑客大会，是网络安全爱好者之间的竞技游戏。
 
-**CTF** 竞赛涉及众多领域，内容繁杂。目前，安全技术发展地越来越快，**CTF** 题目的难度越来越高，初学者需要面对的门槛因此也越来越高。而网上资料大都零散琐碎，初学者往往并不知道该如何系统性地学习 **CTF** 相关领域知识，常常需要花费大量时间，苦不堪言。
+**CTF** 竞赛涉及众多领域，内容繁杂。目前，安全技术发展地越来越快，**CTF** 题目的难度越来越高，初学者需要面对的门槛因此也越来越高。而网上资料大都零散琐碎，初学者往往并不知道该如何系统性地学习 **CTF** 相关领域知识，常需要花费大量时间，苦不堪言。
 
 为了使得热爱 **CTF** 的小伙伴们更好地入门 **CTF**，2016 年 10 月份，**CTF Wiki** 在 Github 有了第一次 commit。随着内容不断完善，**CTF Wiki** 受到了越来越多安全爱好者的喜爱，也渐渐有素未谋面的小伙伴们参与其中。 
 
@@ -82,3 +82,8 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见 [CONTRIBUTING](.github/CONTRIBUTING.md)。 
 
 **在你决定要贡献内容之前，请你务必看完这些内容**。我们期待着你的加入。
+
+非常感谢一起完善 CTF Wiki 的小伙伴们
+
+<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" /></a>
+

@@ -94,7 +94,7 @@ A D F G X 的由来：
 密钥：crypto
 ```
 
-首先，对秘钥进行填充使其长度与明文长度一样。
+首先，对密钥进行填充使其长度与明文长度一样。
 
 | 明文 | c   | o   | m   | e   | g   | r   | e   | a   | t   | w   | a   | l   | l   |
 | ---- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -143,11 +143,11 @@ A D F G X 的由来：
 
 ### 工具
 
--   已知秘钥
+-   已知密钥
     - Python 的 pycipher 库
     - [在线解密 Vigenère cipher](http://planetcalc.com/2468/)
     - CAP4
--   未知秘钥
+-   未知密钥
     - [Vigenère Cipher Codebreaker](http://www.mygeocachingprofile.com/codebreaker.vigenerecipher.aspx)
     - [Vigenere Solver](https://www.guballa.de/vigenere-solver) ，不够完善。
 

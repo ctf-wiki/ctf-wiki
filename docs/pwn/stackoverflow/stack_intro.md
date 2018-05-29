@@ -24,10 +24,10 @@
 - **x86**
   - **函数参数**在**函数返回地址**的上方
 - **x64**
-  - x64中前六个参数依次保存在**RDI, RSI, RDX, RCX, R8和 R9寄存器**里，如果还有更多的参数的话才会保存在栈上。
+  - System V AMD64 ABI(Linux、FreeBSD、macOS等采用)中前六个整型或指针参数依次保存在**RDI, RSI, RDX, RCX, R8和R9寄存器**里，如果还有更多的参数的话才会保存在栈上。
   - 内存地址不能大于0x00007FFFFFFFFFFF，**6个字节长度**，否则会抛出异常。
 
 **参考阅读**
 
 - csapp
-
+- Calling conventions for different C++ compilers and operating systems, Agner Fog
