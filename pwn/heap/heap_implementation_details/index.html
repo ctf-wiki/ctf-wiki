@@ -3608,7 +3608,7 @@
                 
                 
                 <h1 id="_1">深入理解堆的实现<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>仔细想一下，任何堆的实现都离不开以下两个方面的问题</p>
+<p>仔细想一下，任何堆的实现都需要从以下两个角度考虑相应的问题</p>
 <ul>
 <li>宏观角度<ul>
 <li>创建堆</li>
@@ -3622,22 +3622,22 @@
 </ul>
 </li>
 </ul>
-<p>当然，这些都还是比较高层面的想法，不同的堆的底层的实现会有所不同。</p>
+<p>当然，这些都是比较高层面的想法，不同的堆的底层实现会有所不同。</p>
 <h2 id="_2">堆实现概览<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <h2 id="_3">堆初始化<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>堆初始化是在用户第一次申请内存时执行 malloc_consolidate 再执行 malloc_init_state 实现的。这里不做过多讲解。可以参见 <code>malloc_state 相关函数</code>。</p>
 <h2 id="_4">创建堆<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <h2 id="_5">双向链表相关操作<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <h3 id="unlink">unlink<a class="headerlink" href="#unlink" title="Permanent link">&para;</a></h3>
-<p>unlink 用来将一个双向 bin 链表中的一个 chunk 取出来，可能在以下地方使用</p>
+<p>unlink 用来将一个双向链表（只存储空闲的 chunk）中的一个元素取出来，可能在以下地方使用</p>
 <ul>
 <li>malloc<ul>
 <li>从恰好大小合适的 large bin 中获取 chunk。<ul>
 <li><strong>这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。</strong></li>
-<li>依次遍历处理unsorted bin时也是没有unlink的。</li>
+<li>依次遍历处理 unsorted bin 时也没有使用 unlink 的。</li>
 </ul>
 </li>
-<li>从比所需要的 chunk 相应的 bin 大的 bin 中取 chunk。</li>
+<li>从比请求的 chunk 所在的 bin 大的 bin 中取 chunk。</li>
 </ul>
 </li>
 <li>Free<ul>
@@ -3657,6 +3657,7 @@
 </ul>
 <p>由于 unlink 使用非常频繁，所以 unlink 被实现为了一个宏，如下</p>
 <div class="codehilite"><pre><span></span><span class="cm">/* Take a chunk off a bin list */</span>
+<span class="c1">// unlink p</span>
 <span class="cp">#define unlink(AV, P, BK, FD) {                                            \</span>
 <span class="cp">    </span><span class="c1">// 由于 P 已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_size</span> <span class="p">(</span><span class="n">next_chunk</span><span class="p">(</span><span class="n">P</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span>      \
@@ -3671,7 +3672,7 @@
         <span class="n">BK</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">FD</span><span class="p">;</span>                                                              \
         <span class="c1">// 下面主要考虑 P 对应的 nextsize 双向链表的修改</span>
         <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_smallbin_range</span> <span class="p">(</span><span class="n">chunksize_nomask</span> <span class="p">(</span><span class="n">P</span><span class="p">))</span>                              \
-            <span class="c1">// 如果P-&gt;fd_nextsize为 NULL，表明 P 未插入到 largbin 链表中。</span>
+            <span class="c1">// 如果P-&gt;fd_nextsize为 NULL，表明 P 未插入到 nextsize 链表中。</span>
             <span class="c1">// 那么其实也就没有必要对 nextsize 字段进行修改了。</span>
             <span class="c1">// 这里没有去判断 bk_nextsize 字段，可能会出问题。</span>
             <span class="o">&amp;&amp;</span> <span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>                      \
@@ -3705,10 +3706,20 @@
 <span class="p">}</span>
 </pre></div>
 
-<p>这里我们只是以 small bin 的 unlink 为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize 的处理。</p>
+<p>这里我们以 small bin 的 unlink 为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize 的处理。</p>
 <p><img alt="" src="../../../pwn/heap/figure/unlink_smallbin_intro.png" /></p>
-<p>可以看出， <strong>P 最后的 fd 和 bk 指针并没有发生变化</strong>，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。这一点没有变化还是很有用处的。</p>
-<p>同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都做了相应的检测。</p>
+<p>可以看出， <strong>P 最后的 fd 和 bk 指针并没有发生变化</strong>，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。这一点没有变化还是很有用处的，因为我们有时候可以使用这个方法来泄漏地址</p>
+<ul>
+<li>libc 地址</li>
+<li>P 位于双向链表头部，fd 泄漏</li>
+<li>P 位于双向链表尾部，bk 泄漏</li>
+<li>双向链表只包含一个空闲 chunk 时，P 位于双向链表中，fd 和 bk 均可以泄漏</li>
+<li>泄漏堆地址，双向链表包含多个空闲 chunk</li>
+<li>P 位于双向链表头部，fd 泄漏</li>
+<li>P 位于双向链表中，fd 和 bk 均可以泄漏</li>
+<li>P 位于双向链表尾部，bk 泄漏</li>
+</ul>
+<p>同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都会检测 fd 和 bk 是否满足对应的要求。</p>
 <div class="codehilite"><pre><span></span><span class="c1">// fd bk</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">FD</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">!=</span> <span class="n">P</span> <span class="o">||</span> <span class="n">BK</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">!=</span> <span class="n">P</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>                      \
   <span class="n">malloc_printerr</span> <span class="p">(</span><span class="n">check_action</span><span class="p">,</span> <span class="s">&quot;corrupted double-linked list&quot;</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">AV</span><span class="p">);</span>  \
@@ -3722,11 +3733,11 @@
 </pre></div>
 
 <p>看起来似乎很正常。我们以 fd 和 bk 为例，P 的 forward chunk 的 bk 很自然是 P ，同样 P 的 backward chunk 的 fd 也很自然是 P 。如果没有做相应的检查的话，我们可以修改 P 的 fd 与 bk，从而可以很容易地达到任意地址写的效果。关于更加详细的例子，可以参见利用部分的 unlink 。</p>
-<p><strong>注意：堆的第一个chunk的话所记录的prev_inuse位默认为1。</strong></p>
+<p><strong>注意：堆的第一个 chunk 所记录的 prev_inuse 位默认为1。</strong></p>
 <h2 id="_6">申请内存块<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
-<p>我们之前也说了，我们会使用 malloc 函数来申请内存块，可是当我们仔细看看 glibc 的源码实现时，其实并没有malloc 函数。其实该函数真正调用的是 __libc_malloc 函数。为什么不直接写个 malloc 函数呢，因为有时候我们可能需要不同的名称。此外，__libc_malloc 函数只是用来简单封装 _int_malloc 函数。_int_malloc 才是申请内存块的核心。下面我们来仔细分析一下实现。</p>
+<p>一般我们会使用 malloc 函数来申请内存块，可是当仔细看 glibc 的源码实现时，其实并没有malloc 函数。其实该函数真正调用的是 __libc_malloc 函数。为什么不直接写个 malloc 函数呢，因为有时候我们可能需要不同的名称。此外，__libc_malloc 函数只是用来简单封装 _int_malloc 函数。_int_malloc 才是申请内存块的核心。下面我们来仔细分析一下具体的实现。</p>
 <h3 id="__libc_malloc">__libc_malloc<a class="headerlink" href="#__libc_malloc" title="Permanent link">&para;</a></h3>
-<p>该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook）。该函数主要用于进程在创建新线程过程中分配内存或者用户自定义的分配函数。这里需要注意的是，<strong>用户申请的字节一旦进入申请内存函数中就变成了无符号整数</strong>。</p>
+<p>该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook），这个主要用于用户自定义的堆分配函数，方便用户快速修改对分配函数并进行测试。这里需要注意的是，<strong>用户申请的字节一旦进入申请内存函数中就变成了无符号整数</strong>。</p>
 <div class="codehilite"><pre><span></span><span class="c1">// wapper for int_malloc</span>
 <span class="kt">void</span> <span class="o">*</span><span class="nf">__libc_malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">mstate</span> <span class="n">ar_ptr</span><span class="p">;</span>
@@ -3759,7 +3770,12 @@
 <div class="codehilite"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="n">ar_ptr</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="n">__libc_lock_unlock</span><span class="p">(</span><span class="n">ar_ptr</span><span class="o">-&gt;</span><span class="n">mutex</span><span class="p">);</span>
 </pre></div>
 
-<p>判断目前的状态是否满足以下条件，要么没有申请到内存，要么是 mmap 的内存，<strong>要么申请到的内存必须在其所分配的arena中</strong>。</p>
+<p>判断目前的状态是否满足以下条件</p>
+<ul>
+<li>要么没有申请到内存</li>
+<li>要么是 mmap 的内存</li>
+<li><strong>要么申请到的内存必须在其所分配的arena中</strong></li>
+</ul>
 <div class="codehilite"><pre><span></span>    <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">victim</span> <span class="o">||</span> <span class="n">chunk_is_mmapped</span><span class="p">(</span><span class="n">mem2chunk</span><span class="p">(</span><span class="n">victim</span><span class="p">))</span> <span class="o">||</span>
            <span class="n">ar_ptr</span> <span class="o">==</span> <span class="n">arena_for_chunk</span><span class="p">(</span><span class="n">mem2chunk</span><span class="p">(</span><span class="n">victim</span><span class="p">)));</span>
 </pre></div>
@@ -3772,8 +3788,8 @@
 <h3 id="_int_malloc">_int_malloc<a class="headerlink" href="#_int_malloc" title="Permanent link">&para;</a></h3>
 <p>_int_malloc 是内存分配的核心函数，其核心思路有如下</p>
 <ol>
-<li>它根据用户申请的内存块的大小以及相应大小 chunk 使用的频度（fastbin chunk, small chunk, large chunk），依次实现了不同的分配方法。</li>
-<li>它由小到大依次检查不同的 bin 中是否有相应的空闲块可以满足需求。</li>
+<li>它根据用户申请的<strong>内存块大小</strong>以及<strong>相应大小 chunk 通常使用的频度</strong>（fastbin chunk, small chunk, large chunk），依次实现了不同的分配方法。</li>
+<li>它由小到大依次检查不同的 bin 中是否有相应的空闲块可以满足用户请求的内存。</li>
 <li>当所有的空闲 chunk 都无法满足时，它会考虑 top chunk。</li>
 <li>当 top chunk 也无法满足时，堆分配器才会进行内存块申请。</li>
 </ol>
@@ -3962,7 +3978,7 @@
 </pre></div>
 
 <h5 id="unsort-bin">unsort bin 遍历<a class="headerlink" href="#unsort-bin" title="Permanent link">&para;</a></h5>
-<p>先考虑 unsorted bin，再考虑 last remainder ，但是对于small bin chunk 的请求会有所例外。</p>
+<p>先考虑 unsorted bin，再考虑 last remainder ，但是对于 small bin chunk 的请求会有所例外。</p>
 <p><strong>注意 unsorted bin 的遍历顺序为 bk。</strong></p>
 <div class="codehilite"><pre><span></span>        <span class="c1">// 如果 unsorted bin 不为空</span>
         <span class="c1">// First In First Out</span>
@@ -4074,7 +4090,7 @@
                     <span class="n">size</span> <span class="o">|=</span> <span class="n">PREV_INUSE</span><span class="p">;</span>
                     <span class="cm">/* if smaller than smallest, bypass loop below */</span>
                     <span class="c1">// bck-bk 存储着相应 large bin 中最小的chunk。</span>
-                    <span class="c1">// 如果遍历的chunk比当前最小的还要小，那就只需要插入到链表尾部。</span>
+                    <span class="c1">// 如果遍历的 chunk 比当前最小的还要小，那就只需要插入到链表尾部。</span>
                     <span class="c1">// 判断 bck-&gt;bk 是不是在 main arena。</span>
                     <span class="n">assert</span><span class="p">(</span><span class="n">chunk_main_arena</span><span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">));</span>
                     <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">&lt;</span>
@@ -4108,7 +4124,7 @@
                             <span class="n">fwd</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
                         <span class="k">else</span> <span class="p">{</span>
                             <span class="c1">// 如果找到的chunk和当前victim大小不一样</span>
-                            <span class="c1">// 那么久需要构造 nextsize 双向链表了</span>
+                            <span class="c1">// 那么就需要构造 nextsize 双向链表了</span>
                             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span>              <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
                             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span>              <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
                             <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span>                 <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
