@@ -630,7 +630,7 @@ small bin相关的宏如下
      SMALLBIN_CORRECTION)
 ```
 
-**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到small bin中去的。
+**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin中去的。
 
 #### large bin
 
@@ -780,7 +780,7 @@ glibc 中对于 top chunk 的描述如下
 
 ### last remainder
 
-在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不是和申请的大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
+在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不和申请的内存大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
 
 ## 宏观结构
 
