@@ -113,6 +113,11 @@ unlink 用来将一个双向链表（只存储空闲的 chunk）中的一个元�
     - P 位于双向链表中，fd 和 bk 均可以泄漏
     - P 位于双向链表尾部，bk 泄漏
 
+**注意**
+
+- 这里的头部指的是 bin 的 fd 指向的 chunk，即双向链表中最新加入的 chunk。
+- 这里的尾部指的是 bin 的 bk 指向的 chunk，即双向链表中最先加入的 chunk。
+
 同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都会检测 fd 和 bk 是否满足对应的要求。
 
 ```c
