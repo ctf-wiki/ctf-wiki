@@ -86,7 +86,7 @@ int vulnerable()
                               s,ebp-0x14-->+-----------------+
 ```
 
-并且，我们可以通过IDA获得success的地址，其地址为0x0804846B。
+并且，我们可以通过IDA获得success的地址，其地址为0x0804843B。
 
 ```asm
 .text:0804843B success         proc near
