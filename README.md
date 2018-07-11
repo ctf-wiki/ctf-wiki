@@ -1,10 +1,62 @@
-# 前言
 
-欢迎来到`CTF Wiki`。
+# CTF Wiki
 
-`CTF`(`Capture The Flag`, 夺旗赛)起源于1996年DEFCON全球黑客大会，是网络安全技术人员之间的竞技比赛。
+[![Build Status](https://travis-ci.org/ctf-wiki/ctf-wiki.svg?branch=master)](https://travis-ci.org/ctf-wiki/ctf-wiki)
+[![Requirements Status](https://requires.io/github/ctf-wiki/ctf-wiki/requirements.svg?branch=master)](https://requires.io/github/ctf-wiki/ctf-wiki/requirements/?branch=master)
+[![BearyChat](https://img.shields.io/badge/bearychat-join_chat-green.svg)](https://ctf-wiki.bearychat.com)
 
-`CTF Wiki` 是一个自由的站点，主要包含了CTF中的 `基础知识` 、 `常见题型` 、 `解题思路` 以及 `常用工具` 等，希望可以帮助你更快地了解CTF竞赛以及网络安全相关知识。
+欢迎来到 **CTF Wiki**。
+
+**CTF**（Capture The Flag，夺旗赛）起源于 1996 年 **DEFCON** 全球黑客大会，是网络安全爱好者之间的竞技游戏。
+
+**CTF** 竞赛涉及众多领域，内容繁杂。目前，安全技术发展地越来越快，**CTF** 题目的难度越来越高，初学者需要面对的门槛因此也越来越高。而网上资料大都零散琐碎，初学者往往并不知道该如何系统性地学习 **CTF** 相关领域知识，常需要花费大量时间，苦不堪言。
+
+为了使得热爱 **CTF** 的小伙伴们更好地入门 **CTF**，2016 年 10 月份，**CTF Wiki** 在 Github 有了第一次 commit。随着内容不断完善，**CTF Wiki** 受到了越来越多安全爱好者的喜爱，也渐渐有素未谋面的小伙伴们参与其中。 
+
+围绕 **CTF** 近几年赛题，作为一个自由的站点，**CTF Wiki** 对 **CTF** 中的各个方向知识和技术进行介绍，以便于初学者更好地学习 **CTF** 相关的知识。
+
+目前，**CTF Wiki** 主要包含 **CTF** 各大方向的基础知识。
+
+当然，**CTF Wiki** 基于 **CTF**，却不会局限于 **CTF**，在未来，**CTF Wiki** 会更专注于完善于以下内容：
+
+- CTF 竞赛中的进阶知识
+- CTF 竞赛中的优质题目
+- 安全研究中的工具介绍
+- 更多地与安全实战结合
+
+与此同时，CTF Wiki 源于社区，提倡知识自由，在未来也绝不会商业化，将始终保持独立自由的性质。
+
+## How to build？
+
+本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 [https://ctf-wiki.github.io/ctf-wiki/](https://ctf-wiki.github.io/ctf-wiki/)。当然也可以部署在本地，具体方式如下：
+
+### 安装依赖
+
+```shell
+# mkdocs
+pip install mkdocs
+# extensions
+pip install pymdown-extensions
+# theme
+pip install mkdocs-material
+```
+
+### 本地部署
+
+```shell
+# generate static file in site/
+mkdocs build
+# deploy at http://127.0.0.1:8000
+mkdocs serve
+```
+
+**mkdocs 本地部署的网站是动态更新的，即当你修改并保存 md 文件后，刷新页面就能随之动态更新。**
+
+## How to practice？
+
+Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) 仓库中，请根据对应的分类自行寻找。
+
+注：目前仍有部分题目在该仓库下，正在迁移中。。。（misc，reverse，web）
 
 ## 我能收获什么？
 
@@ -13,70 +65,25 @@
 * 一些有趣的安全技术与相应的挑战
 * 一段充实奋斗的时光
 
-在阅读Wiki之前，我们希望能给予你几点建议：
+在阅读 Wiki 之前，我们希望能给予你几点建议：
 
-* 至少掌握一门编程语言
-* 阅读短文 [<< 提问的智慧 >>](http://www.jianshu.com/p/60dd8e9cd12f)
-* 善用Google搜索能帮助你更好地提升自己
+* 至少掌握一门编程语言，比如 Python
+* 阅读短文 [提问的智慧](http://www.jianshu.com/p/60dd8e9cd12f)
+* 善用 Google 搜索能帮助你更好地提升自己
 * 动手实践比什么都要管用
 * 保持对技术的好奇与渴望并坚持下去
 
 > 世界很大，互联网让世界变小，真的黑客们应该去思考并创造，无论当下是在破坏还是在创造，记住，未来，那条主线是创造的就对了。 ——by 余弦
 
-安全圈很小，安全的海洋很深。安全之路的探险，不如就从`CTF Wiki`开始！
+安全圈很小，安全的海洋很深。安全之路的探险，不如就从 **CTF Wiki** 开始！
 
-## 想要帮助Wiki更加完善？
+## 想要帮助 Wiki 更加完善？
 
-我们非常欢迎你为wiki编写内容，将自己的所学所得与大家分享。
+我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见 [CONTRIBUTING](.github/CONTRIBUTING.md)。 
 
->我们希望你能够按照下面的方式为wiki贡献内容。同时，我们并不希望你利用本repo的内容重新建立一个公开的wiki站点，这样并不利于wiki的发展。
+**在你决定要贡献内容之前，请你务必看完这些内容**。我们期待着你的加入。
 
-### 协作方式
+非常感谢一起完善 CTF Wiki 的小伙伴们
 
-#### 基本交流
-
-本项目主要使用issue与bearychat进行交流沟通。berrychat的团队名为 [ctf-wiki](https://ctf-wiki.bearychat.com)，欢迎申请加入（申请时请注明申请理由）。
-
-#### 文档协作
-
-本文档仅有master分支，通过fork和PR的方式更新文档。基本流程如下
-1. fork主仓库到自己的仓库中。
-2. 当你想要贡献某部分内容时，请你务必仔细查看issue与Project中对应的看板，确定是否有人已经开始了这项工作，最好加入berrychat中的 [ctf-wiki](https://ctf-wiki.bearychat.com) 团队，方便沟通与交流。
-3. 编辑结束之后，**请你确保在本地可以正常生成文档**，然后再将分支PR到主仓库的master分支上。其中，PR需要包含以下基本信息
-   * 标题: 本次PR的目的(做了xxx工作，修复了xxx问题)
-   * 内容: 对修复问题的叙述（如果必要的话）
-4. PR评论区进行评论。**尽量在评论之前仔细思考，评论内容要条理清晰，最好给出修正方式，或指出需要集体讨论。** 
-5. 提出该PR的人根据评论修正内容，然后将修改后的内容merge到master分支中。
-
-目前，在人员较少的前提下，基本上可以忽略4-5步。第2步也可以暂时忽略，，，
-
-**注：本文档使用[docsify](https://github.com/QingWei-Li/docsify)部署，请自行学习一下。**
-
-### 文档内容
-
-对于所要编写的部分，应该尽量确保文档的合理性与格式。
-
-所谓合理性，主要包含
-
-- 有逻辑
-- 由浅入深
-
-所谓格式，即在上面合理性的要求下，对于某种类型的题目应该尽可能包含以下几个部分
-
-- 原理
-- 例子
-- 题目
-
-其对应的存储的一般应该有如下目录
-
-- example，存储在文中介绍时所使用的题目
-- figure， 存储介绍时所使用的图片
-- 其它必要内容
-
-其中，题目（指的是除了例子之外的同类型的题目）中只需要说明对应的题目名字，相应的题目应该存储在ctf-challenge仓库中的对应目录中。
-
-
-最后，我们的github仓库地址是[https://github.com/ctf-wiki/ctf-wiki](https://github.com/ctf-wiki/ctf-wiki)， 欢迎 `fork` 和 `pull request` 。当然，如果你有任何的问题，欢迎在 [beary chat](https://ctf-wiki.bearychat.com) 中交流。
-
-我们期待你的加入。
+<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" /></a>
 
