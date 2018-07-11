@@ -396,12 +396,7 @@ io.close()
 - [http://www.xfocus.net/articles/200602/851.html](http://www.xfocus.net/articles/200602/851.html)
 - [http://phrack.org/issues/58/4.html](http://phrack.org/issues/58/4.html)
 
-<<<<<<< HEAD:pwn/stackoverflow/others.md
-# Stack smash
-=======
-
 ## Stack smash
->>>>>>> upstream/master:docs/pwn/stackoverflow/others.md
 
 ### 原理
 
