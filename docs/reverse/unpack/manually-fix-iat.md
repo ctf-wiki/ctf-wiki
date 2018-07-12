@@ -1,4 +1,4 @@
-示例程序可以从此链接下载: [manually_fix_iat.zip](/reverse/unpack/example/manually_fix_iat.zip)
+示例程序可以从此链接下载: [manually_fix_iat.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/manually_fix_iat.zip)
 
 我们常用的`ImportREC`脱壳是使用的软件自带的`IAT auto search`, 但是如果我们要手动查找`IAT`的地址并`dump`出来, 又该怎么操作呢？
 
