@@ -11,13 +11,13 @@ DES全称为Data Encryption Standard，是典型的块加密，其基本信息�
 
 给出一张简单的[DES 流程图](http://homepage.usask.ca/~dtr467/400/) 。
 
-![](/crypto/symmetric/figure/des.gif)
+![](/crypto/blockcipher/figure/des.gif)
 
 
 
 再给一张比较详细的[图](http://bbs.pediy.com/thread-90593.htm)。
 
-![](/crypto/symmetric/figure/des_details.jpg)
+![](/crypto/blockcipher/figure/des_details.jpg)
 
 其中
 

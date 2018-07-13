@@ -12,5 +12,5 @@ AES全称为Advanced Encryption Standard，是典型的块加密，被设计来�
 
 给个看雪上比较好的[图例](http://bbs.pediy.com/thread-90722.htm) 。
 
-![](/crypto/symmetric/figure/aes_details.jpg)
+![](/crypto/blockcipher/figure/aes_details.jpg)
 
