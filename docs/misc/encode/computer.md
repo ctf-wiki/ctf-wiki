@@ -46,6 +46,30 @@ typora-root-url: ../../
 
 ![ascii](/misc/encode/figure/ascii-example.png)
 
+
+
+### 2018 DEFCON Quals ghettohackers: Throwback
+
+题目描述如下
+
+```
+Anyo!e!howouldsacrificepo!icyforexecu!!onspeedthink!securityisacomm!ditytop!urintoasy!tem!
+```
+
+第一直觉应该是我们去补全这些叹号对应的内容，从而得到 flag，但是补全后并不行，那么我们可以把源字符串按照 `!` 分割，然后字符串长度 1 对应字母a，长度 2 对应字母 b，以此类推
+
+```shell
+ori = 'Anyo!e!howouldsacrificepo!icyforexecu!!onspeedthink!securityisacomm!ditytop!urintoasy!tem!'
+sp = ori.split('!')
+print repr(''.join(chr(97 + len(s) - 1) for s in sp))
+```
+
+进而可以得到，这里同时需要假设 0 个字符为空格。因为这正好使得原文可读。
+
+```shell
+dark logic
+```
+
 ### 题目
 
 - Jarvis-basic-德军的密码
