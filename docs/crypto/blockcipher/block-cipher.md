@@ -73,11 +73,11 @@ ECB模式全称为电子密码本模式（Electronic codebook）。
 
 ### 加密
 
-![](/crypto/symmetric/figure/ecb_encryption.png)
+![](/crypto/blockcipher/figure/ecb_encryption.png)
 
 ### 解密
 
-![](/crypto/symmetric/figure/ecb_decryption.png)
+![](/crypto/blockcipher/figure/ecb_decryption.png)
 
 ### 缺点
 
@@ -89,11 +89,11 @@ CBC全称为密码分组链接（Cipher-block chaining） 模式。
 
 ### 加密
 
-![](/crypto/symmetric/figure/cbc_encryption.png)
+![](/crypto/blockcipher/figure/cbc_encryption.png)
 
 ### 解密
 
-![](/crypto/symmetric/figure/cbc_decryption.png)
+![](/crypto/blockcipher/figure/cbc_decryption.png)
 
 ### 特点
 
@@ -113,11 +113,11 @@ PCBC的全称为明文密码块链接（Plaintext cipher-block chaining）。也
 
 ### 加密
 
-![](/crypto/symmetric/figure/pcbc_encryption.png)
+![](/crypto/blockcipher/figure/pcbc_encryption.png)
 
 ### 解密
 
-![](/crypto/symmetric/figure/pcbc_decryption.png)
+![](/crypto/blockcipher/figure/pcbc_decryption.png)
 
 ### 特点
 
@@ -130,11 +130,11 @@ CFB全称为密文反馈模式（Cipher feedback）。
 
 ### 加密
 
-![](/crypto/symmetric/figure/cfb_encryption.png)
+![](/crypto/blockcipher/figure/cfb_encryption.png)
 
 ### 解密
 
-![](/crypto/symmetric/figure/cfb_decryption.png)
+![](/crypto/blockcipher/figure/cfb_decryption.png)
 
 ### 特点
 
@@ -150,11 +150,11 @@ OFB全称为输出反馈模式（Output feedback）。
 
 ### 加密
 
-![](/crypto/symmetric/figure/ofb_encryption.png)
+![](/crypto/blockcipher/figure/ofb_encryption.png)
 
 ### 解密
 
-![](/crypto/symmetric/figure/ofb_decryption.png)
+![](/crypto/blockcipher/figure/ofb_decryption.png)
 
 
 
@@ -164,11 +164,11 @@ CTR全称为计数器模式（Counter mode）。
 
 ### 加密
 
-![](/crypto/symmetric/figure/ctr_encryption.png)
+![](/crypto/blockcipher/figure/ctr_encryption.png)
 
 ### 解密
 
-![](/crypto/symmetric/figure/ctr_decryption.png)
+![](/crypto/blockcipher/figure/ctr_decryption.png)
 
 ## Padding Oracle Attack
 

@@ -7,7 +7,8 @@
 密码学的很多方面都需要随机数
 
 -   密钥生成
--   [nonces](https://en.wikipedia.org/wiki/Cryptographic_nonce)
+-   生成初始化向量，IV，用于分组密码的 CBC，CFB，OFB 模式
+-   nounce，用于防止重放攻击以及分组密码的 CTR 模式等、
 -   [one-time pads](https://en.wikipedia.org/wiki/One-time_pad)
 -   某些签名方案中的盐，如 [ECDSA](https://en.wikipedia.org/wiki/ECDSA)， [RSASSA-PSS](https://en.wikipedia.org/w/index.php?title=RSASSA-PSS&action=edit&redlink=1)
 
