@@ -232,6 +232,11 @@ ans:  1b9cb 5979c 16b2f3
 
 从而 flag 为 flag{01b9cb05979c16b2f3}。
 
+## 题目
+
+- 2017 WHCTF Bornpig
+- 2018 Google CTF 2018 Betterzip
+
 ## 参考
 
 - https://www.rocq.inria.fr/secret/Anne.Canteaut/MPRI/chapter3.pdf
