@@ -1,8 +1,12 @@
+---
+typora-root-url: ../../
+---
+
 # 分组模式
 
 分组加密会将明文消息划分为固定大小的块，每块明文分别在密钥控制下加密为密文。当然并不是每个消息都是相应块大小的整数倍，所以我们可能需要进行填充。
 
-## 常见填充规则
+## 填充规则
 
 正如我们之前所说，在分组加密中，明文的长度往往并不满足要求，需要进行 padding，而如何 padding 目前也已经有了不少的规定。
 
@@ -79,13 +83,36 @@ ECB模式全称为电子密码本模式（Electronic codebook）。
 
 ![](/crypto/blockcipher/figure/ecb_decryption.png)
 
-### 缺点
+### 优缺点
 
-- 同样的明文块会被加密成相同的密文块
+#### 优点
+
+1. 实现简单。
+2. 不同明文分组的加密可以并行计算，速度很快。
+
+#### 缺点
+
+1. 同样的明文块会被加密成相同的密文块，不会隐藏明文分组的统计规律。正如下图所示
+
+![image-20180716215135907](/crypto/blockcipher/figure/ecb_bad_linux.png)
+
+为了解决统一明文产生相同密文的问题，提出了其它的加密模式。
+
+### 典型应用
+
+1. 用于随机数的加密保护。
+2. 用于但分组明文的加密。
+
+### 题目
+
+- 2018 PlaidCTF macsh
 
 ## CBC
 
-CBC全称为密码分组链接（Cipher-block chaining） 模式。
+CBC全称为密码分组链接（Cipher-block chaining） 模式，这里
+
+- IV 不要求保密
+- IV 必须是不可预测的，而且要保证完整性。
 
 ### 加密
 
@@ -95,10 +122,24 @@ CBC全称为密码分组链接（Cipher-block chaining） 模式。
 
 ![](/crypto/blockcipher/figure/cbc_decryption.png)
 
-### 特点
+### 优缺点
 
-- 密文块中的一位变化只会影响当前密文块和下一密文块。
-- 加密过程难以并行化
+#### 优点
+
+1. 密文块不仅和当前密文块相关，而且和前一个密文块或 IV 相关，隐藏了明文的统计特性。
+2. 具有有限的两步错误传播特性，即密文块中的一位变化只会影响当前密文块和下一密文块。
+3. 具有自同步特性，即第 k 块起密文正确，则第 k+1 块就能正常解密。
+
+#### 缺点
+
+1. 加密不能并行，解密可以并行。
+
+### 应用
+
+CBC 应用十分广泛
+
+- 常见的数据加密和 TLS 加密。
+- 完整性认证和身份认证。
 
 ### 攻击
 
@@ -109,7 +150,7 @@ CBC全称为密码分组链接（Cipher-block chaining） 模式。
 
 ## PCBC
 
-PCBC的全称为明文密码块链接（Plaintext cipher-block chaining）。也称为填充密码块链接（Propagating cipher-block chaining）。
+PCBC 的全称为明文密码块链接（Plaintext cipher-block chaining）。也称为填充密码块链接（Propagating cipher-block chaining）。
 
 ### 加密
 
@@ -126,7 +167,7 @@ PCBC的全称为明文密码块链接（Plaintext cipher-block chaining）。也
 
 ## CFB
 
-CFB全称为密文反馈模式（Cipher feedback）。
+CFB 全称为密文反馈模式（Cipher feedback）。
 
 ### 加密
 
@@ -136,17 +177,29 @@ CFB全称为密文反馈模式（Cipher feedback）。
 
 ![](/crypto/blockcipher/figure/cfb_decryption.png)
 
-### 特点
+### 优缺点
 
-- 加解密均不能并行化。
+#### 优点
 
-### 攻击
+- 适应于不同数据格式的要求
+- 有限错误传播
+- 自同步
+
+#### 缺点
+
+- 加密不能并行化，解密不能并行
+
+### 应用场景
+
+该模式适应于数据库加密，无线通信加密等对数据格式有特殊要求的加密环境。
+
+### 题目
 
 - HITCONCTF-Quals-2015-Simple-(Crypto-100)
 
 ## OFB
 
-OFB全称为输出反馈模式（Output feedback）。
+OFB全称为输出反馈模式（Output feedback），其反馈内容是分组加密后的内容而不是密文。
 
 ### 加密
 
@@ -156,11 +209,24 @@ OFB全称为输出反馈模式（Output feedback）。
 
 ![](/crypto/blockcipher/figure/ofb_decryption.png)
 
+### 优缺点
 
+#### 优点
+
+1. 不具有错误传播特性。
+
+#### 缺点
+
+1. IV 无需保密，但是对每个消息必须选择不同的 IV。
+2. 不具有自同步能力。
+
+### 适用场景
+
+适用于一些明文冗余度比较大的场景，如图像加密和语音加密。
 
 ## CTR
 
-CTR全称为计数器模式（Counter mode）。
+CTR全称为计数器模式（Counter mode），该模式由 Diffe 和 Hellman 设计。
 
 ### 加密
 
@@ -169,6 +235,11 @@ CTR全称为计数器模式（Counter mode）。
 ### 解密
 
 ![](/crypto/blockcipher/figure/ctr_decryption.png)
+
+### 题目
+
+- 2017 star ctf ssss
+- 2017 star ctf ssss2
 
 ## Padding Oracle Attack
 
@@ -681,10 +752,11 @@ if __name__ == "__main__":
 hitcon{uNp@d_M3th0D_i5_am4Z1n9!}
 ```
 
-## 参考链接
+## 参考资料
 
 - [分组加密模式](https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F) 
 - https://en.wikipedia.org/wiki/Padding_oracle_attack
 - http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf
 - https://ctftime.org/writeup/7975
 - https://ctftime.org/writeup/7974
+- 清华大学研究生数据安全课程
