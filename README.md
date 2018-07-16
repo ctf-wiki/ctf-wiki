@@ -79,7 +79,7 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 
 ## 想要帮助 Wiki 更加完善？
 
-我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见 [CONTRIBUTING](.github/CONTRIBUTING.md)。 
+我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见[CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/blob/master/.github/CONTRIBUTING.md)。 
 
 **在你决定要贡献内容之前，请你务必看完这些内容**。我们期待着你的加入。
 
