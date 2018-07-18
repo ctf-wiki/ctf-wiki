@@ -593,7 +593,7 @@ sh.interactive()
 
 ### 题目
 
-- train.cs.nctu.edu.tw ret2libc
+- train.cs.nctu.edu.tw: ret2libc
 
 ## shell 获取小结
 
@@ -676,7 +676,10 @@ sh.interactive()
 
 去 libc 的数据库中找到对应的和已经出现的地址一样的 libc，这时候很有可能是一样的。
 
-- libcdb.com
+也可以使用如下的在线网站:
+- [libcdb.com](http://libcdb.com)
+- [libc.blukat.me](https://libc.blukat.me)
+
 
 **当然，还有上面提到的 https://github.com/lieanu/LibcSearcher。**
 
@@ -686,8 +689,7 @@ sh.interactive()
 
 ## 题目
 
-- train.cs.nctu.edu.tw
-    - rop
+- train.cs.nctu.edu.tw: rop
 - 2013-PlaidCTF-ropasaurusrex
 - Defcon 2015 Qualifier: R0pbaby
 
