@@ -23,26 +23,19 @@
 - 安全研究中的工具介绍
 - 更多地与安全实战结合
 
+关于上述部分待完善内容，请参见 [CTF Wiki 中的 Projects](https://github.com/ctf-wiki/ctf-wiki/projects)。
+
 与此同时，CTF Wiki 源于社区，提倡知识自由，在未来也绝不会商业化，将始终保持独立自由的性质。
 
 ## How to build？
 
 本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 [https://ctf-wiki.github.io/ctf-wiki/](https://ctf-wiki.github.io/ctf-wiki/)。当然也可以部署在本地，具体方式如下：
 
-### 安装依赖
-
 ```shell
-# mkdocs
-pip install mkdocs
-# extensions
-pip install pymdown-extensions
-# theme
-pip install mkdocs-material
-```
-
-### 本地部署
-
-```shell
+# 1. clone
+git clone git@github.com:ctf-wiki/ctf-wiki.git
+# 2. requirements
+pip install -r requirements.txt
 # generate static file in site/
 mkdocs build
 # deploy at http://127.0.0.1:8000
@@ -55,36 +48,36 @@ mkdocs serve
 
 Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) 仓库中，请根据对应的分类自行寻找。
 
-注：目前仍有部分题目在该仓库下，正在迁移中。。。（misc，reverse，web）
+注：目前仍有部分题目在该仓库下，正在迁移中。。。（misc，web）
 
-## 我能收获什么？
-
-* 一个不一样的思考方式以及一颗乐于解决问题的心
-* 锻炼你的快速学习能力，不断学习新事物
-* 一些有趣的安全技术与相应的挑战
-* 一段充实奋斗的时光
-
-在阅读 Wiki 之前，我们希望能给予你几点建议：
-
-* 至少掌握一门编程语言，比如 Python
-* 阅读短文 [提问的智慧](http://www.jianshu.com/p/60dd8e9cd12f)
-* 善用 Google 搜索能帮助你更好地提升自己
-* 动手实践比什么都要管用
-* 保持对技术的好奇与渴望并坚持下去
-
-> 世界很大，互联网让世界变小，真的黑客们应该去思考并创造，无论当下是在破坏还是在创造，记住，未来，那条主线是创造的就对了。 ——by 余弦
-
-安全圈很小，安全的海洋很深。安全之路的探险，不如就从 **CTF Wiki** 开始！
-
-## 想要帮助 Wiki 更加完善？
+## How to make CTF Wiki Better？
 
 我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见 [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/blob/master/.github/CONTRIBUTING.md)。 
 
 **在你决定要贡献内容之前，请你务必看完这些内容**。我们期待着你的加入。
 
-非常感谢一起完善 CTF Wiki 的小伙伴们。
+非常感谢一起完善 CTF Wiki 的小伙伴们
 
 <a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" /></a>
+
+## How can you get?
+
+- 一个不一样的思考方式以及一颗乐于解决问题的心
+- 锻炼你的快速学习能力，不断学习新事物
+- 一些有趣的安全技术与相应的挑战
+- 一段充实奋斗的时光
+
+在阅读 Wiki 之前，我们希望能给予你几点建议：
+
+- 至少掌握一门编程语言，比如 Python
+- 阅读短文 [提问的智慧](http://www.jianshu.com/p/60dd8e9cd12f)
+- 善用 Google 搜索能帮助你更好地提升自己
+- 动手实践比什么都要管用
+- 保持对技术的好奇与渴望并坚持下去
+
+> 世界很大，互联网让世界变小，真的黑客们应该去思考并创造，无论当下是在破坏还是在创造，记住，未来，那条主线是创造的就对了。 ——by 余弦
+
+安全圈很小，安全的海洋很深。安全之路的探险，不如就从 **CTF Wiki** 开始！
 
 ## Material color palette 颜色主题
 
