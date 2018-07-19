@@ -53,11 +53,11 @@ $\frac{kN}{2^{i+1}}<P < \frac{kN+N}{2^{i+1}}$
 
 根据第 i 次的结果
 
-$ \frac{2xN}{2^{i+1}} \leq P \leq \frac{2xN+2N}{2^{i+1}}$
+$\frac{2xN}{2^{i+1}} \leq P \leq \frac{2xN+2N}{2^{i+1}}$
 
 那么
 
-- 服务器返回奇数，则 k 必然是一个奇数，k=2x+1， 那么 $ \frac{2xN+N}{2^{i+1}} \leq P \leq \frac{2xN+2N}{2^{i+1}}$
+- 服务器返回奇数，则 k 必然是一个奇数，k=2x+1， 那么 $\frac{2xN+N}{2^{i+1}} \leq P \leq \frac{2xN+2N}{2^{i+1}}$
 - 服务器返回偶数，则 k 必然是一个偶数，k=2x，那么 $\frac{2xN}{2^{i+1}} \leq P \leq \frac{2xN+N}{2^{i+1}}$
 
 进一步我们可以这么归纳
