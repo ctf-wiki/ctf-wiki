@@ -1496,10 +1496,58 @@
           
 
 
-  <li class="md-nav__item">
-    <a href="../../asymmetric/discrete-log/discrete-log/" title="离散对数相关" class="md-nav__link">
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-6-4" type="checkbox" id="nav-3-6-4">
+    
+    <label class="md-nav__link" for="nav-3-6-4">
       离散对数相关
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-6-4">
+        离散对数相关
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/discrete-log/integer_field/" title="整数域上的离散对数" class="md-nav__link">
+      整数域上的离散对数
     </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/discrete-log/elgamal/" title="Elgamal" class="md-nav__link">
+      Elgamal
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../asymmetric/discrete-log/ecc/" title="ECC" class="md-nav__link">
+      ECC
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
   </li>
 
         
@@ -3443,7 +3491,161 @@ CTF<span class="o">{</span>cryp70_5ur3_15_w13rd<span class="o">}</span>
 </pre></div>
 
 <h2 id="2018-backdoor-awesome-mix2">2018 Backdoor Awesome mix2<a class="headerlink" href="#2018-backdoor-awesome-mix2" title="Permanent link">&para;</a></h2>
-<p>待续。</p>
+<p>本地部署 <code>socat TCP4-LISTEN:12345,fork EXEC:./service.py</code>。</p>
+<p>题目类似于上面的题目，唯一的区别在于对于 e 有约束，必须大于 3，所以我们不能使用 1 了。</p>
+<p><span><span class="MathJax_Preview">h(m)^e mod \ n=pad(m)</span><script type="math/tex">h(m)^e mod \ n=pad(m)</script></span></p>
+<p>这里我们已经知道 <code>h(m)，pad(m)</code>。我们只需要构造剩下的数即可，这里我们构造 n 为素数，使得 n-1是一个光滑数，这样就可以使用 pohlig_hellman 算法了。</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="kn">import</span> <span class="n">SHA</span>
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">gmpy2</span>
+<span class="kn">from</span> <span class="nn">gmpy2</span> <span class="kn">import</span> <span class="n">is_prime</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+
+<span class="k">def</span> <span class="nf">PKCS1_pad</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">asn1</span> <span class="o">=</span> <span class="s2">&quot;3021300906052b0e03021a05000414&quot;</span>
+    <span class="n">ans</span> <span class="o">=</span> <span class="n">asn1</span> <span class="o">+</span> <span class="n">data</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="s1">&#39;00&#39;</span> <span class="o">+</span> <span class="s1">&#39;01&#39;</span> <span class="o">+</span> <span class="s1">&#39;ff&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">-</span> <span class="n">n</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;00&#39;</span> <span class="o">+</span> <span class="n">ans</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span>
+
+
+<span class="c1">#context.log_level = &#39;debug&#39;</span>
+<span class="k">def</span> <span class="nf">gen_smooth_num</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="n">minnum</span><span class="o">=</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1020</span><span class="p">)):</span>
+    <span class="n">lenp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">plist</span><span class="p">)</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">factors</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="n">minnum</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lenp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">n</span> <span class="o">*=</span> <span class="n">plist</span><span class="p">[</span><span class="n">tmp</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">plist</span><span class="p">[</span><span class="n">tmp</span><span class="p">]</span> <span class="ow">in</span> <span class="n">factors</span><span class="p">:</span>
+                <span class="n">factors</span><span class="p">[</span><span class="n">plist</span><span class="p">[</span><span class="n">tmp</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">factors</span><span class="p">[</span><span class="n">plist</span><span class="p">[</span><span class="n">tmp</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1024</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">is_prime</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">factors</span>
+
+
+<span class="c1"># http://pythonexample.com/snippet/pohligpy_neuratron_python</span>
+<span class="c1"># solve g^x=h mod m</span>
+<span class="k">def</span> <span class="nf">log_prime_power</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">pf</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">M</span><span class="p">):</span>
+
+    <span class="n">powers</span> <span class="o">=</span> <span class="p">[</span><span class="n">pf</span><span class="o">**</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pe</span><span class="p">)]</span>
+
+    <span class="n">gamma</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">powers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">M</span><span class="p">)</span>
+
+    <span class="n">xk</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">mpz</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pe</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">hk</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">powers</span><span class="p">[</span><span class="n">pe</span> <span class="o">-</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">M</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gk</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">xk</span> <span class="o">*</span> <span class="p">(</span><span class="n">M</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="n">M</span><span class="p">)</span>
+            <span class="n">hk</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">gk</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="n">powers</span><span class="p">[</span><span class="n">pe</span> <span class="o">-</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">M</span><span class="p">)</span>
+
+        <span class="n">k_log_found</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">for</span> <span class="n">dk</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pf</span><span class="p">):</span>
+            <span class="n">yk</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">dk</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">yk</span> <span class="o">==</span> <span class="n">hk</span><span class="p">:</span>
+                <span class="n">k_log_found</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">k_log_found</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;can not solve&quot;</span><span class="p">)</span>
+
+        <span class="n">xk</span> <span class="o">+=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">powers</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">dk</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xk</span>
+
+
+<span class="k">def</span> <span class="nf">pohlig_hellman</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">factors</span><span class="p">):</span>
+    <span class="n">M1</span> <span class="o">=</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">factors</span><span class="p">:</span>
+        <span class="n">pf</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="n">pe</span> <span class="o">=</span> <span class="n">factors</span><span class="p">[</span><span class="n">f</span><span class="p">]</span>
+
+        <span class="n">subgroup_exponent</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">M1</span><span class="p">,</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">pf</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">M</span><span class="p">))</span>
+        <span class="n">gi</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">subgroup_exponent</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+        <span class="n">hi</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">subgroup_exponent</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+
+        <span class="n">xi</span> <span class="o">=</span> <span class="n">log_prime_power</span><span class="p">(</span><span class="n">gi</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">pf</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+        <span class="n">xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span>
+    <span class="n">crt_coeffs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">factors</span><span class="p">:</span>
+        <span class="n">pf</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="n">pe</span> <span class="o">=</span> <span class="n">factors</span><span class="p">[</span><span class="n">f</span><span class="p">]</span>
+
+        <span class="n">mi</span> <span class="o">=</span> <span class="n">pf</span><span class="o">**</span><span class="n">pe</span>
+
+        <span class="n">bi</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">mi</span><span class="p">)</span>
+        <span class="n">bi_inv</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">bi</span><span class="p">,</span> <span class="n">mi</span><span class="p">)</span>
+        <span class="n">crt_coeffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gmpy2</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">bi</span><span class="p">,</span> <span class="n">bi_inv</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">crt_coeffs</span><span class="p">)):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">t_mod</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">t_mod</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">crt_coeffs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">M1</span><span class="p">),</span> <span class="n">M1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="c1">#context.log_level = &#39;debug&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="mi">12345</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Message   -&gt; &#39;</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">Signature -&gt; &#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;message: &#39;</span> <span class="o">+</span> <span class="n">message</span><span class="p">)</span>
+    <span class="n">signature</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;signature: &#39;</span> <span class="o">+</span> <span class="n">signature</span><span class="p">)</span>
+    <span class="n">signature</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">SHA</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="n">m</span> <span class="o">=</span> <span class="n">PKCS1_pad</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">())</span>
+    <span class="k">print</span> <span class="n">m</span><span class="p">,</span> <span class="n">signature</span>
+    <span class="n">plist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_prime</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+            <span class="n">plist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">factors</span> <span class="o">=</span> <span class="n">gen_smooth_num</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="n">signature</span><span class="p">)</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">pohlig_hellman</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">factors</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="k">print</span> <span class="n">n</span><span class="p">,</span> <span class="n">e</span>
+
+    <span class="k">print</span> <span class="n">m</span>
+    <span class="k">print</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Enter n:&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;Enter e:&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+
+
+<span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+<p>有两点需要注意</p>
+<ol>
+<li>由于 <span><span class="MathJax_Preview">g^x=y</span><script type="math/tex">g^x=y</script></span> 中的 g 和 y 都是给定的，我们新找到的 n，不一定 g 的幂次构成的群会包含 y，所以可能求解失败，所以需要多次求解。</li>
+<li>源代码中虽然 <code>n.bit_length() &lt;= 1025</code>，但是其实 n 在满足不小于 signature 的条件时，必须满足如下条件（pycrypto 源码）</li>
+</ol>
+<div class="codehilite"><pre><span></span>        <span class="n">modBits</span> <span class="o">=</span> <span class="n">Crypto</span><span class="o">.</span><span class="n">Util</span><span class="o">.</span><span class="n">number</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">ceil_div</span><span class="p">(</span><span class="n">modBits</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span> <span class="c1"># Convert from bits to bytes</span>
+
+        <span class="c1"># Step 1</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="o">!=</span> <span class="n">k</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+</pre></div>
+
+<p>所以我们最好设置 n 为1024 比特位。</p>
                 
                   
                 
