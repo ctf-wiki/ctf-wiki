@@ -26,17 +26,17 @@ Advanced Encryption Standard（AES），高级加密标准，是典型的块加�
 
 在 AES 加解密过程中，每一块都是 128 比特，所以我们这里明确一些基本概念。
 
-![](/crypto/blockcipher/aes_data_unit.png)
+![](/crypto/blockcipher/figure/aes_data_unit.png)
 
 在 AES 中，块与 State 之间的转换过程如下
 
-![](/crypto/blockcipher/aes_block2state.png)
+![](/crypto/blockcipher/figure/aes_block2state.png)
 
 所以，可以看出，每一个 block 中的字节是按照列排列进入到状态数组的。
 
 而对于明文来说，一般我们会选择使用其十六进制进行编码。
 
-![](/crypto/blockcipher/aes_plain2state.png)
+![](/crypto/blockcipher/figure/aes_plain2state.png)
 
 
 
@@ -63,7 +63,7 @@ Advanced Encryption Standard（AES），高级加密标准，是典型的块加�
 
 在字节替换的背后，其实是有对应的数学规则来定义对应的替换表的，如下
 
-![](/crypto/blockcipher/aes_subbytes.png)
+![](/crypto/blockcipher/figure/aes_subbytes.png)
 
 这里的运算均定义在 $GF(2^8)$ 内。
 
@@ -73,7 +73,7 @@ Advanced Encryption Standard（AES），高级加密标准，是典型的块加�
 
 #### 密钥扩展
 
-![](/crypto/blockcipher/aes_key_expansion.png)
+![](/crypto/blockcipher/figure/aes_key_expansion.png)
 
 ## 等价解密算法
 
