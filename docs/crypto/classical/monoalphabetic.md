@@ -219,7 +219,7 @@ $$
 \begin{align*}
 c_1&=a_1c+b_1 \\
 c_2&=a_2c_1+b_2 \\
-   &=a_1a_2c+a_2b_1c+b_2 \\
+   &=a_1a_2c+a_2b_1+b_2 \\
    &=kc+d
 \end{align*}  
 $$
