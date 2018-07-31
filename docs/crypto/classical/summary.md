@@ -112,3 +112,11 @@ def decrypt(cipher, k1, k2):
 ➜  2017_seccon_vigenere3d git:(master) python exp.py
 SECCON{Welc0me_to_SECCON_CTF_2017}
 ```
+## 消失的三重密码
+
+密文
+```
+of zit kggd zitkt qkt ygxk ortfzoeqs wqlatzwqssl qfr zvg ortfzoeqs yggzwqssl. fgv oy ngx vqfz zg hxz zitd of gft soft.piv dgfn lgsxzogfl qkt zitkt? zohl:hstqlt eiqfut zit ygkd gy zit fxdwtk ngx utz.zit hkgukqddtkl!
+```
+
+使用 quipquip 直接解密。
