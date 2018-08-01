@@ -93,10 +93,8 @@ Advanced Encryption Standard（AES），高级加密标准，是典型的块加�
 通过简单分析这个算法，我们可以发现这个算法是一个简化版的 AES，其基本操作为
 
 - 9 轮迭代
-  - 行移位
-  - 变种字节替换
-- 行移位
-- 变种字节替换
+    - 行移位
+    - 变种字节替换
 
 如下
 
@@ -106,7 +104,11 @@ Advanced Encryption Standard（AES），高级加密标准，是典型的块加�
   {
     shift_row(cipher);
     for ( j = 0LL; j <= 3; ++j )
-      *(_DWORD *)&cipher[4 * j] = box[((4 * j + 3 + 16 * i) << 8) + (unsigned __int8)cipher[4 * j + 3]] ^ box[((4 * j + 2 + 16 * i) << 8) + (unsigned __int8)cipher[4 * j + 2]] ^ box[((4 * j + 1 + 16 * i) << 8) + (unsigned __int8)cipher[4 * j + 1]] ^ box[((4 * j + 16 * i) << 8) + (unsigned __int8)cipher[4 * j]];
+      *(_DWORD *)&cipher[4 * j] = 
+        box[((4 * j + 3 + 16 * i) << 8) + (unsigned __int8)cipher[4 * j + 3]] ^ 
+        box[((4 * j + 2 + 16 * i) << 8) + (unsigned __int8)cipher[4 * j + 2]] ^ 
+        box[((4 * j + 1 + 16 * i) << 8) + (unsigned __int8)cipher[4 * j + 1]] ^ 
+        box[((4 * j + 16 * i) << 8) + (unsigned __int8)cipher[4 * j]];
   }
   result = shift_row(cipher);
   for ( k = 0LL; k <= 0xF; ++k )
@@ -117,7 +119,7 @@ Advanced Encryption Standard（AES），高级加密标准，是典型的块加�
   return result;
 ```
 
-根据程序流程，我们已知程序加密的结果，而 subbytes 和 shift_row 又是可逆的，所以我们可以获取最后一轮加密后的结果。此时，我们还知道 box 对应的常数，我们只是不知道上一轮中 `cipher[4*j` 对应的值，一共 32 位，如果我们直接爆破的话，显然不可取，因为每一轮都需要这么爆破，时间不可接受。那么有没有其它办法呢？其实有的，我们可以考虑中间相遇攻击，即首先枚举所有的 `cipher[4*j]` 与`cipher[4*j+1]` 的字节组合，一共256\*256 种。在枚举剩下两个字节时，我们可以先计算出其与密文的异或值，然后去之前的组合中找，如果找到的话，我们就认为是正确的。这样复杂度瞬间降到 $O(2^{16})$。
+根据程序流程，我们已知程序加密的结果，而 subbytes 和 shift_row 又是可逆的，所以我们可以获取最后一轮加密后的结果。此时，我们还知道 box 对应的常数，我们只是不知道上一轮中 `cipher[4*j]` 对应的值，一共 32 位，如果我们直接爆破的话，显然不可取，因为每一轮都需要这么爆破，时间不可接受。那么有没有其它办法呢？其实有的，我们可以考虑中间相遇攻击，即首先枚举所有的 `cipher[4*j]` 与`cipher[4*j+1]` 的字节组合，一共256\*256 种。在枚举剩下两个字节时，我们可以先计算出其与密文的异或值，然后去之前的组合中找，如果找到的话，我们就认为是正确的。这样复杂度瞬间降到 $O(2^{16})$。
 
 代码如下
 
