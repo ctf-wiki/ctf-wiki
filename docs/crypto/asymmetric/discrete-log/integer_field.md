@@ -78,8 +78,8 @@ $y(g^{-m})^i=g^j$
 不妨假设上述所提到的群的阶为 n， n 为一个光滑数，且$n=\prod_{i=1}^r p_i^{e_i}$
 
 1. 对于每个 $i \in \{1,...,r\} $
-   1. 计算 $g_i=g^{\frac{n}{p_i^{e_i}}}$，$g_i$ 在模 m 中的阶为 $p_i^{e_i}$，这个可以自行推导。
-   2. 计算 $y_i=y^{\frac{n}{p_i^{e_i}}}=g^{\frac{xn}{p_i^{e_i}}}=g_i^{x}=g_i^{x \bmod p_i^{e_i}} =g_i^{r_i}\bmod m$，这里我们知道 $y_i,m,g_i$，而$r_i$ 的范围为$[0,p_i^{e_i}]$，由n 是一个光滑数，可知其范围较小，因此我们可以使用`Pollard’s kangaroo algorithm` 等方法快速求得$r_i$。
+    1. 计算 $g_i=g^{\frac{n}{p_i^{e_i}}}$，$g_i$ 在模 m 中的阶为 $p_i^{e_i}$，这个可以自行推导。
+    2. 计算 $y_i=y^{\frac{n}{p_i^{e_i}}}=g^{\frac{xn}{p_i^{e_i}}}=g_i^{x}=g_i^{x \bmod p_i^{e_i}} =g_i^{r_i}\bmod m$，这里我们知道 $y_i,m,g_i$，而$r_i$ 的范围为$[0,p_i^{e_i}]$，由n 是一个光滑数，可知其范围较小，因此我们可以使用`Pollard’s kangaroo algorithm` 等方法快速求得$r_i$。
 2. 根据上述的推导，我们可以得到对于 $i \in \{1,...,r\} $，$x \equiv r_i \bmod p_i^{e_i}$。
 3. 根据中国剩余定理可得，$x \equiv ans \bmod n$。
 

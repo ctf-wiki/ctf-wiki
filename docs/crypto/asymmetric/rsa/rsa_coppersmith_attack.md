@@ -13,7 +13,7 @@ Coppersmith 相关攻击与[Don Coppersmith](https://en.wikipedia.org/wiki/Don_C
 - 模数为 N ，N 具有一个因子 $b\geq N^{\beta},1< \beta \leq1$
 - 多项式 F 的次数为 $\delta$
 
-那么该方法可以在$O(c\delta^5log^9(N))$ 的复杂度内找到该多项式所有的根$x_0$，这里我们要求 $|x_0|<cN^{\frac{\beta^2}{n}}$ 。
+那么该方法可以在$O(c\delta^5log^9(N))$ 的复杂度内找到该多项式所有的根$x_0$，这里我们要求 $|x_0|<cN^{\frac{\beta^2}{\delta}}$ 。
 
 在这个问题中，我们的目标是找到在模 N 意义下多项式所有的根，这一问题被认为是复杂的。**Coppersmith method** 主要是通过 [Lenstra–Lenstra–Lovász lattice basis reduction algorithm](https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm)（LLL）方法找到
 
