@@ -295,7 +295,7 @@ $p^q+q^p \equiv p+q \bmod pq$
 
 根据4，我们可以知道
 
-$(p+q)^{p+q} \equiv p^p+q^q \bmod pq$
+$(p+q)^{p+q} \equiv p^{p+q}+q^{p+q} \bmod pq$
 
 又因为 1 和 2，则
 
