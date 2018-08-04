@@ -103,6 +103,28 @@ ECB模式全称为电子密码本模式（Electronic codebook）。
 1. 用于随机数的加密保护。
 2. 用于单分组明文的加密。
 
+### 2016 ABCTF aes-mess-75
+
+ 题目描述如下
+
+```
+We encrypted a flag with AES-ECB encryption using a secret key, and got the hash: e220eb994c8fc16388dbd60a969d4953f042fc0bce25dbef573cf522636a1ba3fafa1a7c21ff824a5824c5dc4a376e75 However, we lost our plaintext flag and also lost our key and we can't seem to decrypt the hash back :(. Luckily we encrypted a bunch of other flags with the same key. Can you recover the lost flag using this?
+
+[HINT] There has to be some way to work backwards, right?
+```
+
+可以看出，这个加密是一个 ECB 加密，然后 AES 是 16 个字节一组，每个字节可以使用两个 16 进制字符表示，因此，我们每 32 个字符一组进行分组，然后去对应的 txt 文件中搜索即可。
+
+对应 flag
+
+```
+e220eb994c8fc16388dbd60a969d4953 abctf{looks_like
+f042fc0bce25dbef573cf522636a1ba3 _you_can_break_a
+fafa1a7c21ff824a5824c5dc4a376e75 es}
+```
+
+最后一个显然在加密时进行了 padding。
+
 ### 题目
 
 - 2018 PlaidCTF macsh
@@ -352,13 +374,13 @@ def unpad(msg):
 -   解密
     -   我们可以控制 IV。
 
-首先，既然我们知道 `Welcome!!` 加密后的结果，还可以 recv_msg 中的 IV，那么根据解密过程
+首先，既然我们知道 `Welcome!!` 加密后的结果，还可以控制 recv_msg 中的 IV，那么根据解密过程
 
 $$
 P_{i}=D_{K}(C_{i})\oplus C_{i-1}\\ C_{0}=IV
 $$
 
-如果我们将 `Welcome!!` 加密后的结果输入给 recv_msg，那么其得到的结果便是 `（Welcome!!+'\x07'*7) xor iv_encrypt`，如果我们**恰当的控制解密过程中传递的 iv**，那么我们就可以控制解密后的结果。也就是说我们可以执行**上述所说的任意命令**。从而，我们也就可以知道 `flag` 解密后的结果。
+如果我们将 `Welcome!!` 加密后的结果输入给 recv_msg，那么直接解密后的结果便是 `（Welcome!!+'\x07'*7) xor iv`，如果我们**恰当的控制解密过程中传递的 iv**，那么我们就可以控制解密后的结果。也就是说我们可以执行**上述所说的任意命令**。从而，我们也就可以知道 `flag` 解密后的结果。
 
 其次，在上面的基础之上，如果我们在任何密文 C 后面添加自定义的 IV 和 Welcome 加密后的结果，作为输入传递给 recv_msg，那么我们便可以控制解密之后的消息的最后一个字节，**那么由于 unpad 操作，我们便可以控制解密后的消息的长度减小 0 到 255**。
 
