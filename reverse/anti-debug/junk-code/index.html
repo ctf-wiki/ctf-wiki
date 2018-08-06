@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-0.17.5, mkdocs-material-2.9.4">
+      <meta name="generator" content="mkdocs-1.0, mkdocs-material-3.0.1">
     
     
       
@@ -68,7 +68,7 @@
     
     <link rel="stylesheet" href="../../../assets/fonts/material-icons.css">
     
-      <link rel="stylesheet" href="../../../_static/css/extra.css">
+      <link rel="stylesheet" href="../../../../../../_static/css/extra.css">
     
     
   </head>
@@ -106,7 +106,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#_1" tabindex="1" class="md-skip">
+      <a href="../../../#_1" tabindex="1" class="md-skip">
         跳转至
       </a>
     
@@ -3534,26 +3534,26 @@
 <h2 id="_2">例题<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>这里以<code>看雪.TSRC 2017CTF秋季赛</code>第二题作为讲解. 题目下载链接: <a href="https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/anti-debug/2017_pediy/ctf2017_Fpc.exe">ctf2017_Fpc.exe</a></p>
 <p>程序写了几个函数混淆视听, 将关键的验证逻辑加花指令防止了IDA的静态分析. 我们用IDA打开Fpc这道题, 程序会先打印一些提示信息, 然后获取用户的输入.</p>
-<p><img alt="main.png" src="../../../reverse/anti-debug/figure/2017_pediy/main.png" /></p>
+<p><img alt="main.png" src="../figure/2017_pediy/main.png" /></p>
 <p>这里使用了不安全的<code>scanf</code>函数, 用户输入的缓冲区只有<code>0xCh</code>长, 我们双击<code>v1</code>进入栈帧视图</p>
-<p><img alt="stack.png" src="../../../reverse/anti-debug/figure/2017_pediy/stack.png" /></p>
+<p><img alt="stack.png" src="../figure/2017_pediy/stack.png" /></p>
 <p>因此我们可以通过溢出数据, 覆盖掉返回地址, 从而转移到任意地址继续执行. </p>
 <p>这里我还需要解释一下, 就是<code>scanf</code>之前写的几个混淆视听的函数, 是一些简单的方程式但实际上是无解的. 程序将真正的验证逻辑加花混淆, 导致IDA无法很好的进行反编译. 所以我们这道题的思路就是, 通过溢出转到真正的验证代码处继续执行. </p>
 <p>我们在分析时可以在代码不远处发现以下数据块.</p>
-<p><img alt="block.png" src="../../../reverse/anti-debug/figure/2017_pediy/block.png" /></p>
+<p><img alt="block.png" src="../figure/2017_pediy/block.png" /></p>
 <p>因为IDA没能很好的识别数据, 因此我们可以将光标移到数据块的起始位置, 然后按下<code>C</code>键(code)将这块数据反汇编成代码</p>
-<p><img alt="real_code.png" src="../../../reverse/anti-debug/figure/2017_pediy/real_code.png" /></p>
+<p><img alt="real_code.png" src="../figure/2017_pediy/real_code.png" /></p>
 <p>值得注意的是, 这段代码的位置是<code>0x00413131</code>, <code>0x41</code>是<code>'A'</code>的ascii码，而<code>0x31</code>是<code>'1'</code>的ascii码. 由于看雪比赛的限制, 用户输入只能是字母和数字, 所以我们也完全可以利用溢出漏洞执行这段代码</p>
 <p>用OD打开, 然后<code>Ctrl+G</code>到达<code>0x413131</code>处设下断点, 运行后输入<code>12345612345611A</code>回车, 程序成功地到达<code>0x00413131</code>处. 然后<code>右键分析-&gt;从模块中删除分析</code>识别出正确代码</p>
-<p><img alt="entry.png" src="../../../reverse/anti-debug/figure/2017_pediy/entry.png" /></p>
+<p><img alt="entry.png" src="../figure/2017_pediy/entry.png" /></p>
 <p>断在<code>0x413131</code>处后, 点击菜单栏的<code>&quot;查看&quot;</code>, 选择<code>&quot;RUN跟踪&quot;</code>, 然后再点击<code>&quot;调试&quot;</code>, 选择<code>&quot;跟踪步入&quot;</code>, 程序会记录这段花指令执行的过程, 如下图所示:</p>
-<p><img alt="trace.png" src="../../../reverse/anti-debug/figure/2017_pediy/trace.png" /></p>
+<p><img alt="trace.png" src="../figure/2017_pediy/trace.png" /></p>
 <p>这段花指令本来很长, 但是使用OD的跟踪功能后, 花指令的执行流程就非常清楚. 整个过程中进行了大量的跳转, 我们只要取其中的有效指令拿出来分析即可.</p>
 <p>需要注意的是, 在有效指令中, 我们依旧要满足一些条件跳转, 这样程序才能在正确的逻辑上一直执行下去. </p>
 <p>比如<code>0x413420</code>处的<code>jnz ctf2017_.00413B03</code>. 我们就要重新来过, 并在<code>0x413420</code>设下断点</p>
-<p><img alt="jnz.png" src="../../../reverse/anti-debug/figure/2017_pediy/jnz.png" /></p>
+<p><img alt="jnz.png" src="../figure/2017_pediy/jnz.png" /></p>
 <p>通过修改标志寄存器来满足跳转. 继续跟踪步入(之后还有<code>0041362E  jnz ctf2017_.00413B03</code>需要满足). 保证逻辑正确后, 将有效指令取出继续分析就好了</p>
-<p><img alt="register.png" src="../../../reverse/anti-debug/figure/2017_pediy/register.png" /></p>
+<p><img alt="register.png" src="../figure/2017_pediy/register.png" /></p>
                 
                   
                 
@@ -3629,28 +3629,28 @@
       
     </div>
     
-      <script src="../../../assets/javascripts/application.30f6b8b1.js"></script>
+      <script src="../../../assets/javascripts/application.583bbe55.js"></script>
       
         
         
           
-          <script src="../../../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          <script src="assets/javascripts/lunr/../../../lunr.stemmer.support.js"></script>
           
             
               
-                <script src="../../../assets/javascripts/lunr/tinyseg.js"></script>
+                <script src="assets/javascripts/lunr/../../../tinyseg.js"></script>
               
               
-                <script src="../../../assets/javascripts/lunr/lunr.jp.js"></script>
+                <script src="assets/javascripts/lunr/lunr.jp../../../.js"></script>
               
             
           
           
         
       
-      <script>app.initialize({version:"0.17.5",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.0",url:{base:"../../.."}})</script>
       
-        <script src="../../../_static/js/extra.js"></script>
+        <script src="../../../../../../_static/js/extra.js"></script>
       
         <script src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
       

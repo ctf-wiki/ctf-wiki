@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-0.17.5, mkdocs-material-2.9.4">
+      <meta name="generator" content="mkdocs-1.0, mkdocs-material-3.0.1">
     
     
       
@@ -68,7 +68,7 @@
     
     <link rel="stylesheet" href="../../../assets/fonts/material-icons.css">
     
-      <link rel="stylesheet" href="../../../_static/css/extra.css">
+      <link rel="stylesheet" href="../../../../../../_static/css/extra.css">
     
     
   </head>
@@ -106,7 +106,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#_1" tabindex="1" class="md-skip">
+      <a href="../../../#_1" tabindex="1" class="md-skip">
         跳转至
       </a>
     
@@ -3643,9 +3643,9 @@
                 
                 <p>我们现在来分析一道2016年SecCon的<code>anti-debugging</code>题, 题目下载链接: <a href="https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/anti-debug/2016_seccon/anti_debugging_100/bin.exe">bin.exe</a></p>
 <p>这是一个32位的PE文件, 是一个控制台程序, 我们直接运行, 会要求输入<code>password</code>. 当你输入一个错误的<code>password</code>时则会提示你<code>password is wrong</code>.</p>
-<p><img alt="run.png" src="../../../reverse/anti-debug/figure/2016_seccon/run.png" /></p>
+<p><img alt="run.png" src="../figure/2016_seccon/run.png" /></p>
 <p>我们用IDA打开来看下, 最快速的方式就是直接查看字符串, 根据<code>password is wrong</code>找到关键代码. IDA显示的结果如下图:</p>
-<p><img alt="ida_strings.png" src="../../../reverse/anti-debug/figure/2016_seccon/ida_strings.png" /></p>
+<p><img alt="ida_strings.png" src="../figure/2016_seccon/ida_strings.png" /></p>
 <p>显然, 字符串表明程序中可能有各种检测, 比如检测进程名<code>ollydbg.exe</code>, <code>ImmunityDebugger.exe</code>, <code>idaq.exe</code>和<code>Wireshark.exe</code>. 然后也有其他的检测. 我们也看到了字符串<code>password is wrong</code>和<code>You password is correct</code>的字样. 同时还发现了一个很有可能就是待解密的flag的字符串. 那么我们就先根据<code>password is wrong</code>的交叉引用来到关键函数处. </p>
 <p>如下所示: 程序果然使用了大量的反调试技巧.</p>
 <div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
@@ -3761,9 +3761,9 @@
 </pre></div>
 
 <p>显然, 输入的<code>password</code>正确, 就会输出提示<code>Your password is correct.</code>. ??? 不觉得奇怪吗. 难道<code>I have a pen.</code>就是我们的flag了吗? 不不不当然不是. 这其实是一个陷阱, 既然你知道了<code>I have a pen.</code>那么就肯定有通过某种逆向手段在对程序进行分析. 所以接下来的部分就开始进行一些反调试或其他的检测手段(实际中也可以出现这样的陷阱).</p>
-<p>一开始的是<code>IsDebuggerPresent()</code>, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看 <a href="../../../reverse/anti-debug/isdebuggerpresent/index.html">IsDebuggerPresent()</a> 篇</p>
+<p>一开始的是<code>IsDebuggerPresent()</code>, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看 <a href="/reverse/anti-debug/isdebuggerpresent/index.html">IsDebuggerPresent()</a> 篇</p>
 <h2 id="ntglobalflag">NtGlobalFlag<a class="headerlink" href="#ntglobalflag" title="Permanent link">&para;</a></h2>
-<p>接下来是检测<code>NtGlobalFlag</code>这个字段的标志位. 通过检测PEB的字段值是否为<code>0x70</code>来检测调试器, 如果不太清楚的话, 可以返回去看 <a href="../../../reverse/anti-debug/ntglobalflag/index.html">NtGlobalFlag</a> 篇</p>
+<p>接下来是检测<code>NtGlobalFlag</code>这个字段的标志位. 通过检测PEB的字段值是否为<code>0x70</code>来检测调试器, 如果不太清楚的话, 可以返回去看 <a href="/reverse/anti-debug/ntglobalflag/index.html">NtGlobalFlag</a> 篇</p>
 <div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span> <span class="n">sub_401120</span><span class="p">()</span> <span class="o">==</span> <span class="mh">0x70</span> <span class="p">)</span>         <span class="c1">// 3. 检测PEB的0x68偏移处是否为0x70. 检测NtGlobalFlag()</span>
 <span class="p">{</span>
     <span class="n">puts</span><span class="p">(</span><span class="s">&quot;But detected NtGlobalFlag!&quot;</span><span class="p">);</span>
@@ -3793,7 +3793,7 @@
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
-这里我顺便在注释里列出了<code>CheckRemoteDebuggerPresent()</code>这个API的函数原型. 如果检测到调试器的存在, 会将<code>pbDebuggerPresent</code>设置为一个非零值. 根据其值检测调试器(<a href="../../../reverse/anti-debug/checkremotedebuggerpresent/index.html">CheckRemoteDebuggerPresent()</a> 篇)</p>
+这里我顺便在注释里列出了<code>CheckRemoteDebuggerPresent()</code>这个API的函数原型. 如果检测到调试器的存在, 会将<code>pbDebuggerPresent</code>设置为一个非零值. 根据其值检测调试器(<a href="/reverse/anti-debug/checkremotedebuggerpresent/index.html">CheckRemoteDebuggerPresent()</a> 篇)</p>
 <h2 id="_2">时间差检测<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <div class="codehilite"><pre><span></span><span class="n">v13</span> <span class="o">=</span> <span class="n">GetTickCount</span><span class="p">();</span>
 <span class="k">for</span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">100</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>    <span class="c1">// 睡眠</span>
@@ -3943,11 +3943,11 @@
 
 <p>实际上这一段代码并没有被IDA反编译出来. 而<code>loc_401652</code>位置则是一串代码, 亮点在于使用了一个<code>MessageBoxA</code>的函数. 而且函数参数之一就是我们的待解密flag. 那么我们就可以在输入<code>I have a pen.</code>后, 在<code>if ( !v22 )</code>跳转的汇编代码部分, 将其手动改为跳转到flag解密及弹出<code>messagebox</code>的部分运行, 让程序自己帮忙解密并输出, 就可以了. </p>
 <p>操作如下图所示:</p>
-<p><img alt="jmp.png" src="../../../reverse/anti-debug/figure/2016_seccon/jmp.png" /></p>
+<p><img alt="jmp.png" src="../figure/2016_seccon/jmp.png" /></p>
 <p>这里是输入<code>I have a pen.</code>后的跳转部分, 因为正常跳转到的部分, 全是一些检测调试的内容, 所以我们直接跳到代码解密的部分. 也就是<code>00401663</code>的位置.</p>
-<p><img alt="target.png" src="../../../reverse/anti-debug/figure/2016_seccon/target.png" /></p>
+<p><img alt="target.png" src="../figure/2016_seccon/target.png" /></p>
 <p>在<code>00401663</code>以上的<code>mov-cmp-jnz</code>也是一个验证部分, 就不管了, 直接跳到<code>00401663</code>这里的<code>mov ecx, 7</code>这里运行解密代码, 并顺着执行<code>MessageBoxA()</code>弹出消息框, 拿到flag</p>
-<p><img alt="flag.png" src="../../../reverse/anti-debug/figure/2016_seccon/flag.png" /></p>
+<p><img alt="flag.png" src="../figure/2016_seccon/flag.png" /></p>
                 
                   
                 
@@ -4023,28 +4023,28 @@
       
     </div>
     
-      <script src="../../../assets/javascripts/application.30f6b8b1.js"></script>
+      <script src="../../../assets/javascripts/application.583bbe55.js"></script>
       
         
         
           
-          <script src="../../../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          <script src="assets/javascripts/lunr/../../../lunr.stemmer.support.js"></script>
           
             
               
-                <script src="../../../assets/javascripts/lunr/tinyseg.js"></script>
+                <script src="assets/javascripts/lunr/../../../tinyseg.js"></script>
               
               
-                <script src="../../../assets/javascripts/lunr/lunr.jp.js"></script>
+                <script src="assets/javascripts/lunr/lunr.jp../../../.js"></script>
               
             
           
           
         
       
-      <script>app.initialize({version:"0.17.5",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.0",url:{base:"../../.."}})</script>
       
-        <script src="../../../_static/js/extra.js"></script>
+        <script src="../../../../../../_static/js/extra.js"></script>
       
         <script src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
       
