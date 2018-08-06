@@ -9,7 +9,7 @@
 
 要想弄懂这个ROP利用技巧，需要首先理解ELF文件的基本结构，以及动态链接的基本过程，请参考executable中elf对应的介绍。这里我只给出相应的利用方式。
 
-我们知道在linux中是利用_dl_runtime_resolve(link_map_obj, reloc_index)来对动态链接的函数进行重定位的。那么如果我们可以控制相应的参数以及其对应地址的内容是不是就可以控制解析的函数了呢？答案还肯定的。具体利用方式如下
+我们知道在linux中是利用_dl_runtime_resolve(link_map_obj, reloc_index)来对动态链接的函数进行重定位的。那么如果我们可以控制相应的参数以及其对应地址的内容是不是就可以控制解析的函数了呢？答案是肯定的。具体利用方式如下
 
 1.  控制程序执行dl_resolve函数
     -   给定Link_map以及index两个参数。
