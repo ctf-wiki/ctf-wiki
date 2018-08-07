@@ -1137,7 +1137,7 @@ throw v2                # finally 块结束
 
 **！！从java代码到smali代码！！**
 
-该例子来自于http://blog.csdn.net/dd864140130/article/details/52076515。
+该例子来自于<u>http://blog.csdn.net/dd864140130/article/details/52076515</u>。
 
 java代码如下
 
@@ -1387,7 +1387,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 java -jar smali.jar assemble  src.smali -o src.dex
 ```
 
-其中，smali.jar 来自于 https://bitbucket.org/JesusFreke/smali/overview。
+其中，smali.jar 来自于 <u>https://bitbucket.org/JesusFreke/smali/overview</u>。
 
 ## 运行 smali
 
