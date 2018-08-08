@@ -32,7 +32,7 @@
 
 在主程序中，可以发现，如果我们输入的字符串为EYG3QMCS就会执行flagActivity.class。那么我们输入一下，可以得到如下结果
 
-![](/android/basic_reverse/staticfigure/2014-tinyCTF-flag.png)
+![](/android/basic_reverse/static/figure/2014-tinyCTF-flag.png)
 
 即得到flag。
 
@@ -46,7 +46,7 @@
 
 安装一下程序。简单看一下页面，可以发现程序主要是输入密码，然后登陆。如果输入错的话会爆出“Wrong Password”的信息。
 
-![](/android/basic_reverse/staticfigure/2014-Numdroid-screen.png)
+![](/android/basic_reverse/static/figure/2014-Numdroid-screen.png)
 
 ### 分析程序
 
@@ -145,7 +145,7 @@
 
 输入之后得到如下
 
-![](/android/basic_reverse/static/figure/flag.png)
+![](/android/basic_reverse/static/figure/2014-Numdroid-flag.png)
 
 然后我们计算对应的MD值，从而获得flag为ASIS_3c56e1ed0597056fef0006c6d1c52463。
 
@@ -159,7 +159,7 @@
 
 随便输入了下，发现程序直接报错，告诉我们不对，那么我们可以根据这些信息来进行定位关键代码。
 
-![](/android/basic_reverse/static/figure/figure/2014-Sharif-key1.png)
+![](/android/basic_reverse/static/figure/2014-Sharif-key1.png)
 
 ### 定位关键代码
 
@@ -262,9 +262,9 @@ KeyVerifier.isValidLicenceKey(editText.getText().toString(), MainActivity.this.a
 adb pull /data/data/edu.sharif.ctf/databases/db.db
 ```
 
-进而使用电脑上可以查看sqlite的软件查看一下，这里我使用的是http://sqlitebrowser.org/。如下
+进而使用电脑上可以查看sqlite的软件查看一下，这里我使用的是<u>http://sqlitebrowser.org/</u>。如下
 
-![](/android/basic_reverse/static/figure/figure/2014-Sharif-db.png)
+![](/android/basic_reverse/static/figure/2014-Sharif-db.png)
 
 这里，我们可以直接得到
 

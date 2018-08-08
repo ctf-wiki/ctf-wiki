@@ -55,7 +55,7 @@ adb forward tcp:23946 tcp:23946
 
 ### 添加程序
 
-这里我们以http://www.52pojie.cn/thread-554068-1-1.html中的 debugnativeapp 为例子。
+这里我们以<u>http://www.52pojie.cn/thread-554068-1-1.html</u>中的 debugnativeapp 为例子。
 
 首先，我们需要把原生程序放到 android 设备中，并修改其权限，使其可以被执行。如下
 
@@ -106,7 +106,7 @@ adb shell chmod 755 /data/local/tmp/debugnativeapp
 
 对于 so 原生程序，我们可能会想这和普通原生程序有什么不一样的地方呢？自然是有的，so文件不能单独运行。一般是其它程序调用 so 文件中的基本某些函数。所以这里我们就不能直接采用上面 run 的方式了。一般来说，android 中 so 文件都是依赖于 apk 文件的。
 
-这里我们以 http://www.52pojie.cn/thread-554068-1-1.html 中的 debugjniso.apk 为例子。
+这里我们以 <u>http://www.52pojie.cn/thread-554068-1-1.html</u> 中的 debugjniso.apk 为例子。
 
 **首先，必须搭建基本调试环境。**
 
@@ -177,7 +177,7 @@ adb forward tcp:xxx jdwp:<pid>
 
 这里给出一个基本的通信过程
 
-![](figure/jdb-debugging.png)
+![](/android/basic_reverse/dynamic/figure/jdb-debugging.png)
 
 此时，我们的电脑已经与手机的 app 虚拟机之间建立了通信。
 
