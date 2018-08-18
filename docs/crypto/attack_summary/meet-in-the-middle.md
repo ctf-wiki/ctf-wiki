@@ -28,7 +28,10 @@ $E_{k_1}(P)=D_{k_2}(C)$
 
 ## 题目
 
-
+- 2018 国赛 Crackmec，参见 Wiki AES 部分
+- 2018 Plaid CTF Transducipher，参见比特攻击部分的原理。
+- 2018 国赛 Crackme java，参见 Wiki 整数域上的离散对数部分
+- 2018 WCTF RSA，参见 wiki RSA Complex 部分
 
 ## 参考文献
 
