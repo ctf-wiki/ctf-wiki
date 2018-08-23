@@ -29,7 +29,7 @@ Unsorted Bin Attack 可以达到的效果是实现修改任意地址值为一个
 
 ## 原理
 
-这里我以 shellfish 的 how2heap 仓库中的 [unsorted_bin_attack.c](https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c) 为例进行介绍，这里我做一些简单的修改，如下
+这里我以 shellphish 的 how2heap 仓库中的 [unsorted_bin_attack.c](https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c) 为例进行介绍，这里我做一些简单的修改，如下
 
 ```c
 #include <stdio.h>

