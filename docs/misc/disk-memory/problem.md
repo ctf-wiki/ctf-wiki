@@ -16,7 +16,7 @@ extract_compressed_fs test.cloop now
 
 参考https://manned.org/create_compressed_fs/f2f838da。
 
-得到一个 ext4 类型的文件，进一步想办法或许这个文件系统的内容
+得到一个 ext4 类型的文件，进一步想办法获取这个文件系统的内容
 
 ```shell
 ➜  clip losetup -d /dev/loop0
