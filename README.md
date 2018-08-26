@@ -80,3 +80,7 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 > 世界很大，互联网让世界变小，真的黑客们应该去思考并创造，无论当下是在破坏还是在创造，记住，未来，那条主线是创造的就对了。 ——by 余弦
 
 安全圈很小，安全的海洋很深。安全之路的探险，不如就从 **CTF Wiki** 开始！
+
+## 版权声明
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a>进行许可。
+
