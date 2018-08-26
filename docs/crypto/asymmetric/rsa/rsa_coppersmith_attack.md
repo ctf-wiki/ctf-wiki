@@ -10,7 +10,7 @@ Coppersmith 相关攻击与[Don Coppersmith](https://en.wikipedia.org/wiki/Don_C
 
 这里我们以单变量为主进行介绍，假设
 
-- 模数为 N ，N 具有一个因子 $b\geq N^{\beta},1< \beta \leq1$
+- 模数为 N ，N 具有一个因子 $b\geq N^{\beta},0< \beta \leq 1$
 - 多项式 F 的次数为 $\delta$
 
 那么该方法可以在$O(c\delta^5log^9(N))$ 的复杂度内找到该多项式所有的根$x_0$，这里我们要求 $|x_0|<cN^{\frac{\beta^2}{\delta}}$ 。
