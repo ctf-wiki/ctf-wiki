@@ -62,7 +62,7 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 
 <a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" /></a>
 
-## How can you get?
+## What can you get?
 
 - 一个不一样的思考方式以及一颗乐于解决问题的心
 - 锻炼你的快速学习能力，不断学习新事物
