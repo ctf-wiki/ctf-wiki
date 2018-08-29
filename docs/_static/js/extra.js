@@ -26,4 +26,5 @@ window.addEventListener('load', function() {
     if (a){
         document.body.setAttribute('data-md-color-accent',a);
     }
-}, false); 
+}, false);
+
