@@ -101,7 +101,7 @@ struct malloc_chunk {
     -   bk_nextsize 指向后一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。
     -   一般空闲的 large chunk 在 fd 的遍历顺序中，按照由大到小的顺序排列。**这样做可以避免在寻找合适chunk 时挨个遍历。**
 
-一个已经分配的 chunk 的样子如下。**我们称前两个字段称为 chunk header，后面的部分称为user data。每次 malloc 申请得到的内存指针，其实指向user data的起始处。** 
+一个已经分配的 chunk 的样子如下。**我们称前两个字段称为 chunk header，后面的部分称为 user data。每次 malloc 申请得到的内存指针，其实指向 user data 的起始处。** 
 
 当一个 chunk 处于使用状态时，它的下一个 chunk 的 prev_size 域无效，所以下一个 chunk 的该部分也可以被当前chunk使用。**这就是chunk中的空间复用。**
 
@@ -146,7 +146,7 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 可以发现，如果一个 chunk 处于 free 状态，那么会有两个位置记录其相应的大小
 
-1. 本身的size字段会记录，
+1. 本身的 size 字段会记录，
 
 2. 它后面的 chunk 会记录。
 
@@ -327,13 +327,13 @@ mem指向用户得到的内存的起始位置。
 **获取前一个chunk的信息**
 
 ```c++
-/* Size of the chunk below P.  Only valid if prev_inuse (P).  */
+/* Size of the chunk below P.  Only valid if !prev_inuse (P).  */
 #define prev_size(p) ((p)->mchunk_prev_size)
 
-/* Set the size of the chunk below P.  Only valid if prev_inuse (P).  */
+/* Set the size of the chunk below P.  Only valid if !prev_inuse (P).  */
 #define set_prev_size(p, sz) ((p)->mchunk_prev_size = (sz))
 
-/* Ptr to previous physical malloc_chunk.  Only valid if prev_inuse (P).  */
+/* Ptr to previous physical malloc_chunk.  Only valid if !prev_inuse (P).  */
 #define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))
 ```
 
@@ -445,7 +445,7 @@ typedef struct malloc_chunk *mbinptr;
 #define last(b) ((b)->bk)
 ```
 
-#### fast bin
+#### Fast Bin
 
 大多数程序经常会申请以及释放一些比较小的内存块。如果将一些较小的 chunk 释放之后发现存在与之相邻的空闲的 chunk 并将它们进行合并，那么当下一次再次申请相应大小的 chunk 时，就需要对 chunk 进行分割，这样就大大降低了堆的利用效率。**因为我们把大部分时间花在了合并、分割以及中间检查的过程中。**因此，ptmalloc 中专门设计了 fast bin，对应的变量就是 malloc state 中的 fastbinsY 
 
@@ -477,7 +477,7 @@ typedef struct malloc_chunk *mfastbinptr;
 
 为了更加高效地利用 fast bin，glibc 采用单向链表对其中的每个 bin 进行组织，并且**每个 bin 采取 LIFO 策略**，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的 chunk 的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中相应的 bin 中是否有对应大小的空闲块，如果有的话，就会直接从这个 bin 中获取 chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
 
-默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为8字节开始一直到80字节，定义如下
+默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为 8 字节开始一直到 80 字节（注意这里说的是数据空间大小，也即除去 prev_size 和 size 字段部分的大小）定义如下
 
 ```c++
 #define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)
@@ -566,7 +566,7 @@ ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fas
     ((((unsigned int) (sz)) >> (SIZE_SZ == 8 ? 4 : 3)) - 2)
 ```
 
-**需要特别注意的是，fastbin 范围的 chunk 的 inuse 始终被置为 1。因此它们不会和其它被释放的chunk合并。**
+**需要特别注意的是，fastbin 范围的 chunk 的 inuse 始终被置为 1。因此它们不会和其它被释放的 chunk 合并。**
 
 但是当释放的 chunk 与该 chunk 相邻的空闲 chunk 合并后的大小大于FASTBIN_CONSOLIDATION_THRESHOLD时，内存碎片可能比较多了，我们就需要把 fast bins 中的chunk都进行合并，以减少内存碎片对系统的影响。
 
@@ -585,7 +585,7 @@ ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fas
 #define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)
 ```
 
-**malloc_consolidate函数可以将fastbin中所有的chunk释放并合并在一起。？？？** 
+**malloc_consolidate 函数可以将 fastbin 中所有能和其它 chunk 合并的 chunk 合并在一起。具体地参见后续的详细函数的分析。** 
 
 ```
 /*
@@ -596,9 +596,9 @@ ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fas
  */
 ```
 
-#### small bin
+#### Small Bin
 
-small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为：chunk_size =2 * SIZE_SZ *index，具体如下
+small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为：chunk_size = 2 * SIZE_SZ *index，具体如下
 
 | 下标   | SIZE_SZ=4（32位） | SIZE_SZ=8（64位） |
 | ---- | -------------- | -------------- |
@@ -609,7 +609,7 @@ small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为�
 | x    | 2\*4\*x        | 2\*8\*x        |
 | 63   | 504            | 1008           |
 
-small bins 中一共有 62 个链表，每个链表中存储的 chunk 大小都一致。比如对于 32 位系统来说，下标 2 对应的双向链表中存储的 chunk 大小为均为 16 字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，**small bins 中每个 bin 对应的链表采用 FIFO 的规则**，所以同一个链表中先被释放的 chunk 会先被分配出去。
+small bins 中一共有 62 个循环双向链表，每个链表中存储的 chunk 大小都一致。比如对于 32 位系统来说，下标 2 对应的双向链表中存储的 chunk 大小为均为 16 字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，**small bins 中每个 bin 对应的链表采用 FIFO 的规则**，所以同一个链表中先被释放的 chunk 会先被分配出去。
 
 small bin相关的宏如下
 
@@ -630,9 +630,9 @@ small bin相关的宏如下
      SMALLBIN_CORRECTION)
 ```
 
-**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin中去的。
+**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin 中去的，我们在后面分析具体的源代码时会有深刻的体会。
 
-#### large bin
+#### Large Bin
 
 large bins 中一共包括 63 个 bin，每个 bin 中的 chunk 的大小不一致，而是处于一定区间范围内。此外，这 63 个 bin 被分成了 6 组，每组 bin 中的 chunk 大小之间的公差一致，具体如下：
 
@@ -698,7 +698,7 @@ large bins 中一共包括 63 个 bin，每个 bin 中的 chunk 的大小不一�
                                                 : largebin_index_32(sz))
 ```
 
-#### unsorted bin
+#### Unsorted Bin
 
 unsorted bin 可以视为空闲 chunk 回归其所属 bin 之前的缓冲区。
 
@@ -727,9 +727,9 @@ unsorted bin 可以视为空闲 chunk 回归其所属 bin 之前的缓冲区。
 #define unsorted_chunks(M) (bin_at(M, 1))
 ```
 
-unsorted bin 处于我们之前所说的bin数组下标1处。故而 unsorted bin只有一个链表。unsorted bin 中的空闲 chunk 处于乱序状态，主要有两个来源
+unsorted bin 处于我们之前所说的 bin 数组下标 1 处。故而 unsorted bin 只有一个链表。unsorted bin 中的空闲 chunk 处于乱序状态，主要有两个来源
 
-- 当一个较大的 chunk 被分割成两半后，如果剩下的部分大于MINSIZE，就会被放到 unsorted bin 中。
+- 当一个较大的 chunk 被分割成两半后，如果剩下的部分大于 MINSIZE，就会被放到 unsorted bin 中。
 - 释放一个不属于 fast bin 的 chunk，并且该 chunk 不和 top chunk 紧邻时，该 chunk 会被首先放到 unsorted bin 中。关于 top chunk 的解释，请参考下面的介绍。
 
 此外，Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO 。
@@ -745,7 +745,7 @@ unsorted bin 处于我们之前所说的bin数组下标1处。故而 unsorted bi
     ((in_smallbin_range(sz)) ? smallbin_index(sz) : largebin_index(sz))
 ```
 
-### top chunk
+### Top Chunk
 
 glibc 中对于 top chunk 的描述如下
 
@@ -780,7 +780,7 @@ glibc 中对于 top chunk 的描述如下
 
 ### last remainder
 
-在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不和申请的内存大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
+在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不和申请的内存大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin 也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
 
 ## 宏观结构
 

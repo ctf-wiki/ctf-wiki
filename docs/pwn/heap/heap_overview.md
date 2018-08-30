@@ -49,7 +49,7 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 可以看出，malloc 函数返回对应大小字节的内存块的指针。此外，该函数还对一些异常情况进行了处理
 
 - 当 n=0 时，返回当前系统允许的堆的最小内存块。
-- 当 n 为负数时，由于在大多数系统上，**size_t 是无符号数（这一点非常重要）**，所以程序就会申请很大的内存空间，但通常来说都会崩溃，因为系统没有那么多的内存可以分配。
+- 当 n 为负数时，由于在大多数系统上，**size_t 是无符号数（这一点非常重要）**，所以程序就会申请很大的内存空间，但通常来说都会失败，因为系统没有那么多的内存可以分配。
 
 ### free
 
@@ -101,9 +101,9 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 
 ```c
 /* sbrk and brk example */
-##include <stdio.h>
-##include <unistd.h>
-##include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 int main()
 {
