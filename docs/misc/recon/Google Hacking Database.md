@@ -1,134 +1,134 @@
 # Google Hacking Database
-标签： 渗透测试 黑客 信息收集 
 
----
-通过我的上一篇文章，我们知道Google Hacking 的强大之处，也了解了hacker们能通过简单的搜索框在网络中出入于无形，但是你可能不知道，在他们背后还有一个强大的后盾，那就是Google Hacking Database（GHDB），这篇文章主要就是简单的介绍一下GHDB的使用
+## **简介**
 
-## 0X01 简介
 话不多说，先上链接
 https://www.exploit-db.com/google-hacking-database/
 
-![此处输入图片的描述][1]
+![](/misc/recon/figure/GHDB1.png)
 
-这个是世界广大的黑客朋友们自发维护的一个汇集着各种已经被优化的查询语句的数据库，每天都在不断地更新，如果你对如何驾驭Google Hacking 的语法感到迷茫，或者是想提升自己的查询能力，再或者是想发现一些新的姿势，这里绝对是你的不二之选。
+这个是世界广大的黑客朋友们自发维护的一个汇集着各种已经被优化的查询语句的数据库，每天都在不断地更新，如果你对如何驾驭 Google Hacking 的语法感到迷茫，或者是想提升自己的查询能力，再或者是想发现一些新的姿势，这里绝对是你的不二之选。
 
-## 0X02 语句分类
+## **语句分类**
 在首页的实例语句的下方有着很多的分类，每种分类都有不同的语句条数。
-![此处输入图片的描述][2]
+![](/misc/recon/figure/GHDB2.png)
 
 分类从左往右从上到下分别是
 
-1.立足点：
-可帮助攻击者立足于Web服务器的查询示例
+1. 立足点：
+可帮助攻击者立足于 Web 服务器的查询示例
 
-2.敏感目录
-谷歌Google网站共享敏感目录的集合。这里包含的文件将从敏感到über-secret变化！
+2. 敏感目录：
+Google 网站共享敏感目录的集合。
 
-3.易受攻击的文件
-Google可以在网站上找到几百个易受攻击的文件。
+3. 易受攻击的文件：
+Google 可以在网站上找到几百个易受攻击的文件。
 
-4.易受攻击的服务器
+4. 易受攻击的服务器
 这些搜索显示具有特定漏洞的服务器。这些发现方式与“易受攻击的文件”部分中的搜索方式不同。
 
-5.错误消息
+5. 错误消息
 详细的错误消息
 
-6.网络或漏洞数据 
-这些页面包含诸如防火墙日志，蜜罐日志，网络信息，IDS日志等各种有趣的东西！
+6. 网络或漏洞数据 
+这些页面包含诸如防火墙日志、蜜罐日志、网络信息、IDS 日志等各种有趣的东西！
 
-7.各种在线设备
+7. 各种在线设备
 这个类别包含诸如打印机，摄像机以及谷歌在网络上发现的各种酷炫事物。
 
-8.Web服务器检测 
-这些链接展示了Googles极棒的配置Web服务器的能力。
+8. Web 服务器检测 
+这些链接展示了 Google 极棒的配置 Web 服务器的能力。
 
-9.包含用户名的文件 
-这些文件包含用户名，但没有密码......但是，谷歌在网站上查找用户名。
+9. 包含用户名的文件 
+这些文件包含用户名，但没有密码。
 
-10.包含密码的文件
-PASSWORDS！谷歌发现密码！
+10. 包含密码的文件
+PASSWORDS 谷歌发现的密码
 
-11.敏感的在线购物信息
-可以显示诸如客户数据，供应商，订单，信用卡号码，信用卡信息等在线购物信息的查询示例
+11. 敏感的在线购物信息
+可以显示诸如客户数据、供应商、订单、信用卡号码、信用卡信息等在线购物信息的查询示例
 
-12.包含丰富信息的文件 
+12. 包含丰富信息的文件 
 没有用户名或密码，但有趣的东西无一例外。
 
-13.包含登录门户的页面
+13. 包含登录门户的页面
 这些是各种服务的登录页面。考虑他们网站前门的更敏感的功能。
 
-14.咨询和弱点
+14. 咨询和弱点
 这些搜索找到易受攻击的服务。 这些搜索通常来自各种安全咨询帖子，在许多情况下是产品或版本特定的。
 
 在搜索框左边的下拉菜单中也有着详细的分类，如下图
-![此处输入图片的描述][3]
+
+![](/misc/recon/figure/GHDB3.png)
 
 
-## 0X03 搜索
+## **搜索**
+
 在这一部分我会把常见的漏洞搜索语句列举出来。
 
-### 一、寻找目录列表中的敏感文件或者目录：
+### 寻找目录列表中的敏感文件或者目录：
 
-### 基本语句：
+#### 基本语句：
 
 **查找目录列表的敏感文件**
 
-1.(site:域名）intitle:"index.of"(|intitle:...) (intext:)"敏感文件名/敏感后缀名" (|intext:...) (-忽略的文件名)
+1. (site:域名）intitle:"index.of"(|intitle:...) (intext:)"敏感文件名/敏感后缀名" (|intext:...) (-忽略的文件名)
 
 **查找url中能访问的敏感文件或者目录**
 
-1.(site:域名) inurl:"敏感文件名/目录名"|inurl:...  (-忽略的文件名)
+1. (site:域名) inurl:"敏感文件名/目录名"|inurl:...  (-忽略的文件名)
 
-2.(site:域名) filetype:后缀名 inurl:文件名(|inurl:...)  (-忽略的文件名)
+2. (site:域名) filetype:后缀名 inurl:文件名(|inurl:...)  (-忽略的文件名)
 
-3.(site:域名) intext:"文件中独一无二的短语"  (-忽略的文件名)
+3. (site:域名) intext:"文件中独一无二的短语"  (-忽略的文件名)
 
 **查找特定的服务器版本的网站**
 
-(site:域名) intext:"Apache/1.3.27 Server at" (-忽略的文件名)
+1. (site:域名) intext:"Apache/1.3.27 Server at" (-忽略的文件名)
 
 **查找登录入口/后台**
 
-(site:域名) inurl:"login"|inurl:"logon"|inurl:"admin"|inurl:"manage"|inurl:"manager"|inurl:"member"|inurl:"admin_login"|inurl:"ad_login"|inurl:"ad_manage"|inurl:"houtai"|inurl:"guanli"|inurl:"htdl"|inurl:"htgl"|inurl:"members"|inurl:"system"(|inurl:...)  (-忽略的文件名)
+1. (site:域名) inurl:"login"|inurl:"logon"|inurl:"admin"|inurl:"manage"|inurl:"manager"|inurl:"member"|inurl:"admin_login"|inurl:"ad_login"|inurl:"ad_manage"|inurl:"houtai"|inurl:"guanli"|inurl:"htdl"|inurl:"htgl"|inurl:"members"|inurl:"system"(|inurl:...)  (-忽略的文件名)
 
 **错误消息**
 
-(site:域名) intext:"error"|intext:"warning"|intext:"for more information"|intext:"not found"|intext:"其他错误消息" (-排除的信息)
+1. (site:域名) intext:"error"|intext:"warning"|intext:"for more information"|intext:"not found"|intext:"其他错误消息" (-排除的信息)
 
 **数据库的转储**
 
-(site:域名) # Dumping data for table(user|username|password|pass) (-排除的信息)
+1. (site:域名) # Dumping data for table(user|username|password|pass) (-排除的信息)
 
 **查找子域名**
 
-site:"主机名" -site:"www.主机名" (-排除的信息)
+1. site:"主机名" -site:"www.主机名" (-排除的信息)
 
 **查找网站中泄露出的邮箱地址**
 
-site:域名 intext:"email"(|intext:...) (-排除的信息)
+2. site:域名 intext:"email"(|intext:...) (-排除的信息)
 
-更多组合
+**更多组合**
+
 我们可以把自己的搜索与能获取更好的结果的搜索项一起使用
 
-1.当查找email时，能添加类似 通讯录 邮件 电子邮件 发送这种关键词
+1. 当查找email时，能添加类似：通讯录、邮件、电子邮件、发送这种关键词
 
-2.查找电话号码的时候可以使用一些类似 电话 移动电话 通讯录 数字 手机
+2. 查找电话号码的时候可以使用一些类似：电话、移动电话、通讯录、数字、手机等关键词
 
 **查找网站中的人的信息**
 
-site:域名 intext:"人的信息"(|intext:...) (-排除的信息)
+1. site:域名 intext:"人的信息"(|intext:...) (-排除的信息)
 
 **用户名相关**
 
-(site:域名) intext:"username"|intext:"userid"|intext:"employee.ID"(|intext:...)  "your username is" (-排除的信息)
+1. (site:域名) intext:"username"|intext:"userid"|intext:"employee.ID"(|intext:...)  "your username is" (-排除的信息)
 
 **密码相关**
 
-(site:域名) intext:"password"|intext:"passcode"(|intext:...)  "your password is"  "reminder forgotten" (-排除的信息)
+1. (site:域名) intext:"password"|intext:"passcode"(|intext:...)  "your password is"  "reminder forgotten" (-排除的信息)
 
 **公司相关**
 
-(site:域名) intext:"admin"|intext:"administrator"|intext:"contact your system"|intext:"contact your administrator" (-排除的信息)
+1. (site:域名) intext:"admin"|intext:"administrator"|intext:"contact your system"|intext:"contact your administrator" (-排除的信息)
 
 **web 服务器的软件错误消息**
 
@@ -143,29 +143,30 @@ site:域名 intext:"人的信息"(|intext:...) (-排除的信息)
 "Version Info" "BootVesion" "Internet Settings" 能找到 Belkin Cable/DSL路由器 ......
 
 **这里强烈推荐谷歌的两个好朋友**
-他们是搜索物联网设备的神兵利器，有时间我也可以给大家介绍一下，或者网上也有不少文章简单的介绍了他们，推荐大家阅读
 
-钟馗之眼  https://www.zoomeye.org/
+他们是搜索物联网设备的神兵利器
 
-![此处输入图片的描述][4]
+1. 钟馗之眼  https://www.zoomeye.org/
 
-shadon    https://www.shodan.io/
+![](/misc/recon/figure/ZKZY1.png)
 
-![此处输入图片的描述][5]
+2. shadon    https://www.shodan.io/
+
+![](/misc/recon/figure/shadon1.png)
 
 **注册表信息**
 
-filetype:reg HKEY_CURRENT_USER|(其他注册表文件) （username|其他细节信息）
+1. filetype:reg HKEY_CURRENT_USER|(其他注册表文件) （username|其他细节信息）
 
-![此处输入图片的描述][6]
+![](/misc/recon/figure/ZCB1.png)
 
 **漏洞扫描器生成的报告**
 
-This file was generated by Nessus|(其他扫描器报告中的唯一语句)
+1. This file was generated by Nessus|(其他扫描器报告中的唯一语句)
 
 
 
-附件一（后缀名/隐藏文件）：
+**附件一（后缀名/隐藏文件）**
 ".vscode"
 ".env"
 ".Trash"
@@ -260,7 +261,7 @@ This file was generated by Nessus|(其他扫描器报告中的唯一语句)
 ".cfm"
 ".ctl"
 
-附件二（目录）：
+**附件二（目录）**
 "home/000~root~000/"
 "logs"
 "log"
@@ -404,7 +405,7 @@ This file was generated by Nessus|(其他扫描器报告中的唯一语句)
 "userid"
 "putty"
 
-附件三（操作系统）
+**附件三（操作系统）**
 Unix
 CentOS
 Debian
@@ -419,17 +420,10 @@ Ubuntu
 UNIX
 Win32
 
-附件四（注册表）
+**附件四（注册表）**
 HKEY_CLASSES_ROOT
 HKEY_CURRENT_USER
 HKEY_LOCAL_MACHINE
 HKEY_USERS
 HKEY_CURRENT_CONFIG
 
-
-  [1]: http://omjtvvl8z.bkt.clouddn.com/GHDB1.png
-  [2]: http://omjtvvl8z.bkt.clouddn.com/GHDB2.png
-  [3]: http://omjtvvl8z.bkt.clouddn.com/GHDB3.png
-  [4]: http://omjtvvl8z.bkt.clouddn.com/ZKZY1.png
-  [5]: http://omjtvvl8z.bkt.clouddn.com/shadon1.png
-  [6]: http://omjtvvl8z.bkt.clouddn.com/ZCB1.png
