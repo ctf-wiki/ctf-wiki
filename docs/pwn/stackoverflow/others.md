@@ -197,7 +197,7 @@ ret #pop eip，弹出栈顶元素作为程序下一个执行地址
 
 ```
 mov esp, ebp # 将ebp的值赋给esp
-pop ebp #弹出ebp
+pop ebp # 弹出ebp
 ```
 
 下面我们来仔细说一下基本的控制过程。
