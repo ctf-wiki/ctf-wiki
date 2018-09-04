@@ -114,8 +114,8 @@ shellcode|padding|fake ebp|0x08048504|set esp point to shellcode and jmp esp
 所以我们最后一段需要执行的指令就是
 
 ```asm
-sub 0x28,%esp
-jmp %esp
+sub esp,0x28
+jmp esp
 ```
 
 所以最后的 exp 如下
