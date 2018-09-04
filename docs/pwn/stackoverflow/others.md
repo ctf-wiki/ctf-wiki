@@ -84,9 +84,9 @@ signed int vul()
 可以看出，源程序存在栈溢出漏洞。但是其所能溢出的字节就只有 50-0x20-4=14 个字节，所以我们很难执行一些比较好的 ROP。这里我们就考虑 stack pivoting 。由于程序本身并没有开启堆栈保护，所以我们可以在栈上布置shellcode 并执行。基本利用思路如下
 
 - 利用栈溢出布置 shellcode
-- 控制 eip 指向 shellcode处
+- 控制 eip 指向 shellcode 处
 
-第一步，还是比较容易地，直接读取即可，但是由于程序本身会开启 ASLR 保护，所以我们很难直接知道shellcode 的地址。但是栈上相对偏移是固定的，所以我们可以利用栈溢出对 esp 进行操作，使其指向 shellcode处，并且直接控制程序跳转至 esp处。那下面就是找控制程序跳转到 esp 处的 gadgets 了。
+第一步，还是比较容易地，直接读取即可，但是由于程序本身会开启 ASLR 保护，所以我们很难直接知道 shellcode 的地址。但是栈上相对偏移是固定的，所以我们可以利用栈溢出对 esp 进行操作，使其指向 shellcode 处，并且直接控制程序跳转至 esp处。那下面就是找控制程序跳转到 esp 处的 gadgets 了。
 
 ```shell
 ➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ ROPgadget --binary b0verfl0w --only 'jmp|ret'         
@@ -175,50 +175,50 @@ ebp2|target function addr|leave ret addr|arg1|arg2
 
 这里我们的 fake ebp 指向 ebp2，即它为 ebp2 所在的地址。通常来说，这里都是我们能够控制的可读的内容。
 
-**下面的汇编语法是 AT&T 语法。**
+**下面的汇编语法是 intel 语法。**
 
 在我们介绍基本的控制过程之前，我们还是有必要说一下，函数的入口点与出口点的基本操作
 
 入口点
 
 ```
-push %ebp  # 将ebp压栈
-mov %esp, %ebp #将esp的值赋给ebp
+push ebp  # 将ebp压栈
+mov ebp, esp #将esp的值赋给ebp
 ```
 
 出口点
 
 ```
 leave
-ret #pop %eip，弹出栈顶元素作为程序下一个执行地址
+ret #pop eip，弹出栈顶元素作为程序下一个执行地址
 ```
 
 其中 leave 指令相当于
 
 ```
-mov %ebp, %esp # 将ebp的值赋给esp
-pop %ebp #弹出ebp
+mov esp, ebp # 将ebp的值赋给esp
+pop ebp #弹出ebp
 ```
 
 下面我们来仔细说一下基本的控制过程。
 
 1. 在有栈溢出的程序执行 leave 时，其分为两个步骤
 
-    - mov %ebp, %esp ，这会将 esp 也指向当前栈溢出漏洞的 ebp 基地址处。
-    - pop %ebp， 这会将栈中存放的 fake ebp 的值赋给 ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了 ebp2 所在的地址。
+    - mov esp, ebp ，这会将 esp 也指向当前栈溢出漏洞的 ebp 基地址处。
+    - pop ebp， 这会将栈中存放的 fake ebp 的值赋给 ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了 ebp2 所在的地址。
 
 2. 执行 ret 指令，会再次执行 leave ret 指令。
 
 3. 执行 leave 指令，其分为两个步骤
 
-    - mov %ebp, %esp ，这会将 esp 指向 ebp2。
-    - pop %ebp，此时，会将 ebp 的内容设置为 ebp2 的值，同时 esp 会指向 target function。
+    - mov esp, ebp ，这会将 esp 指向 ebp2。
+    - pop ebp，此时，会将 ebp 的内容设置为 ebp2 的值，同时 esp 会指向 target function。
 
 4. 执行 ret 指令，这时候程序就会执行 target function，当其进行程序的时候会执行
 
-    - push %ebp，会将 ebp2 值压入栈中，
+    - push ebp，会将 ebp2 值压入栈中，
 
-    - mov %esp, %ebp，将 ebp 指向当前基地址。
+    - mov ebp, esp，将 ebp 指向当前基地址。
 
 此时的栈结构如下
 
