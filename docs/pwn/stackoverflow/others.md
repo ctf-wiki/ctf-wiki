@@ -114,8 +114,8 @@ shellcode|padding|fake ebp|0x08048504|set esp point to shellcode and jmp esp
 所以我们最后一段需要执行的指令就是
 
 ```asm
-sub 0x28,esp
-jmp esp
+sub 0x28,%esp
+jmp %esp
 ```
 
 所以最后的 exp 如下
@@ -182,43 +182,43 @@ ebp2|target function addr|leave ret addr|arg1|arg2
 入口点
 
 ```
-push ebp  # 将ebp压栈
-move esp, ebp #将esp的值赋给ebp
+push %ebp  # 将ebp压栈
+mov %esp, %ebp #将esp的值赋给ebp
 ```
 
 出口点
 
 ```
 leave
-ret #pop eip，弹出栈顶元素作为程序下一个执行地址
+ret #pop %eip，弹出栈顶元素作为程序下一个执行地址
 ```
 
 其中 leave 指令相当于
 
 ```
-move ebp, esp # 将ebp的值赋给esp
-pop ebp #弹出ebp
+mov %ebp, %esp # 将ebp的值赋给esp
+pop %ebp #弹出ebp
 ```
 
 下面我们来仔细说一下基本的控制过程。
 
 1. 在有栈溢出的程序执行 leave 时，其分为两个步骤
 
-    - move ebp, esp ，这会将 esp 也指向当前栈溢出漏洞的 ebp 基地址处。
-    - pop ebp， 这会将栈中存放的 fake ebp 的值赋给 ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了 ebp2 所在的地址。
+    - mov %ebp, %esp ，这会将 esp 也指向当前栈溢出漏洞的 ebp 基地址处。
+    - pop %ebp， 这会将栈中存放的 fake ebp 的值赋给 ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了 ebp2 所在的地址。
 
 2. 执行 ret 指令，会再次执行 leave ret 指令。
 
 3. 执行 leave 指令，其分为两个步骤
 
-    - move ebp, esp ，这会将 esp 指向 ebp2。
-    - pop ebp，此时，会将 ebp 的内容设置为 ebp2 的值，同时 esp 会指向 target function。
+    - mov %ebp, %esp ，这会将 esp 指向 ebp2。
+    - pop %ebp，此时，会将 ebp 的内容设置为 ebp2 的值，同时 esp 会指向 target function。
 
 4. 执行 ret 指令，这时候程序就会执行 target function，当其进行程序的时候会执行
 
-    - push ebp，会将 ebp2 值压入栈中，
+    - push %ebp，会将 ebp2 值压入栈中，
 
-    - move esp, ebp，将 ebp 指向当前基地址。
+    - mov %esp, %ebp，将 ebp 指向当前基地址。
 
 此时的栈结构如下
 
