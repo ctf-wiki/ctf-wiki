@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.3, mkdocs-material-3.0.3">
+      <meta name="generator" content="mkdocs-1.0.3, mkdocs-material-3.0.4">
     
     
       
@@ -60,8 +60,8 @@
       <script src="../../../assets/javascripts/modernizr.1aa3b519.js"></script>
     
     
-      <link href="https://gstatic.loli.net" rel="preconnect" crossorigin>
       
+        <link href="https://gstatic.loli.net" rel="preconnect" crossorigin>
         <link rel="stylesheet" href="https://fonts.loli.net/css?family=Fira+Sans:300,400,400i,700|Fira+Mono">
         <style>body,input{font-family:"Fira Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Fira Mono","Courier New",Courier,monospace}</style>
       
@@ -4265,8 +4265,8 @@ Unique gadgets found: <span class="m">3</span>
 <li>size(0x08048504)=0x4</li>
 </ul>
 <p>所以我们最后一段需要执行的指令就是</p>
-<div class="codehilite"><pre><span></span><span class="nf">sub</span> <span class="mi">0x28</span><span class="p">,</span><span class="no">esp</span>
-<span class="nf">jmp</span> <span class="no">esp</span>
+<div class="codehilite"><pre><span></span><span class="nf">sub</span> <span class="mi">0x28</span><span class="p">,</span><span class="nv">%esp</span>
+<span class="nf">jmp</span> <span class="nv">%esp</span>
 </pre></div>
 
 <p>所以最后的 exp 如下</p>
@@ -4318,18 +4318,18 @@ ebp2|target function addr|leave ret addr|arg1|arg2
 <p><strong>下面的汇编语法是 AT&amp;T 语法。</strong></p>
 <p>在我们介绍基本的控制过程之前，我们还是有必要说一下，函数的入口点与出口点的基本操作</p>
 <p>入口点</p>
-<div class="codehilite"><pre><span></span>push ebp  # 将ebp压栈
-move esp, ebp #将esp的值赋给ebp
+<div class="codehilite"><pre><span></span>push %ebp  # 将ebp压栈
+mov %esp, %ebp #将esp的值赋给ebp
 </pre></div>
 
 <p>出口点</p>
 <div class="codehilite"><pre><span></span>leave
-ret #pop eip，弹出栈顶元素作为程序下一个执行地址
+ret #pop %eip，弹出栈顶元素作为程序下一个执行地址
 </pre></div>
 
 <p>其中 leave 指令相当于</p>
-<div class="codehilite"><pre><span></span>move ebp, esp # 将ebp的值赋给esp
-pop ebp #弹出ebp
+<div class="codehilite"><pre><span></span>mov %ebp, %esp # 将ebp的值赋给esp
+pop %ebp #弹出ebp
 </pre></div>
 
 <p>下面我们来仔细说一下基本的控制过程。</p>
@@ -4337,8 +4337,8 @@ pop ebp #弹出ebp
 <li>
 <p>在有栈溢出的程序执行 leave 时，其分为两个步骤</p>
 <ul>
-<li>move ebp, esp ，这会将 esp 也指向当前栈溢出漏洞的 ebp 基地址处。</li>
-<li>pop ebp， 这会将栈中存放的 fake ebp 的值赋给 ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了 ebp2 所在的地址。</li>
+<li>mov %ebp, %esp ，这会将 esp 也指向当前栈溢出漏洞的 ebp 基地址处。</li>
+<li>pop %ebp， 这会将栈中存放的 fake ebp 的值赋给 ebp。即执行完指令之后，ebp便指向了ebp2，也就是保存了 ebp2 所在的地址。</li>
 </ul>
 </li>
 <li>
@@ -4347,18 +4347,18 @@ pop ebp #弹出ebp
 <li>
 <p>执行 leave 指令，其分为两个步骤</p>
 <ul>
-<li>move ebp, esp ，这会将 esp 指向 ebp2。</li>
-<li>pop ebp，此时，会将 ebp 的内容设置为 ebp2 的值，同时 esp 会指向 target function。</li>
+<li>mov %ebp, %esp ，这会将 esp 指向 ebp2。</li>
+<li>pop %ebp，此时，会将 ebp 的内容设置为 ebp2 的值，同时 esp 会指向 target function。</li>
 </ul>
 </li>
 <li>
 <p>执行 ret 指令，这时候程序就会执行 target function，当其进行程序的时候会执行</p>
 <ul>
 <li>
-<p>push ebp，会将 ebp2 值压入栈中，</p>
+<p>push %ebp，会将 ebp2 值压入栈中，</p>
 </li>
 <li>
-<p>move esp, ebp，将 ebp 指向当前基地址。</p>
+<p>mov %esp, %ebp，将 ebp 指向当前基地址。</p>
 </li>
 </ul>
 </li>
