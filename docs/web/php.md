@@ -276,13 +276,39 @@ pcntl_exec();
 `preg_replace()` 的第一个参数如果存在 `/e` 模式修饰符，则允许代码执行。
 
 ```php
-<?php
-$var = "<tag>phpinfo()</tag>";
-preg_replace("/<tag>(.*?)<\/tag>/e", "addslashes(\\1)", $var);
+phpinfo()";
+preg_replace("/(.*?)<\/tag>/e", "addslashes(\1)", $var);
 ?>
 ```
 
 如果没有 `/e` 修饰符，可以尝试 %00 截断。
+
+### `preg_match` 代码执行
+
+`preg_match` 执行的是匹配正则表达式，如果匹配成功，则允许代码执行。
+
+```
+40){
+        die("Long.");
+    }
+    if(preg_match("/[A-Za-z0-9]+/",$code)){
+        die("NO.");
+    }
+    @eval($code);
+}else{
+    highlight_file(__FILE__);
+}
+//$hint =  "php function getFlag() to get flag";
+?>
+```
+
+这道题是xman训练赛的时候，梅子酒师傅出的一道题。这一串代码描述是这样子，我们要绕过A-Z、a-z、0-9这些常规数字、字母字符串的传参，将非字母、数字的字符经过各种变换，最后能构造出 a-z 中任意一个字符，并且字符串长度小于40。然后再利用 PHP允许动态函数执行的特点，拼接出一个函数名，这里我们是 `getFlag`，然后动态执行该代码即可。
+
+我们最终是要读取到那个getFlag函数，我们需要构造一个_GET来去读取这个函数，我们最终构造了如下字符串：
+
+![5b9293b330aca](https://i.loli.net/2018/09/07/5b9293b330aca.png)
+
+具体做法参考：[记一次拿webshell踩过的坑(如何用PHP编写一个不包含数字和字母的后门)](https://www.cnblogs.com/ECJTUACM-873284962/p/9433641.html)
 
 ### 动态函数执行
 
