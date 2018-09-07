@@ -289,7 +289,11 @@ preg_replace("/<tag>(.*?)<\/tag>/e", "addslashes(\\1)", $var);
 `preg_match` 执行的是匹配正则表达式，如果匹配成功，则允许代码执行。
 
 ```
-40){
+<?php
+include 'flag.php';
+if(isset($_GET['code'])){
+    $code = $_GET['code'];
+    if(strlen($code)>40){
         die("Long.");
     }
     if(preg_match("/[A-Za-z0-9]+/",$code)){
