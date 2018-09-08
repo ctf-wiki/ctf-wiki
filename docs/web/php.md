@@ -323,7 +323,7 @@ if(isset($_GET['code'])){
 
 运行结果如下：
 
-![](./picture/php/answer1.png)
+![](picture/php/figure/preg_match/answer1.png)
 
 我们可以看到，输出的结果是字符 `~`。之所以会得到这样的结果，是因为代码中对字符 `A` 和字符 `?` 进行了异或操作。在 `PHP` 中，两个变量进行异或时，先会将字符串转换成 `ASCII` 值，再将 `ASCII` 值转换成二进制再进行异或，异或完，又将结果从二进制转换成了 `ASCII` 值，再将 `ASCII` 值转换成字符串。异或操作有时也被用来交换两个变量的值。
 
@@ -350,7 +350,7 @@ if(isset($_GET['code'])){
 
 代码执行结果如下：
 
-![](./picture/php/answer2.png)
+![](picture/php/figure/preg_match/answer2.png)
 
 我们一起来分析一下上面这段代码：
 
@@ -390,7 +390,7 @@ $__=("#"^"|").("."^"~").("/"^"`").("|"^"/").("{"^"/");
 
 我们最终是要读取到那个 `getFlag` 函数，我们需要构造一个 `_GET` 来去读取这个函数，我们最终构造了如下字符串：
 
-![](./picture/php/payloads.png)
+![](picture/php/figure/preg_match/payloads.png)
 
 可能很多小伙伴看到这里仍然无法理解这段字符串是如何构造的吧，我们就对这段字符串进行段分析。
 
@@ -421,7 +421,7 @@ $__=("#"^"|").("."^"~").("/"^"`").("|"^"/").("{"^"/");
 
 输出结果为：
 
-![](./picture/php/answer3.png)
+![](picture/php/figure/preg_match/answer3.png)
 
 ```
 <?php
@@ -431,7 +431,7 @@ $__=("#"^"|").("."^"~").("/"^"`").("|"^"/").("{"^"/");
 
 输出结果为：
 
-![](./picture/php/answer4.png)
+![](picture/php/figure/preg_match/answer4.png)
 
 ```
 <?php
@@ -441,11 +441,11 @@ $__=("#"^"|").("."^"~").("/"^"`").("|"^"/").("{"^"/");
 
 输出结果为：
 
-![](./picture/php/answer5.png)
+![](picture/php/figure/preg_match/answer5.png)
 
 所以我们可以知道， `_GET` 就是这么被构造出来的啦！
 
-#### ② 获取 `_GET` 参数
+#### ② 获取 `_GET` 参数
 
 我们又该如何获取 `_GET` 参数呢？咱们可以构造出如下字串：
 
@@ -469,11 +469,11 @@ $__=("#"^"|").("."^"~").("/"^"`").("|"^"/").("{"^"/");
 
 所以把参数全部连接起来，就可以了。
 
-![](./picture/php/payloads.png)
+![](picture/php/figure/preg_match/payloads.png)
 
 结果如下：
 
-![](./picture/php/answer6.png)
+![](picture/php/figure/preg_match/flag.png)
 
 于是我们就成功地读取到了flag！
 
