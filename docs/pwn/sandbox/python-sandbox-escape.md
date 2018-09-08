@@ -2,10 +2,10 @@
 typora-root-url: ../../../docs
 ---
 
-# Python沙盒
+# Python 沙盒
 所谓的 Python 沙盒，即以一定的方法模拟 Python 终端，实现用户对 Python 的使用。
 
-# Python沙箱逃逸的一些方法
+# Python 沙箱逃逸的一些方法
 我们通常所说的 Python 沙箱逃逸就是绕过模拟的 Python 终端，最终实现命令执行。
 ## 导入模块
 在 Python 的内建函数中，有一些函数可以帮助我们实现任意命令执行：
@@ -16,13 +16,15 @@ commands.getstatus()
 subprocess.call(command, shell=True) subprocess.Popen(command, shell=True)
 pty.spawn()
 ```
-在 Python 中导入模块的方法通常有三种(xxx为模块名称）)：
-1. import xxx
-2. from xxx import *
-3. \_\_import\_\_('xxx')     
+在 Python 中导入模块的方法通常有三种（xxx 为模块名称）：
+
+1. `import xxx`
+2. `from xxx import *`
+3. `__import__('xxx')`
+
 我们可以通过上述的导入方法，导入相关模块并使用上述的函数实现命令执行。
 除此之外，我们也可以**通过路径引入模块**：
-如在 linux 系统中 Python 的 os 模块的路径一般都是在 /usr/lib/python2.7/os.py ，当知道路径的时候，我们就可以通过如下的操作导入模块，然后进一步使用相关函数。
+如在 linux 系统中 Python 的 os 模块的路径一般都是在 `/usr/lib/python2.7/os.py`，当知道路径的时候，我们就可以通过如下的操作导入模块，然后进一步使用相关函数。
 ```py
 >>> import sys
 >>> sys.modules['os']='/usr/lib/python2.7/os.py'
@@ -62,12 +64,12 @@ print platform.popen('dir').read()
 但是，正常的 Python 沙箱会以黑名单的形式禁止使用一些模块如 os 或以白名单的形式只允许用户使用沙箱提供的模块，用以阻止用户的危险操作。而如何进一步逃逸沙箱就是我们的重点研究内容。
 
 ## Python 的内建函数
-当我们不能导入模块，或者想要导入的模块被禁，那么我们只能寻求 Python 本身内置函数（即通常不用人为导入，Python本身默认已经导入的函数）。我们可以通过可以通过 `dir __builtin__` 来获取内置函数列表
+当我们不能导入模块，或者想要导入的模块被禁，那么我们只能寻求 Python 本身内置函数（即通常不用人为导入，Python 本身默认已经导入的函数）。我们可以通过可以通过 `dir __builtin__` 来获取内置函数列表
 ```python
 >>> dir(__builtins__)
 ['ArithmeticError', 'AssertionError', 'AttributeError', 'BaseException', 'BufferError', 'BytesWarning', 'DeprecationWarning', 'EOFError', 'Ellipsis', 'EnvironmentError', 'Exception', 'False', 'FloatingPointError', 'FutureWarning', 'GeneratorExit', 'IOError', 'ImportError', 'ImportWarning', 'IndentationError', 'IndexError', 'KeyError', 'KeyboardInterrupt', 'LookupError', 'MemoryError', 'NameError', 'None', 'NotImplemented', 'NotImplementedError', 'OSError', 'OverflowError', 'PendingDeprecationWarning', 'ReferenceError', 'RuntimeError', 'RuntimeWarning', 'StandardError', 'StopIteration', 'SyntaxError', 'SyntaxWarning', 'SystemError', 'SystemExit', 'TabError', 'True', 'TypeError', 'UnboundLocalError', 'UnicodeDecodeError', 'UnicodeEncodeError', 'UnicodeError', 'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning', 'ValueError', 'Warning', 'ZeroDivisionError', '_', '__debug__', '__doc__', '__import__', '__name__', '__package__', 'abs', 'all', 'any', 'apply', 'basestring', 'bin', 'bool', 'buffer', 'bytearray', 'bytes', 'callable', 'chr', 'classmethod', 'cmp', 'coerce', 'compile', 'complex', 'copyright', 'credits', 'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 'execfile', 'exit', 'file', 'filter', 'float', 'format', 'frozenset', 'getattr', 'globals', 'hasattr', 'hash', 'help', 'hex', 'id', 'input', 'int', 'intern', 'isinstance', 'issubclass', 'iter', 'len', 'license', 'list', 'locals', 'long', 'map', 'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow', 'print', 'property', 'quit', 'range', 'raw_input', 'reduce', 'reload', 'repr', 'reversed', 'round', 'set', 'setattr', 'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'unichr', 'unicode', 'vars', 'xrange', 'zip']
 ```
-在Python中，不引入直接使用的内置函数被成为 **builtin** 函数，随着 **__builtin__** 这个模块自动引入到环境中。那么我们如何引入的模块呢？我们可以通过 **__dict__** 引入我们想要引入的模块。**__dict__** 的作用是列出一个模组/类/对象 下面 所有的属性和函数。这在沙盒逃逸中是很有用的,可以找到隐藏在其中的一些东西
+在 Python 中，不引入直接使用的内置函数被成为 **builtin** 函数，随着 **__builtin__** 这个模块自动引入到环境中。那么我们如何引入的模块呢？我们可以通过 **__dict__** 引入我们想要引入的模块。**__dict__** 的作用是列出一个模组/类/对象 下面 所有的属性和函数。这在沙盒逃逸中是很有用的,可以找到隐藏在其中的一些东西
 **__dict__**能做什么呢？
 我们知道，一个模块对象有一个由字典对象实现的命名空间，属性的引用会被转换为这个字典中的查找，例如，m.x 等同于 m.dict["x"]。
 
