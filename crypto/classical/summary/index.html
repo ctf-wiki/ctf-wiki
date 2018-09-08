@@ -3750,17 +3750,12 @@
 <span class="n">POR4dnyTLHBfwbxAAZhe</span><span class="p">}}</span><span class="n">ocZR3Cxcftw9</span>
 </pre></div>
 
-<p>首先，我们先来分析一下 t 的构成</p>
-<div>
-<div class="MathJax_Preview">
-t[i][j]=s[i+j:]+s[:i+j] \\
+<p><strong>解法一</strong>：</p>
+<p>首先，我们先来分析一下 t 的构成
+$$
+t[i][j]=s[i+j:]+s[:i+j] \
 t[i][k]=s[i+k:]+s[:i+k]
-</div>
-<script type="math/tex; mode=display">
-t[i][j]=s[i+j:]+s[:i+j] \\
-t[i][k]=s[i+k:]+s[:i+k]
-</script>
-</div>
+$$</p>
 <p><span><span class="MathJax_Preview">t[i][j][k]</span><script type="math/tex">t[i][j][k]</script></span> 为 <span><span class="MathJax_Preview">t[i][j]</span><script type="math/tex">t[i][j]</script></span> 中的第 k 个字符，<span><span class="MathJax_Preview">t[i][k][j]</span><script type="math/tex">t[i][k][j]</script></span> 为 <span><span class="MathJax_Preview">t[i][k]</span><script type="math/tex">t[i][k]</script></span> 中的第 j 个字符。无论是 <span><span class="MathJax_Preview">i+j+k</span><script type="math/tex">i+j+k</script></span> 是否超过 <code>len(s)</code> 两者都始终保持一致，即 <span><span class="MathJax_Preview">t[i][j][k]=t[i][k][j]</span><script type="math/tex">t[i][j][k]=t[i][k][j]</script></span> 。</p>
 <p>故而，其实对于相同的明文来说，可能有多个密钥使其生成相同的密文。</p>
 <p>然而上面分析就是单纯地分析而已，，下面开始正题。</p>
@@ -3801,7 +3796,37 @@ t[i][k]=s[i+k:]+s[:i+k]
 </pre></div>
 
 <p>得到明文如下</p>
-<div class="codehilite"><pre><span></span>➜  2017_seccon_vigenere3d git:<span class="o">(</span>master<span class="o">)</span> python exp.py
+<p><div class="codehilite"><pre><span></span>➜  2017_seccon_vigenere3d git:<span class="o">(</span>master<span class="o">)</span> python exp.py
+SECCON<span class="o">{</span>Welc0me_to_SECCON_CTF_2017<span class="o">}</span>
+</pre></div>
+<strong>解法二</strong></p>
+<p>关于此题的分析：</p>
+<ol>
+<li>考虑到在程序正常运行下，数组访问不会越界，我们在讨论时做以下约定：$ arr[index] \Leftrightarrow arr[index \% len(arr)] $</li>
+<li>关于 python 程序中定义的 <code>_l</code> 函数，发现以下等价关系：$ _l(offset, arr)[index] \Leftrightarrow arr[index + offset] $</li>
+<li>关于 python 的 main 函数中三维矩阵 t 的定义，发现以下等价关系：$ t[a][b][c] \Leftrightarrow _l(a+b, s)[c] $</li>
+<li>综合第 2 第 3 点的观察，有如下等价关系：$ t[a][b][c] \Leftrightarrow s[a+b+c] $</li>
+<li>我们将 s 视为一种编码格式，即：编码过程 s.find(x)，解码过程 s[x]。并直接使用其编码结果的数字替代其所代指的字符串，那么加密过程可以用以下公式表示：</li>
+<li>$ e = f +  k1 +k2 $</li>
+<li>其中，e 是密文，f 是明文，k1 与 k2 是通过复制方法得到、与 f 长度一样的密钥，<strong>加法是向量加</strong>。</li>
+</ol>
+<p>所以我们只需要通过计算 <code>k1+k2</code> ，模拟密钥，即可解密。关于此题的解密 python 脚本：</p>
+<div class="codehilite"><pre><span></span><span class="c1"># exp2.py</span>
+<span class="n">enc_str</span> <span class="o">=</span> <span class="s1">&#39;ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_{}&#39;</span>
+<span class="n">dec_dic</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span><span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">enc_str</span><span class="p">)}</span>
+<span class="n">encrypt</span> <span class="o">=</span> <span class="s1">&#39;POR4dnyTLHBfwbxAAZhe}}ocZR3Cxcftw9&#39;</span>
+<span class="n">flag_bg</span> <span class="o">=</span> <span class="s1">&#39;SECCON{**************************}&#39;</span>
+
+<span class="n">sim_key</span> <span class="o">=</span> <span class="p">[</span><span class="n">dec_dic</span><span class="p">[</span><span class="n">encrypt</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">-</span><span class="n">dec_dic</span><span class="p">[</span><span class="n">flag_bg</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">)]</span> <span class="c1"># 破解模拟密钥</span>
+<span class="n">sim_key</span> <span class="o">=</span> <span class="n">sim_key</span> <span class="o">+</span> <span class="n">sim_key</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">flag_ed</span> <span class="o">=</span> <span class="p">[</span><span class="n">dec_dic</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">-</span><span class="n">sim_key</span><span class="p">[</span><span class="n">k</span><span class="o">%</span><span class="mi">14</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">encrypt</span><span class="p">)]</span> <span class="c1"># 模拟密钥解密</span>
+<span class="n">flag_ed</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">enc_str</span><span class="p">[</span><span class="n">i</span><span class="o">%</span><span class="nb">len</span><span class="p">(</span><span class="n">enc_str</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">flag_ed</span><span class="p">])</span> <span class="c1"># 解码</span>
+<span class="k">print</span><span class="p">(</span><span class="n">flag_ed</span><span class="p">)</span>
+</pre></div>
+
+<p>得到明文如下：</p>
+<div class="codehilite"><pre><span></span>$ python exp2.py
 SECCON<span class="o">{</span>Welc0me_to_SECCON_CTF_2017<span class="o">}</span>
 </pre></div>
 
