@@ -64,7 +64,7 @@
 这里我们以蒸米的一步一步学 ROP 之 linux_x64 篇中 level5 为例进行介绍。首先检查程序的安全保护
 
 ```shell
-➜  ret2__libc_csu_init git:(iromise) ✗ checksec level5   
+➜  ret2__libc_csu_init git:(iromise) ✗ checksec level5
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
     Stack:    No canary found
@@ -221,36 +221,36 @@ gef➤  x/5i 0x000000000040061A+3
    0x40061e <__libc_csu_init+94>:	pop    r13
    0x400620 <__libc_csu_init+96>:	pop    r14
    0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret 
+   0x400624 <__libc_csu_init+100>:	ret
 gef➤  x/5i 0x000000000040061e
    0x40061e <__libc_csu_init+94>:	pop    r13
    0x400620 <__libc_csu_init+96>:	pop    r14
    0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret    
+   0x400624 <__libc_csu_init+100>:	ret
    0x400625:	nop
 gef➤  x/5i 0x000000000040061f
    0x40061f <__libc_csu_init+95>:	pop    rbp
    0x400620 <__libc_csu_init+96>:	pop    r14
    0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret    
+   0x400624 <__libc_csu_init+100>:	ret
    0x400625:	nop
 gef➤  x/5i 0x0000000000400620
    0x400620 <__libc_csu_init+96>:	pop    r14
    0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret    
+   0x400624 <__libc_csu_init+100>:	ret
    0x400625:	nop
    0x400626:	nop    WORD PTR cs:[rax+rax*1+0x0]
 gef➤  x/5i 0x0000000000400621
    0x400621 <__libc_csu_init+97>:	pop    rsi
    0x400622 <__libc_csu_init+98>:	pop    r15
-   0x400624 <__libc_csu_init+100>:	ret    
+   0x400624 <__libc_csu_init+100>:	ret
    0x400625:	nop
 gef➤  x/5i 0x000000000040061A+9
    0x400623 <__libc_csu_init+99>:	pop    rdi
-   0x400624 <__libc_csu_init+100>:	ret    
+   0x400624 <__libc_csu_init+100>:	ret
    0x400625:	nop
    0x400626:	nop    WORD PTR cs:[rax+rax*1+0x0]
-   0x400630 <__libc_csu_fini>:	repz ret 
+   0x400630 <__libc_csu_fini>:	repz ret
 ```
 
 ### 题目
@@ -324,7 +324,7 @@ canary本身可以通过爆破来获取，但是如果只是愚蠢地枚举所�
 
 需要注意的是，攻击条件2表明了程序本身并不会因为crash有变化，所以每次的canary等值都是一样的。所以我们可以按照字节进行爆破。正如论文中所展示的，每个字节最多有256种可能，所以在32位的情况下，我们最多需要爆破1024次，64位最多爆破2048次。
 
-![](/pwn/stackoverflow/figure/stack_reading.png)
+![](./figure/stack_reading.png)
 
 #### Blind ROP
 
@@ -346,7 +346,7 @@ syscall
 
 首先，在libc_csu_init的结尾一长串的gadgets，我们可以通过偏移来获取write函数调用的前两个参数。正如文中所展示的
 
-![](/pwn/stackoverflow/figure/brop_gadget.png)
+![](./figure/brop_gadget.png)
 
 ###### find a call write
 
@@ -387,7 +387,7 @@ pop rdx; ret
 
 之所以要寻找stop gadgets，是因为当我们猜到某个gadgtes后，如果我们仅仅是将其布置在栈上，由于执行完这个gadget之后，程序还会跳到栈上的下一个地址。如果该地址是非法地址，那么程序就会crash。这样的话，在攻击者看来程序只是单纯的crash了。因此，攻击者就会认为在这个过程中并没有执行到任何的`useful gadget`，从而放弃它。例子如下图
 
-![](/pwn/stackoverflow/figure/stop_gadget.png)
+![](./figure/stop_gadget.png)
 
 但是，如果我们布置了`stop gadget`，那么对于我们所要尝试的每一个地址，如果它是一个gadget的话，那么程序不会崩溃。接下来，就是去想办法识别这些gadget。
 
@@ -429,9 +429,9 @@ pop rdx; ret
 
 ##### 寻找PLT
 
-如下图所示，程序的plt表具有比较规整的结构，每一个plt表项都是16字节。而且，在每一个表项的6字节偏移处，是该表项对应的函数的解析路径，即程序最初执行该函数的时候，会执行该路径对函数的got地址进行解析。 
+如下图所示，程序的plt表具有比较规整的结构，每一个plt表项都是16字节。而且，在每一个表项的6字节偏移处，是该表项对应的函数的解析路径，即程序最初执行该函数的时候，会执行该路径对函数的got地址进行解析。
 
-![](/pwn/stackoverflow/figure/brop_plt.png)
+![](./figure/brop_plt.png)
 
 此外，对于大多数plt调用来说，一般都不容易崩溃，即使是使用了比较奇怪的参数。所以说，如果我们发现了一系列的长度为16的没有使得程序崩溃的代码段，那么我们有一定的理由相信我们遇到了plt表。除此之外，我们还可以通过前后偏移6字节，来判断我们是处于plt表项中间还是说处于开头。
 
@@ -460,7 +460,7 @@ pop rdx; ret
 - 利用plt表项的慢路径
 - 并且利用下一个表项的慢路径的地址来覆盖返回地址
 
-这样，我们就不用来回控制相应的变量了。 
+这样，我们就不用来回控制相应的变量了。
 
 当然，我们也可能碰巧找到strncmp或者strcasecmp函数，它们具有和strcmp一样的效果。
 
@@ -696,7 +696,7 @@ with open('code', 'wb') as f:
 ```asm
 seg000:0000000000400560                 db 0FFh
 seg000:0000000000400561                 db  25h ; %
-seg000:0000000000400562                 db 0B2h ; 
+seg000:0000000000400562                 db 0B2h ;
 seg000:0000000000400563                 db  0Ah
 seg000:0000000000400564                 db  20h
 seg000:0000000000400565                 db    0

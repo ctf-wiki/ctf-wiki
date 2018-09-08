@@ -23,7 +23,7 @@ decode -X -P pass svega_stego.mp3
 
 初步观察后，由 `strings` 无发现，听音频无异常猜测使用隐写软件隐藏数据。
 
-![](/misc/audio/files/1.jpg)
+![](./figure/1.jpg)
 
 得到密码后使用 `Mp3Stego` 解密。
 
@@ -50,7 +50,7 @@ Base64 && Base32 后得到 flag。
 
 其实这题隐藏的信息在最开始的一段音频内，不细心听可能会误认为是隐写软件。
 
-![](/misc/audio/files/3.png)
+![](./figure/3.png)
 
 以高为 1 低为 0，转换得到 `01` 字符串。
 
@@ -73,7 +73,7 @@ Base64 && Base32 后得到 flag。
 
 > Su-ctf-quals-2014:hear_with_your_eyes
 
-![](/misc/audio/files/4.png)
+![](./figure/4.png)
 
 ## LSB音频隐写
 
@@ -89,7 +89,7 @@ Base64 && Base32 后得到 flag。
 
 直接使用 `slienteye` 即可。
 
-![](/misc/audio/files/2.jpg)
+![](./figure/2.jpg)
 
 ## 延伸
 

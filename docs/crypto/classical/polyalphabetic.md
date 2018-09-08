@@ -85,7 +85,7 @@ A D F G X 的由来：
 
 维吉尼亚密码（Vigenere）是使用一系列凯撒密码组成密码字母表的加密算法，属于多表密码的一种简单形式。
 
-![维吉尼亚表格](/crypto/classical/figure/vigenere1.jpg)
+![维吉尼亚表格](./figure/vigenere1.jpg)
 
 下面给出一个例子
 
@@ -102,7 +102,7 @@ A D F G X 的由来：
 
 其次，查表得密文
 
-![维吉尼亚加密](/crypto/classical/figure/vigenere2.jpg)
+![维吉尼亚加密](./figure/vigenere2.jpg)
 
 ```
 明文：come greatwall
@@ -313,4 +313,3 @@ VBP JOZGD IVEQV HYY AIICX CSNL FWW ZVDP WVK
 -   未知关键词
     - http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-autokey-cipher/
     - **tools 文件夹下 break_autokey.py，待完成。**
-

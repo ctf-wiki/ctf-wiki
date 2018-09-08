@@ -51,7 +51,7 @@ typora-root-url: ../../
 - 轮加密函数
 - 轮解密函数
 
-![image-20180714222206782](/crypto/blockcipher/figure/iterated_cipher.png)
+![image-20180714222206782](./figure/iterated_cipher.png)
 
 #### 轮函数
 

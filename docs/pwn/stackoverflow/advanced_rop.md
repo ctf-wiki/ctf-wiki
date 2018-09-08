@@ -65,7 +65,7 @@ gef➤  pattern create 200
 aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaab
 [+] Saved as '$_gef0'
 gef➤  r
-Starting program: /mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main 
+Starting program: /mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main
 Welcome to XDCTF2015~!
 aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaab
 
@@ -103,7 +103,7 @@ $eflags: [carry PARITY adjust zero SIGN trap INTERRUPT direction overflow RESUME
 0xffffccfc│+0x1c: "laabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxa[...]"
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[ trace ]────
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-gef➤  pattern search 
+gef➤  pattern search
 [!] Syntax
 pattern search PATTERN [SIZE]
 gef➤  pattern search 0x62616164
@@ -245,7 +245,7 @@ r.interactive()
 鉴于pwntools本身并不支持对重定位表项的信息的获取。这里我们手动看一下
 
 ```shell
-➜  ret2dlresolve git:(master) ✗ readelf -r main  
+➜  ret2dlresolve git:(master) ✗ readelf -r main
 
 重定位节 '.rel.dyn' 位于偏移量 0x318 含有 3 个条目：
  偏移量     信息    类型              符号值      符号名称
@@ -516,7 +516,7 @@ r.interactive()
 效果如下
 
 ```shell
-➜  ret2dlresolve git:(master) ✗ python stage5.py      
+➜  ret2dlresolve git:(master) ✗ python stage5.py
 [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main'
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -689,7 +689,7 @@ r.interactive()
 效果如下
 
 ```shell
-➜  ret2dlresolve git:(master) ✗ python roptool.py                       
+➜  ret2dlresolve git:(master) ✗ python roptool.py
 [+] Starting local process './main': pid 6114
 [DEBUG] Received 0x17 bytes:
     'Welcome to XDCTF2015~!\n'
@@ -746,13 +746,13 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
  signal机制是类unix系统中进程之间相互传递信息的一种方法。一般，我们也称其为软中断信号，或者软中断。比如说，进程之间可以通过系统调用kill来发送软中断信号。一般来说，信号机制常见的步骤如下图所示：
 
-![Process of Signal Handlering](/pwn/stackoverflow/figure/ProcessOfSignalHandlering.png)
+![Process of Signal Handlering](./figure/ProcessOfSignalHandlering.png)
 
 1.  内核向某个进程发送signal机制，该进程会被暂时挂起，进入内核态。
 
 2.  内核会为该进程保存相应的上下文，**主要是将所有寄存器压入栈中，以及压入signal信息，以及指向sigreturn的系统调用地址**。此时栈的结构如下图所示，我们称ucontext以及siginfo这一段为Signal Frame。**需要注意的是，这一部分是在用户进程的地址空间的。**之后会跳转到注册过的signal handler中处理相应的signal。因此，当signal handler执行完之后，就会执行sigreturn代码。
 
-    ![signal2-stack](/pwn/stackoverflow/figure/signal2-stack.png)
+    ![signal2-stack](./figure/signal2-stack.png)
 
     对于signal Frame来说，不同会因为架构的不同而因此有所区别，这里给出分别给出x86以及x64的sigcontext
 
@@ -857,7 +857,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 首先，我们假设攻击者可以控制用户进程的栈，那么它就可以伪造一个Signal Frame，如下图所示，这里以64位为例子，给出Signal Frame更加详细的信息
 
-![signal2-stack](/pwn/stackoverflow/figure/srop-example-1.png)
+![signal2-stack](./figure/srop-example-1.png)
 
 当系统执行完sigreturn系统调用之后，会执行一系列的pop指令以便于恢复相应寄存器的值，当执行到rip时，就会将程序执行流指向syscall地址，根据相应寄存器的值，此时，便会得到一个shell。
 
@@ -870,7 +870,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 如下图所示 ，这样当每次syscall返回的时候，栈指针都会指向下一个Signal Frame。因此就可以执行一系列的sigreturn函数调用。
 
-![signal2-stack](/pwn/stackoverflow/figure/srop-example-2.png)
+![signal2-stack](./figure/srop-example-2.png)
 
 #### 后续
 
@@ -886,11 +886,11 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
 此外，关于sigreturn以及syscall;ret这两个gadget在上面并没有提及。提出该攻击的论文作者发现了这些gadgets出现的某些地址：
 
-![gadget1](/pwn/stackoverflow/figure/srop-gadget-1.png)
+![gadget1](./figure/srop-gadget-1.png)
 
 并且，作者发现，有些系统上SROP的地址被随机化了，而有些则没有。比如说`Linux < 3.3 x86_64`（在Debian 7.0， Ubuntu Long Term Support， CentOS 6系统中默认内核），可以直接在vsyscall中的固定地址处找到syscall&return代码片段。如下
 
-![gadget1](/pwn/stackoverflow/figure/srop-gadget-2.png)
+![gadget1](./figure/srop-gadget-2.png)
 
 但是目前它已经被`vsyscall-emulate`和`vdso`机制代替了。此外，目前大多数系统都会开启ASLR保护，所以相对来说这些gadgets都并不容易找到。
 
@@ -907,7 +907,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 **确定文件基本信息**
 
 ```text
-➜  smallest file smallest     
+➜  smallest file smallest
 smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, stripped
 ```
 
@@ -916,7 +916,7 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 **检查保护**
 
 ```text
-➜  smallest checksec smallest     
+➜  smallest checksec smallest
     Arch:     amd64-64-little
     RELRO:    No RELRO
     Stack:    No canary found
@@ -1042,7 +1042,7 @@ sh.interactive()
 这里，我们顺便来看一下vdso，在Linux(kernel 2.6 or upper)中执行ldd /bin/sh, 会发现有个名字叫linux-vdso.so.1(老点的版本是linux-gate.so.1)的动态文件, 而系统中却找不到它, 它就是VDSO。 例如:
 
 ```shell
-➜  ~ ldd /bin/sh           
+➜  ~ ldd /bin/sh
 	linux-vdso.so.1 =>  (0x00007ffd8ebf2000)
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f84ff2f9000)
 	/lib64/ld-linux-x86-64.so.2 (0x0000560cae6eb000)
@@ -1063,7 +1063,7 @@ mov ebp,esp
 
 ### 原理
 
-待补充。	
+待补充。
 
 ### 题目
 
@@ -1081,4 +1081,3 @@ Jump-oriented programming
 ## COP
 
 Call-oriented programming
-

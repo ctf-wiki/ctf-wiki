@@ -1,4 +1,4 @@
-最后一次异常法的原理是, 程序在自解压或自解密过程中, 可能会触发无数次的异常. 如果能定位到最后一次程序异常的位置, 可能就会很接近自动脱壳完成位置. 现在最后一次异常法脱壳可以利用Ollydbg的异常计数器插件, 先记录异常数目, 然后重新载入, 自动停在最后一次异常处. 
+最后一次异常法的原理是, 程序在自解压或自解密过程中, 可能会触发无数次的异常. 如果能定位到最后一次程序异常的位置, 可能就会很接近自动脱壳完成位置. 现在最后一次异常法脱壳可以利用Ollydbg的异常计数器插件, 先记录异常数目, 然后重新载入, 自动停在最后一次异常处.
 
 ## 要点
 
@@ -14,7 +14,7 @@
 
 OD载入程序, 在菜单`选项->调试设置->异常标签页`中取消勾选所有的忽略异常, 然后重载程序.
 
-![exception_01.png](/reverse/unpack/figure/exception_01.png)
+![exception_01.png](./figure/exception_01.png)
 
 我们按下`Shift+F9`, 记录按了多少次, 程序正常运行. 我们要得到的是倒数第二次按下是按了多少次. 在本例中
 
@@ -23,23 +23,18 @@ OD载入程序, 在菜单`选项->调试设置->异常标签页`中取消勾选�
 
 那么我们重载程序, 只需按下1次(`2-1=1`)`Shift+F9`, 来到`0040CCD2`的位置, 观察堆栈窗口, 这里有一个`SE处理程序: 0040CCD7`
 
-![exception_02.png](/reverse/unpack/figure/exception_02.png)
+![exception_02.png](./figure/exception_02.png)
 
 我们在CPU窗口(汇编指令), 按`Ctrl+G`, 输入`0040CCD7`, 然后在此处按下F2. 也就是在`0040CCD7`处设置断点, 然后按下`Shift+F9`运行, 触发断点.
 
-![exception_03.png](/reverse/unpack/figure/exception_03.png)
+![exception_03.png](./figure/exception_03.png)
 
 触发断点后, 来单步跟踪. 向下都是一些循环和跳转, 我们使用F4跳过循环. 最后到达如下位置
 
-![exception_04.png](/reverse/unpack/figure/exception_04.png)
+![exception_04.png](./figure/exception_04.png)
 
 显然在最后的`mov ebp, 0041010CC; jmp ebp`是在跳转向OEP, 我们跳转过去如下图所示:
 
-![exception_05.png](/reverse/unpack/figure/exception_05.png)
+![exception_05.png](./figure/exception_05.png)
 
-显然, 我们幸运地来到了OEP处. 
-
-
-
-
-
+显然, 我们幸运地来到了OEP处.

@@ -8,11 +8,11 @@
 
 这里给出程序静态执行的基本过程。
 
-![](/executable/elf/figure/run_static_linking.png)
+![](./figure/run_static_linking.png)
 
 ### 动态执行
 
-![](/executable/elf/figure/run_dynamic_linking.png)
+![](./figure/run_dynamic_linking.png)
 
 ### 基本操作说明
 
@@ -44,7 +44,7 @@
 
   具体的映射如下
 
-  ![](/executable/elf/figure/memory_mapping.png)
+  ![](./figure/memory_mapping.png)
 
   分情况处理
 

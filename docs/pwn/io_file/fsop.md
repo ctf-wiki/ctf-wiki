@@ -24,7 +24,7 @@ _IO_flush_all_lockp (int do_lock)
 }
 ```
 
-![](/pwn/io_file/figure/abort_routine.001.jpeg)
+![](./figure/abort_routine.001.jpeg)
 
 而_IO_flush_all_lockp不需要攻击者手动调用，在一些情况下这个函数会被系统调用：
 

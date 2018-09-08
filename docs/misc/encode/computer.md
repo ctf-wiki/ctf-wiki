@@ -10,7 +10,7 @@ typora-root-url: ../../
 
 ## ASCII 编码
 
-![ascii](/misc/encode/figure/ascii.jpg)
+![ascii](./figure/ascii.jpg)
 
 ### 特点
 
@@ -44,7 +44,7 @@ typora-root-url: ../../
 
 ### 例子
 
-![ascii](/misc/encode/figure/ascii-example.png)
+![ascii](./figure/ascii-example.png)
 
 
 
@@ -80,24 +80,24 @@ dark logic
 base xx 中的 xx 表示的是采用多少个字符进行编码，比如说 base64 就是采用以下 64 个字符编码，由于 2 的 6 次方等于 64，所以每 6 个比特为一个单元，对应某个可打印字符。3个字节就有 24 个比特，对应于 4 个 Base64 单元，即 3 个字节需要用 4 个可打印字符来表示。它可用来作为电子邮件的传输编码。在 Base64 中的可打印字符包括字母 A-Z、a-z、数字 0-9，这样共有 62 个字符，此外两个可打印符号在不同的系统中而不同。
 
 
-![base64](/misc/encode/figure/base64.png)
+![base64](./figure/base64.png)
 
 具体介绍参见 [Base64 - 维基百科](https://zh.wikipedia.org/wiki/Base64)。
 
 
 **编码 man**
 
-![base64 编码 MAN](/misc/encode/figure/base64_man.png)
+![base64 编码 MAN](./figure/base64_man.png)
 
 如果要编码的字节数不能被 3 整除，最后会多出 1 个或 2 个字节，那么可以使用下面的方法进行处理：先使用 0 值在末尾补足，使其能够被 3 整除，然后再进行 base64 的编码。在编码后的 base64 文本后加上一个或两个 `=` 号，代表补足的字节数。也就是说，当最后剩余一个八位字节（一个 byte）时，最后一个 6 位的 base64 字节块有四位是 0 值，最后附加上两个等号；如果最后剩余两个八位字节（2 个 byte）时，最后一个 6 位的 base 字节块有两位是 0 值，最后附加一个等号。参考下表：
 
-![base64 补 0](/misc/encode/figure/base64_0.png)
+![base64 补 0](./figure/base64_0.png)
 
 由于解码时补位的 0 并不参与运算，可以在该处隐藏信息。
 
 与 base64 类似，base32 使用 32 个可见字符进行编码，2 的 5 次方为 32，所以每 5 bit 为 1 个分组。5 字节为 40 bit，对应于 8 个 base32 分组，即 5 个字节用 8 个 base32 中字符来表示。但如果不足 5 个字节，则会先对第一个不足 5 bit 的分组用 0 补足了 5 bit ，对后面剩余分组全部使用 “=” 填充，直到补满 5 个字节。由此可知，base32 最多只有 6 个等号出现。例如：
 
-![base32](/misc/encode/figure/base32.png)
+![base32](./figure/base32.png)
 
 ### 特点
 
@@ -106,7 +106,7 @@ base xx 中的 xx 表示的是采用多少个字符进行编码，比如说 base
 - 根据 base 的不同，字符集会有所限制
 - **有可能需要自己加等号**
 - **=也就是 3D**
-- 更多内容请参见 [base rfc](https://tools.ietf.org/html/rfc4648) 
+- 更多内容请参见 [base rfc](https://tools.ietf.org/html/rfc4648)
 
 ### 工具
 

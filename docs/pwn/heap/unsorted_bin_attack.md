@@ -85,7 +85,7 @@ int main() {
 程序执行后的效果为
 
 ```shell
-➜  unsorted_bin_attack git:(master) ✗ gcc unsorted_bin_attack.c -o unsorted_bin_attack   
+➜  unsorted_bin_attack git:(master) ✗ gcc unsorted_bin_attack.c -o unsorted_bin_attack
 ➜  unsorted_bin_attack git:(master) ✗ ./unsorted_bin_attack
 This file demonstrates unsorted bin attack by write a large unsigned long value into stack
 In practice, unsorted bin attack is generally prepared for further attacks, such as rewriting the global variable global_max_fast in libc for further fastbin attack
@@ -106,13 +106,13 @@ Let's malloc again to get the chunk we just free. During this time, target shoul
 
 这里我们可以使用一个图来描述一下具体发生的流程以及背后的原理。
 
-![](/pwn/heap/figure/unsorted_bin_attack_order.png)
+![](./figure/unsorted_bin_attack_order.png)
 
 **初始状态时**
 
 unsorted bin 的 fd 和 bk 均指向 unsorted bin 本身。
 
-**执行free(p)** 
+**执行free(p)**
 
 由于释放的 chunk 大小不属于 fast bin 范围内，所以会首先放入到 unsorted bin 中。
 
@@ -188,9 +188,9 @@ void l33t() { system("cat ./flag"); }
 ### 基本信息
 
 ```shell
-➜  hitcontraining_lab14 git:(master) file magicheap 
+➜  hitcontraining_lab14 git:(master) file magicheap
 magicheap: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=9f84548d48f7baa37b9217796c2ced6e6281bb6f, not stripped
-➜  hitcontraining_lab14 git:(master) checksec magicheap 
+➜  hitcontraining_lab14 git:(master) checksec magicheap
 [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unsorted_bin_attack/hitcontraining_lab14/magicheap'
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
@@ -288,7 +288,7 @@ r.interactive()
 可以看出，该程序开启了所有的保护
 
 ```shell
-pwndbg> checksec 
+pwndbg> checksec
 [*] '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unsorted_bin_attack/zerostorage/zerostorage'
     Arch:     amd64-64-little
     RELRO:    Full RELRO

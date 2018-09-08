@@ -1,6 +1,6 @@
 ## 关于CheckRemoteDebuggerPresent
 
-`kernel32`的`CheckRemoteDebuggerPresent()`函数用于检测指定进程是否正在被调试. `Remote`在单词里是指同一个机器中的不同进程. 
+`kernel32`的`CheckRemoteDebuggerPresent()`函数用于检测指定进程是否正在被调试. `Remote`在单词里是指同一个机器中的不同进程.
 
 ``` c
 BOOL WINAPI CheckRemoteDebuggerPresent(
@@ -9,7 +9,7 @@ BOOL WINAPI CheckRemoteDebuggerPresent(
 );
 ```
 
-如果调试器存在(通常是检测自己是否正在被调试), 该函数会将`pbDebuggerPresent`指向的值设为`0xffffffff`. 
+如果调试器存在(通常是检测自己是否正在被调试), 该函数会将`pbDebuggerPresent`指向的值设为`0xffffffff`.
 
 ## 检测代码
 
@@ -57,6 +57,6 @@ int main(int argc, char *argv[])
 }
 ```
 
-我们可以直接修改`isDebuggerPresent`的值或修改跳转条件来绕过(注意不是`CheckRemoteDebuggerPresent`的izhi, 它的返回值是用于表示函数是否正确执行). 
+我们可以直接修改`isDebuggerPresent`的值或修改跳转条件来绕过(注意不是`CheckRemoteDebuggerPresent`的izhi, 它的返回值是用于表示函数是否正确执行).
 
-但如果要针对`CheckRemoteDebuggerPresent`这个api函数进行修改的话. 首先要知道`CheckRemoteDebuggerPresent`内部其实是通过调用`NtQueryInformationProcess`来完成功能的. 而我们就需要对`NtQueryInformationProcess`的返回值进行修改. 我们将在[ NtQueryInformationProcess 篇](/reverse/anti-debug/ntqueryinformationprocess/index.html)进行介绍.
+但如果要针对`CheckRemoteDebuggerPresent`这个api函数进行修改的话. 首先要知道`CheckRemoteDebuggerPresent`内部其实是通过调用`NtQueryInformationProcess`来完成功能的. 而我们就需要对`NtQueryInformationProcess`的返回值进行修改. 我们将在[ NtQueryInformationProcess 篇](./ntqueryinformationprocess/index.html)进行介绍.

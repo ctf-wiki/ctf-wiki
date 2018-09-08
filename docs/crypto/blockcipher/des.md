@@ -19,7 +19,7 @@ Data Encryption Standard(DES)，数据加密标准，是典型的块加密，其
 
 给出一张简单的 [DES 流程图](http://homepage.usask.ca/~dtr467/400/) 。
 
-![](/crypto/blockcipher/figure/des.gif)
+![](./figure/des.gif)
 
 ### 加密
 
@@ -56,7 +56,7 @@ DES 中的核心部件主要包括（这里只给出加密过程的）
 
 其中 F 函数如下
 
-![](/crypto/blockcipher/figure/f-function.png)
+![](./figure/f-function.png)
 
 如果对 DES 更加感兴趣，可以进行更加仔细地研究。欢迎提供 PR。
 
@@ -170,7 +170,7 @@ class N1ES:
         self.Kn = []
         for i in range(32):
             self.Kn.append(map(chr, k[i * 8: i * 8 + 8]))
-        return 
+        return
 
     def encrypt(self, plaintext):
         if (len(plaintext) % 16 != 0 or isinstance(plaintext, bytes) == False):

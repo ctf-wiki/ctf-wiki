@@ -17,7 +17,7 @@ JPG 基本数据结构为两大类型：「段」和经过压缩编码的图像�
 
 一些常见的段类型
 
-![](/misc/picture/figure/jpgformat.png)
+![](./figure/jpgformat.png)
 
 `0xffd8` 和 `0xffd9`为 JPG 文件的开始结束的标志。
 

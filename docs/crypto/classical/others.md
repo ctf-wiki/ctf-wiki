@@ -21,7 +21,7 @@
 可以看到，培根密码主要有以下特点
 
 - 只有两种字符
-- 每一段的长度为 5 
+- 每一段的长度为 5
 - 加密内容会有特殊的字体之分，亦或者大小写之分。
 
 ### 工具
@@ -91,11 +91,11 @@ TAHCEIRPEHIESR
 
 填入 5 行 7 列表（事先约定填充的行列数）
 
-![qulu-table](/crypto/classical/figure/qulu-table.png)
+![qulu-table](./figure/qulu-table.png)
 
 加密的回路线（事先约定填充的行列数）
 
-![qulu-road](/crypto/classical/figure/qulu-road.png)
+![qulu-road](./figure/qulu-road.png)
 
 ```
 密文：gesfc inpho dtmwu qoury zejre hbxva lookT
@@ -111,11 +111,11 @@ TAHCEIRPEHIESR
 
 将明文填入 5 行 7 列表（事先约定填充的行列数，如果明文不能填充完表格可以约定使用某个字母进行填充）
 
-![明文](/crypto/classical/figure/columnar-transposition-plaintext.png)
+![明文](./figure/columnar-transposition-plaintext.png)
 
 密钥： `how are u`，按 `how are u` 在字母表中的出现的先后顺序进行编号，我们就有 a 为 1，e 为 2，h 为 3，o 为 4，r 为 5，u 为 6，w 为 7，所以先写出 a 列，其次 e 列，以此类推写出的结果便是密文：
 
-![密钥](/crypto/classical/figure/columnar-transposition-key.png)
+![密钥](./figure/columnar-transposition-key.png)
 
 密文： `qoury inpho Tkool hbxva uwmtd cfseg erjez`
 
@@ -213,11 +213,11 @@ Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1
 
 猪圈密码是一种以格子为基础的简单替代式密码，格子如下
 
-![猪圈密码对照表](/crypto/classical/figure/pigpen.png)
+![猪圈密码对照表](./figure/pigpen.png)
 
 我们举一个例子，如明文为 `X marks the spot` ，那么密文如下
 
-![猪圈密码示例](/crypto/classical/figure/pigpen_example.png)
+![猪圈密码示例](./figure/pigpen_example.png)
 
 ### 工具
 
@@ -229,7 +229,7 @@ Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1
 
 这种密码出自于福尔摩斯探案集。每一个跳舞的小人实际上对应的是英文二十六个字母中的一个，而小人手中的旗子则表明该字母是单词的最后一个字母，如果仅仅是一个单词而不是句子，或者是句子中最后的一个单词，则单词中最后一个字母不必举旗。
 
-![舞动的小人密码](/crypto/classical/figure/dancingman.jpg)
+![舞动的小人密码](./figure/dancingman.jpg)
 
 ## 键盘密码
 
@@ -239,7 +239,7 @@ Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1
 
 手机键盘加密方式，是每个数字键上有 3-4 个字母，用两位数字来表示字母，例如：ru 用手机键盘表示就是：7382，那么这里就可以知道了，手机键盘加密方式不可能用 1 开头，第二位数字不可能超过 4，解密的时候参考此
 
-![picture](/crypto/classical/figure/mobile.jpg)
+![picture](./figure/mobile.jpg)
 
 关于手机键盘加密还有另一种方式，就是「音的」式（这一点可能根据手机的不同会有所不同），具体参照手机键盘来打，例如：「数字」表示出来就是：748 94。在手机键盘上面按下这几个数，就会出：「数字」的拼音。
 
@@ -247,15 +247,15 @@ Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1
 
 电脑键盘棋盘加密，利用了电脑的棋盘方阵。
 
-![电脑棋盘加密](/crypto/classical/figure/computer-chess.jpg)
+![电脑棋盘加密](./figure/computer-chess.jpg)
 
 
 
 ### 电脑键盘坐标
 
-电脑键盘坐标加密，利用键盘上面的字母行和数字行来加密，例：bye 用电脑键盘 XY 表示就是：351613 
+电脑键盘坐标加密，利用键盘上面的字母行和数字行来加密，例：bye 用电脑键盘 XY 表示就是：351613
 
-![电脑键盘坐标加密](/crypto/classical/figure/computer-x-y.jpg)
+![电脑键盘坐标加密](./figure/computer-x-y.jpg)
 
 
 
@@ -263,7 +263,7 @@ Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1
 
 电脑键盘 QWE 加密法，就是用字母表替换键盘上面的排列顺序。
 
-![computer-qwe](/crypto/classical/figure/computer-qwe.jpg)
+![computer-qwe](./figure/computer-qwe.jpg)
 
 
 

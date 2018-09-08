@@ -1,6 +1,3 @@
----
-typora-root-url: ../../../docs
----
 
 # 深入理解堆的实现
 
@@ -100,7 +97,7 @@ unlink 用来将一个双向链表（只存储空闲的 chunk）中的一个元�
 
 这里我们以 small bin 的 unlink 为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize 的处理。
 
-![](/pwn/heap/figure/unlink_smallbin_intro.png)
+![](./figure/unlink_smallbin_intro.png)
 
 可以看出， **P 最后的 fd 和 bk 指针并没有发生变化**，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。这一点没有变化还是很有用处的，因为我们有时候可以使用这个方法来泄漏地址
 
@@ -124,13 +121,13 @@ unlink 用来将一个双向链表（只存储空闲的 chunk）中的一个元�
 // fd bk
 if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
   malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
-  
+
   // next_size related
               if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
                 || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
               malloc_printerr (check_action,                                      \
                                "corrupted double-linked list (not small)",    \
-                               P, AV);   
+                               P, AV);
 ```
 
 看起来似乎很正常。我们以 fd 和 bk 为例，P 的 forward chunk 的 bk 很自然是 P ，同样 P 的 backward chunk 的 fd 也很自然是 P 。如果没有做相应的检查的话，我们可以修改 P 的 fd 与 bk，从而可以很容易地达到任意地址写的效果。关于更加详细的例子，可以参见利用部分的 unlink 。
@@ -380,7 +377,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
     else {
         // 获取large bin的下标。
         idx = largebin_index(nb);
-        // 如果存在fastbin的话，会处理 fastbin 
+        // 如果存在fastbin的话，会处理 fastbin
         if (have_fastchunks(av)) malloc_consolidate(av);
     }
 
@@ -565,7 +562,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
                         fwd->fd->bk_nextsize =
                             victim->bk_nextsize->fd_nextsize = victim;
                     } else {
-                        // 当前要插入的 victim 的大小大于最小的 chunk 
+                        // 当前要插入的 victim 的大小大于最小的 chunk
                         // 判断 fwd 是否在 main arena
                         assert(chunk_main_arena(fwd));
                         // 从链表头部开始找到不比 victim 大的 chunk
@@ -611,7 +608,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
 while 最多迭代10000次后退出。
 
 ```c
-            // 
+            //
 ##define MAX_ITERS 10000
             if (++iters >= MAX_ITERS) break;
         }
@@ -690,7 +687,7 @@ while 最多迭代10000次后退出。
                     set_head(victim,
                              nb | PREV_INUSE |
                                  (av != &main_arena ? NON_MAIN_ARENA : 0));
-                  
+
                     // 设置remainder的上一个chunk，即分配出去的chunk的使用状态
                     // 其余的不用管，直接从上面继承下来了
                     set_head(remainder, remainder_size | PREV_INUSE);
@@ -1100,7 +1097,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
                 locked = 0;
             }
         }
-        // 将chunk的mem部分全部设置为perturb_byte 
+        // 将chunk的mem部分全部设置为perturb_byte
         free_perturb(chunk2mem(p), size - 2 * SIZE_SZ);
         // 设置fast chunk的标记位
         set_fastchunks(av);
@@ -1206,7 +1203,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 ##### 释放填充
 
 ```c++
-        //将指针的mem部分全部设置为perturb_byte 
+        //将指针的mem部分全部设置为perturb_byte
 		free_perturb(chunk2mem(p), size - 2 * SIZE_SZ);
 ```
 
@@ -1428,7 +1425,7 @@ static void malloc_consolidate(mstate av) {
         // 清空 fastbin 标记
         // 因为要合并 fastbin 中的 chunk 了。
         clear_fastchunks(av);
-        // 
+        //
         unsorted_bin = unsorted_chunks(av);
 
         /*
@@ -1527,4 +1524,3 @@ static void free_perturb(char *p, size_t n) {
     if (__glibc_unlikely(perturb_byte)) memset(p, perturb_byte, n);
 }
 ```
-
