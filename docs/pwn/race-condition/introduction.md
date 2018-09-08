@@ -8,7 +8,7 @@ typora-root-url: ../../../docs
 
 条件竞争是指一个系统的运行结果依赖于不受控制的事件的先后顺序。当这些不受控制的事件并没有按照开发者想要的方式运行时，就可能会出现 bug。这个术语最初来自于两个电信号互相竞争来影响输出结果。
 
-![](/pwn/race-condition/figure/race_condition.png)
+![](./figure/race_condition.png)
 
 条件竞争主要出现在如下领域
 
@@ -73,7 +73,7 @@ Thread 1718667008 has counter value 10
 但是，由于条件竞争的存在，最后输出的结果往往不尽人意
 
 ```c
-➜  005race_condition ./example1                          
+➜  005race_condition ./example1
 Thread 1417475840 has counter value 2
 Thread 1408755456 has counter value 2
 Thread 1391314688 has counter value 8
@@ -91,7 +91,7 @@ Thread 1266345728 has counter value 10
 - 程序首先执行了action1，然后执行了action2。其中 action 可能是应用级别的，也可能是操作系统级别的。正常来说，我们希望程序在执行 action2 时，action1 所产生的条件仍然是满足的。
 - 但是由于程序的并发性，攻击者很有可能可以在 action2 执行之前的这个短暂的时间窗口中破坏 action1 所产生的条件。这时候攻击者的操作与 action2 产生了条件竞争，所以可能会影响程序的执行效果。
 
-![](/pwn/race-condition/figure/time_interval.png)
+![](./figure/time_interval.png)
 
 所以我认为问题的根源在于程序员虽然假设某个条件在相应时间段应该是满足的，但是往往条件可能会在这个很小的时间窗口中被修改。**虽然这个时间的间隔可能非常小，但是攻击者仍然可能可以通过执行某些操作（如计算密集型操作，Dos攻击）使得受害机器的处理速度变得相对慢一些。**
 
@@ -105,7 +105,7 @@ Thread 1266345728 has counter value 10
 
 TOCTOC (Time-of-check Time-of-use) 指的是程序在使用资源（变量，内存，文件）前会对进行检查，但是在程序使用对应的资源前，该资源却被修改了。
 
-![](/pwn/race-condition/figure/toctou.png)
+![](./figure/toctou.png)
 
 下面给出一些更加具体的例子。
 
@@ -129,7 +129,7 @@ TOCTOC (Time-of-check Time-of-use) 指的是程序在使用资源（变量，内
 
 以下面的代码为例子，程序在访问某个文件之前，会检查是否存在，之后会打开文件然后执行操作。但是如果在检查之后，真正使用文件之前，攻击者将文件修改为某个符号链接，那么程序将访问错误的文件。
 
-![](/pwn/race-condition/figure/race_condition_file.png)
+![](./figure/race_condition_file.png)
 
 这种条件竞争出现的问题的根源在于文件系统中的名字对象绑定的问题。而下面的函数都会使用文件名作为参数：access(), open(), creat(), mkdir(), unlink(), rmdir(), chown(), symlink(), link(), rename(), chroot(),…
 
@@ -138,7 +138,7 @@ TOCTOC (Time-of-check Time-of-use) 指的是程序在使用资源（变量，内
 - `st_ino` ，包含了文件的序列号，即 `i-node`
 - `st_dev` ，包含了文件对应的设备。
 
-![](/pwn/race-condition/figure/race_condition_identify_file.png)
+![](./figure/race_condition_identify_file.png)
 
 ### CWE-364: Signal Handler Race Condition
 
@@ -212,7 +212,7 @@ cat file > my_pipe
 
 当同步原语使用的不恰当的时候，进程就可能会出现死锁。当两个或两个以上的执行流互相阻塞导致都不能继续执行，死锁就会发生。其实，死锁主要是因为在冲突的执行流中，出现了循环等待的执行流，即循环等待中的每一个执行流都获得一个资源，同时试图获得下一个资源。下图所示，P1、P2 两个进程都需要资源才能继续运行。P1 拥有资源 R2、还需要额外资源 R1 才能运行；P2 拥有资源 R1、还需要额外资源 R2 才能运行，两边都在互相等待而没有任何一个可运行。
 
-![](/pwn/race-condition/figure/process_deadlock.png)
+![](./figure/process_deadlock.png)
 
 一般来说，死锁有以下四个必要条件
 
@@ -266,4 +266,3 @@ cat file > my_pipe
 - http://www.cnblogs.com/biyeymyhjob/archive/2012/07/20/2601655.html
 - http://www.cnblogs.com/huxiao-tee/p/4660352.html
 - https://github.com/dirtycow/dirtycow.github.io
-

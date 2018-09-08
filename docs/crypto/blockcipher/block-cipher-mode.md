@@ -77,11 +77,11 @@ ECB模式全称为电子密码本模式（Electronic codebook）。
 
 ### 加密
 
-![](/crypto/blockcipher/figure/ecb_encryption.png)
+![](./figure/ecb_encryption.png)
 
 ### 解密
 
-![](/crypto/blockcipher/figure/ecb_decryption.png)
+![](./figure/ecb_decryption.png)
 
 ### 优缺点
 
@@ -94,7 +94,7 @@ ECB模式全称为电子密码本模式（Electronic codebook）。
 
 1. 同样的明文块会被加密成相同的密文块，不会隐藏明文分组的统计规律。正如下图所示
 
-![image-20180716215135907](/crypto/blockcipher/figure/ecb_bad_linux.png)
+![image-20180716215135907](./figure/ecb_bad_linux.png)
 
 为了解决统一明文产生相同密文的问题，提出了其它的加密模式。
 
@@ -138,11 +138,11 @@ CBC全称为密码分组链接（Cipher-block chaining） 模式，这里
 
 ### 加密
 
-![](/crypto/blockcipher/figure/cbc_encryption.png)
+![](./figure/cbc_encryption.png)
 
 ### 解密
 
-![](/crypto/blockcipher/figure/cbc_decryption.png)
+![](./figure/cbc_decryption.png)
 
 ### 优缺点
 
@@ -176,11 +176,11 @@ PCBC 的全称为明文密码块链接（Plaintext cipher-block chaining）。�
 
 ### 加密
 
-![](/crypto/blockcipher/figure/pcbc_encryption.png)
+![](./figure/pcbc_encryption.png)
 
 ### 解密
 
-![](/crypto/blockcipher/figure/pcbc_decryption.png)
+![](./figure/pcbc_decryption.png)
 
 ### 特点
 
@@ -193,11 +193,11 @@ CFB 全称为密文反馈模式（Cipher feedback）。
 
 ### 加密
 
-![](/crypto/blockcipher/figure/cfb_encryption.png)
+![](./figure/cfb_encryption.png)
 
 ### 解密
 
-![](/crypto/blockcipher/figure/cfb_decryption.png)
+![](./figure/cfb_decryption.png)
 
 ### 优缺点
 
@@ -225,11 +225,11 @@ OFB全称为输出反馈模式（Output feedback），其反馈内容是分组�
 
 ### 加密
 
-![](/crypto/blockcipher/figure/ofb_encryption.png)
+![](./figure/ofb_encryption.png)
 
 ### 解密
 
-![](/crypto/blockcipher/figure/ofb_decryption.png)
+![](./figure/ofb_decryption.png)
 
 ### 优缺点
 
@@ -252,11 +252,11 @@ CTR全称为计数器模式（Counter mode），该模式由 Diffe 和 Hellman �
 
 ### 加密
 
-![](/crypto/blockcipher/figure/ctr_encryption.png)
+![](./figure/ctr_encryption.png)
 
 ### 解密
 
-![](/crypto/blockcipher/figure/ctr_decryption.png)
+![](./figure/ctr_decryption.png)
 
 ### 题目
 
@@ -776,7 +776,7 @@ hitcon{uNp@d_M3th0D_i5_am4Z1n9!}
 
 ## 参考资料
 
-- [分组加密模式](https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F) 
+- [分组加密模式](https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F)
 - https://en.wikipedia.org/wiki/Padding_oracle_attack
 - http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf
 - https://ctftime.org/writeup/7975

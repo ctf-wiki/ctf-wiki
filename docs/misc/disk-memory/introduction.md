@@ -14,7 +14,7 @@
 -   Linux: EXT2 -> EXT3 -> EXT4
 -   FAT 主磁盘结构
 
-    ![](/misc/disk-memory/figure/forensic-filesys.jpg)
+    ![](./figure/forensic-filesys.jpg)
 
 -   删除文件：目录表中文件名第一字节 `e5`。
 

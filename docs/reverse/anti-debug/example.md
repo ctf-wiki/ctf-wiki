@@ -2,13 +2,13 @@
 
 这是一个32位的PE文件, 是一个控制台程序, 我们直接运行, 会要求输入`password`. 当你输入一个错误的`password`时则会提示你`password is wrong`.
 
-![run.png](/reverse/anti-debug/figure/2016_seccon/run.png)
+![run.png](./figure/2016_seccon/run.png)
 
 我们用IDA打开来看下, 最快速的方式就是直接查看字符串, 根据`password is wrong`找到关键代码. IDA显示的结果如下图:
 
-![ida_strings.png](/reverse/anti-debug/figure/2016_seccon/ida_strings.png)
+![ida_strings.png](./figure/2016_seccon/ida_strings.png)
 
-显然, 字符串表明程序中可能有各种检测, 比如检测进程名`ollydbg.exe`, `ImmunityDebugger.exe`, `idaq.exe`和`Wireshark.exe`. 然后也有其他的检测. 我们也看到了字符串`password is wrong`和`You password is correct`的字样. 同时还发现了一个很有可能就是待解密的flag的字符串. 那么我们就先根据`password is wrong`的交叉引用来到关键函数处. 
+显然, 字符串表明程序中可能有各种检测, 比如检测进程名`ollydbg.exe`, `ImmunityDebugger.exe`, `idaq.exe`和`Wireshark.exe`. 然后也有其他的检测. 我们也看到了字符串`password is wrong`和`You password is correct`的字样. 同时还发现了一个很有可能就是待解密的flag的字符串. 那么我们就先根据`password is wrong`的交叉引用来到关键函数处.
 
 如下所示: 程序果然使用了大量的反调试技巧.
 
@@ -21,9 +21,9 @@ int __cdecl main(int argc, const char **argv, const char **envp)
   printf("Input password >");
   v3 = (FILE *)sub_40223D();
   fgets(&v23, 64, v3);
-  strcpy(v21, "I have a pen.");  
+  strcpy(v21, "I have a pen.");
   v22 = strncmp(&v23, v21, 0xDu); // 1. 直接比较明文字符串与输入字符串
-  if ( !v22 )   
+  if ( !v22 )
   {
     puts("Your password is correct.");
     if ( IsDebuggerPresent() == 1 )     // 2. API: IsDebuggerPresent()
@@ -64,7 +64,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
       printf("But detect %s.\n", &lpFileName);      // 6. 检测ProcessMonitor
       exit(1);
     }
-    v11 = sub_401130();     // 7. API: CreateToolhelp32Snapshot()检测进程 
+    v11 = sub_401130();     // 7. API: CreateToolhelp32Snapshot()检测进程
     if ( v11 == 1 )
     {
       printf("But detected Ollydbg.\n");
@@ -90,10 +90,10 @@ int __cdecl main(int argc, const char **argv, const char **envp)
       printf("But detected VMware.\n");
       exit(1);
     }
-    v17 = 1;    
+    v17 = 1;
     v20 = 1;
     v12 = 0;
-    v19 = 1 / 0;   
+    v19 = 1 / 0;
     ms_exc.registration.TryLevel = -2;  // 9. SEH
     printf("But detected Debugged.\n");
     exit(1);
@@ -111,7 +111,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 printf("Input password >");
 v3 = (FILE *)sub_40223D();
 fgets(&v23, 64, v3);
-strcpy(v21, "I have a pen.");  
+strcpy(v21, "I have a pen.");
 v22 = strncmp(&v23, v21, 0xDu); // 1. 直接比较明文字符串与输入字符串
 if ( !v22 )  {
     ......
@@ -133,11 +133,11 @@ if ( IsDebuggerPresent() == 1 )     // 2. API: IsDebuggerPresent()
 
 显然, 输入的`password`正确, 就会输出提示`Your password is correct.`. ??? 不觉得奇怪吗. 难道`I have a pen.`就是我们的flag了吗? 不不不当然不是. 这其实是一个陷阱, 既然你知道了`I have a pen.`那么就肯定有通过某种逆向手段在对程序进行分析. 所以接下来的部分就开始进行一些反调试或其他的检测手段(实际中也可以出现这样的陷阱).
 
-一开始的是`IsDebuggerPresent()`, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看 [IsDebuggerPresent()](/reverse/anti-debug/isdebuggerpresent/index.html) 篇
+一开始的是`IsDebuggerPresent()`, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看 [IsDebuggerPresent()](./isdebuggerpresent/index.html) 篇
 
 ## NtGlobalFlag
 
-接下来是检测`NtGlobalFlag`这个字段的标志位. 通过检测PEB的字段值是否为`0x70`来检测调试器, 如果不太清楚的话, 可以返回去看 [NtGlobalFlag](/reverse/anti-debug/ntglobalflag/index.html) 篇
+接下来是检测`NtGlobalFlag`这个字段的标志位. 通过检测PEB的字段值是否为`0x70`来检测调试器, 如果不太清楚的话, 可以返回去看 [NtGlobalFlag](./ntglobalflag/index.html) 篇
 
 ``` c
 if ( sub_401120() == 0x70 )         // 3. 检测PEB的0x68偏移处是否为0x70. 检测NtGlobalFlag()
@@ -175,7 +175,7 @@ if ( pbDebuggerPresent )            // 4. API: CheckRemoteDebuggerPresent()
     exit(1);
 }
 ```
-这里我顺便在注释里列出了`CheckRemoteDebuggerPresent()`这个API的函数原型. 如果检测到调试器的存在, 会将`pbDebuggerPresent`设置为一个非零值. 根据其值检测调试器([CheckRemoteDebuggerPresent()](/reverse/anti-debug/checkremotedebuggerpresent/index.html) 篇)
+这里我顺便在注释里列出了`CheckRemoteDebuggerPresent()`这个API的函数原型. 如果检测到调试器的存在, 会将`pbDebuggerPresent`设置为一个非零值. 根据其值检测调试器([CheckRemoteDebuggerPresent()](./checkremotedebuggerpresent/index.html) 篇)
 
 
 ## 时间差检测
@@ -192,7 +192,7 @@ if ( GetTickCount() - v13 > 1000 )  // 5. 检测时间差
 }
 ```
 
-`GetTickCount`会返回启动到现在的毫秒数, 循环里光是`sleep(1)`就进行了100次, 也就是100毫秒. 两次得到的时间作差如果大于1000毫秒, 时差明显大于所耗的时间, 也就间接检测到了调试. 
+`GetTickCount`会返回启动到现在的毫秒数, 循环里光是`sleep(1)`就进行了100次, 也就是100毫秒. 两次得到的时间作差如果大于1000毫秒, 时差明显大于所耗的时间, 也就间接检测到了调试.
 
 
 ## ProcessMonitor
@@ -210,10 +210,10 @@ if ( CreateFileA("\\\\.\\Global\\ProcmonDebugLogger", 0x80000000, 7u, 0, 3u, 0x8
 
 ## 检测进程名
 
-这里通过执行`sub_401130()`函数来检测进程, 并根据检测到的不同进程, 返回相应的值. 
+这里通过执行`sub_401130()`函数来检测进程, 并根据检测到的不同进程, 返回相应的值.
 
 ``` c
-v11 = sub_401130();     // 7. API: CreateToolhelp32Snapshot()检测进程 
+v11 = sub_401130();     // 7. API: CreateToolhelp32Snapshot()检测进程
 if ( v11 == 1 )
 {
     printf("But detected Ollydbg.\n");
@@ -312,7 +312,7 @@ signed int sub_401240()
 ## SEH
 
 ``` c
-v17 = 1;    
+v17 = 1;
 v20 = 1;
 v12 = 0;
 v19 = 1 / 0;    // 9. SEH
@@ -355,16 +355,16 @@ exit(1);
 .text:0040164D                 call    _exit
 ```
 
-实际上这一段代码并没有被IDA反编译出来. 而`loc_401652`位置则是一串代码, 亮点在于使用了一个`MessageBoxA`的函数. 而且函数参数之一就是我们的待解密flag. 那么我们就可以在输入`I have a pen.`后, 在`if ( !v22 )`跳转的汇编代码部分, 将其手动改为跳转到flag解密及弹出`messagebox`的部分运行, 让程序自己帮忙解密并输出, 就可以了. 
+实际上这一段代码并没有被IDA反编译出来. 而`loc_401652`位置则是一串代码, 亮点在于使用了一个`MessageBoxA`的函数. 而且函数参数之一就是我们的待解密flag. 那么我们就可以在输入`I have a pen.`后, 在`if ( !v22 )`跳转的汇编代码部分, 将其手动改为跳转到flag解密及弹出`messagebox`的部分运行, 让程序自己帮忙解密并输出, 就可以了.
 
 操作如下图所示:
 
-![jmp.png](/reverse/anti-debug/figure/2016_seccon/jmp.png)
+![jmp.png](./figure/2016_seccon/jmp.png)
 
 这里是输入`I have a pen.`后的跳转部分, 因为正常跳转到的部分, 全是一些检测调试的内容, 所以我们直接跳到代码解密的部分. 也就是`00401663`的位置.
 
-![target.png](/reverse/anti-debug/figure/2016_seccon/target.png)
+![target.png](./figure/2016_seccon/target.png)
 
 在`00401663`以上的`mov-cmp-jnz`也是一个验证部分, 就不管了, 直接跳到`00401663`这里的`mov ecx, 7`这里运行解密代码, 并顺着执行`MessageBoxA()`弹出消息框, 拿到flag
 
-![flag.png](/reverse/anti-debug/figure/2016_seccon/flag.png)
+![flag.png](./figure/2016_seccon/flag.png)

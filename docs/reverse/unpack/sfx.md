@@ -12,12 +12,12 @@
 
 首先我们在菜单`选项->调试设置->异常标签页`中勾选所有忽略异常.
 
-![sfx_01.png](/reverse/unpack/figure/sfx_01.png)
+![sfx_01.png](./figure/sfx_01.png)
 
 然后切换到`SFX`标签页, 点选"字节方式跟踪真正入口处(速度非常慢)"
 
-![sfx_02.png](/reverse/unpack/figure/sfx_02.png)
+![sfx_02.png](./figure/sfx_02.png)
 
 重载程序，程序已经停在了代码入口点, 并且也不需要对OEP进行重新分析.
 
-![sfx_03.png](/reverse/unpack/figure/sfx_03.png)
+![sfx_03.png](./figure/sfx_03.png)

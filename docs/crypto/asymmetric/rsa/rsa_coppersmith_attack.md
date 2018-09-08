@@ -17,7 +17,7 @@ Coppersmith 相关攻击与[Don Coppersmith](https://en.wikipedia.org/wiki/Don_C
 
 在这个问题中，我们的目标是找到在模 N 意义下多项式所有的根，这一问题被认为是复杂的。**Coppersmith method** 主要是通过 [Lenstra–Lenstra–Lovász lattice basis reduction algorithm](https://en.wikipedia.org/wiki/Lenstra%E2%80%93Lenstra%E2%80%93Lov%C3%A1sz_lattice_basis_reduction_algorithm)（LLL）方法找到
 
-- 与该多项式具有相同根 $x_0$ 
+- 与该多项式具有相同根 $x_0$
 - 更小系数
 - 定义域为整数域
 
@@ -25,11 +25,11 @@ Coppersmith 相关攻击与[Don Coppersmith](https://en.wikipedia.org/wiki/Don_C
 
 那么问题的关键就是如何将 f 转换到 g 呢？Howgrave-Graham 给出了一种思路
 
-![image-20180717210921382](/crypto/asymmetric/rsa/figure/coppersmith-howgrave-graham.png)
+![image-20180717210921382](figure/coppersmith-howgrave-graham.png)
 
 也就是说我们需要找到一个具有“更小系数”的多项式 g，也就是下面的转换方式
 
-![image-20180717211351350](/crypto/asymmetric/rsa/ref/coppersmith-f2g.png)
+![image-20180717211351350](ref/coppersmith-f2g.png)
 
 在 LLL 算法中，有两点是非常有用的
 
@@ -578,7 +578,7 @@ def pi_b(x, m):
 	m:
 		1: encrypt
 		0: decrypt
-	'''	
+	'''
 	enc = DES.new(key)
 	if m:
 		method = enc.encrypt
@@ -641,7 +641,7 @@ if __name__=="__main__":
 解密结果如下
 
 ```python
-➜  2016-HCTF-RSA2 git:(master) ✗ python exp_p4.py 
+➜  2016-HCTF-RSA2 git:(master) ✗ python exp_p4.py
 0xa37302107c17fb4ef5c3443f4ef9e220ac659670077b9aa9ff7381d11073affe9183e88acae0ab61fb75a3c7815ffcb1b756b27c4d90b2e0ada753fa17cc108c1d0de82c747db81b9e6f49bde1362693L
 ```
 
@@ -772,7 +772,7 @@ $$
             nlist.append(long(N,16))
             elist.append(long(e,16))
             clist.append(long(c,16))
-    
+
     for i in range(len(nlist)):
         print 'index i'
         n = nlist[i]
@@ -801,4 +801,3 @@ the plaintext: flag_S0Y0UKN0WW13N3R$4TT4CK!
 
 - Survey: Lattice Reduction Attacks on RSA
 - An Introduction to Coppersmith’s method and Applications in Cryptology
-

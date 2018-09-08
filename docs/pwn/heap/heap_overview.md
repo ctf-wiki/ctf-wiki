@@ -82,7 +82,7 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 
 如下图所示，我们主要考虑对堆进行申请内存块的操作。
 
-![](/pwn/heap/figure/brk&mmap.png)
+![](./figure/brk&mmap.png)
 
 #### (s)brk
 
@@ -95,7 +95,7 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 
 具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示
 
-![](/pwn/heap/figure/program_virtual_address_memory_space.png)
+![](./figure/program_virtual_address_memory_space.png)
 
 **例子**
 
@@ -142,14 +142,14 @@ int main()
 - start_brk = brk = end_data = 0x804b000
 
 ```shell
-sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ ./sbrk 
+sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ ./sbrk
 Welcome to sbrk example:6141
 Program Break Location1:0x804b000
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ cat /proc/6141/maps
 ...
 0804a000-0804b000 rw-p 00001000 08:01 539624     /home/sploitfun/ptmalloc.ppt/syscalls/sbrk
-b7e21000-b7e22000 rw-p 00000000 00:00 0 
+b7e21000-b7e22000 rw-p 00000000 00:00 0
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 ```
@@ -162,7 +162,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 - brk = 0x804c000
 
 ```shell
-sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ ./sbrk 
+sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ ./sbrk
 Welcome to sbrk example:6141
 Program Break Location1:0x804b000
 Program Break Location2:0x804c000
@@ -171,7 +171,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ cat /proc/6141/maps
 ...
 0804a000-0804b000 rw-p 00001000 08:01 539624     /home/sploitfun/ptmalloc.ppt/syscalls/sbrk
 0804b000-0804c000 rw-p 00000000 00:00 0          [heap]
-b7e21000-b7e22000 rw-p 00000000 00:00 0 
+b7e21000-b7e22000 rw-p 00000000 00:00 0
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 ```
@@ -238,7 +238,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ cat /proc/6067/maps
 08048000-08049000 r-xp 00000000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
 08049000-0804a000 r--p 00000000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
 0804a000-0804b000 rw-p 00001000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
-b7e21000-b7e22000 rw-p 00000000 00:00 0 
+b7e21000-b7e22000 rw-p 00000000 00:00 0
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 ```
@@ -252,7 +252,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ cat /proc/6067/maps
 08048000-08049000 r-xp 00000000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
 08049000-0804a000 r--p 00000000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
 0804a000-0804b000 rw-p 00001000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
-b7e00000-b7e22000 rw-p 00000000 00:00 0 
+b7e00000-b7e22000 rw-p 00000000 00:00 0
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 ```
@@ -266,7 +266,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ cat /proc/6067/maps
 08048000-08049000 r-xp 00000000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
 08049000-0804a000 r--p 00000000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
 0804a000-0804b000 rw-p 00001000 08:01 539691     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
-b7e21000-b7e22000 rw-p 00000000 00:00 0 
+b7e21000-b7e22000 rw-p 00000000 00:00 0
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 ```
@@ -330,7 +330,7 @@ int main() {
 **第一次申请之前**， 没有任何任何堆段。
 
 ```shell
-sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread 
+sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
 ...
@@ -338,7 +338,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ cat /proc/6501/maps
 08048000-08049000 r-xp 00000000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 08049000-0804a000 r--p 00000000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804a000-0804b000 rw-p 00001000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
-b7e05000-b7e07000 rw-p 00000000 00:00 0 
+b7e05000-b7e07000 rw-p 00000000 00:00 0
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 ```
@@ -346,7 +346,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 **第一次申请后**， 从下面的输出可以看出，堆段被建立了，并且它就紧邻着数据段，这说明malloc的背后是用brk函数来实现的。同时，需要注意的是，我们虽然只是申请了1000个字节，但是我们却得到了0x0806c000-0x0804b000=0x21000个字节的堆。**这说明虽然程序可能只是向操作系统申请很小的内存，但是为了方便，操作系统会把很大的内存分配给程序。这样的话，就避免了多次内核态与用户态的切换，提高了程序的效率。**我们称这一块连续的内存区域为 arena。此外，我们称由主线程申请的内存为 main_arena。后续的申请的内存会一直从这个 arena 中获取，直到空间不足。当 arena 空间不足时，它可以通过增加brk的方式来增加堆的空间。类似地，arena 也可以通过减小 brk 来缩小自己的空间。
 
 ```shell
-sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread 
+sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
 After malloc and before free in main thread
@@ -356,7 +356,7 @@ sploitfun@sploitfun-VirtualBox:~/lsploits/hof/ptmalloc.ppt/mthread$ cat /proc/65
 08049000-0804a000 r--p 00000000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804a000-0804b000 rw-p 00001000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804b000-0806c000 rw-p 00000000 00:00 0          [heap]
-b7e05000-b7e07000 rw-p 00000000 00:00 0 
+b7e05000-b7e07000 rw-p 00000000 00:00 0
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 ```
@@ -364,7 +364,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 **在主线程释放内存后**，我们从下面的输出可以看出，其对应的 arena 并没有进行回收，而是交由glibc来进行管理。当后面程序再次申请内存时，在 glibc 中管理的内存充足的情况下，glibc 就会根据堆分配的算法来给程序分配相应的内存。
 
 ```shell
-sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread 
+sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
 After malloc and before free in main thread
@@ -375,7 +375,7 @@ sploitfun@sploitfun-VirtualBox:~/lsploits/hof/ptmalloc.ppt/mthread$ cat /proc/65
 08049000-0804a000 r--p 00000000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804a000-0804b000 rw-p 00001000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804b000-0806c000 rw-p 00000000 00:00 0          [heap]
-b7e05000-b7e07000 rw-p 00000000 00:00 0 
+b7e05000-b7e07000 rw-p 00000000 00:00 0
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 ```
@@ -383,7 +383,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 **在第一个线程malloc之前**，我们可以看到并没有出现与线程1相关的堆，但是出现了与线程1相关的栈。
 
 ```shell
-sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread 
+sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
 After malloc and before free in main thread
@@ -395,7 +395,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ cat /proc/6501/maps
 08049000-0804a000 r--p 00000000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804a000-0804b000 rw-p 00001000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804b000-0806c000 rw-p 00000000 00:00 0          [heap]
-b7604000-b7605000 ---p 00000000 00:00 0 
+b7604000-b7605000 ---p 00000000 00:00 0
 b7605000-b7e07000 rw-p 00000000 00:00 0          [stack:6594]
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
@@ -408,7 +408,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 > 当用户请求的内存大于128KB时，并且没有任何arena有足够的空间时，那么系统就会执行mmap函数来分配相应的内存空间。这与这个请求来自于主线程还是从线程无关。
 
 ```shell
-sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread 
+sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
 After malloc and before free in main thread
@@ -421,9 +421,9 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ cat /proc/6501/maps
 08049000-0804a000 r--p 00000000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804a000-0804b000 rw-p 00001000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804b000-0806c000 rw-p 00000000 00:00 0          [heap]
-b7500000-b7521000 rw-p 00000000 00:00 0 
-b7521000-b7600000 ---p 00000000 00:00 0 
-b7604000-b7605000 ---p 00000000 00:00 0 
+b7500000-b7521000 rw-p 00000000 00:00 0
+b7521000-b7600000 ---p 00000000 00:00 0
+b7604000-b7605000 ---p 00000000 00:00 0
 b7605000-b7e07000 rw-p 00000000 00:00 0          [stack:6594]
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
@@ -432,7 +432,7 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$
 **在第一个线程释放内存后**， 我们可以从下面的输出看到，这样释放内存同样不会把内存重新给系统。
 
 ```shell
-sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread 
+sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc in main thread
 After malloc and before free in main thread
@@ -446,9 +446,9 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ cat /proc/6501/maps
 08049000-0804a000 r--p 00000000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804a000-0804b000 rw-p 00001000 08:01 539625     /home/sploitfun/ptmalloc.ppt/mthread/mthread
 0804b000-0806c000 rw-p 00000000 00:00 0          [heap]
-b7500000-b7521000 rw-p 00000000 00:00 0 
-b7521000-b7600000 ---p 00000000 00:00 0 
-b7604000-b7605000 ---p 00000000 00:00 0 
+b7500000-b7521000 rw-p 00000000 00:00 0
+b7521000-b7600000 ---p 00000000 00:00 0
+b7604000-b7605000 ---p 00000000 00:00 0
 b7605000-b7e07000 rw-p 00000000 00:00 0          [stack:6594]
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$

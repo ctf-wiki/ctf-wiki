@@ -6,11 +6,11 @@
 
 下面是一个可执行文件加载到内存中布局的例子
 
-![](/executable/elf/figure/executable_file_example.png)
+![](./figure/executable_file_example.png)
 
 对应的代码段以及数据段的解释如下
 
-![](/executable/elf/figure/program_header_segments.png) 
+![](./figure/program_header_segments.png)
 
 在这个例子中，尽管代码段和数据段在模4KB的意义下相等，但是仍然最多有4个页面包含有不纯的代码或者数据。当然，实际中会取决于页大小或者文件系统的块大小。
 
@@ -23,10 +23,10 @@
 
 数据段的结尾需要好好处理没有被初始化的数据，一般来说，系统要求它们以0开始。因此，如果一个文件的最后一页包含不在逻辑页中的信息，那么剩下的数据必须被初始化为0。剩下的三个页中的杂质数据在逻辑上说并不是进程镜像的一部分，系统可以选择删除它们。该文件对应的虚拟内存镜像如下（假设每一页大小为4KB）
 
-![](/executable/elf/figure/process_segments_image.png)
+![](./figure/process_segments_image.png)
 
 在加载段时，可执行文件与共享目标文件有所区别。可执行文件通常来说包含绝对代码。为了能够使得程序正确执行，每一个段应该在用于构建可执行文件的虚拟地址处。因此，系统直接使用p_vaddr作为虚拟地址。
 
 另一方面，共享目标文件通常包含地址独立代码。这使得在不同的进程中，同一段的虚拟地址可能会有所不同，但这并不会影响程序的执行行为。尽管系统会为不同的进程选择不同的虚拟地址，但是它仍旧维持了段的相对地址。因为地址独立代码在不同的段中使用相对地址，因此在虚拟内存中的虚拟地址之间的差肯定和在文件中的相应的虚拟地址的差相同。下面给出了可能的对于同一共享目标文件不同进程的情况，描述了相对地址寻址，此外这个表还给出了基地址的计算方法。
 
-![](/executable/ELF/figure/shared_object_segments_addresses.png)
+![](./figure/shared_object_segments_addresses.png)

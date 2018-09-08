@@ -1,7 +1,3 @@
----
-typora-root-url: ../../../docs
----
-
 # 格式化字符串漏洞原理介绍
 
 首先，对格式化字符串漏洞的原理进行简单介绍。
@@ -16,7 +12,7 @@ typora-root-url: ../../../docs
 
 这里我们给出一个简单的例子，其实相信大多数人都接触过printf函数之类的。之后我们再一个一个进行介绍。
 
-![](/pwn/fmtstr/figure/printf.png)
+![](./figure/printf.png)
 
 ### 格式化字符串函数
 
@@ -58,7 +54,7 @@ typora-root-url: ../../../docs
     -   输出的最大长度
 -   length，输出的长度
     -   hh，输出一个字节
-    -   h，输出一个双字节  ​
+    -   h，输出一个双字节
 -   type
     -   d/i，有符号整数
     -   u，无符号整数

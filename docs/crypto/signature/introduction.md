@@ -4,5 +4,4 @@
 
 数字签名依赖于非对称密码，因为我们必须确保一方能够做的事情，而另一方不能够做出这样的事情。其基本原理如下
 
-![](/crypto/signature/figure/Digital_Signature_diagram.png)
-
+![](./figure/Digital_Signature_diagram.png)
