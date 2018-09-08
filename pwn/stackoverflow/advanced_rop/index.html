@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.3, mkdocs-material-3.0.4">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-3.0.4">
     
     
       
@@ -4811,14 +4811,14 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <p>其中，<code>sigreturn</code>是一个系统调用，在类unix系统发生signal的时候会被间接地调用。</p>
 <h3 id="signal">signal机制<a class="headerlink" href="#signal" title="Permanent link">&para;</a></h3>
 <p>signal机制是类unix系统中进程之间相互传递信息的一种方法。一般，我们也称其为软中断信号，或者软中断。比如说，进程之间可以通过系统调用kill来发送软中断信号。一般来说，信号机制常见的步骤如下图所示：</p>
-<p><img alt="Process of Signal Handlering" src="../figure/ProcessOfSignalHandlering.png" /></p>
+<p><img alt="Process of Signal Handlering" src="/pwn/stackoverflow/figure/ProcessOfSignalHandlering.png" /></p>
 <ol>
 <li>
 <p>内核向某个进程发送signal机制，该进程会被暂时挂起，进入内核态。</p>
 </li>
 <li>
 <p>内核会为该进程保存相应的上下文，<strong>主要是将所有寄存器压入栈中，以及压入signal信息，以及指向sigreturn的系统调用地址</strong>。此时栈的结构如下图所示，我们称ucontext以及siginfo这一段为Signal Frame。<strong>需要注意的是，这一部分是在用户进程的地址空间的。</strong>之后会跳转到注册过的signal handler中处理相应的signal。因此，当signal handler执行完之后，就会执行sigreturn代码。</p>
-<p><img alt="signal2-stack" src="../figure/signal2-stack.png" /></p>
+<p><img alt="signal2-stack" src="/pwn/stackoverflow/figure/signal2-stack.png" /></p>
 <p>对于signal Frame来说，不同会因为架构的不同而因此有所区别，这里给出分别给出x86以及x64的sigcontext</p>
 <ul>
 <li>x86</li>
@@ -4920,7 +4920,7 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <p>说到这里，其实，SROP的基本利用原理也就出现了。下面举两个简单的例子。</p>
 <h4 id="shell">获取shell<a class="headerlink" href="#shell" title="Permanent link">&para;</a></h4>
 <p>首先，我们假设攻击者可以控制用户进程的栈，那么它就可以伪造一个Signal Frame，如下图所示，这里以64位为例子，给出Signal Frame更加详细的信息</p>
-<p><img alt="signal2-stack" src="../figure/srop-example-1.png" /></p>
+<p><img alt="signal2-stack" src="/pwn/stackoverflow/figure/srop-example-1.png" /></p>
 <p>当系统执行完sigreturn系统调用之后，会执行一系列的pop指令以便于恢复相应寄存器的值，当执行到rip时，就会将程序执行流指向syscall地址，根据相应寄存器的值，此时，便会得到一个shell。</p>
 <h4 id="system-call-chains">system call chains<a class="headerlink" href="#system-call-chains" title="Permanent link">&para;</a></h4>
 <p>需要指出的是，上面的例子中，我们只是单独的获得一个shell。有时候，我们可能会希望执行一系列的函数。我们只需要做两处修改即可</p>
@@ -4929,7 +4929,7 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <li><strong>把原来rip指向的<code>syscall</code> gadget换成<code>syscall; ret</code> gadget。</strong></li>
 </ul>
 <p>如下图所示 ，这样当每次syscall返回的时候，栈指针都会指向下一个Signal Frame。因此就可以执行一系列的sigreturn函数调用。</p>
-<p><img alt="signal2-stack" src="../figure/srop-example-2.png" /></p>
+<p><img alt="signal2-stack" src="/pwn/stackoverflow/figure/srop-example-2.png" /></p>
 <h4 id="_9">后续<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h4>
 <p>需要注意的是，我们在构造ROP攻击的时候，需要满足下面的条件</p>
 <ul>
@@ -4944,9 +4944,9 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <li>需要有够大的空间来塞下整个sigal frame</li>
 </ul>
 <p>此外，关于sigreturn以及syscall;ret这两个gadget在上面并没有提及。提出该攻击的论文作者发现了这些gadgets出现的某些地址：</p>
-<p><img alt="gadget1" src="../figure/srop-gadget-1.png" /></p>
+<p><img alt="gadget1" src="/pwn/stackoverflow/figure/srop-gadget-1.png" /></p>
 <p>并且，作者发现，有些系统上SROP的地址被随机化了，而有些则没有。比如说<code>Linux &lt; 3.3 x86_64</code>（在Debian 7.0， Ubuntu Long Term Support， CentOS 6系统中默认内核），可以直接在vsyscall中的固定地址处找到syscall&amp;return代码片段。如下</p>
-<p><img alt="gadget1" src="../figure/srop-gadget-2.png" /></p>
+<p><img alt="gadget1" src="/pwn/stackoverflow/figure/srop-gadget-2.png" /></p>
 <p>但是目前它已经被<code>vsyscall-emulate</code>和<code>vdso</code>机制代替了。此外，目前大多数系统都会开启ASLR保护，所以相对来说这些gadgets都并不容易找到。</p>
 <p>值得一说的是，对于sigreturn系统调用来说，在64位系统中，sigreturn系统调用对应的系统调用号为15，只需要RAX=15，并且执行syscall即可实现调用syscall调用。而RAX寄存器的值又可以通过控制某个函数的返回值来间接控制，比如说read函数的返回值为读取的字节数。</p>
 <h3 id="_10">利用工具<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
@@ -5222,7 +5222,7 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
           
         
       
-      <script>app.initialize({version:"1.0.3",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
       
         <script src="../../../_static/js/extra.js"></script>
       

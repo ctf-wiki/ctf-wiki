@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.3, mkdocs-material-3.0.4">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-3.0.4">
     
     
       
@@ -3787,9 +3787,9 @@
                 
                 <p>我们现在来分析一道2016年SecCon的<code>anti-debugging</code>题, 题目下载链接: <a href="https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/anti-debug/2016_seccon/anti_debugging_100/bin.exe">bin.exe</a></p>
 <p>这是一个32位的PE文件, 是一个控制台程序, 我们直接运行, 会要求输入<code>password</code>. 当你输入一个错误的<code>password</code>时则会提示你<code>password is wrong</code>.</p>
-<p><img alt="run.png" src="../figure/2016_seccon/run.png" /></p>
+<p><img alt="run.png" src="/reverse/anti-debug/figure/2016_seccon/run.png" /></p>
 <p>我们用IDA打开来看下, 最快速的方式就是直接查看字符串, 根据<code>password is wrong</code>找到关键代码. IDA显示的结果如下图:</p>
-<p><img alt="ida_strings.png" src="../figure/2016_seccon/ida_strings.png" /></p>
+<p><img alt="ida_strings.png" src="/reverse/anti-debug/figure/2016_seccon/ida_strings.png" /></p>
 <p>显然, 字符串表明程序中可能有各种检测, 比如检测进程名<code>ollydbg.exe</code>, <code>ImmunityDebugger.exe</code>, <code>idaq.exe</code>和<code>Wireshark.exe</code>. 然后也有其他的检测. 我们也看到了字符串<code>password is wrong</code>和<code>You password is correct</code>的字样. 同时还发现了一个很有可能就是待解密的flag的字符串. 那么我们就先根据<code>password is wrong</code>的交叉引用来到关键函数处. </p>
 <p>如下所示: 程序果然使用了大量的反调试技巧.</p>
 <div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
@@ -4087,11 +4087,11 @@
 
 <p>实际上这一段代码并没有被IDA反编译出来. 而<code>loc_401652</code>位置则是一串代码, 亮点在于使用了一个<code>MessageBoxA</code>的函数. 而且函数参数之一就是我们的待解密flag. 那么我们就可以在输入<code>I have a pen.</code>后, 在<code>if ( !v22 )</code>跳转的汇编代码部分, 将其手动改为跳转到flag解密及弹出<code>messagebox</code>的部分运行, 让程序自己帮忙解密并输出, 就可以了. </p>
 <p>操作如下图所示:</p>
-<p><img alt="jmp.png" src="../figure/2016_seccon/jmp.png" /></p>
+<p><img alt="jmp.png" src="/reverse/anti-debug/figure/2016_seccon/jmp.png" /></p>
 <p>这里是输入<code>I have a pen.</code>后的跳转部分, 因为正常跳转到的部分, 全是一些检测调试的内容, 所以我们直接跳到代码解密的部分. 也就是<code>00401663</code>的位置.</p>
-<p><img alt="target.png" src="../figure/2016_seccon/target.png" /></p>
+<p><img alt="target.png" src="/reverse/anti-debug/figure/2016_seccon/target.png" /></p>
 <p>在<code>00401663</code>以上的<code>mov-cmp-jnz</code>也是一个验证部分, 就不管了, 直接跳到<code>00401663</code>这里的<code>mov ecx, 7</code>这里运行解密代码, 并顺着执行<code>MessageBoxA()</code>弹出消息框, 拿到flag</p>
-<p><img alt="flag.png" src="../figure/2016_seccon/flag.png" /></p>
+<p><img alt="flag.png" src="/reverse/anti-debug/figure/2016_seccon/flag.png" /></p>
                 
                   
                 
@@ -4212,7 +4212,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.3",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
       
         <script src="../../../_static/js/extra.js"></script>
       
