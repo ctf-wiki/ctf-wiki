@@ -188,7 +188,7 @@ Self-XSS 顾名思义，就是一个具有 XSS 漏洞的点只能由攻击者本
   5. 攻击者从页面提取 CSRF Token
   6. 然后可以使用 CSRF Token 提交修改用户的个人信息
 
-  这种攻击流程需要注意几个地方：第三步登录是不需要用户交互的，利用Google Sign In等非密码登录方式登录；**X-Frame-Options**  需要被设置为同源（该页面可以在相同域名页面的 `iframe` 中展示 ）
+  这种攻击流程需要注意几个地方：第三步登录是不需要用户交互的，利用 Google Sign In 等非密码登录方式登录；**X-Frame-Options**  需要被设置为同源（该页面可以在相同域名页面的 `iframe` 中展示 ）
 
 - 登陆存在 CSRF，账户信息存在 Self-XSS，OAUTH 认证
 
