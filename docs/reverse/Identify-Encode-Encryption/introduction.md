@@ -116,8 +116,114 @@ void rc4_crypt(unsigned char *s, unsigned char *Data, unsigned long Len) //加�
 
 初始化长度为256的[S盒](https://zh.wikipedia.org/wiki/S%E7%9B%92)。第一个for循环将0到255的互不重复的元素装入S盒。第二个for循环根据密钥打乱S盒。
 
-```
- for i from 0 to 255
+```c
+  for i from 0 to 255
      S[i] := i
+ endfor
+ j := 0
+ for( i=0 ; i<256 ; i++)
+     j := (j + S[i] + key[i mod keylength]) % 256
+     swap values of S[i] and S[j]
+ endfor
+```
+
+下面i,j是两个指针。每收到一个字节，就进行while循环。通过一定的算法（(a),(b)）定位S盒中的一个元素，并与输入字节异或，得到k。循环中还改变了S盒（(c)）。如果输入的是[明文](https://zh.wikipedia.org/wiki/%E6%98%8E%E6%96%87)，输出的就是[密文](https://zh.wikipedia.org/wiki/%E5%AF%86%E6%96%87)；如果输入的是密文，输出的就是明文。
+
+```c
+ i := 0
+ j := 0
+ while GeneratingOutput:
+     i := (i + 1) mod 256   //a
+     j := (j + S[i]) mod 256 //b
+     swap values of S[i] and S[j]  //c
+     k := inputByte ^ S[(S[i] + S[j]) % 256]
+     output K
+ endwhile
+```
+
+此算法保证每256次循环中S盒的每个元素至少被交换过一次
+
+
+
+## MD5
+
+**MD5消息摘要算法**（英语：MD5 Message-Digest Algorithm），一种被广泛使用的[密码散列函数](https://zh.wikipedia.org/wiki/%E5%AF%86%E7%A2%BC%E9%9B%9C%E6%B9%8A%E5%87%BD%E6%95%B8)，可以产生出一个128位（16[字节](https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82)）的散列值（hash value），用于确保信息传输完整一致。MD5由美国密码学家[罗纳德·李维斯特](https://zh.wikipedia.org/wiki/%E7%BD%97%E7%BA%B3%E5%BE%B7%C2%B7%E6%9D%8E%E7%BB%B4%E6%96%AF%E7%89%B9)（Ronald Linn Rivest）设计，于1992年公开，用以取代[MD4](https://zh.wikipedia.org/wiki/MD4)算法。这套算法的程序在 [RFC 1321](https://tools.ietf.org/html/rfc1321) 中被加以规范。
+
+
+
+伪代码表示为：
 
 ```
+/Note: All variables are unsigned 32 bits and wrap modulo 2^32 when calculating
+var int[64] r, k
+
+//r specifies the per-round shift amounts
+r[ 0..15]：= {7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22} 
+r[16..31]：= {5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20}
+r[32..47]：= {4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23}
+r[48..63]：= {6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21}
+
+//Use binary integer part of the sines of integers as constants:
+for i from 0 to 63
+    k[i] := floor(abs(sin(i + 1)) × 2^32)
+
+//Initialize variables:
+var int h0 := 0x67452301
+var int h1 := 0xEFCDAB89
+var int h2 := 0x98BADCFE
+var int h3 := 0x10325476
+
+//Pre-processing:
+append "1" bit to message
+append "0" bits until message length in bits ≡ 448 (mod 512)
+append bit length of message as 64-bit little-endian integer to message
+
+//Process the message in successive 512-bit chunks:
+for each 512-bit chunk of message
+    break chunk into sixteen 32-bit little-endian words w[i], 0 ≤ i ≤ 15
+
+    //Initialize hash value for this chunk:
+    var int a := h0
+    var int b := h1
+    var int c := h2
+    var int d := h3
+
+    //Main loop:
+    for i from 0 to 63
+        if 0 ≤ i ≤ 15 then
+            f := (b and c) or ((not b) and d)
+            g := i
+        else if 16 ≤ i ≤ 31
+            f := (d and b) or ((not d) and c)
+            g := (5×i + 1) mod 16
+        else if 32 ≤ i ≤ 47
+            f := b xor c xor d
+            g := (3×i + 5) mod 16
+        else if 48 ≤ i ≤ 63
+            f := c xor (b or (not d))
+            g := (7×i) mod 16
+ 
+        temp := d
+        d := c
+        c := b
+        b := leftrotate((a + f + k[i] + w[g]),r[i]) + b
+        a := temp
+    Next i
+    //Add this chunk's hash to result so far:
+    h0 := h0 + a
+    h1 := h1 + b 
+    h2 := h2 + c
+    h3 := h3 + d
+End ForEach
+var int digest := h0 append h1 append h2 append h3 //(expressed as little-endian)
+```
+
+其鲜明的特征是：
+
+```c
+    h0 = 0x67452301;
+    h1 = 0xefcdab89;
+    h2 = 0x98badcfe;
+    h3 = 0x10325476;
+```
+
