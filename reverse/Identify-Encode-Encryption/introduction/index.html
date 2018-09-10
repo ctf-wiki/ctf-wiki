@@ -2349,6 +2349,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#md5" title="MD5" class="md-nav__link">
+    MD5
+  </a>
+  
+</li>
+      
       
       
       
@@ -3941,6 +3948,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#md5" title="MD5" class="md-nav__link">
+    MD5
+  </a>
+  
+</li>
+      
       
       
       
@@ -4045,8 +4059,101 @@
 <p>通过分析初始化代码，可以看出初始化代码中，对字符数组s进行了初始化赋值，且赋值分别递增。之后对s进行了256次交换操作。通过识别初始化代码，可以知道rc4算法。</p>
 <p>其伪代码表示为：</p>
 <p>初始化长度为256的<a href="https://zh.wikipedia.org/wiki/S%E7%9B%92">S盒</a>。第一个for循环将0到255的互不重复的元素装入S盒。第二个for循环根据密钥打乱S盒。</p>
-<div class="codehilite"><pre><span></span> for i from 0 to 255
-     S[i] := i
+<div class="codehilite"><pre><span></span>  <span class="k">for</span> <span class="n">i</span> <span class="n">from</span> <span class="mi">0</span> <span class="n">to</span> <span class="mi">255</span>
+     <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">:=</span> <span class="n">i</span>
+ <span class="n">endfor</span>
+ <span class="nl">j</span> <span class="p">:</span><span class="o">=</span> <span class="mi">0</span>
+ <span class="k">for</span><span class="p">(</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span> <span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="mi">256</span> <span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+     <span class="nl">j</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span> <span class="n">mod</span> <span class="n">keylength</span><span class="p">])</span> <span class="o">%</span> <span class="mi">256</span>
+     <span class="n">swap</span> <span class="n">values</span> <span class="n">of</span> <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="n">and</span> <span class="n">S</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+ <span class="n">endfor</span>
+</pre></div>
+
+<p>下面i,j是两个指针。每收到一个字节，就进行while循环。通过一定的算法（(a),(b)）定位S盒中的一个元素，并与输入字节异或，得到k。循环中还改变了S盒（&copy;）。如果输入的是<a href="https://zh.wikipedia.org/wiki/%E6%98%8E%E6%96%87">明文</a>，输出的就是<a href="https://zh.wikipedia.org/wiki/%E5%AF%86%E6%96%87">密文</a>；如果输入的是密文，输出的就是明文。</p>
+<div class="codehilite"><pre><span></span> <span class="nl">i</span> <span class="p">:</span><span class="o">=</span> <span class="mi">0</span>
+ <span class="nl">j</span> <span class="p">:</span><span class="o">=</span> <span class="mi">0</span>
+ <span class="k">while</span> <span class="nl">GeneratingOutput</span><span class="p">:</span>
+     <span class="nl">i</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="n">mod</span> <span class="mi">256</span>   <span class="c1">//a</span>
+     <span class="nl">j</span> <span class="p">:</span><span class="o">=</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="n">mod</span> <span class="mi">256</span> <span class="c1">//b</span>
+     <span class="n">swap</span> <span class="n">values</span> <span class="n">of</span> <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="n">and</span> <span class="n">S</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>  <span class="c1">//c</span>
+     <span class="nl">k</span> <span class="p">:</span><span class="o">=</span> <span class="n">inputByte</span> <span class="o">^</span> <span class="n">S</span><span class="p">[(</span><span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">S</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">%</span> <span class="mi">256</span><span class="p">]</span>
+     <span class="n">output</span> <span class="n">K</span>
+ <span class="n">endwhile</span>
+</pre></div>
+
+<p>此算法保证每256次循环中S盒的每个元素至少被交换过一次</p>
+<h2 id="md5">MD5<a class="headerlink" href="#md5" title="Permanent link">&para;</a></h2>
+<p><strong>MD5消息摘要算法</strong>（英语：MD5 Message-Digest Algorithm），一种被广泛使用的<a href="https://zh.wikipedia.org/wiki/%E5%AF%86%E7%A2%BC%E9%9B%9C%E6%B9%8A%E5%87%BD%E6%95%B8">密码散列函数</a>，可以产生出一个128位（16<a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82">字节</a>）的散列值（hash value），用于确保信息传输完整一致。MD5由美国密码学家<a href="https://zh.wikipedia.org/wiki/%E7%BD%97%E7%BA%B3%E5%BE%B7%C2%B7%E6%9D%8E%E7%BB%B4%E6%96%AF%E7%89%B9">罗纳德·李维斯特</a>（Ronald Linn Rivest）设计，于1992年公开，用以取代<a href="https://zh.wikipedia.org/wiki/MD4">MD4</a>算法。这套算法的程序在 <a href="https://tools.ietf.org/html/rfc1321">RFC 1321</a> 中被加以规范。</p>
+<p>伪代码表示为：</p>
+<div class="codehilite"><pre><span></span>/Note: All variables are unsigned 32 bits and wrap modulo 2^32 when calculating
+var int[64] r, k
+
+//r specifies the per-round shift amounts
+r[ 0..15]：= {7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22} 
+r[16..31]：= {5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20}
+r[32..47]：= {4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23}
+r[48..63]：= {6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21}
+
+//Use binary integer part of the sines of integers as constants:
+for i from 0 to 63
+    k[i] := floor(abs(sin(i + 1)) × 2^32)
+
+//Initialize variables:
+var int h0 := 0x67452301
+var int h1 := 0xEFCDAB89
+var int h2 := 0x98BADCFE
+var int h3 := 0x10325476
+
+//Pre-processing:
+append &quot;1&quot; bit to message
+append &quot;0&quot; bits until message length in bits ≡ 448 (mod 512)
+append bit length of message as 64-bit little-endian integer to message
+
+//Process the message in successive 512-bit chunks:
+for each 512-bit chunk of message
+    break chunk into sixteen 32-bit little-endian words w[i], 0 ≤ i ≤ 15
+
+    //Initialize hash value for this chunk:
+    var int a := h0
+    var int b := h1
+    var int c := h2
+    var int d := h3
+
+    //Main loop:
+    for i from 0 to 63
+        if 0 ≤ i ≤ 15 then
+            f := (b and c) or ((not b) and d)
+            g := i
+        else if 16 ≤ i ≤ 31
+            f := (d and b) or ((not d) and c)
+            g := (5×i + 1) mod 16
+        else if 32 ≤ i ≤ 47
+            f := b xor c xor d
+            g := (3×i + 5) mod 16
+        else if 48 ≤ i ≤ 63
+            f := c xor (b or (not d))
+            g := (7×i) mod 16
+
+        temp := d
+        d := c
+        c := b
+        b := leftrotate((a + f + k[i] + w[g]),r[i]) + b
+        a := temp
+    Next i
+    //Add this chunk&#39;s hash to result so far:
+    h0 := h0 + a
+    h1 := h1 + b 
+    h2 := h2 + c
+    h3 := h3 + d
+End ForEach
+var int digest := h0 append h1 append h2 append h3 //(expressed as little-endian)
+</pre></div>
+
+<p>其鲜明的特征是：</p>
+<div class="codehilite"><pre><span></span>    <span class="n">h0</span> <span class="o">=</span> <span class="mh">0x67452301</span><span class="p">;</span>
+    <span class="n">h1</span> <span class="o">=</span> <span class="mh">0xefcdab89</span><span class="p">;</span>
+    <span class="n">h2</span> <span class="o">=</span> <span class="mh">0x98badcfe</span><span class="p">;</span>
+    <span class="n">h3</span> <span class="o">=</span> <span class="mh">0x10325476</span><span class="p">;</span>
 </pre></div>
                 
                   
