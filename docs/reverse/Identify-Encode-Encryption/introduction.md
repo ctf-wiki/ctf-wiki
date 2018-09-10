@@ -1,4 +1,3 @@
-
 ---
 typora-root-url: ../../../docs
 ---
@@ -65,3 +64,60 @@ void decrypt (uint32_t* v, uint32_t* k) {
 
 
 在 Tea 算法中其最主要的识别特征就是 拥有一个 image number ：0x9e3779b9 。当然，这 Tea 算法也有魔改的，感兴趣的可以看 2018 0ctf Quals milk-tea。
+
+
+
+
+
+## RC4
+
+在[密码学](https://zh.wikipedia.org/wiki/%E5%AF%86%E7%A2%BC%E5%AD%B8)中，**RC4**（来自Rivest Cipher 4的缩写）是一种[流加密](https://zh.wikipedia.org/wiki/%E6%B5%81%E5%8A%A0%E5%AF%86)算法，[密钥](https://zh.wikipedia.org/wiki/%E5%AF%86%E9%92%A5)长度可变。它加解密使用相同的密钥，因此也属于[对称加密算法](https://zh.wikipedia.org/wiki/%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86)。RC4是[有线等效加密](https://zh.wikipedia.org/wiki/%E6%9C%89%E7%B7%9A%E7%AD%89%E6%95%88%E5%8A%A0%E5%AF%86)（WEP）中采用的加密算法，也曾经是[TLS](https://zh.wikipedia.org/wiki/%E4%BC%A0%E8%BE%93%E5%B1%82%E5%AE%89%E5%85%A8%E5%8D%8F%E8%AE%AE)可采用的算法之一。
+
+
+
+```C
+void rc4_init(unsigned char *s, unsigned char *key, unsigned long Len) //初始化函数
+{
+    int i =0, j = 0;
+    char k[256] = {0};
+    unsigned char tmp = 0;
+    for (i=0;i<256;i++) {
+        s[i] = i;
+        k[i] = key[i%Len];
+    }
+    for (i=0; i<256; i++) {
+        j=(j+s[i]+k[i])%256;
+        tmp = s[i];
+        s[i] = s[j]; //交换s[i]和s[j]
+        s[j] = tmp;
+    }
+ }
+
+void rc4_crypt(unsigned char *s, unsigned char *Data, unsigned long Len) //加解密
+{
+    int i = 0, j = 0, t = 0;
+    unsigned long k = 0;
+    unsigned char tmp;
+    for(k=0;k<Len;k++) {
+        i=(i+1)%256;
+        j=(j+s[i])%256;
+        tmp = s[i];
+        s[i] = s[j]; //交换s[x]和s[y]
+        s[j] = tmp;
+        t=(s[i]+s[j])%256;
+        Data[k] ^= s[t];
+     }
+} 
+```
+
+通过分析初始化代码，可以看出初始化代码中，对字符数组s进行了初始化赋值，且赋值分别递增。之后对s进行了256次交换操作。通过识别初始化代码，可以知道rc4算法。
+
+其伪代码表示为：
+
+初始化长度为256的[S盒](https://zh.wikipedia.org/wiki/S%E7%9B%92)。第一个for循环将0到255的互不重复的元素装入S盒。第二个for循环根据密钥打乱S盒。
+
+```
+ for i from 0 to 255
+     S[i] := i
+
+```
