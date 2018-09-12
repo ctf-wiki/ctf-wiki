@@ -6,7 +6,7 @@
 
 ####  （1）通用寄存器
 
-MIPS 有 32 个通用寄存器 （General purpose registers），以美元符号 （$） 表示。可以表示为 $0~$31，也可以用寄存器名称表示如，$sp 、 $t9 、$fp 等等。
+MIPS 有 32 个通用寄存器 （General purpose registers），以美元符号 （$） 表示。可以表示为 `$0~$31`，也可以用寄存器名称表示如，$sp 、 $t9 、$fp 等等。
 
 
 
