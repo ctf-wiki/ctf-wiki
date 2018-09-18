@@ -26,15 +26,15 @@
 
 1. 借助于过滤器窗口
 
-    ![filter_window](figure/filter_window.png)
+    ![filter_window](./figure/filter_window.png)
 
 2. 借助于工具条的输入栏
 
-    ![filter_tool](figure/filter_tool.png)
+    ![filter_tool](./figure/filter_tool.png)
 
 3. 将数据包某个属性值指定为过滤条件
 
-    ![filter_select](figure/filter_select.png)
+    ![filter_select](./figure/filter_select.png)
 
 !!! note
 ​    复杂的过滤命令可以直接通过第三种方式得到过滤语法
@@ -45,7 +45,7 @@
 
 这个窗口现实的是捕捉文件包含的所有协议的树状分支
 
-![pro_his](figure/pro_his.png)
+![pro_his](./figure/pro_his.png)
 
 包含的字段
 
@@ -66,7 +66,7 @@
 
 发生于一特定端点的IP间的所有流量.
 
-![Conversation](figure/conversation.png)
+![Conversation](./figure/conversation.png)
 
 !!! note
 ​    - 查看收发大量数据流的IP地址。如果是你知道的服务器（你记得服务器的地址或地址范围），那问题就解决了；但也有可能只是某台设备正在扫描网络，或仅是一台产生过多数据的PC。
@@ -76,13 +76,13 @@
 
 这一工具列出了Wireshark发现的所有endpoints上的统计信息
 
-![points](figure/points.png)
+![points](./figure/points.png)
 
 #### HTTP
 
 - Packet Counter
 
-    ![pac_count](figure/pac_count.png)
+    ![pac_count](./figure/pac_count.png)
 
 
 **参考**
@@ -114,7 +114,7 @@ TODO
 - `102.168.173.134`为主
 - 不存在附件
 
-![linghang_hack](figure/linghang_hack.png)
+![linghang_hack](./figure/linghang_hack.png)
 
 从这张图,基本可以判断初这是一个在`sql注入-盲注时产生的流量包`
 
@@ -331,7 +331,7 @@ print  ''.join(last)
 
 *flag*
 
-![dnscat_flag](figure/dnscat_flag.png)
+![dnscat_flag](./figure/dnscat_flag.png)
 
 
 
@@ -357,11 +357,11 @@ print  ''.join(last)
 
 认证大致过程如下图
 
-![wpa-psk](figure/wpa-psk.png)
+![wpa-psk](./figure/wpa-psk.png)
 
 其中四次握手过程
 
-![eapol](figure/eapol.png)
+![eapol](./figure/eapol.png)
 
 1. 4次握手开始于验证器(AP)，它产生一个随机的值(ANonce)发送给请求者
 2. 请求者也产生了它自己的随机SNonce，然后用这两个Nonces以及PMK生成了PTK。请求者回复消息2给验证器,还有一个MIC（message integrity code，消息验证码）作为PMK的验证
@@ -376,7 +376,7 @@ print  ''.join(last)
 
 同时也成功发现了握手包信息
 
-![shiyanba-wpa](figure/shiyanba-wpa.png)
+![shiyanba-wpa](./figure/shiyanba-wpa.png)
 
 接下来跑密码
 
@@ -401,7 +401,7 @@ print  ''.join(last)
 
 鼠标移动时表现为连续性，与键盘击键的离散性不一样，不过实际上鼠标动作所产生的数据包也是离散的，毕竟计算机表现的连续性信息都是由大量离散信息构成的
 
-![mouse](figure/mouse.png)
+![mouse](./figure/mouse.png)
 
 每一个数据包的数据区有四个字节，第一个字节代表按键，当取0x00时，代表没有按键、为0x01时，代表按左键，为0x02时，代表当前按键为右键。第二个字节可以看成是一个signed byte类型，其最高位为符号位，当这个值为正时，代表鼠标水平右移多少像素，为负时，代表水平左移多少像素。第三个字节与第二字节类似，代表垂直上下移动的偏移。
 
@@ -414,11 +414,11 @@ print  ''.join(last)
 
 键盘数据包的数据长度为8个字节，击键信息集中在第3个字节
 
-![keyboard](figure/keyboard.png)
+![keyboard](./figure/keyboard.png)
 
 根据data值与具体键位的对应关系
 
-![keyboard_pro](figure/keyboard_pro.png)
+![keyboard_pro](./figure/keyboard_pro.png)
 
 可从数据包恢复出键盘的案件信息
 
