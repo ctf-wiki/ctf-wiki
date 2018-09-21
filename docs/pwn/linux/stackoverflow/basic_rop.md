@@ -687,7 +687,7 @@ sh.interactive()
 
 #### ret2dl-resolve 
 
-当 ELF 文件采用动态链接时，go t表会采用延迟绑定技术。当第一次调用某个 libc 函数时，程序会调用_dl_runtime_resolve 函数对其地址解析。因此，我们可以利用栈溢出构造 ROP 链，伪造对其他函数（如：system）的解析。这也是我们在高级 rop 中会介绍的技巧。
+当 ELF 文件采用动态链接时，got 表会采用延迟绑定技术。当第一次调用某个 libc 函数时，程序会调用_dl_runtime_resolve 函数对其地址解析。因此，我们可以利用栈溢出构造 ROP 链，伪造对其他函数（如：system）的解析。这也是我们在高级 rop 中会介绍的技巧。
 
 ## 题目
 
@@ -697,7 +697,7 @@ sh.interactive()
 
 ## 参考阅读
 
-- 乌云一步一步ROP篇(蒸米)
+- [乌云一步一步ROP篇(蒸米)](http://wooyun.jozxing.cc/static/drops/tips-6597.html)
 - [手把手教你栈溢出从入门到放弃（上）](https://zhuanlan.zhihu.com/p/25816426)
 - [手把手教你栈溢出从入门到放弃（下）](https://zhuanlan.zhihu.com/p/25892385)
 - [ 【技术分享】现代栈溢出利用技术基础：ROP](http://bobao.360.cn/learning/detail/3694.html)
