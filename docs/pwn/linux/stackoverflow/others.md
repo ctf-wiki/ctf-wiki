@@ -8,7 +8,7 @@ stack pivoting，正如它所描述的，该技巧就是劫持栈指针指向攻
 
 - 可以控制的栈溢出的字节数较少，难以构造较长的 ROP 链
 - 开启了 PIE 保护，栈地址未知，我们可以将栈劫持到已知的区域。
-- 其它漏洞难以利用，我们需要进行转换，比如说将栈劫持到堆空间，从而在堆上写 top 及进行堆漏洞利用
+- 其它漏洞难以利用，我们需要进行转换，比如说将栈劫持到堆空间，从而在堆上写 rop 及进行堆漏洞利用
 
 此外，利用 stack pivoting 有以下几个要求
 
@@ -229,7 +229,7 @@ v
 ebp2|leave ret addr|arg1|arg2
 ```
 
-5. 当程序执行师，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。
+5. 当程序执行时，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。
 
 6. 程序结束后，其又会执行两次 leave ret addr，所以如果我们在 ebp2 处布置好了对应的内容，那么我们就可以一直控制程序的执行流程。
 
@@ -334,7 +334,9 @@ pwndbg> distance 0x7ffceaf111d0 0x7ffceaf11160
 0x7ffceaf111d0->0x7ffceaf11160 is -0x70 bytes (-0xe words)
 ```
 
-leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了, 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 sub\_400676 函数来 leak libc, 然后在下一次利用时就可以通过 rop 执行 system("/bin/sh") 或 execve("/bin/sh", 0, 0)来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 execve("/bin/sh", 0, 0) 的利用链, 这种方法更稳妥(system("/bin/sh") 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过多次调试来确定
+leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了, 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 sub\_400676 函数来 leak libc。 
+	 
+然后在下一次利用时就可以通过 rop 执行 system("/bin/sh") 或 execve("/bin/sh", 0, 0)来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 execve("/bin/sh", 0, 0) 的利用链, 这种方法更稳妥(system("/bin/sh") 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过调试来确定
 
 #### exp
 ```python
@@ -469,7 +471,7 @@ LABEL_8:
   memset((void *)((signed int)v1 + 0x600D20LL), 0, (unsigned int)(32 - v1));
 ```
 
-又看了看对应地址的内容，可以发现如下内容，说明程序的flag就在这里啊。
+又看了看对应地址的内容，可以发现如下内容，说明程序的flag就在这里。
 
 
 ```
@@ -668,6 +670,7 @@ sh.interactive()
 这里我们直接就得到了 flag，没有出现网上说的得不到 flag 的情况。
 
 ### 题目
+2018网鼎杯 - guess
 
 ## 栈上的 partial overwrite
 partial overwrite 这种技巧在很多地方都适用, 这里先以栈上的 partial overwrite 为例来介绍这种思想
