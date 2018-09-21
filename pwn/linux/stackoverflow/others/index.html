@@ -4441,7 +4441,7 @@
 <ul>
 <li>可以控制的栈溢出的字节数较少，难以构造较长的 ROP 链</li>
 <li>开启了 PIE 保护，栈地址未知，我们可以将栈劫持到已知的区域。</li>
-<li>其它漏洞难以利用，我们需要进行转换，比如说将栈劫持到堆空间，从而在堆上写 top 及进行堆漏洞利用</li>
+<li>其它漏洞难以利用，我们需要进行转换，比如说将栈劫持到堆空间，从而在堆上写 rop 及进行堆漏洞利用</li>
 </ul>
 <p>此外，利用 stack pivoting 有以下几个要求</p>
 <ul>
@@ -4641,7 +4641,7 @@ ebp2|leave ret addr|arg1|arg2
 
 <ol>
 <li>
-<p>当程序执行师，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。</p>
+<p>当程序执行时，其会正常申请空间，同时我们在栈上也安排了该函数对应的参数，所以程序会正常执行。</p>
 </li>
 <li>
 <p>程序结束后，其又会执行两次 leave ret addr，所以如果我们在 ebp2 处布置好了对应的内容，那么我们就可以一直控制程序的执行流程。</p>
@@ -4739,7 +4739,8 @@ NX 保护  </p>
 <span class="n">pwndbg</span><span class="o">&gt;</span> <span class="n">distance</span> <span class="mh">0x7ffceaf111d0</span> <span class="mh">0x7ffceaf11160</span>
 <span class="mh">0x7ffceaf111d0</span><span class="o">-&gt;</span><span class="mh">0x7ffceaf11160</span> <span class="n">is</span> <span class="o">-</span><span class="mh">0x70</span> <span class="n">bytes</span> <span class="p">(</span><span class="o">-</span><span class="mh">0xe</span> <span class="n">words</span><span class="p">)</span>
 </pre></div></p>
-<p>leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了, 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 sub_400676 函数来 leak libc, 然后在下一次利用时就可以通过 rop 执行 system("/bin/sh") 或 execve("/bin/sh", 0, 0)来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 execve("/bin/sh", 0, 0) 的利用链, 这种方法更稳妥(system("/bin/sh") 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过多次调试来确定</p>
+<p>leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了, 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 sub_400676 函数来 leak libc。 </p>
+<p>然后在下一次利用时就可以通过 rop 执行 system("/bin/sh") 或 execve("/bin/sh", 0, 0)来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 execve("/bin/sh", 0, 0) 的利用链, 这种方法更稳妥(system("/bin/sh") 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过调试来确定</p>
 <h4 id="exp">exp<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h4>
 <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="s2">&quot;./over.over&quot;</span>
@@ -4854,7 +4855,7 @@ NX 保护  </p>
 <div class="codehilite"><pre><span></span>  <span class="n">memset</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)((</span><span class="kt">signed</span> <span class="kt">int</span><span class="p">)</span><span class="n">v1</span> <span class="o">+</span> <span class="mh">0x600D20LL</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)(</span><span class="mi">32</span> <span class="o">-</span> <span class="n">v1</span><span class="p">));</span>
 </pre></div>
 
-<p>又看了看对应地址的内容，可以发现如下内容，说明程序的flag就在这里啊。</p>
+<p>又看了看对应地址的内容，可以发现如下内容，说明程序的flag就在这里。</p>
 <div class="codehilite"><pre><span></span>.data:0000000000600D20 ; char aPctfHereSTheFl[]
 .data:0000000000600D20 aPctfHereSTheFl db &#39;PCTF{Here&#39;,27h,&#39;s the flag on server}&#39;,0
 </pre></div>
@@ -5030,6 +5031,7 @@ NX 保护  </p>
 
 <p>这里我们直接就得到了 flag，没有出现网上说的得不到 flag 的情况。</p>
 <h3 id="_16">题目<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<p>2018网鼎杯 - guess</p>
 <h2 id="partial-overwrite">栈上的 partial overwrite<a class="headerlink" href="#partial-overwrite" title="Permanent link">&para;</a></h2>
 <p>partial overwrite 这种技巧在很多地方都适用, 这里先以栈上的 partial overwrite 为例来介绍这种思想</p>
 <p>我们知道, 在程序开启了 PIE 保护时 (PIE enabled) 高位的地址会发生随机化, 但低位的偏移是始终固定的, 也就是说如果我们能更改低位的偏移, 就可以在一定程度上控制程序的执行流, 绕过 PIE 保护</p>
