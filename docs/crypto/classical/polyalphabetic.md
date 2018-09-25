@@ -79,6 +79,8 @@ A D F G X 的由来：
 
 - CrypTool
 
+### 例子
+
 ## Vigenere 维吉尼亚密码
 
 ### 原理
