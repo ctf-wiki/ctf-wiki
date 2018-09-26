@@ -5,16 +5,16 @@
 题目给的信息如下所示：
 
 
-- 每次交互可以维持的时间长度约为5分钟
-- 每次交互中中n是确定的1024bit，但是未知，e为65537
-- 使用aes加密了flag，密钥和IV均不知道
-- 每次密钥是固定的，但是IV每次都会随机
-- 可以使用encrypt功能随意使用rsa和aes进行加密，其中每次加密都会对aes的iv进行随机
-- 可以使用decrypt对随意的密文进行解密，但是只能知道最后一个字节是什么
-- 可以使用print_flag获取flag密文
-- 可以使用print_key获取rsa加密的aes密钥
+- 每次交互可以维持的时间长度约为 5 分钟
+- 每次交互中中n是确定的 1024 bit，但是未知， e 为 65537
+- 使用 aes 加密了 flag，密钥和 IV 均不知道
+- 每次密钥是固定的，但是 IV 每次都会随机
+- 可以使用 encrypt 功能随意使用 rsa 和 aes 进行加密，其中每次加密都会对 aes 的 iv 进行随机
+- 可以使用 decrypt 对随意的密文进行解密，但是只能知道最后一个字节是什么
+- 可以使用 print_flag 获取 flag 密文
+- 可以使用 print_key 获取 rsa 加密的 aes 密钥
 
-本题目看似一个题目，实则是3个题目，需要分步骤解决。在此之前，我們準備好交互的函數
+本题目看似一个题目，实则是 3 个题目，需要分步骤解决。在此之前，我們準備好交互的函數
 
 ```python
 def get_enc_key(io):
@@ -46,13 +46,13 @@ def decrypt_io(io,c):
 
 ### GCD attack n
 
-第一步我们需要把没有给出的n算出来，因为我们可以利用encrypt功能对我们输入的明文x进行rsa加密，那么可以利用整除的性质算n
+第一步我们需要把没有给出的 n 算出来，因为我们可以利用 encrypt 功能对我们输入的明文 x 进行 rsa 加密，那么可以利用整除的性质算 n
 
 ```python
 因为x ^ e = c mod n
 所以 n | x ^ e - c
 ```
-我们可以构造足够多的x，算出最够多的x ^ e - c，从而计算最大公约数，得到n。
+我们可以构造足够多的 x，算出最够多的 x ^ e - c，从而计算最大公约数，得到 n。
 
 ```
 def get_n(io):
@@ -64,7 +64,7 @@ def get_n(io):
     return n
 ```
 
-可以利用加密进行check
+可以利用加密进行 check
 
 ```python
 def check_n(io,n):
@@ -77,7 +77,7 @@ def check_n(io,n):
 
 ### RSA parity oracle
 
-利用leak的的最后一个字节，我们可以进行选择密文攻击，使用RSA parity oracle回复aes的秘钥
+利用 leak 的的最后一个字节，我们可以进行选择密文攻击，使用 RSA parity oracle 回复 aes 的秘钥
 
 ```python
 def guess_m(io,n,c):
@@ -98,9 +98,9 @@ def guess_m(io,n,c):
 
 ### PRNG Predict
 
-这里我们可以解密flag的16字节之后的内容了，但是前16个字节没有IV是解密不了的。这时我们可以发现，IV生成使用的随机数使用了getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行PRNG的predict，从而直接获取随机数
+这里我们可以解密 flag 的16字节之后的内容了，但是前16个字节没有 IV 是解密不了的。这时我们可以发现，IV 生成使用的随机数使用了 getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行 PRNG 的 predict，从而直接获取随机数
 
-这里使用了一个现成的的java进行PRNG的Predict
+这里使用了一个现成的的 java 进行 PRNG 的 Predict
 
 ```java
 public class Main {
@@ -247,7 +247,7 @@ public class Main {
 }
 ```
 
-写了一个python直接调用java
+写了一个 python 直接调用 java
 
 ```
 from Crypto.Util.number import long_to_bytes,bytes_to_long
