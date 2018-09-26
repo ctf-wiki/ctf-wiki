@@ -19,14 +19,14 @@ typora-root-url: ../../../docs
 在最初 unlink 实现的时候，其实是没有对 chunk 的 size 检查和双向链表检查的，即没有如下检查代码。
 
 ```c
-// 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致(size检查)
+// 由于 P 已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致(size检查)
 if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
       malloc_printerr ("corrupted size vs. prev_size");			      \
-// 检查fd和bk指针(双向链表完整性检查)
+// 检查 fd 和 bk 指针(双向链表完整性检查)
 if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
   malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
 
-  // largebin中next_size双向链表完整性检查 
+  // largebin 中 next_size 双向链表完整性检查 
               if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
                 || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
               malloc_printerr (check_action,                                      \
