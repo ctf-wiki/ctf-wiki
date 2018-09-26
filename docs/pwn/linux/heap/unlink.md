@@ -8,7 +8,7 @@ typora-root-url: ../../../docs
 
 我们在利用 unlink 所造成的漏洞时，其实就是对进行 unlink chunk 进行内存布局，然后借助 unlink 操作来达成修改指针的效果。
 
-我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来（例如free时和目前物理相邻的 free chunk 进行合并）。其基本的过程如下
+我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来（例如 free 时和目前物理相邻的 free chunk 进行合并）。其基本的过程如下
 
 ![](./figure/unlink_smallbin_intro.png)
 
@@ -16,7 +16,7 @@ typora-root-url: ../../../docs
 
 ### 古老的 unlink
 
-在最初 unlink 实现的时候，其实是没有对chunk的size检查和双向链表检查的，即没有如下检查代码。
+在最初 unlink 实现的时候，其实是没有对 chunk 的 size 检查和双向链表检查的，即没有如下检查代码。
 
 ```c
 // 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致(size检查)
@@ -37,7 +37,7 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 ![](./figure/old_unlink_vul.png)
 
-现在有物理空间连续的两个chunk（Q，Nextchunk），其中Q处于使用状态、Nextchunk处于释放状态。那么如果我们通过某种方式（**比如溢出**）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时
+现在有物理空间连续的两个 chunk（Q，Nextchunk），其中 Q 处于使用状态、Nextchunk 处于释放状态。那么如果我们通过某种方式（**比如溢出**）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时
 
 - glibc 判断这个块是 small chunk
 - 判断前向合并，发现前一个 chunk 处于使用状态，不需要前向合并
@@ -72,22 +72,22 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 那么我们上面所利用的修改 GOT 表项的方法就可能不可用了。但是我们可以通过伪造的方式绕过这个机制。
 
-首先我们通过覆盖，将nextchunk的FD指针指向了fakeFD，将nextchunk的BK指针指向了fakeBK。那么为了通过验证，我们需要
+首先我们通过覆盖，将 nextchunk 的 FD 指针指向了 fakeFD，将 nextchunk 的 BK 指针指向了 fakeBK 。那么为了通过验证，我们需要
 
 - fakeFD->bk == P    <=>    *(fakeFD+12)== P
 - fakeBK->fd == P    <=>    *(fakeBK+8) == P
 
-当满足上述两式时，可以进入Unlink的环节，进行如下操作：
+当满足上述两式时，可以进入 Unlink 的环节，进行如下操作：
 
 - fakeFD->bk=fakeBK    <=>    *(fakeFD+12)=fakeBK
 - fakeBK->fd=fakeFD    <=>    *(fakeBK+8)=fakeFD
 
-如果让fakeFD+12和fakeBK+8指向同一个指向P的指针，那么：
+如果让 fakeFD+12 和 fakeBK+8 指向同一个指向P的指针，那么：
 
 - *P = P - 8
 - *P = P - 12
 
-即通过此方式，P的指针指向了比自己低12的地址处。此方法虽然不可以实现任意地址写，但是可以修改指向chunk的指针，这样的修改是可以达到一定的效果的。
+即通过此方式， P 的指针指向了比自己低 12 的地址处。此方法虽然不可以实现任意地址写，但是可以修改指向 chunk 的指针，这样的修改是可以达到一定的效果的。
 
 如果我们想要使得两者都指向 P，只需要按照如下方式修改即可
 
