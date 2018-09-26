@@ -1,16 +1,18 @@
 # RSA 复杂题目
+
+## 2018 Tokyo Western Mixed Cipher
+
 题目给的信息如下所示：
 
-```
-每次交互可以维持的时间长度约为5分钟
-每次交互中中n是确定的1024bit，但是未知，e为65537
-使用aes加密了flag，密钥和IV均不知道
-每次密钥是固定的，但是IV每次都会随机
-可以使用encrypt功能随意使用rsa和aes进行加密，其中每次加密都会对aes的iv进行随机
-可以使用decrypt对随意的密文进行解密，但是只能知道最后一个字节是什么
-可以使用print_flag获取flag密文
-可以使用print_key获取rsa加密的aes密钥
-```
+
+- 每次交互可以维持的时间长度约为5分钟
+- 每次交互中中n是确定的1024bit，但是未知，e为65537
+- 使用aes加密了flag，密钥和IV均不知道
+- 每次密钥是固定的，但是IV每次都会随机
+- 可以使用encrypt功能随意使用rsa和aes进行加密，其中每次加密都会对aes的iv进行随机
+- 可以使用decrypt对随意的密文进行解密，但是只能知道最后一个字节是什么
+- 可以使用print_flag获取flag密文
+- 可以使用print_key获取rsa加密的aes密钥
 
 本题目看似一个题目，实则是3个题目，需要分步骤解决。在此之前，我們準備好交互的函數
 
@@ -42,7 +44,7 @@ def decrypt_io(io,c):
     return io.read_line()[:-1].decode("hex")
 ```
 
-###算n
+### GCD attack n
 
 第一步我们需要把没有给出的n算出来，因为我们可以利用encrypt功能对我们输入的明文x进行rsa加密，那么可以利用整除的性质算n
 
@@ -73,7 +75,7 @@ def check_n(io,n):
         return False
 ```
 
-###RSA parity oracle
+### RSA parity oracle
 
 利用leak的的最后一个字节，我们可以进行选择密文攻击，使用RSA parity oracle回复aes的秘钥
 
@@ -94,7 +96,7 @@ def guess_m(io,n,c):
     return ub
 ```
 
-###PRNG Predict
+### PRNG Predict
 
 这里我们可以解密flag的16字节之后的内容了，但是前16个字节没有IV是解密不了的。这时我们可以发现，IV生成使用的随机数使用了getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行PRNG的predict，从而直接获取随机数
 
@@ -105,7 +107,7 @@ public class Main {
 
    static int[] state;
    static int currentIndex;
-
+40huo
    public static void main(String[] args) {
       state = new int[624];
       currentIndex = 0;
@@ -132,7 +134,7 @@ public class Main {
 
       rev(arr);
 
-      for (int i = 0; i < 624; i++) {
+      for (int i = 0; i < 6240huo4; i++) {
          System.out.println(state[i]);
       }
 
