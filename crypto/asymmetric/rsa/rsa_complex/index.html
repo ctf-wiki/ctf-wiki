@@ -1648,6 +1648,47 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2018-tokyo-western-mixed-cipher" title="2018 Tokyo Western Mixed Cipher" class="md-nav__link">
+    2018 Tokyo Western Mixed Cipher
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gcd-attack-n" title="GCD attack n" class="md-nav__link">
+    GCD attack n
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rsa-parity-oracle" title="RSA parity oracle" class="md-nav__link">
+    RSA parity oracle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prng-predict" title="PRNG Predict" class="md-nav__link">
+    PRNG Predict
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exp" title="EXP" class="md-nav__link">
+    EXP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2016-asis-find-the-flag" title="2016 ASIS Find the flag" class="md-nav__link">
     2016 ASIS Find the flag
   </a>
@@ -3924,6 +3965,47 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2018-tokyo-western-mixed-cipher" title="2018 Tokyo Western Mixed Cipher" class="md-nav__link">
+    2018 Tokyo Western Mixed Cipher
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gcd-attack-n" title="GCD attack n" class="md-nav__link">
+    GCD attack n
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rsa-parity-oracle" title="RSA parity oracle" class="md-nav__link">
+    RSA parity oracle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prng-predict" title="PRNG Predict" class="md-nav__link">
+    PRNG Predict
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exp" title="EXP" class="md-nav__link">
+    EXP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2016-asis-find-the-flag" title="2016 ASIS Find the flag" class="md-nav__link">
     2016 ASIS Find the flag
   </a>
@@ -3977,6 +4059,369 @@
                 
                 
                 <h1 id="rsa">RSA 复杂题目<a class="headerlink" href="#rsa" title="Permanent link">&para;</a></h1>
+<h2 id="2018-tokyo-western-mixed-cipher">2018 Tokyo Western Mixed Cipher<a class="headerlink" href="#2018-tokyo-western-mixed-cipher" title="Permanent link">&para;</a></h2>
+<p>题目给的信息如下所示：</p>
+<ul>
+<li>每次交互可以维持的时间长度约为 5 分钟</li>
+<li>每次交互中中n是确定的 1024 bit，但是未知， e 为 65537</li>
+<li>使用 aes 加密了 flag，密钥和 IV 均不知道</li>
+<li>每次密钥是固定的，但是 IV 每次都会随机</li>
+<li>可以使用 encrypt 功能随意使用 rsa 和 aes 进行加密，其中每次加密都会对 aes 的 iv 进行随机</li>
+<li>可以使用 decrypt 对随意的密文进行解密，但是只能知道最后一个字节是什么</li>
+<li>可以使用 print_flag 获取 flag 密文</li>
+<li>可以使用 print_key 获取 rsa 加密的 aes 密钥</li>
+</ul>
+<p>本题目看似一个题目，实则是 3 个题目，需要分步骤解决。在此之前，我們準備好交互的函數</p>
+<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_enc_key</span><span class="p">(</span><span class="n">io</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;4: get encrypted keyn&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;4&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;here is encrypted key :)n&quot;</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="mi">16</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">c</span>
+
+<span class="k">def</span> <span class="nf">encrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">p</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;4: get encrypted keyn&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;input plain text: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;RSA: &quot;</span><span class="p">)</span>
+    <span class="n">rsa_c</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="mi">16</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;AES: &quot;</span><span class="p">)</span>
+    <span class="n">aes_c</span><span class="o">=</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rsa_c</span><span class="p">,</span><span class="n">aes_c</span>
+
+<span class="k">def</span> <span class="nf">decrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;4: get encrypted keyn&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;input hexencoded cipher text: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">))</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;RSA: &quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">io</span><span class="o">.</span><span class="n">read_line</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">)</span>
+</pre></div>
+
+<h3 id="gcd-attack-n">GCD attack n<a class="headerlink" href="#gcd-attack-n" title="Permanent link">&para;</a></h3>
+<p>第一步我们需要把没有给出的 n 算出来，因为我们可以利用 encrypt 功能对我们输入的明文 x 进行 rsa 加密，那么可以利用整除的性质算 n</p>
+<p><div class="codehilite"><pre><span></span><span class="err">因为</span><span class="n">x</span> <span class="o">^</span> <span class="n">e</span> <span class="o">=</span> <span class="n">c</span> <span class="n">mod</span> <span class="n">n</span>
+<span class="err">所以</span> <span class="n">n</span> <span class="o">|</span> <span class="n">x</span> <span class="o">^</span> <span class="n">e</span> <span class="o">-</span> <span class="n">c</span>
+</pre></div>
+我们可以构造足够多的 x，算出最够多的 x ^ e - c，从而计算最大公约数，得到 n。</p>
+<div class="codehilite"><pre><span></span>def get_n(io):
+    rsa_c,aes_c=encrypt_io(io,long_to_bytes(2))
+    n=pow(2,65537)-rsa_c
+    for i in range(3,6):
+        rsa_c, aes_c = encrypt_io(io, long_to_bytes(i))
+        n=primefac.gcd(n,pow(i,65537)-rsa_c)
+    return n
+</pre></div>
+
+<p>可以利用加密进行 check</p>
+<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">check_n</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">rsa_c</span><span class="p">,</span> <span class="n">aes_c</span> <span class="o">=</span> <span class="n">encrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="s2">&quot;123&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">pow</span><span class="p">(</span><span class="n">bytes_to_long</span><span class="p">(</span><span class="s2">&quot;123&quot;</span><span class="p">),</span> <span class="n">e</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">==</span><span class="n">rsa_c</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+</pre></div>
+
+<h3 id="rsa-parity-oracle">RSA parity oracle<a class="headerlink" href="#rsa-parity-oracle" title="Permanent link">&para;</a></h3>
+<p>利用 leak 的的最后一个字节，我们可以进行选择密文攻击，使用 RSA parity oracle 回复 aes 的秘钥</p>
+<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">guess_m</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">k</span><span class="o">=</span><span class="mi">1</span>
+    <span class="n">lb</span><span class="o">=</span><span class="mi">0</span>
+    <span class="n">ub</span><span class="o">=</span><span class="n">n</span>
+    <span class="k">while</span> <span class="n">ub</span><span class="o">!=</span><span class="n">lb</span><span class="p">:</span>
+        <span class="k">print</span> <span class="n">lb</span><span class="p">,</span><span class="n">ub</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">k</span><span class="o">*</span><span class="n">e</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">%</span> <span class="n">n</span>
+        <span class="k">if</span> <span class="nb">ord</span><span class="p">(</span><span class="n">decrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">tmp</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">lb</span> <span class="o">=</span> <span class="p">(</span><span class="n">lb</span> <span class="o">+</span> <span class="n">ub</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ub</span> <span class="o">=</span> <span class="p">(</span><span class="n">lb</span> <span class="o">+</span> <span class="n">ub</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">k</span><span class="o">+=</span><span class="mi">1</span>
+    <span class="k">print</span> <span class="n">ub</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="n">ub</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ub</span>
+</pre></div>
+
+<h3 id="prng-predict">PRNG Predict<a class="headerlink" href="#prng-predict" title="Permanent link">&para;</a></h3>
+<p>这里我们可以解密 flag 的16字节之后的内容了，但是前16个字节没有 IV 是解密不了的。这时我们可以发现，IV 生成使用的随机数使用了 getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行 PRNG 的 predict，从而直接获取随机数</p>
+<p>这里使用了一个现成的的 java 进行 PRNG 的 Predict</p>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
+
+   <span class="kd">static</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">state</span><span class="o">;</span>
+   <span class="kd">static</span> <span class="kt">int</span> <span class="n">currentIndex</span><span class="o">;</span>
+<span class="mi">40</span><span class="n">huo</span>
+   <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">state</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">624</span><span class="o">];</span>
+      <span class="n">currentIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+<span class="c1">//    initialize(0);</span>
+
+<span class="c1">//    for (int i = 0; i &lt; 5; i++) {</span>
+<span class="c1">//       System.out.println(state[i]);</span>
+<span class="c1">//    }</span>
+
+      <span class="c1">// for (int i = 0; i &lt; 5; i++) {</span>
+      <span class="c1">// System.out.println(nextNumber());</span>
+      <span class="c1">// }</span>
+
+      <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">!=</span> <span class="mi">624</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;must be 624 args&quot;</span><span class="o">);</span>
+         <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+      <span class="o">}</span>
+      <span class="kt">int</span><span class="o">[]</span> <span class="n">arr</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">624</span><span class="o">];</span>
+      <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">args</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+         <span class="n">arr</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+      <span class="o">}</span>
+
+
+      <span class="n">rev</span><span class="o">(</span><span class="n">arr</span><span class="o">);</span>
+
+      <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">6240</span><span class="n">huo4</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+         <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">state</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+      <span class="o">}</span>
+
+<span class="c1">//    System.out.println(&quot;currentIndex &quot; + currentIndex);</span>
+<span class="c1">//    System.out.println(&quot;state[currentIndex] &quot; + state[currentIndex]);</span>
+<span class="c1">//    System.out.println(&quot;next &quot; + nextNumber());</span>
+
+      <span class="c1">// want -2065863258</span>
+   <span class="o">}</span>
+
+   <span class="kd">static</span> <span class="kt">void</span> <span class="nf">nextState</span><span class="o">()</span> <span class="o">{</span>
+      <span class="c1">// Iterate through the state</span>
+      <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">624</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+         <span class="c1">// y is the first bit of the current number,</span>
+         <span class="c1">// and the last 31 bits of the next number</span>
+         <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="o">(</span><span class="n">state</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&amp;</span> <span class="mh">0x80000000</span><span class="o">)</span>
+               <span class="o">+</span> <span class="o">(</span><span class="n">state</span><span class="o">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">%</span> <span class="mi">624</span><span class="o">]</span> <span class="o">&amp;</span> <span class="mh">0x7fffffff</span><span class="o">);</span>
+         <span class="c1">// first bitshift y by 1 to the right</span>
+         <span class="kt">int</span> <span class="n">next</span> <span class="o">=</span> <span class="n">y</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">1</span><span class="o">;</span>
+         <span class="c1">// xor it with the 397th next number</span>
+         <span class="n">next</span> <span class="o">^=</span> <span class="n">state</span><span class="o">[(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">397</span><span class="o">)</span> <span class="o">%</span> <span class="mi">624</span><span class="o">];</span>
+         <span class="c1">// if y is odd, xor with magic number</span>
+         <span class="k">if</span> <span class="o">((</span><span class="n">y</span> <span class="o">&amp;</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">==</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">next</span> <span class="o">^=</span> <span class="mh">0x9908b0df</span><span class="o">;</span>
+         <span class="o">}</span>
+         <span class="c1">// now we have the result</span>
+         <span class="n">state</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">next</span><span class="o">;</span>
+      <span class="o">}</span>
+   <span class="o">}</span>
+
+   <span class="kd">static</span> <span class="kt">int</span> <span class="nf">nextNumber</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">currentIndex</span><span class="o">++;</span>
+      <span class="kt">int</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">state</span><span class="o">[</span><span class="n">currentIndex</span><span class="o">];</span>
+      <span class="n">tmp</span> <span class="o">^=</span> <span class="o">(</span><span class="n">tmp</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">11</span><span class="o">);</span>
+      <span class="n">tmp</span> <span class="o">^=</span> <span class="o">(</span><span class="n">tmp</span> <span class="o">&lt;&lt;</span> <span class="mi">7</span><span class="o">)</span> <span class="o">&amp;</span> <span class="mh">0x9d2c5680</span><span class="o">;</span>
+      <span class="n">tmp</span> <span class="o">^=</span> <span class="o">(</span><span class="n">tmp</span> <span class="o">&lt;&lt;</span> <span class="mi">15</span><span class="o">)</span> <span class="o">&amp;</span> <span class="mh">0xefc60000</span><span class="o">;</span>
+      <span class="n">tmp</span> <span class="o">^=</span> <span class="o">(</span><span class="n">tmp</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">18</span><span class="o">);</span>
+      <span class="k">return</span> <span class="n">tmp</span><span class="o">;</span>
+   <span class="o">}</span>
+
+   <span class="kd">static</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="kt">int</span> <span class="n">seed</span><span class="o">)</span> <span class="o">{</span>
+
+      <span class="c1">// http://code.activestate.com/recipes/578056-mersenne-twister/</span>
+
+      <span class="c1">// global MT</span>
+      <span class="c1">// global bitmask_1</span>
+      <span class="c1">// MT[0] = seed</span>
+      <span class="c1">// for i in xrange(1,624):</span>
+      <span class="c1">// MT[i] = ((1812433253 * MT[i-1]) ^ ((MT[i-1] &gt;&gt; 30) + i)) &amp; bitmask_1</span>
+
+      <span class="c1">// copied Python 2.7&#39;s impl (probably uint problems)</span>
+      <span class="n">state</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">seed</span><span class="o">;</span>
+      <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">624</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+         <span class="n">state</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">((</span><span class="mi">1812433253</span> <span class="o">*</span> <span class="n">state</span><span class="o">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="o">])</span> <span class="o">^</span> <span class="o">((</span><span class="n">state</span><span class="o">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="o">]</span> <span class="o">&gt;&gt;</span> <span class="mi">30</span><span class="o">)</span> <span class="o">+</span> <span class="n">i</span><span class="o">))</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span><span class="o">;</span>
+      <span class="o">}</span>
+   <span class="o">}</span>
+
+   <span class="kd">static</span> <span class="kt">int</span> <span class="nf">unBitshiftRightXor</span><span class="o">(</span><span class="kt">int</span> <span class="n">value</span><span class="o">,</span> <span class="kt">int</span> <span class="n">shift</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// we part of the value we are up to (with a width of shift bits)</span>
+      <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+      <span class="c1">// we accumulate the result here</span>
+      <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+      <span class="c1">// iterate until we&#39;ve done the full 32 bits</span>
+      <span class="k">while</span> <span class="o">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">shift</span> <span class="o">&lt;</span> <span class="mi">32</span><span class="o">)</span> <span class="o">{</span>
+         <span class="c1">// create a mask for this part</span>
+         <span class="kt">int</span> <span class="n">partMask</span> <span class="o">=</span> <span class="o">(-</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="o">(</span><span class="mi">32</span> <span class="o">-</span> <span class="n">shift</span><span class="o">))</span> <span class="o">&gt;&gt;&gt;</span> <span class="o">(</span><span class="n">shift</span> <span class="o">*</span> <span class="n">i</span><span class="o">);</span>
+         <span class="c1">// obtain the part</span>
+         <span class="kt">int</span> <span class="n">part</span> <span class="o">=</span> <span class="n">value</span> <span class="o">&amp;</span> <span class="n">partMask</span><span class="o">;</span>
+         <span class="c1">// unapply the xor from the next part of the integer</span>
+         <span class="n">value</span> <span class="o">^=</span> <span class="n">part</span> <span class="o">&gt;&gt;&gt;</span> <span class="n">shift</span><span class="o">;</span>
+         <span class="c1">// add the part to the result</span>
+         <span class="n">result</span> <span class="o">|=</span> <span class="n">part</span><span class="o">;</span>
+         <span class="n">i</span><span class="o">++;</span>
+      <span class="o">}</span>
+      <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+   <span class="o">}</span>
+
+   <span class="kd">static</span> <span class="kt">int</span> <span class="nf">unBitshiftLeftXor</span><span class="o">(</span><span class="kt">int</span> <span class="n">value</span><span class="o">,</span> <span class="kt">int</span> <span class="n">shift</span><span class="o">,</span> <span class="kt">int</span> <span class="n">mask</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// we part of the value we are up to (with a width of shift bits)</span>
+      <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+      <span class="c1">// we accumulate the result here</span>
+      <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+      <span class="c1">// iterate until we&#39;ve done the full 32 bits</span>
+      <span class="k">while</span> <span class="o">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">shift</span> <span class="o">&lt;</span> <span class="mi">32</span><span class="o">)</span> <span class="o">{</span>
+         <span class="c1">// create a mask for this part</span>
+         <span class="kt">int</span> <span class="n">partMask</span> <span class="o">=</span> <span class="o">(-</span><span class="mi">1</span> <span class="o">&gt;&gt;&gt;</span> <span class="o">(</span><span class="mi">32</span> <span class="o">-</span> <span class="n">shift</span><span class="o">))</span> <span class="o">&lt;&lt;</span> <span class="o">(</span><span class="n">shift</span> <span class="o">*</span> <span class="n">i</span><span class="o">);</span>
+         <span class="c1">// obtain the part</span>
+         <span class="kt">int</span> <span class="n">part</span> <span class="o">=</span> <span class="n">value</span> <span class="o">&amp;</span> <span class="n">partMask</span><span class="o">;</span>
+         <span class="c1">// unapply the xor from the next part of the integer</span>
+         <span class="n">value</span> <span class="o">^=</span> <span class="o">(</span><span class="n">part</span> <span class="o">&lt;&lt;</span> <span class="n">shift</span><span class="o">)</span> <span class="o">&amp;</span> <span class="n">mask</span><span class="o">;</span>
+         <span class="c1">// add the part to the result</span>
+         <span class="n">result</span> <span class="o">|=</span> <span class="n">part</span><span class="o">;</span>
+         <span class="n">i</span><span class="o">++;</span>
+      <span class="o">}</span>
+      <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+   <span class="o">}</span>
+
+   <span class="kd">static</span> <span class="kt">void</span> <span class="nf">rev</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">nums</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">624</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+
+         <span class="kt">int</span> <span class="n">value</span> <span class="o">=</span> <span class="n">nums</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+         <span class="n">value</span> <span class="o">=</span> <span class="n">unBitshiftRightXor</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="mi">18</span><span class="o">);</span>
+         <span class="n">value</span> <span class="o">=</span> <span class="n">unBitshiftLeftXor</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="mi">15</span><span class="o">,</span> <span class="mh">0xefc60000</span><span class="o">);</span>
+         <span class="n">value</span> <span class="o">=</span> <span class="n">unBitshiftLeftXor</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="mi">7</span><span class="o">,</span> <span class="mh">0x9d2c5680</span><span class="o">);</span>
+         <span class="n">value</span> <span class="o">=</span> <span class="n">unBitshiftRightXor</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="mi">11</span><span class="o">);</span>
+
+         <span class="n">state</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">value</span><span class="o">;</span>
+      <span class="o">}</span>
+   <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+<p>写了一个 python 直接调用 java</p>
+<div class="codehilite"><pre><span></span>from Crypto.Util.number import long_to_bytes,bytes_to_long
+
+
+
+def encrypt_io(io,p):
+    io.read_until(&quot;4: get encrypted keyn&quot;)
+    io.writeline(&quot;1&quot;)
+    io.read_until(&quot;input plain text: &quot;)
+    io.writeline(p)
+    io.read_until(&quot;RSA: &quot;)
+    rsa_c=int(io.readline()[:-1],16)
+    io.read_until(&quot;AES: &quot;)
+    aes_c=io.readline()[:-1].decode(&quot;hex&quot;)
+    return rsa_c,aes_c
+import subprocess
+import random
+def get_iv(io):
+    rsa_c, aes_c=encrypt_io(io,&quot;1&quot;)
+    return bytes_to_long(aes_c[0:16])
+def splitInto32(w128):
+    w1 = w128 &amp; (2**32-1)
+    w2 = (w128 &gt;&gt; 32) &amp; (2**32-1)
+    w3 = (w128 &gt;&gt; 64) &amp; (2**32-1)
+    w4 = (w128 &gt;&gt; 96)
+    return w1,w2,w3,w4
+def sign(iv):
+    # converts a 32 bit uint to a 32 bit signed int
+    if(iv&amp;0x80000000):
+        iv = -0x100000000 + iv
+    return iv
+def get_state(io):
+    numbers=[]
+    for i in range(156):
+        print i
+        numbers.append(get_iv(io))
+    observedNums = [sign(w) for n in numbers for w in splitInto32(n)]
+    o = subprocess.check_output([&quot;java&quot;, &quot;Main&quot;] + map(str, observedNums))
+    stateList = [int(s) % (2 ** 32) for s in o.split()]
+    r = random.Random()
+    state = (3, tuple(stateList + [624]), None)
+    r.setstate(state)
+    return r.getrandbits(128)
+</pre></div>
+
+<h3 id="exp">EXP<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h3>
+<p>整体攻击代码如下：</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">zio</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">primefac</span>
+<span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="n">long_to_bytes</span><span class="p">,</span><span class="n">bytes_to_long</span>
+<span class="n">target</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;crypto.chal.ctf.westerns.tokyo&quot;</span><span class="p">,</span><span class="mi">5643</span><span class="p">)</span>
+<span class="n">e</span><span class="o">=</span><span class="mi">65537</span>
+
+<span class="k">def</span> <span class="nf">get_enc_key</span><span class="p">(</span><span class="n">io</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;4: get encrypted keyn&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;4&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;here is encrypted key :)n&quot;</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="mi">16</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">c</span>
+
+<span class="k">def</span> <span class="nf">encrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">p</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;4: get encrypted keyn&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;input plain text: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;RSA: &quot;</span><span class="p">)</span>
+    <span class="n">rsa_c</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="mi">16</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;AES: &quot;</span><span class="p">)</span>
+    <span class="n">aes_c</span><span class="o">=</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rsa_c</span><span class="p">,</span><span class="n">aes_c</span>
+
+<span class="k">def</span> <span class="nf">decrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;4: get encrypted keyn&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;input hexencoded cipher text: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">))</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;RSA: &quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">io</span><span class="o">.</span><span class="n">read_line</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">get_n</span><span class="p">(</span><span class="n">io</span><span class="p">):</span>
+    <span class="n">rsa_c</span><span class="p">,</span><span class="n">aes_c</span><span class="o">=</span><span class="n">encrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">n</span><span class="o">=</span><span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">65537</span><span class="p">)</span><span class="o">-</span><span class="n">rsa_c</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">):</span>
+        <span class="n">rsa_c</span><span class="p">,</span> <span class="n">aes_c</span> <span class="o">=</span> <span class="n">encrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="n">n</span><span class="o">=</span><span class="n">primefac</span><span class="o">.</span><span class="n">gcd</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="nb">pow</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="mi">65537</span><span class="p">)</span><span class="o">-</span><span class="n">rsa_c</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">n</span>
+
+<span class="k">def</span> <span class="nf">check_n</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">rsa_c</span><span class="p">,</span> <span class="n">aes_c</span> <span class="o">=</span> <span class="n">encrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="s2">&quot;123&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">pow</span><span class="p">(</span><span class="n">bytes_to_long</span><span class="p">(</span><span class="s2">&quot;123&quot;</span><span class="p">),</span> <span class="n">e</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">==</span><span class="n">rsa_c</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+
+<span class="kn">import</span> <span class="nn">gmpy2</span>
+<span class="k">def</span> <span class="nf">guess_m</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">k</span><span class="o">=</span><span class="mi">1</span>
+    <span class="n">lb</span><span class="o">=</span><span class="mi">0</span>
+    <span class="n">ub</span><span class="o">=</span><span class="n">n</span>
+    <span class="k">while</span> <span class="n">ub</span><span class="o">!=</span><span class="n">lb</span><span class="p">:</span>
+        <span class="k">print</span> <span class="n">lb</span><span class="p">,</span><span class="n">ub</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">k</span><span class="o">*</span><span class="n">e</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">%</span> <span class="n">n</span>
+        <span class="k">if</span> <span class="nb">ord</span><span class="p">(</span><span class="n">decrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">tmp</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">lb</span> <span class="o">=</span> <span class="p">(</span><span class="n">lb</span> <span class="o">+</span> <span class="n">ub</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ub</span> <span class="o">=</span> <span class="p">(</span><span class="n">lb</span> <span class="o">+</span> <span class="n">ub</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">k</span><span class="o">+=</span><span class="mi">1</span>
+    <span class="k">print</span> <span class="n">ub</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="n">ub</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ub</span>
+
+
+<span class="n">io</span> <span class="o">=</span> <span class="n">zio</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">print_read</span><span class="o">=</span><span class="n">COLORED</span><span class="p">(</span><span class="n">NONE</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">),</span><span class="n">print_write</span><span class="o">=</span><span class="n">COLORED</span><span class="p">(</span><span class="n">NONE</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">))</span>
+<span class="n">n</span><span class="o">=</span><span class="n">get_n</span><span class="p">(</span><span class="n">io</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">check_n</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+<span class="n">c</span><span class="o">=</span><span class="n">get_enc_key</span><span class="p">(</span><span class="n">io</span><span class="p">)</span>
+<span class="k">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">decrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">c</span><span class="p">))</span><span class="o">==</span><span class="mi">16</span>
+
+
+<span class="n">m</span><span class="o">=</span><span class="n">guess_m</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">c</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span> <span class="o">-</span> <span class="mi">50000</span><span class="p">,</span><span class="n">m</span><span class="o">+</span><span class="mi">50000</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">pow</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">n</span><span class="p">)</span><span class="o">==</span><span class="n">c</span><span class="p">:</span>
+        <span class="n">aeskey</span><span class="o">=</span><span class="n">i</span>
+        <span class="k">print</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="n">aeskey</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="n">decrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">c</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">print</span> <span class="s2">&quot;found aes key&quot;</span><span class="p">,</span><span class="nb">hex</span><span class="p">(</span><span class="n">aeskey</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">fuck_r</span>
+<span class="n">next_iv</span><span class="o">=</span><span class="n">fuck_r</span><span class="o">.</span><span class="n">get_state</span><span class="p">(</span><span class="n">io</span><span class="p">)</span>
+<span class="k">print</span> <span class="s2">&quot;##########################################&quot;</span>
+<span class="k">print</span> <span class="n">next_iv</span>
+<span class="k">print</span> <span class="n">aeskey</span>
+<span class="n">io</span><span class="o">.</span><span class="n">interact</span><span class="p">()</span>
+</pre></div>
+
 <h2 id="2016-asis-find-the-flag">2016 ASIS Find the flag<a class="headerlink" href="#2016-asis-find-the-flag" title="Permanent link">&para;</a></h2>
 <p>这里我们以 ASIS 2016 线上赛中 Find the flag 为例进行介绍。</p>
 <p>文件解压出来，有一个密文，一个公钥，一个 py 脚本。看一下公钥。</p>
