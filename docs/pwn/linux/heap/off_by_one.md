@@ -255,7 +255,7 @@ signed __int64 __fastcall my_read(_BYTE *ptr, int number)
 
 ## 利用
 
-### 1.泄漏
+### 泄漏
 
 
 因为程序中的my_read函数存在null byte off-by-one，事实上my_read读入的结束符'\x00'是写入到0x555555756060的位置的。这样当0x555555756060～0x555555756068写入book指针时就会覆盖掉结束符'\x00'，所以这里是存在一个地址泄漏的漏洞。通过打印author name就可以获得pointer array中第一项的值。
@@ -307,7 +307,7 @@ book1_addr=u64(book1_addr)
 ```
 
 
-### 2.off-by-one覆盖指针低字节
+### off-by-one覆盖指针低字节
 
 程序中同样提供了一种change功能，change功能用于修改author name，所以通过change可以写入author name，利用off-by-one覆盖pointer array第一个项的低字节。
 
@@ -334,7 +334,7 @@ def off_by_one(addr):
 其中addr+58是为了使指针指向book2的指针地址，使得我们可以任意修改这些指针值。
 
 
-### 3.通过栈实现利用
+### 通过栈实现利用
 
 通过前面2部分我们已经获得了任意地址读写的能力，读者读到这里可能会觉得下面的操作是显而易见的，比如写got表劫持流程或者写__malloc_hook劫持流程等。但是这个题目特殊之处在于开启PIE并且没有泄漏libc基地址的方法，因此我们还需要想一下其他的办法。
 
@@ -383,7 +383,7 @@ Start              End                Offset             Perm Path
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
 ```
 
-### 4.EXP
+### EXP
 ```python
 from pwn import *
 context.log_level="info"
