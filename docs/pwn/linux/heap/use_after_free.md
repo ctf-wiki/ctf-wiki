@@ -207,7 +207,7 @@ unsigned int del_note()
 - 申请note2，并且设置real content的大小为8，那么根据堆的分配规则
   - note2其实会分配note1对应的内存块。
   - real content 对应的chunk其实是note0。
-- 如果我们这时候向note3的chunk部分写入magic的地址，那么由于我们没有note1为NULL。当我们再次尝试输出note1的时候，程序就会调用magic函数。
+- 如果我们这时候向note2 real content的chunk部分写入magic的地址，那么由于我们没有note0为NULL。当我们再次尝试输出note0的时候，程序就会调用magic函数。
 
 ### 利用脚本
 
