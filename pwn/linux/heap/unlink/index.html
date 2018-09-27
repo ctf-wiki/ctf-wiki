@@ -4385,19 +4385,19 @@
                 <h1 id="unlink">Unlink<a class="headerlink" href="#unlink" title="Permanent link">&para;</a></h1>
 <h2 id="_1">原理<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>我们在利用 unlink 所造成的漏洞时，其实就是对进行 unlink chunk 进行内存布局，然后借助 unlink 操作来达成修改指针的效果。</p>
-<p>我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来，然后和目前物理相邻的 free chunk 进行合并。其基本的过程如下</p>
+<p>我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来（例如 free 时和目前物理相邻的 free chunk 进行合并）。其基本的过程如下</p>
 <p><img alt="" src="../figure/unlink_smallbin_intro.png" /></p>
 <p>下面我们首先介绍一下 unlink 最初没有防护时的利用方法，然后介绍目前利用 unlink 的方式。</p>
 <h3 id="unlink_1">古老的 unlink<a class="headerlink" href="#unlink_1" title="Permanent link">&para;</a></h3>
-<p>在最初 unlink 实现的时候，其实是没有对双向链表检查的，也就是说，没有以下的代码。</p>
-<p><div class="codehilite"><pre><span></span><span class="c1">// 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。</span>
+<p>在最初 unlink 实现的时候，其实是没有对 chunk 的 size 检查和双向链表检查的，即没有如下检查代码。</p>
+<p><div class="codehilite"><pre><span></span><span class="c1">// 由于 P 已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致(size检查)</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_size</span> <span class="p">(</span><span class="n">next_chunk</span><span class="p">(</span><span class="n">P</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span>      \
       <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;corrupted size vs. prev_size&quot;</span><span class="p">);</span>               \
-<span class="c1">// fd bk</span>
+<span class="c1">// 检查 fd 和 bk 指针(双向链表完整性检查)</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">FD</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">!=</span> <span class="n">P</span> <span class="o">||</span> <span class="n">BK</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">!=</span> <span class="n">P</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>                      \
   <span class="n">malloc_printerr</span> <span class="p">(</span><span class="n">check_action</span><span class="p">,</span> <span class="s">&quot;corrupted double-linked list&quot;</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">AV</span><span class="p">);</span>  \
 
-  <span class="c1">// next_size related</span>
+  <span class="c1">// largebin 中 next_size 双向链表完整性检查 </span>
               <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">!=</span> <span class="n">P</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>              \
                 <span class="o">||</span> <span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">!=</span> <span class="n">P</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>    \
               <span class="n">malloc_printerr</span> <span class="p">(</span><span class="n">check_action</span><span class="p">,</span>                                      \
@@ -4406,13 +4406,13 @@
 </pre></div>
 <strong>这里我们以 32 位为例</strong>，假设堆内存最初的布局是下面的样子</p>
 <p><img alt="" src="../figure/old_unlink_vul.png" /></p>
-<p>那么如果我们通过某种方式（<strong>比如溢出</strong>）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时</p>
-<ol>
-<li>glibc 判断这个块是 small chunk。</li>
-<li>判断前向合并，发现前一个 chunk 处于使用状态，不需要前向合并。</li>
-<li>判断后向合并，发现后一个 chunk 处于空闲状态，需要合并。</li>
-<li>继而对 nextchunk 采取 unlink 操作。</li>
-</ol>
+<p>现在有物理空间连续的两个 chunk（Q，Nextchunk），其中 Q 处于使用状态、Nextchunk 处于释放状态。那么如果我们通过某种方式（<strong>比如溢出</strong>）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时</p>
+<ul>
+<li>glibc 判断这个块是 small chunk</li>
+<li>判断前向合并，发现前一个 chunk 处于使用状态，不需要前向合并</li>
+<li>判断后向合并，发现后一个 chunk 处于空闲状态，需要合并</li>
+<li>继而对 Nextchunk 采取 unlink 操作</li>
+</ul>
 <p>那么 unlink 具体执行的效果是什么样子呢？我们可以来分析一下</p>
 <ul>
 <li>FD=P-&gt;fd = target addr -12</li>
@@ -4434,16 +4434,26 @@
 <li>FD-&gt;bk = target addr - 12 + 12=target_addr</li>
 <li>BK-&gt;fd = expect value + 8</li>
 </ul>
-<p>那么我们上面所利用的修改 GOT 表项的方法就可能不可用了。但是，如果我们使得 expect value+8 以及 target_addr 等于 P，那么我们就可以执行</p>
+<p>那么我们上面所利用的修改 GOT 表项的方法就可能不可用了。但是我们可以通过伪造的方式绕过这个机制。</p>
+<p>首先我们通过覆盖，将 nextchunk 的 FD 指针指向了 fakeFD，将 nextchunk 的 BK 指针指向了 fakeBK 。那么为了通过验证，我们需要</p>
 <ul>
-<li>*P= expect value = P - 8</li>
-<li>*P = target addr -12 = P - 12</li>
+<li>fakeFD-&gt;bk == P    &lt;=&gt;    *(fakeFD+12)== P</li>
+<li>fakeBK-&gt;fd == P    &lt;=&gt;    *(fakeBK+8) == P</li>
 </ul>
-<p>即改写了指针 P 的内容，将其指向了比自己低 12 的地址处。</p>
-<p>而如果我们想要使得两者都指向 P，只需要按照如下方式修改即可</p>
+<p>当满足上述两式时，可以进入 Unlink 的环节，进行如下操作：</p>
+<ul>
+<li>fakeFD-&gt;bk=fakeBK    &lt;=&gt;    *(fakeFD+12)=fakeBK</li>
+<li>fakeBK-&gt;fd=fakeFD    &lt;=&gt;    *(fakeBK+8)=fakeFD</li>
+</ul>
+<p>如果让 fakeFD+12 和 fakeBK+8 指向同一个指向P的指针，那么：</p>
+<ul>
+<li>*P = P - 8</li>
+<li>*P = P - 12</li>
+</ul>
+<p>即通过此方式，P 的指针指向了比自己低 12 的地址处。此方法虽然不可以实现任意地址写，但是可以修改指向 chunk 的指针，这样的修改是可以达到一定的效果的。</p>
+<p>如果我们想要使得两者都指向 P，只需要按照如下方式修改即可</p>
 <p><img alt="" src="../figure/new_unlink_vul.png" /></p>
-<p>我们会通过之后的例子来说明，我们这样的修改是可以达到一定的效果的。</p>
-<p>需要注意的是，这里我们并没有违背下面的约束。</p>
+<p>需要注意的是，这里我们并没有违背下面的约束，因为 P 在 Unlink 前是指向正确的 chunk 的指针。</p>
 <div class="codehilite"><pre><span></span>    <span class="c1">// 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_size</span> <span class="p">(</span><span class="n">next_chunk</span><span class="p">(</span><span class="n">P</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span>      \
       <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;corrupted size vs. prev_size&quot;</span><span class="p">);</span>               \
