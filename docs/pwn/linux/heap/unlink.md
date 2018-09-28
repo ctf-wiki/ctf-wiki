@@ -437,7 +437,7 @@ if __name__ == "__main__":
 
 ### tcache exploit
 
-在 libc 2.26 以上使用 tcache 方法:
+本题可以溢出较长字节，因此可以覆盖 chunk 的 fd 指针，在 libc 2.26 之后的 tcache 机制中，未对 fd 指针指向的 chunk 进行 size 检查，从而可以将 fd 指针覆盖任意地址。在 free 该被溢出 chunk 并且两次 malloc 后可以实现任意地址修改：
 
 ```python
 from pwn import *
