@@ -10,7 +10,7 @@
 
 ### 例子
 
-这里，我们以 2017 年的 UIUCTF 中 pwn200 GoodLuck 为例进行介绍。这里由于只有本地环境，所以我在本地设置了一个 flag.txt 文件。
+这里，我们以 2017 年的 UIUCTF 中 [pwn200 GoodLuck](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2017-UIUCTF-pwn200-GoodLuck) 为例进行介绍。这里由于只有本地环境，所以我在本地设置了一个 flag.txt 文件。
 
 #### 确定保护
 
@@ -148,7 +148,7 @@ sh.interactive()
 
 ### 例子
 
-这里我们以 2016 CCTF 中的 pwn3 为例进行介绍。
+这里我们以 2016 CCTF 中的 [pwn3](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2016-CCTF-pwn3) 为例进行介绍。
 
 #### 确定保护
 
@@ -291,7 +291,7 @@ sh.interactive()
 
 ### 例子
 
-这里我们以三个白帽-pwnme\_k0 为例进行分析。
+这里我们以 [三个白帽-pwnme_k0](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/三个白帽-pwnme_k0) 为例进行分析。
 
 #### 确定保护
 
@@ -482,7 +482,7 @@ sh.interactive()
 
 ### 例子
 
-这里我们以 2015 年 CSAW 中的 contacts 为例进行介绍。
+这里我们以 2015 年 CSAW 中的 [contacts](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2015-CSAW-contacts) 为例进行介绍。
 
 #### 确定保护
 
@@ -840,7 +840,7 @@ io.interactive()
 
 ### 例子1-泄露栈
 
-源码和部署文件均放在了对应的文件夹 fmt\_blind\_stack 中。
+源码和部署文件均放在了对应的文件夹 [fmt_blind_stack](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_stack) 中。
 
 #### 确定程序位数
 
@@ -895,7 +895,7 @@ g}\x00\x00\x00\x00\x00\x00
 
 ### 例子2-盲打劫持got
 
-源码以及部署文件均已经在 blind\_fmt\_got 文件夹中。
+源码以及部署文件均已经在 [blind_fmt_got](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_got) 文件夹中。
 
 #### 确定程序位数
 
@@ -1132,3 +1132,6 @@ offset = (int)(math.ceil(len(payload) / 8.0) + 1)
 ```
 
 这一行给出了修改后的地址在格式化字符串中的偏移，之所以是这样在于无论如何修改，由于 '%order$hn' 中 order 多出来的字符都不会大于 8。具体的可以自行推导。
+
+### 题目
+- SuCTF2018 - lock2 （主办方提供了 docker 镜像: suctf/2018-pwn-lock2）

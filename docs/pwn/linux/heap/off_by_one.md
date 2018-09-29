@@ -151,7 +151,7 @@ datastore: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically l
 
 ## 介绍
 
-Asis CTF 2016的一道题目，考察点是null byte off-by-one
+Asis CTF 2016的一道题目，[链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks)，考察点是null byte off-by-one
 
 ## 题目介绍
 

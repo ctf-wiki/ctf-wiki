@@ -50,7 +50,7 @@ gef➤  x/7i 0x000000000040061d
 
 #### 例1
 
-这里我们以 **X-CTF Quals 2016 - b0verfl0w** 为例进行介绍。首先，查看程序的安全保护，如下
+这里我们以 [X-CTF Quals 2016 - b0verfl0w](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/stackprivot/X-CTF%20Quals%202016%20-%20b0verfl0w) 为例进行介绍。首先，查看程序的安全保护，如下
 
 ```shell
 ➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ checksec b0verfl0w                 
@@ -142,7 +142,7 @@ sh.interactive()
 
 ### 题目
 
-- EkoPartyCTF 2016 fuckzing-exploit-200
+- [EkoPartyCTF 2016 fuckzing-exploit-200](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/stackprivot/EkoPartyCTF%202016%20fuckzing-exploit-200)
 
 ## frame faking
 
@@ -237,7 +237,7 @@ ebp2|leave ret addr|arg1|arg2
 
 
 ### 例子
-以 2018 年 6 月安恒杯月赛的 over 一题为例进行介绍, 题目可以在 ctf-challenge 中找到
+以 2018 年 6 月安恒杯月赛的 over 一题为例进行介绍, 题目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/fake_frame/over) 中找到
 
 #### 文件信息
 ```bash
