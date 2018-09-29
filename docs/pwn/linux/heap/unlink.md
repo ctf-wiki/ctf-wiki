@@ -532,7 +532,7 @@ def deletenote(id):
 
 #### 生成三个note
 
-这一部分对应的代码如下
+构造三个 chunk，chunk0、chunk1 和 chunk2
 
 ```python
 # chunk0: a fake chunk
@@ -548,12 +548,12 @@ newnote(0, 'a' * 8)
 newnote(0x80, 'b' * 16)
 ```
 
-其中这三个note的大小分别为0x80，0，0x80，第二个chunk虽然申请的大小为0，但是glibc的要求chunk块至少可以存储4个必要的字段(prev\_size,size,fd,bk)，所以会分配0x20的空间。同时，由于无符号整数的比较问题，可以为该note输入任意长的字符串。
+其中这三个 chunk 申请时的大小分别为0x80，0，0x80，chunk1 虽然申请的大小为0，但是 glibc 的要求 chunk 块至少可以存储 4 个必要的字段(prev\_size,size,fd,bk)，所以会分配 0x20 的空间。同时，由于无符号整数的比较问题，可以为该note输入任意长的字符串。
 
-这里需要注意的是，chunk1中一共构造了两个chunk
+这里需要注意的是，chunk0 中一共构造了两个 chunk
 
-- chunk ptr[0]，这个是为了unlink时修改对应的值。
-- chunk ptr[0]'s nextchunk，这个是为了使得unlink时的第一个检查满足。
+- chunk ptr[0]，这个是为了 unlink 时修改对应的值。
+- chunk ptr[0]'s nextchunk，这个是为了使得 unlink 时的第一个检查满足。
 
 ```c
     // 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
@@ -602,7 +602,7 @@ fake ptr[0] chunk's nextchunk----->+-----------------+
                                            图1
 ```
 
-#### 释放chunk1-覆盖chunk2-释放chunk2
+#### 释放 chunk1-覆盖 chunk2-释放 chunk2
 
 对应的代码如下
 
@@ -616,7 +616,7 @@ newnote(0, content)
 deletenote(2)
 ```
 
-首先释放 chunk1，由于该chunk属于fastbin，所以下次在申请的时候仍然会申请到该chunk，同时由于上面所说的类型问题，我们可以读取任意字符，所以就可以覆盖chunk3，覆盖之后如图2所示。
+首先释放 chunk1，由于该chunk属于fastbin，所以下次在申请的时候仍然会申请到该chunk，同时由于上面所说的类型问题，我们可以读取任意字符，所以就可以覆盖chunk2，覆盖之后如图2所示。
 
 ```
                                    +-----------------+high addr
