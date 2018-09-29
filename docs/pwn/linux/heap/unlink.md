@@ -982,7 +982,7 @@ int new()
 }
 ```
 
-所有的笔记malloc出来的指针存放在bss上全局数组bss_ptr中，这个数组最多可以存放7个heap_ptr。
+所有的笔记malloc出来的指针存放在bss上全局数组bss_ptr中，这个数组最多可以存放8个heap_ptr。
 而且heap_ptr对应的size也被放在bss_ptr数组中。current_ptr表示当前笔记，bss布局如下。
 
 ```
