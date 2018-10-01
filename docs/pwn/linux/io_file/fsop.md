@@ -91,7 +91,7 @@ int main(void)
 }
 ```
 
-我们使用分配内存的前0x100个字节作为_IO_FILE_plus，后0x100个字节作为vtable，在vtable中使用0x41414141这个地址作为伪造的_IO_overflow指针。
+我们使用分配内存的前0x100个字节作为_IO_FILE，后0x100个字节作为vtable，在vtable中使用0x41414141这个地址作为伪造的_IO_overflow指针。
 
 之后，覆盖位于libc中的全局变量 _IO_list_all，把它指向我们伪造的_IO_FILE_plus。
 

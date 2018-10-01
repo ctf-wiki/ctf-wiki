@@ -54,7 +54,7 @@ this pogram will crash...
 
 ## 例子
 
-这里我们以 HITCON-training 中的 lab 10 hacknote为例。
+这里我们以 HITCON-training 中的 [lab 10 hacknote](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/use_after_free/hitcon-training-hacknote) 为例。
 
 ### 功能分析
 
@@ -207,7 +207,7 @@ unsigned int del_note()
 - 申请note2，并且设置real content的大小为8，那么根据堆的分配规则
   - note2其实会分配note1对应的内存块。
   - real content 对应的chunk其实是note0。
-- 如果我们这时候向note3的chunk部分写入magic的地址，那么由于我们没有note1为NULL。当我们再次尝试输出note1的时候，程序就会调用magic函数。
+- 如果我们这时候向note2 real content的chunk部分写入magic的地址，那么由于我们没有note0为NULL。当我们再次尝试输出note0的时候，程序就会调用magic函数。
 
 ### 利用脚本
 

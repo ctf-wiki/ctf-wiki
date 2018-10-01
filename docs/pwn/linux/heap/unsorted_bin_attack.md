@@ -178,6 +178,7 @@ Let's malloc again to get the chunk we just free. During this time, target shoul
 - 我们可以修改 heap 中的 global_max_fast 来使得更大的 chunk 可以被视为 fast bin，这样我们就可以去执行一些 fast bin attack了。
 
 ## HITCON Training lab14 magic heap
+[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unsorted_bin_attack/hitcontraining_lab14)
 
 这里我们修改一下源程序中的 l33t 函数，以便于可以正常运行。
 
@@ -279,7 +280,7 @@ r.interactive()
 
 **注：待进一步完成。**
 
-这里我们以 2016 年 0CTF 的zerostorage为例，进行介绍。
+这里我们以 2016 年 0CTF 的 [zerostorage](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unsorted_bin_attack/zerostorage) 为例，进行介绍。
 
 **这个题当时给了服务器的系统版本和内核版本，所以自己可以下一个一模一样的进行调试，这里我们就直接用自己的本地机器调试了。但是在目前的Ubuntu 16.04 中，由于进一步的随机化，导致 libc 加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX 的策略就无法再次使用，似乎只能用 angelboy 的策略了。**
 
