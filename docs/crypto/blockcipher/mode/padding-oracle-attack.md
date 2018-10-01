@@ -1,302 +1,37 @@
----
-typora-root-url: ../../
----
+# Padding Oracle Attack
 
-# 分组模式
-
-分组加密会将明文消息划分为固定大小的块，每块明文分别在密钥控制下加密为密文。当然并不是每个消息都是相应块大小的整数倍，所以我们可能需要进行填充。
-
-## 填充规则
-
-正如我们之前所说，在分组加密中，明文的长度往往并不满足要求，需要进行 padding，而如何 padding 目前也已经有了不少的规定。
-
-常见的 [填充规则]( https://www.di-mgt.com.au/cryptopad.html) 如下。**需要注意的是，即使消息的长度是块大小的整数倍，仍然需要填充。**
-
-一般来说，如果在解密之后发现 Padding 不正确，则往往会抛出异常。我们也因此可以知道 Paddig 是否正确。
-
-### Pad with bytes all of the same value as the number of padding bytes (PKCS5 padding)
-
-举例子如下
-
-```
-DES INPUT BLOCK  = f  o  r  _  _  _  _  _
-(IN HEX)           66 6F 72 05 05 05 05 05
-KEY              = 01 23 45 67 89 AB CD EF
-DES OUTPUT BLOCK = FD 29 85 C9 E8 DF 41 40
-```
-
-### Pad with 0x80 followed by zero bytes (OneAndZeroes Padding)
-
-举例子如下
-
-```
-DES INPUT BLOCK  = f  o  r  _  _  _  _  _
-(IN HEX)           66 6F 72 80 00 00 00 00
-KEY              = 01 23 45 67 89 AB CD EF
-DES OUTPUT BLOCK = BE 62 5D 9F F3 C6 C8 40
-```
-
-这里其实就是和 md5 和 sha1 的 padding 差不多。
-
-### Pad with zeroes except make the last byte equal to the number of padding bytes
-
-举例子如下
-
-```
-DES INPUT BLOCK  = f  o  r  _  _  _  _  _
-(IN HEX)           66 6f 72 00 00 00 00 05
-KEY              = 01 23 45 67 89 AB CD EF
-DES OUTPUT BLOCK = 91 19 2C 64 B5 5C 5D B8
-```
-
-### Pad with zero (null) characters
-
-举例子如下
-
-```
-DES INPUT BLOCK  = f  o  r  _  _  _  _  _
-(IN HEX)           66 6f 72 00 00 00 00 00
-KEY              = 01 23 45 67 89 AB CD EF
-DES OUTPUT BLOCK = 9E 14 FB 96 C5 FE EB 75
-```
-
-### Pad with spaces
-
-举例子如下
-
-```
-DES INPUT BLOCK  = f  o  r  _  _  _  _  _
-(IN HEX)           66 6f 72 20 20 20 20 20
-KEY              = 01 23 45 67 89 AB CD EF
-DES OUTPUT BLOCK = E3 FF EC E5 21 1F 35 25
-```
-
-## ECB
-
-ECB模式全称为电子密码本模式（Electronic codebook）。
-
-### 加密
-
-![](./figure/ecb_encryption.png)
-
-### 解密
-
-![](./figure/ecb_decryption.png)
-
-### 优缺点
-
-#### 优点
-
-1. 实现简单。
-2. 不同明文分组的加密可以并行计算，速度很快。
-
-#### 缺点
-
-1. 同样的明文块会被加密成相同的密文块，不会隐藏明文分组的统计规律。正如下图所示
-
-![image-20180716215135907](./figure/ecb_bad_linux.png)
-
-为了解决统一明文产生相同密文的问题，提出了其它的加密模式。
-
-### 典型应用
-
-1. 用于随机数的加密保护。
-2. 用于单分组明文的加密。
-
-### 2016 ABCTF aes-mess-75
-
- 题目描述如下
-
-```
-We encrypted a flag with AES-ECB encryption using a secret key, and got the hash: e220eb994c8fc16388dbd60a969d4953f042fc0bce25dbef573cf522636a1ba3fafa1a7c21ff824a5824c5dc4a376e75 However, we lost our plaintext flag and also lost our key and we can't seem to decrypt the hash back :(. Luckily we encrypted a bunch of other flags with the same key. Can you recover the lost flag using this?
-
-[HINT] There has to be some way to work backwards, right?
-```
-
-可以看出，这个加密是一个 ECB 加密，然后 AES 是 16 个字节一组，每个字节可以使用两个 16 进制字符表示，因此，我们每 32 个字符一组进行分组，然后去对应的 txt 文件中搜索即可。
-
-对应 flag
-
-```
-e220eb994c8fc16388dbd60a969d4953 abctf{looks_like
-f042fc0bce25dbef573cf522636a1ba3 _you_can_break_a
-fafa1a7c21ff824a5824c5dc4a376e75 es}
-```
-
-最后一个显然在加密时进行了 padding。
-
-### 题目
-
-- 2018 PlaidCTF macsh
-
-## CBC
-
-CBC全称为密码分组链接（Cipher-block chaining） 模式，这里
-
-- IV 不要求保密
-- IV 必须是不可预测的，而且要保证完整性。
-
-### 加密
-
-![](./figure/cbc_encryption.png)
-
-### 解密
-
-![](./figure/cbc_decryption.png)
-
-### 优缺点
-
-#### 优点
-
-1. 密文块不仅和当前密文块相关，而且和前一个密文块或 IV 相关，隐藏了明文的统计特性。
-2. 具有有限的两步错误传播特性，即密文块中的一位变化只会影响当前密文块和下一密文块。
-3. 具有自同步特性，即第 k 块起密文正确，则第 k+1 块就能正常解密。
-
-#### 缺点
-
-1. 加密不能并行，解密可以并行。
-
-### 应用
-
-CBC 应用十分广泛
-
-- 常见的数据加密和 TLS 加密。
-- 完整性认证和身份认证。
-
-### 攻击
-
--   字节反转攻击
-    - IV 向量，影响第一个明文分组
-    - 第 n 个密文分组，影响第 n + 1 个明文分组
--   Padding Oracle Attack，具体参见下面介绍。
-
-## PCBC
-
-PCBC 的全称为明文密码块链接（Plaintext cipher-block chaining）。也称为填充密码块链接（Propagating cipher-block chaining）。
-
-### 加密
-
-![](./figure/pcbc_encryption.png)
-
-### 解密
-
-![](./figure/pcbc_decryption.png)
-
-### 特点
-
-- 解密过程难以并行化
-- 互换邻接的密文块不会对后面的密文块造成影响
-
-## CFB
-
-CFB 全称为密文反馈模式（Cipher feedback）。
-
-### 加密
-
-![](./figure/cfb_encryption.png)
-
-### 解密
-
-![](./figure/cfb_decryption.png)
-
-### 优缺点
-
-#### 优点
-
-- 适应于不同数据格式的要求
-- 有限错误传播
-- 自同步
-
-#### 缺点
-
-- 加密不能并行化，解密不能并行
-
-### 应用场景
-
-该模式适应于数据库加密，无线通信加密等对数据格式有特殊要求的加密环境。
-
-### 题目
-
-- HITCONCTF-Quals-2015-Simple-(Crypto-100)
-
-## OFB
-
-OFB全称为输出反馈模式（Output feedback），其反馈内容是分组加密后的内容而不是密文。
-
-### 加密
-
-![](./figure/ofb_encryption.png)
-
-### 解密
-
-![](./figure/ofb_decryption.png)
-
-### 优缺点
-
-#### 优点
-
-1. 不具有错误传播特性。
-
-#### 缺点
-
-1. IV 无需保密，但是对每个消息必须选择不同的 IV。
-2. 不具有自同步能力。
-
-### 适用场景
-
-适用于一些明文冗余度比较大的场景，如图像加密和语音加密。
-
-## CTR
-
-CTR全称为计数器模式（Counter mode），该模式由 Diffe 和 Hellman 设计。
-
-### 加密
-
-![](./figure/ctr_encryption.png)
-
-### 解密
-
-![](./figure/ctr_decryption.png)
-
-### 题目
-
-- 2017 star ctf ssss
-- 2017 star ctf ssss2
-
-## Padding Oracle Attack
-
-### 介绍
+## 介绍
 
 Padding Oracle Attack 攻击一般需要满足以下几个条件
 
--   加密算法
-    -   采用 PKCS5 Padding 的加密算法。 当然，非对称加密中 OAEP 的填充方式也有可能会受到影响。
-    -   分组模式为 CBC 模式。
--   攻击者能力
-    -   攻击者可以拦截上述加密算法加密的消息。
-    -   攻击者可以和 padding oracle（即服务器） 进行交互：客户端向服务器端发送密文，服务器端会以某种返回信息告知客户端 padding 是否正常。
+- 加密算法
+  - 采用 PKCS5 Padding 的加密算法。 当然，非对称加密中 OAEP 的填充方式也有可能会受到影响。
+  - 分组模式为 CBC 模式。
+- 攻击者能力
+  - 攻击者可以拦截上述加密算法加密的消息。
+  - 攻击者可以和 padding oracle（即服务器） 进行交互：客户端向服务器端发送密文，服务器端会以某种返回信息告知客户端 padding 是否正常。
 
 Padding Oracle Attack 攻击可以达到的效果如下
 
--   在不清楚 key 和 IV 的前提下解密任意给定的密文。
+- 在不清楚 key 和 IV 的前提下解密任意给定的密文。
 
-### 原理
+## 原理
 
 Padding Oracle Attack 攻击的基本原理如下
 
--   对于很长的消息一块一块解密。
--   对于每一块消息，先解密消息的最后一个字节，然后解密倒数第二个字节，依次类推。
+- 对于很长的消息一块一块解密。
+- 对于每一块消息，先解密消息的最后一个字节，然后解密倒数第二个字节，依次类推。
 
 这里我们回顾一下 CBC 的
 
--   加密
+- 加密
 
 $$
 C_i=E_K(P_i \oplus C_{i-1})\\
 C_0=IV
 $$
 
--   解密
+- 解密
 
 $$
 P_{i}=D_{K}(C_{i})\oplus C_{i-1}\\ C_{0}=IV
@@ -308,13 +43,12 @@ $$
 $$
 P=D_K(Y)\oplus F
 $$
-
 所以修改密文 F 的最后一个字节 $F_{n}$ 可以修改 Y 对应的明文的最后一个字节。下面给出获取 P 最后一个字节的过程
 
-1.  i=0，设置 F 的每个字节为**随机字节**。
-2.  设置 $F_n=i \oplus 0x01$
-3.  将 F|Y 发送给服务器，如果 P 的最后一个字节是 i 的话，那么最后的 padding 就是 0x01，不会出现错误。否则，只有 P 的最后 $P_n \oplus i \oplus 0x01$ 字节都是 $P_n \oplus i \oplus 0x01$ 才不会报错。**而且，需要注意的是 padding 的字节只能是 0 到 n。** 因此，若想要使得在 F 随机地情况下，并且满足padding 字节大小的约束情况下还不报错**概率很小**。所以在服务器端不报错的情况下，我们可以认为我们确实获取了正确的字节。
-4.  在出现错误的情况下，i=i+1，跳转到2。
+1. i=0，设置 F 的每个字节为**随机字节**。
+2. 设置 $F_n=i \oplus 0x01$
+3. 将 F|Y 发送给服务器，如果 P 的最后一个字节是 i 的话，那么最后的 padding 就是 0x01，不会出现错误。否则，只有 P 的最后 $P_n \oplus i \oplus 0x01$ 字节都是 $P_n \oplus i \oplus 0x01$ 才不会报错。**而且，需要注意的是 padding 的字节只能是 0 到 n。** 因此，若想要使得在 F 随机地情况下，并且满足padding 字节大小的约束情况下还不报错**概率很小**。所以在服务器端不报错的情况下，我们可以认为我们确实获取了正确的字节。
+4. 在出现错误的情况下，i=i+1，跳转到2。
 
 当获取了 P 的最后一个字节后，我们可以继续获取 P 的倒数第二个字节，此时需要设置 $F_n=P_n\oplus 0x02$ ，同时设置 $F_{n-1}=i \oplus 0x02$ 去枚举 i。
 
@@ -322,9 +56,9 @@ $$
 
 然而，需要注意的是，往往遇到的一些现实问题并不是标准的 Padding Oracle Attack 模式，我们往往需要进行一些变形。
 
-### 2017 HITCON Secret Server
+## 2017 HITCON Secret Server
 
-#### 分析
+### 分析
 
 程序中采用的加密是 AES CBC，其中采用的 padding 与 PKCS5 类似
 
@@ -341,8 +75,8 @@ def unpad(msg):
 
 其中，需要注意的是，每次和用户交互的函数是
 
--   `send_msg` ，接受用户的明文，使用固定的 `2jpmLoSsOlQrqyqE` 作为 IV，进行加密，并将加密结果输出。
--   `recv_msg` ，接受用户的 IV 和密文，对密文进行解密，并返回。根据返回的结果会有不同的操作
+- `send_msg` ，接受用户的明文，使用固定的 `2jpmLoSsOlQrqyqE` 作为 IV，进行加密，并将加密结果输出。
+- `recv_msg` ，接受用户的 IV 和密文，对密文进行解密，并返回。根据返回的结果会有不同的操作
 
 ```python
             msg = recv_msg().strip()
@@ -364,34 +98,32 @@ def unpad(msg):
                 send_msg('command not found')
 ```
 
-#### 主要漏洞
+### 主要漏洞
 
 这里我们再简单总结一下我们已有的部分
 
--   加密
-    -   加密时的 IV 是固定的而且已知。
-    -   'Welcome!!' 加密后的结果。
--   解密
-    -   我们可以控制 IV。
+- 加密
+  - 加密时的 IV 是固定的而且已知。
+  - 'Welcome!!' 加密后的结果。
+- 解密
+  - 我们可以控制 IV。
 
 首先，既然我们知道 `Welcome!!` 加密后的结果，还可以控制 recv_msg 中的 IV，那么根据解密过程
-
 $$
 P_{i}=D_{K}(C_{i})\oplus C_{i-1}\\ C_{0}=IV
 $$
-
 如果我们将 `Welcome!!` 加密后的结果输入给 recv_msg，那么直接解密后的结果便是 `（Welcome!!+'\x07'*7) xor iv`，如果我们**恰当的控制解密过程中传递的 iv**，那么我们就可以控制解密后的结果。也就是说我们可以执行**上述所说的任意命令**。从而，我们也就可以知道 `flag` 解密后的结果。
 
 其次，在上面的基础之上，如果我们在任何密文 C 后面添加自定义的 IV 和 Welcome 加密后的结果，作为输入传递给 recv_msg，那么我们便可以控制解密之后的消息的最后一个字节，**那么由于 unpad 操作，我们便可以控制解密后的消息的长度减小 0 到 255**。
 
-#### 利用思路
+### 利用思路
 
 基本利用思路如下
 
-1.  绕过 proof of work
-2.  根据执行任意命令的方式获取加密后的 flag。
-3.  由于 flag 的开头是 `hitcon{`，一共有7个字节，所以我们任然可以通过控制 iv 来使得解密后的前 7 个字节为指定字节。这使得我们可以对于解密后的消息执行 `get-md5` 命令。而根据 unpad 操作，我们可以控制解密后的消息恰好在消息的第几个字节处。所以我们可以开始时将控制解密后的消息为 `hitcon{x`，即只保留`hitcon{` 后的一个字节。这样便可以获得带一个字节哈希后的加密结果。类似地，我们也可以获得带制定个字节哈希后的加密结果。
-4.  这样的话，我们可以在本地逐字节爆破，计算对应 `md5`，然后再次利用任意命令执行的方式，控制解密后的明文为任意指定命令，如果控制不成功，那说明该字节不对，需要再次爆破；如果正确，那么就可以直接执行对应的命令。
+1. 绕过 proof of work
+2. 根据执行任意命令的方式获取加密后的 flag。
+3. 由于 flag 的开头是 `hitcon{`，一共有7个字节，所以我们任然可以通过控制 iv 来使得解密后的前 7 个字节为指定字节。这使得我们可以对于解密后的消息执行 `get-md5` 命令。而根据 unpad 操作，我们可以控制解密后的消息恰好在消息的第几个字节处。所以我们可以开始时将控制解密后的消息为 `hitcon{x`，即只保留`hitcon{` 后的一个字节。这样便可以获得带一个字节哈希后的加密结果。类似地，我们也可以获得带制定个字节哈希后的加密结果。
+4. 这样的话，我们可以在本地逐字节爆破，计算对应 `md5`，然后再次利用任意命令执行的方式，控制解密后的明文为任意指定命令，如果控制不成功，那说明该字节不对，需要再次爆破；如果正确，那么就可以直接执行对应的命令。
 
 具体代码如下
 
@@ -517,45 +249,43 @@ if __name__ == "__main__":
 Flag so far: Paddin9_15_ve3y_h4rd__!!}\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10
 ```
 
-### 2017 HITCON Secret Server Revenge
+## 2017 HITCON Secret Server Revenge
 
-#### 描述
+### 描述
 
 ```
 The password of zip is the flag of "Secret Server"
 ```
 
-#### 分析
+### 分析
 
 这个程序时接着上面的程序继续搞的，不过这次进行的简单的修改
 
--   加密算法的 iv 未知，不过可以根据 Welcome 加密后的消息推算出来。
--   程序多了一个 56 字节的 token。
--   程序最多能进行 340 操作，因此上述的爆破自然不可行
+- 加密算法的 iv 未知，不过可以根据 Welcome 加密后的消息推算出来。
+- 程序多了一个 56 字节的 token。
+- 程序最多能进行 340 操作，因此上述的爆破自然不可行
 
 程序的大概流程如下
 
-1.  经过 proof of work
-2.  发送 “Welcome!!” 加密后的消息
-3.  在 340 次操作中，需要猜中 token 的值，然后会自动将 flag 输出。
+1. 经过 proof of work
+2. 发送 “Welcome!!” 加密后的消息
+3. 在 340 次操作中，需要猜中 token 的值，然后会自动将 flag 输出。
 
-#### 漏洞
+### 漏洞
 
 当然，在上个题目中存在的漏洞，在这个题目中仍然存在，即
 
-1.  任意执行给定命令
-2.  长度截断
+1. 任意执行给定命令
+2. 长度截断
 
-#### 利用思路
+### 利用思路
 
 由于 340 的次数限制，虽然我们仍然可以获得 `md5(token[:i])` 加密后的值（**这里需要注意的是这部分加密后恰好是 32 个字节，前 16 个字节是 md5 后加密的值，后面的 16 个字节完全是填充的加密后的字节。**这里`md5(token[:i])`  特指前16个字节。）。但是，我们不能再次为了获得一个字符去爆破 256 次了。
 
 既然不能够爆破，那么我们有没有可能一次获取一个字节的大小呢？这里，我们再来梳理一下该程序可能可以泄漏的信息
 
-1.  某些消息的 md5 值加密后的值，这里我们可以获取 `md5(token[:i])` 加密后的值。
-
-2.  unpad 每次会对解密后的消息进行 unpad，这个字节是根据解密后的消息的最后一个字节来决定的。如果我们可以计算出这个字节的大小，那么我们就可能可以知道一个字节的值。
-
+1. 某些消息的 md5 值加密后的值，这里我们可以获取 `md5(token[:i])` 加密后的值。
+2. unpad 每次会对解密后的消息进行 unpad，这个字节是根据解密后的消息的最后一个字节来决定的。如果我们可以计算出这个字节的大小，那么我们就可能可以知道一个字节的值。
 
 这里我们深入分析一下 unpad 的信息泄漏。如果我们将加密 IV 和 `encrypt(md5(token[:i]))` 放在某个密文 C 的后面，构成 `C|IV|encrypt(md5(token[:i]))`，那么解密出来的消息的最后一个明文块就是 `md5(token[:i])`。进而，在 unpad 的时候就是利用 `md5(token[:i])` 的最后一个字节（ 0-255）进行 unpad，之后对 unpad 后的字符串执行指定的命令（比如md5）。那么，如果我们**事先构造一些消息哈希后加密的样本**，然后将上述执行后的结果与样本比较，如果相同，那么我们基本可以确定 `md5(token[:i]) ` 的**最后一个字节**。然而，如果 `md5(token[:i])` 的最后一个字节小于16，那么在 unpad 时就会利用一些 md5 中的值，而这部分值，由于对于不同长度的 `token[:i]` 几乎都不会相同。所以可能需要特殊处理。
 
@@ -563,14 +293,14 @@ The password of zip is the flag of "Secret Server"
 
 具体利用思路如下
 
-1.  绕过 proof of work。
-2.  获取 token 加密后的结果 `token_enc` ，这里会在 token 前面添加 7 个字节 `"token: "` 。 因此加密后的长度为 64。
-3.  依次获取 `encrypt(md5(token[:i]))` 的结果，一共是 57 个，包括最后一个 token 的 padding。
-4.  构造与 unpad 大小对应的样本。这里我们构造密文 `token_enc|padding|IV_indexi|welcome_enc`。由于 `IV_indexi` 是为了修改最后一个明文块的最后一个字节，所以该字节处于变化之中。我们若想获取一些固定字节的哈希值，这部分自然不能添加。因此这里产生样本时 unpad 的大小范围为 17 ~ 255。如果最后测试时 `md5(token[:i])` 的最后一个字节小于17的话，基本就会出现一些未知的样本。很自然的一个想法是我们直接获取 255-17+1个这么多个样本，然而，如果这样做的话，根据上面 340 的次数（255-17+1+57+56>340）限制，我们显然不能获取到 token 的所有字节。所以这里我们需要想办法复用一些内容，这里我们选择复用  `encrypt(md5(token[:i]))`  的结果。那么我们在补充 padding 时需要确保一方面次数够用，另一方面可以复用之前的结果。这里我们设置 unpad 的循环为 17 到 208，并使得 unpad 大于 208 时恰好 unpad 到我们可以复用的地方。这里需要注意的是，当 `md5(token[:i])` 的最后一个字节为 0 时，会将所有解密后的明文 unpad 掉，因此会出现 command not found 的密文。
-5.  再次构造密文 `token_enc|padding|IV|encrypt(md5(token[:i])) ` ，那么，解密时即使用 `md5(token[:i])` 的最后一个字节进行 unpad。如果这个字节不小于17或者为0，则可以处理。如果这个字节小于17，那么显然，最后返回给用户的 md5 的结果并不在样本范围内，那么我们修改其最后一个字节的最高比特位，使其 unpad 后可以落在样本范围内。这样，我们就可以猜出 `md5(token[:i]) ` 的最后一个字节。
-6.  在猜出 `md5(token[:i]) ` 的最后一个字节后，我们可以在本地暴力破解 256 次，找出所有哈希值末尾为 `md5(token[:i]) ` 的最后一个字节的字符。
-7.  但是，在第六步中，对于一个 `md5(token[:i]) `  可能会找出多个备选字符，因为我们只需要使得其末尾字节是给定字节即可。
-8.  那么，问题来了，如何删除一些多余的备选字符串呢？这里我就选择了一个小 trick，即在逐字节枚举时，同时枚举出 token 的 padding。由于 padding 是 0x01 是固定的，所以我们只需要过滤出所有结尾不是 0x01 的token 即可。
+1. 绕过 proof of work。
+2. 获取 token 加密后的结果 `token_enc` ，这里会在 token 前面添加 7 个字节 `"token: "` 。 因此加密后的长度为 64。
+3. 依次获取 `encrypt(md5(token[:i]))` 的结果，一共是 57 个，包括最后一个 token 的 padding。
+4. 构造与 unpad 大小对应的样本。这里我们构造密文 `token_enc|padding|IV_indexi|welcome_enc`。由于 `IV_indexi` 是为了修改最后一个明文块的最后一个字节，所以该字节处于变化之中。我们若想获取一些固定字节的哈希值，这部分自然不能添加。因此这里产生样本时 unpad 的大小范围为 17 ~ 255。如果最后测试时 `md5(token[:i])` 的最后一个字节小于17的话，基本就会出现一些未知的样本。很自然的一个想法是我们直接获取 255-17+1个这么多个样本，然而，如果这样做的话，根据上面 340 的次数（255-17+1+57+56>340）限制，我们显然不能获取到 token 的所有字节。所以这里我们需要想办法复用一些内容，这里我们选择复用  `encrypt(md5(token[:i]))`  的结果。那么我们在补充 padding 时需要确保一方面次数够用，另一方面可以复用之前的结果。这里我们设置 unpad 的循环为 17 到 208，并使得 unpad 大于 208 时恰好 unpad 到我们可以复用的地方。这里需要注意的是，当 `md5(token[:i])` 的最后一个字节为 0 时，会将所有解密后的明文 unpad 掉，因此会出现 command not found 的密文。
+5. 再次构造密文 `token_enc|padding|IV|encrypt(md5(token[:i])) ` ，那么，解密时即使用 `md5(token[:i])` 的最后一个字节进行 unpad。如果这个字节不小于17或者为0，则可以处理。如果这个字节小于17，那么显然，最后返回给用户的 md5 的结果并不在样本范围内，那么我们修改其最后一个字节的最高比特位，使其 unpad 后可以落在样本范围内。这样，我们就可以猜出 `md5(token[:i]) ` 的最后一个字节。
+6. 在猜出 `md5(token[:i]) ` 的最后一个字节后，我们可以在本地暴力破解 256 次，找出所有哈希值末尾为 `md5(token[:i]) ` 的最后一个字节的字符。
+7. 但是，在第六步中，对于一个 `md5(token[:i]) `  可能会找出多个备选字符，因为我们只需要使得其末尾字节是给定字节即可。
+8. 那么，问题来了，如何删除一些多余的备选字符串呢？这里我就选择了一个小 trick，即在逐字节枚举时，同时枚举出 token 的 padding。由于 padding 是 0x01 是固定的，所以我们只需要过滤出所有结尾不是 0x01 的token 即可。
 
 这里，在测试时，将代码中 `sleep` 注释掉了。以便于加快交互速度。利用代码如下
 
@@ -774,6 +504,230 @@ if __name__ == "__main__":
 hitcon{uNp@d_M3th0D_i5_am4Z1n9!}
 ```
 
+## Teaser Dragon CTF 2018 AES-128-TSB
+
+这个题目还是蛮有意思的，题目描述如下
+
+```
+Haven't you ever thought that GCM mode is overcomplicated and there must be a simpler way to achieve Authenticated Encryption? Here it is!
+
+Server: aes-128-tsb.hackable.software 1337
+
+server.py
+```
+
+附件以及最后的 exp 自行到 ctf-challenge 仓库下寻找。
+
+题目的基本流程为
+
+- 不断接收 a 和 b 两个字符串，其中 a 为明文，b 为密文，注意
+  - b 在解密后需要满足尾部恰好等于 iv。
+- 如果 a 和 b 相等，那么根据
+  - a 为 `gimme_flag` ，输出加密后的 flag。
+  - 否则，输出一串随机加密的字符串。
+- 否则输出一串明文的字符串。
+
+此外，我们还可以发现题目中的 unpad 存在问题，可以截断指定长度。
+
+```python
+def unpad(msg):
+    if not msg:
+        return ''
+    return msg[:-ord(msg[-1])]
+```
+
+一开始，很直接的思路是 a 和 b 的长度都输入 0 ，那么可以直接绕过 `a==b` 检查，获取一串随机密文加密的字符串。然而似乎并没有什么作用，我们来分析一下加密的流程
+
+```python
+def tsb_encrypt(aes, msg):
+    msg = pad(msg)
+    iv = get_random_bytes(16)
+    prev_pt = iv
+    prev_ct = iv
+    ct = ''
+    for block in split_by(msg, 16) + [iv]:
+        ct_block = xor(block, prev_pt)
+        ct_block = aes.encrypt(ct_block)
+        ct_block = xor(ct_block, prev_ct)
+        ct += ct_block
+        prev_pt = block
+        prev_ct = ct_block
+    return iv + ct
+```
+
+不妨假设 $P_0=iv,C_0=iv$，则
+
+ $C_i=C_{i-1}\oplus E(P_{i-1} \oplus P_i)$
+
+那么，假设消息长度为 16，与我们想要得到的`gimme_flag` padding 后长度类似，则
+
+ $C_1=IV\oplus E( IV \oplus P_1)$
+
+ $C_2=C_1 \oplus E(P_1 \oplus IV)$
+
+可以很容易的发现 $C_2=IV$。反过来想，如果我们向服务器发送 `iv+c+iv`，那么总能绕过 `tsb_decrypt` 的 mac 检查
+
+```python
+def tsb_decrypt(aes, msg):
+    iv, msg = msg[:16], msg[16:]
+    prev_pt = iv
+    prev_ct = iv
+    pt = ''
+    for block in split_by(msg, 16):
+        pt_block = xor(block, prev_ct)
+        pt_block = aes.decrypt(pt_block)
+        pt_block = xor(pt_block, prev_pt)
+        pt += pt_block
+        prev_pt = pt_block
+        prev_ct = block
+    pt, mac = pt[:-16], pt[-16:]
+    if mac != iv:
+        raise CryptoError()
+    return unpad(pt)
+```
+
+那么此时，服务器解密后的消息则是
+
+$unpad(IV \oplus D(C_1 \oplus IV))$
+
+### 获取明文最后一个字节
+
+我们可以考虑控制 D 解密的消息为常数值，比如全零，即`C1=IV`，那么我们就可以从 0 到 255 枚举 IV 的最后一个字节，得到 $IV \oplus D(C_1 \oplus IV)$ 的最后一个字节也是 0~255。而只有是 1~15 的时候，`unpad` 操作过后，消息长度不为 0。因此，我们可以在枚举时统计究竟哪些数字导致了长度不为零，并标记为 1，其余标记为 0。
+
+```python
+def getlast_byte(iv, block):
+    iv_pre = iv[:15]
+    iv_last = ord(iv[-1])
+    tmp = []
+    print('get last byte')
+    for i in range(256):
+        send_data('')
+        iv = iv_pre + chr(i)
+        tmpblock = block[:15] + chr(i ^ ord(block[-1]) ^ iv_last)
+        payload = iv + tmpblock + iv
+        send_data(payload)
+        length, data = recv_data()
+        if 'Looks' in data:
+            tmp.append(1)
+        else:
+            tmp.append(0)
+    last_bytes = []
+    for i in range(256):
+        if tmp == xor_byte_map[i][0]:
+            last_bytes.append(xor_byte_map[i][1])
+    print('possible last byte is ' + str(last_bytes))
+    return last_bytes
+```
+
+此外，我们可以在最初的时候打表获取最后一个字节所有的可能情况，记录在 xor_byte_map 中。
+
+```python
+"""
+every item is a pair [a,b]
+a is the xor list
+b is the idx which is zero when xored
+"""
+xor_byte_map = []
+for i in range(256):
+    a = []
+    b = 0
+    for j in range(256):
+        tmp = i ^ j
+        if tmp > 0 and tmp <= 15:
+            a.append(1)
+        else:
+            a.append(0)
+        if tmp == 0:
+            b = j
+    xor_byte_map.append([a, b])
+```
+
+通过与这个表进行对比，我们就可以知道最后一个字节可能的情况。
+
+### 解密任意加密块
+
+在获取了明文最后一个字节后，我们就可以利用  unpad 的漏洞，从长度 1 枚举到长度 15 来获得对应的明文内容。
+
+```python
+def dec_block(iv, block):
+    last_bytes = getlast_byte(iv, block)
+
+    iv_pre = iv[:15]
+    iv_last = ord(iv[-1])
+    print('try to get plain')
+    plain0 = ''
+    for last_byte in last_bytes:
+        plain0 = ''
+        for i in range(15):
+            print 'idx:', i
+            tag = False
+            for j in range(256):
+                send_data(plain0 + chr(j))
+                pad_size = 15 - i
+                iv = iv_pre + chr(pad_size ^ last_byte)
+                tmpblock = block[:15] + chr(
+                    pad_size ^ last_byte ^ ord(block[-1]) ^ iv_last
+                )
+                payload = iv + tmpblock + iv
+                send_data(payload)
+                length, data = recv_data()
+                if 'Looks' not in data:
+                    # success
+                    plain0 += chr(j)
+                    tag = True
+                    break
+            if not tag:
+                break
+        # means the last byte is ok
+        if plain0 != '':
+            break
+    plain0 += chr(iv_last ^ last_byte)
+    return plain0
+```
+
+### 解密出指定明文
+
+这一点比较简单，我们希望利用这一点来获取 `gimme_flag` 的密文
+
+```python
+    print('get the cipher of flag')
+    gemmi_iv1 = xor(pad('gimme_flag'), plain0)
+    gemmi_c1 = xor(gemmi_iv1, cipher0)
+    payload = gemmi_iv1 + gemmi_c1 + gemmi_iv1
+    send_data('gimme_flag')
+    send_data(payload)
+    flag_len, flag_cipher = recv_data()
+```
+
+其中 plain0 和 cipher0 是我们获取的 AES 加密的明密文对，不包括之前和之后的两个异或。
+
+### 解密 flag
+
+这一点，其实就是利用解密任意加密块的功能实现的，如下
+
+```python
+    print('the flag cipher is ' + flag_cipher.encode('hex'))
+    flag_cipher = split_by(flag_cipher, 16)
+
+    print('decrypt the blocks one by one')
+    plain = ''
+    for i in range(len(flag_cipher) - 1):
+        print('block: ' + str(i))
+        if i == 0:
+            plain += dec_block(flag_cipher[i], flag_cipher[i + 1])
+        else:
+            iv = plain[-16:]
+            cipher = xor(xor(iv, flag_cipher[i + 1]), flag_cipher[i])
+            plain += dec_block(iv, cipher)
+            pass
+        print('now plain: ' + plain)
+    print plain
+```
+
+可以思考一下为什么第二块之后的密文操作会有所不同。
+
+完整的代码参考 ctf-challenge 仓库。
+
 ## 参考资料
 
 - [分组加密模式](https://zh.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F)
@@ -781,4 +735,3 @@ hitcon{uNp@d_M3th0D_i5_am4Z1n9!}
 - http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf
 - https://ctftime.org/writeup/7975
 - https://ctftime.org/writeup/7974
-- 清华大学研究生数据安全课程
