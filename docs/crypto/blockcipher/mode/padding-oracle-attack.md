@@ -565,7 +565,13 @@ def tsb_encrypt(aes, msg):
 
  $C_2=C_1 \oplus E(P_1 \oplus IV)$
 
-可以很容易的发现 $C_2=IV$。反过来想，如果我们向服务器发送 `iv+c+iv`，那么总能绕过 `tsb_decrypt` 的 mac 检查
+可以很容易的发现 $C_2=IV$。
+
+（[盗图](https://github.com/pberba/ctf-solutions/tree/master/20180929_teaser_dragon/aes_128_tsb)，下面的图片更加清晰
+
+![](figure/aes-tsb-encryption.png)
+
+反过来想，如果我们向服务器发送 `iv+c+iv`，那么总能绕过 `tsb_decrypt` 的 mac 检查
 
 ```python
 def tsb_decrypt(aes, msg):
