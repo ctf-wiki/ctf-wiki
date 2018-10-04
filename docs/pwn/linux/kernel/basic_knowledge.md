@@ -1,8 +1,8 @@
 介绍一些 linux kernel pwn 会用到的基础知识，后续会逐渐补充。
 
-主要参考了 [Linux Kernel Exploitation](https://github.com/bash-c/slides/blob/master/pwn_kernel/13_lecture.pdf)。
+主要参考了 [Linux Kernel Exploitation](https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/pwn/linux/kernel/ref/13_lecture.pdf)。
 
-# Kernel
+## Kernel
 kernel 也是一个程序，用来管理软件发出的数据 I/O 要求，将这些要求转义为指令，交给 CPU 和计算机中的其他组件处理，kernel 是现代操作系统最基本的部分。
 
 ![](https://upload.wikimedia.org/wikipedia/commons/8/8f/Kernel_Layout.svg)
@@ -16,7 +16,7 @@ kernel 最主要的功能有两点：
 
 需要注意的是，**kernel 的 crash 通常会引起重启**。
 
-# Ring Model
+## Ring Model
 intel CPU 将 CPU 的特权级别分为 4 个级别：Ring 0, Ring 1, Ring 2, Ring 3。
 
 Ring0 只给 OS 使用，Ring 3 所有程序都可以使用，内层 Ring 可以随便使用外层 Ring 的资源。
@@ -24,19 +24,19 @@ Ring0 只给 OS 使用，Ring 3 所有程序都可以使用，内层 Ring 可以
 使用 Ring Model 是为了提升系统安全性，例如某个间谍软件作为一个在 Ring 3 运行的用户程序，在不通知用户的时候打开摄像头会被阻止，因为访问硬件需要使用being驱动程序保留的 Ring 1 的方法。
 
 大多数的现代操作系统只使用了 Ring 0 和 Ring 3。
-![](http://ww1.sinaimg.cn/large/006AWYXBly1fvvb8k44kjj30rf0j2wke.jpg)
 
-# Loadable Kernel Modules(LKMs)
+## Loadable Kernel Modules(LKMs)
 可加载核心模块 (或直接称为内核模块) 就像运行在内核空间的可执行程序，包括:
 
 - 驱动程序（Device drivers）
+	- 设备驱动
+	- 文件系统驱动
+	- ...
 - 内核扩展模块 (modules)
-
-![](http://ww1.sinaimg.cn/large/006AWYXBly1fvw9qhknaoj30ps0hkaev.jpg)
 
 LKMs 的文件格式和用户态的可执行程序相同，Linux 下为 ELF，Windows 下为 exe/dll，mac 下为 MACH-O，因此我们可以用 IDA 等工具来分析内核模块。
 
-## 相关指令
+#### 相关指令
 - **insmod**: 讲指定模块加载到内核中
 - **rmmod**: 从内核中卸载指定模块
 - **lsmod**: 列出已经加载的模块
@@ -44,21 +44,21 @@ LKMs 的文件格式和用户态的可执行程序相同，Linux 下为 ELF，Wi
 > 大多数　kernel vulnerability 也出在 LKM 中。
 
 
-# syscall
+## syscall
 系统调用，指的是用户空间的程序向操作系统内核请求需要更高权限的服务，比如 IO 操作或者进程间通信。系统调用提供用户程序与操作系统间的接口，部分库函数（如 scanf，puts 等 IO 相关的函数实际上是对系统调用的封装 （read 和 write)）。
 
 > 在 */usr/include/x86_64-linux-gnu/asm/unistd_64.h* 和 */usr/include/x86_64-linux-gnu/asm/unistd_32.h* 分别可以查看 64 位和 32 位的系统调用号。
 
 > 同时推荐一个很好用的网站 [Linux Syscall Reference](https://syscalls.kernelgrok.com)，可以查阅 32 位系统调用对应的寄存器含义以及源码。欢迎师傅们推荐 64 位类似功能的网站。
 
-# ioctl
+## ioctl
 直接查看 man 手册
 ```
 NAME
        ioctl - control device
 
 SYNOPSIS
-       #include <sys/ioctl.h>
+       ##include <sys/ioctl.h>
 
        int ioctl(int fd, unsigned long request, ...);
 
@@ -89,9 +89,9 @@ DESCRIPTION
 > 为了解决这个问题，内核被设计成可扩展的，可以加入一个称为设备驱动的模块，驱动的代码允许在内核空间运行而且可以对设备直接寻址。一个Ioctl接口是一个独立的系统调用，通过它用户空间可以跟设备驱动沟通。对设备驱动的请求是一个以设备和请求号码为参数的Ioctl调用，如此内核就允许用户空间访问设备驱动进而访问设备而不需要了解具体的设备细节，同时也不需要一大堆针对不同设备的系统调用。
 
 
-# 状态切换
+## 状态切换
 
-## user space to kernel space
+#### user space to kernel space
 当发生 `系统调用`，`产生异常`，`外设产生中断`等事件时，会发生用户态到内核态的切换，具体的过程为：
 
 1. 通过 `swapgs` 切换 GS 段寄存器，将 GS 寄存器值和一个特定位置的值进行交换，目的是保存 GS 值，同时将该位置的值作为内核执行时的 GS 值使用。
@@ -130,13 +130,13 @@ DESCRIPTION
 4. 通过汇编指令判断是否为 x32\_abi。
 5. 通过系统调用号，跳到全局变量 `sys_call_table` 相应位置继续执行系统调用。
 
-## kernel space to user space
+#### kernel space to user space
 退出时，流程如下：
 
 1. 通过 `swapgs` 恢复 GS 值
 2. 通过 `sysretq` 或者 `iretq` 恢复到用户控件继续执行。如果使用 `iretq` 还需要给出用户空间的一些信息（CS, eflags/rflags, esp/rsp 等）
 
-# 内核态函数
+## 内核态函数
 相比用户态库函数，内核态的函数有了一些变化
 
 - printf()		->		**printk()**，但需要注意的是 printk() 不一定会把内容显示到终端上，但一定在内核缓冲区里，可以通过 `dmesg` 查看效果
@@ -168,20 +168,20 @@ ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
 
 > 一般情况下，/proc/kallsyms 的内容需要 root 权限才能查看
 
-# struct cred
+## struct cred
 之前提到 kernel 记录了进程的权限，更具体的，是用 cred 结构体记录的，每个进程中都有一个 cred 结构，这个结构保存了该进程的权限等信息（uid，gid 等），如果能修改某个进程的 cred，那么也就修改了这个进程的权限。
 
-[源码](https://code.woboq.org/linux/linux/include/linux/cred.h.html#cred) 如下:
+[源码](https://code.woboq.org/linux/linux/include/linux/cred.h.html##cred) 如下:
 ```asm
 struct cred {
 	atomic_t	usage;
-#ifdef CONFIG_DEBUG_CREDENTIALS
+##ifdef CONFIG_DEBUG_CREDENTIALS
 	atomic_t	subscribers;	/* number of processes subscribed */
 	void		*put_addr;
 	unsigned	magic;
-#define CRED_MAGIC	0x43736564
-#define CRED_MAGIC_DEAD	0x44656144
-#endif
+##define CRED_MAGIC	0x43736564
+##define CRED_MAGIC_DEAD	0x44656144
+##endif
 	kuid_t		uid;		/* real UID of the task */
 	kgid_t		gid;		/* real GID of the task */
 	kuid_t		suid;		/* saved UID of the task */
@@ -196,17 +196,17 @@ struct cred {
 	kernel_cap_t	cap_effective;	/* caps we can actually use */
 	kernel_cap_t	cap_bset;	/* capability bounding set */
 	kernel_cap_t	cap_ambient;	/* Ambient capability set */
-#ifdef CONFIG_KEYS
+##ifdef CONFIG_KEYS
 	unsigned char	jit_keyring;	/* default keyring to attach requested
 					 * keys to */
 	struct key __rcu *session_keyring; /* keyring inherited over fork */
 	struct key	*process_keyring; /* keyring private to this process */
 	struct key	*thread_keyring; /* keyring private to this thread */
 	struct key	*request_key_auth; /* assumed request_key authority */
-#endif
-#ifdef CONFIG_SECURITY
+##endif
+##ifdef CONFIG_SECURITY
 	void		*security;	/* subjective LSM security */
-#endif
+##endif
 	struct user_struct *user;	/* real user ID subscription */
 	struct user_namespace *user_ns; /* user_ns the caps and keyrings are relative to. */
 	struct group_info *group_info;	/* supplementary groups for euid/fsgid */
@@ -214,13 +214,13 @@ struct cred {
 } __randomize_layout;
 ```
 
-# Mitigation
+## Mitigation
 
 > canary, dep, PIE, RELRO 等保护与用户态原理和作用相同
 
 - smep:
 
-# CTF kernel pwn 相关
+## CTF kernel pwn 相关
 一般会给以下三个文件
 
 1. boot.sh: 一个用于启动 kernel 的 shell 的脚本，多用 qemu，保护措施与 qemu 不同的启动参数有关
@@ -239,7 +239,7 @@ rootfs.cpio
 CISCN2017_babydriver [master●] ls
 babydriver.tar  boot.sh  bzImage  rootfs.cpio
 CISCN2017_babydriver [master●] file bzImage
-bzImage: Linux kernel x86 boot executable bzImage, version 4.4.72 (atum@ubuntu) #1 SMP Thu Jun 15 19:52:50 PDT 2017, RO-rootFS, swap_dev 0x6, Normal VGA
+bzImage: Linux kernel x86 boot executable bzImage, version 4.4.72 (atum@ubuntu) ##1 SMP Thu Jun 15 19:52:50 PDT 2017, RO-rootFS, swap_dev 0x6, Normal VGA
 CISCN2017_babydriver [master●] file rootfs.cpio
 rootfs.cpio: gzip compressed data, last modified: Tue Jul  4 08:39:15 2017, max compression, from Unix, original size 2844672
 CISCN2017_babydriver [master●] file boot.sh
@@ -248,7 +248,7 @@ CISCN2017_babydriver [master●] bat boot.sh
 ───────┬─────────────────────────────────────────────────────────────────────────────────
        │ File: boot.sh
 ───────┼─────────────────────────────────────────────────────────────────────────────────
-   1   │ #!/bin/bash
+   1   │ ##!/bin/bash
    2   │ 
    3   │ qemu-system-x86_64 -initrd rootfs.cpio -kernel bzImage -append 'console=ttyS0 ro
        │ ot=/dev/ram oops=panic panic=1' -enable-kvm -monitor /dev/null -m 64M --nographi
@@ -264,7 +264,7 @@ CISCN2017_babydriver [master●] bat boot.sh
 
 其他的选项可以通过 --help 查看。
 
-# Reference:
+## Reference:
 https://zh.wikipedia.org/wiki/内核
 
 https://zh.wikipedia.org/wiki/分级保护域
