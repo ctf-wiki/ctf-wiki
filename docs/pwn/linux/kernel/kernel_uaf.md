@@ -33,7 +33,7 @@ core [master●] bat init
 ───────┬─────────────────────────────────────────────────────────────────────────────────
        │ File: init
 ───────┼─────────────────────────────────────────────────────────────────────────────────
-   1   │ ##!/bin/sh
+   1   │ #!/bin/sh
    2   │
    3   │ mount -t proc none /proc
    4   │ mount -t sysfs none /sys
@@ -182,13 +182,13 @@ int __fastcall babyrelease(inode *inode, file *filp)
 ```C
 struct cred {
 	atomic_t	usage;
-##ifdef CONFIG_DEBUG_CREDENTIALS
+#ifdef CONFIG_DEBUG_CREDENTIALS
 	atomic_t	subscribers;	/* number of processes subscribed */
 	void		*put_addr;
 	unsigned	magic;
-##define CRED_MAGIC	0x43736564
-##define CRED_MAGIC_DEAD	0x44656144
-##endif
+#define CRED_MAGIC	0x43736564
+#define CRED_MAGIC_DEAD	0x44656144
+#endif
 	kuid_t		uid;		/* real UID of the task */
 	kgid_t		gid;		/* real GID of the task */
 	kuid_t		suid;		/* saved UID of the task */
@@ -203,17 +203,17 @@ struct cred {
 	kernel_cap_t	cap_effective;	/* caps we can actually use */
 	kernel_cap_t	cap_bset;	/* capability bounding set */
 	kernel_cap_t	cap_ambient;	/* Ambient capability set */
-##ifdef CONFIG_KEYS
+#ifdef CONFIG_KEYS
 	unsigned char	jit_keyring;	/* default keyring to attach requested
 					 * keys to */
 	struct key __rcu *session_keyring; /* keyring inherited over fork */
 	struct key	*process_keyring; /* keyring private to this process */
 	struct key	*thread_keyring; /* keyring private to this thread */
 	struct key	*request_key_auth; /* assumed request_key authority */
-##endif
-##ifdef CONFIG_SECURITY
+#endif
+#ifdef CONFIG_SECURITY
 	void		*security;	/* subjective LSM security */
-##endif
+#endif
 	struct user_struct *user;	/* real user ID subscription */
 	struct user_namespace *user_ns; /* user_ns the caps and keyrings are relative to. */
 	struct group_info *group_info;	/* supplementary groups for euid/fsgid */
@@ -235,13 +235,13 @@ struct cred {
 注释都写在代码里了，[exploit here](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/kernel/CISCN2017-babydriver)
 ```C
 CISCN2017_babydriver [master●●] cat exploit.c 
-##include <stdio.h>
-##include <stdlib.h>
-##include <unistd.h>
-##include <fcntl.h>
-##include <stropts.h>
-##include <sys/wait.h>
-##include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stropts.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
 
 int main()
 {
@@ -315,9 +315,9 @@ uid=1000(ctf) gid=1000(ctf) groups=1000(ctf)
 [   14.377201] alloc done
 [   14.377629] device release
 [+] root now.
-/ ## id
+/ # id
 uid=0(root) gid=0(root) groups=1000(ctf)
-/ ##
+/ #
 
 ```
 

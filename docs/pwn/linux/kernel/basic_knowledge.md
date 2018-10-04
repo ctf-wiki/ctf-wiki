@@ -36,7 +36,7 @@ Ring0 只给 OS 使用，Ring 3 所有程序都可以使用，内层 Ring 可以
 
 LKMs 的文件格式和用户态的可执行程序相同，Linux 下为 ELF，Windows 下为 exe/dll，mac 下为 MACH-O，因此我们可以用 IDA 等工具来分析内核模块。
 
-#### 相关指令
+### 相关指令
 - **insmod**: 讲指定模块加载到内核中
 - **rmmod**: 从内核中卸载指定模块
 - **lsmod**: 列出已经加载的模块
@@ -58,7 +58,7 @@ NAME
        ioctl - control device
 
 SYNOPSIS
-       ##include <sys/ioctl.h>
+       #include <sys/ioctl.h>
 
        int ioctl(int fd, unsigned long request, ...);
 
@@ -91,7 +91,7 @@ DESCRIPTION
 
 ## 状态切换
 
-#### user space to kernel space
+### user space to kernel space
 当发生 `系统调用`，`产生异常`，`外设产生中断`等事件时，会发生用户态到内核态的切换，具体的过程为：
 
 1. 通过 `swapgs` 切换 GS 段寄存器，将 GS 寄存器值和一个特定位置的值进行交换，目的是保存 GS 值，同时将该位置的值作为内核执行时的 GS 值使用。
@@ -130,7 +130,7 @@ DESCRIPTION
 4. 通过汇编指令判断是否为 x32\_abi。
 5. 通过系统调用号，跳到全局变量 `sys_call_table` 相应位置继续执行系统调用。
 
-#### kernel space to user space
+### kernel space to user space
 退出时，流程如下：
 
 1. 通过 `swapgs` 恢复 GS 值
@@ -171,17 +171,17 @@ ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
 ## struct cred
 之前提到 kernel 记录了进程的权限，更具体的，是用 cred 结构体记录的，每个进程中都有一个 cred 结构，这个结构保存了该进程的权限等信息（uid，gid 等），如果能修改某个进程的 cred，那么也就修改了这个进程的权限。
 
-[源码](https://code.woboq.org/linux/linux/include/linux/cred.h.html##cred) 如下:
+[源码](https://code.woboq.org/linux/linux/include/linux/cred.h.html#cred) 如下:
 ```asm
 struct cred {
 	atomic_t	usage;
-##ifdef CONFIG_DEBUG_CREDENTIALS
+#ifdef CONFIG_DEBUG_CREDENTIALS
 	atomic_t	subscribers;	/* number of processes subscribed */
 	void		*put_addr;
 	unsigned	magic;
-##define CRED_MAGIC	0x43736564
-##define CRED_MAGIC_DEAD	0x44656144
-##endif
+#define CRED_MAGIC	0x43736564
+#define CRED_MAGIC_DEAD	0x44656144
+#endif
 	kuid_t		uid;		/* real UID of the task */
 	kgid_t		gid;		/* real GID of the task */
 	kuid_t		suid;		/* saved UID of the task */
@@ -196,17 +196,17 @@ struct cred {
 	kernel_cap_t	cap_effective;	/* caps we can actually use */
 	kernel_cap_t	cap_bset;	/* capability bounding set */
 	kernel_cap_t	cap_ambient;	/* Ambient capability set */
-##ifdef CONFIG_KEYS
+#ifdef CONFIG_KEYS
 	unsigned char	jit_keyring;	/* default keyring to attach requested
 					 * keys to */
 	struct key __rcu *session_keyring; /* keyring inherited over fork */
 	struct key	*process_keyring; /* keyring private to this process */
 	struct key	*thread_keyring; /* keyring private to this thread */
 	struct key	*request_key_auth; /* assumed request_key authority */
-##endif
-##ifdef CONFIG_SECURITY
+#endif
+#ifdef CONFIG_SECURITY
 	void		*security;	/* subjective LSM security */
-##endif
+#endif
 	struct user_struct *user;	/* real user ID subscription */
 	struct user_namespace *user_ns; /* user_ns the caps and keyrings are relative to. */
 	struct group_info *group_info;	/* supplementary groups for euid/fsgid */
@@ -239,7 +239,7 @@ rootfs.cpio
 CISCN2017_babydriver [master●] ls
 babydriver.tar  boot.sh  bzImage  rootfs.cpio
 CISCN2017_babydriver [master●] file bzImage
-bzImage: Linux kernel x86 boot executable bzImage, version 4.4.72 (atum@ubuntu) ##1 SMP Thu Jun 15 19:52:50 PDT 2017, RO-rootFS, swap_dev 0x6, Normal VGA
+bzImage: Linux kernel x86 boot executable bzImage, version 4.4.72 (atum@ubuntu) #1 SMP Thu Jun 15 19:52:50 PDT 2017, RO-rootFS, swap_dev 0x6, Normal VGA
 CISCN2017_babydriver [master●] file rootfs.cpio
 rootfs.cpio: gzip compressed data, last modified: Tue Jul  4 08:39:15 2017, max compression, from Unix, original size 2844672
 CISCN2017_babydriver [master●] file boot.sh
@@ -248,7 +248,7 @@ CISCN2017_babydriver [master●] bat boot.sh
 ───────┬─────────────────────────────────────────────────────────────────────────────────
        │ File: boot.sh
 ───────┼─────────────────────────────────────────────────────────────────────────────────
-   1   │ ##!/bin/bash
+   1   │ #!/bin/bash
    2   │ 
    3   │ qemu-system-x86_64 -initrd rootfs.cpio -kernel bzImage -append 'console=ttyS0 ro
        │ ot=/dev/ram oops=panic panic=1' -enable-kvm -monitor /dev/null -m 64M --nographi
