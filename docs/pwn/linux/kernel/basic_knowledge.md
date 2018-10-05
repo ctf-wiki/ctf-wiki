@@ -136,38 +136,6 @@ DESCRIPTION
 1. 通过 `swapgs` 恢复 GS 值
 2. 通过 `sysretq` 或者 `iretq` 恢复到用户控件继续执行。如果使用 `iretq` 还需要给出用户空间的一些信息（CS, eflags/rflags, esp/rsp 等）
 
-## 内核态函数
-相比用户态库函数，内核态的函数有了一些变化
-
-- printf()		->		**printk()**，但需要注意的是 printk() 不一定会把内容显示到终端上，但一定在内核缓冲区里，可以通过 `dmesg` 查看效果
-- memcpy()		->		**copy\_from\_user()/copy\_to\_user()**
-	- copy\_from\_user() 实现了将用户空间的数据传送到内核空间
-	- copy\_to\_user() 实现了将内核空间的数据传送到用户空间
-- malloc()		->		**kmalloc()**，内核态的内存分配函数，和 malloc() 相似，但使用的是 `slab/slub 分配器`
-- free()		->		**kfree()**，同 kmalloc()
-
-另外要注意的是，`kernel 管理进程，因此 kernel 也记录了进程的权限`。kernel 中有两个可以方便的改变权限的函数：
-
-- **int commit_creds(struct cred *new)**
-- **struct cred* prepare_kernel_cred(struct task_struct* daemon)**
-
-从函数名也可以看出，执行 `commit_creds(prepare_kernel_cred(0))` 即可获得 root 权限（root 的 uid，gid 均为 0）
-
-执行 `commit_creds(prepare_kernel_cred(0))` 也是最常用的提权手段，两个函数的地址都可以在 `/proc/kallsyms` 中查看
-```bash
-post sudo grep commit_creds /proc/kallsyms 
-[sudo] m4x 的密码：
-ffffffffbb6af9e0 T commit_creds
-ffffffffbc7cb3d0 r __ksymtab_commit_creds
-ffffffffbc7f06fe r __kstrtab_commit_creds
-post sudo grep prepare_kernel_cred /proc/kallsyms
-ffffffffbb6afd90 T prepare_kernel_cred
-ffffffffbc7d4f20 r __ksymtab_prepare_kernel_cred
-ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
-```
-
-> 一般情况下，/proc/kallsyms 的内容需要 root 权限才能查看
-
 ## struct cred
 之前提到 kernel 记录了进程的权限，更具体的，是用 cred 结构体记录的，每个进程中都有一个 cred 结构，这个结构保存了该进程的权限等信息（uid，gid 等），如果能修改某个进程的 cred，那么也就修改了这个进程的权限。
 
@@ -213,6 +181,38 @@ struct cred {
 	struct rcu_head	rcu;		/* RCU deletion hook */
 } __randomize_layout;
 ```
+
+## 内核态函数
+相比用户态库函数，内核态的函数有了一些变化
+
+- printf()		->		**printk()**，但需要注意的是 printk() 不一定会把内容显示到终端上，但一定在内核缓冲区里，可以通过 `dmesg` 查看效果
+- memcpy()		->		**copy\_from\_user()/copy\_to\_user()**
+	- copy\_from\_user() 实现了将用户空间的数据传送到内核空间
+	- copy\_to\_user() 实现了将内核空间的数据传送到用户空间
+- malloc()		->		**kmalloc()**，内核态的内存分配函数，和 malloc() 相似，但使用的是 `slab/slub 分配器`
+- free()		->		**kfree()**，同 kmalloc()
+
+另外要注意的是，`kernel 管理进程，因此 kernel 也记录了进程的权限`。kernel 中有两个可以方便的改变权限的函数：
+
+- **int commit_creds(struct cred *new)**
+- **struct cred* prepare_kernel_cred(struct task_struct* daemon)**
+
+从函数名也可以看出，执行 `commit_creds(prepare_kernel_cred(0))` 即可获得 root 权限（root 的 uid，gid 均为 0）
+
+执行 `commit_creds(prepare_kernel_cred(0))` 也是最常用的提权手段，两个函数的地址都可以在 `/proc/kallsyms` 中查看
+```bash
+post sudo grep commit_creds /proc/kallsyms 
+[sudo] m4x 的密码：
+ffffffffbb6af9e0 T commit_creds
+ffffffffbc7cb3d0 r __ksymtab_commit_creds
+ffffffffbc7f06fe r __kstrtab_commit_creds
+post sudo grep prepare_kernel_cred /proc/kallsyms
+ffffffffbb6afd90 T prepare_kernel_cred
+ffffffffbc7d4f20 r __ksymtab_prepare_kernel_cred
+ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
+```
+
+> 一般情况下，/proc/kallsyms 的内容需要 root 权限才能查看
 
 ## Mitigation
 
