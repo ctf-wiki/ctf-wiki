@@ -3677,15 +3677,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" title="内核态函数" class="md-nav__link">
-    内核态函数
+  <a href="#struct-cred" title="struct cred" class="md-nav__link">
+    struct cred
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#struct-cred" title="struct cred" class="md-nav__link">
-    struct cred
+  <a href="#_3" title="内核态函数" class="md-nav__link">
+    内核态函数
   </a>
   
 </li>
@@ -3748,6 +3748,18 @@
   <li class="md-nav__item">
     <a href="../kernel_rop/" title="kernel-ROP" class="md-nav__link">
       kernel-ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../bypass_smep/" title="bypass-smep" class="md-nav__link">
+      bypass-smep
     </a>
   </li>
 
@@ -4257,15 +4269,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" title="内核态函数" class="md-nav__link">
-    内核态函数
+  <a href="#struct-cred" title="struct cred" class="md-nav__link">
+    struct cred
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#struct-cred" title="struct cred" class="md-nav__link">
-    struct cred
+  <a href="#_3" title="内核态函数" class="md-nav__link">
+    内核态函数
   </a>
   
 </li>
@@ -4440,38 +4452,6 @@ DESCRIPTION
 <li>通过 <code>swapgs</code> 恢复 GS 值</li>
 <li>通过 <code>sysretq</code> 或者 <code>iretq</code> 恢复到用户控件继续执行。如果使用 <code>iretq</code> 还需要给出用户空间的一些信息（CS, eflags/rflags, esp/rsp 等）</li>
 </ol>
-<h2 id="_3">内核态函数<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p>相比用户态库函数，内核态的函数有了一些变化</p>
-<ul>
-<li>printf()      -&gt;      <strong>printk()</strong>，但需要注意的是 printk() 不一定会把内容显示到终端上，但一定在内核缓冲区里，可以通过 <code>dmesg</code> 查看效果</li>
-<li>memcpy()      -&gt;      <strong>copy_from_user()/copy_to_user()</strong><ul>
-<li>copy_from_user() 实现了将用户空间的数据传送到内核空间</li>
-<li>copy_to_user() 实现了将内核空间的数据传送到用户空间</li>
-</ul>
-</li>
-<li>malloc()      -&gt;      <strong>kmalloc()</strong>，内核态的内存分配函数，和 malloc() 相似，但使用的是 <code>slab/slub 分配器</code></li>
-<li>free()        -&gt;      <strong>kfree()</strong>，同 kmalloc()</li>
-</ul>
-<p>另外要注意的是，<code>kernel 管理进程，因此 kernel 也记录了进程的权限</code>。kernel 中有两个可以方便的改变权限的函数：</p>
-<ul>
-<li><strong>int commit_creds(struct cred *new)</strong></li>
-<li><strong>struct cred<em> prepare_kernel_cred(struct task_struct</em> daemon)</strong></li>
-</ul>
-<p>从函数名也可以看出，执行 <code>commit_creds(prepare_kernel_cred(0))</code> 即可获得 root 权限（root 的 uid，gid 均为 0）</p>
-<p>执行 <code>commit_creds(prepare_kernel_cred(0))</code> 也是最常用的提权手段，两个函数的地址都可以在 <code>/proc/kallsyms</code> 中查看
-<div class="codehilite"><pre><span></span>post sudo grep commit_creds /proc/kallsyms 
-<span class="o">[</span>sudo<span class="o">]</span> m4x 的密码：
-ffffffffbb6af9e0 T commit_creds
-ffffffffbc7cb3d0 r __ksymtab_commit_creds
-ffffffffbc7f06fe r __kstrtab_commit_creds
-post sudo grep prepare_kernel_cred /proc/kallsyms
-ffffffffbb6afd90 T prepare_kernel_cred
-ffffffffbc7d4f20 r __ksymtab_prepare_kernel_cred
-ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
-</pre></div></p>
-<blockquote>
-<p>一般情况下，/proc/kallsyms 的内容需要 root 权限才能查看</p>
-</blockquote>
 <h2 id="struct-cred">struct cred<a class="headerlink" href="#struct-cred" title="Permanent link">&para;</a></h2>
 <p>之前提到 kernel 记录了进程的权限，更具体的，是用 cred 结构体记录的，每个进程中都有一个 cred 结构，这个结构保存了该进程的权限等信息（uid，gid 等），如果能修改某个进程的 cred，那么也就修改了这个进程的权限。</p>
 <p><a href="https://code.woboq.org/linux/linux/include/linux/cred.h.html#cred">源码</a> 如下:
@@ -4515,6 +4495,38 @@ ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
     <span class="no">struct</span> <span class="no">rcu_head</span> <span class="no">rcu</span><span class="c">;        /* RCU deletion hook */</span>
 <span class="err">}</span> <span class="no">__randomize_layout</span><span class="c">;</span>
 </pre></div></p>
+<h2 id="_3">内核态函数<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>相比用户态库函数，内核态的函数有了一些变化</p>
+<ul>
+<li>printf()      -&gt;      <strong>printk()</strong>，但需要注意的是 printk() 不一定会把内容显示到终端上，但一定在内核缓冲区里，可以通过 <code>dmesg</code> 查看效果</li>
+<li>memcpy()      -&gt;      <strong>copy_from_user()/copy_to_user()</strong><ul>
+<li>copy_from_user() 实现了将用户空间的数据传送到内核空间</li>
+<li>copy_to_user() 实现了将内核空间的数据传送到用户空间</li>
+</ul>
+</li>
+<li>malloc()      -&gt;      <strong>kmalloc()</strong>，内核态的内存分配函数，和 malloc() 相似，但使用的是 <code>slab/slub 分配器</code></li>
+<li>free()        -&gt;      <strong>kfree()</strong>，同 kmalloc()</li>
+</ul>
+<p>另外要注意的是，<code>kernel 管理进程，因此 kernel 也记录了进程的权限</code>。kernel 中有两个可以方便的改变权限的函数：</p>
+<ul>
+<li><strong>int commit_creds(struct cred *new)</strong></li>
+<li><strong>struct cred<em> prepare_kernel_cred(struct task_struct</em> daemon)</strong></li>
+</ul>
+<p>从函数名也可以看出，执行 <code>commit_creds(prepare_kernel_cred(0))</code> 即可获得 root 权限（root 的 uid，gid 均为 0）</p>
+<p>执行 <code>commit_creds(prepare_kernel_cred(0))</code> 也是最常用的提权手段，两个函数的地址都可以在 <code>/proc/kallsyms</code> 中查看
+<div class="codehilite"><pre><span></span>post sudo grep commit_creds /proc/kallsyms 
+<span class="o">[</span>sudo<span class="o">]</span> m4x 的密码：
+ffffffffbb6af9e0 T commit_creds
+ffffffffbc7cb3d0 r __ksymtab_commit_creds
+ffffffffbc7f06fe r __kstrtab_commit_creds
+post sudo grep prepare_kernel_cred /proc/kallsyms
+ffffffffbb6afd90 T prepare_kernel_cred
+ffffffffbc7d4f20 r __ksymtab_prepare_kernel_cred
+ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
+</pre></div></p>
+<blockquote>
+<p>一般情况下，/proc/kallsyms 的内容需要 root 权限才能查看</p>
+</blockquote>
 <h2 id="mitigation">Mitigation<a class="headerlink" href="#mitigation" title="Permanent link">&para;</a></h2>
 <blockquote>
 <p>canary, dep, PIE, RELRO 等保护与用户态原理和作用相同</p>
