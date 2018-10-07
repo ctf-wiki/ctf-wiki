@@ -36,6 +36,12 @@ Ring0 只给 OS 使用，Ring 3 所有程序都可以使用，内层 Ring 可以
 
 LKMs 的文件格式和用户态的可执行程序相同，Linux 下为 ELF，Windows 下为 exe/dll，mac 下为 MACH-O，因此我们可以用 IDA 等工具来分析内核模块。
 
+模块可以被单独编译，但不能单独运行。它在运行时被链接到内核作为内核的一部分在内核空间运行，这与运行在用户控件的进程不同。
+
+模块通常用来实现一种文件系统、一个驱动程序或者其他内核上层的功能。
+
+> Linux 内核之所以提供模块机制，是因为它本身是一个单内核 (monolithic kernel)。单内核的优点是效率高，因为所有的内容都集合在一起，但缺点是可扩展性和可维护性相对较差，模块机制就是为了弥补这一缺陷。
+
 ### 相关指令
 - **insmod**: 讲指定模块加载到内核中
 - **rmmod**: 从内核中卸载指定模块
@@ -199,7 +205,7 @@ struct cred {
 
 从函数名也可以看出，执行 `commit_creds(prepare_kernel_cred(0))` 即可获得 root 权限（root 的 uid，gid 均为 0）
 
-执行 `commit_creds(prepare_kernel_cred(0))` 也是最常用的提权手段，两个函数的地址都可以在 `/proc/kallsyms` 中查看
+执行 `commit_creds(prepare_kernel_cred(0))` 也是最常用的提权手段，两个函数的地址都可以在 `/proc/kallsyms` 中查看（较老的内核版本中是 `/proc/ksyms`。
 ```bash
 post sudo grep commit_creds /proc/kallsyms 
 [sudo] m4x 的密码：
@@ -218,7 +224,11 @@ ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
 
 > canary, dep, PIE, RELRO 等保护与用户态原理和作用相同
 
-- smep:
+- smep: Supervisor Mode Execution Protection，当处理器处于 `ring0` 模式，执行 `用户空间` 的代码会触发页错误。（在 arm 中该保护称为 `PXN`)
+
+- smap: Superivisor Mode Access Protection，类似于 smep，通常是在访问数据时。
+
+- mmap_min_addr:
 
 ## CTF kernel pwn 相关
 一般会给以下三个文件

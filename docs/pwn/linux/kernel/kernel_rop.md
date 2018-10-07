@@ -23,6 +23,11 @@ ROPgadget --binary ./vmlinux > g2  1064.39s user 42.52s system 54% cpu 33:35.89 
 ```
 
 如果题目没有给 vmlinux，可以通过 [extract-vmlinux](https://github.com/torvalds/linux/blob/master/scripts/extract-vmlinux) 提取。
+```bash
+CISCN2017_babydriver [master●●] ./extract-vmlinux ./bzImage > vmlinux
+CISCN2017_babydriver [master●●] file vmlinux 
+vmlinux: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, BuildID[sha1]=e993ea9809ee28d059537a0d5e866794f27e33b4, stripped
+```
 
 看一下 start.sh
 ```bash
