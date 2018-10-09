@@ -6,7 +6,7 @@
 
 参见 [摩尔斯编码 -维基百科](https://zh.wikipedia.org/wiki/%E6%91%A9%E5%B0%94%E6%96%AF%E7%94%B5%E7%A0%81)，对应表如下
 
-![摩尔斯电码](/misc/encode/figure/morse.jpg)
+![摩尔斯电码](./figure/morse.jpg)
 
 ### 特点
 
@@ -26,13 +26,15 @@
 
 敲击码（Tap code）是一种以非常简单的方式对文本信息进行编码的方法。因该编码对信息通过使用一系列的点击声音来编码而命名，敲击码是基于 5 ×5 方格波利比奥斯方阵来实现的，不同点是是用 K 字母被整合到 C 中。
 
-```text
-1  2  3  4  5
-```
+|Tap Code|1|2|3|4|5|
+|--|--|--|--|--|--|
+|1|A|B|C/K|D|E|
+|2|F|G|H|I|J|
+|3|L|M|N|O|P|
+|4|Q|R|S|T|U|
+|5|V|W|X|Y|Z|
 
-> 1 A B C/K D E 2 F G H I J 3 L M N O P 4 Q R S T U 5 V W X Y Z
-
-![](/misc/encode/figure/tapcode.jpg)
+![](./figure/tapcode.jpg)
 
 ## 曼彻斯特编码
 

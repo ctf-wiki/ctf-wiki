@@ -79,13 +79,85 @@ A D F G X 的由来：
 
 - CrypTool
 
+### 例子
+
+这里以安恒杯 9 月 Crypto 赛题 Go 为例，题目为：
+
+> 密文：ilnllliiikkninlekile
+
+> 压缩包给了一行十六进制：546865206c656e677468206f66207468697320706c61696e746578743a203130
+
+> 请对密文解密
+
+首先对十六进制进行 hex 解码，得到字符串："The length of this plaintext: 10"
+
+密文长度为 20 ，而明文长度为 10 ，密文只有 " l "," i "," n "," k "," e " 这五个字符，联想到棋盘密码。
+
+首先试一下五个字符按字母表顺序排列：
+
+|      | e   | i   | k   | l   | n    |
+| :--- | --- | --- | --- | --- | :--- |
+| e    | A   | B   | C   | D   | E    |
+| i    | F   | G   | H   | I/J | K    |
+| k    | L   | M   | N   | O   | P    |
+| l    | Q   | R   | S   | T   | U    |
+| n    | V   | W   | X   | Y   | Z    |
+
+根据密文解密得：iytghpkqmq。
+
+这应该不是我们想要的 flag 答案。
+
+看来这五个字符排列不是这么排列的，一共有 5! 种情况，写脚本爆破：
+
+```python
+import itertools
+
+key = []
+cipher = "ilnllliiikkninlekile"
+
+for i in itertools.permutations('ilnke', 5):
+    key.append(''.join(i))
+
+for now_key in key:
+    solve_c = ""
+    res = ""
+    for now_c in cipher:
+        solve_c += str(now_key.index(now_c))
+    for i in range(0,len(solve_c),2):
+        now_ascii = int(solve_c[i])*5+int(solve_c[i+1])+97
+        if now_ascii>ord('i'):
+            now_ascii+=1
+        res += chr(now_ascii)
+    if "flag" in res:
+        print now_key,res
+```
+脚本其实就是实现棋盘密码这个算法，只是这五个字符的顺序不定。
+
+跑出下面两个结果：
+
+> linke flagishere
+
+> linek flagkxhdwd
+
+显然第一个是我们想要的答案。
+
+附上正确的密码表：
+
+|      | l   | i   | n   | k   | e    |
+| :--- | --- | --- | --- | --- | :--- |
+| l    | A   | B   | C   | D   | E    |
+| i    | F   | G   | H   | I/J | K    |
+| n    | L   | M   | N   | O   | P    |
+| k    | Q   | R   | S   | T   | U    |
+| e    | V   | W   | X   | Y   | Z    |
+
 ## Vigenere 维吉尼亚密码
 
 ### 原理
 
 维吉尼亚密码（Vigenere）是使用一系列凯撒密码组成密码字母表的加密算法，属于多表密码的一种简单形式。
 
-![维吉尼亚表格](/crypto/classical/figure/vigenere1.jpg)
+![维吉尼亚表格](./figure/vigenere1.jpg)
 
 下面给出一个例子
 
@@ -102,7 +174,7 @@ A D F G X 的由来：
 
 其次，查表得密文
 
-![维吉尼亚加密](/crypto/classical/figure/vigenere2.jpg)
+![维吉尼亚加密](./figure/vigenere2.jpg)
 
 ```
 明文：come greatwall
@@ -313,4 +385,3 @@ VBP JOZGD IVEQV HYY AIICX CSNL FWW ZVDP WVK
 -   未知关键词
     - http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-autokey-cipher/
     - **tools 文件夹下 break_autokey.py，待完成。**
-

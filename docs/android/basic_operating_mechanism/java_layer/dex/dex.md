@@ -28,7 +28,7 @@ Google 为 Android 中的 Java 代码专门设计了对应的可执行文件 DEX
 
 可变长度的类型其实都是基于 LEB128(Little-Endian Base) 类型的，可以用于表示 32 位大小的 int 数字，其根据所要表示的数字的大小来选择合适的长度。如下图所示，其中每个字节的最高位表示是否使用下一个字节，1 表示使用，0 表示不使用。故而每个字节其实只有 7 个有效的 bit 位用来表示相应的数字。如果有一个 LEB128 类型的变量使用了 5 个字节，并且第五个字节的最高位为 1 ，那说明出现了问题。
 
-![](/android/basic_operating_mechanism/java_layer/dex/figure/leb128.png)
+![](./figure/leb128.png)
 
 dalvik中读取无符号leb128类型的函数如下
 
@@ -40,7 +40,7 @@ DEX_INLINE int readUnsignedLeb128(const u1** pStream) {
         int cur = *(ptr++);     //第2个字节
         result = (result & 0x7f) | ((cur & 0x7f) << 7); //前两个字节
         if (cur > 0x7f) {
-            cur = *(ptr++); 
+            cur = *(ptr++);
             result |= (cur & 0x7f) << 14;
             if (cur > 0x7f) {
                 cur = *(ptr++);
@@ -129,7 +129,7 @@ uleb128p1类型主要是用表示无符号数，其适用于以下场景
 
 DEX文件的整体结构如下
 
-![](/android/basic_operating_mechanism/java_layer/dex/figure/dex_structure.png)
+![](./figure/dex_structure.png)
 
 主要包括三个部分
 
@@ -143,8 +143,8 @@ DEX的文件头主要包含magic字段、alder32校验值、SHA-1哈希值、str
 
 ```c++
 struct DexHeader {
-    u1  magic[8];           /* includes version number */  
-    u4  checksum;           /* adler32 checksum */  
+    u1  magic[8];           /* includes version number */
+    u4  checksum;           /* adler32 checksum */
     u1  signature[kSHA1DigestLen]; /* SHA-1 hash */
     u4  fileSize;           /* length of entire file */
     u4  headerSize;         /* offset to start of next section */
@@ -334,7 +334,7 @@ struct DexCode {
 
 可以看出在索引区指向是比较复杂的，但同时也比较巧妙，这里给出Dalvik设计者在[Google Developer Day 2008 China](https://sites.google.com/site/developerdaychina/) 演讲中给出的例子。
 
-![](/android/basic_operating_mechanism/java_layer/dex/figure/dex_structure_designer.png)
+![](./figure/dex_structure_designer.png)
 
 ### DEX 数据区
 
@@ -350,7 +350,7 @@ struct DexMapList {
     DexMapItem list[1];    /* 指向DexMapItem */
 };
 
-struct DexMapItem {   
+struct DexMapItem {
     u2 type;      /* kDexType开头的类型 */
     u2 unused;    /* 未使用，用于字节对齐 */
     u4 size;      /* 指定相应类型的个数 */

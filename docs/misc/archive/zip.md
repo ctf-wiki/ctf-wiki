@@ -49,7 +49,7 @@ ZIP 文件主要由三部分构成，分别为
 
 -   Windows下的神器 [ARCHPR](http://www.downcc.com/soft/130539.html)
 
-    ![](/misc/archive/figure/1.png)
+    ![](./figure/1.png)
 
     暴力枚举，跑字典，明文攻击，应有尽有。
 
@@ -77,17 +77,17 @@ CRC32 校验码出现在很多文件中比如 `png` 文件，同样 `zip` 中也
 
 比如我们新建一个 `flag.txt`，其中内容为 `123`，使用密码 `!QAZXSW@#EDCVFR$` 去加密。
 
-![](/misc/archive/figure/2.png)
+![](./figure/2.png)
 
 而我们去计算文件的 CRC32 值发现和上图中的 CRC32 值吻合。
 
 ```shell
-文件: flag.txt 
-大小: 3 
-时间: Tue, 29 Aug 2017 10:38:10 +0800 
-MD5: 202cb962ac59075b964b07152d234b70 
-SHA1: 40bd001563085fc35165329ea1ff5c5ecbdbbeef 
-CRC32: 884863D2 
+文件: flag.txt
+大小: 3
+时间: Tue, 29 Aug 2017 10:38:10 +0800
+MD5: 202cb962ac59075b964b07152d234b70
+SHA1: 40bd001563085fc35165329ea1ff5c5ecbdbbeef
+CRC32: 884863D2
 ```
 
 !!! note
@@ -108,8 +108,8 @@ crcdict = {}
 print "computing all possible CRCs..."
 for x in itertools.product(list(alph), repeat=4):
     st = ''.join(x)
-    testcrc = binascii.crc32(st) 
-    crcdict[struct.pack('<i', testcrc)] = st 
+    testcrc = binascii.crc32(st)
+    crcdict[struct.pack('<i', testcrc)] = st
 print "Done!"
 
 f = open('flag.zip')
@@ -168,18 +168,18 @@ Bit 1: If the compression method used was type 6,
 Bit 6: Strong encryption.  If this bit is set, you should
      set the version needed to extract value to at least
      50 and you must also set bit 0.  If AES encryption
-     is used, the version needed to extract value must 
+     is used, the version needed to extract value must
      be at least 51.
 ...
 ```
 
 在 010Editor 中我们尝试着将这 1 位修改 `0 --> 1`。
 
-![](/misc/archive/figure/4.png)
+![](./figure/4.png)
 
 再打开文件发现已要求输入密码。
 
-![](/misc/archive/figure/5.png)
+![](./figure/5.png)
 
 修改伪加密的方法：
 
@@ -192,14 +192,14 @@ Bit 6: Strong encryption.  If this bit is set, you should
 #### 例题
 
 > SSCTF-2017:我们的秘密是绿色的
-> 
+>
 > WP: <http://bobao.360.cn/ctf/detail/197.html>
 
 我们在得到两个 `readme.txt`，且一个加密，一个已知，很容易想到明文攻击的手法。
 
 注意在用明文攻击时的操作。
 
-![](/misc/archive/figure/3.png)
+![](./figure/3.png)
 
 得到密码 `Y29mZmVl` 后，解压缩文件，得到另一个压缩包。
 

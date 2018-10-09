@@ -17,8 +17,8 @@
 这里我们以 HITB 2017 的 Hack in the card I 作为例子。
 
 题目给出了公钥文件 `publickey.pem`，密文，测量智能卡功率的电路图，和**解密**过程中智能卡消耗的功率变化（通过在线网站给出 [trace](http://47.74.147.53:20015/index.html)）。
-​	
-![Circuit diagram](/crypto/asymmetric/rsa/figure/circuitdiagram.png)
+
+![Circuit diagram](./figure/circuitdiagram.png)
 
 密文：
 ```
@@ -57,7 +57,7 @@ int PowerMod(int a, int b, int c)
 
 > 有时候模乘也可能会从高位向低位进行模乘。这里是从低位向高位模乘。
 
-![](/crypto/asymmetric/rsa/figure/trace.png)
+![](./figure/trace.png)
 
 由此可给出还原 d 的脚本如下：
 

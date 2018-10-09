@@ -29,7 +29,7 @@
 
 当编写完 App 相关的代码后，我们的最后一步就是将 App 中所有使用到的资源文件进行打包，打包流程如下图（<u>http://androidsrc.net/android-app-build-overview/</u>）所示：
 
-![](/android/basic_develop/figure/android_app_build.png)
+![](./figure/android_app_build.png)
 
 具体的操作如下
 
@@ -45,7 +45,7 @@
 
 APK 文件也是一种 ZIP 文件。因此，我们可以使用解压 zip 的工具来对其进行解压。一个典型的 APK 文件的结构如下图所示。其中，关于每一部分的介绍如下
 
-![](/android/basic_develop/figure/apk_structure.png)
+![](./figure/apk_structure.png)
 
 
 - AndroidManifest.xml

@@ -1,5 +1,392 @@
 # RSA 复杂题目
 
+## 2018 Tokyo Western Mixed Cipher
+
+题目给的信息如下所示：
+
+
+- 每次交互可以维持的时间长度约为 5 分钟
+- 每次交互中中n是确定的 1024 bit，但是未知， e 为 65537
+- 使用 aes 加密了 flag，密钥和 IV 均不知道
+- 每次密钥是固定的，但是 IV 每次都会随机
+- 可以使用 encrypt 功能随意使用 rsa 和 aes 进行加密，其中每次加密都会对 aes 的 iv 进行随机
+- 可以使用 decrypt 对随意的密文进行解密，但是只能知道最后一个字节是什么
+- 可以使用 print_flag 获取 flag 密文
+- 可以使用 print_key 获取 rsa 加密的 aes 密钥
+
+本题目看似一个题目，实则是 3 个题目，需要分步骤解决。在此之前，我們準備好交互的函數
+
+```python
+def get_enc_key(io):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("4")
+    io.read_until("here is encrypted key :)n")
+    c=int(io.readline()[:-1],16)
+    return c
+
+def encrypt_io(io,p):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("1")
+    io.read_until("input plain text: ")
+    io.writeline(p)
+    io.read_until("RSA: ")
+    rsa_c=int(io.readline()[:-1],16)
+    io.read_until("AES: ")
+    aes_c=io.readline()[:-1].decode("hex")
+    return rsa_c,aes_c
+
+def decrypt_io(io,c):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("2")
+    io.read_until("input hexencoded cipher text: ")
+    io.writeline(long_to_bytes(c).encode("hex"))
+    io.read_until("RSA: ")
+    return io.read_line()[:-1].decode("hex")
+```
+
+### GCD attack n
+
+第一步我们需要把没有给出的 n 算出来，因为我们可以利用 encrypt 功能对我们输入的明文 x 进行 rsa 加密，那么可以利用整除的性质算 n
+
+```python
+因为x ^ e = c mod n
+所以 n | x ^ e - c
+```
+我们可以构造足够多的 x，算出最够多的 x ^ e - c，从而计算最大公约数，得到 n。
+
+```
+def get_n(io):
+    rsa_c,aes_c=encrypt_io(io,long_to_bytes(2))
+    n=pow(2,65537)-rsa_c
+    for i in range(3,6):
+        rsa_c, aes_c = encrypt_io(io, long_to_bytes(i))
+        n=primefac.gcd(n,pow(i,65537)-rsa_c)
+    return n
+```
+
+可以利用加密进行 check
+
+```python
+def check_n(io,n):
+    rsa_c, aes_c = encrypt_io(io, "123")
+    if pow(bytes_to_long("123"), e, n)==rsa_c:
+        return True
+    else:
+        return False
+```
+
+### RSA parity oracle
+
+利用 leak 的的最后一个字节，我们可以进行选择密文攻击，使用 RSA parity oracle 回复 aes 的秘钥
+
+```python
+def guess_m(io,n,c):
+    k=1
+    lb=0
+    ub=n
+    while ub!=lb:
+        print lb,ub
+        tmp = c * gmpy2.powmod(2, k*e, n) % n
+        if ord(decrypt_io(io,tmp)[-1])%2==1:
+            lb = (lb + ub) / 2
+        else:
+            ub = (lb + ub) / 2
+        k+=1
+    print ub,len(long_to_bytes(ub))
+    return ub
+```
+
+### PRNG Predict
+
+这里我们可以解密 flag 的16字节之后的内容了，但是前16个字节没有 IV 是解密不了的。这时我们可以发现，IV 生成使用的随机数使用了 getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行 PRNG 的 predict，从而直接获取随机数
+
+这里使用了一个现成的的 java 进行 PRNG 的 Predict
+
+```java
+public class Main {
+
+   static int[] state;
+   static int currentIndex;
+40huo
+   public static void main(String[] args) {
+      state = new int[624];
+      currentIndex = 0;
+
+//    initialize(0);
+
+//    for (int i = 0; i < 5; i++) {
+//       System.out.println(state[i]);
+//    }
+
+      // for (int i = 0; i < 5; i++) {
+      // System.out.println(nextNumber());
+      // }
+
+      if (args.length != 624) {
+         System.err.println("must be 624 args");
+         System.exit(1);
+      }
+      int[] arr = new int[624];
+      for (int i = 0; i < args.length; i++) {
+         arr[i] = Integer.parseInt(args[i]);
+      }
+
+
+      rev(arr);
+
+      for (int i = 0; i < 6240huo4; i++) {
+         System.out.println(state[i]);
+      }
+
+//    System.out.println("currentIndex " + currentIndex);
+//    System.out.println("state[currentIndex] " + state[currentIndex]);
+//    System.out.println("next " + nextNumber());
+
+      // want -2065863258
+   }
+
+   static void nextState() {
+      // Iterate through the state
+      for (int i = 0; i < 624; i++) {
+         // y is the first bit of the current number,
+         // and the last 31 bits of the next number
+         int y = (state[i] & 0x80000000)
+               + (state[(i + 1) % 624] & 0x7fffffff);
+         // first bitshift y by 1 to the right
+         int next = y >>> 1;
+         // xor it with the 397th next number
+         next ^= state[(i + 397) % 624];
+         // if y is odd, xor with magic number
+         if ((y & 1L) == 1L) {
+            next ^= 0x9908b0df;
+         }
+         // now we have the result
+         state[i] = next;
+      }
+   }
+
+   static int nextNumber() {
+      currentIndex++;
+      int tmp = state[currentIndex];
+      tmp ^= (tmp >>> 11);
+      tmp ^= (tmp << 7) & 0x9d2c5680;
+      tmp ^= (tmp << 15) & 0xefc60000;
+      tmp ^= (tmp >>> 18);
+      return tmp;
+   }
+
+   static void initialize(int seed) {
+
+      // http://code.activestate.com/recipes/578056-mersenne-twister/
+
+      // global MT
+      // global bitmask_1
+      // MT[0] = seed
+      // for i in xrange(1,624):
+      // MT[i] = ((1812433253 * MT[i-1]) ^ ((MT[i-1] >> 30) + i)) & bitmask_1
+
+      // copied Python 2.7's impl (probably uint problems)
+      state[0] = seed;
+      for (int i = 1; i < 624; i++) {
+         state[i] = ((1812433253 * state[i - 1]) ^ ((state[i - 1] >> 30) + i)) & 0xffffffff;
+      }
+   }
+
+   static int unBitshiftRightXor(int value, int shift) {
+      // we part of the value we are up to (with a width of shift bits)
+      int i = 0;
+      // we accumulate the result here
+      int result = 0;
+      // iterate until we've done the full 32 bits
+      while (i * shift < 32) {
+         // create a mask for this part
+         int partMask = (-1 << (32 - shift)) >>> (shift * i);
+         // obtain the part
+         int part = value & partMask;
+         // unapply the xor from the next part of the integer
+         value ^= part >>> shift;
+         // add the part to the result
+         result |= part;
+         i++;
+      }
+      return result;
+   }
+
+   static int unBitshiftLeftXor(int value, int shift, int mask) {
+      // we part of the value we are up to (with a width of shift bits)
+      int i = 0;
+      // we accumulate the result here
+      int result = 0;
+      // iterate until we've done the full 32 bits
+      while (i * shift < 32) {
+         // create a mask for this part
+         int partMask = (-1 >>> (32 - shift)) << (shift * i);
+         // obtain the part
+         int part = value & partMask;
+         // unapply the xor from the next part of the integer
+         value ^= (part << shift) & mask;
+         // add the part to the result
+         result |= part;
+         i++;
+      }
+      return result;
+   }
+
+   static void rev(int[] nums) {
+      for (int i = 0; i < 624; i++) {
+
+         int value = nums[i];
+         value = unBitshiftRightXor(value, 18);
+         value = unBitshiftLeftXor(value, 15, 0xefc60000);
+         value = unBitshiftLeftXor(value, 7, 0x9d2c5680);
+         value = unBitshiftRightXor(value, 11);
+
+         state[i] = value;
+      }
+   }
+}
+```
+
+写了一个 python 直接调用 java
+
+```
+from Crypto.Util.number import long_to_bytes,bytes_to_long
+
+
+
+def encrypt_io(io,p):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("1")
+    io.read_until("input plain text: ")
+    io.writeline(p)
+    io.read_until("RSA: ")
+    rsa_c=int(io.readline()[:-1],16)
+    io.read_until("AES: ")
+    aes_c=io.readline()[:-1].decode("hex")
+    return rsa_c,aes_c
+import subprocess
+import random
+def get_iv(io):
+    rsa_c, aes_c=encrypt_io(io,"1")
+    return bytes_to_long(aes_c[0:16])
+def splitInto32(w128):
+    w1 = w128 & (2**32-1)
+    w2 = (w128 >> 32) & (2**32-1)
+    w3 = (w128 >> 64) & (2**32-1)
+    w4 = (w128 >> 96)
+    return w1,w2,w3,w4
+def sign(iv):
+    # converts a 32 bit uint to a 32 bit signed int
+    if(iv&0x80000000):
+        iv = -0x100000000 + iv
+    return iv
+def get_state(io):
+    numbers=[]
+    for i in range(156):
+        print i
+        numbers.append(get_iv(io))
+    observedNums = [sign(w) for n in numbers for w in splitInto32(n)]
+    o = subprocess.check_output(["java", "Main"] + map(str, observedNums))
+    stateList = [int(s) % (2 ** 32) for s in o.split()]
+    r = random.Random()
+    state = (3, tuple(stateList + [624]), None)
+    r.setstate(state)
+    return r.getrandbits(128)
+```
+
+### EXP
+
+整体攻击代码如下：
+
+```python
+from zio import *
+import primefac
+from Crypto.Util.number import long_to_bytes,bytes_to_long
+target=("crypto.chal.ctf.westerns.tokyo",5643)
+e=65537
+
+def get_enc_key(io):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("4")
+    io.read_until("here is encrypted key :)n")
+    c=int(io.readline()[:-1],16)
+    return c
+
+def encrypt_io(io,p):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("1")
+    io.read_until("input plain text: ")
+    io.writeline(p)
+    io.read_until("RSA: ")
+    rsa_c=int(io.readline()[:-1],16)
+    io.read_until("AES: ")
+    aes_c=io.readline()[:-1].decode("hex")
+    return rsa_c,aes_c
+
+def decrypt_io(io,c):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("2")
+    io.read_until("input hexencoded cipher text: ")
+    io.writeline(long_to_bytes(c).encode("hex"))
+    io.read_until("RSA: ")
+    return io.read_line()[:-1].decode("hex")
+
+def get_n(io):
+    rsa_c,aes_c=encrypt_io(io,long_to_bytes(2))
+    n=pow(2,65537)-rsa_c
+    for i in range(3,6):
+        rsa_c, aes_c = encrypt_io(io, long_to_bytes(i))
+        n=primefac.gcd(n,pow(i,65537)-rsa_c)
+    return n
+
+def check_n(io,n):
+    rsa_c, aes_c = encrypt_io(io, "123")
+    if pow(bytes_to_long("123"), e, n)==rsa_c:
+        return True
+    else:
+        return False
+
+
+import gmpy2
+def guess_m(io,n,c):
+    k=1
+    lb=0
+    ub=n
+    while ub!=lb:
+        print lb,ub
+        tmp = c * gmpy2.powmod(2, k*e, n) % n
+        if ord(decrypt_io(io,tmp)[-1])%2==1:
+            lb = (lb + ub) / 2
+        else:
+            ub = (lb + ub) / 2
+        k+=1
+    print ub,len(long_to_bytes(ub))
+    return ub
+
+
+io = zio(target, timeout=10000, print_read=COLORED(NONE, 'red'),print_write=COLORED(NONE, 'green'))
+n=get_n(io)
+print check_n(io,n)
+c=get_enc_key(io)
+print len(decrypt_io(io,c))==16
+
+
+m=guess_m(io,n,c)
+for i in range(m - 50000,m+50000):
+    if pow(i,e,n)==c:
+        aeskey=i
+        print long_to_bytes(aeskey)[-1]==decrypt_io(io,c)[-1]
+        print "found aes key",hex(aeskey)
+
+import fuck_r
+next_iv=fuck_r.get_state(io)
+print "##########################################"
+print next_iv
+print aeskey
+io.interact()
+```
+
+
 ## 2016 ASIS Find the flag
 
 这里我们以 ASIS 2016 线上赛中 Find the flag 为例进行介绍。
