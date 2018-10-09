@@ -1,7 +1,7 @@
 
 # Canary
 
-## **0.Introduction** 
+## **Introduction** 
 由于stack overflow而引发的攻击非常普遍也非常古老, 相应地一种叫做canary的 mitigation技术很早就出现在gcc/glibc里, 直到现在也作为系统安全的第一道防线存在。
 
 canary不管是实现还是设计思想都比较简单高效, 就是插入一个值, 在stack overflow发生的 高危区域的尾部, 当函数返回之时检测canary的值是否经过了改变, 以此来判断stack/buffer overflow是否发生.
@@ -10,8 +10,8 @@ Canary与windows下的GS保护都是防止栈溢出的有效手段，它的出�
 
 <!-- more -->
 
-## **1.Canary 原理**
-### **1.1在GCC中使用Canary**
+## **Canary 原理**
+### **在GCC中使用Canary**
 可以在GCC中使用以下参数设置Canary:
 
 ```cpp
@@ -22,7 +22,7 @@ Canary与windows下的GS保护都是防止栈溢出的有效手段，它的出�
 -fno-stack-protector 禁用保护.
 ```
 
-### **1.2Canary实现原理**
+### **Canary实现原理**
 
 开启Canary保护的stack结构大概如下
 
@@ -122,17 +122,17 @@ security_init (void)
 ```
 
 
-## **2.Canary绕过技术**
+## **Canary绕过技术**
 
-### **2.1 序言**
+### **序言**
 Canary是一种十分有效的解决栈溢出问题的漏洞缓解措施。但是并不意味着Canary就能够阻止所有的栈溢出利用，在这里给出了常见的存在Canary的栈溢出利用思路，请注意每种方法都有特定的环境要求。
 
-### **2.2 泄露栈中的Canary**
+### **泄露栈中的Canary**
 Canary设计为以字节"\x00"结尾，本意是为了保证Canary可以截断字符串。
 泄露栈中的Canary的思路是覆盖Canary的低字节，来打印出剩余的Canary部分。
 这种利用方式需要存在合适的输出函数，并且可能需要第一溢出泄露Canary，之后再次溢出控制执行流程。
 
-### **2.3 one-by-one爆破Canary**
+### **one-by-one爆破Canary**
 
 对于Canary，不仅每次进程重启后的Canary不同(相比GS，GS重启后是相同的)，而且同一个进程中的每个线程的Canary也不同。
 但是存在一类通过fork函数开启子进程交互的题目，因为fork函数会直接拷贝父进程的内存，因此每次创建的子进程的Canary是相同的。我们可以利用这样的特点，彻底逐个字节将Canary爆破出来。
@@ -164,17 +164,17 @@ print "   [+] SSP value is 0x%s" % canary
 ```
 
 
-### **2.4劫持__stack_chk_fail函数**
+### **劫持__stack_chk_fail函数**
 已知Canary失败的处理逻辑会进入到stack_chk_failed函数，stack_chk_failed函数是一个普通的延迟绑定函数，可以通过修改GOT表劫持这个函数。
 
 参见ZCTF2017 Login，利用方式是通过fsb漏洞篡改__stack_chk_fail的GOT表，再进行ROP利用
 
-### **2.5覆盖TLS中储存的Canary值**
+### **覆盖TLS中储存的Canary值**
 
 已知Canary储存在TLS中，在函数返回前会使用这个值进行对比。当溢出尺寸较大时，可以同时覆盖栈上储存的Canary和TLS储存的Canary实现绕过。
 
 
-## **3.利用示例**
+## **利用示例**
 
 存在漏洞的示例源代码如下:
 
@@ -204,13 +204,12 @@ int main(void) {
 ```
 
 编译为32bit程序，开启NX，ASLR，Canary保护
-![-w600](media/15107152089668/15107154540302.jpg)
 
-### **3.1泄露Canary示例**
+### **泄露Canary示例**
 首先通过覆盖Canary最后一个"\x00"字节来打印出4位的Canary
 之后，计算好偏移，将Canary填入到相应的溢出位置，实现Ret到getshell函数中
 
-```cpp
+```python
 #!/usr/bin/env python
 
 from pwn import *
@@ -243,7 +242,7 @@ io.interactive()
 ```
 
 
-### **3.2劫持__stack_chk_fail示例**
+### **劫持__stack_chk_fail示例**
 在`__stack__chk_fail`函数的plt地址附近找到一条ret指令。
 让程序即使出错也不abort，从而实现BOF利用，return 到getshell中即可。
 我们已知`__stack__chk_fail`的plt地址为:0x8048450,在没有lazy binding前它中存放的应该时plt的一条指令的地址，我们就在这附近搜索，寻找ret指令，或者其他相关指令
