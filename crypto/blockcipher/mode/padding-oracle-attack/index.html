@@ -4703,7 +4703,7 @@ $$
 <p>具体利用思路如下</p>
 <ol>
 <li>绕过 proof of work。</li>
-<li>获取 token 加密后的结果 <code>token_enc</code> ，这里会在 token 前面添加 7 个字节 <code>&quot;token: &quot;</code> 。 因此加密后的长度为 64。</li>
+<li>获取 token 加密后的结果 <code>token_enc</code> ，这里会在 token 前面添加 7 个字节 <code>"token: "</code> 。 因此加密后的长度为 64。</li>
 <li>依次获取 <code>encrypt(md5(token[:i]))</code> 的结果，一共是 57 个，包括最后一个 token 的 padding。</li>
 <li>构造与 unpad 大小对应的样本。这里我们构造密文 <code>token_enc|padding|IV_indexi|welcome_enc</code>。由于 <code>IV_indexi</code> 是为了修改最后一个明文块的最后一个字节，所以该字节处于变化之中。我们若想获取一些固定字节的哈希值，这部分自然不能添加。因此这里产生样本时 unpad 的大小范围为 17 ~ 255。如果最后测试时 <code>md5(token[:i])</code> 的最后一个字节小于17的话，基本就会出现一些未知的样本。很自然的一个想法是我们直接获取 255-17+1个这么多个样本，然而，如果这样做的话，根据上面 340 的次数（255-17+1+57+56&gt;340）限制，我们显然不能获取到 token 的所有字节。所以这里我们需要想办法复用一些内容，这里我们选择复用  <code>encrypt(md5(token[:i]))</code>  的结果。那么我们在补充 padding 时需要确保一方面次数够用，另一方面可以复用之前的结果。这里我们设置 unpad 的循环为 17 到 208，并使得 unpad 大于 208 时恰好 unpad 到我们可以复用的地方。这里需要注意的是，当 <code>md5(token[:i])</code> 的最后一个字节为 0 时，会将所有解密后的明文 unpad 掉，因此会出现 command not found 的密文。</li>
 <li>再次构造密文 <code>token_enc|padding|IV|encrypt(md5(token[:i]))</code> ，那么，解密时即使用 <code>md5(token[:i])</code> 的最后一个字节进行 unpad。如果这个字节不小于17或者为0，则可以处理。如果这个字节小于17，那么显然，最后返回给用户的 md5 的结果并不在样本范围内，那么我们修改其最后一个字节的最高比特位，使其 unpad 后可以落在样本范围内。这样，我们就可以猜出 <code>md5(token[:i])</code> 的最后一个字节。</li>
@@ -5129,7 +5129,7 @@ server.py
 </form>
 <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
 <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
-<script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
+<script src="https://cdnjs.loli.net/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js"></script>
 <script>
     const gitalk = new Gitalk({
         clientID: 'd78d2e8d782d95560289',
