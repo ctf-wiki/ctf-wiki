@@ -58,7 +58,7 @@ je     0x4005d7 <main+65>
 call   0x400460 <__stack_chk_fail@plt>
 ```
 
-如果 canary 已经被非法修改，此时程序流程会走到 \_\_stack\_chk\_fail。\_\_stack\_chk\_fail 也是位于 glibc 中的函数，默认情况下经过 ELF 的延迟绑定，定义如下。
+如果 canary 已经被非法修改，此时程序流程会走到 `__stack_chk_fail`。`__stack_chk_fail` 也是位于 glibc 中的函数，默认情况下经过 ELF 的延迟绑定，定义如下。
 
 ```C
 eglibc-2.19/debug/stack_chk_fail.c
@@ -77,7 +77,7 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 }
 ```
 
-这意味可以通过劫持 \_\_stack\_chk\_fail的got值劫持流程或者利用 \_\_stack\_chk\_fail 泄漏内容(参见 stack smash)。
+这意味可以通过劫持 `__stack_chk_fail`的got值劫持流程或者利用 `__stack_chk_fail` 泄漏内容(参见 stack smash)。
 
 进一步，对于 Linux 来说，fs 寄存器实际指向的是当前栈的 TLS 结构，fs:0x28 指向的正是 stack\_guard。
 ```C
@@ -231,9 +231,9 @@ print "   [+] SSP value is 0x%s" % canary
 
 
 ### 劫持__stack_chk_fail函数
-已知 Canary 失败的处理逻辑会进入到 \_\_stack\_chk\_failed 函数，\_\_stack\_chk\_failed 函数是一个普通的延迟绑定函数，可以通过修改 GOT 表劫持这个函数。
+已知 Canary 失败的处理逻辑会进入到 `__stack_chk_fail`ed 函数，`__stack_chk_fail`ed 函数是一个普通的延迟绑定函数，可以通过修改 GOT 表劫持这个函数。
 
-参见 ZCTF2017 Login，利用方式是通过 fsb 漏洞篡改 \_\_stack\_chk\_fail 的 GOT 表，再进行 ROP 利用
+参见 ZCTF2017 Login，利用方式是通过 fsb 漏洞篡改 `__stack_chk_fail` 的 GOT 表，再进行 ROP 利用
 
 ### 覆盖 TLS 中储存的 Canary 值
 
