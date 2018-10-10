@@ -1,6 +1,6 @@
 # bypass-smep
 ## SMEP 
-为了防止 `ret2usr` 攻击，内核开发者提出了 `smep` 保护，smep 全程(Supervisor Mode Execution Protection)，是内核的一种保护措施，作用是当 CPU 处于 `ring0` 模式时，执行 `用户空间的代码` 会触发页错误；这个保护在 arm 中被称为 `PXN`。
+为了防止 `ret2usr` 攻击，内核开发者提出了 `smep` 保护，smep 全称 `Supervisor Mode Execution Protection`，是内核的一种保护措施，作用是当 CPU 处于 `ring0` 模式时，执行 `用户空间的代码` 会触发页错误；这个保护在 arm 中被称为 `PXN`。
 
 通过 qemu 启动内核时的选项可以判断是否开启了 smep 保护。
 ```bash
@@ -147,7 +147,7 @@ struct tty_operations {
 } __randomize_layout;
 ```
 
-大把的函数指针（pwn 手的风水宝地），因此设想构造下图所示结构体
+大把的函数指针（ pwn 手的风水宝地），因此设想构造下图所示结构体
 ```
 fake_tty_struct  fake_tty_operations
 +---------+      +----------+
