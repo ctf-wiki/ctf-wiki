@@ -4384,7 +4384,7 @@
 <span class="nf">call</span>   <span class="mh">0x400460</span> <span class="p">&lt;</span><span class="no">__stack_chk_fail@plt</span><span class="p">&gt;</span>
 </pre></div>
 
-<p>如果 canary 已经被非法修改，此时程序流程会走到 __stack_chk_fail。__stack_chk_fail 也是位于 glibc 中的函数，默认情况下经过 ELF 的延迟绑定，定义如下。</p>
+<p>如果 canary 已经被非法修改，此时程序流程会走到 <code>__stack_chk_fail</code>。<code>__stack_chk_fail</code> 也是位于 glibc 中的函数，默认情况下经过 ELF 的延迟绑定，定义如下。</p>
 <div class="codehilite"><pre><span></span><span class="n">eglibc</span><span class="o">-</span><span class="mf">2.19</span><span class="o">/</span><span class="n">debug</span><span class="o">/</span><span class="n">stack_chk_fail</span><span class="p">.</span><span class="n">c</span>
 
 <span class="kt">void</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">noreturn</span><span class="p">))</span> <span class="n">__stack_chk_fail</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
@@ -4401,7 +4401,7 @@
 <span class="p">}</span>
 </pre></div>
 
-<p>这意味可以通过劫持 __stack_chk_fail的got值劫持流程或者利用 __stack_chk_fail 泄漏内容(参见 stack smash)。</p>
+<p>这意味可以通过劫持 <code>__stack_chk_fail</code>的got值劫持流程或者利用 <code>__stack_chk_fail</code> 泄漏内容(参见 stack smash)。</p>
 <p>进一步，对于 Linux 来说，fs 寄存器实际指向的是当前栈的 TLS 结构，fs:0x28 指向的正是 stack_guard。
 <div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span>
 <span class="p">{</span>
@@ -4536,8 +4536,8 @@
 </pre></div>
 
 <h3 id="__stack_chk_fail">劫持__stack_chk_fail函数<a class="headerlink" href="#__stack_chk_fail" title="Permanent link">&para;</a></h3>
-<p>已知 Canary 失败的处理逻辑会进入到 __stack_chk_failed 函数，__stack_chk_failed 函数是一个普通的延迟绑定函数，可以通过修改 GOT 表劫持这个函数。</p>
-<p>参见 ZCTF2017 Login，利用方式是通过 fsb 漏洞篡改 __stack_chk_fail 的 GOT 表，再进行 ROP 利用</p>
+<p>已知 Canary 失败的处理逻辑会进入到 <code>__stack_chk_fail</code>ed 函数，<code>__stack_chk_fail</code>ed 函数是一个普通的延迟绑定函数，可以通过修改 GOT 表劫持这个函数。</p>
+<p>参见 ZCTF2017 Login，利用方式是通过 fsb 漏洞篡改 <code>__stack_chk_fail</code> 的 GOT 表，再进行 ROP 利用</p>
 <h3 id="tls-canary">覆盖 TLS 中储存的 Canary 值<a class="headerlink" href="#tls-canary" title="Permanent link">&para;</a></h3>
 <p>已知 Canary 储存在 TLS 中，在函数返回前会使用这个值进行对比。当溢出尺寸较大时，可以同时覆盖栈上储存的 Canary 和 TLS 储存的 Canary 实现绕过。</p>
 <p>参见 StarCTF2018 babystack</p>
