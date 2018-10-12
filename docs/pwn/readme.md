@@ -18,6 +18,8 @@ https://github.com/Escapingbug/awesome-browser-exploit
 
 ## Kernel Pwn
 
-Windows Kernel
+### Windows Kernel
 
-Linux Kernel
+### Linux Kernel
+Linux kernel 的漏洞，就 CTF 而言，多是 LKM 的漏洞，通过这些漏洞达到提权以及获取稳定 shell 等目的。
+

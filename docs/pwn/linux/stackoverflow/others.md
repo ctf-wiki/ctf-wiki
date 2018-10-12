@@ -334,9 +334,11 @@ pwndbg> distance 0x7ffceaf111d0 0x7ffceaf11160
 0x7ffceaf111d0->0x7ffceaf11160 is -0x70 bytes (-0xe words)
 ```
 
-leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了, 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 sub\_400676 函数来 leak libc。 
+leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了。 
+
+比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 `sub_400676` 函数来 leak libc。 
 	 
-然后在下一次利用时就可以通过 rop 执行 system("/bin/sh") 或 execve("/bin/sh", 0, 0)来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 execve("/bin/sh", 0, 0) 的利用链, 这种方法更稳妥(system("/bin/sh") 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过调试来确定
+然后在下一次利用时就可以通过 rop 执行 `system("/bin/sh")` 或 `execve("/bin/sh", 0, 0)` 来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 `execve("/bin/sh", 0, 0)` 的利用链, 这种方法更稳妥(`system("/bin/sh")` 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过调试来确定
 
 #### exp
 ```python
@@ -388,7 +390,7 @@ io.interactive()
 ### 原理
 
 
-在程序加了canary 保护之后，如果我们读取的 buffer 覆盖了对应的值时，程序就会报错，而一般来说我们并不会关心报错信息。而 stack smash 技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序启动 canary 保护之后，如果发现 canary 被修改的话，程序就会执行 __stack_chk_fail 函数来打印 argv[0] 指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
+在程序加了canary 保护之后，如果我们读取的 buffer 覆盖了对应的值时，程序就会报错，而一般来说我们并不会关心报错信息。而 stack smash 技巧则就是利用打印这一信息的程序来得到我们想要的内容。这是因为在程序启动 canary 保护之后，如果发现 canary 被修改的话，程序就会执行 `__stack_chk_fail` 函数来打印 argv[0] 指针所指向的字符串，正常情况下，这个指针指向了程序名。其代码如下
 
 ```C
 void __attribute__ ((noreturn)) __stack_chk_fail (void)
@@ -404,7 +406,7 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 }
 ```
 
-所以说如果我们利用栈溢出覆盖 argv[0] 为我们想要输出的字符串的地址，那么在 __fortify_fail 函数中就会输出我们想要的信息。
+所以说如果我们利用栈溢出覆盖 argv[0] 为我们想要输出的字符串的地址，那么在 `__fortify_fail` 函数中就会输出我们想要的信息。
 
 ### 例子
 
@@ -463,7 +465,7 @@ LABEL_8:
 }
 ```
 
-很显然，程序在 _IO_gets((__int64)&v4); 存在栈溢出。
+很显然，程序在 `_IO_gets((__int64)&v4)`; 存在栈溢出。
 
 此外，程序中还提示要 overwrite flag。而且发现程序很有意思的在 while 循环之后执行了这条语句
 
@@ -596,7 +598,7 @@ Breakpoint 1, 0x00000000004006d0 in ?? ()
 .text:000000000040080E                 call    __IO_gets
 ```
 
-我们可以确定我们读入的字符串的起始地址其实就是调用 __IO_gets 之前的 rsp，所以我们把断点下在 call 处，如下
+我们可以确定我们读入的字符串的起始地址其实就是调用 `__IO_gets` 之前的 rsp，所以我们把断点下在 call 处，如下
 
 ```asm
 gef➤  b *0x000000000040080E
@@ -727,7 +729,9 @@ __int64 sub_960()
 这样我们只要控制 rip 到该函数即可
 
 #### leak canary
-在第一次 read 之后紧接着就有一个输出, 而 read 并不会给输入的末尾加上 \0, 这就给了我们 leak 栈上内容的机会, 为了第二次溢出能控制返回地址, 我们选择 leak canary. 可以计算出第一次 read 需要的长度为 0x30 - 0x8 + 1 (+ 1 是为了覆盖 canary 的最低位为非 0 的值, printf 使用 %s 时, 遇到 \0 结束, 覆盖 canary 低位为非 0 值时, canary 就可以被 printf 打印出来了)
+在第一次 read 之后紧接着就有一个输出, 而 read 并不会给输入的末尾加上 \0, 这就给了我们 leak 栈上内容的机会。
+
+为了第二次溢出能控制返回地址, 我们选择 leak canary. 可以计算出第一次 read 需要的长度为 0x30 - 0x8 + 1 (+ 1 是为了覆盖 canary 的最低位为非 0 的值, printf 使用 %s 时, 遇到 \0 结束, 覆盖 canary 低位为非 0 值时, canary 就可以被 printf 打印出来了)
 
 ```asm
 Breakpoint 1, 0x0000557c8443aa08 in ?? ()
@@ -782,6 +786,7 @@ canary 在 rbp - 0x8 的位置上, 可以看出此时 canary 的低位已经被�
 
 #### 覆盖返回地址
 有了 canary 后, 就可以通过第二次的栈溢出来改写返回地址了, 控制返回地址到 getshell 函数即可, 我们先看一下没溢出时的返回地址
+
 ```asm
 0x000055dc43694a1e in ?? ()
 LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
@@ -836,7 +841,7 @@ pwndbg> x/10i (0x0A3E+0x55dc43694000)
    0x55dc43694a52:	mov    rbp,rsp
    0x55dc43694a55:	sub    rsp,0x10
 ```
-可以发现, 此时的返回地址与 get shell 函数的地址只有低位的 16 bit 不同, 如果覆写低 16 bit 为 0x?A3E, 就有一定的几率 get shell
+可以发现, 此时的返回地址与 get shell 函数的地址只有低位的 16 bit 不同, 如果覆写低 16 bit 为 `0x?A3E`, 就有一定的几率 get shell
 
 最终的脚本如下:
 ```python

@@ -86,7 +86,7 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 
 #### (s)brk
 
-对于堆的操作，操作系统提供了 brk 函数，glibc 库提供了 sbrk 函数，我们可以通过增加 [brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365) (program break location, the program break is the address of the first location beyond the current end of the data region, https://en.wikipedia.org/wiki/Sbrk)的大小来向操作系统申请内存。
+对于堆的操作，操作系统提供了 brk 函数，glibc 库提供了 sbrk 函数，我们可以通过增加 [brk](https://en.wikipedia.org/wiki/Sbrk) 的大小来向操作系统申请内存。
 
 初始时，堆的起始地址 [start_brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365) 以及堆的当前末尾 [brk](http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365) 指向同一地址。根据是否开启ASLR，两者的具体位置会有所不同
 
