@@ -4695,18 +4695,18 @@
 <p>那么我们上面所利用的修改 GOT 表项的方法就可能不可用了。但是我们可以通过伪造的方式绕过这个机制。</p>
 <p>首先我们通过覆盖，将 nextchunk 的 FD 指针指向了 fakeFD，将 nextchunk 的 BK 指针指向了 fakeBK 。那么为了通过验证，我们需要</p>
 <ul>
-<li>fakeFD-&gt;bk == P    &lt;=&gt;    *(fakeFD+12)== P</li>
-<li>fakeBK-&gt;fd == P    &lt;=&gt;    *(fakeBK+8) == P</li>
+<li><code>fakeFD -&gt; bk == P</code>  &lt;=&gt;  <code>*(fakeFD + 12) == P</code></li>
+<li><code>fakeBK -&gt; fd == P</code>  &lt;=&gt;  <code>*(fakeBK + 8) == P</code></li>
 </ul>
 <p>当满足上述两式时，可以进入 Unlink 的环节，进行如下操作：</p>
 <ul>
-<li>fakeFD-&gt;bk=fakeBK    &lt;=&gt;    *(fakeFD+12)=fakeBK</li>
-<li>fakeBK-&gt;fd=fakeFD    &lt;=&gt;    *(fakeBK+8)=fakeFD</li>
+<li><code>fakeFD -&gt; bk = fakeBK</code>  &lt;=&gt;  <code>*(fakeFD + 12) = fakeBK</code></li>
+<li><code>fakeBK -&gt; fd = fakeFD</code>  &lt;=&gt;  <code>*(fakeBK + 8) = fakeFD</code></li>
 </ul>
-<p>如果让 fakeFD+12 和 fakeBK+8 指向同一个指向P的指针，那么：</p>
+<p>如果让 fakeFD + 12 和 fakeBK + 8 指向同一个指向P的指针，那么：</p>
 <ul>
-<li>*P = P - 8</li>
-<li>*P = P - 12</li>
+<li><code>*P = P - 8</code></li>
+<li><code>*P = P - 12</code></li>
 </ul>
 <p>即通过此方式，P 的指针指向了比自己低 12 的地址处。此方法虽然不可以实现任意地址写，但是可以修改指向 chunk 的指针，这样的修改是可以达到一定的效果的。</p>
 <p>如果我们想要使得两者都指向 P，只需要按照如下方式修改即可</p>
