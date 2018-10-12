@@ -74,18 +74,18 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 首先我们通过覆盖，将 nextchunk 的 FD 指针指向了 fakeFD，将 nextchunk 的 BK 指针指向了 fakeBK 。那么为了通过验证，我们需要
 
-- fakeFD->bk == P    <=>    *(fakeFD+12)== P
-- fakeBK->fd == P    <=>    *(fakeBK+8) == P
+- `fakeFD -> bk == P`  <=>  `*(fakeFD + 12) == P`
+- `fakeBK -> fd == P`  <=>  `*(fakeBK + 8) == P`
 
 当满足上述两式时，可以进入 Unlink 的环节，进行如下操作：
 
-- fakeFD->bk=fakeBK    <=>    *(fakeFD+12)=fakeBK
-- fakeBK->fd=fakeFD    <=>    *(fakeBK+8)=fakeFD
+- `fakeFD -> bk = fakeBK`  <=>  `*(fakeFD + 12) = fakeBK`
+- `fakeBK -> fd = fakeFD`  <=>  `*(fakeBK + 8) = fakeFD`
 
-如果让 fakeFD+12 和 fakeBK+8 指向同一个指向P的指针，那么：
+如果让 fakeFD + 12 和 fakeBK + 8 指向同一个指向P的指针，那么：
 
-- *P = P - 8
-- *P = P - 12
+- `*P = P - 8`
+- `*P = P - 12`
 
 即通过此方式，P 的指针指向了比自己低 12 的地址处。此方法虽然不可以实现任意地址写，但是可以修改指向 chunk 的指针，这样的修改是可以达到一定的效果的。
 

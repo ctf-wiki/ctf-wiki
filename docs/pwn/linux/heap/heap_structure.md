@@ -397,7 +397,7 @@ mem指向用户得到的内存的起始位置。
 
 在具体的实现中，ptmalloc 采用分箱式方法对空闲的 chunk 进行管理。首先，它会根据空闲的 chunk 的大小以及使用状态将 chunk 初步分为4类：fast bins，small bins，large bins，unsorted bin。每类中仍然有更细的划分，相似大小的 chunk 会用双向链表链接起来。也就是说，在每类 bin 的内部仍然会有多个互不相关的链表来保存不同大小的 chunk。
 
-对于 small bins，large bins，unsorted bin 来说，Ptmalloc 将它们维护在同一个数组中。这些bin对应的数据结构在 malloc_state 中，如下
+对于 small bins，large bins，unsorted bin 来说，ptmalloc 将它们维护在同一个数组中。这些bin对应的数据结构在 malloc_state 中，如下
 
 ```c++
 #define NBINS 128
