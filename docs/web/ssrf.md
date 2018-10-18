@@ -37,7 +37,7 @@ SSRF，Server-Side Request Forgery，服务端请求伪造，是一种由攻击�
     ?>
     ```
 
-    这段代码使用 `file_get_contents` 函数从用户指定的 URL 获取图片。然后把它用一个随即文件名保存在硬盘上，并展示给用户。
+    这段代码使用 `file_get_contents` 函数从用户指定的 URL 获取图片。然后把它用一个随机文件名保存在硬盘上，并展示给用户。
 
 2.  `fsockopen()`
 
