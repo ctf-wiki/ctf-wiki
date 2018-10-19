@@ -1,8 +1,8 @@
-# 整数域上的离散对数
+# 离散对数
 
 ## 基本定义
 
-在了解整数域上的离散对数时，我们先来了解几个基本定义
+在了解离散对数时，我们先来了解几个基本定义。
 
 **定义1**
 
@@ -10,7 +10,7 @@
 
 **定义2**
 
-设 $m\geq 1$，(a,m)=1，使得 $a^d \equiv 1(\bmod m)$ 成立的最小正整数 d 称为 a 对模 m 的指数或者阶，我们一般将其记为 $\delta_m(a)$。
+设 $m\geq 1$，$(a,m)=1$ ，使得 $a^d \equiv 1\pmod m$ 成立的最小正整数 d 称为 a 对模 m 的指数或者阶，我们一般将其记为 $\delta_m(a)$。
 
 **定义3**
 
@@ -20,27 +20,23 @@
 
 **性质1**
 
-对于素数 p 来说，每一个与其互素的数都是它的原根。
+使得 $a^d \equiv 1\pmod m$ 成立的最小正整数 $d$ ，必有$d\mid\varphi(m)$。
 
 **性质2**
 
-使得 $a^d \equiv 1(\bmod m)$ 成立的最小正整数 d ，必有$d| \varphi(m)$。
-
-**性质3**
-
-模 m 存在原根的必要条件是 $m=1,2,4,p^{\alpha},2p^{\alpha}$ 。
+模 $m$ 剩余系存在原根的充要条件是 $m=2,4,p^{\alpha},2p^{\alpha}$ ，其中 $p$ 为奇素数， $\alpha$ 为正整数。
 
 ## 离散对数问题
 
-如果 $y=g^x \bmod p$，那么已知 g，p，y，我们很难求得 x。但是当 p 具有一定的特性时就可能可以求解，比如，这个群的阶是一个光滑数。
+已知 $g,p,y$ ，对于方程 $y\equiv g^x \pmod p$ ，求解 $x$ 是一个难解问题。但是当 $p$ 具有一定的特性时就可能可以求解，比如，这个群的阶是一个光滑数。
 
-正是上述这个问题构成了目前很大一部分现代密码学，包括密钥交换，ECC 等。
+正是上述这个问题构成了目前很大一部分现代密码学，包括 Diffie–Hellman 密钥交换， ElGamal 算法，ECC 等。
 
 ## 离散对数求解方式
 
 ### 暴力破解
 
-给定 $y=g^x \bmod p$，我们可以暴力枚举 x 从而得到真正的 x 的值。
+给定 $y\equiv g^x \pmod p$，我们可以暴力枚举 $x$ 从而得到真正的 $x$ 的值。
 
 ### Baby-step giant-step
 
@@ -50,11 +46,11 @@
 
 因此
 
-$y=g^x=g^{im+j}$
+$$y=g^x=g^{im+j}$$
 
 也就是
 
-$y(g^{-m})^i=g^j$
+$$y(g^{-m})^i=g^j$$
 
 那么我们就可以枚举所有的 j 并进行计算，并将其存储到一个集合 S 中，然后我们再次枚举 i，计算 $y(g^{-m})^i$，一旦我们发现计算的结果在集合 S 中，则说明我们得到了一个碰撞，进而得到了 i 和 j。
 
@@ -62,8 +58,20 @@ $y(g^{-m})^i=g^j$
 
 其中
 
-- 每一次 j 的增加表示“baby-step”，一次乘上 g。
+- 每一次 j 的增加表示“baby-step”，一次乘上 $g$。
 - 每一次 i 的增加表示“giant-step”，一次乘上 $g^{-m}$ 。
+
+```python
+def bsgs(g, y, p):
+    m = int(ceil(sqrt(p - 1)))
+    S = {pow(g, j, p): j for j in range(m)}
+    gs = pow(g, p - 1 - m, p)
+    for i in range(m):
+        if y in S:
+            return i * m + S[y]
+        y = y * gs % p
+    return None
+```
 
 ### Pollard’s ρ algorithm
 
@@ -71,27 +79,27 @@ $y(g^{-m})^i=g^j$
 
 ### Pollard’s kangaroo algorithm
 
-如果我们知道 x 的范围为 $a \leq x \leq b$，那么我们可以以$O(\sqrt {(b-a)})$ 的时间复杂度解决上述问题。具体原理请自行谷歌。
+如果我们知道 x 的范围为 $a \leq x \leq b$，那么我们可以以$O(\sqrt{b-a})$ 的时间复杂度解决上述问题。具体原理请自行谷歌。
 
-### The Pohlig-Hellman algorithm
+### Pohlig-Hellman algorithm
 
-不妨假设上述所提到的群的阶为 n， n 为一个光滑数，且$n=\prod_{i=1}^r p_i^{e_i}$
+不妨假设上述所提到的群关于元素 $g$ 的阶为 $n$， $n$ 为一个光滑数： $n=\prod\limits_{i=1}^r p_i^{e_i}$。
 
-1. 对于每个 $i \in \{1,...,r\} $
-    1. 计算 $g_i=g^{\frac{n}{p_i^{e_i}}}$，$g_i$ 在模 m 中的阶为 $p_i^{e_i}$，这个可以自行推导。
-    2. 计算 $y_i=y^{\frac{n}{p_i^{e_i}}}=g^{\frac{xn}{p_i^{e_i}}}=g_i^{x}=g_i^{x \bmod p_i^{e_i}} =g_i^{r_i}\bmod m$，这里我们知道 $y_i,m,g_i$，而$r_i$ 的范围为$[0,p_i^{e_i}]$，由n 是一个光滑数，可知其范围较小，因此我们可以使用`Pollard’s kangaroo algorithm` 等方法快速求得$r_i$。
-2. 根据上述的推导，我们可以得到对于 $i \in \{1,...,r\}$ ，$x \equiv r_i \bmod p_i^{e_i}$。
-3. 根据中国剩余定理可得，$x \equiv ans \bmod n$。
+1. 对于每个 $i \in \{1,\ldots,r\}$ ：
+    1. 计算 $g_i \equiv g^{n/p_i^{e_i}} \pmod m$。根据拉格朗日定理， $g_i$ 在群中的阶为 $p_i^{e_i}$ 。
+    2. 计算 $y_i \equiv y^{n/p_i^{e_i}} \equiv g^{xn/p_i^{e_i}} \equiv g_i^{x} \equiv g_i^{x \bmod p_i^{e_i}} \equiv g_i^{x_i} \pmod m$，这里我们知道 $y_i,m,g_i$，而$x_i$ 的范围为$[0,p_i^{e_i})$，由 $n$ 是一个光滑数，可知其范围较小，因此我们可以使用 *Pollard’s kangaroo algorithm* 等方法快速求得$x_i$。
+2. 根据上述的推导，我们可以得到对于 $i \in \{1,\ldots,r\}$ ，$x \equiv x_i \pmod{p_i^{e_i}}$ ，该式可用中国剩余定理求解。
 
-我们可以将其作为用下图解释
 
+上述过程可用下图简单描述：
+
+<center>
 ![Pohlig Hellman Algorithm](figure/Pohlig-Hellman-Diagram.png)
+</center>
 
-当然，原文中有一些优雅的做法，这里只是给出思想。
+其复杂度为$O\left(\sum\limits _i e_i\left(\log n+\sqrt{p_i}\right)\right)$，可以看出复杂度还是很低的。
 
-其复杂度为$O(\sum\limits _i e_i(log_2 n+\sqrt p_i))$，可以看出复杂度还是很低的。
-
-如果$m=2n+1$，并且 n 是一个素数，那么复杂度就和原来的$\sqrt m$ 几乎没有差别了。。
+但当 $n$ 为素数，$m=2n+1$，那么复杂度和 $O(\sqrt m)$ 是几乎没有差别的。
 
 ## 2018 国赛 crackme java
 
@@ -155,7 +163,7 @@ $r_0=2^r \bmod p$
 
 $r_1 =b*h^r \bmod p$
 
-可以发现，r 的范围为 $[0,2^{32}]$，所以我们可以使用 BSGS 算法，如下
+可以发现，r 的范围为 $[0,2^{32})$，所以我们可以使用 BSGS 算法，如下
 
 ```python
 from sage.all import *
