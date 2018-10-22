@@ -20,7 +20,7 @@ CTF 中有关古典密码的题目，通常是根据密文求出明文，因此�
 
 题目描述
 
-> 最近一直在好奇一个问题，QWE到底等不等于ABC？
+> 最近一直在好奇一个问题，QWE 到底等不等于 ABC？
 >
 > -.- .. --.- .-.. .-- - ..-. -.-. --.- --. -. ... --- ---
 >
@@ -120,12 +120,12 @@ SECCON{Welc0me_to_SECCON_CTF_2017}
 
 关于此题的分析：
 
-1. 考虑到在程序正常运行下，数组访问不会越界，我们在讨论时做以下约定：$ arr[index] \Leftrightarrow arr[index \% len(arr)] $
-2. 关于 python 程序中定义的 `_l` 函数，发现以下等价关系：$ \_l(offset, arr)[index] \Leftrightarrow arr[index + offset] $
-3. 关于 python 的 main 函数中三维矩阵 t 的定义，发现以下等价关系：$ t[a][b][c] \Leftrightarrow \_l(a+b, s)[c] $
-4. 综合第 2 第 3 点的观察，有如下等价关系：$ t[a][b][c] \Leftrightarrow s[a+b+c] $
+1. 考虑到在程序正常运行下，数组访问不会越界，我们在讨论时做以下约定：$arr[index] \Leftrightarrow arr[index \% len(arr)]$
+2. 关于 python 程序中定义的 `_l` 函数，发现以下等价关系：$\_l(offset, arr)[index] \Leftrightarrow arr[index + offset]$
+3. 关于 python 的 main 函数中三维矩阵 t 的定义，发现以下等价关系：$t[a][b][c] \Leftrightarrow \_l(a+b, s)[c]$
+4. 综合第 2 第 3 点的观察，有如下等价关系：$t[a][b][c] \Leftrightarrow s[a+b+c]$
 5. 我们将 s 视为一种编码格式，即：编码过程 s.find(x)，解码过程 s[x]。并直接使用其编码结果的数字替代其所代指的字符串，那么加密过程可以用以下公式表示：
-   - $ e = f +  k1 +k2 $
+   - $e = f +  k1 +k2$
    - 其中，e 是密文，f 是明文，k1 与 k2 是通过复制方法得到、与 f 长度一样的密钥，**加法是向量加**。
 
 所以我们只需要通过计算 `k1+k2` ，模拟密钥，即可解密。关于此题的解密 python 脚本：
