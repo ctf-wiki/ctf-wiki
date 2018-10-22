@@ -1,4 +1,33 @@
-# RSA 选择密文攻击
+# RSA 选择明密文攻击
+
+## 选择明文攻击
+
+这里给出一个例子，假如我们有一个加密 oracle ，但是我们不知道 n 和 e，那
+
+1. 我们可以通过加密 oracle 获取 n。
+2. 在 e 比较小（ $e<2^{64}$）时，我们可以利用 *Pollard’s kangaroo algorithm* 算法获取 e。这一点比较显然。
+
+我们可以加密 2，4，8，16。那么我们可以知道
+
+$c_2=2^{e} \bmod n$
+
+$c_4=4^{e} \bmod n$
+
+$c_8=8^{e} \bmod n$
+
+那么
+
+$c_2^2 \equiv c_4 \bmod n$
+
+$c_2^3 \equiv c_8 \bmod n$
+
+故而
+
+$c_2^2-c_4=kn$
+
+$c_2^3-c_8=tn$
+
+我们可以求出 kn 和 tn 的最大公因数，很大概率就是 n 了。我们还可以构造更多的例子从来更加确定性地找 n。
 
 ## 任意密文解密
 
@@ -11,9 +40,9 @@
 
 ## RSA parity oracle
 
-### 原理
+假设目前存在一个 Oracle，它会对一个给定的密文进行解密，并且会检查解密的明文的奇偶性，并根据奇偶性返回相应的值，比如 1 表示奇数，0 表示偶数。那么给定一个加密后的密文，我们只需要 log(N) 次就可以知道这个密文对应的明文消息。
 
-假设目前存在一个 Oracle，它会对一个给定的密文进行解密，并且会检查解密的明文的奇偶性，并根据奇偶性返回相应的值，比如 1 表示奇数，0 表示偶数。那么给定一个加密后的密文，我们只需要 log(N) 次就可以知道这个密文对应的明文消息，原理如下
+### 原理
 
 假设
 
@@ -204,6 +233,149 @@ CTF{h3ll0__17_5_m3_1_w45_w0nd3r1n6_1f_4f73r_4ll_7h353_y34r5_y0u_d_l1k3_70_m337}
 - 2016 sharif CTF lsb-oracle-150
 - 2018 Backdoor CTF  BIT-LEAKER
 - 2018 XMAN 选拔赛 baby RSA
+
+## RSA Byte Oracle
+
+假设目前存在一个 Oracle，它会对一个给定的密文进行解密，并且会给出明文的最后一个字节。那么给定一个加密后的密文，我们只需要 $\log_{256}n$ 次就可以知道这个密文对应的明文消息。
+
+### 原理
+
+这个其实算作 RSA parity Oracle 的扩展，既然可以泄露出最后一个字节，那么按道理我们获取密文对应明文的次数应该可以减少。
+
+假设
+
+$C=P^e \bmod N$
+
+第一次时，我们可以给服务器发送
+
+$C*256^e=(256P)^e \bmod N$
+
+服务器会计算得到
+
+$256P \bmod N$
+
+这里
+
+- 256P 是偶数。
+- N 是奇数，因为它是由两个大素数相乘得到。
+
+由于 P 一般是小于 N 的，那么$256P \bmod N=256P-kn, k<256$。而且对于两个不同的 $k_1,k_2$，我们有
+
+$256P-k_1n \not\equiv 256P-k_2n \bmod 256$
+
+我们可以利用反证法来证明上述不等式。同时 $256P-kn$ 的最后一个字节其实就是 $-kn$ 在模 256 的情况下获取的。那么，其实我们可以首先枚举出 0~255 情况下的最后一个字节，构造一个 k 和最后一个字节的映射表 map
+
+当服务器返回最后一个字节 b，那么我们可以根据上述构造的映射表得知 k，即减去了 k 个N， 即 $kN \leq 256 P \leq (k+1)N$。
+
+此后，我们使用数学归纳法来获取 P 的范围，即假设在第 i 次时，$\frac{xN}{256^{i}} \leq P < \frac{xN+N}{256^{i}}$
+
+进一步，在第 i+1 次时，我们可以发送
+
+$C*256^{(i+1)e}$
+
+服务器会计算得到
+
+$256^{i+1}P \bmod N=256^{i+1}P-kN$
+
+$0 \leq 256^{i+1}P-kN<N$ 
+
+$\frac{kN}{256^{i+1}} \leq P < \frac{kN+N}{256^{i+1}}$
+
+根据第 i 次的结果
+
+$\frac{256xN}{256^{i+1}} \leq P < \frac{256xN+256N}{256^{i+1}}$
+
+我们这里可以假设 $k=256y+t$， 而这里的 t 就是我们可以通过映射表获取的。
+
+ $\frac{256yN+tN}{256^{i+1}} \leq P < \frac{256yN+(t+1)N}{256^{i+1}}$
+
+与此同时，由于 P 必然存在，所以第 i+1 得到的这个范围和第 i 次得到的范围必然存在交集。
+
+所以 y 必然与 x 相等。
+
+进一步我们可以这么归纳，初始情况下
+
+```
+lb = 0
+ub = N
+```
+
+假设服务器返回了 b，那么
+
+```c
+k = mab[b]
+interval = (ub-lb)/256
+lb = lb + interval * k
+ub = lb + interval
+```
+
+### 2018 HITCON lost key
+
+这是一个综合题目，首先没有给出 n，我们可以使用选择明文攻击的方式获取 n，当然我们也可以进一步获取 e，最后利用代码如下
+
+```python
+from pwn import *
+import gmpy2
+from fractions import Fraction
+p = process('./rsa.py')
+#p = remote('18.179.251.168', 21700)
+#context.log_level = 'debug'
+p.recvuntil('Here is the flag!\n')
+flagcipher = int(p.recvuntil('\n', drop=True), 16)
+
+
+def long_to_hex(n):
+    s = hex(n)[2:].rstrip('L')
+    if len(s) % 2: s = '0' + s
+    return s
+
+
+def send(ch, num):
+    p.sendlineafter('cmd: ', ch)
+    p.sendlineafter('input: ', long_to_hex(num))
+    data = p.recvuntil('\n')
+    return int(data, 16)
+
+
+if __name__ == "__main__":
+    # get n
+    cipher2 = send('A', 2)
+    cipher4 = send('A', 4)
+    nset = []
+    nset.append(cipher2 * cipher2 - cipher4)
+
+    cipher3 = send('A', 3)
+    cipher9 = send('A', 9)
+    nset.append(cipher3 * cipher3 - cipher9)
+    cipher5 = send('A', 5)
+    cipher25 = send('A', 25)
+    nset.append(cipher5 * cipher5 - cipher25)
+    n = nset[0]
+    for item in nset:
+        n = gmpy2.gcd(item, n)
+
+    # get map between k and return byte
+    submap = {}
+    for i in range(0, 256):
+        submap[-n * i % 256] = i
+
+    # get cipher256
+    cipher256 = send('A', 256)
+
+    back = flagcipher
+
+    L = Fraction(0, 1)
+    R = Fraction(1, 1)
+    for i in range(128):
+        print i
+        flagcipher = flagcipher * cipher256 % n
+        b = send('B', flagcipher)
+        k = submap[b]
+        L, R = L + (R - L) * Fraction(k, 256
+                                     ), L + (R - L) * Fraction(k + 1, 256)
+    low = int(L * n)
+    print long_to_hex(low - low % 256 + send('B', back)).decode('hex')
+```
 
 ## 参考
 

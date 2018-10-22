@@ -1527,17 +1527,20 @@ static void free_perturb(char *p, size_t n) {
 
 ## tcache
 
-tcache 是 glibc 2.26(ubuntu 17.10) 之后引入的一种技术（see [commit](https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc)），目的是提升堆管理的性能。但提升性能的同时舍弃了很多安全检查，也因此有了很多新的利用方式。
+tcache 是 glibc 2.26 (ubuntu 17.10) 之后引入的一种技术（see [commit](https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc)），目的是提升堆管理的性能。但提升性能的同时舍弃了很多安全检查，也因此有了很多新的利用方式。
 
 > 主要参考了 glibc 源码，angelboy 的 slide 以及 tukan.farm，链接都放在最后了。
 
-### New Structure
+### 相关结构体
 
 tcache 引入了两个新的结构体，`tcache_entry` 和 `tcache_perthread_struct`。
 
-**tcache_entry**
+这其实和 fastbin 很像，但又不一样。
+
+#### tcache_entry
 
 [source code](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#tcache_entry)
+
 ```C
 /* We overlay this structure on the user-data portion of a chunk when
    the chunk is stored in the per-thread cache.  */
@@ -1547,7 +1550,13 @@ typedef struct tcache_entry
 } tcache_entry;
 ```
 
-**tcache_perthread_struct**
+`tcache_entry` 用于链接空闲的 chunk 结构体，其中的 `next` 指针指向下一个大小相同的 chunk。
+
+需要注意的是这里的 next 指向 chunk 的 user data，而 fastbin 的 fd 指向 chunk 开头的地址。
+
+而且，tcache_entry 会复用空闲 chunk 的 user data 部分。
+
+#### tcache_perthread_struct
 
 [source code](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#tcache_perthread_struct)
 ```C
@@ -1567,24 +1576,18 @@ typedef struct tcache_perthread_struct
 static __thread tcache_perthread_struct *tcache = NULL;
 ```
 
-----
-先给一个宏观印象：
+每个 thread 都会维护一个 `tcache_prethread_struct`，它是整个 tcache 的管理结构，一共有 `TCACHE_MAX_BINS` 个计数器和 `TCACHE_MAX_BINS`项 tcache_entry，其中
 
-- `tcache_prethread_struct` 是整个 tcache 的管理结构，其中有 64 项 entries。每个 entries 管理了若干个大小相同的 chunk，用单向链表 (`tcache_entry`) 的方式连接释放的 chunk，这一点上和 fastbin 很像
-- 每个 thread 都会维护一个 `tcache_prethread_struct`
-- `tcache_prethread_struct` 中的 `counts` 记录 `entries` 中每一条链上 chunk 的数目，每条链上最多可以有 7 个 chunk
-- `tcache_entry` 用于链接 chunk 结构体，其中的 `next` 指针指向下一个大小相同的 chunk
-	- 这里与 fastbin 不同的是 fastbin 的 fd 指向 chunk 开头的地址，而 tcache 的 next 指向 user data 的地方，即 chunk header 之后
+- `tcache_entry` 用单向链表的方式链接了相同大小的处于空闲状态（free 后）的 chunk，这一点上和 fastbin 很像。
+-  `counts` 记录了 `tcache_entry` 链上空闲 chunk 的数目，每条链上最多可以有 7 个 chunk。
 
 用图表示大概是：
 
 ![](http://ww1.sinaimg.cn/large/006AWYXBly1fw87zlnrhtj30nh0ciglz.jpg)
 
 
-### 相关函数
-同样先给一个宏观的印象：
-
-- 第一次 malloc 时，会先 malloc 一块内存用来存放 `tcache_prethread_struct`
+### 基本工作方式
+- 第一次 malloc 时，会先 malloc 一块内存用来存放 `tcache_prethread_struct` 。
 - free 内存，且 size 小于 small bin size 时
 	- tcache 之前会放到 fastbin 或者 unsorted bin 中
 	- tcache 后：
@@ -1596,13 +1599,11 @@ static __thread tcache_perthread_struct *tcache = NULL;
 	- tcache 为空后，从 bin 中找
 	- tcache 为空时，如果 `fastbin/smallbin/unsorted bin` 中有 size 符合的 chunk，会先把 `fastbin/smallbin/unsorted bin` 中的 chunk 放到 tcache 中，直到填满。之后再从 tcache 中取；因此 chunk 在 bin 中和 tcache 中的顺序会反过来
 
+### 源码分析
 
-
-
-#### source code
 接下来从源码的角度分析一下 tcache。
 
-##### __libc_malloc
+#### __libc_malloc
 第一次 malloc 时，会进入到 `MAYBE_INIT_TCACHE ()`
 
 [source code](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#3010)
@@ -1636,10 +1637,11 @@ __libc_malloc (size_t bytes)
 }
 ```
 
-##### __tcache_init()
+#### __tcache_init()
 其中 `MAYBE_INIT_TCACHE ()` 在 tcache 为空（即第一次 malloc）时调用了 `tcache_init()`，直接查看 `tcache_init()`
 
 [source code](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#tcache_init)
+
 ```C
 tcache_init(void)
 {
@@ -1662,17 +1664,17 @@ tcache_init(void)
      typically do this very early, so either there is sufficient
      memory, or there isn't enough memory to do non-trivial
      allocations anyway.  */
-  if (victim)
+  if (victim) // 初始化 tcache
     {
-      tcache = (tcache_perthread_struct *) victim; // 更新 tcache
+      tcache = (tcache_perthread_struct *) victim;
       memset (tcache, 0, sizeof (tcache_perthread_struct));
     }
 }
 ```
 
-`tcache_init()` 成功返回后，`tcache_prethread_struct` 就被成功建立了
+`tcache_init()` 成功返回后，`tcache_prethread_struct` 就被成功建立了。
 
-##### 申请内存
+#### 申请内存
 接下来将进入申请内存的步骤
 ```C
   // 从 tcache list 中获取内存
@@ -1697,7 +1699,7 @@ tcache_init(void)
 ```
 在 `tcache->entries` 不为空时，将进入 `tcache_get()` 的流程获取 chunk，否则与 tcache 机制前的流程类似，这里主要分析第一种 `tcache_get()`。这里也可以看出 tcache 的优先级很高，比 fastbin 还要高（ fastbin 的申请在没进入 tcache 的流程中）。
 
-##### tcache_get()
+#### tcache_get()
 看一下 `tcache_get()`
 
 [source code](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#tcache_get)
@@ -1717,7 +1719,7 @@ tcache_get (size_t tc_idx)
 ```
 `tcache_get()` 就是获得 chunk 的过程了。可以看出这个过程还是很简单的，从 `tcache->entries[tc_idx]` 中获得第一个 chunk，`tcache->counts` 减一，几乎没有任何保护。
 
-##### __libc_free()
+#### __libc_free()
 看完申请，再看看有 tcache 时的释放
 
 [source code](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#3068)
@@ -1734,7 +1736,7 @@ __libc_free (void *mem)
 ```
 `__libc_free()` 没有太多变化，`MAYBE_INIT_TCACHE ()` 在 tcache 不为空失去了作用。
 
-##### _int_free()
+#### _int_free()
 跟进 `_int_free()`
 
 [source code](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#4123)
@@ -1762,7 +1764,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 判断 `tc_idx` 合法，`tcache->counts[tc_idx]` 在 7 个以内时，就进入 `tcache_put()`，传递的两个参数是要释放的 chunk 和该 chunk 对应的 size 在 tcache 中的下标。
 
 
-##### tcache_put()
+#### tcache_put()
 
 [source code](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#2907)
 
