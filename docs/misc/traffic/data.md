@@ -133,6 +133,54 @@ p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,1 CPU Inte
 `xxd -p -r png flag`
 
 
+## 自定义协议
+
+提取数据存在一类特殊情况，即传输的数据本身使用自定义协议，下面用 `HITCON 2018` 的两道 Misc 为例说明。
+
+### 例题分析
+
+- [HITCON-2018 : ev3 basic](https://ctftime.org/task/6885)
+
+- [HITCON-2018 : ev3 scanner](https://ctftime.org/task/6886)
+
+**ev3 basic**
+
+- Step 1
+
+对于这类题目，首先分析有效数据位于哪些包中。观察流量，通讯双方为 localhost 和 LegoSystem 。其中大量标为 PKTLOG 的数据包都是日志，此题中不需关注。简单浏览其余各个协议的流量，发现仅 RFCOMM 协议中存在没有被 wireshark 解析的 data 段，而 RFCOMM 正是蓝牙使用的[传输层协议](https://en.wikipedia.org/wiki/List_of_Bluetooth_protocols#Radio_frequency_communication_(RFCOMM))之一。
+
+由前述 tshark 相关介绍，可以通过以下命令提取数据：
+
+`tshark -r .\ev3_basic.pklg -T fields -e data -Y "btrfcomm"`
+
+- Step 2
+
+找到数据后，需要确定数据格式。如何查找资料可以参考 `信息搜集技术` 一节，此处不再赘述。总之由 ev3 这个关键词出发，我们最终知道这种通信方式传输的内容被称之为 [Direct Command](http://ev3directcommands.blogspot.com/2016/01/no-title-specified-page-table-border_94.html)，所使用的是乐高自定义的一种[简单应用层协议](https://le-www-live-s.legocdn.com/sc/media/files/ev3-developer-kit/lego%20mindstorms%20ev3%20communication%20developer%20kit-f691e7ad1e0c28a4cfb0835993d76ae3.pdf?la=en-us)，Command 本身格式由乐高的手册 [EV3 Firmware Developer Kit](http://www.lego.com/en-gb/mindstorms/downloads) 定义。*（查找过程并不像此处简单而直观，也是本题的关键点之一。）*
+
+在乐高的协议中，发送和回复遵从不同格式。在 `ev3 basic` 中，所有回复流量都相同，通过手册可知内容代表 ok，没有实际含义，而发送的每个数据包都包含了一条指令。由协议格式解析出指令的 Opcode 均为 0x84，代表 UI_DRAW 函数，且 CMD 是 0x05，代表 TEXT。之后是四个参数，Color, X0, Y0, STRING。此处需要注意乐高的单个参数字节数并不固定，即便手册上标明了数据类型是 DATA16，仍然可能使用一个字节长度的参数，需要参照手册中 `Parameter encoding` 一节及[相关文章](http://ev3directcommands.blogspot.com/2016/01/ev3-direct-commands-lesson-02-pre.html)。
+
+尝试分析几个命令，发现每个指令都会在屏幕特定位置打印一个字符，这与提供的图片相符。
+
+- Step 3
+
+理解数据内容后，通过脚本提取所有命令并解析参数，需要注意单个参数的字节数不固定。
+
+得到所有命令的参数后，可以将每个字符其按照坐标绘制在屏幕上。较简单的做法是先按 X 后按 Y 排序，直接输出即可。
+
+**ev3 scanner**
+
+第二题的做法与第一题基本相同，难度增加的地方在于：
+
+- 发送的命令不再单一，包括读取传感器信息、控制 ev3 运动
+
+- 回复也包含信息，主要是传感器读取的内容
+
+- 函数的参数更复杂，解析难度更大
+
+- 解析命令得到的结果需要更多处理
+
+`ev3 scanner` 此处不再提供详细方法，可作为练习加深对这一类型题目的理解。
+
 ## Python Script
 
 TODO
