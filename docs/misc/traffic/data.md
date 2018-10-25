@@ -181,7 +181,7 @@ p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,1 CPU Inte
 
 `ev3 scanner` 此处不再提供详细方法，可作为练习加深对这一类型题目的理解。
 
-## Python Script
+### Python Script
 
 TODO
 
