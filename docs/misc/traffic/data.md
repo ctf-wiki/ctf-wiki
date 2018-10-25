@@ -139,13 +139,13 @@ p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,1 CPU Inte
 
 ### 例题分析
 
-- [HITCON-2018 : ev3 basic](https://ctftime.org/task/6885)
+- [HITCON-2018 : ev3 basic](https://github.com/ctf-wiki/ctf-challenges/tree/master/misc/cap/2018HITCON-ev3-basic)
 
-- [HITCON-2018 : ev3 scanner](https://ctftime.org/task/6886)
+- [HITCON-2018 : ev3 scanner](https://github.com/ctf-wiki/ctf-challenges/tree/master/misc/cap/2018HITCON-ev3-scanner)
 
 **ev3 basic**
 
-- Step 1
+#### 确定数据
 
 对于这类题目，首先分析有效数据位于哪些包中。观察流量，通讯双方为 localhost 和 LegoSystem 。其中大量标为 PKTLOG 的数据包都是日志，此题中不需关注。简单浏览其余各个协议的流量，发现仅 RFCOMM 协议中存在没有被 wireshark 解析的 data 段，而 RFCOMM 正是蓝牙使用的[传输层协议](https://en.wikipedia.org/wiki/List_of_Bluetooth_protocols#Radio_frequency_communication_(RFCOMM))之一。
 
@@ -153,7 +153,7 @@ p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,1 CPU Inte
 
 `tshark -r .\ev3_basic.pklg -T fields -e data -Y "btrfcomm"`
 
-- Step 2
+#### 分析协议
 
 找到数据后，需要确定数据格式。如何查找资料可以参考 `信息搜集技术` 一节，此处不再赘述。总之由 ev3 这个关键词出发，我们最终知道这种通信方式传输的内容被称之为 [Direct Command](http://ev3directcommands.blogspot.com/2016/01/no-title-specified-page-table-border_94.html)，所使用的是乐高自定义的一种[简单应用层协议](https://le-www-live-s.legocdn.com/sc/media/files/ev3-developer-kit/lego%20mindstorms%20ev3%20communication%20developer%20kit-f691e7ad1e0c28a4cfb0835993d76ae3.pdf?la=en-us)，Command 本身格式由乐高的手册 [EV3 Firmware Developer Kit](http://www.lego.com/en-gb/mindstorms/downloads) 定义。*（查找过程并不像此处简单而直观，也是本题的关键点之一。）*
 
@@ -161,7 +161,7 @@ p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,1 CPU Inte
 
 尝试分析几个命令，发现每个指令都会在屏幕特定位置打印一个字符，这与提供的图片相符。
 
-- Step 3
+#### 处理结果
 
 理解数据内容后，通过脚本提取所有命令并解析参数，需要注意单个参数的字节数不固定。
 
