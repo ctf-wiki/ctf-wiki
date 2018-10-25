@@ -820,9 +820,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#_3" title="自定义协议" class="md-nav__link">
+    自定义协议
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="例题分析" class="md-nav__link">
+    例题分析
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="确定数据" class="md-nav__link">
+    确定数据
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="分析协议" class="md-nav__link">
+    分析协议
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" title="处理结果" class="md-nav__link">
+    处理结果
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#python-script" title="Python Script" class="md-nav__link">
     Python Script
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4243,9 +4290,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#_3" title="自定义协议" class="md-nav__link">
+    自定义协议
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="例题分析" class="md-nav__link">
+    例题分析
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" title="确定数据" class="md-nav__link">
+    确定数据
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="分析协议" class="md-nav__link">
+    分析协议
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" title="处理结果" class="md-nav__link">
+    处理结果
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#python-script" title="Python Script" class="md-nav__link">
     Python Script
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4390,7 +4484,47 @@ p7zip Version <span class="m">16</span>.02 <span class="o">(</span><span class="
 </ul>
 <p>16进制还原图片</p>
 <p><code>xxd -p -r png flag</code></p>
-<h2 id="python-script">Python Script<a class="headerlink" href="#python-script" title="Permanent link">&para;</a></h2>
+<h2 id="_3">自定义协议<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>提取数据存在一类特殊情况，即传输的数据本身使用自定义协议，下面用 <code>HITCON 2018</code> 的两道 Misc 为例说明。</p>
+<h3 id="_4">例题分析<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/misc/cap/2018HITCON-ev3-basic">HITCON-2018 : ev3 basic</a></p>
+</li>
+<li>
+<p><a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/misc/cap/2018HITCON-ev3-scanner">HITCON-2018 : ev3 scanner</a></p>
+</li>
+</ul>
+<p><strong>ev3 basic</strong></p>
+<h4 id="_5">确定数据<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
+<p>对于这类题目，首先分析有效数据位于哪些包中。观察流量，通讯双方为 localhost 和 LegoSystem 。其中大量标为 PKTLOG 的数据包都是日志，此题中不需关注。简单浏览其余各个协议的流量，发现仅 RFCOMM 协议中存在没有被 wireshark 解析的 data 段，而 RFCOMM 正是蓝牙使用的<a href="https://en.wikipedia.org/wiki/List_of_Bluetooth_protocols#Radio_frequency_communication_(RFCOMM)">传输层协议</a>之一。</p>
+<p>由前述 tshark 相关介绍，可以通过以下命令提取数据：</p>
+<p><code>tshark -r .\ev3_basic.pklg -T fields -e data -Y "btrfcomm"</code></p>
+<h4 id="_6">分析协议<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
+<p>找到数据后，需要确定数据格式。如何查找资料可以参考 <code>信息搜集技术</code> 一节，此处不再赘述。总之由 ev3 这个关键词出发，我们最终知道这种通信方式传输的内容被称之为 <a href="http://ev3directcommands.blogspot.com/2016/01/no-title-specified-page-table-border_94.html">Direct Command</a>，所使用的是乐高自定义的一种<a href="https://le-www-live-s.legocdn.com/sc/media/files/ev3-developer-kit/lego%20mindstorms%20ev3%20communication%20developer%20kit-f691e7ad1e0c28a4cfb0835993d76ae3.pdf?la=en-us">简单应用层协议</a>，Command 本身格式由乐高的手册 <a href="http://www.lego.com/en-gb/mindstorms/downloads">EV3 Firmware Developer Kit</a> 定义。<em>（查找过程并不像此处简单而直观，也是本题的关键点之一。）</em></p>
+<p>在乐高的协议中，发送和回复遵从不同格式。在 <code>ev3 basic</code> 中，所有回复流量都相同，通过手册可知内容代表 ok，没有实际含义，而发送的每个数据包都包含了一条指令。由协议格式解析出指令的 Opcode 均为 0x84，代表 UI_DRAW 函数，且 CMD 是 0x05，代表 TEXT。之后是四个参数，Color, X0, Y0, STRING。此处需要注意乐高的单个参数字节数并不固定，即便手册上标明了数据类型是 DATA16，仍然可能使用一个字节长度的参数，需要参照手册中 <code>Parameter encoding</code> 一节及<a href="http://ev3directcommands.blogspot.com/2016/01/ev3-direct-commands-lesson-02-pre.html">相关文章</a>。</p>
+<p>尝试分析几个命令，发现每个指令都会在屏幕特定位置打印一个字符，这与提供的图片相符。</p>
+<h4 id="_7">处理结果<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
+<p>理解数据内容后，通过脚本提取所有命令并解析参数，需要注意单个参数的字节数不固定。</p>
+<p>得到所有命令的参数后，可以将每个字符其按照坐标绘制在屏幕上。较简单的做法是先按 X 后按 Y 排序，直接输出即可。</p>
+<p><strong>ev3 scanner</strong></p>
+<p>第二题的做法与第一题基本相同，难度增加的地方在于：</p>
+<ul>
+<li>
+<p>发送的命令不再单一，包括读取传感器信息、控制 ev3 运动</p>
+</li>
+<li>
+<p>回复也包含信息，主要是传感器读取的内容</p>
+</li>
+<li>
+<p>函数的参数更复杂，解析难度更大</p>
+</li>
+<li>
+<p>解析命令得到的结果需要更多处理</p>
+</li>
+</ul>
+<p><code>ev3 scanner</code> 此处不再提供详细方法，可作为练习加深对这一类型题目的理解。</p>
+<h3 id="python-script">Python Script<a class="headerlink" href="#python-script" title="Permanent link">&para;</a></h3>
 <p>TODO</p>
                 
                   
