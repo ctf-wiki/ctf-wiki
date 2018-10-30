@@ -18,9 +18,10 @@ ELF （Executable and Linkable Format）文件，也就是在 Linux 中的目标
 - 可执行文件（Executable File），就是我们通常在 Linux 中执行的程序。
 
 
-- 共享目标文件（Shared Object File），包含代码和数据，这种文件是我们所称的库文件，一般以 `.so` 结尾。一般情况下，它有以下两种使用情景
-  - 链接器（Link eDitor, ld）可能会处理它和其它可重定位文件以及共享目标文件，生成另外一个目标文件。
-  - 动态链接器（Dynamic Linker）将它与可执行文件以及其它共享目标组合在一起生成进程镜像。
+- 共享目标文件（Shared Object File），包含代码和数据，这种文件是我们所称的库文件，一般以 `.so` 结尾。一般情况下，它有以下两种使用情景：
+
+	- 链接器（Link eDitor, ld）可能会处理它和其它可重定位文件以及共享目标文件，生成另外一个目标文件。
+	- 动态链接器（Dynamic Linker）将它与可执行文件以及其它共享目标组合在一起生成进程镜像。
 
 > 关于Link eDitor的命名，https://en.wikipedia.org/wiki/GNU_linker
 
