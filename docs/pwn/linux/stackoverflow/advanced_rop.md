@@ -754,7 +754,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 
     ![signal2-stack](./figure/signal2-stack.png)
 
-    对于signal Frame来说，不同会因为架构的不同而因此有所区别，这里给出分别给出x86以及x64的sigcontext
+    对于signal Frame来说，会因为架构的不同而有所区别，这里给出分别给出x86以及x64的sigcontext
 
     -   x86
 
@@ -1025,7 +1025,7 @@ sh.interactive()
 参考阅读
 
 - [Sigreturn Oriented Programming (SROP) Attack攻击原理](http://www.freebuf.com/articles/network/87447.html)
-- [SROP by Angle Baby](https://www.slideshare.net/AngelBoy1/sigreturn-ori)
+- [SROP by Angel Boy](https://www.slideshare.net/AngelBoy1/sigreturn-ori)
 - [系统调用](http://www.cs.utexas.edu/~bismith/test/syscalls/syscalls64_orig.html)
 
 ## ret2VDSO
