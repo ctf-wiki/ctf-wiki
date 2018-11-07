@@ -247,29 +247,17 @@ exp 如下：
 from hashlib import sha256
 import socket
 import string
+import itertools
 HOST='106.75.13.64'
 PORT=54321
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((HOST, PORT))
 def brute_force(pad, shavalue):
-    dict = string.letters + string.digits
-    key = ""
-    for i1 in dict:
-        tmp = key
-        key1 = tmp + i1
-        for i2 in dict:
-            tmp = key1
-            key2 = tmp + i2
-            for i3 in dict:
-                tmp = key2
-                key3 = tmp + i3
-                for i4 in dict:
-                    tmp = key3
-                    key4 = tmp + i4
-                    final_key = key4
-                    if sha256(key4+pad).hexdigest()==shavalue:
-                        print key4
-                        return key4
+    for str in itertools.product(string.ascii_letters + string.digits, repeat=4):
+        str=''.join(str)
+        if sha256(str + pad).hexdigest() == shavalue:
+            print str
+            return str
 def choice1():
     sock.send("1\n")
     result=sock.recv(1024).strip()[30:]
