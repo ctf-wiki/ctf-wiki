@@ -19,9 +19,6 @@ def main():
         print "Tips : "
         print "        To use this python script , you must install the tshark first."
         print "        You can use `sudo apt-get install tshark` to install it"
-        print "Author : "
-        print "        Angel_Kitty <angelkitty6698@gmail.com>"
-        print "        If you have any questions , please contact me by email."
         print "        Thank you for using."
         exit(1)
 
