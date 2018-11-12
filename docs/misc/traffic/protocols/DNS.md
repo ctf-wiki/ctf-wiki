@@ -38,7 +38,7 @@ DNS通常为UDP协议,报文格式
 
 
 
-**例题**
+### 例题
 
 - [BSides San Francisco CTF 2017 : dnscap-500](https://github.com/ctfs/write-ups-2017/tree/master/bsidessf-ctf-2017/forensics/dnscap-500)
 - Step:
@@ -159,12 +159,12 @@ print  ''.join(last)
 
 
 
-**相关题目**
+### 相关题目
 
 - [IceCTF-2016:Search](https://mrpnkt.github.io/2016/icectf-2016-search/)
 - [EIS-2017:DNS 101](https://github.com/susers/Writeups/blob/master/2017/EIS/Misc/DNS%20101/Write-up.md)
 
-**参考**
+### 参考文献
 
 - https://github.com/lisijie/homepage/blob/master/posts/tech/dns%E5%8D%8F%E8%AE%AE%E8%A7%A3%E6%9E%90.md
 - https://xpnsec.tumblr.com/post/157479786806/bsidessf-ctf-dnscap-walkthrough

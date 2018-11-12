@@ -101,6 +101,8 @@
 
 > 第一届“百度杯”信息安全攻防总决赛 线上选拔赛：find the flag
 >
+> 题目：<a href="file\findtheflag.cap">findtheflag.cap</a>
+>
 > WP：https://www.cnblogs.com/ECJTUACM-873284962/p/9884447.html
 
 首先我们拿到这样一道流量包的题目，题目名称为 `find the flag` 。这里面给了很多提示信息，要我们去找到 `flag` 。
