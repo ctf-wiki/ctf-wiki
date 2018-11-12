@@ -1,10 +1,10 @@
 ### HTTP
 
-`HTTP` ( `Hyper Text Transfer Protocol` ，也称为超文本传输协议)是一种用于分布式、协作式和超媒体信息系统的应用层协议。 `HTTP` 是万维网的数据通信的基础
+`HTTP` ( `Hyper Text Transfer Protocol` ，也称为超文本传输协议)是一种用于分布式、协作式和超媒体信息系统的应用层协议。 `HTTP` 是万维网的数据通信的基础。
 
 ### 例题
 
-<a href="file\hack.pcap">江苏省领航杯-2017:hack</a>
+> 题目：江苏省领航杯-2017：hack
 
 总体观察可以得出:
 

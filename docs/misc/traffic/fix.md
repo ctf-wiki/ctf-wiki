@@ -99,9 +99,7 @@
 
 ## 例题
 
-> 第一届“百度杯”信息安全攻防总决赛 线上选拔赛：find the flag
->
-> 题目：<a href="file\findtheflag.cap">findtheflag.cap</a>
+> 题目：第一届“百度杯”信息安全攻防总决赛 线上选拔赛：find the flag
 >
 > WP：https://www.cnblogs.com/ECJTUACM-873284962/p/9884447.html
 

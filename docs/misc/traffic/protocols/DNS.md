@@ -40,7 +40,7 @@
 
 ### 例题
 
-> 题目：`BSides San Francisco CTF 2017` : <a href="file\dnscap.pcap">dnscap.pcap</a>
+> 题目：`BSides San Francisco CTF 2017` ： `dnscap.pcap` 
 
 我们通过 `wireshark` 打开发现全部为 `DNS` 协议,查询名为大量字符串`([\w\.]+)\.skullseclabs\.org`
 

@@ -24,7 +24,7 @@
 
 ### 例题  
 
-- 实验吧: http://ctf5.shiyanbar.com/misc/shipin.cap
+> 实验吧： `shipin.cap`
 
 从大量的`Deauth` 攻击基本可以判断是一个破解 `wifi` 时的流量攻击
 

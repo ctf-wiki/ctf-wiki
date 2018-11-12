@@ -6,9 +6,9 @@
 
 ### 例题
 
-- [hack-dat-kiwi-ctf-2015:ssl-sniff-2](https://github.com/ctfs/write-ups-2015/tree/master/hack-dat-kiwi-ctf-2015/forensics/ssl-sniff-2)
+> 题目：hack-dat-kiwi-ctf-2015:ssl-sniff-2
 
-打开流量包发现是SSL加密过的数据,导入题目提供的`server.key.insecure`,即可解密
+打开流量包发现是 `SSL` 加密过的数据,导入题目提供的`server.key.insecure`,即可解密
 
 ```xml
 GET /key.html HTTP/1.1
