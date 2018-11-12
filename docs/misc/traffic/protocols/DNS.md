@@ -1,6 +1,6 @@
 ### DNS
 
-DNS通常为UDP协议,报文格式
+`DNS` 通常为 `UDP` 协议,报文格式
 
 ```sh
 +-------------------------------+
@@ -16,9 +16,9 @@ DNS通常为UDP协议,报文格式
 +-------------------------------+
 ```
 
-查询包只有头部和问题两个部分，DNS收到查询包后，根据查询到的信息追加回答信息、授权机构、额外资源记录，并且修改了包头的相关标识再返回给客户端。
+查询包只有头部和问题两个部分， `DNS` 收到查询包后，根据查询到的信息追加回答信息、授权机构、额外资源记录，并且修改了包头的相关标识再返回给客户端。
 
-每个question部分
+每个 `question` 部分
 
 ```
    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
@@ -33,17 +33,18 @@ DNS通常为UDP协议,报文格式
  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 ```
 
-- QNAME：为查询的域名，是可变长的，编码格式为：将域名用.号划分为多个部分，每个部分前面加上一个字节表示该部分的长度，最后加一个0字节表示结束
-- QTYPE：占16位，表示查询类型，共有16种，常用值有：1（A记录，请求主机IP地址）、2（NS，请求授权DNS服务器）、5（CNAME别名查询）
+- `QNAME` ：为查询的域名，是可变长的，编码格式为：将域名用.号划分为多个部分，每个部分前面加上一个字节表示该部分的长度，最后加一个 `0` 字节表示结束
+- `QTYPE` ：占 `16` 位，表示查询类型，共有 `16` 种，常用值有：`1` ( `A` 记录，请求主机 `IP` 地址)、`2` ( `NS` ，请求授权 `DNS` 服务器)、`5` ( `CNAME` 别名查询）
 
 
 
 ### 例题
 
-- [BSides San Francisco CTF 2017 : dnscap-500](https://github.com/ctfs/write-ups-2017/tree/master/bsidessf-ctf-2017/forensics/dnscap-500)
-- Step:
-  - wireshark 打开发现全部为DNS协议,查询名为大量字符串`([\w\.]+)\.skullseclabs\.org`
-  - `tshark -r dnscap.pcap -T fields -e dns.qry.name > hex`提取后，python转码
+> 题目：`BSides San Francisco CTF 2017` : <a href="file\dnscap.pcap">dnscap.pcap</a>
+
+我们通过 `wireshark` 打开发现全部为 `DNS` 协议,查询名为大量字符串`([\w\.]+)\.skullseclabs\.org`
+
+我们通过 `tshark -r dnscap.pcap -T fields -e dns.qry.name > hex`提取后，利用 `python` 转码：
 
 ```python
 import re
@@ -59,7 +60,7 @@ with open('hex','rb') as f:
 print find
 ```
 
-- 发现几条关键信息
+我们发现了几条关键信息：
 
 ```
 Welcome to dnscap! The flag is below, have fun!!
@@ -86,7 +87,7 @@ Good luck! That was dnscat2 traffic on a flaky connection with lots of re-transm
 good luck. :)+
 ```
 
-flag确实包含在其中,但是有大量重复信息,一是应为`question`在dns协议中查询和反馈时都会用到,` -Y "ip.src == 192.168.43.91"`进行过滤后发现还是有不少重复部分
+`flag` 确实包含在其中,但是有大量重复信息,一是应为`question` 。在 `dns` 协议中查询和反馈时都会用到，` -Y "ip.src == 192.168.43.91"`进行过滤后发现还是有不少重复部分。
 
 ```
 %2A}
@@ -117,7 +118,7 @@ i4ZI32
 rP@1
 ```
 
-- 根据发现的`dnscat`找到 https://github.com/iagox86/dnscat2/blob/master/doc/protocol.md 这里介绍了`dnscat`协议的相关信息,这是一种通过DNS传递数据的变种协议,题目文件中应该未使用加密,所以直接看这里的数据块信息
+根据发现的 `dnscat` 找到 https://github.com/iagox86/dnscat2/blob/master/doc/protocol.md 这里介绍了 `dnscat` 协议的相关信息,这是一种通过 `DNS` 传递数据的变种协议,题目文件中应该未使用加密,所以直接看这里的数据块信息
 
 ```
 MESSAGE_TYPE_MSG: [0x01]
@@ -129,7 +130,7 @@ MESSAGE_TYPE_MSG: [0x01]
 (byte[]) data
 ```
 
-- 在`qry.name`中去除其余字段,只留下`data`快,从而合并数据,再从16进制中检索`89504e.....6082`提取`png`,得到flag
+在`qry.name`中去除其余字段,只留下 `data` 快,从而合并数据,再从 `16` 进制中检索`89504e.....6082`提取`png`,得到 `flag` 。
 
 ```python
 import re
