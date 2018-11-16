@@ -500,7 +500,7 @@ payload = 'A'*length +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
 
 ### 例子
 
-这里我们以HCTF2016的出题人失踪了为例，相关的部署文件都放在了example文件夹下的对应目录下。基本思路如下
+这里我们以 [HCTF2016的出题人失踪了](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/brop/hctf2016-brop) 为例。基本思路如下
 
 #### 确定栈溢出长度
 

