@@ -1,4 +1,4 @@
-﻿# 通过堆进行信息泄漏
+# 通过堆进行信息泄漏
 
 ## 什么叫信息泄漏
 在CTF中，Pwn题目一般都是运行在远端服务器上的。因此我们不能获知服务器上的libc.so地址、Heap基地址等地址信息，但是在进行利用的时候往往需要这些地址，此时就需要进行信息泄漏。
@@ -94,3 +94,50 @@ Start              End                Offset             Perm Path
 * Use-After-Free
 * 越界读
 * heap extend 
+
+###  0x01 read UAF
+
+通过，UAF ，泄露 heapbase：
+
+```c
+p0 = malloc(0x20);
+p1 = malloc(0x20);
+
+free(p0);
+free(p1);
+    
+printf('heap base:%p',*p1);
+```
+
+ 由于 fastbin list 的特性，当我们构造一条fastbin list的时候
+
+```bash
+(0x30)     fastbin[1]: 0x602030 --> 0x602000 --> 0x0
+```
+
+存在 chunk 1 -> chunk 0 的现象，如果此时 UAF漏洞存在，我们可以通过 show chunk 1，将chunk 0的地址打印出来
+
+
+
+同理，泄露 libc base
+
+```c
+p0 = malloc(0x100);
+free(p0);
+printf("libc: %p\n", *p0);
+
+```
+
+
+
+### 0x02  overlapping chunks
+
+
+
+
+
+### 0x03 Partial Overwrite
+
+
+
+### 0x04 Relative Write
