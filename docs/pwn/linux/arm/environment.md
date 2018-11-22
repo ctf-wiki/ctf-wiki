@@ -6,12 +6,11 @@
 ![](http://ww1.sinaimg.cn/large/006AWYXBly1fq5av617a5j30lq0bu78m.jpg)
 
 ## 预备环境安装：
-- 安装 git，gdb 和 gdb-multiarch，同时安装 binfmt 用来识别文件类型
+- 安装 git，gdb 和 gdb-multiarch
 
 ```bash
 $ sudo apt-get update
 $ sudo apt-get install git gdb gdb-multiarch
-$ sudo apt-get install "binfmt*"
 ```
 
 - 安装 gdb 的插件 pwndbg（或者 gef 等 gdb plugin）
@@ -32,6 +31,7 @@ $ ./setup.sh
 我们对版本的要求不是很严格, 直接通过 apt 等包管理安装即可
 ```bash
 $ sudo apt-get install qemu-user
+$ sudo apt-get install qemu-use-binfmt qemu-user-binfmt:i386
 ```
 通过 qemu 模拟 arm/mips 环境，进而进行运行和调试
 
@@ -42,7 +42,7 @@ $ sudo apt-get install qemu-user
 ![](http://ww1.sinaimg.cn/large/006AWYXBly1fq5csjo38rj313o05i779.jpg)
 这就需要我们安装对应架构的共享库，可以通过如下命令搜索：
 ```bash
-$ apt-cache search "libc6" | grep ARCH
+$ apt search "libc6-" | grep "ARCH"
 ```
 ![](http://ww1.sinaimg.cn/large/006AWYXBly1fq5cudid7gj30xy0h7trd.jpg)
 我们只需安装类似 **libc6-ARCH-cross** 形式的即可
@@ -80,6 +80,8 @@ pwndbg> target remote localhost:1234
 同样，如果想要运行或者调试其他架构的 binary，只需安装其他架构的 qemu 和共享库即可
 
 ## reference：
+
 https://docs.pwntools.com/en/stable/qemu.html
+
 https://reverseengineering.stackexchange.com/questions/8829/cross-debugging-for-arm-mips-elf-with-qemu-toolchain
 

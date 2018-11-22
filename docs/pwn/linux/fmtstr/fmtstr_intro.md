@@ -76,7 +76,7 @@
 
 我们再继续以上面的为例子进行介绍
 
-![基本例子](/pwn/fmtstr/figure/printf.png)
+![基本例子](./figure/printf.png)
 
 对于这样的例子，在进入printf函数的之前(即还没有调用printf)，栈上的布局由高地址到低地址依次如下
 

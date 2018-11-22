@@ -2,7 +2,7 @@
 
 中级 ROP 主要是使用了一些比较巧妙的 Gadgets。
 
-## ret2__libc_csu_init
+## ret2csu
 
 ### 原理
 
