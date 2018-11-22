@@ -236,7 +236,7 @@ tcache_get (size_t tc_idx)
 
 ### 0x03 Pwn Tcache
 
-#### （1）tcache poisoning
+#### tcache poisoning
 
 通过覆盖 tcache 中的 next，不需要伪造任何 chunk 结构即可实现 malloc 到任何地址。
 
@@ -716,7 +716,7 @@ rax            0x7fffffffdfa8	140737488347048
 ```
 可以看出 `tache posioning` 这种方法和 fastbin attack 类似，但因为没有 size 的限制有了更大的利用范围。
 
-#### （2）tcache dup
+#### tcache dup
 类似 `fastbin dup`，不过利用的是 `tcache_put()` 的不严谨
 ```C
 static __always_inline void
@@ -918,7 +918,7 @@ pwndbg> heapinfo
 ```
 可以看出，这种方法与 `fastbin dup` 相比也简单了很多。
 
-#### （3）tcache perthread corruption
+#### tcache perthread corruption
 我们已经知道 `tcache_perthread_struct` 是整个 tcache 的管理结构，如果能控制这个结构体，那么无论我们 malloc 的 size 是多少，地址都是可控的。
 
 这里没找到太好的例子，自己想了一种情况
@@ -959,7 +959,7 @@ tcache_    +------------+<---------------------------+
 
 
 
-#### （4）tcache house of spirit
+#### tcache house of spirit
 
 拿 how2heap 的源码来讲：
 
@@ -1030,15 +1030,13 @@ gdb-peda$ heapinfo
 
 Tache 里就存放了一块 栈上的内容，我们之后只需 malloc，就可以控制这块内存。
 
-
-
-#### （5）smallbin unlink
+#### smallbin unlink
 
 在smallbin中包含有空闲块的时候，会同时将同大小的其他空闲块，放入tcache中，此时也会出现解链操作，但相比于unlink宏，缺少了链完整性校验。因此，原本unlink操作在该条件下也可以使用。
 
 
 
-#### (6) libc leak
+####  libc leak
 
 在以前的libc 版本中，我们只需这样：
 
@@ -1112,9 +1110,77 @@ addr                prev                size                 status             
 
 
 
+### 0x04 Tcache Check
+
+在最新的 libc 的[commit](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blobdiff;f=malloc/malloc.c;h=f730d7a2ee496d365bf3546298b9d19b8bddc0d0;hp=6d7a6a8cabb4edbf00881cb7503473a8ed4ec0b7;hb=bcdaad21d4635931d1bd3b54a7894276925d081d;hpb=5770c0ad1e0c784e817464ca2cf9436a58c9beb7) 中更新了 Tcache 的 double free 的check：
+
+```c
+index 6d7a6a8..f730d7a 100644 (file)
+--- a/malloc/malloc.c
++++ b/malloc/malloc.c
+@@ -2967,6 +2967,8 @@ mremap_chunk (mchunkptr p, size_t new_size)
+ typedef struct tcache_entry
+ {
+   struct tcache_entry *next;
++  /* This field exists to detect double frees.  */
++  struct tcache_perthread_struct *key;
+ } tcache_entry;
+ 
+ /* There is one of these for each thread, which contains the
+@@ -2990,6 +2992,11 @@ tcache_put (mchunkptr chunk, size_t tc_idx)
+ {
+   tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
+   assert (tc_idx < TCACHE_MAX_BINS);
++
++  /* Mark this chunk as "in the tcache" so the test in _int_free will
++     detect a double free.  */
++  e->key = tcache;
++
+   e->next = tcache->entries[tc_idx];
+   tcache->entries[tc_idx] = e;
+   ++(tcache->counts[tc_idx]);
+@@ -3005,6 +3012,7 @@ tcache_get (size_t tc_idx)
+   assert (tcache->entries[tc_idx] > 0);
+   tcache->entries[tc_idx] = e->next;
+   --(tcache->counts[tc_idx]);
++  e->key = NULL;
+   return (void *) e;
+ }
+ 
+@@ -4218,6 +4226,26 @@ _int_free (mstate av, mchunkptr p, int have_lock)
+   {
+     size_t tc_idx = csize2tidx (size);
+ 
++    /* Check to see if it's already in the tcache.  */
++    tcache_entry *e = (tcache_entry *) chunk2mem (p);
++
++    /* This test succeeds on double free.  However, we don't 100%
++       trust it (it also matches random payload data at a 1 in
++       2^<size_t> chance), so verify it's not an unlikely coincidence
++       before aborting.  */
++    if (__glibc_unlikely (e->key == tcache && tcache))
++      {
++       tcache_entry *tmp;
++       LIBC_PROBE (memory_tcache_double_free, 2, e, tc_idx);
++       for (tmp = tcache->entries[tc_idx];
++            tmp;
++            tmp = tmp->next)
++         if (tmp == e)
++           malloc_printerr ("free(): double free detected in tcache 2");
++       /* If we get here, it was a coincidence.  We've wasted a few
++          cycles, but don't abort.  */
++      }
++
+     if (tcache
+        && tc_idx < mp_.tcache_bins
+        && tcache->counts[tc_idx] < mp_.tcache_count)
+```
 
 
-### 0x04 建议习题：
+
+目前为止，只看到了在 free 操作的时候的 check ，似乎没有对 get 进行新的check。
+
+### 0x05 建议习题：
 
 * 2018 HITCON children_tcache
 
