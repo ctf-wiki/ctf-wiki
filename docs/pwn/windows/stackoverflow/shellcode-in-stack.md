@@ -1,8 +1,8 @@
-# 执行 Shellcode[¶]()
+# 执行 Shellcode
 
 
 
-## 介绍 [¶]()
+## 介绍 
 
 shellcode 是一段用于利用软件漏洞而执行的代码，shellcode 为16进制之机械码，以其经常让攻击者获得 shell 而得名。shellcode 常常使用机器语言编写。 可在暂存器 eip 溢出后，塞入一段可让 CPU 执行的 shellcode 机械码，让电脑可以执行攻击者的任意指令。在编译时关闭 ASLR、NX 、CANARY 选项，这样就可以在输入时把 shellcode 布置在栈中，通过动态调试获得所需要的 padding 溢出到返回地址为输入的 shellcode 地址，这样程序返回后便会执行 shellcode。
 
@@ -12,7 +12,7 @@ shellcode 是一段用于利用软件漏洞而执行的代码，shellcode 为16�
 
 ![demo](./figure/demo2-1.png)
 
-### 示例 [¶]()
+### 示例 
 
 下面给出一个经典例子，验证程序溢出后执行 **shellcode**，编译的环境为 winxp 工具为 vc6.0。
 
@@ -88,7 +88,7 @@ void main()
 
 
 
-### 参考阅读 [¶]()
+### 参考阅读 
 
 [0day安全：软件漏洞分析技术]()
 
