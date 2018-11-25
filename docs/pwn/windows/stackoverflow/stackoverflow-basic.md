@@ -2,7 +2,7 @@
 
 ## 介绍 
 
-当数据写入程序数据结构之外的调用堆栈上的存储器地址（通常是固定长度的缓冲区）时，会发生**堆栈缓冲区溢出**。当程序将更多数据写入堆栈中的缓冲区而不是实际为该缓冲区分配的缓冲区时，会导致堆栈缓冲区溢出错误。这几乎总是导致堆栈上相邻数据的损坏，并且在错误触发溢出的情况下，通常会导致程序崩溃或操作不正确。堆栈缓冲区溢出是一种更常见的编程故障。由于堆栈包含所有函数调用的返回地址，因此堆栈上的缓冲区溢出更有可能使程序执行shellcode。
+关于栈的介绍，可以阅读 [Linux Pwn](https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/stack_intro/) 中的介绍。
 
 
 
@@ -111,4 +111,6 @@ Authenticode    : false
 [stack buffer overflow](https://en.wikipedia.org/wiki/Stack_buffer_overflow)
 
 [0day安全：软件漏洞分析技术]()
+
+[Winchecksec](https://github.com/trailofbits/winchecksec)
 
