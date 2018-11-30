@@ -333,7 +333,7 @@ if(isset($_GET['code'])){
 
 `?` 的ASCII值是 `63` ，对应的二进制值是 `00111111`
 
-异或的二进制的值是 `10000000` ，对应的 `ASCII` 值是 `126` ，对应的字符串的值就是 `~` 了
+异或的二进制的值是 `‭01111110‬` ，对应的 `ASCII` 值是 `126` ，对应的字符串的值就是 `~` 了
 
 我们都知道， `PHP` 是弱类型的语言，也就是说在 `PHP` 中我们可以不预先声明变量的类型，而直接声明一个变量并进行初始化或赋值操作。正是由于 `PHP` 弱类型的这个特点，我们对 `PHP` 的变类型进行隐式的转换，并利用这个特点进行一些非常规的操作。如将整型转换成字符串型，将布尔型当作整型，或者将字符串当作函数来处理，下面我们来看一段代码：
 
@@ -689,7 +689,7 @@ case 3:
 
 **in_array()**
 
-在 PHP 手册中， `in_array()` 函数的解释是 `bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` ,如果strict参数没有提供，那么in\_array就会使用松散比较来判断 `$needle` 是否在 `$haystack` 中。当 strince 的值为 true 时， `in_array()` 会比较 needls 的类型和 haystack 中的类型是否相同。
+在 PHP 手册中， `in_array()` 函数的解释是 `bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` ,如果strict参数没有提供，那么 `in_array` 就会使用松散比较来判断 `$needle` 是否在 `$haystack` 中。当 strince 的值为 true 时， `in_array()` 会比较 needls 的类型和 haystack 中的类型是否相同。
 
 ```php
 $array=[0,1,2,'3'];
