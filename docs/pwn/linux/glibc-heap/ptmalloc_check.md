@@ -8,7 +8,7 @@
 | :---: | :--------------------------------------: | :-----------------: |
 | 申请的大小 | REQUEST_OUT_OF_RANGE(req) ：((unsigned long) (req) >= (unsigned long) (INTERNAL_SIZE_T)(-2 * MINSIZE)) | __set_errno(ENOMEM) |
 
-### fastbin ed
+### fastbin
 
 | 检查目标     |                  检查条件                   |                报错信息                |
 | -------- | :-------------------------------------: | :--------------------------------: |
@@ -64,10 +64,6 @@
 |   释放chunk位置   |               p == av->top               |  double free or corruption (top)   |
 | next chunk 位置 | contiguous (av) && (char *) nextchunk  >= ((char *) av->top + chunksize(av->top)) |  double free or corruption (out)   |
 | next chunk 大小 | chunksize_nomask (nextchunk) <= 2 * SIZE_SZ \|\|  nextsize >= av->system_mem | free(): invalid next size (normal) |
-
-
-
-#### 
 
 ## unlink
 
