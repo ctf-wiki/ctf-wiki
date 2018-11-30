@@ -380,3 +380,4 @@ if __name__ == "__main__":
 ## 参考
 
 - https://crypto.stackexchange.com/questions/11053/rsa-least-significant-bit-oracle-attack
+- https://pastebin.com/KnEUSMxp
