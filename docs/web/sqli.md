@@ -217,8 +217,7 @@ http://www.test.com/list.php?order=rand((select char(substring(table_name,1,1)) 
 
 ## 参考资料
 
--   [SQL 注入速查表](http://static.hx99.net/static/drops/tips-7840.html)
--   [MySQL 注入技巧](http://static.hx99.net/static/drops/tips-7299.html)
--   [MySQL 注入科普](http://static.hx99.net/static/drops/tips-123.html)
+-   [记一份SQLmap使用手册小结（一）](https://bbs.ichunqiu.com/forum.php?mod=viewthread&tid=47179&page=1#pid525044)
+-   [记一份SQLmap使用手册小结（二）](https://bbs.ichunqiu.com/forum.php?mod=viewthread&tid=47180&page=1#pid522022)
 -   [MySQL 注入总结](http://www.91ri.org/4073.html)
 -   [《SQL 注入攻击与防御》](http://product.dangdang.com/23364650.html)
