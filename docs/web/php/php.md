@@ -880,6 +880,9 @@ http://url/CVS/Entries 返回所有文件的结构
 ```shell
 bk clone http://url/name dir
 ```
+### PHP代码审计思维导图
+
+![](https://i.imgur.com/TrZcA03.jpg)
 
 ### 参考文献
 
