@@ -62,13 +62,17 @@ docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 
 ## How to practice？
 
-Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) 仓库中，请根据对应的分类自行寻找。
+ 首先，可以通过在线阅读来学习一些基本的安全知识。
 
-注：目前仍有部分题目在该仓库下，正在迁移中。。。（misc，web）
+其次，CTF Wiki 还有两个姊妹项目
+
+- CTF Wiki 中涉及的题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) 仓库中，请根据对应的分类自行寻找。
+    - 注：目前仍有部分题目在该仓库下，正在迁移中。。。（misc，web）
+- CTF Wiki 中涉及的工具会不断补充到 [ctf-tools](https://github.com/ctf-wiki/ctf-tools) 仓库中。
 
 ## How to make CTF Wiki Better？
 
-我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见 [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/blob/master/.github/CONTRIBUTING.md)。 
+我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享，具体的贡献方式请参见 [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/wiki/Contributing-Guide)。 
 
 **在你决定要贡献内容之前，请你务必看完这些内容**。我们期待着你的加入。
 
@@ -78,16 +82,17 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 
 ## What can you get?
 
-- 一个不一样的思考方式以及一颗乐于解决问题的心
-- 锻炼你的快速学习能力，不断学习新事物
-- 一些有趣的安全技术与相应的挑战
+- 快速学习新事物的能力
+- 一个不一样的思考方式
+- 一颗乐于解决问题的心
+- 一些有趣的安全技术
 - 一段充实奋斗的时光
 
 在阅读 Wiki 之前，我们希望能给予你几点建议：
 
-- 至少掌握一门编程语言，比如 Python
 - 阅读短文 [提问的智慧](http://www.jianshu.com/p/60dd8e9cd12f)
 - 善用 Google 搜索能帮助你更好地提升自己
+- 至少掌握一门编程语言，比如 Python
 - 动手实践比什么都要管用
 - 保持对技术的好奇与渴望并坚持下去
 
@@ -95,6 +100,6 @@ Wiki 中的所有题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-chal
 
 安全圈很小，安全的海洋很深。安全之路的探险，不如就从 **CTF Wiki** 开始！
 
-## 版权声明
+## Copyleft
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a>进行许可。
 
