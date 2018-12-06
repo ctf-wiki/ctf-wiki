@@ -882,7 +882,7 @@ bk clone http://url/name dir
 ```
 ### PHP代码审计思维导图
 
-![](https://i.imgur.com/TrZcA03.jpg)
+![](https://raw.githubusercontent.com/miraitowa/ctf-wiki/master/docs/web/php/figure/preg_match/php代码审计思维导图.png)
 
 ### 参考文献
 
