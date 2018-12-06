@@ -236,7 +236,7 @@ ebp2|leave ret addr|arg1|arg2
 可以看出在 fake frame 中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与 stack pivoting 相似。
 
 
-### 例子
+### 2018 安恒杯 over
 以 2018 年 6 月安恒杯月赛的 over 一题为例进行介绍, 题目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/fake_frame/over) 中找到
 
 #### 文件信息
@@ -378,7 +378,7 @@ io.sendafter(">", payload)
 io.interactive()
 ```
 
-总的来说这种方法跟 stack pivot 差别并不是很大
+总的来说这种方法跟 stack pivot 差别并不是很大。
 
 ### 参考阅读
 
@@ -408,9 +408,9 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 
 所以说如果我们利用栈溢出覆盖 argv[0] 为我们想要输出的字符串的地址，那么在 `__fortify_fail` 函数中就会输出我们想要的信息。
 
-### 例子
+### 32C3 CTF readme
 
-这里，我们以 2015 年 32C3 CTF smashes 为例进行介绍，该题目在 jarvisoj 上有复现。
+这里，我们以 2015 年 32C3 CTF readme 为例进行介绍，该题目在 jarvisoj 上有复现。
 
 #### 确定保护
 
@@ -672,7 +672,7 @@ sh.interactive()
 这里我们直接就得到了 flag，没有出现网上说的得不到 flag 的情况。
 
 ### 题目
-2018网鼎杯 - guess
+- 2018 网鼎杯 - guess
 
 ## 栈上的 partial overwrite
 partial overwrite 这种技巧在很多地方都适用, 这里先以栈上的 partial overwrite 为例来介绍这种思想。
