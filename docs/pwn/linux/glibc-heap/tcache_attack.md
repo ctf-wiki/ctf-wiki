@@ -1184,8 +1184,6 @@ index 6d7a6a8..f730d7a 100644 (file)
 
 #### Challenge 1 : LCTF2018 PWN easy_heap
 
-[题目和官方解答链接](https://github.com/LCTF/LCTF2018/tree/master/Writeup/easy_heap)
-
 ##### 基本信息
 
 远程环境中的 libc 是 libc-2.27.so ，所以堆块申请释放过程中需要考虑 Tcache 。
@@ -1479,9 +1477,6 @@ gdb-peda$ x/300xg 0x55e5d0fdf300
 尽管作者尽力展示所有的细节 ，发现越要展示更多细节 ，越不容易讲清楚 ，所以最好画图和亲自调试一下 。简单来讲就是在某些限制下如何通过一系列的操作 tcahce chunk 和 unsortedbin 实现 unlink 。
 
 #### Challenge 2 : HITCON 2018 PWN baby_tcache
-
-[题目](https://vigneshsrao.github.io/assets/img/baby_tcache/baby_tcache)
-[题目 exp CTFtime 上提供的](https://vigneshsrao.github.io/assets/img/baby_tcache/exploit.py)
 
 ##### 基本信息
 
