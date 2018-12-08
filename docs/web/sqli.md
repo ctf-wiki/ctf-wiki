@@ -311,7 +311,7 @@ SET NAMES 'x'语句与这三个语句等价：
      ?>
 
 
-![](./figure/preg_match/宽字节注入1.png)
+![](./php/figure/preg_match/宽字节注入1.png)
 
 那么如何逃过`addslashes`的限制呢？`addslashes`函数产生的效果就是，让'变成\'，让单双引号变得不再是'单双引号'，只是一撇而已。
 
@@ -324,10 +324,10 @@ SET NAMES 'x'语句与这三个语句等价：
 
 才到汉字的范围）。根据这个我们在地址栏输入%df%27看看会发生什么：
 
-![](./figure/preg_match/宽字节注入2.png)
+![](./php/figure/preg_match/宽字节注入2.png)
 
 
-![](./figure/preg_match/宽字节注入3.png)
+![](.php/figure/preg_match/宽字节注入3.png)
 
 我们可以看到，页面已经报错了。看到报错，说明这句sql语句出错，说明我们已经绕过了`addslashes`那么就可以正常的进行注入了。
 
@@ -343,16 +343,16 @@ SET NAMES 'x'语句与这三个语句等价：
 
 **例子代码：**
 
-![](./figure/preg_match/例子2.png)
+![](./php/figure/preg_match/例子2.png)
 
 
-![](./figure/preg_match/宽字节注入4.png)
+![](./php/figure/preg_match/宽字节注入4.png)
 
 
-![](./figure/preg_match/宽字节注入5.png)
+![](./php/figure/preg_match/宽字节注入5.png)
 
 
-![](./figure/preg_match/宽字节注入6.png)
+![](./php/figure/preg_match/宽字节注入6.png)
 
 
 **转换过程：**
