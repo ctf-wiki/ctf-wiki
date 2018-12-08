@@ -880,10 +880,6 @@ http://url/CVS/Entries 返回所有文件的结构
 ```shell
 bk clone http://url/name dir
 ```
-### PHP代码审计思维导图
-
-![](./figure/preg_match/php代码审计思维导图.png)
-
 ### 参考文献
 
 - [记一次拿webshell踩过的坑(如何用PHP编写一个不包含数字和字母的后门)](https://www.cnblogs.com/ECJTUACM-873284962/p/9433641.html)
