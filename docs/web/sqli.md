@@ -212,7 +212,7 @@ http://www.test.com/list.php?order=rand((select char(substring(table_name,1,1)) 
 
 ### 宽字节注入
 
-#### 了解宽字节注入 ####
+#### 了解宽字节注入 
 
 首先我们了解下宽字节注入，宽字节注入主要是源于程序员设置数据库编码与`PHP`编码设置为不同的两个编码那么就有可能产生宽字节注入
 
