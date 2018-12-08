@@ -1540,9 +1540,9 @@ int new()
 
 程序的漏洞很容易发现 ，而且申请的 chunk 大小可控 ，所以一般考虑构造 overlapping chunk 处理 。但是问题在于即使把 main_arena 相关的地址写到了 chunk 上 ，也没法调用 show 功能做信息泄露 ，因为程序就没提供这个功能 。
 
-当然如果没有信息泄露也可以考虑 part write 去改掉 main_arena 相关地址的后几个字节 ，利用 tcache 机制把 __free_hook chunk 写进 tcache 的链表中 ，后面利用 unsortedbin attack 往 __free_hook 里面写上 unsortedbin addr ，后面把 __free_hook 分配出来 ，再利用 part write 在 __free_hook 里面写上 one_shoot ，不过这个方法的爆破工作量太大需要4096次 ，感兴趣的可以试试 。
+当然如果没有信息泄露也可以考虑 part write 去改掉 main_arena 相关地址的后几个字节 ，利用 tcache 机制把 `__free_hook` chunk 写进 tcache 的链表中 ，后面利用 unsortedbin attack 往 `__free_hook` 里面写上 unsortedbin addr ，后面把 `__free_hook` 分配出来 ，再利用 part write 在 `__free_hook` 里面写上 one_shoot ，不过这个方法的爆破工作量太大需要4096次 ，感兴趣的可以试试 。
 
-出题者提供一个基于文件结构体的内存读方法来实现内存泄露 ，简单说来就是修改 puts 函数工作过程中 stdout 结构的 __IO_write_base ，从而达到内存泄露 ，这个方法的优点在于只爆破半个字节 run 16 次即可 ，具体操作见后面的 exp 解析部分 。
+出题者提供一个基于文件结构体的内存读方法来实现内存泄露 ，简单说来就是修改 puts 函数工作过程中 stdout 结构的 `__IO_write_base` ，从而达到内存泄露 ，这个方法的优点在于只爆破半个字节 run 16 次即可 ，具体操作见后面的 exp 解析部分 。
 
 ##### 操作过程
 
@@ -1738,7 +1738,7 @@ new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
 
 ##### Challenge 2 小结
 
-这个程序的利用过程是一个应该学会的技巧 ，这种通过文件结构体的方式来实现内存的读写的相关资料可以参考台湾天使大佬的博客 。最近的 hctf2018 steak 这个程序的信息泄露多数人是通过 copy puts_addr 到 __free_hook 指针里 ，实现信息泄露 。实际上也可以通过修改文件结构体的字段来实现信息泄露 ，感兴趣的可以试试 。
+这个程序的利用过程是一个应该学会的技巧 ，这种通过文件结构体的方式来实现内存的读写的相关资料可以参考台湾 Angelboy 的博客 。最近的 hctf2018 steak 这个程序的信息泄露多数人是通过 copy puts_addr 到 `__free_hook` 指针里 ，实现信息泄露 。实际上也可以通过修改文件结构体的字段来实现信息泄露 ，感兴趣的可以试试 。
 
 ### 0x06 建议习题：
 
