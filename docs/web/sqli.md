@@ -327,7 +327,7 @@ SET NAMES 'x'语句与这三个语句等价：
 ![](./php/figure/preg_match/宽字节注入2.png)
 
 
-![](.php/figure/preg_match/宽字节注入3.png)
+![](./php/figure/preg_match/宽字节注入3.png)
 
 我们可以看到，页面已经报错了。看到报错，说明这句sql语句出错，说明我们已经绕过了`addslashes`那么就可以正常的进行注入了。
 
