@@ -35,6 +35,8 @@
 
 在利用 `execve` 获取 shell 时，前几条同 system 一致。但它具有一个优点就是几乎不受环境变量的影响。但是缺点在于我们需要布置三个参数。
 
+此外，glibc 中我们还可以使用 one_gadget 来获取 shell。
+
 ## syscall
 
 系统调用号 `__NR_execve` 在 IA-32 中为 11，x86-64 为 59。
