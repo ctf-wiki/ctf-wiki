@@ -4709,21 +4709,21 @@
 <h2 id="heap">获取heap位置<a class="headerlink" href="#heap" title="Permanent link">&para;</a></h2>
 <p>有多种方法能获知<code>heap</code>的位置, 方法之一就是<code>kernel32</code>的<code>GetProcessHeap()</code>函数, 当然也可以用以下的32位汇编代码来检测32位环境(实际上就有一些壳避免使用该api函数, 直接查询PEB):</p>
 <div class="codehilite"><pre><span></span><span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
 </pre></div>
 
 <p>或使用以下64位代码来检测64位环境</p>
 <div class="codehilite"><pre><span></span><span class="nf">push</span> <span class="mi">60</span><span class="no">h</span>
 <span class="nf">pop</span> <span class="no">rsi</span>
 <span class="nl">gs:</span><span class="nf">lodsq</span> <span class="c">;Process Environment Block</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">rax</span><span class="err">+</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">rax</span><span class="err">+</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
 </pre></div>
 
 <p>或使用以下32位代码检测64位环境</p>
 <div class="codehilite"><pre><span></span><span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
 <span class="c">;64-bit Process Environment Block</span>
 <span class="c">;follows 32-bit Process Environment Block</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">1030</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">1030</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
 </pre></div>
 
 <p>另外一种方法则是使用<code>kernel32</code>的<code>GetProcessHeaps()</code>函数, 其实它只是简单的转给了<code>ntdll</code>的<code>RtlGetProcessHeaps()</code>函数, 这个函数会返回属于当前进程的堆的数组, 而数组的第一个堆, 就跟<code>kernel32</code>的<code>GetProcessHeap()</code>函数所返回的是一样的.</p>
@@ -4732,7 +4732,7 @@
 <span class="nf">pop</span> <span class="no">esi</span>
 <span class="nl">fs:</span><span class="nf">lodsd</span> <span class="c">;Process Environment Block</span>
 <span class="c">;get process heaps list base</span>
-<span class="no">mov</span> <span class="no">esi</span><span class="p">,</span> <span class="p">[</span><span class="no">esi</span><span class="err">+</span><span class="no">eax</span><span class="err">+</span><span class="mi">5</span><span class="no">ch</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="no">esi</span><span class="p">,</span> <span class="p">[</span><span class="no">esi</span><span class="err">+</span><span class="no">eax</span><span class="err">+</span><span class="mi">5</span><span class="no">ch</span><span class="p">]</span>
 <span class="nf">lodsd</span>
 </pre></div>
 
@@ -4741,7 +4741,7 @@
 <span class="nf">pop</span> <span class="no">rsi</span>
 <span class="nl">gs:</span><span class="nf">lodsq</span> <span class="c">;Process Environment Block</span>
 <span class="c">;get process heaps list base</span>
-<span class="no">mov</span> <span class="no">esi</span><span class="p">,</span> <span class="p">[</span><span class="no">rsi</span><span class="p">*</span><span class="mi">2</span><span class="err">+</span><span class="no">rax</span><span class="err">+</span><span class="mi">20</span><span class="no">h</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="no">esi</span><span class="p">,</span> <span class="p">[</span><span class="no">rsi</span><span class="p">*</span><span class="mi">2</span><span class="err">+</span><span class="no">rax</span><span class="err">+</span><span class="mi">20</span><span class="no">h</span><span class="p">]</span>
 <span class="nf">lodsd</span>
 </pre></div>
 
@@ -4749,8 +4749,8 @@
 <div class="codehilite"><pre><span></span><span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
 <span class="c">;64-bit Process Environment Block</span>
 <span class="c">;follows 32-bit Process Environment Block</span>
-<span class="no">mov</span> <span class="no">esi</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">10</span><span class="no">f0h</span><span class="p">]</span> <span class="c">;get process heaps list base</span>
-<span class="no">lodsd</span>
+<span class="nf">mov</span> <span class="no">esi</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">10</span><span class="no">f0h</span><span class="p">]</span> <span class="c">;get process heaps list base</span>
+<span class="nf">lodsd</span>
 </pre></div>
 
 <h2 id="flags">检测Flags字段<a class="headerlink" href="#flags" title="Permanent link">&para;</a></h2>
@@ -4762,11 +4762,11 @@
 <span class="nf">sbb</span> <span class="no">ebx</span><span class="p">,</span> <span class="no">ebx</span>
 <span class="nf">and</span> <span class="no">ebx</span><span class="p">,</span> <span class="mi">34</span><span class="no">h</span>
 <span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="no">ebx</span><span class="err">+</span><span class="mi">0</span><span class="no">ch</span><span class="p">]</span> <span class="c">;Flags</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="no">ebx</span><span class="err">+</span><span class="mi">0</span><span class="no">ch</span><span class="p">]</span> <span class="c">;Flags</span>
 <span class="c">;neither HEAP_CREATE_ALIGN_16</span>
 <span class="c">;nor HEAP_SKIP_VALIDATION_CHECKS</span>
-<span class="no">and</span> <span class="no">eax</span><span class="p">,</span> <span class="mi">0</span><span class="no">effeffffh</span>
+<span class="nf">and</span> <span class="no">eax</span><span class="p">,</span> <span class="mi">0</span><span class="no">effeffffh</span>
 <span class="c">;HEAP_GROWABLE</span>
 <span class="c">;+ HEAP_TAIL_CHECKING_ENABLED</span>
 <span class="c">;+ HEAP_FREE_CHECKING_ENABLED</span>
@@ -4782,10 +4782,10 @@
 <span class="nf">sbb</span> <span class="no">ebx</span><span class="p">,</span> <span class="no">ebx</span>
 <span class="nf">and</span> <span class="no">ebx</span><span class="p">,</span> <span class="mi">34</span><span class="no">h</span>
 <span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="no">ebx</span><span class="err">+</span><span class="mi">0</span><span class="no">ch</span><span class="p">]</span> <span class="c">;Flags</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="no">ebx</span><span class="err">+</span><span class="mi">0</span><span class="no">ch</span><span class="p">]</span> <span class="c">;Flags</span>
 <span class="c">;not HEAP_SKIP_VALIDATION_CHECKS</span>
-<span class="no">bswap</span> <span class="no">eax</span>
+<span class="nf">bswap</span> <span class="no">eax</span>
 <span class="nf">and</span> <span class="no">al</span><span class="p">,</span> <span class="mi">0</span><span class="no">efh</span>
 <span class="c">;HEAP_GROWABLE</span>
 <span class="c">;+ HEAP_TAIL_CHECKING_ENABLED</span>
@@ -4800,8 +4800,8 @@
 <div class="codehilite"><pre><span></span><span class="nf">push</span> <span class="mi">60</span><span class="no">h</span>
 <span class="nf">pop</span> <span class="no">rsi</span>
 <span class="nl">gs:</span><span class="nf">lodsq</span> <span class="c">;Process Environment Block</span>
-<span class="no">mov</span> <span class="no">ebx</span><span class="p">,</span> <span class="p">[</span><span class="no">rax</span><span class="err">+</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
-<span class="no">call</span> <span class="no">GetVersion</span>
+<span class="nf">mov</span> <span class="no">ebx</span><span class="p">,</span> <span class="p">[</span><span class="no">rax</span><span class="err">+</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">call</span> <span class="no">GetVersion</span>
 <span class="nf">cmp</span> <span class="no">al</span><span class="p">,</span> <span class="mi">6</span>
 <span class="nf">sbb</span> <span class="no">rax</span><span class="p">,</span> <span class="no">rax</span>
 <span class="nf">and</span> <span class="no">al</span><span class="p">,</span> <span class="mi">0</span><span class="no">a4h</span>
@@ -4810,7 +4810,7 @@
 <span class="c">;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class="c">;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
 <span class="nf">cmp</span> <span class="no">d</span> <span class="p">[</span><span class="no">rbx</span><span class="err">+</span><span class="no">rax</span><span class="err">+</span><span class="mi">70</span><span class="no">h</span><span class="p">],</span> <span class="mi">40000062</span><span class="no">h</span> <span class="c">;Flags</span>
-<span class="no">je</span> <span class="no">being_debugged</span>
+<span class="nf">je</span> <span class="no">being_debugged</span>
 </pre></div>
 
 <p>用32位代码检测64位windows环境:</p>
@@ -4819,9 +4819,9 @@
 <span class="nf">mov</span> <span class="no">ebx</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="no">eax</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
 <span class="c">;64-bit Process Environment Block</span>
 <span class="c">;follows 32-bit Process Environment Block</span>
-<span class="no">mov</span> <span class="no">ah</span><span class="p">,</span> <span class="mi">10</span><span class="no">h</span>
+<span class="nf">mov</span> <span class="no">ah</span><span class="p">,</span> <span class="mi">10</span><span class="no">h</span>
 <span class="nf">mov</span> <span class="no">ebx</span><span class="p">,</span> <span class="p">[</span><span class="no">ebx</span><span class="err">+</span><span class="no">eax</span><span class="p">]</span> <span class="c">;get process heap base</span>
-<span class="no">call</span> <span class="no">GetVersion</span>
+<span class="nf">call</span> <span class="no">GetVersion</span>
 <span class="nf">cmp</span> <span class="no">al</span><span class="p">,</span> <span class="mi">6</span>
 <span class="nf">sbb</span> <span class="no">eax</span><span class="p">,</span> <span class="no">eax</span>
 <span class="nf">and</span> <span class="no">al</span><span class="p">,</span> <span class="mi">0</span><span class="no">a4h</span>
@@ -4843,10 +4843,10 @@
 <span class="nf">sbb</span> <span class="no">ebx</span><span class="p">,</span> <span class="no">ebx</span>
 <span class="nf">and</span> <span class="no">ebx</span><span class="p">,</span> <span class="mi">34</span><span class="no">h</span>
 <span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="no">ebx</span><span class="err">+</span><span class="mi">10</span><span class="no">h</span><span class="p">]</span> <span class="c">;ForceFlags</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="no">ebx</span><span class="err">+</span><span class="mi">10</span><span class="no">h</span><span class="p">]</span> <span class="c">;ForceFlags</span>
 <span class="c">;not HEAP_CREATE_ALIGN_16</span>
-<span class="no">btr</span> <span class="no">eax</span><span class="p">,</span> <span class="mi">10</span><span class="no">h</span>
+<span class="nf">btr</span> <span class="no">eax</span><span class="p">,</span> <span class="mi">10</span><span class="no">h</span>
 <span class="c">;HEAP_TAIL_CHECKING_ENABLED</span>
 <span class="c">;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class="c">;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
@@ -4861,12 +4861,12 @@
 <span class="nf">sbb</span> <span class="no">ebx</span><span class="p">,</span> <span class="no">ebx</span>
 <span class="nf">and</span> <span class="no">ebx</span><span class="p">,</span> <span class="mi">34</span><span class="no">h</span>
 <span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
-<span class="no">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="mi">18</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
 <span class="c">;ForceFlags</span>
 <span class="c">;HEAP_TAIL_CHECKING_ENABLED</span>
 <span class="c">;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class="c">;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
-<span class="no">cmp</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="no">ebx</span><span class="err">+</span><span class="mi">10</span><span class="no">h</span><span class="p">],</span> <span class="mi">40000060</span><span class="no">h</span>
+<span class="nf">cmp</span> <span class="p">[</span><span class="no">eax</span><span class="err">+</span><span class="no">ebx</span><span class="err">+</span><span class="mi">10</span><span class="no">h</span><span class="p">],</span> <span class="mi">40000060</span><span class="no">h</span>
 <span class="nf">je</span> <span class="no">being_debugged</span>
 </pre></div>
 
@@ -4874,8 +4874,8 @@
 <p><div class="codehilite"><pre><span></span><span class="nf">push</span> <span class="mi">60</span><span class="no">h</span>
 <span class="nf">pop</span> <span class="no">rsi</span>
 <span class="nl">gs:</span><span class="nf">lodsq</span> <span class="c">;Process Environment Block</span>
-<span class="no">mov</span> <span class="no">ebx</span><span class="p">,</span> <span class="p">[</span><span class="no">rax</span><span class="err">+</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
-<span class="no">call</span> <span class="no">GetVersion</span>
+<span class="nf">mov</span> <span class="no">ebx</span><span class="p">,</span> <span class="p">[</span><span class="no">rax</span><span class="err">+</span><span class="mi">30</span><span class="no">h</span><span class="p">]</span> <span class="c">;get process heap base</span>
+<span class="nf">call</span> <span class="no">GetVersion</span>
 <span class="nf">cmp</span> <span class="no">al</span><span class="p">,</span> <span class="mi">6</span>
 <span class="nf">sbb</span> <span class="no">rax</span><span class="p">,</span> <span class="no">rax</span>
 <span class="nf">and</span> <span class="no">al</span><span class="p">,</span> <span class="mi">0</span><span class="no">a4h</span>
@@ -4894,9 +4894,9 @@
 <span class="nf">mov</span> <span class="no">ebx</span><span class="p">,</span> <span class="no">fs</span><span class="p">:[</span><span class="no">eax</span><span class="p">]</span> <span class="c">;Process Environment Block</span>
 <span class="c">;64-bit Process Environment Block</span>
 <span class="c">;follows 32-bit Process Environment Block</span>
-<span class="no">mov</span> <span class="no">ah</span><span class="p">,</span> <span class="mi">10</span><span class="no">h</span>
+<span class="nf">mov</span> <span class="no">ah</span><span class="p">,</span> <span class="mi">10</span><span class="no">h</span>
 <span class="nf">mov</span> <span class="no">ebx</span><span class="p">,</span> <span class="p">[</span><span class="no">ebx</span><span class="err">+</span><span class="no">eax</span><span class="p">]</span> <span class="c">;get process heap base</span>
-<span class="no">sbb</span> <span class="no">eax</span><span class="p">,</span> <span class="no">eax</span>
+<span class="nf">sbb</span> <span class="no">eax</span><span class="p">,</span> <span class="no">eax</span>
 <span class="nf">and</span> <span class="no">al</span><span class="p">,</span> <span class="mi">0</span><span class="no">a4h</span>
 <span class="c">;ForceFlags</span>
 <span class="c">;HEAP_TAIL_CHECKING_ENABLED</span>

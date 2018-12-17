@@ -4988,9 +4988,9 @@
 <span class="nl">.text:</span><span class="err">080485</span><span class="nf">FE</span>                 <span class="no">mov</span>     <span class="no">ebp</span><span class="p">,</span> <span class="no">esp</span>
 <span class="nl">.text:</span><span class="err">08048600</span>                 <span class="nf">sub</span>     <span class="no">esp</span><span class="p">,</span> <span class="mi">28</span><span class="no">h</span>
 <span class="nl">.text:</span><span class="err">08048603</span>                 <span class="nf">mov</span>     <span class="no">dword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="mi">0</span> <span class="c">; timer</span>
-<span class="no">.text</span><span class="p">:</span><span class="mi">0804860</span><span class="no">A</span>                 <span class="no">call</span>    <span class="no">_time</span>
+<span class="nl">.text:</span><span class="err">0804860</span><span class="nf">A</span>                 <span class="no">call</span>    <span class="no">_time</span>
 <span class="nl">.text:</span><span class="err">0804860</span><span class="nf">F</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">eax</span>      <span class="c">; seed</span>
-<span class="no">.text</span><span class="p">:</span><span class="mi">08048612</span>                 <span class="no">call</span>    <span class="no">_srand</span>
+<span class="nl">.text:</span><span class="err">08048612</span>                 <span class="nf">call</span>    <span class="no">_srand</span>
 <span class="nl">.text:</span><span class="err">08048617</span>                 <span class="nf">call</span>    <span class="no">_rand</span>
 <span class="nl">.text:</span><span class="err">0804861</span><span class="nf">C</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">secretcode</span><span class="p">],</span> <span class="no">eax</span>
 <span class="nl">.text:</span><span class="err">0804861</span><span class="nf">F</span>                 <span class="no">lea</span>     <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">input</span><span class="p">]</span>
@@ -5001,14 +5001,14 @@
 <span class="nl">.text:</span><span class="err">08048635</span>                 <span class="nf">cmp</span>     <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">secretcode</span><span class="p">]</span>
 <span class="nl">.text:</span><span class="err">08048638</span>                 <span class="nf">jnz</span>     <span class="no">short</span> <span class="no">locret_8048646</span>
 <span class="nl">.text:</span><span class="err">0804863</span><span class="nf">A</span>                 <span class="no">mov</span>     <span class="no">dword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">offset</span> <span class="no">command</span> <span class="c">; &quot;/bin/sh&quot;</span>
-<span class="no">.text</span><span class="p">:</span><span class="mi">08048641</span>                 <span class="no">call</span>    <span class="no">_system</span>
+<span class="nl">.text:</span><span class="err">08048641</span>                 <span class="nf">call</span>    <span class="no">_system</span>
 </pre></div>
 
 <p>在 secure 函数又发现了存在调用 system("/bin/sh") 的代码，那么如果我们直接控制程序返回至 0x0804863A，那么就可以得到系统的 shell 了。</p>
 <p>下面就是我们如何构造 payload 了，首先需要确定的是我们能够控制的内存的起始地址距离 main 函数的返回地址的字节数。</p>
 <div class="codehilite"><pre><span></span><span class="nl">.text:</span><span class="err">080486</span><span class="nf">A7</span>                 <span class="no">lea</span>     <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">esp</span><span class="err">+</span><span class="mi">1</span><span class="no">Ch</span><span class="p">]</span>
 <span class="nl">.text:</span><span class="err">080486</span><span class="nf">AB</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">eax</span>      <span class="c">; s</span>
-<span class="no">.text</span><span class="p">:</span><span class="mi">080486</span><span class="no">AE</span>                 <span class="no">call</span>    <span class="no">_gets</span>
+<span class="nl">.text:</span><span class="err">080486</span><span class="nf">AE</span>                 <span class="no">call</span>    <span class="no">_gets</span>
 </pre></div>
 
 <p>可以看到该字符串是通过相对于 esp 的索引，所以我们需要进行调试，将断点下在 call 处，查看 esp，ebp，如下</p>
