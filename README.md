@@ -20,7 +20,7 @@
 - CTF 竞赛中的进阶知识
 - CTF 竞赛中的优质题目
 
-关于上述部分待完善内容，请参见CTF Wiki 的 [Projects](https://github.com/ctf-wiki/ctf-wiki/projects)，详细列举了正在做的事情以及待做事项。
+关于上述部分待完善内容，请参见 CTF Wiki 的 [Projects](https://github.com/ctf-wiki/ctf-wiki/projects)，详细列举了正在做的事情以及待做事项。
 
 当然，**CTF Wiki** 基于 **CTF**，却不会局限于 **CTF**，在未来，**CTF Wiki** 将会
 
