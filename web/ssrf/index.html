@@ -2,7 +2,7 @@
 
 
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh" class="no-js">
   <head>
     
@@ -2332,7 +2332,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" title="参考资料" class="md-nav__link">
+  <a href="#_3" title="绕过姿势" class="md-nav__link">
+    绕过姿势
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" title="危害" class="md-nav__link">
+    危害
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" title="参考资料" class="md-nav__link">
     参考资料
   </a>
   
@@ -4653,7 +4667,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" title="参考资料" class="md-nav__link">
+  <a href="#_3" title="绕过姿势" class="md-nav__link">
+    绕过姿势
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" title="危害" class="md-nav__link">
+    危害
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" title="参考资料" class="md-nav__link">
     参考资料
   </a>
   
@@ -4775,6 +4803,9 @@
 <ul>
 <li>服务器开启 OpenSSL 无法进行交互利用</li>
 <li>服务端需要鉴权（Cookies &amp; User：Pass）不能完美利用</li>
+<li>限制请求的端口为http常用的端口，比如，80,443,8080,8090。</li>
+<li>禁用不需要的协议。仅仅允许http和https请求。可以防止类似于file:///,gopher://,ftp:// 等引起的问题。</li>
+<li>统一错误信息，避免用户可以根据错误信息来判断远端服务器的端口状态。</li>
 </ul>
 <h2 id="ssrf_3">利用 SSRF 进行端口扫描<a class="headerlink" href="#ssrf_3" title="Permanent link">&para;</a></h2>
 <p>根据服务器的返回信息进行判断，大部分应用不会判别端口，可通过返回的 banner 信息判断端口状态。</p>
@@ -4842,9 +4873,50 @@
 <div class="codehilite"><pre><span></span>file:///etc/passwd
 </pre></div>
 
+<h2 id="_3">绕过姿势<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<ol>
+<li>更改IP地址写法
+例如<code>192.168.0.1</code></li>
+</ol>
+<p>(1)、8进制格式：<code>0300.0250.0.1</code>
+(2)、16进制格式：<code>0xC0.0xA8.0.1</code>
+(3)、10进制整数格式：<code>3232235521</code>
+(4)、16进制整数格式：<code>0xC0A80001</code>
+(5)、还有一种特殊的省略模式，例如<code>10.0.0.1</code>这个IP可以写成<code>10.1</code></p>
+</li>
+<li>
+<p>利用URL解析问题
+    在某些情况下，后端程序可能会对访问的URL进行解析，对解析出来的host地址进行过滤。这时候可能会出现对URL参数解析不当，导致可以绕过过滤。
+    例如：</p>
+<ul>
+<li><code>http://www.baidu.com@192.168.0.1/</code>与<code>http://192.168.0.1</code>请求的都是<code>192.168.0.1</code>的内容</li>
+<li>可以指向任意ip的域名<code>xip.io</code>：<code>http://127.0.0.1.xip.io/</code>==&gt;<code>http://127.0.0.1/</code></li>
+<li>短地址<code>http://dwz.cn/11SMa</code>==&gt;<code>http://127.0.0.1</code></li>
+<li>利用句号<code>。</code>：<code>127。0。0。1</code>==&gt;<code>127.0.0.1</code></li>
+<li>利用Enclosed alphanumerics
+    <div class="codehilite"><pre><span></span>ⓔⓧⓐⓜⓟⓛⓔ.ⓒⓞⓜ  &gt;&gt;&gt;  example.com
+List:
+① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨ ⑩ ⑪ ⑫ ⑬ ⑭ ⑮ ⑯ ⑰ ⑱ ⑲ ⑳ 
+⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇ 
+⒈ ⒉ ⒊ ⒋ ⒌ ⒍ ⒎ ⒏ ⒐ ⒑ ⒒ ⒓ ⒔ ⒕ ⒖ ⒗ ⒘ ⒙ ⒚ ⒛ 
+⒜ ⒝ ⒞ ⒟ ⒠ ⒡ ⒢ ⒣ ⒤ ⒥ ⒦ ⒧ ⒨ ⒩ ⒪ ⒫ ⒬ ⒭ ⒮ ⒯ ⒰ ⒱ ⒲ ⒳ ⒴ ⒵ 
+Ⓐ Ⓑ Ⓒ Ⓓ Ⓔ Ⓕ Ⓖ Ⓗ Ⓘ Ⓙ Ⓚ Ⓛ Ⓜ Ⓝ Ⓞ Ⓟ Ⓠ Ⓡ Ⓢ Ⓣ Ⓤ Ⓥ Ⓦ Ⓧ Ⓨ Ⓩ 
+ⓐ ⓑ ⓒ ⓓ ⓔ ⓕ ⓖ ⓗ ⓘ ⓙ ⓚ ⓛ ⓜ ⓝ ⓞ ⓟ ⓠ ⓡ ⓢ ⓣ ⓤ ⓥ ⓦ ⓧ ⓨ ⓩ 
+⓪ ⓫ ⓬ ⓭ ⓮ ⓯ ⓰ ⓱ ⓲ ⓳ ⓴ 
+⓵ ⓶ ⓷ ⓸ ⓹ ⓺ ⓻ ⓼ ⓽ ⓾ ⓿
+</pre></div></li>
+</ul>
 </li>
 </ul>
-<h2 id="_3">参考资料<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h2 id="_4">危害<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li>可以对外网、服务器所在内网、本地进行端口扫描，获取一些服务的banner信息;</li>
+<li>攻击运行在内网或本地的应用程序（比如溢出）;</li>
+<li>对内网web应用进行指纹识别，通过访问默认文件实现;</li>
+<li>攻击内外网的web应用，主要是使用get参数就可以实现的攻击（比如struts2，sqli等）;</li>
+<li>利用file协议读取本地文件等。</li>
+</ul>
+<h2 id="_5">参考资料<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="http://tools.40huo.cn/#!papers.md">《Build Your SSRF EXP Autowork》猪猪侠</a></li>
 <li><a href="https://_thorns.gitbooks.io/sec/content/teng_xun_mou_chu_ssrf_lou_6d1e28_fei_chang_hao_de_.html">腾讯某处 SSRF 漏洞（非常好的利用点）附利用脚本</a></li>
