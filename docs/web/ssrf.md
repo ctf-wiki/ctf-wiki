@@ -172,6 +172,7 @@ header("Location: $scheme://$ip:$port/$data");
     ```
     file:///etc/passwd
     ```
+    
 ## 绕过姿势
 1.  更改IP地址写法
     例如`192.168.0.1`
@@ -202,6 +203,7 @@ header("Location: $scheme://$ip:$port/$data");
         ⓪ ⓫ ⓬ ⓭ ⓮ ⓯ ⓰ ⓱ ⓲ ⓳ ⓴ 
         ⓵ ⓶ ⓷ ⓸ ⓹ ⓺ ⓻ ⓼ ⓽ ⓾ ⓿
         ```
+        
 ## 危害
 
 * 可以对外网、服务器所在内网、本地进行端口扫描，获取一些服务的banner信息;
