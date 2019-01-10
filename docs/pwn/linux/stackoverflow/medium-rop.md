@@ -299,7 +299,7 @@ BROP是没有对应应用程序的源代码或者二进制文件下，对程序�
     -   暴力枚举
 -   Stack Reading
     -   获取栈上的数据来泄露canaries，以及ebp和返回地址。
--   Bind ROP
+-   Blind ROP
     -   找到足够多的 gadgets 来控制输出函数的参数，并且对其进行调用，比如说常见的 write 函数以及puts函数。
 -   Build the exploit
     -   利用输出函数来 dump 出程序以便于来找到更多的 gadgets，从而可以写出最后的 exploit。
