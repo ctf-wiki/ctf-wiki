@@ -112,6 +112,7 @@ base xx 中的 xx 表示的是采用多少个字符进行编码，比如说 base
 
 - http://www1.tc711.com/tool/BASE64.htm
 - python 库函数
+- [读取隐写信息脚本](https://github.com/cjcslhp/wheels/tree/master/b64stego)
 
 
 ## 例子
