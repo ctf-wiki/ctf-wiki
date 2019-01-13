@@ -115,7 +115,7 @@ base xx 中的 xx 表示的是采用多少个字符进行编码，比如说 base
 - [读取隐写信息脚本](https://github.com/cjcslhp/wheels/tree/master/b64stego)
 
 
-## 例子
+### 例子
 
 题目描述参见 `ctf-challenge`中 [misc 分类的 base64-stego 目录](https://github.com/ctf-wiki/ctf-challenges/tree/master/misc/encode/computer/base64-stego)中的 data.txt 文件。
 
