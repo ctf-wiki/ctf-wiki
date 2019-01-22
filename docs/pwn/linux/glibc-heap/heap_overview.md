@@ -28,7 +28,7 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 
 ### malloc
 
-在 glibc 的[malloc.h](https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448)中，malloc 的说明如下
+在 glibc 的[malloc.c](https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L448)中，malloc 的说明如下
 
 ```c++
 /*
