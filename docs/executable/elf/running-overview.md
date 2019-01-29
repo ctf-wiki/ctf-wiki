@@ -14,6 +14,12 @@
 
 ![](./figure/run_dynamic_linking.png)
 
+
+
+这里给出另外一张更加细节的图片。
+
+![image-20181201152204864](figure/program-running-overview.png)
+
 ### 基本操作说明
 
 #### sys_execve

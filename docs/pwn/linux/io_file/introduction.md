@@ -68,7 +68,7 @@ _IO_2_1_stdin_
 
 但是事实上_IO_FILE结构外包裹着另一种结构_IO_FILE_plus，其中包含了一个重要的指针vtable指向了一系列函数指针。
 
-在libc2.23版本下，32位的vtable偏移为0x94，64位偏移为0x228
+在libc2.23版本下，32位的vtable偏移为0x94，64位偏移为0xd8
 
 ```
 struct _IO_FILE_plus

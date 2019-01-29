@@ -480,7 +480,7 @@ sh.interactive()
 
 点击下载: [ret2libc2](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc2/ret2libc2)
 
-该题目与例 1 基本一致，只不过不再出现 /bin/sh 字符串，所以此次需要我们自己来读取字符串，所以我们需要两个 gadgets，第一个控制程序读取字符串，第二个控制程序执行 system(""/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的 exp 如下
+该题目与例 1 基本一致，只不过不再出现 /bin/sh 字符串，所以此次需要我们自己来读取字符串，所以我们需要两个 gadgets，第一个控制程序读取字符串，第二个控制程序执行 system("/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的 exp 如下
 
 ```python
 ##!/usr/bin/env python
@@ -594,100 +594,6 @@ sh.interactive()
 ### 题目
 
 - train.cs.nctu.edu.tw: ret2libc
-
-## shell 获取小结
-
-这里总结几种常见的获取 shell 的方式：
-
--   执行 shellcode，这一方面也会有不同的情况
-    -   可以直接返回 shell
-    -   可以将 shell 返回到某一个端口
-    -   shellcode 中字符有时候需要满足不同的需求
-    -   **注意，我们需要将 shellcode 写在可以执行的内存区域中。**
--   执行 system("/bin/sh")，system('sh') 等等
-    -   关于 system 的地址，参见下面章节的**地址寻找**。
-    -   关于 "/bin/sh"， “sh”
-        -   首先寻找 binary 里面有没有对应的字符串，**比如说有 flush 函数，那就一定有 sh 了**
-        -   考虑个人读取对应字符串
-        -   libc 中其实是有 /bin/sh 的
-    -   优点
-        -   只需要一个参数。
-    -   缺点
-        -   **有可能因为破坏环境变量而无法执行。**
--   执行 execve("/bin/sh",NULL,NULL)
-    -   前几条同 system
-    -   优点
-        -   几乎不受环境变量的影响。
-    -   缺点
-        -   **需要 3 个参数。**
--   系统调用
-    -   系统调用号 `__NR_execve` 在 IA-32 中为 11，x86-64 为 59
-
-## 地址寻找小结
-
-在漏洞利用过程中，我们总是免不了要去寻找一些地址，常见的寻找地址的类型有如下几种
-
-### 通用寻找
-
-#### 直接地址寻找
-
-程序中已经给出了相关变量或者函数的地址了。这时候，我们就可以直接进行利用了。
-
-#### got 表寻找
-
-有时候我们并不一定非得直接知道某个函数的地址，可以利用 GOT 表跳转到对应函数的地址。当然，如果我们非得知道这个函数的地址，我们可以利用 write，puts 等输出函数将 GOT 表中地址处对应的内容输出出来（**前提是这个函数已经被解析一次了**）。
-
-### 有 libc
-
-**相对偏移寻找**，这时候我们就需要考虑利用 libc 中函数的基地址一样这个特性来寻找了。比如我们可以通过 __libc_start_main 的地址来泄漏 libc 在内存中的基地址。**注意：不要选择有wapper的函数，这样会使得函数的基地址计算不正确。**常见的有wapper 的函数有？（待补充）。
-
-### 无 libc
-
-其实，这种情况的解决策略分为两种
-
-- 想办法获取 libc
-- 想办法直接获取对应的地址。
-
-而对于想要泄露的地址，我们只是单纯地需要其对应的内容，所以 puts ， write，printf 均可以。
-
-- puts，printf 会有 \x00 截断的问题
-- write 可以指定长度输出的内容。
-
-下面是一些相应的方法
-
-#### `pwnlib.dynelf`
-
-前提是我们可以泄露任意地址的内容。
-
-- **如果要使用 write 函数泄露的话，一次最好多输出一些地址的内容，因为我们一般是只是不断地向高地址读内容，很有可能导致高地址的环境变量被覆盖，就会导致 shell 不能启动。**
-
-#### libc 数据库
-
-```shell
-## 更新数据库
-./get
-## 将已有libc添加到数据库中
-./add libc.so 
-## Find all the libc's in the database that have the given names at the given addresses. 
-./find function1 addr function2 addr
-## Dump some useful offsets, given a libc ID. You can also provide your own names to dump.
-./dump __libc_start_main_ret system dup2
-```
-
-去 libc 的数据库中找到对应的和已经出现的地址一样的 libc，这时候很有可能是一样的。
-
-也可以使用如下的在线网站:
-
-- [libcdb.com](http://libcdb.com)
-
-- [libc.blukat.me](https://libc.blukat.me)
-
-
-**当然，还有上面提到的 https://github.com/lieanu/LibcSearcher。**
-
-#### ret2dl-resolve 
-
-当 ELF 文件采用动态链接时，got 表会采用延迟绑定技术。当第一次调用某个 libc 函数时，程序会调用_dl_runtime_resolve 函数对其地址解析。因此，我们可以利用栈溢出构造 ROP 链，伪造对其他函数（如：system）的解析。这也是我们在高级 rop 中会介绍的技巧。
 
 ## 题目
 
