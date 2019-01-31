@@ -9,7 +9,7 @@
 
 
 
-![典型的Double Fetch原理图](https://ws2.sinaimg.cn/large/d9e4cccely1fznqv7bfuvj20qr0cmdgr.jpg)
+![典型的Double Fetch原理图](./double-fetch.png)
 
 ## 2018 0CTF Finals Baby Kernel
 
