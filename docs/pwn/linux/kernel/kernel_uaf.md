@@ -178,7 +178,7 @@ int __fastcall babyrelease(inode *inode, file *filp)
 
 那么有了 UAF 要怎么用呢？之前提到了 cred 结构体，可以修改 cred 来提权到 root。
 
-其中 4.4.72 的 cred 结构体 [定义](/usr/src/linux-headers-4.15.0-29deepin/include/linux/compiler_types.h) 如下：
+其中 4.4.72 的 cred 结构体 [定义](https://elixir.bootlin.com/linux/v4.4.72/source/include/linux/cred.h#L118) 如下：
 ```C
 struct cred {
 	atomic_t	usage;

@@ -1,7 +1,4 @@
----
-subtitle: shellcode
-title: 其他
----
+## shellcode
 
 给定一段 shellcode，执行并获取结果。
 
