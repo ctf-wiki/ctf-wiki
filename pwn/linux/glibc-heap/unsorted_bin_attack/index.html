@@ -4990,6 +4990,15 @@
 <li>在程序 malloc 时，如果在 fastbin，small bin 中找不到对应大小的 chunk，就会尝试从 Unsorted Bin 中寻找 chunk。如果取出来的 chunk 大小刚好满足，就会直接返回给用户，否则就会把这些 chunk 分别插入到对应的 bin 中。</li>
 </ol>
 <h2 id="_4">原理<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>在  <a href="https://code.woboq.org/userspace/glibc/">glibc</a>/<a href="https://code.woboq.org/userspace/glibc/malloc/">malloc</a>/<a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html">malloc.c</a> 中的 <code>_int_malloc</code> 有这么一段代码，当将一个 unsorted bin取出的时候，会将 <code>bck-&gt;fd</code> 的位置写入本 Unsorted Bin 的位置。</p>
+<div class="codehilite"><pre><span></span>          <span class="cm">/* remove from unsorted list */</span>
+          <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span> <span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">!=</span> <span class="n">victim</span><span class="p">))</span>
+            <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;malloc(): corrupted unsorted chunks 3&quot;</span><span class="p">);</span>
+          <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
+          <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">);</span>
+</pre></div>
+
+<p>换而言之，如果我们控制了 bk 的值，我们就能将 <code>unsorted_chunks (av)</code> 写到任意地址。</p>
 <p>这里我以 shellphish 的 how2heap 仓库中的 <a href="https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c">unsorted_bin_attack.c</a> 为例进行介绍，这里我做一些简单的修改，如下</p>
 <div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
@@ -5301,7 +5310,13 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <p>如果我们在merge之前曾经删除过一个storage C，那么在我们merge A后，A就会插在unsorted bin的双向链表的首部，所以其fd则是C对应的地址，bk则是unsorted bin的一个基地址。这样我们就可以直接泄露两个地址。</p>
 <p>而且需要注意的是，我们还是可以去修改merge后的B的内容的，所以这其实就是个Use After Free。</p>
 <h3 id="_11">利用流程<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<p>。。。。</p>
+<ul>
+<li>Unsorted Bin Attack</li>
+</ul>
+<p>利用 unsorted bin attack ，修改 global_max_fast 全局变量，由于 global_max_fast 变量为控制最大的Fast chunk的大小，将这里改写为unsorted bin的地址(一般来说是一个很大的正数)，就能使之后的chunk都被当作fast chunk，即可进行Fast bin attack。</p>
+<ul>
+<li>Fast Bin Attack</li>
+</ul>
 <h2 id="_12">题目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <h3 id="_13">参考文献<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
 <ul>
