@@ -880,7 +880,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
 -   **需要知道相应的地址**
     -   **"/bin/sh"**
     -   **Signal Frame**
-    -   **syscal**
+    -   **syscall**
     -   **sigreturn**
 -   需要有够大的空间来塞下整个sigal frame
 
@@ -1032,7 +1032,7 @@ sh.interactive()
 
 ### VDSO介绍
 
-什么是VDSO(Virtual Dynamically-linked Shared Object)呢？听其名字，大概是虚拟动态链接共享对象，所以说它应该是虚拟的，与虚拟内存一直，在计算机中本身并不存在。具体来说，它是将内核态的调用映射到用户地址空间的库。那么它为什么会存在呢？这是因为有些系统调用经常被用户使用，这就会出现大量的用户态与内核态切换的开销。通过vdso，我们可以大量减少这样的开销，同时也可以使得我们的路径更好。这里路径更好指的是，我们不需要使用传统的int 0x80来进行系统调用，不同的处理器实现了不同的快速系统调用指令
+什么是VDSO(Virtual Dynamically-linked Shared Object)呢？听其名字，大概是虚拟动态链接共享对象，所以说它应该是虚拟的，与虚拟内存一致，在计算机中本身并不存在。具体来说，它是将内核态的调用映射到用户地址空间的库。那么它为什么会存在呢？这是因为有些系统调用经常被用户使用，这就会出现大量的用户态与内核态切换的开销。通过vdso，我们可以大量减少这样的开销，同时也可以使得我们的路径更好。这里路径更好指的是，我们不需要使用传统的int 0x80来进行系统调用，不同的处理器实现了不同的快速系统调用指令
 
 - intel实现了sysenter，sysexit
 - amd实现了syscall，sysret
