@@ -5184,11 +5184,53 @@ print repr<span class="o">(</span><span class="s1">&#39;&#39;</span>.join<span c
 
 一大串 Base64 密文，试试补 0 位的数据。
 
-wzxhzdk:5
+<div class="codehilite"><pre><span></span><span class="c1"># coding=utf-8</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;text.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">))</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">last</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">last</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">last</span><span class="p">)</span> <span class="o">-</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">last</span><span class="o">.</span><span class="n">islower</span><span class="p">():</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">last</span><span class="p">)</span> <span class="o">-</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">26</span>
+            <span class="k">elif</span> <span class="n">last</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">last</span><span class="p">)</span> <span class="o">+</span> <span class="mi">52</span>
+            <span class="k">elif</span> <span class="n">last</span> <span class="o">==</span> <span class="s1">&#39;+&#39;</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="mi">62</span>
+            <span class="k">elif</span> <span class="n">last</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="mi">63</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="s1">&#39;{0:06b}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elem</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">last</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">last</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">last</span><span class="p">)</span> <span class="o">-</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">last</span><span class="o">.</span><span class="n">islower</span><span class="p">():</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">last</span><span class="p">)</span> <span class="o">-</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">26</span>
+            <span class="k">elif</span> <span class="n">last</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">last</span><span class="p">)</span> <span class="o">+</span> <span class="mi">52</span>
+            <span class="k">elif</span> <span class="n">last</span> <span class="o">==</span> <span class="s1">&#39;+&#39;</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="mi">62</span>
+            <span class="k">elif</span> <span class="n">last</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="mi">63</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="s1">&#39;{0:06b}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elem</span><span class="p">[</span><span class="mi">4</span><span class="p">:])</span>
+
+<span class="n">flag_b</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<span class="n">split</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;.{8}&#39;</span><span class="p">,</span> <span class="n">flag_b</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">split</span><span class="p">:</span>
+    <span class="k">print</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span>
+</pre></div>
 
 感觉像是程序有点毛病，不过还是能看出来 flag。
 
-wzxhzdk:6
+<div class="codehilite"><pre><span></span>flag{BASE64_i5_amaz1ng~
+</pre></div>
 -->
 
 <h3 id="_12">题目<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
