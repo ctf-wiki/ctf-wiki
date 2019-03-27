@@ -29,6 +29,20 @@ Unsorted Bin Attack 可以达到的效果是实现修改任意地址值为一个
 
 ## 原理
 
+在  [glibc](https://code.woboq.org/userspace/glibc/)/[malloc](https://code.woboq.org/userspace/glibc/malloc/)/[malloc.c](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html) 中的 `_int_malloc ` 有这么一段代码，当将一个 unsorted bin取出的时候，会将 `bck->fd` 的位置写入本 Unsorted Bin 的位置。
+
+```C
+          /* remove from unsorted list */
+          if (__glibc_unlikely (bck->fd != victim))
+            malloc_printerr ("malloc(): corrupted unsorted chunks 3");
+          unsorted_chunks (av)->bk = bck;
+          bck->fd = unsorted_chunks (av);
+```
+
+换而言之，如果我们控制了 bk 的值，我们就能将 `unsorted_chunks (av)` 写到任意地址。
+
+
+
 这里我以 shellphish 的 how2heap 仓库中的 [unsorted_bin_attack.c](https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c) 为例进行介绍，这里我做一些简单的修改，如下
 
 ```c
@@ -384,7 +398,13 @@ pwndbg> checksec
 
 ### 利用流程
 
-。。。。
+- Unsorted Bin Attack
+
+  利用 unsorted bin attack ，修改 global_max_fast 全局变量，由于 global_max_fast 变量为控制最大的Fast chunk的大小，将这里改写为unsorted bin的地址(一般来说是一个很大的正数)，就能使之后的chunk都被当作fast chunk，即可进行Fast bin attack。
+
+- Fast Bin Attack
+
+  
 
 ## 题目
 
