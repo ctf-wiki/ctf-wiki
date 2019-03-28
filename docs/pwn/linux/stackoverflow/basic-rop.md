@@ -480,7 +480,7 @@ sh.interactive()
 
 点击下载: [ret2libc2](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc2/ret2libc2)
 
-该题目与例 1 基本一致，只不过不再出现 /bin/sh 字符串，所以此次需要我们自己来读取字符串，所以我们需要两个 gadgets，第一个控制程序读取字符串，第二个控制程序执行 system(""/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的 exp 如下
+该题目与例 1 基本一致，只不过不再出现 /bin/sh 字符串，所以此次需要我们自己来读取字符串，所以我们需要两个 gadgets，第一个控制程序读取字符串，第二个控制程序执行 system("/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的 exp 如下
 
 ```python
 ##!/usr/bin/env python

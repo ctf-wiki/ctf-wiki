@@ -3,7 +3,7 @@
 
 [![Build Status](https://travis-ci.org/ctf-wiki/ctf-wiki.svg?branch=master)](https://travis-ci.org/ctf-wiki/ctf-wiki)
 [![Requirements Status](https://requires.io/github/ctf-wiki/ctf-wiki/requirements.svg?branch=master)](https://requires.io/github/ctf-wiki/ctf-wiki/requirements/?branch=master)
-[![BearyChat](https://img.shields.io/badge/bearychat-join_chat-green.svg)](https://ctf-wiki.bearychat.com)
+[![Slack](https://img.shields.io/badge/slack-join%20chat-brightgreen.svg)](https://join.slack.com/t/ctf-wiki/shared_invite/enQtNTkwNDg5NDUzNzAzLWExOTRhZTE0ZTMzYjVlNDk5OGI3ZDA1NmQyZjE4NWRlMGU3NjEwM2Y2ZTliMTg4Njg1MjliNWRhNTk2ZmY0NmI)
 
 欢迎来到 **CTF Wiki**。
 
@@ -20,7 +20,7 @@
 - CTF 竞赛中的进阶知识
 - CTF 竞赛中的优质题目
 
-关于上述部分待完善内容，请参见CTF Wiki 的 [Projects](https://github.com/ctf-wiki/ctf-wiki/projects)，详细列举了正在做的事情以及待做事项。
+关于上述部分待完善内容，请参见 CTF Wiki 的 [Projects](https://github.com/ctf-wiki/ctf-wiki/projects)，详细列举了正在做的事情以及待做事项。
 
 当然，**CTF Wiki** 基于 **CTF**，却不会局限于 **CTF**，在未来，**CTF Wiki** 将会
 

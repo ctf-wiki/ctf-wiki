@@ -112,11 +112,41 @@ base xx 中的 xx 表示的是采用多少个字符进行编码，比如说 base
 
 - http://www1.tc711.com/tool/BASE64.htm
 - python 库函数
+- [读取隐写信息脚本](https://github.com/cjcslhp/wheels/tree/master/b64stego)
 
 
-## 例子
+### 例子
 
-题目描述参见 `ctf-challenge`中 misc 分类的 base64-stego 目录中的 data.txt 文件。
+题目描述参见 `ctf-challenge`中 [misc 分类的 base64-stego 目录](https://github.com/ctf-wiki/ctf-challenges/tree/master/misc/encode/computer/base64-stego)中的 data.txt 文件。
+
+使用脚本读取隐写信息。
+
+``` python
+import base64
+
+def deStego(stegoFile):
+    b64table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    with open(stegoFile,'r') as stegoText:
+        message = ""
+        for line in stegoText:
+            try:
+                text = line[line.index("=") - 1:-1]
+                message += "".join([ bin( 0 if i == '=' else b64table.find(i))[2:].zfill(6) for i in text])[2 if text.count('=') ==2 else 4:6]  
+            except:
+                pass
+    return "".join([chr(int(message[i:i+8],2)) for i in range(0,len(message),8)])
+
+print(deStego("text.txt"))
+```
+
+输出:
+
+```
+     flag{BASE64_i5_amaz1ng}
+```
+
+<!--
+下面是原编辑者的代码，代码的小毛病在于查找隐写字符用`last = line[-3]`写死了，这种写法默认每行尾有一个'\n',而最后一行并非如此，因此左后一个字符显示错误。
 
 一大串 Base64 密文，试试补 0 位的数据。
 
@@ -169,7 +199,7 @@ for i in split:
 ```
 flag{BASE64_i5_amaz1ng~
 ```
-
+-->
 
 ### 题目
 
