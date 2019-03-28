@@ -19,7 +19,7 @@ As a freedom site, focusing on recent year's CTF, **CTF Wiki** introduces the kn
 Now, **CTF Wiki** mainly contains the basic knowledge of **CTF**, and we are now working hard to enrich the following contents.
 
 - Advanced knowledge in the CTF
-- Quality topics in the CTF
+- High quality topics about CTFs
 
 For the above-mentioned parts to be improved, please refer to the [Projects](https://github.com/ctf-wiki/ctf-wiki/projects) which details what to do.
 
