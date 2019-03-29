@@ -1651,6 +1651,46 @@
     攻击
   </a>
   
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_8" title="字节反转攻击" class="md-nav__link">
+    字节反转攻击
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0ops" title="0ops 训练平台某题" class="md-nav__link">
+    0ops 训练平台某题
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#padding-oracle-attack" title="Padding Oracle Attack" class="md-nav__link">
+    Padding Oracle Attack
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
       
@@ -4686,6 +4726,46 @@
     攻击
   </a>
   
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_8" title="字节反转攻击" class="md-nav__link">
+    字节反转攻击
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" title="原理" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0ops" title="0ops 训练平台某题" class="md-nav__link">
+    0ops 训练平台某题
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#padding-oracle-attack" title="Padding Oracle Attack" class="md-nav__link">
+    Padding Oracle Attack
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
       
@@ -4741,14 +4821,109 @@
 <li>完整性认证和身份认证。</li>
 </ul>
 <h2 id="_7">攻击<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<h3 id="_8">字节反转攻击<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h4 id="_9">原理<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h4>
+<p>字节反转的原理十分简单，我们观察<strong>解密过程</strong>可以发现如下特性:</p>
 <ul>
-<li>字节反转攻击<ul>
-<li>IV 向量，影响第一个明文分组</li>
-<li>第 n 个密文分组，影响第 n + 1 个明文分组</li>
+<li>IV 向量影响第一个明文分组</li>
+<li>第 n 个密文分组可以影响第 n + 1 个明文分组</li>
 </ul>
-</li>
-<li>Padding Oracle Attack，具体参见下面介绍。</li>
-</ul>
+<p>假设第<span><span class="MathJax_Preview">n</span><script type="math/tex">n</script></span>个密文分组为<span><span class="MathJax_Preview">C_n</span><script type="math/tex">C_n</script></span>，解密后的第<span><span class="MathJax_Preview">n</span><script type="math/tex">n</script></span>个明文分组为为<span><span class="MathJax_Preview">P_n</span><script type="math/tex">P_n</script></span>。</p>
+<p>然后<span><span class="MathJax_Preview">P_{n+1}=C_n~\text{xor}~f(C_{n+1})</span><script type="math/tex">P_{n+1}=C_n~\text{xor}~f(C_{n+1})</script></span>。</p>
+<p>其中<span><span class="MathJax_Preview">f</span><script type="math/tex">f</script></span>函数为图中的<span><span class="MathJax_Preview">\text{Block Cipher Decryption}</span><script type="math/tex">\text{Block Cipher Decryption}</script></span>。</p>
+<p>对于某个信息已知的原文和密文，然后我们可以修改第<span><span class="MathJax_Preview">n</span><script type="math/tex">n</script></span>个密文块<span><span class="MathJax_Preview">C_n</span><script type="math/tex">C_n</script></span>为<span><span class="MathJax_Preview">C_n~\text{xor}~P_{n+1}~\text{xor}~A</span><script type="math/tex">C_n~\text{xor}~P_{n+1}~\text{xor}~A</script></span>。然后再对这条密文进行解密，那么解密后的第<span><span class="MathJax_Preview">n</span><script type="math/tex">n</script></span>个明文快将会变成<span><span class="MathJax_Preview">A</span><script type="math/tex">A</script></span>。</p>
+<h4 id="0ops">0ops 训练平台某题<a class="headerlink" href="#0ops" title="Permanent link">&para;</a></h4>
+<p>以下以 0ops 训练平台的一个题目作为例子:</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">flag</span> <span class="kn">import</span> <span class="n">FLAG</span>
+<span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">AES</span>
+<span class="kn">from</span> <span class="nn">Crypto</span> <span class="kn">import</span> <span class="n">Random</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+
+<span class="n">BLOCK_SIZE</span><span class="o">=</span><span class="mi">16</span>
+<span class="n">IV</span> <span class="o">=</span> <span class="n">Random</span><span class="o">.</span><span class="n">new</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">BLOCK_SIZE</span><span class="p">)</span>
+<span class="n">passphrase</span> <span class="o">=</span> <span class="n">Random</span><span class="o">.</span><span class="n">new</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">BLOCK_SIZE</span><span class="p">)</span>
+
+<span class="n">pad</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span> <span class="o">+</span> <span class="p">(</span><span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">%</span> <span class="n">BLOCK_SIZE</span><span class="p">)</span> <span class="o">*</span> <span class="nb">chr</span><span class="p">(</span><span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">%</span> <span class="n">BLOCK_SIZE</span><span class="p">)</span>
+<span class="n">unpad</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">[:</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:])]</span>
+
+<span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;flag=&quot;</span><span class="o">+</span><span class="n">FLAG</span><span class="o">+</span><span class="s2">&quot;&amp;userdata=&quot;</span>
+<span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&amp;user=guest&quot;</span>
+<span class="k">def</span> <span class="nf">menu</span><span class="p">():</span>
+    <span class="k">print</span> <span class="s2">&quot;1. encrypt&quot;</span>
+    <span class="k">print</span> <span class="s2">&quot;2. decrypt&quot;</span>
+    <span class="k">return</span> <span class="nb">raw_input</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">encrypt</span><span class="p">():</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">(</span><span class="s2">&quot;your data: &quot;</span><span class="p">)</span>
+    <span class="n">plain</span> <span class="o">=</span> <span class="n">prefix</span><span class="o">+</span><span class="n">data</span><span class="o">+</span><span class="n">suffix</span>
+    <span class="n">aes</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">passphrase</span><span class="p">,</span> <span class="n">AES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">,</span> <span class="n">IV</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">aes</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">pad</span><span class="p">(</span><span class="n">plain</span><span class="p">)))</span>
+
+
+<span class="k">def</span> <span class="nf">decrypt</span><span class="p">():</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">(</span><span class="s2">&quot;input data: &quot;</span><span class="p">)</span>
+    <span class="n">aes</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">passphrase</span><span class="p">,</span> <span class="n">AES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">,</span> <span class="n">IV</span><span class="p">)</span>
+    <span class="n">plain</span> <span class="o">=</span> <span class="n">unpad</span><span class="p">(</span><span class="n">aes</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+    <span class="k">print</span> <span class="s1">&#39;DEBUG ====&gt; &#39;</span> <span class="o">+</span> <span class="n">plain</span>
+    <span class="k">if</span> <span class="n">plain</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]</span><span class="o">==</span><span class="s2">&quot;admin&quot;</span><span class="p">:</span>
+        <span class="k">print</span> <span class="n">plain</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s2">&quot;you are not admin&quot;</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">menu</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cmd</span><span class="o">==</span><span class="s2">&quot;1&quot;</span><span class="p">:</span>
+            <span class="n">encrypt</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">cmd</span><span class="o">==</span><span class="s2">&quot;2&quot;</span><span class="p">:</span>
+            <span class="n">decrypt</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">exit</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+<p>可见题目希望我们提供一个加密的字符串，如果这个字符串解密后最后的内容为admin。程序将会输出明文。所以题目流程为先随便提供一个明文，然后将密文进行修改，使得解密后的字符串最后的内容为admin,我们可以枚举flag的长度来确定我们需要在什么位置进行修改。</p>
+<p>以下是exp.py</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+
+<span class="n">pad</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">pad</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;xxx.xxx.xxx.xxx&#39;</span><span class="p">,</span> <span class="mi">10004</span><span class="p">)</span>
+    <span class="c1">#r = process(&#39;./chall.sh&#39;)</span>
+
+    <span class="n">r</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;&gt; &#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;your data: &#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="n">cipher</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">recv</span><span class="p">()))</span>
+    <span class="c1">#print &#39;cipher ===&gt;&#39;, &#39;&#39;.join(cipher)</span>
+
+    <span class="n">BLOCK_SIZE</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;flag=&quot;</span> <span class="o">+</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="s2">&quot;&amp;userdata=&quot;</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&amp;user=guest&quot;</span>
+    <span class="n">plain</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">data</span> <span class="o">+</span> <span class="n">suffix</span>
+
+    <span class="n">idx</span> <span class="o">=</span> <span class="p">(</span><span class="mi">22</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">pad</span><span class="p">)</span> <span class="o">%</span> <span class="n">BLOCK_SIZE</span> <span class="o">+</span> <span class="p">((</span><span class="mi">22</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">pad</span><span class="p">)</span> <span class="o">/</span> <span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">BLOCK_SIZE</span>
+    <span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">0</span><span class="p">])</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;g&#39;</span><span class="p">)</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">))</span>
+    <span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;u&#39;</span><span class="p">)</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">))</span>
+    <span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">2</span><span class="p">])</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;e&#39;</span><span class="p">)</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">))</span>
+    <span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">3</span><span class="p">])</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">)</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">))</span>
+    <span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">cipher</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">4</span><span class="p">])</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">)</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">))</span>
+
+    <span class="n">r</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;&gt; &#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">sendlineafter</span><span class="p">(</span><span class="s1">&#39;input data: &#39;</span><span class="p">,</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cipher</span><span class="p">)))</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">recvline</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;you are not admin&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+        <span class="k">print</span> <span class="n">msg</span>
+        <span class="k">break</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>  
+</pre></div>
+
+<h3 id="padding-oracle-attack">Padding Oracle Attack<a class="headerlink" href="#padding-oracle-attack" title="Permanent link">&para;</a></h3>
+<p>具体参见下面的介绍。</p>
                 
                   
                 
