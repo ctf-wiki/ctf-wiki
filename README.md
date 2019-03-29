@@ -8,11 +8,11 @@
 
 Welcome to **CTF Wiki**！
 
-**CTF** (Capture The Flag) started from **DEFCON CTF** of 1996, which is a competitive game among network security enthusiasts.
+**CTF** (Capture The Flag) started from **DEFCON CTF**, a competitive game among network security enthusiasts, originally hosted in 1996.
 
-**CTF** covers a wide range of fields. At the same time, the security technology is evolving faster and faster, and the difficulty of **CTF** is getting higher and higher. As a result, the threshold for beginners is getting higher and higher. Most of the online information is scattered and trivial. Beginners often don't know how to systematically learn **CTF** related domain knowledge. Also, it takes a lot of time.
+**CTF** covers a wide range of fields. While, the security technology is evolving faster and faster, the difficulty of **CTF** is getting progressively harder. As a result, the threshold for beginners is getting progressively higher. Most of the online information is scattered and trivial. Beginners often don't know how to systematically learn **CTF** related domain knowledge. Also, it takes a lot of time.
 
-In order to make the people who love **CTF** get started **CTF**, in October 2016, **CTF Wiki** is launched on Github. With content enrich, **CTF Wiki** received lots of appreciation from security enthusiasts, and there are also a lot of friends who have never met.
+In order to make the people who love **CTF** get started **CTF**ing, in October 2016, **CTF Wiki** was launched on Github. With rich content, **CTF Wiki** receives a lots of appreciation from security enthusiasts, many friends whom we never thought we'ed meet.
 
 As a freedom site, focusing on recent year's CTF, **CTF Wiki** introduces the knowledge and techniques from all directions of **CTF** to make it easier for beginners to learn **CTF**.
 
