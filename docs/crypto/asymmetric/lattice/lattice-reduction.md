@@ -11,13 +11,13 @@ typora-root-url: ../../../
 LLL 算法就是在格上找到一组基，满足如下效果
 
 
-![image-20180717213241784](/crypto/asymmetric/lattice/lll-def.png)
+![image-20180717213241784](/crypto/asymmetric/lattice/figure/lll-def.png)
 
 
 
 而且，这种方法生成的基所具有的如下性质是非常有用的
 
-![image-20180717213519622](/crypto/asymmetric/lattice/lll-property.png)
+![image-20180717213519622](/crypto/asymmetric/lattice/figure/lll-property.png)
 
 ### 简单应用
 
@@ -44,7 +44,7 @@ $\sqrt{1+\sum\limits_{i=1}^n\alpha_i^2}$
 
 可以参见考研宇哥的如下证明
 
-![](/crypto/asymmetric/lattice/lll-application2-5255892.png)
+![](/crypto/asymmetric/lattice/figure/lll-application2-5255892.png)
 
 那么经过 LLL 算法后，我们可以获得
 
