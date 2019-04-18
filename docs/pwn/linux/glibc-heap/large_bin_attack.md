@@ -226,7 +226,7 @@ large bin chunk里的`fd_nextsize`指向的是链表中第一个比自己小的c
 
 
 
-而此时我们 largebin 只有一个chunk，且当前 当前 chunk size为 0x290 小于 largebin 里chunk 的大小，首先，将 P1 进行切割，并重新整理进 largebin , 且` if ((unsigned long) size == (unsigned long) chunksize_nomask (fwd))` 未成立时：
+而此时我们 largebin 只有一个chunk，且当前 当前 chunk size为 0x290 小于 largebin 里chunk 的大小，首先将unsorted bin 里的 chunk 置入 large bin，进而去遍历 large bin，此时发现 fwd chunk 不符合` if ((unsigned long) size == (unsigned long) chunksize_nomask (fwd))` 这个条件时：
 
 ```c
     [...]
