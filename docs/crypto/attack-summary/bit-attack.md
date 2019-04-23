@@ -4,7 +4,7 @@
 
 简单地说，就是利用比特位之间的关系进行攻击。
 
-## 2018 Plaid CTF tranducipher
+## 2018 Plaid CTF transducipher
 
 题目如下
 
@@ -185,13 +185,13 @@ def invtransduce(b, s=0):
 
 - 块大小为 8 个字节
 - 轮数为 6 轮
-- 加密算法的每轮的基本操作为 trandcue 和 swap。
-- 密钥的扩展也是与 trandcue 和 swap 相关。
+- 加密算法的每轮的基本操作为 transduce 和 swap。
+- 密钥的扩展也是与 transduce 和 swap 相关。
 
 更具体的
 
 1. swap 是将 8 字节的高 32 位与低 32 位进行调换。
-2. trandduce 是对于 8 字节的每个比特，逐比特与某个值进行异或。这个值与 T 有关。
+2. transduce 是对于 8 字节的每个比特，逐比特与某个值进行异或。这个值与 T 有关。
 
 通过进一步地分析，我们可以发现这两个函数都是可逆的。也就是说，如果我们知道了最后的密文，那么我们其实可以将原来的轮数缩短为差不多 5 轮，因为最后一轮的 `transduce` 和`swap` 没有作用了。
 
