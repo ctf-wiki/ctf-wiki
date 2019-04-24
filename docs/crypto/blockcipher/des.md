@@ -221,6 +221,39 @@ print n1es.decrypt(cipher)
 N1CTF{F3istel_n3tw0rk_c4n_b3_ea5i1y_s0lv3d_/--/}
 ```
 
+## 2019 CISCN  part_des
+
+题目只给了一个文件：
+
+```
+Round n part_encode-> 0x92d915250119e12b
+Key map -> 0xe0be661032d5f0b676f82095e4d67623628fe6d376363183aed373a60167af537b46abc2af53d97485591f5bd94b944a3f49d94897ea1f699d1cdc291f2d9d4a5c705f2cad89e938dbacaca15e10d8aeaed90236f0be2e954a8cf0bea6112e84
+```
+
+考虑到题目名以及数据特征，`Round n part_encode` 为执行n轮des的中间结果，`Key map` 应为des的子密钥，要还原出明文只需进行n轮des加密的逆过程即可，解密时注意以下三点。
+
+- 子密钥的选取，对于只进行了n轮的加密结果，解密时应依次使用密钥 n, n-1..., 1。
+- des 最后一轮后的操作，未完成的 des 没有交换左右两部分和逆初始置换，因此解密时我们应先对密文进行这两步操作。
+- n 的选择，在本题中，我们并不知道 n，但这无关紧要，我们可以尝试所有可能的取值（0-15）flag应为ascii字符串。
+
+解题代码可以在`ctf-challenges`仓库找到。
+
+解密结果（部分）：
+
+```
+14
+t-ÏEÏx§
+13
+y0ur9Ood
+12
+µp^Ûé=¹
+11
+)Á`rûÕû
+```
+
+可以看出n为13，flag为`flag{y0ur9Ood}`
+
+
 ## 参考
 
 - 清华大学研究生数据安全课程课件
