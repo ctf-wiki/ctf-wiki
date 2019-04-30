@@ -23,7 +23,7 @@ TODO: Add intro
 
 具体算法：
 
-![](https://i.imgur.com/gaBEemq.png)
+![](/crypto/asymmetric/lattice/figure/babai_1.png)
 
 * 其中$c_j$为Gram-schmidt正交化中的系数取整，也即$proj_{b_{j}}(b)$的取整。
 
@@ -31,9 +31,18 @@ TODO: Add intro
 
 ### Babai’s Rounding Technique
 
-<!--
-TODO
--->
+该算法是`Babai's nearest plane algorithm`的一个变种。
+
+步骤可以表示为：
+
+```
+N = rank(B), w = target
+- B' = LLL(B)
+- Find a linear combination [l_0, ... l_N] such that w = sum(l_i * b'_i).
+* (b'_i is the i-th vector in the LLL-reduced basis B')
+- Round each l_i to it's closest integer l'_i.
+- Result v = sum(l'_i * b'_i)
+```
 
 ## 相关内容
 
