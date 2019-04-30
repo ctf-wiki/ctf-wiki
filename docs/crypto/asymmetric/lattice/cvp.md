@@ -23,7 +23,7 @@ TODO: Add intro
 
 具体算法：
 
-![](/crypto/asymmetric/lattice/figure/babai_1.png)
+![](figure/babai_1.png)
 
 * 其中$c_j$为Gram-schmidt正交化中的系数取整，也即$proj_{b_{j}}(b)$的取整。
 
