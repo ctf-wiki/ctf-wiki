@@ -118,7 +118,7 @@ def makeKey(n):
 	for i in range(1, n):
 		privKey.append(random.randint(s + 1, 4**(n + i)))
 		s += privKey[i]
-	q = random.randint(privKey[n-1] + 1, 2*privKey[n-1])
+	q = random.randint(s + 1, 2*s)
 	r = random.randint(1, q)
 	while gmpy2.gcd(r, q) != 1:
 		r = random.randint(1, q)
