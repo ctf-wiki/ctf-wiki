@@ -54,7 +54,7 @@ mkdocs serve
 **mkdocs 本地部署的网站是动态更新的，即当你修改并保存 md 文件后，刷新页面就能随之动态更新。**
 
 
-只是想本地浏览，并不想修改文档？试试 Docker 把！
+只是想本地浏览，并不想修改文档？试试 Docker 吧！
 ```
 docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 ```

@@ -4,7 +4,7 @@
 
 ## 介绍
 
-House of Roman 这个技巧说简单点其实就是 fastbin attack 和 Unsortbin attachk 结合的一个小 trick。
+House of Roman 这个技巧说简单点其实就是 fastbin attack 和 Unsortbin attack 结合的一个小 trick。
 
 ## 概括
 
