@@ -53,7 +53,7 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 
 ### free
 
-在 glibc 的 [malloc.h](https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465) 中，free 的说明如下
+在 glibc 的 [malloc.c](https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465) 中，free 的说明如下
 
 ```c++
 /*
