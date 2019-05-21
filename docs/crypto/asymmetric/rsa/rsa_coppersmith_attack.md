@@ -701,28 +701,28 @@ hctf{d8e8fca2dc0f896fd7cb4cb0031ba249}
 
 ### 攻击条件
 
-当 d 较小时，满足 $d\leq N^{0.292}$ 时，我们可以利用该工具，在一定程度上该要攻击比 Wiener's Attack 要强一些。
+当 d 较小时，满足 $d < N^{0.292}$ 时，我们可以利用该攻击，比 Wiener's Attack 要强一些。
 
 ### 攻击原理
 
-这里简单说一下原理
+这里简单说一下原理。
 
-首先我们有
-
-$$
-ed \equiv 1 \bmod  \varphi(N)
-$$
-
-进而我们有
+首先
 
 $$
-ed =k\varphi(N)+1
+ed \equiv 1 \bmod  \varphi(N)/2
+$$
+
+进而有
+
+$$
+ed +k\varphi(N)/2=1
 $$
 
 即
 
 $$
-k \varphi(N) +1 \equiv 0 \bmod e
+k \varphi(N)/2 \equiv 1 \bmod e
 $$
 
 
@@ -735,26 +735,34 @@ $$
 所以
 
 $$
-k(N-p-q+1)+1 \equiv 0 \bmod e
+k(N-p-q+1)/2 \equiv 1 \bmod e
 $$
 
-我们假设 $A=N+1$，$y=-p-q$ 那么
-
-原式可化为
+假设 $A=\frac{N+1}{2}$，$y=\frac{-p-q}{2}$ ，原式可化为
 
 $$
-f(k,y)=k(A+y)+1 \equiv 0 \bmod e
+f(k,y)=k(A+y) \equiv 1 \bmod e
 $$
 
-如果我们求得了该二元方程的根，那么我们自然也就可以解一元二次方程 $N=pq,p+q=-y$ 来得到 p 与 q。
+其中
+
+$|k|<\frac{2ed}{\varphi(N)}<\frac{3ed}{N}=3*\frac{e}{N}*d<3*\frac{e}{N}*N^{delta}$
+
+$|y|<2*N^{0.5}$
+
+y 的估计用到了 p、q 比较均匀的假设。这里 delta 为预估的小于 0.292 的值。
+
+如果我们求得了该二元方程的根，那么我们自然也就可以解一元二次方程 $N=pq,p+q=-2y$ 来得到 p 与 q。
+
+更加具体的推导，参考 New Results on the Cryptanalysis of Low Exponent RSA.
 
 ### 攻击工具
 
-请参考 https://github.com/mimoo/RSA-and-LLL-attacks。上面有使用教程。
+请参考 https://github.com/mimoo/RSA-and-LLL-attacks 。上面有使用教程。
 
-### 例子
+### 2015 PlaidCTF Curious
 
-这里我们以 2015 年 PlaidCTF-CTF-Curious 为例进行介绍。
+这里我们以 2015 年 PlaidCTF Curious 为例进行介绍。
 
 首先题目给了一堆 N，e，c。简单看一下可以发现该 e 比较大。这时候我们可以考虑使用 Wiener's Attack，这里我们使用更强的目前介绍的攻击。
 
@@ -796,6 +804,255 @@ $$
 private key found: 23974584842546960047080386914966001070087596246662608796022581200084145416583
 the plaintext: flag_S0Y0UKN0WW13N3R$4TT4CK!
 ```
+
+### 2019 Defcon Quals ASRybaB
+
+题目大概意思是，我们接收三对 RSA ，然后需要求出 d，然后对给定的数字 v[i] 加密，发送给服务器，只要时间在一定范围内，940s，即可。那难点自然在 create_key 函数了。
+
+```python
+def send_challenges():
+
+    code = marshal.loads("63000000000d000000070000004300000073df010000740000721d0064010064020015000000000100640200157d00006e00007401007d01007c0100640300157d02006402007d0300786f007c03006a02008300007c01006b030072a400784c007403007296007404006a05007c02008301007d04007404006a05007c02008301007d05007406007c04007c0500188301006a02008300007c0100640400146b0400724b0050714b00714b00577c04007c0500147d0300713600577c0400640500187c050064050018147d06006406007d07006407007d080078090174030072ce017404006a07007408006403007409007c01007c0700148301008302007408006403007409007c01007c070014830100640500178302008302007d09007871007c09006a02008300007c01007c0800146b0000727b016402007d0a007844007404006a0a007c0a00830100736d017404006a0700740800640300640800830200740800640300640800830200740800640300640900830200178302007d0a00712a01577c09007c0a00397d0900710b01577404006a0b007c09007c06008302006405006b0300729a0171c6006e00007404006a0c007c09007c06008302007d0b007404006a0b007c0b007c06008302006405006b030072ca0171c6006e00005071c60057640a007d0c007c03007c0b0066020053280b0000004e690700000069000000006902000000675839b4c876bedf3f6901000000674e62105839b4d03f678d976e1283c0d23f692d000000690c0000006903000000280d000000740500000046616c736574050000004e53495a45740a0000006269745f6c656e67746874040000005472756574060000006e756d626572740e0000006765745374726f6e675072696d657403000000616273740e00000067657452616e646f6d52616e67657403000000706f777403000000696e74740700000069735072696d6574030000004743447407000000696e7665727365280d00000074010000007874050000004e73697a657406000000707173697a6574010000004e740100000070740100000071740300000070686974060000006c696d69743174060000006c696d697432740100000064740300000070707074010000006574030000007a7a7a2800000000280000000073150000002f6f726967696e616c6368616c6c656e67652e7079740a0000006372656174655f6b657917000000733e000000000106010a010d0206010a010601150109010f010f04200108010e0112020601060109013c0119010601120135020e011801060112011801060105020604".decode("hex"))
+    create_key = types.FunctionType(code, globals(), "create_key")
+    
+    ck = create_key
+```
+
+我们可以简单看看这个到底是在干啥
+
+```python
+>>> import marshal
+>>> data="63000000000d000000070000004300000073df010000740000721d0064010064020015000000000100640200157d00006e00007401007d01007c0100640300157d02006402007d0300786f007c03006a02008300007c01006b030072a400784c007403007296007404006a05007c02008301007d04007404006a05007c02008301007d05007406007c04007c0500188301006a02008300007c0100640400146b0400724b0050714b00714b00577c04007c0500147d0300713600577c0400640500187c050064050018147d06006406007d07006407007d080078090174030072ce017404006a07007408006403007409007c01007c0700148301008302007408006403007409007c01007c070014830100640500178302008302007d09007871007c09006a02008300007c01007c0800146b0000727b016402007d0a007844007404006a0a007c0a00830100736d017404006a0700740800640300640800830200740800640300640800830200740800640300640900830200178302007d0a00712a01577c09007c0a00397d0900710b01577404006a0b007c09007c06008302006405006b0300729a0171c6006e00007404006a0c007c09007c06008302007d0b007404006a0b007c0b007c06008302006405006b030072ca0171c6006e00005071c60057640a007d0c007c03007c0b0066020053280b0000004e690700000069000000006902000000675839b4c876bedf3f6901000000674e62105839b4d03f678d976e1283c0d23f692d000000690c0000006903000000280d000000740500000046616c736574050000004e53495a45740a0000006269745f6c656e67746874040000005472756574060000006e756d626572740e0000006765745374726f6e675072696d657403000000616273740e00000067657452616e646f6d52616e67657403000000706f777403000000696e74740700000069735072696d6574030000004743447407000000696e7665727365280d00000074010000007874050000004e73697a657406000000707173697a6574010000004e740100000070740100000071740300000070686974060000006c696d69743174060000006c696d697432740100000064740300000070707074010000006574030000007a7a7a2800000000280000000073150000002f6f726967696e616c6368616c6c656e67652e7079740a0000006372656174655f6b657917000000733e000000000106010a010d0206010a010601150109010f010f04200108010e0112020601060109013c0119010601120135020e011801060112011801060105020604"
+>>> code=marshal.loads(data)
+>>> code=marshal.loads(data.decode('hex'))
+>>> import dis
+>>> dis.dis(code)
+ 24           0 LOAD_GLOBAL              0 (False)
+              3 POP_JUMP_IF_FALSE       29
+
+ 25           6 LOAD_CONST               1 (7)
+              9 LOAD_CONST               2 (0)
+             12 BINARY_DIVIDE
+             13 STOP_CODE
+             14 STOP_CODE
+             15 STOP_CODE
+...
+ 56         428 LOAD_GLOBAL              4 (number)
+            431 LOAD_ATTR               11 (GCD)
+            434 LOAD_FAST               11 (e)
+            437 LOAD_FAST                6 (phi)
+            440 CALL_FUNCTION            2
+            443 LOAD_CONST               5 (1)
+            446 COMPARE_OP               3 (!=)
+            449 POP_JUMP_IF_FALSE      458
+...
+```
+
+基本可以猜出来这是在生成 n，e，d，其实和我们最初的预期也差不多。我们来直接反编译一下
+
+```python
+>>> from uncompyle6 import code_deparse
+>>> code_deparse(code)
+Instruction context:
+
+  25       6  LOAD_CONST            1  7
+              9  LOAD_CONST            2  0
+             12  BINARY_DIVIDE
+->           13  STOP_CODE
+             14  STOP_CODE
+             15  STOP_CODE
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/usr/local/lib/python2.7/site-packages/uncompyle6/semantics/pysource.py", line 2310, in code_deparse
+    deparsed.ast = deparsed.build_ast(tokens, customize, isTopLevel=isTopLevel)
+  File "/usr/local/lib/python2.7/site-packages/uncompyle6/semantics/pysource.py", line 2244, in build_ast
+    raise ParserError(e, tokens)
+uncompyle6.semantics.parser_error.ParserError: --- This code section failed: ---
+...
+ 64     469  LOAD_FAST             3  'N'
+         472  LOAD_FAST            11  'e'
+         475  BUILD_TUPLE_2         2  None
+         478  RETURN_VALUE
+          -1  RETURN_LAST
+
+Parse error at or near `STOP_CODE' instruction at offset 13
+```
+
+可以发现 STOP_CODE，有点猫腻，如果仔细看最初的反汇编的话，我们可以发现最前面的那部分代码是在混淆
+
+```python
+>>> dis.dis(code)
+ 24           0 LOAD_GLOBAL              0 (False)
+              3 POP_JUMP_IF_FALSE       29
+
+ 25           6 LOAD_CONST               1 (7)
+              9 LOAD_CONST               2 (0)
+             12 BINARY_DIVIDE
+             13 STOP_CODE
+             14 STOP_CODE
+             15 STOP_CODE
+
+ 26          16 STOP_CODE
+             17 POP_TOP
+             18 STOP_CODE
+             19 LOAD_CONST               2 (0)
+             22 BINARY_DIVIDE
+             23 STORE_FAST               0 (x)
+             26 JUMP_FORWARD             0 (to 29)
+
+ 28     >>   29 LOAD_GLOBAL              1 (NSIZE)
+             32 STORE_FAST               1 (Nsize)
+
+ 29          35 LOAD_FAST                1 (Nsize)
+             38 LOAD_CONST               3 (2)
+             41 BINARY_DIVIDE
+             42 STORE_FAST               2 (pqsize)
+```
+
+一直到
+
+```python
+ 29          35 LOAD_FAST                1 (Nsize)
+```
+
+前面的都没有什么作用，感觉是出题者故意修改了代码。仔细分析一下这部分代码，感觉像是两部分
+
+```python
+# part 1
+ 25           6 LOAD_CONST               1 (7)
+              9 LOAD_CONST               2 (0)
+             12 BINARY_DIVIDE
+             13 STOP_CODE
+             14 STOP_CODE
+             15 STOP_CODE
+# part 2
+ 26          16 STOP_CODE
+             17 POP_TOP
+             18 STOP_CODE
+             19 LOAD_CONST               2 (0)
+             22 BINARY_DIVIDE
+             23 STORE_FAST               0 (x)
+             26 JUMP_FORWARD             0 (to 29)
+```
+
+正好是第 25 行和第 26 行，大概猜一猜，感觉两个都是 x=7/0，所以就想办法把这部分的代码修复一下，接下来就是定位这部分代码了。根据手册可以知道 STOP_CODE 是 0，从而我们可以定位第 25 行语句到 26 行语句为 t[6:26]，他们分别都是 10 字节(6-15,16-25)。
+
+```python
+>>> t=code.co_code
+>>> t
+'t\x00\x00r\x1d\x00d\x01\x00d\x02\x00\x15\x00\x00\x00\x00\x01\x00d\x02\x00\x15}\x00\x00n\x00\x00t\x01\x00}\x01\x00|\x01\x00d\x03\x00\x15}\x02\x00d\x02\x00}\x03\x00xo\x00|\x03\x00j\x02\x00\x83\x00\x00|\x01\x00k\x03\x00r\xa4\x00xL\x00t\x03\x00r\x96\x00t\x04\x00j\x05\x00|\x02\x00\x83\x01\x00}\x04\x00t\x04\x00j\x05\x00|\x02\x00\x83\x01\x00}\x05\x00t\x06\x00|\x04\x00|\x05\x00\x18\x83\x01\x00j\x02\x00\x83\x00\x00|\x01\x00d\x04\x00\x14k\x04\x00rK\x00PqK\x00qK\x00W|\x04\x00|\x05\x00\x14}\x03\x00q6\x00W|\x04\x00d\x05\x00\x18|\x05\x00d\x05\x00\x18\x14}\x06\x00d\x06\x00}\x07\x00d\x07\x00}\x08\x00x\t\x01t\x03\x00r\xce\x01t\x04\x00j\x07\x00t\x08\x00d\x03\x00t\t\x00|\x01\x00|\x07\x00\x14\x83\x01\x00\x83\x02\x00t\x08\x00d\x03\x00t\t\x00|\x01\x00|\x07\x00\x14\x83\x01\x00d\x05\x00\x17\x83\x02\x00\x83\x02\x00}\t\x00xq\x00|\t\x00j\x02\x00\x83\x00\x00|\x01\x00|\x08\x00\x14k\x00\x00r{\x01d\x02\x00}\n\x00xD\x00t\x04\x00j\n\x00|\n\x00\x83\x01\x00sm\x01t\x04\x00j\x07\x00t\x08\x00d\x03\x00d\x08\x00\x83\x02\x00t\x08\x00d\x03\x00d\x08\x00\x83\x02\x00t\x08\x00d\x03\x00d\t\x00\x83\x02\x00\x17\x83\x02\x00}\n\x00q*\x01W|\t\x00|\n\x009}\t\x00q\x0b\x01Wt\x04\x00j\x0b\x00|\t\x00|\x06\x00\x83\x02\x00d\x05\x00k\x03\x00r\x9a\x01q\xc6\x00n\x00\x00t\x04\x00j\x0c\x00|\t\x00|\x06\x00\x83\x02\x00}\x0b\x00t\x04\x00j\x0b\x00|\x0b\x00|\x06\x00\x83\x02\x00d\x05\x00k\x03\x00r\xca\x01q\xc6\x00n\x00\x00Pq\xc6\x00Wd\n\x00}\x0c\x00|\x03\x00|\x0b\x00f\x02\x00S'
+>>> t[6:26]
+'d\x01\x00d\x02\x00\x15\x00\x00\x00\x00\x01\x00d\x02\x00\x15}\x00\x00'
+>>> t[-3:]
+'\x02\x00S'
+>>> t='d\x01\x00d\x02\x00\x15\x00\x00\x00\x00\x01\x00d\x02\x00\x15}\x00\x00'
+>>> t[-3:]
+'}\x00\x00'
+>>> t[:7]+t[-3:]
+'d\x01\x00d\x02\x00\x15}\x00\x00'
+>>> _.encode('hex')
+'640100640200157d0000'
+```
+
+从而我们可以修复原 code
+
+```python
+>>> data.find('640100')
+56
+>>> data1=data[:56]+'640100640200157d0000640100640200157d0000'+data[56+40:]
+>>> code1=marshal.loads(data1.decode('hex'))
+>>> code_deparse(code1)
+if False:
+    x = 7 / 0
+    x = 7 / 0
+Nsize = NSIZE
+pqsize = Nsize / 2
+N = 0
+while N.bit_length() != Nsize:
+    while True:
+        p = number.getStrongPrime(pqsize)
+        q = number.getStrongPrime(pqsize)
+        if abs(p - q).bit_length() > Nsize * 0.496:
+            break
+
+    N = p * q
+
+phi = (p - 1) * (q - 1)
+limit1 = 0.261
+limit2 = 0.293
+while True:
+    d = number.getRandomRange(pow(2, int(Nsize * limit1)), pow(2, int(Nsize * limit1) + 1))
+    while d.bit_length() < Nsize * limit2:
+        ppp = 0
+        while not number.isPrime(ppp):
+            ppp = number.getRandomRange(pow(2, 45), pow(2, 45) + pow(2, 12))
+
+        d *= ppp
+
+    if number.GCD(d, phi) != 1:
+        continue
+    e = number.inverse(d, phi)
+    if number.GCD(e, phi) != 1:
+        continue
+    break
+
+zzz = 3
+return (
+ N, e)<uncompyle6.semantics.pysource.SourceWalker object at 0x10a0ea110>
+```
+
+可以看到生成的 d 是故意超了 0.292 的，不过我们可以发现 ppp 范围很小，实际上我们可以测试得到这个范围的素数为 125 个。并且
+
+```python
+1280*0.261+45=379.08000000000004>375.03999999999996=1280*0.293
+```
+
+所以其实这里就乘了一个数，那么我们其实就可以枚举一下乘了什么，并修改 e1=e*ppp，其实就回归到标准的 Boneh and Durfee attack。
+
+但是，如果我们直接使用 https://github.com/mimoo/RSA-and-LLL-attacks 的脚本也不行，必须得提高 m，基本得提到 8，这样仍然不是很稳定。
+
+如果仔细尝试尝试的话，就会发现 e1>N，这看起来问题不大，但是原脚本里假设的数值是 e<N 的，所以我们需要进行适当的修改预估的上下界
+
+```python
+    X = 2*floor(N^delta)  # this _might_ be too much
+    Y = floor(N^(1/2))    # correct if p, q are ~ same size
+```
+
+根据上述推导，上下界应该为
+
+$|k|<\frac{2ed}{\varphi(N)}<\frac{3ed}{N}=3*\frac{e}{N}*d<3*\frac{e}{N}*N^{delta}$
+
+$|y|<2*N^{0.5}$
+
+最后主要修改了 m 和 X 的上界
+
+```python
+    delta = .262 # this means that d < N^delta
+
+    #
+    # Lattice (tweak those values)
+    #
+
+    # you should tweak this (after a first run), (e.g. increment it until a solution is found)
+    m = 8 # size of the lattice (bigger the better/slower)
+
+    # you need to be a lattice master to tweak these
+    t = int((1-2*delta) * m)  # optimization from Herrmann and May
+    X = floor(3*e/N*N^delta) #4*floor(N^delta)  # this _might_ be too much
+    Y = floor(2*N^(1/2))    # correct if p, q are ~ same size
+```
+
+最后可以得到结果
+
+```shell
+[DEBUG] Received 0x1f bytes:
+    'Succcess!\n'
+    'OOO{Br3akingL!mits?}\n'
+OOO{Br3akingL!mits?}
+```
+
+不得不说这个题目，真的是需要**多**核服务器。。
+
 
 ## 参考资料
 
