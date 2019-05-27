@@ -10,7 +10,7 @@
 
 安装文件之后，查看一下
 
-![](/android/basic_reverse/static/figure/2014-tinyCTF-screen.png)
+![](./figure/2014-tinyCTF-screen.png)
 
 可以看出其就是输入一个字符串，然后应该会弹出结果。
 
@@ -32,7 +32,7 @@
 
 在主程序中，可以发现，如果我们输入的字符串为EYG3QMCS就会执行flagActivity.class。那么我们输入一下，可以得到如下结果
 
-![](/android/basic_reverse/staticfigure/2014-tinyCTF-flag.png)
+![](./figure/2014-tinyCTF-flag.png)
 
 即得到flag。
 
@@ -46,7 +46,7 @@
 
 安装一下程序。简单看一下页面，可以发现程序主要是输入密码，然后登陆。如果输入错的话会爆出“Wrong Password”的信息。
 
-![](/android/basic_reverse/staticfigure/2014-Numdroid-screen.png)
+![](./figure/2014-Numdroid-screen.png)
 
 ### 分析程序
 
@@ -145,7 +145,7 @@
 
 输入之后得到如下
 
-![](/android/basic_reverse/static/figure/flag.png)
+![](./figure/2014-Numdroid-flag.png)
 
 然后我们计算对应的MD值，从而获得flag为ASIS_3c56e1ed0597056fef0006c6d1c52463。
 
@@ -155,11 +155,11 @@
 
 首先，安装程序，随便点了点按钮，在右上方点击按钮会让我们输入key
 
-![](/android/basic_reverse/static/figure/2014-Sharif-key.png)
+![](./figure/2014-Sharif-key.png)
 
 随便输入了下，发现程序直接报错，告诉我们不对，那么我们可以根据这些信息来进行定位关键代码。
 
-![](/android/basic_reverse/static/figure/figure/2014-Sharif-key1.png)
+![](./figure/2014-Sharif-key1.png)
 
 ### 定位关键代码
 
@@ -262,9 +262,9 @@ KeyVerifier.isValidLicenceKey(editText.getText().toString(), MainActivity.this.a
 adb pull /data/data/edu.sharif.ctf/databases/db.db
 ```
 
-进而使用电脑上可以查看sqlite的软件查看一下，这里我使用的是http://sqlitebrowser.org/。如下
+进而使用电脑上可以查看sqlite的软件查看一下，这里我使用的是<u>http://sqlitebrowser.org/</u>。如下
 
-![](/android/basic_reverse/static/figure/figure/2014-Sharif-db.png)
+![](./figure/2014-Sharif-db.png)
 
 这里，我们可以直接得到
 
@@ -387,8 +387,8 @@ private int getSig(String packageName) {
 
 可以看出我们想要的flag的分为两个部分
 
-- String.valueOf(this.getSig(this.getPackageName())) 
-- this.getCrc() 
+- String.valueOf(this.getSig(this.getPackageName()))
+- this.getCrc()
 
 其中第一部分，我们可以采用自己编写一个app来获取对应的值。第二部分我们可以直接将dex文件提取出来，利用网上的工具计算一下。
 
@@ -580,4 +580,3 @@ eM_5m4Li_i4_Ea5y
 - GCTF 2017 Android2
 - ISG 2017 Crackme
 - XMAN 2017 mobile3 rev1
-

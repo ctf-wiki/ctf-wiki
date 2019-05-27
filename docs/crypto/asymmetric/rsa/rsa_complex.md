@@ -1,3 +1,392 @@
+# RSA 复杂题目
+
+## 2018 Tokyo Western Mixed Cipher
+
+题目给的信息如下所示：
+
+
+- 每次交互可以维持的时间长度约为 5 分钟
+- 每次交互中中n是确定的 1024 bit，但是未知， e 为 65537
+- 使用 aes 加密了 flag，密钥和 IV 均不知道
+- 每次密钥是固定的，但是 IV 每次都会随机
+- 可以使用 encrypt 功能随意使用 rsa 和 aes 进行加密，其中每次加密都会对 aes 的 iv 进行随机
+- 可以使用 decrypt 对随意的密文进行解密，但是只能知道最后一个字节是什么
+- 可以使用 print_flag 获取 flag 密文
+- 可以使用 print_key 获取 rsa 加密的 aes 密钥
+
+本题目看似一个题目，实则是 3 个题目，需要分步骤解决。在此之前，我們準備好交互的函數
+
+```python
+def get_enc_key(io):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("4")
+    io.read_until("here is encrypted key :)n")
+    c=int(io.readline()[:-1],16)
+    return c
+
+def encrypt_io(io,p):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("1")
+    io.read_until("input plain text: ")
+    io.writeline(p)
+    io.read_until("RSA: ")
+    rsa_c=int(io.readline()[:-1],16)
+    io.read_until("AES: ")
+    aes_c=io.readline()[:-1].decode("hex")
+    return rsa_c,aes_c
+
+def decrypt_io(io,c):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("2")
+    io.read_until("input hexencoded cipher text: ")
+    io.writeline(long_to_bytes(c).encode("hex"))
+    io.read_until("RSA: ")
+    return io.read_line()[:-1].decode("hex")
+```
+
+### GCD attack n
+
+第一步我们需要把没有给出的 n 算出来，因为我们可以利用 encrypt 功能对我们输入的明文 x 进行 rsa 加密，那么可以利用整除的性质算 n
+
+```python
+因为x ^ e = c mod n
+所以 n | x ^ e - c
+```
+我们可以构造足够多的 x，算出最够多的 x ^ e - c，从而计算最大公约数，得到 n。
+
+```
+def get_n(io):
+    rsa_c,aes_c=encrypt_io(io,long_to_bytes(2))
+    n=pow(2,65537)-rsa_c
+    for i in range(3,6):
+        rsa_c, aes_c = encrypt_io(io, long_to_bytes(i))
+        n=primefac.gcd(n,pow(i,65537)-rsa_c)
+    return n
+```
+
+可以利用加密进行 check
+
+```python
+def check_n(io,n):
+    rsa_c, aes_c = encrypt_io(io, "123")
+    if pow(bytes_to_long("123"), e, n)==rsa_c:
+        return True
+    else:
+        return False
+```
+
+### RSA parity oracle
+
+利用 leak 的的最后一个字节，我们可以进行选择密文攻击，使用 RSA parity oracle 回复 aes 的秘钥
+
+```python
+def guess_m(io,n,c):
+    k=1
+    lb=0
+    ub=n
+    while ub!=lb:
+        print lb,ub
+        tmp = c * gmpy2.powmod(2, k*e, n) % n
+        if ord(decrypt_io(io,tmp)[-1])%2==1:
+            lb = (lb + ub) / 2
+        else:
+            ub = (lb + ub) / 2
+        k+=1
+    print ub,len(long_to_bytes(ub))
+    return ub
+```
+
+### PRNG Predict
+
+这里我们可以解密 flag 的16字节之后的内容了，但是前16个字节没有 IV 是解密不了的。这时我们可以发现，IV 生成使用的随机数使用了 getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行 PRNG 的 predict，从而直接获取随机数
+
+这里使用了一个现成的的 java 进行 PRNG 的 Predict
+
+```java
+public class Main {
+
+   static int[] state;
+   static int currentIndex;
+40huo
+   public static void main(String[] args) {
+      state = new int[624];
+      currentIndex = 0;
+
+//    initialize(0);
+
+//    for (int i = 0; i < 5; i++) {
+//       System.out.println(state[i]);
+//    }
+
+      // for (int i = 0; i < 5; i++) {
+      // System.out.println(nextNumber());
+      // }
+
+      if (args.length != 624) {
+         System.err.println("must be 624 args");
+         System.exit(1);
+      }
+      int[] arr = new int[624];
+      for (int i = 0; i < args.length; i++) {
+         arr[i] = Integer.parseInt(args[i]);
+      }
+
+
+      rev(arr);
+
+      for (int i = 0; i < 6240huo4; i++) {
+         System.out.println(state[i]);
+      }
+
+//    System.out.println("currentIndex " + currentIndex);
+//    System.out.println("state[currentIndex] " + state[currentIndex]);
+//    System.out.println("next " + nextNumber());
+
+      // want -2065863258
+   }
+
+   static void nextState() {
+      // Iterate through the state
+      for (int i = 0; i < 624; i++) {
+         // y is the first bit of the current number,
+         // and the last 31 bits of the next number
+         int y = (state[i] & 0x80000000)
+               + (state[(i + 1) % 624] & 0x7fffffff);
+         // first bitshift y by 1 to the right
+         int next = y >>> 1;
+         // xor it with the 397th next number
+         next ^= state[(i + 397) % 624];
+         // if y is odd, xor with magic number
+         if ((y & 1L) == 1L) {
+            next ^= 0x9908b0df;
+         }
+         // now we have the result
+         state[i] = next;
+      }
+   }
+
+   static int nextNumber() {
+      currentIndex++;
+      int tmp = state[currentIndex];
+      tmp ^= (tmp >>> 11);
+      tmp ^= (tmp << 7) & 0x9d2c5680;
+      tmp ^= (tmp << 15) & 0xefc60000;
+      tmp ^= (tmp >>> 18);
+      return tmp;
+   }
+
+   static void initialize(int seed) {
+
+      // http://code.activestate.com/recipes/578056-mersenne-twister/
+
+      // global MT
+      // global bitmask_1
+      // MT[0] = seed
+      // for i in xrange(1,624):
+      // MT[i] = ((1812433253 * MT[i-1]) ^ ((MT[i-1] >> 30) + i)) & bitmask_1
+
+      // copied Python 2.7's impl (probably uint problems)
+      state[0] = seed;
+      for (int i = 1; i < 624; i++) {
+         state[i] = ((1812433253 * state[i - 1]) ^ ((state[i - 1] >> 30) + i)) & 0xffffffff;
+      }
+   }
+
+   static int unBitshiftRightXor(int value, int shift) {
+      // we part of the value we are up to (with a width of shift bits)
+      int i = 0;
+      // we accumulate the result here
+      int result = 0;
+      // iterate until we've done the full 32 bits
+      while (i * shift < 32) {
+         // create a mask for this part
+         int partMask = (-1 << (32 - shift)) >>> (shift * i);
+         // obtain the part
+         int part = value & partMask;
+         // unapply the xor from the next part of the integer
+         value ^= part >>> shift;
+         // add the part to the result
+         result |= part;
+         i++;
+      }
+      return result;
+   }
+
+   static int unBitshiftLeftXor(int value, int shift, int mask) {
+      // we part of the value we are up to (with a width of shift bits)
+      int i = 0;
+      // we accumulate the result here
+      int result = 0;
+      // iterate until we've done the full 32 bits
+      while (i * shift < 32) {
+         // create a mask for this part
+         int partMask = (-1 >>> (32 - shift)) << (shift * i);
+         // obtain the part
+         int part = value & partMask;
+         // unapply the xor from the next part of the integer
+         value ^= (part << shift) & mask;
+         // add the part to the result
+         result |= part;
+         i++;
+      }
+      return result;
+   }
+
+   static void rev(int[] nums) {
+      for (int i = 0; i < 624; i++) {
+
+         int value = nums[i];
+         value = unBitshiftRightXor(value, 18);
+         value = unBitshiftLeftXor(value, 15, 0xefc60000);
+         value = unBitshiftLeftXor(value, 7, 0x9d2c5680);
+         value = unBitshiftRightXor(value, 11);
+
+         state[i] = value;
+      }
+   }
+}
+```
+
+写了一个 python 直接调用 java
+
+```
+from Crypto.Util.number import long_to_bytes,bytes_to_long
+
+
+
+def encrypt_io(io,p):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("1")
+    io.read_until("input plain text: ")
+    io.writeline(p)
+    io.read_until("RSA: ")
+    rsa_c=int(io.readline()[:-1],16)
+    io.read_until("AES: ")
+    aes_c=io.readline()[:-1].decode("hex")
+    return rsa_c,aes_c
+import subprocess
+import random
+def get_iv(io):
+    rsa_c, aes_c=encrypt_io(io,"1")
+    return bytes_to_long(aes_c[0:16])
+def splitInto32(w128):
+    w1 = w128 & (2**32-1)
+    w2 = (w128 >> 32) & (2**32-1)
+    w3 = (w128 >> 64) & (2**32-1)
+    w4 = (w128 >> 96)
+    return w1,w2,w3,w4
+def sign(iv):
+    # converts a 32 bit uint to a 32 bit signed int
+    if(iv&0x80000000):
+        iv = -0x100000000 + iv
+    return iv
+def get_state(io):
+    numbers=[]
+    for i in range(156):
+        print i
+        numbers.append(get_iv(io))
+    observedNums = [sign(w) for n in numbers for w in splitInto32(n)]
+    o = subprocess.check_output(["java", "Main"] + map(str, observedNums))
+    stateList = [int(s) % (2 ** 32) for s in o.split()]
+    r = random.Random()
+    state = (3, tuple(stateList + [624]), None)
+    r.setstate(state)
+    return r.getrandbits(128)
+```
+
+### EXP
+
+整体攻击代码如下：
+
+```python
+from zio import *
+import primefac
+from Crypto.Util.number import long_to_bytes,bytes_to_long
+target=("crypto.chal.ctf.westerns.tokyo",5643)
+e=65537
+
+def get_enc_key(io):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("4")
+    io.read_until("here is encrypted key :)n")
+    c=int(io.readline()[:-1],16)
+    return c
+
+def encrypt_io(io,p):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("1")
+    io.read_until("input plain text: ")
+    io.writeline(p)
+    io.read_until("RSA: ")
+    rsa_c=int(io.readline()[:-1],16)
+    io.read_until("AES: ")
+    aes_c=io.readline()[:-1].decode("hex")
+    return rsa_c,aes_c
+
+def decrypt_io(io,c):
+    io.read_until("4: get encrypted keyn")
+    io.writeline("2")
+    io.read_until("input hexencoded cipher text: ")
+    io.writeline(long_to_bytes(c).encode("hex"))
+    io.read_until("RSA: ")
+    return io.read_line()[:-1].decode("hex")
+
+def get_n(io):
+    rsa_c,aes_c=encrypt_io(io,long_to_bytes(2))
+    n=pow(2,65537)-rsa_c
+    for i in range(3,6):
+        rsa_c, aes_c = encrypt_io(io, long_to_bytes(i))
+        n=primefac.gcd(n,pow(i,65537)-rsa_c)
+    return n
+
+def check_n(io,n):
+    rsa_c, aes_c = encrypt_io(io, "123")
+    if pow(bytes_to_long("123"), e, n)==rsa_c:
+        return True
+    else:
+        return False
+
+
+import gmpy2
+def guess_m(io,n,c):
+    k=1
+    lb=0
+    ub=n
+    while ub!=lb:
+        print lb,ub
+        tmp = c * gmpy2.powmod(2, k*e, n) % n
+        if ord(decrypt_io(io,tmp)[-1])%2==1:
+            lb = (lb + ub) / 2
+        else:
+            ub = (lb + ub) / 2
+        k+=1
+    print ub,len(long_to_bytes(ub))
+    return ub
+
+
+io = zio(target, timeout=10000, print_read=COLORED(NONE, 'red'),print_write=COLORED(NONE, 'green'))
+n=get_n(io)
+print check_n(io,n)
+c=get_enc_key(io)
+print len(decrypt_io(io,c))==16
+
+
+m=guess_m(io,n,c)
+for i in range(m - 50000,m+50000):
+    if pow(i,e,n)==c:
+        aeskey=i
+        print long_to_bytes(aeskey)[-1]==decrypt_io(io,c)[-1]
+        print "found aes key",hex(aeskey)
+
+import fuck_r
+next_iv=fuck_r.get_state(io)
+print "##########################################"
+print next_iv
+print aeskey
+io.interact()
+```
+
+
 ## 2016 ASIS Find the flag
 
 这里我们以 ASIS 2016 线上赛中 Find the flag 为例进行介绍。
@@ -378,3 +767,206 @@ decrypt()
 ```
 
 利用末尾的字符串 `wIe6ER1s_1TtA3k_e_t00_larg3` 解密压缩包，注意去掉 B。至此全部解密结束，得到 flag。
+
+## 2018 WCTF RSA
+
+题目基本描述为
+
+```
+Description:
+Encrypted message for user "admin":
+
+<<<320881698662242726122152659576060496538921409976895582875089953705144841691963343665651276480485795667557825130432466455684921314043200553005547236066163215094843668681362420498455007509549517213285453773102481574390864574950259479765662844102553652977000035769295606566722752949297781646289262341623549414376262470908749643200171565760656987980763971637167709961003784180963669498213369651680678149962512216448400681654410536708661206594836597126012192813519797526082082969616915806299114666037943718435644796668877715954887614703727461595073689441920573791980162741306838415524808171520369350830683150672985523901>>>
+
+admin public key:
+
+n = 483901264006946269405283937218262944021205510033824140430120406965422208942781742610300462772237450489835092525764447026827915305166372385721345243437217652055280011968958645513779764522873874876168998429546523181404652757474147967518856439439314619402447703345139460317764743055227009595477949315591334102623664616616842043021518775210997349987012692811620258928276654394316710846752732008480088149395145019159397592415637014390713798032125010969597335893399022114906679996982147566245244212524824346645297637425927685406944205604775116409108280942928854694743108774892001745535921521172975113294131711065606768927
+e = 65537
+
+Service: http://36.110.234.253
+
+```
+
+这个题目现在已经没有办法在线获取 binary 了，现在得到的 binary 是之前已经下载好的，我们当时需要登录用户的 admin 来下载对应的 generator。
+
+通过简单逆向这个 generator，我们可以发现这个程序是这么工作的
+
+- 利用用户给定的 license（32 个字节），迭代解密某个**固定位置**之后的数据，每 32 个字节一组，与密钥相异或得到结果。
+- 密钥的生成方法为 
+    - $k_1=key$
+    - $k_2 =sha256(k_1)$
+    - ...
+    - $k_n=sha256(k_{n-1})$
+
+其中，固定位置就是在找源文件 `generator` 中第二次出现 `ENCRYPTED` 的位置，然后再次偏移 32 个字节。
+
+```python
+    _ENCRYPT_STR = ENCRYPTED_STR;
+    v10 = 0;
+    ENCRYPTED_LEN = strlen(ENCRYPTED_STR);
+    do
+    {
+      do
+        ++v9;
+      while ( strncmp(&file_contents[v9], _ENCRYPT_STR, ENCRYPTED_LEN) );
+      ++v10;
+    }
+    while ( v10 <= 1 );
+    v11 = &file_start_off_32[loc2 + ENCRYPTED_LEN];
+    v12 = loc2 + ENCRYPTED_LEN;
+    len = file_size - (loc2 + ENCRYPTED_LEN) - 32;
+    decrypt(&file_start_off_32[v12], &license, len);
+    sha256_file_start(v11, len, &output);
+    if ( !memcmp(&output, &file_contents[v12], 0x20u) )
+    {
+      v14 = fopen("out.exe", "wb");
+      fwrite(v11, 1u, len, v14);
+      fclose(v14);
+      sprintf(byte_406020, "out.exe %s", argv[1]);
+      system(byte_406020);
+    }
+```
+
+同时，我们需要确保生成的文件的校验对应的哈希值恰好为指定的值，由于文件最后是一个 exe 文件，所以我们可以认为最后的文件头就是标准的 exe 文件，因此就不需要知道原始的 license 文件，进而我们可以编写 python 脚本生成 exe。
+
+在生成的 exe 中，我们分析出程序的基本流程为
+
+1. 读取 license
+2. 使用 license 作为 seed 分别生成 pq
+3. 利用 p，q 生成 n，e，d。
+
+其漏洞出现在生成 p，q 的方法上，而且生成 p 和 q 的方法类似。
+
+我们如果仔细分析下生成素数的函数的话，可以看到每个素数都是分为两部分生成的
+
+1. 生成左半部分 512 位。
+2. 生成右半部分 512 位。
+3. 左右构成 1024 比特位，判断是不是素数，是素数就成功，不是素数，继续生成。
+
+其中生成每部分的方式相同，方式为
+
+```python
+sha512(const1|const2|const3|const4|const5|const6|const7|const8|v9)
+v9=r%1000000007
+```
+
+ 只有 v9 会有所变化，但是它的范围却是固定的。
+
+那么，如果我们表示 p，q 为
+
+$p=a*2^{512}+b$
+
+$q=c*2^{512}+d$
+
+那么
+
+$n=pq=ac*2^{1024}+(ad+bc)*2^{512}+bd$
+
+那么
+
+$n \equiv bd \bmod 2^{512}$
+
+而且由于 p 和 q 在生成时，a，b，c，d 均只有 1000000007 种可能性。
+
+进而，我们可以枚举所有的可能性，首先计算出 b 可能的集合为 S，同时我们使用中间相遇攻击，计算
+
+$n/d \equiv b \bmod 2^{512}$
+
+这里由于 b 和 d 都是 p 的尾数，所以一定不会是 2 的倍数，进而必然存在逆元。
+
+这样做虽然可以，然而，我们可以简单算一下存储空间
+
+$64*1000000007 / 1024 / 1024 / 1024=59$
+
+也就是说需要 59 G，太大了，，所以我们仍然需要进一步考虑
+
+$n \equiv bd \bmod 2^{64}$
+
+这样，我们的内存需求瞬间就降到了 8 G左右。我们仍然使用枚举的方法进行运算。
+
+其次，我们不能使用 python，，python 占据空间太大，因此需要使用 c/c++ 编写。
+
+枚举所有可能的 d 计算对应的值 $n/d$ 如果对应的值在集合 S 中，那么我们就可以认为找到了一对合法的 b 和 d，因此我们就可以恢复 p 和 q 的一半。
+
+之后，我们根据
+
+$n-bd=ac*2^{1024}+(ad+bc)*2^{512}$
+
+可以得到
+
+$\frac{n-bd}{2^{512}} = ac*2^{512}+ad+bc$
+
+$\frac{n-bd}{2^{512}} \equiv ad+bc \bmod 2^{512}$
+
+类似地，我们可以计算出 a 和 c，从而我们就可以完全恢复出 p 和 q。
+
+在具体求解的过程中，在求 p 和 q 的一部分时，可以发现因为是模 $2^{64}$，所以可能存在碰撞（但其实就是一个是 p，另外一个是q，恰好对称。）。下面我们就求得了 b 对应的 v9。
+
+**注意：这里枚举出来的空间大约占用 11 个 G（包括索引），所以请选择合适的位置。**
+
+```
+b64: 9646799660ae61bd idx_b: 683101175 idx_d: 380087137
+search 23000000
+search 32000000
+search 2b000000
+search d000000
+search 3a000000
+search 1c000000
+search 6000000
+search 24000000
+search 15000000
+search 33000000
+search 2c000000
+search e000000
+b64: 9c63259ccab14e0b idx_b: 380087137 idx_d: 683101175
+search 1d000000
+search 3b000000
+search 7000000
+search 16000000
+search 25000000
+search 34000000
+```
+
+其实，我们在真正得到 p 或者 q 的一部分后，另外一部分完全可以使用暴力枚举的方式获取，因为计算量几乎都是一样的，最后结果为
+
+```python
+...
+hash 7000000
+hash 30000000
+p = 13941980378318401138358022650359689981503197475898780162570451627011086685747898792021456273309867273596062609692135266568225130792940286468658349600244497842007796641075219414527752166184775338649475717002974228067471300475039847366710107240340943353277059789603253261584927112814333110145596444757506023869
+q = 34708215825599344705664824520726905882404144201254119866196373178307364907059866991771344831208091628520160602680905288551154065449544826571548266737597974653701384486239432802606526550681745553825993460110874794829496264513592474794632852329487009767217491691507153684439085094523697171206345793871065206283
+plain text 13040004482825754828623640066604760502140535607603761856185408344834209443955563791062741885
+hash 16000000
+hash 25000000
+hash b000000
+hash 34000000
+hash 1a000000
+...
+➜  2018-WCTF-rsa git:(master) ✗ python
+Python 2.7.14 (default, Mar 22 2018, 14:43:05)
+[GCC 4.2.1 Compatible Apple LLVM 9.0.0 (clang-900.0.39.2)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> p=13040004482825754828623640066604760502140535607603761856185408344834209443955563791062741885
+>>> hex(p)[2:].decode('hex')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/usr/local/Cellar/python@2/2.7.14_3/Frameworks/Python.framework/Versions/2.7/lib/python2.7/encodings/hex_codec.py", line 42, in hex_decode
+    output = binascii.a2b_hex(input)
+TypeError: Odd-length string
+>>> hex(p)[2:-1].decode('hex')
+'flag{fa6778724ed740396fc001b198f30313}'
+```
+
+最后我们便拿到 flag 了。
+
+**详细的利用代码请参见 ctf-challenge 仓库。**
+
+相关编译指令，需要链接相关的库。
+
+```shell
+g++  exp2.cpp -std=c++11 -o main2 -lgmp -lcrypto -pthread
+```
+
+## 参考
+
+- https://upbhack.de/posts/wctf-2018-writeup-rsa/

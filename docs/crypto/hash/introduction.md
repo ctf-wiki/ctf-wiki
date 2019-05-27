@@ -2,7 +2,7 @@
 
 哈希函数（Hash Function）把消息或数据压缩成摘要，使得数据量变小。其一般模型如下
 
-![](/crypto/hash/figure/hash.png)
+![](./figure/hash.png)
 
 显然对于任何一个hash值，理论上存在若干个消息与之对应，即碰撞。
 
@@ -33,4 +33,3 @@
 | SHA1   | 160 bit           |
 | SHA256 | 256 bit           |
 | SHA512 | 512 bit           |
-

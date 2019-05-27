@@ -1,23 +1,26 @@
 # 总结
 
-## 经验
+## 古典密码分析思路
 
-古典密码的基本解题思路可以总结如下
+CTF 中有关古典密码的题目，通常是根据密文求出明文，因此采用**唯密文攻击**居多，基本分析思路总结如下：
 
-- 已知密码，识别密码
-- 未知密码，分析密码特性，利用暴力破解或者相应思路求解
+1. 确定密码类型：根据题目提示、加密方式、密文字符集、密文展现形式等信息。
+2. 确定攻击方法：包括直接分析、蛮力攻击、统计分析等方法。对于无法确定类型的特殊密码，应根据其密码特性选用合适的攻击方法。
+3. 确定分析工具：以在线密码分析工具与 Python 脚本工具包为主，以离线密码分析工具与手工分析为辅。
 
-有以下几种方法可以用来识别密码
+以上唯密文攻击方法的适用场景与举例如下：
 
-- 加密方式判别
-- 字符集判别
-- 加密结果样子判别
+| 攻击方法   | 适用场景                           | 举例                                   |
+| ---------- | ---------------------------------- | -------------------------------------- |
+| 直接分析法 | 由密码类型可确定映射关系的代换密码 | 凯撒密码、猪圈密码、键盘密码等         |
+| 蛮力攻击法 | 密钥空间较小的代换密码或置换密码   | 移位密码、栅栏密码等                   |
+| 统计分析法 | 密钥空间较大的代换密码             | 简单替换密码、仿射密码、维吉尼亚密码等 |
 
 ## 实验吧 围在栅栏里的爱
 
 题目描述
 
-> 最近一直在好奇一个问题，QWE到底等不等于ABC？
+> 最近一直在好奇一个问题，QWE 到底等不等于 ABC？
 >
 > -.- .. --.- .-.. .-- - ..-. -.-. --.- --. -. ... --- ---
 >
@@ -53,8 +56,9 @@ $ python Vigenere3d.py SECCON{**************************} **************
 POR4dnyTLHBfwbxAAZhe}}ocZR3Cxcftw9
 ```
 
-首先，我们先来分析一下 t 的构成
+**解法一**：
 
+首先，我们先来分析一下 t 的构成
 $$
 t[i][j]=s[i+j:]+s[:i+j] \\
 t[i][k]=s[i+k:]+s[:i+k]
@@ -112,3 +116,47 @@ def decrypt(cipher, k1, k2):
 ➜  2017_seccon_vigenere3d git:(master) python exp.py
 SECCON{Welc0me_to_SECCON_CTF_2017}
 ```
+**解法二**
+
+关于此题的分析：
+
+1. 考虑到在程序正常运行下，数组访问不会越界，我们在讨论时做以下约定：$arr[index] \Leftrightarrow arr[index \% len(arr)]$
+2. 关于 python 程序中定义的 `_l` 函数，发现以下等价关系：$\_l(offset, arr)[index] \Leftrightarrow arr[index + offset]$
+3. 关于 python 的 main 函数中三维矩阵 t 的定义，发现以下等价关系：$t[a][b][c] \Leftrightarrow \_l(a+b, s)[c]$
+4. 综合第 2 第 3 点的观察，有如下等价关系：$t[a][b][c] \Leftrightarrow s[a+b+c]$
+5. 我们将 s 视为一种编码格式，即：编码过程 s.find(x)，解码过程 s[x]。并直接使用其编码结果的数字替代其所代指的字符串，那么加密过程可以用以下公式表示：
+   - $e = f +  k1 +k2$
+   - 其中，e 是密文，f 是明文，k1 与 k2 是通过复制方法得到、与 f 长度一样的密钥，**加法是向量加**。
+
+所以我们只需要通过计算 `k1+k2` ，模拟密钥，即可解密。关于此题的解密 python 脚本：
+
+```python
+# exp2.py
+enc_str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_{}'
+dec_dic = {k:v for v,k in enumerate(enc_str)}
+encrypt = 'POR4dnyTLHBfwbxAAZhe}}ocZR3Cxcftw9'
+flag_bg = 'SECCON{**************************}'
+
+sim_key = [dec_dic[encrypt[i]]-dec_dic[flag_bg[i]] for i in range(7)] # 破解模拟密钥
+sim_key = sim_key + sim_key[::-1]
+
+flag_ed = [dec_dic[v]-sim_key[k%14] for k,v in enumerate(encrypt)] # 模拟密钥解密
+flag_ed = ''.join([enc_str[i%len(enc_str)] for i in flag_ed]) # 解码
+print(flag_ed)
+```
+
+得到明文如下：
+
+```bash
+$ python exp2.py
+SECCON{Welc0me_to_SECCON_CTF_2017}
+```
+
+## 消失的三重密码
+
+密文
+```
+of zit kggd zitkt qkt ygxk ortfzoeqs wqlatzwqssl qfr zvg ortfzoeqs yggzwqssl. fgv oy ngx vqfz zg hxz zitd of gft soft.piv dgfn lgsxzogfl qkt zitkt? zohl:hstqlt eiqfut zit ygkd gy zit fxdwtk ngx utz.zit hkgukqddtkl!
+```
+
+使用 quipquip 直接解密。

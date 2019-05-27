@@ -1,6 +1,4 @@
----
-typora-root-url: ../../../
----
+
 
 # ECC
 
@@ -25,7 +23,7 @@ $y^2=x^3+ax+b$
 
 其中$4a^3+27b^2 \bmod p \neq 0$
 
-我们称该方程的所有解(x,y)，($x\in Fp , y \in Fp$)，以及一个称为“无穷远点”(O)组成的集合为定义在Fp上的一个椭圆曲线，记为E(Fp)。 
+我们称该方程的所有解(x,y)，($x\in Fp , y \in Fp$)，以及一个称为“无穷远点”(O)组成的集合为定义在Fp上的一个椭圆曲线，记为E(Fp)。
 
 一般定义椭圆曲线密码需要以下条件
 
@@ -77,7 +75,7 @@ $Q=m\cdot p =p \oplus p \oplus ... \oplus p$ （m个p参与运算）
 
 这里我们以2013年SECCON CTF quals 中的 Cryptanalysis 为例，题目如下
 
-![img](/crypto/asymmetric/discrete-log/figure/2013-seccon-ctf-crypt-desp.png)
+![img](./figure/2013-seccon-ctf-crypt-desp.png)
 
 这里，我们已知椭圆曲线方程以及对应的生成元 base，还知道相应的模数以及公钥以及加密后的结果。
 

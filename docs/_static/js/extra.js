@@ -26,4 +26,7 @@ window.addEventListener('load', function() {
     if (a){
         document.body.setAttribute('data-md-color-accent',a);
     }
-}, false); 
+}, false);
+
+//添加空格
+pangu.spacingPageBody();

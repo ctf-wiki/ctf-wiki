@@ -13,7 +13,7 @@
 
 下表显示了一个 GIF 文件的组成结构：
 
-![](/misc/picture/figure/gif.png)
+![](./figure/gif.png)
 
 中间的那个大块可以被重复任意次
 
@@ -37,7 +37,7 @@ canvas）虚拟画布上，而现在一般将这些图片集用于实现动画�
 
 每个 image 都以一个 image descriptor block（图像描述块）作为开头，这个块固定为 10 字节。
 
-![](/misc/picture/figure/imagesdescription.png)
+![](./figure/imagesdescription.png)
 
 ### 图像数据（Image Data）
 

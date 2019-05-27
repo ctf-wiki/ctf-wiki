@@ -270,9 +270,9 @@ public class MainActivity extends Activity {   //this$0
       {
          public class thirdinner //this$3
          {
-           
-         }       
-      }    
+
+         }
+      }
    }
 }
 ```
@@ -312,7 +312,7 @@ MainActivity$firstinner$thirdinner.smali
 
 Dalvik 中指令的格式主要包含两个方面：位描述，格式ID。目前 Dalvik 中基本上所有的指令如下图所示，其中第一列给出了指令按照位进行描述的格式，第二列是格式化 ID ，第三列表示相应的句法，第四列对其进行说明。
 
-![](/android/basic_operating_mechanism/java_layer/smali/figure/Dalvik-Executable-instruction-formats.png)
+![](./figure/Dalvik-Executable-instruction-formats.png)
 
 #### 位描述
 
@@ -331,7 +331,7 @@ Dalvik 中指令的格式主要包含两个方面：位描述，格式ID。目�
 
 但是，正如表格里所展现的
 
-![](/android/basic_operating_mechanism/java_layer/smali/figure/Dalvik-Instruction-sample.png)
+![](./figure/Dalvik-Instruction-sample.png)
 
 这样的一种指令格式，根据ID的不同，仍然可以表示不同的指令含义。
 
@@ -809,7 +809,7 @@ if-testz类型的指令如下
 
 ```java
 int a = 10
-if(a > 0) 
+if(a > 0)
     a = 1;
 else
     a = 0;
@@ -831,7 +831,7 @@ const/4 v0, 0x0
 
 ```java
 int a = 10;
-if(a > 0) 
+if(a > 0)
     a = 1;
 ```
 
@@ -1137,7 +1137,7 @@ throw v2                # finally 块结束
 
 **！！从java代码到smali代码！！**
 
-该例子来自于http://blog.csdn.net/dd864140130/article/details/52076515。
+该例子来自于<u>http://blog.csdn.net/dd864140130/article/details/52076515</u>。
 
 java代码如下
 
@@ -1387,7 +1387,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 java -jar smali.jar assemble  src.smali -o src.dex
 ```
 
-其中，smali.jar 来自于 https://bitbucket.org/JesusFreke/smali/overview。
+其中，smali.jar 来自于 <u>https://bitbucket.org/JesusFreke/smali/overview</u>。
 
 ## 运行 smali
 

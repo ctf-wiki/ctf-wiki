@@ -55,7 +55,7 @@ adb forward tcp:23946 tcp:23946
 
 ### 添加程序
 
-这里我们以http://www.52pojie.cn/thread-554068-1-1.html中的 debugnativeapp 为例子。
+这里我们以<u>http://www.52pojie.cn/thread-554068-1-1.html</u>中的 debugnativeapp 为例子。
 
 首先，我们需要把原生程序放到 android 设备中，并修改其权限，使其可以被执行。如下
 
@@ -68,7 +68,7 @@ adb shell chmod 755 /data/local/tmp/debugnativeapp
 
 根据原生层程序的位数选择相应的 ida，然后选择 Debugger-Run-RemoteArmLinux/Android debugger，如下界面
 
-![](/android/basic_reverse/dynamic/figure/debug_run_android.png) 
+![](./figure/debug_run_android.png)
 
 其中，重要的参数意义如下
 
@@ -81,13 +81,13 @@ adb shell chmod 755 /data/local/tmp/debugnativeapp
 
 其中 Debug options 选择如下
 
-![](/android/basic_reverse/dynamic/figure/debug_run_setup.png) 
+![](./figure/debug_run_setup.png)
 
 主要是选择了三个 Events，使得我们的程序可以在入口点，线程启动时，library加载时自动停止。当然，也可以都进行选择。
 
 启动程序后，如下
 
-![](/android/basic_reverse/dynamic/figure/debug_run_run.png) 
+![](./figure/debug_run_run.png)
 
 注：
 
@@ -95,7 +95,7 @@ adb shell chmod 755 /data/local/tmp/debugnativeapp
 >
 > 2. 如果遇到以下问题，直接cancel就好。具体原因还不清楚。
 >
->    ![](/android/basic_reverse/dynamic/figure/debug_run_linker.png)
+>    ![](./figure/debug_run_linker.png)
 >
 > 3. 如果遇到error: only position independent executables (PIE) are supported.一般是因为android手机的版本大于5，可以尝试
 >
@@ -106,7 +106,7 @@ adb shell chmod 755 /data/local/tmp/debugnativeapp
 
 对于 so 原生程序，我们可能会想这和普通原生程序有什么不一样的地方呢？自然是有的，so文件不能单独运行。一般是其它程序调用 so 文件中的基本某些函数。所以这里我们就不能直接采用上面 run 的方式了。一般来说，android 中 so 文件都是依赖于 apk 文件的。
 
-这里我们以 http://www.52pojie.cn/thread-554068-1-1.html 中的 debugjniso.apk 为例子。
+这里我们以 <u>http://www.52pojie.cn/thread-554068-1-1.html</u> 中的 debugjniso.apk 为例子。
 
 **首先，必须搭建基本调试环境。**
 
@@ -130,7 +130,7 @@ adb shell am start -D -n packagename/.MainActivity
 
 启动 IDA pro，点击Debugger-Attach-RemoteArmLinux/Android debugger，Hostname 填 localhost，port 默认就是 23946 端口。其实就是我们本地电脑的监听端口。如下
 
-![](/android/basic_reverse/dynamic/figure/debug_setup.png) 
+![](./figure/debug_setup.png)
 
 点击 ok，启动调试
 
@@ -140,17 +140,17 @@ adb shell am start -D -n packagename/.MainActivity
 
 利用 ctrl+f 快速定位并选择相应的进程，如下
 
-![](/android/basic_reverse/dynamic/figure/debug_attach_process.png) 
+![](./figure/debug_attach_process.png)
 
 然后ok确定即可。
 
 这时我们可以看到我们已经 attach 成功了。
 
-![](/android/basic_reverse/dynamic/figure/debug_attach_libc.png) 
+![](./figure/debug_attach_libc.png)
 
 这时候我们再点击 Debugger-Debugger options，设置相关选项如下
 
-![](/android/basic_reverse/dynamic/figure/debug_attach_setup.png)
+![](./figure/debug_attach_setup.png)
 
 意思类同于原生程序。
 
@@ -162,7 +162,7 @@ adb shell am start -D -n packagename/.MainActivity
 
 首先，我们打开 ddms 来选中我们要调试的进程。
 
-![](/android/basic_reverse/dynamic/figure/ddms.png)
+![](./figure/ddms.png)
 
 这里其实相当于直接执行了
 
@@ -177,7 +177,7 @@ adb forward tcp:xxx jdwp:<pid>
 
 这里给出一个基本的通信过程
 
-![](figure/jdb-debugging.png)
+![](./figure/jdb-debugging.png)
 
 此时，我们的电脑已经与手机的 app 虚拟机之间建立了通信。
 
@@ -202,7 +202,7 @@ jdb -connect com.sun.jdi.SocketAttach:hostname=127.0.0.1,port=8700
 
 我们再次看一下我们的手机，
 
-![](/android/basic_reverse/dynamic/figure/debug_attach_mobile.png) 
+![](./figure/debug_attach_mobile.png)
 
 此时，应用已经又继续运行了，不再是之前的 wait for debugger 了。
 
@@ -210,13 +210,13 @@ jdb -connect com.sun.jdi.SocketAttach:hostname=127.0.0.1,port=8700
 
 这里我们再次打开一个 ida，导入该 apk 的 so 库，然后在 export 中寻找我们的函数，如下
 
-![](/android/basic_reverse/dynamic/figure/debug_attach_jnistring.png) 
+![](./figure/debug_attach_jnistring.png)
 
 可以看出其偏移为 0xc38。
 
 我们再在之前的调试的 IDA 中运行 F9 直到怎么按都不再运行，我们会看到程序断在 linker 处
 
-![](/android/basic_reverse/dynamic/figure/debug_attach_linker.png) 
+![](./figure/debug_attach_linker.png)
 
 此时，我们**点击 app 界面的设置标题按钮**（之所以要按这个，是因为在该函数中调用了原生 API），再次观察IDA，可以看出该 so 库已经被加载进入
 

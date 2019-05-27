@@ -24,8 +24,9 @@ MD5的输入输出如下
 - http://www.cmd5.com/
 - http://www.ttmd5.com/
 - http://pmd5.com/
+- https://www.win.tue.nl/hashclash/fastcoll_v1.0.0.5.exe.zip (生成指定前缀的md5碰撞)
 
 ## 题目
 
 - CFF 2016 好多盐
-  - JarvisOJ 好多盐
+- JarvisOJ 好多盐

@@ -10,6 +10,7 @@
 -   [漏洞银行(BUGBANK)技能树 ](https://skills.bugbank.cn/)
 -   [安全技能树简版 by 余弦](http://evilcos.me/security_skill_tree_basic/index.html)
 -   [安全类思维导图 by phith0n](https://github.com/phith0n/Mind-Map)
+-   [信息安全从业者书单推荐](https://github.com/riusksk/secbook)
 
 ## 信息资讯
 
@@ -43,14 +44,18 @@
 -   [Sniper OJ](http://www.sniperoj.com/)
 -   [Jarvis OJ](https://www.jarvisoj.com/)
 -   [CTF Learn](https://ctflearn.com/)
+-   [Hackme CTF](https://hackme.inndy.tw/scoreboard/)
+-   [Practice CTF List](http://captf.com/practice-ctf/)
 
 ## CTF 工具
 
 -   [看雪工具](https://tools.pediy.com/)
+-   [吾爱破解工具](https://down.52pojie.cn/Tools/)
 -   [CTF在线工具 by CTFcode](http://ctf.ssleye.com/)
 -   [CTF在线工具箱 by bugku](http://tool.bugku.com/)
 -   [CTF工具资源库 by HBCTF team](https://ctftools.com/down/)
 -   [ctf-tools by zardus](https://github.com/zardus/ctf-tools)
+-   [The Cyber Swiss Army Knife](https://gchq.github.io/CyberChef/)
 
 ## CTF Writeup 集合
 

@@ -80,7 +80,7 @@ im.save("flag.png")
 
 这类题目大部分都是一些像素块组成的图片，如下图
 
-![](/misc/picture/figure/brainfun.png)
+![](./figure/brainfun.png)
 
 相关题目:
 

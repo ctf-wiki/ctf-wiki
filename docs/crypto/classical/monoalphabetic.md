@@ -37,10 +37,10 @@
 这里以 **XMan 一期夏令营分享赛宫保鸡丁队 Crypto 100** 为例进行介绍。
 
 ```
-明文：s0a6u3u1s0bv1a
+密文：s0a6u3u1s0bv1a
 密钥：guangtou
 偏移：6,20,0,13,6,19,14,20
-密文：y0u6u3h1y0uj1u
+明文：y0u6u3h1y0uj1u
 ```
 
 ### 破解
@@ -219,7 +219,7 @@ $$
 \begin{align*}
 c_1&=a_1c+b_1 \\
 c_2&=a_2c_1+b_2 \\
-   &=a_1a_2c+a_2b_1c+b_2 \\
+   &=a_1a_2c+a_2b_1+b_2 \\
    &=kc+d
 \end{align*}  
 $$
