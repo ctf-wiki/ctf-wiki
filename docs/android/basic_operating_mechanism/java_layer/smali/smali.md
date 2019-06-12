@@ -155,7 +155,7 @@ private java.lang.String str1;
 这里我们就不介绍相应内容了，直接给出一个例子
 
 ```
-# instance fields
+# static fields
 .field public static str2:Ljava/lang/String;
 ```
 
