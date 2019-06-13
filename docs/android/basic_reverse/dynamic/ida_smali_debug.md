@@ -1,2 +1,2 @@
-# IDA 动态调试 smali 代码
+# IDA Dynamically debugging smali code
 

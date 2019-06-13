@@ -1,1 +1,1 @@
-简述 Windows 下的漏洞利用。
+Briefly describe exploits under Windows.
