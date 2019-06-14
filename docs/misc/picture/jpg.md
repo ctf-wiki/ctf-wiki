@@ -1,49 +1,71 @@
-## 文件结构
+[EN](./jpg.md) | [ZH](./jpg-zh.md)
+## File Structure
 
--   JPEG 是有损压缩格式，将像素信息用 JPEG 保存成文件再读取出来，其中某些像素值会有少许变化。在保存时有个质量参数可在 0 至 100 之间选择，参数越大图片就越保真，但图片的体积也就越大。一般情况下选择 70 或 80 就足够了
--   JPEG 没有透明度信息
 
-JPG 基本数据结构为两大类型：「段」和经过压缩编码的图像数据。
+- JPEG is a lossy compression format. Pixel information is saved as a file in JPEG and then read out. Some of the pixel values will change slightly. There is a quality parameter that can be selected between 0 and 100 when saving. The larger the parameter, the more fidelity the picture will be, but the larger the size of the picture. In general, choosing 70 or 80 is enough.
+- JPEG has no transparency information
 
-| 名 称   | 字节数 | 数据 | 说明                                        |
+
+The JPG basic data structure is of two major types: &quot;segment&quot; and compression-encoded image data.
+
+
+| Name | Bytes | Data | Description |
 | ------- | ------ | ---- | ------------------------------------------- |
-| 段 标识 | 1      | FF   | 每个新段的开始标识                          |
-| 段类型  | 1      |      | 类型编码（称作标记码）                      |
-| 段长 度 | 2      |      | 包括段内容和段长度本身,不包括段标识和段类型 |
-| 段内容  | 2      |      | ≤65533字节                                  |
 
--   有些段没有长度描述也没有内容，只有段标识和段类型。文件头和文件尾均属于这种段。
--   段与段之间无论有多少 `FF` 都是合法的，这些 `FF` 称为「填充字节」，必须被忽略掉。
+| Segment Identification | 1 | FF | Start ID of each new segment |
+| Segment Type | 1 | | Type Encoding (called Tag) |
+| Segment length | 2 | | Includes segment content and segment length itself, excluding segment ID and segment type |
+| Section content | 2 | | ≤65533 bytes |
 
-一些常见的段类型
+
+- Some segments have no length description and no content, only segment identification and segment type. Both the header and the end of the file belong to this segment.
+- No matter how many `FF` are legal between segments and segments, these `FF` are called &quot;fill bytes&quot; and must be ignored.
+
+
+Some common segment types
+
 
 ![](./figure/jpgformat.png)
 
-`0xffd8` 和 `0xffd9`为 JPG 文件的开始结束的标志。
+
+
+`0xffd8` and `0xffd9` are flags for the beginning of the JPG file.
+
 
 ## 隐写软件
 
+
 ### [Stegdetect](https://github.com/redNixon/stegdetect)
 
-通过统计分析技术评估 JPEG 文件的 DCT 频率系数的隐写工具, 可以检测到通过 JSteg、JPHide、OutGuess、Invisible
-Secrets、F5、appendX 和 Camouflage 等这些隐写工具隐藏的信息，并且还具有基于字典暴力破解密码方法提取通过 Jphide、outguess 和 jsteg-shell 方式嵌入的隐藏信息。
+
+
+A steganographic tool for evaluating DCT frequency coefficients of JPEG files by statistical analysis techniques, which can be detected by JSteg, JPHide, OutGuess, Invisible
+Information hidden by steganographic tools such as Secrets, F5, appendX, and Camouflage, and also has hidden information embedded in Jphide, outguess, and jsteg-shell methods based on the dictionary brute force cryptography method.
+
 
 ```shell
--q 仅显示可能包含隐藏内容的图像。
--n 启用检查JPEG文件头功能，以降低误报率。如果启用，所有带有批注区域的文件将被视为没有被嵌入信息。如果JPEG文件的JFIF标识符中的版本号不是1.1，则禁用OutGuess检测。
--s 修改检测算法的敏感度，该值的默认值为1。检测结果的匹配度与检测算法的敏感度成正比，算法敏感度的值越大，检测出的可疑文件包含敏感信息的可能性越大。
--d 打印带行号的调试信息。
--t 设置要检测哪些隐写工具（默认检测jopi），可设置的选项如下：
-j 检测图像中的信息是否是用jsteg嵌入的。
-o 检测图像中的信息是否是用outguess嵌入的。
-p 检测图像中的信息是否是用jphide嵌入的。
-i 检测图像中的信息是否是用invisible secrets嵌入的。
+
+-q Displays only images that may contain hidden content.
+-n Enables checking the JPEG header function to reduce the false positive rate. If enabled, all files with annotated areas will be treated as if they were not embedded. If the version number in the JFIF identifier of the JPEG file is not 1.1, OutGuess detection is disabled.
+-s Modifies the sensitivity of the detection algorithm. The default value of this value is 1. The matching degree of the detection result is directly proportional to the sensitivity of the detection algorithm. The larger the value of the algorithm sensitivity, the more likely the detected suspicious file contains sensitive information.
+-d Prints debugging information with line numbers.
+-t Set which steganographic tools to detect (default detection jobi), the options that can be set are as follows:
+j Check if the information in the image is embedded in jsteg.
+o Detect if the information in the image is embedded with outguess.
+p Detects whether the information in the image is embedded in jphide.
+i Detects if the information in the image is embedded with invisible secrets.
 ```
 
-### [JPHS](http://linux01.gwdg.de/~alatham/stego.html)
 
-JPEG 图像的信息隐藏软件 JPHS，它是由 Allan Latham 开发设计实现在 Windows 和 Linux 系统平台针对有损压缩 JPEG 文件进行信息加密隐藏和探测提取的工具。软件里面主要包含了两个程序 JPHIDE和 JPSEEK。JPHIDE 程序主要是实现将信息文件加密隐藏到 JPEG 图像功能，而 JPSEEK 程序主要实现从用 JPHIDE 程序加密隐藏得到的 JPEG 图像探测提取信息文件，Windows 版本的 JPHS 里的 JPHSWIN 程序具有图形化操作界面且具备 JPHIDE 和 JPSEEK 的功能。
+
+### [JPHS] (http://linux01.gwdg.de/~alatham/stego.html)
+
+
+JPHS, an information hiding software for JPEG images, is a tool developed by Allan Latham to implement information encryption and detection extraction for lossy compressed JPEG files on Windows and Linux system platforms. The software mainly contains two programs JPHIDE and JPSEEK. The JPHIDE program mainly implements the function of hiding information file encryption into JPEG image. The JPSEEK program mainly implements the JPEG image detection and extraction information file obtained by encrypting and hiding with the JPHIDE program. The JPHSWIN program in the Windows version of JPHS has a graphical operation interface and has The features of JPHIDE and JPSEEK.
+
 
 ### [SilentEye](http://silenteye.v1kings.io/)
+
+
 
 > SilentEye is a cross-platform application design for an easy use of steganography, in this case hiding messages into pictures or sounds. It provides a pretty nice interface and an easy integration of new steganography algorithm and cryptography process by using a plug-ins system.

@@ -1,13 +1,17 @@
-# 深入理解堆的实现
+[EN](./overview.md) | [ZH](./overview-zh.md)
+# Deep understanding of heap implementation
 
-仔细想一下，任何堆的实现都需要从以下两个角度考虑相应的问题
 
-- 宏观角度
-    - 创建堆
-    - 堆初始化
-    - 删除堆
-- 微观角度
-    - 申请内存块
-    - 释放内存块
+Think about it carefully, any heap implementation needs to consider the corresponding problem from the following two perspectives.
 
-当然，这些都是比较高层面的想法，不同的堆的底层实现会有所不同。
+
+- Macro perspective
+- Create a heap
+- heap initialization
+- Delete heap
+- Micro angle
+- Apply for a memory block
+- Free memory block
+
+
+Of course, these are relatively high-level ideas, and the underlying implementation of different heaps will be different.

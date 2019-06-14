@@ -1,5 +1,9 @@
+[EN](./FTP.md) | [ZH](./FTP-zh.md)
 ### FTP
 
-`FTP` ( `File Transfer Protocol` ，即文件传输协议)是 `TCP/IP` 协议组中的协议之一。 `FTP` 协议包括两个组成部分，其一为 `FTP` 服务器，其二为 `FTP` 客户端。其中 `FTP` 服务器用来存储文件，用户可以使用 `FTP` 客户端通过 `FTP` 协议访问位于 `FTP` 服务器上的资源。在开发网站的时候，通常利用 `FTP` 协议把网页或程序传到 `Web` 服务器上。此外，由于 `FTP` 传输效率非常高，在网络上传输大的文件时，一般也采用该协议。
 
-默认情况下 `FTP` 协议使用 `TCP` 端口中的 `20` 和 `21` 这两个端口，其中 `20` 用于传输数据， `21` 用于传输控制信息。但是，是否使用 `20` 作为传输数据的端口与 `FTP` 使用的传输模式有关，如果采用主动模式，那么数据传输端口就是 `20` ；如果采用被动模式，则具体最终使用哪个端口要服务器端和客户端协商决定。
+
+`FTP` (File Transfer Protocol) is one of the protocols in the `TCP/IP` protocol suite. The `FTP` protocol consists of two components, one for the `FTP` server and the other for the `FTP` client. The `FTP` server is used to store files. Users can use the `FTP` client to access resources located on the `FTP` server via the `FTP` protocol. When developing a website, the web page or program is usually transferred to the `Web` server using the `FTP` protocol. In addition, because the `FTP` transmission efficiency is very high, this protocol is generally used when transferring large files on the network.
+
+
+By default, the `FTP` protocol uses the `20` and `21` ports of the `TCP` port, where `20` is used to transfer data and `21` is used to transmit control information. However, whether to use `20` as the port for transmitting data is related to the transmission mode used by `FTP`. If the active mode is adopted, the data transmission port is `20`; if the passive mode is adopted, which port is ultimately used for the server side. Negotiate with the client to decide.

@@ -1,171 +1,295 @@
+[EN](./DNS.md) | [ZH](./DNS-zh.md)
 ### DNS
 
-`DNS` 通常为 `UDP` 协议,报文格式
+
+
+`DNS` is usually `UDP` protocol, message format
+
 
 ```sh
+
 +-------------------------------+
-| 报文头                         |
+
+| Message Head |
 +-------------------------------+
-| 问题 (向服务器提出的查询部分)    |
+
+| Question (part of the query to the server) |
 +-------------------------------+
-| 回答 (服务器回复的资源记录)      |
+
+| Answer (resource record of server reply) |
 +-------------------------------+
-| 授权 (权威的资源记录)           |
+
+| Authorization (authoritative resource record) |
 +-------------------------------+
-| 格外的 (格外的资源记录)         |
+
+| Extraordinary (extra resource record) |
 +-------------------------------+
+
 ```
 
-查询包只有头部和问题两个部分， `DNS` 收到查询包后，根据查询到的信息追加回答信息、授权机构、额外资源记录，并且修改了包头的相关标识再返回给客户端。
 
-每个 `question` 部分
+
+The query packet has only the header and the problem. After receiving the query packet, `DNS` appends the reply information, the authority, and the additional resource record according to the information that is queried, and modifies the relevant identifier of the packet header and returns it to the client.
+
+
+Each `question` section
+
 
 ```
+
    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
  |                                               |
+
  /                     QNAME                     /
+
  /                                               /
+
  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
  |                     QTYPE                     |
+
  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
  |                     QCLASS                    |
+
  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
 ```
 
-- `QNAME` ：为查询的域名，是可变长的，编码格式为：将域名用.号划分为多个部分，每个部分前面加上一个字节表示该部分的长度，最后加一个 `0` 字节表示结束
-- `QTYPE` ：占 `16` 位，表示查询类型，共有 `16` 种，常用值有：`1` ( `A` 记录，请求主机 `IP` 地址)、`2` ( `NS` ，请求授权 `DNS` 服务器)、`5` ( `CNAME` 别名查询）
+
+
+- `QNAME`: The domain name of the query is variable length. The encoding format is: divide the domain name into multiple parts with a ., each part is preceded by a byte to indicate the length of the part, and finally add one. 0` byte indicates the end
+- `QTYPE`: occupies the `16` bit, indicating the query type. There are a total of `16`. Common values are: `1` ( `A` record, request host `IP` address), `2` ( `NS` , Request authorization `DNS` server), `5` ( `CNAME` alias query)
 
 
 
-### 例题
 
-> 题目：`BSides San Francisco CTF 2017` ： `dnscap.pcap` 
 
-我们通过 `wireshark` 打开发现全部为 `DNS` 协议,查询名为大量字符串`([\w\.]+)\.skullseclabs\.org`
 
-我们通过 `tshark -r dnscap.pcap -T fields -e dns.qry.name > hex`提取后，利用 `python` 转码：
+### Example
+
+
+&gt; Title: `BSides San Francisco CTF 2017` : `dnscap.pcap`
+
+
+We open all the `DNS` protocols through `wireshark`, and the query name is a large number of strings `([\w\.]+)\.skullseclabs\.org`
+
+
+We use `tshark -r dnscap.pcap -T fields -e dns.qry.name &gt; hex` to extract and use `python` to transcode:
+
 
 ```python
+
 import re
+
+
+
 
 
 find = ""
 
+
+
 with open('hex','rb') as f:
+
     for i in f:
+
         text = re.findall(r'([\w\.]+)\.skull',i)
+
         if text:
+
             find += text[0].replace('.','')
+
 print find
-```
-
-我们发现了几条关键信息：
 
 ```
+
+
+
+We found a few key pieces of information:
+
+
+```
+
 Welcome to dnscap! The flag is below, have fun!!
+
 Welcome to dnscap! The flag is below, have fun!!
-!command (sirvimes)
+
+! command (browser)
 ...
+
 IHDR
-gAMA
+range
 bKGD
+
         pHYs
+
 IHDR
-gAMA
+range
 bKGD
+
         pHYs
+
 tIME
+
 IDATx
 ...
+
 2017-02-01T21:04:00-08:00
+
 IEND
-console (sirvimes)
-console (sirvimes)
+console
+console
 Good luck! That was dnscat2 traffic on a flaky connection with lots of re-transmits. Seriously,
+
 Good luck! That was dnscat2 traffic on a flaky connection with lots of re-transmits. Seriously, d[
+
 good luck. :)+
-```
-
-`flag` 确实包含在其中,但是有大量重复信息,一是应为`question` 。在 `dns` 协议中查询和反馈时都会用到，` -Y "ip.src == 192.168.43.91"`进行过滤后发现还是有不少重复部分。
 
 ```
-%2A}
-%2A}
+
+
+
+`flag` is indeed included, but there is a lot of duplicate information, one should be `question`. It will be used in the query and feedback in the `dns` protocol. `-Y &quot;ip.src == 192.168.43.91&quot;` After filtering, there are still many duplicates.
+
+
+```
+
+% 2A}
+% 2A}
 %2A}q
+
 %2A}x
-%2A}
+
+% 2A}
 IHDR
-gAMA
+range
 bKGD
+
         pHYs
+
 tIME
+
 IDATx
-HBBH
+HBBB
 CxRH!
 C1%t
-ceyF
+
+cheyF
 i4ZI32
-rP@1
-ceyF
+
+rP @ 1
+cheyF
 i4ZI32
-rP@1
-ceyF
+
+rP @ 1
+cheyF
 i4ZI32
-rP@1
-ceyF
+
+rP @ 1
+cheyF
 i4ZI32
-rP@1
+
+rP @ 1
 ```
 
-根据发现的 `dnscat` 找到 https://github.com/iagox86/dnscat2/blob/master/doc/protocol.md 这里介绍了 `dnscat` 协议的相关信息,这是一种通过 `DNS` 传递数据的变种协议,题目文件中应该未使用加密,所以直接看这里的数据块信息
+
+
+According to the found `dnscat`, find https://github.com/iagox86/dnscat2/blob/master/doc/protocol.md. Here is the information about the `dnscat` protocol, which is a kind of data passing through `DNS`. Variant protocol, encryption should not be used in the title file, so look directly at the data block information here.
+
 
 ```
+
 MESSAGE_TYPE_MSG: [0x01]
+
 (uint16_t) packet_id
+
 (uint8_t) message_type [0x01]
+
 (uint16_t) session_id
 (uint16_t) seq
-(uint16_t) ack
+
+(uint16_t) ah
 (byte[]) data
+
 ```
 
-在`qry.name`中去除其余字段,只留下 `data` 快,从而合并数据,再从 `16` 进制中检索`89504e.....6082`提取`png`,得到 `flag` 。
+
+
+Remove the rest of the fields in `qry.name`, leaving only `data` fast, thus merging the data, then retrieving `89504e.....6082` from the `16` binary to extract `png` and get `flag` .
+
 
 ```python
+
 import re
+
+
+
 
 
 find = []
 
+
+
 with open('hex','rb') as f:
+
     for i in f:
+
         text = re.findall(r'([\w\.]+)\.skull',i)
+
         if text:
+
             tmp =  text[0].replace('.','')
+
             find.append(tmp[18:])
+
 last = []
 
+
+
 for i in find:
+
     if i not in last:
+
         last.append(i)
 
 
+
+
+
 print  ''.join(last)
+
 ```
 
+
+
 *flag*
+
+
 
 ![dnscat_flag](./figure/dnscat_flag.png)
 
 
 
-### 相关题目
+
+
+
+
+### Related topics
+
 
 - [IceCTF-2016:Search](https://mrpnkt.github.io/2016/icectf-2016-search/)
+
 - [EIS-2017:DNS 101](https://github.com/susers/Writeups/blob/master/2017/EIS/Misc/DNS%20101/Write-up.md)
 
-### 参考文献
+
+
+### references
+
 
 - https://github.com/lisijie/homepage/blob/master/posts/tech/dns%E5%8D%8F%E8%AE%AE%E8%A7%A3%E6%9E%90.md
+
 - https://xpnsec.tumblr.com/post/157479786806/bsidessf-ctf-dnscap-walkthrough

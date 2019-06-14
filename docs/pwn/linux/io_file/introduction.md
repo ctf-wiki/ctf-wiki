@@ -1,331 +1,586 @@
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
 # FILE结构
 
 
-## FILE介绍
 
-FILE在Linux系统的标准IO库中是用于描述文件的结构，称为文件流。
-FILE结构在程序执行fopen等函数时会进行创建，并分配在堆中。我们常定义一个指向FILE结构的指针来接收这个返回值。
 
-FILE结构定义在libio.h中，如下所示
+## FILE Introduction
+
+
+FILE is a structure for describing files in a standard IO library of a Linux system, called a file stream.
+The FILE structure is created when the program executes functions such as fopen and is allocated in the heap. We often define a pointer to the FILE structure to receive this return value.
+
+
+The FILE structure is defined in libio.h as shown below
+
 
 ```
+
 struct _IO_FILE {
   int _flags;		/* High-order word is _IO_MAGIC; rest is flags. */
+
 #define _IO_file_flags _flags
 
+
+
   /* The following pointers correspond to the C++ streambuf protocol. */
+
   /* Note:  Tk uses the _IO_read_ptr and _IO_read_end fields directly. */
+
   char* _IO_read_ptr;	/* Current read pointer */
+
   char* _IO_read_end;	/* End of get area. */
+
   char* _IO_read_base;	/* Start of putback+get area. */
+
   char* _IO_write_base;	/* Start of put area. */
+
   char* _IO_write_ptr;	/* Current put pointer. */
+
   char* _IO_write_end;	/* End of put area. */
+
   char* _IO_buf_base;	/* Start of reserve area. */
+
   char* _IO_buf_end;	/* End of reserve area. */
+
   /* The following fields are used to support backing up and undo. */
+
   char *_IO_save_base; /* Pointer to start of non-current get area. */
+
   char *_IO_backup_base;  /* Pointer to first valid character of backup area */
+
   char *_IO_save_end; /* Pointer to end of non-current get area. */
+
+
 
   struct _IO_marker *_markers;
 
+
+
   struct _IO_FILE *_chain;
 
+
+
   int _fileno;
+
 #if 0
+
   int _blksize;
+
 #else
+
   int _flags2;
+
 #endif
   _IO_off_t _old_offset; /* This used to be _offset but it's too small.  */
 
+
+
 #define __HAVE_COLUMN /* temporary */
+
   /* 1+column number of pbase(); 0 is unknown. */
+
   unsigned short _cur_column;
+
   signed char _vtable_offset;
+
   char _shortbuf[1];
+
+
 
   /*  char* _save_gptr;  char* _save_egptr; */
 
+
+
   _IO_lock_t *_lock;
+
 #ifdef _IO_USE_OLD_IO_FILE
+
 };
-```
-
-进程中的FILE结构会通过_chain域彼此连接形成一个链表，链表头部用全局变量_IO_list_all表示，通过这个值我们可以遍历所有的FILE结构。
-
-在标准I/O库中，每个程序启动时有三个文件流是自动打开的：stdin、stdout、stderr。因此在初始状态下，_IO_list_all指向了一个有这些文件流构成的链表，但是需要注意的是这三个文件流位于libc.so的数据段。而我们使用fopen创建的文件流是分配在堆内存上的。
-
-我们可以在libc.so中找到stdin\stdout\stderr等符号，这些符号是指向FILE结构的指针，真正结构的符号是
 
 ```
+
+
+
+The FILE structure in the process will be connected to each other through the _chain field to form a linked list. The linked list header is represented by the global variable _IO_list_all. Through this value, we can traverse all the FILE structures.
+
+
+In the standard I/O library, three file streams are automatically opened at the start of each program: stdin, stdout, stderr. So in the initial state, _IO_list_all points to a linked list of these file streams, but it should be noted that these three file streams are located in the data segment of libc.so. The file stream we created with fopen is allocated on the heap memory.
+
+
+We can find stdin\stdout\stderr and other symbols in libc.so, these symbols are pointers to the FILE structure, the symbol of the real structure is
+
+
+```
+
 _IO_2_1_stderr_
 _IO_2_1_stdout_
 _IO_2_1_stdin_
 ```
 
 
-但是事实上_IO_FILE结构外包裹着另一种结构_IO_FILE_plus，其中包含了一个重要的指针vtable指向了一系列函数指针。
 
-在libc2.23版本下，32位的vtable偏移为0x94，64位偏移为0xd8
+
+
+But in fact the _IO_FILE structure is wrapped around another structure _IO_FILE_plus, which contains an important pointer vtable pointing to a series of function pointers.
+
+
+In libc2.23, the 32-bit vtable offset is 0x94 and the 64-bit offset is 0xd8.
+
 
 ```
+
 struct _IO_FILE_plus
 {
-	_IO_FILE    file;
+
+_IO_FILE file;
 	IO_jump_t   *vtable;
+
 }
-```
-
-vtable是IO_jump_t类型的指针，IO_jump_t中保存了一些函数指针，在后面我们会看到在一系列标准IO函数中会调用这些函数指针
 
 ```
+
+
+
+Vtable is a pointer of type IO_jump_t, and some function pointers are stored in IO_jump_t. Later we will see that these function pointers are called in a series of standard IO functions.
+
+
+```
+
 void * funcs[] = {
+
    1 NULL, // "extra word"
+
    2 NULL, // DUMMY
+
    3 exit, // finish
+
    4 NULL, // overflow
+
    5 NULL, // underflow
+
    6 NULL, // uflow
+
    7 NULL, // pbackfail
+
    
+
    8 NULL, // xsputn  #printf
-   9 NULL, // xsgetn
-   10 NULL, // seekoff
+
+9 NULL, // xsgetn
+10 NULL, // seekoff
    11 NULL, // seekpos
-   12 NULL, // setbuf
+
+12 NULL, // setbuf
    13 NULL, // sync
-   14 NULL, // doallocate
+
+14 NULL, // target location
    15 NULL, // read
+
    16 NULL, // write
+
    17 NULL, // seek
+
    18 pwn,  // close
+
    19 NULL, // stat
+
    20 NULL, // showmanyc
+
    21 NULL, // imbue
+
 };
+
 ```
+
+
+
+
 
 
 
 ## fread
 
-fread是标准IO库函数，作用是从文件流中读数据，函数原型如下
+
+
+Fread is a standard IO library function that reads data from a file stream. The function prototype is as follows
+
 
 ```
+
 size_t fread ( void *buffer, size_t size, size_t count, FILE *stream) ;
-```
-
-* buffer 存放读取数据的缓冲区。
-
-* size：指定每个记录的长度。
-
-* count： 指定记录的个数。
-
-* stream：目标文件流。
-
-* 返回值：返回读取到数据缓冲区中的记录个数
-
-fread的代码位于/libio/iofread.c中，函数名为_IO_fread，但真正的功能实现在子函数_IO_sgetn中。
 
 ```
+
+
+
+* buffer Holds the buffer for reading data.
+
+
+* size: specifies the length of each record.
+
+
+* count: Specifies the number of records.
+
+
+* stream: the target file stream.
+
+* Return value: Returns the number of records read into the data buffer
+
+
+The code for fread is located in /libio/iofread.c and the function name is _IO_fread, but the real function is implemented in the subfunction _IO_sgetn.
+
+
+```
+
 _IO_size_t
+
 _IO_fread (buf, size, count, fp)
+
      void *buf;
+
      _IO_size_t size;
+
      _IO_size_t count;
-     _IO_FILE *fp;
+
+_IO_FILE * fp;
 {
+
   ...
+
   bytes_read = _IO_sgetn (fp, (char *) buf, bytes_requested);
+
   ...
+
 }
-```
-
-在_IO_sgetn函数中会调用_IO_XSGETN，而_IO_XSGETN是_IO_FILE_plus.vtable中的函数指针，在调用这个函数时会首先取出vtable中的指针然后再进行调用。
 
 ```
+
+
+
+_IO_XSGETN is called in the _IO_sgetn function, and _IO_XSGETN is a function pointer in _IO_FILE_plus.vtable. When this function is called, the pointer in the vtable is first fetched and then called.
+
+
+```
+
 _IO_size_t
-_IO_sgetn (fp, data, n)
-     _IO_FILE *fp;
+
+_IO_sgetn (fp, date, n)
+_IO_FILE * fp;
      void *data;
+
      _IO_size_t n;
+
 {
+
   return _IO_XSGETN (fp, data, n);
+
 }
-```
-
-在默认情况下函数指针是指向_IO_file_xsgetn函数的，
 
 ```
+
+
+
+By default the function pointer points to the _IO_file_xsgetn function.
+
+
+```
+
   if (fp->_IO_buf_base
+
 	      && want < (size_t) (fp->_IO_buf_end - fp->_IO_buf_base))
+
 	    {
+
 	      if (__underflow (fp) == EOF)
+
 		break;
 
+
+
 	      continue;
+
 	    }
+
 ```
+
+
+
 
 
 ## fwrite
 
-fwrite同样是标准IO库函数，作用是向文件流写入数据，函数原型如下
+
+
+Fwrite is also a standard IO library function, the function is to write data to the file stream, the function prototype is as follows
+
 
 ```
+
 size_t fwrite(const void* buffer, size_t size, size_t count, FILE* stream);
-```
-
-* buffer:是一个指针，对fwrite来说，是要写入数据的地址;
-
-* size:要写入内容的单字节数;
-
-* count:要进行写入size字节的数据项的个数;
-
-* stream:目标文件指针;
-
-* 返回值：实际写入的数据项个数count。
-
-
-fwrite的代码位于/libio/iofwrite.c中，函数名为_IO_fwrite。
-在_IO_fwrite中主要是调用_IO_XSPUTN来实现写入的功能。
-
-根据前面对_IO_FILE_plus的介绍，可知_IO_XSPUTN位于_IO_FILE_plus的vtable中，调用这个函数需要首先取出vtable中的指针，再跳过去进行调用。
 
 ```
+
+
+
+* buffer: is a pointer, for fwrite, is the address to write data;
+
+
+* size: the number of single bytes to write to the content;
+
+
+* count: the number of data items to be written to size bytes;
+
+
+* stream: target file pointer;
+
+
+* Return value: count of the number of data items actually written.
+
+
+
+
+The code for fwrite is located in /libio/iofwrite.c and the function name is _IO_fwrite.
+In _IO_fwrite, _IO_XSPUTN is mainly called to implement the write function.
+
+
+According to the introduction of _IO_FILE_plus, it can be seen that _IO_XSPUTN is located in the vtable of _IO_FILE_plus. To call this function, you need to first take out the pointer in the vtable and then jump over to make the call.
+
+
+```
+
 written = _IO_sputn (fp, (const char *) buf, request);
-```
-
-在_IO_XSPUTN对应的默认函数_IO_new_file_xsputn中会调用同样位于vtable中的_IO_OVERFLOW
 
 ```
+
+
+
+The _IO_OVERFLOW, also located in the vtable, is called in the default function _IO_new_file_xsputn corresponding to _IO_XSPUTN.
+
+
+```
+
  /* Next flush the (full) buffer. */
+
       if (_IO_OVERFLOW (f, EOF) == EOF)
-```
-
-
-_IO_OVERFLOW默认对应的函数是_IO_new_file_overflow
 
 ```
+
+
+
+
+
+The default function of _IO_OVERFLOW is _IO_new_file_overflow
+
+
+```
+
 if (ch == EOF)
+
     return _IO_do_write (f, f->_IO_write_base,
+
 			 f->_IO_write_ptr - f->_IO_write_base);
+
   if (f->_IO_write_ptr == f->_IO_buf_end ) /* Buffer is really full */
+
     if (_IO_do_flush (f) == EOF)
+
       return EOF;
+
 ```
-在_IO_new_file_overflow内部最终会调用系统接口write函数
+
+The system interface write function will eventually be called inside _IO_new_file_overflow.
+
+
+
 
 
 
 ## fopen
 
-fopen在标准IO库中用于打开文件，函数原型如下
+
+
+Fopen is used to open files in the standard IO library. The function prototype is as follows
+
 
 ```   
+
 FILE *fopen(char *filename, *type);
-```
-
-* filename:目标文件的路径
-
-* type:打开方式的类型
-
-* 返回值:返回一个文件指针
-
-在fopen内部会创建FILE结构并进行一些初始化操作，下面来看一下这个过程
-
-首先在fopen对应的函数__fopen_internal内部会调用malloc函数，分配FILE结构的空间。因此我们可以获知FILE结构是存储在堆上的
 
 ```
+
+
+
+* filename: the path to the target file
+
+
+* type: type of open method
+
+
+* Return value: return a file pointer
+
+
+Inside the fopen will create a FILE structure and perform some initialization operations, let&#39;s take a look at this process
+
+
+First, the malloc function is called inside the fopen corresponding function __fopen_internal, and the space of the FILE structure is allocated. So we can know that the FILE structure is stored on the heap.
+
+
+```
+
 *new_f = (struct locked_FILE *) malloc (sizeof (struct locked_FILE));
+
 ```
 
-之后会为创建的FILE初始化vtable，并调用_IO_file_init进一步初始化操作
+
+
+After that, the vtable will be initialized for the created FILE, and _IO_file_init will be called to further initialize the operation.
 ```
+
 _IO_JUMPS (&new_f->fp) = &_IO_file_jumps;
+
 _IO_file_init (&new_f->fp);
+
 ```
 
-在_IO_file_init函数的初始化操作中，会调用_IO_link_in把新分配的FILE链入_IO_list_all为起始的FILE链表中
+
+
+In the initialization operation of the _IO_file_init function, _IO_link_in is called to link the newly allocated FILE into _IO_list_all as the starting FILE list.
 ```
+
 void
-_IO_link_in (fp)
-     struct _IO_FILE_plus *fp;
+
+_IO_link_in (fp)     struct _IO_FILE_plus *fp;
+
 {
+
     if ((fp->file._flags & _IO_LINKED) == 0)
+
     {
+
       fp->file._flags |= _IO_LINKED;
-      fp->file._chain = (_IO_FILE *) _IO_list_all;
+
+fp-&gt; file._chain = (_IO_FILE *) _IO_list_all;
       _IO_list_all = fp;
+
       ++_IO_list_all_stamp;
+
     }
+
 }
+
 ```
 
-之后__fopen_internal函数会调用_IO_file_fopen函数打开目标文件，_IO_file_fopen会根据用户传入的打开模式进行打开操作，总之最后会调用到系统接口open函数，这里不再深入。
+
+
+After that, the __fopen_internal function will call the _IO_file_fopen function to open the target file. _IO_file_fopen will open according to the open mode passed by the user. In the end, it will call the system interface open function, which is not deepened here.
 ```
+
 if (_IO_file_fopen ((_IO_FILE *) new_f, filename, mode, is32) != NULL)
+
     return __fopen_maybe_mmap (&new_f->fp.file);
+
 ```
 
-总结一下fopen的操作是
 
-* 使用malloc分配FILE结构
-* 设置FILE结构的vtable
-* 初始化分配的FILE结构
-* 将初始化的FILE结构链入FILE结构链表中
-* 调用系统调用打开文件
+
+Summarize the operation of fopen is
+
+
+* Use malloc to allocate FILE structure
+* Set the vtable of the FILE structure
+* Initialize the allocated FILE structure
+* Link the initialized FILE structure into the FILE structure list
+* Call system call to open file
+
 
 ## fclose
 
-fclose是标准IO库中用于关闭已打开文件的函数，其作用与fopen相反。
+
+
+Fclose is a function in the standard IO library for closing open files, which is the opposite of fopen.
+
 
 ```
+
 int fclose(FILE *stream)
-```
-功能：关闭一个文件流，使用fclose就可以把缓冲区内最后剩余的数据输出到磁盘文件中，并释放文件指针和有关的缓冲区
-
-
-
-fclose首先会调用_IO_unlink_it将指定的FILE从_chain链表中脱链
 
 ```
+
+Function: Close a file stream, use fclose to output the last remaining data in the buffer to the disk file, and release the file pointer and related buffer
+
+
+
+
+
+
+Fclose will first call _IO_unlink_it to delink the specified FILE from the _chain list.
+
+
+```
+
 if (fp->_IO_file_flags & _IO_IS_FILEBUF)
-    _IO_un_link ((struct _IO_FILE_plus *) fp);
+
+_IO_un_link ((struct _IO_FILE_plus *) fp);
 ```
 
-之后会调用_IO_file_close_it函数，_IO_file_close_it会调用系统接口close关闭文件
+
+
+After that, the _IO_file_close_it function will be called, and _IO_file_close_it will call the system interface close to close the file.
+
 
 ```
+
 if (fp->_IO_file_flags & _IO_IS_FILEBUF)
+
     status = _IO_file_close_it (fp);
-```
-
-最后调用vtable中的_IO_FINISH，其对应的是_IO_file_finish函数，其中会调用free函数释放之前分配的FILE结构
 
 ```
+
+
+
+Finally, the _IO_FINISH in the vtable is called, which corresponds to the _IO_file_finish function, which will call the free function to release the previously allocated FILE structure.
+
+
+```
+
 _IO_FINISH (fp);
 ```
 
 
+
+
+
 ## printf/puts
 
-printf和puts是常用的输出函数，在printf的参数是以'\n'结束的纯字符串时，printf会被优化为puts函数并去除换行符。
 
 
-puts在源码中实现的函数是_IO_puts，这个函数的操作与fwrite的流程大致相同，函数内部同样会调用vtable中的_IO_sputn，结果会执行_IO_new_file_xsputn，最后会调用到系统接口write函数。
+Printf and puts are commonly used output functions. When the printf argument is a pure string ending with &#39;\n&#39;, printf will be optimized to puts the function and remove the newline.
 
-printf的调用栈回溯如下，同样是通过_IO_file_xsputn实现
+
+
+
+The function that puts implements in the source code is _IO_puts. The operation of this function is roughly the same as that of fwrite. The function also calls _IO_sputn in the vtable. The result is _IO_new_file_xsputn, and finally the system interface write function is called.
+
+
+Printf&#39;s call stack traceback is as follows, also implemented by _IO_file_xsputn
+
 
 ```
+
 vfprintf+11
+
 _IO_file_xsputn
 _IO_file_overflow
+
 funlockfile
+
 _IO_file_write
+
 write
+
 ```
+
+
 
 

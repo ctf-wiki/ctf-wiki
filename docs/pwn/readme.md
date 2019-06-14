@@ -1,29 +1,50 @@
-概述 pwn 的一些方向，以及思想。
+[EN](./readme.md) | [ZH](./readme-zh.md)
+Outline some directions of pwn, as well as ideas.
+
+
+
 
 
 
 ### GLIBC Pwn
 
-通常是与 linux 下的内存管理有关。如我们常说的 house of 系列内容
+
+Usually related to memory management under linux. As we often say the house of series content
+
+
+
 
 
 
 ## Browser Pwn
 
-与浏览器相关的Pwn
+
+Browser-related Pwn
+
 
 https://github.com/Escapingbug/awesome-browser-exploit
 
 
 
+
+
+
+
 ## Kernel Pwn
+
 
 ### Windows Kernel
 
-### Linux Kernel
-Linux kernel 的漏洞，就 CTF 而言，多是 LKM 的漏洞，通过这些漏洞达到提权以及获取稳定 shell 等目的。
 
-### TODO
+
+### Linux Kernel
+
+The Linux kernel vulnerabilities, in the case of CTFs, are mostly LKM vulnerabilities. These vulnerabilities are used to achieve privilege and secure shells.
+
+
+### ALL
 * Need a new document section for english.
+
 * Look into reccursivly translating into english through google.
+
 * Get a public work to clean up grammar. 

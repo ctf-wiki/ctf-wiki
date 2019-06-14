@@ -1,37 +1,59 @@
-## 常用工具
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
+## Common tools
+
 
 -   EasyRecovery
--   MedAnalyze
--   FTK
+
+- MedAnalyze
+- FTK
 -   [Elcomsoft Forensic Disk Decryptor](https://ctf-wiki.github.io/ctf-tools/misc/#_6)
+
 -   Volatility
+
+
 
 ## 磁盘
 
-常见的磁盘分区格式有以下几种
+
+Common disk partition formats are as follows
+
 
 -   Windows: FAT12 -> FAT16 -> FAT32 -> NTFS
+
 -   Linux: EXT2 -> EXT3 -> EXT4
--   FAT 主磁盘结构
+
+- FAT master disk structure
+
 
     ![](./figure/forensic-filesys.jpg)
 
--   删除文件：目录表中文件名第一字节 `e5`。
+
+
+- Delete file: The first byte of the file name in the directory table is `e5`.
+
 
 ## VMDK
 
-VMDK 文件本质上是物理硬盘的虚拟版，也会存在跟物理硬盘的分区和扇区中类似的填充区域，我们可以利用这些填充区域来把我们需要隐藏的数据隐藏到里面去，这样可以避免隐藏的文件增加了 VMDK 文件的大小（如直接附加到文件后端），也可以避免由于 VMDK 文件大小的改变所带来的可能导致的虚拟机错误。而且 VMDK 文件一般比较大，适合用于隐藏大文件。
 
-## 内存
 
--   解析 Windows / Linux / Mac OS X 内存结构
--   分析进程，内存数据
--   根据题目提示寻找线索和思路，提取分析指定进程的特定内存数据
+The VMDK file is essentially a virtual version of the physical hard disk. There are also similar fill areas in the partitions and sectors of the physical hard disk. We can use these filled areas to hide the data we need to hide, so as to avoid hiding. The files increase the size of the VMDK file (such as attaching directly to the file backend), and can also avoid virtual machine errors caused by changes in the size of the VMDK file. And VMDK files are generally large and suitable for hiding large files.
 
-## 题目
 
--   Jarvis OJ - MISC - 取证 2
+## RAM
 
-## 参考
 
--   [数据隐藏技术](http://wooyun.jozxing.cc/static/drops/tips-12614.html)
+- Resolve Windows / Linux / Mac OS X memory structure
+- Analysis process, in-memory data
+- Find clues and ideas based on the prompts, and extract specific memory data for the specified process
+
+
+## topic
+
+
+- Jarvis OJ - MISC - Forensics 2
+
+
+## Reference
+
+
+- [Data Hiding Technology] (http://wooyun.jozxing.cc/static/drops/tips-12614.html)

