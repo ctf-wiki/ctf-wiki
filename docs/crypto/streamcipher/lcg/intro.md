@@ -1,4 +1,3 @@
-# Linear Congruence Generator
+# 线性同余生成器
 
-
-To be added.
+待补充。

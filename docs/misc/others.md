@@ -1,22 +1,13 @@
 ## shellcode
 
+给定一段 shellcode，执行并获取结果。
 
-
-Given a piece of shellcode, execute and get the result.
-
-
-tool
+工具
 ====
-
-
 
 -   [shellcodeexec](https://github.com/inquisb/shellcodeexec)
 
-
-
-topic
+题目
 ====
-
-
 
 -   Jarvis OJ - Basic - shellcode

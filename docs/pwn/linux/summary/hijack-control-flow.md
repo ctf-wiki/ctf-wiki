@@ -1,43 +1,28 @@
-# Control program execution flow
+# 控制程序执行流
 
+在控制程序执行流的过程中，我们可以考虑如下方式。
 
-In the process of controlling the execution flow of the program, we can consider the following ways.
-
-
-## Direct control EIP
-
+## 直接控制 EIP
 
 
 
+## 返回地址
 
+即控制程序栈上的返回地址。
 
-## return address
+## 跳转指针
 
-
-That is, control the return address on the program stack.
-
-
-## Jump pointer
-
-
-Here we can consider the following way
-
+这里我们可以考虑如下方式
 
 - call 
-
 - jmp
 
+## 函数指针
 
-## function pointer
-
-
-Common function pointers have
-
+常见的函数指针具有
 
 - vtable,  function table，如 IO_FILE 的 vtable，printf function table。
+- hook  指针，如 `malloc_hook`，`free_hook`。
+- handler
 
-- hook pointers, such as `malloc_hook`, `free_hook`.
-- acting
-
-
-## Modify control flow related variables
+## 修改控制流相关变量

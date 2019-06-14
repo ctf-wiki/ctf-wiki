@@ -1,26 +1,16 @@
 # PCBC
 
+PCBC 的全称为明文密码块链接（Plaintext cipher-block chaining）。也称为填充密码块链接（Propagating cipher-block chaining）。
 
-
-The full name of PCBC is Plaintext cipher-block chaining. Also known as Propagating cipher-block chaining.
-
-
-## Encryption
-
+## 加密
 
 ![](./figure/pcbc_encryption.png)
 
-
-
-## decryption
-
+## 解密
 
 ![](./figure/pcbc_decryption.png)
 
+## 特点
 
-
-## Features
-
-
-- The decryption process is difficult to parallelize
-- Interchanging adjacent ciphertext blocks does not affect subsequent ciphertext blocks
+- 解密过程难以并行化
+- 互换邻接的密文块不会对后面的密文块造成影响

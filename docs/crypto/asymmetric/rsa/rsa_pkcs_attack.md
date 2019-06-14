@@ -1,14 +1,9 @@
-# Bleichenbacher&#39;s attack
+# Bleichenbacher's attack
 
-
-- RSA signature can be forged in the PKCS 1.5 standard
-
+- PKCS 1.5 标准中可以伪造 RSA 签名​
 
 !!! warning
-
-To be added.
-
+    待补充。
 
 - http://ddaa.tw/gctf_crypto_201_rsa_ctf_challenge.html
-
 

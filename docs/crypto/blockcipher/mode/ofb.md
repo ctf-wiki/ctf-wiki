@@ -1,41 +1,27 @@
 # OFB
 
+OFB全称为输出反馈模式（Output feedback），其反馈内容是分组加密后的内容而不是密文。
 
-OFB is called output feedback mode, and its feedback content is packet-encrypted content instead of ciphertext.
-
-
-## Encryption
-
+## 加密
 
 ![](./figure/ofb_encryption.png)
 
-
-
-## decryption
-
+## 解密
 
 ![](./figure/ofb_decryption.png)
 
+## 优缺点
 
+### 优点
 
-## Advantages and disadvantages
+1. 不具有错误传播特性。
 
+### 缺点
 
-### Advantages
+1. IV 无需保密，但是对每个消息必须选择不同的 IV。
+2. 不具有自同步能力。
 
+## 适用场景
 
-1. Does not have error propagation characteristics.
-
-
-### Disadvantages
-
-
-1. IV does not require confidentiality, but a different IV must be chosen for each message.
-2. Does not have self-synchronization capability.
-
-
-## Applicable scene
-
-
-Applicable to some scenarios where the plaintext redundancy is relatively large, such as image encryption and voice encryption.
+适用于一些明文冗余度比较大的场景，如图像加密和语音加密。
 
