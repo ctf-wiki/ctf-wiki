@@ -7,7 +7,7 @@
 
 欢迎来到 **CTF Wiki**。
 
-English Speaking?  [En](./en/index.md)
+English Speaking?  [En](./en/docs/index.md)
 
 **CTF**（Capture The Flag，夺旗赛）起源于 1996 年 **DEFCON** 全球黑客大会，是网络安全爱好者之间的竞技游戏。
 
