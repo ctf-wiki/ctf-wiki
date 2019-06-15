@@ -1,0 +1,5820 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="CTF Wiki">
+      
+      
+        <link rel="canonical" href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/glibc-heap/heap_structure-zh/">
+      
+      
+        <meta name="author" content="CTF Wiki Team">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="jp">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../../../..">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+    
+    
+      
+        <title>Heap structure zh - CTF Wiki</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.4031d38b.css">
+      
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.224b79ff.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="">
+      
+    
+    
+      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://gstatic.loli.net" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Sans:300,400,400i,700|Source+Code+Pro&display=fallback">
+        <style>body,input{font-family:"Noto Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Source Code Pro","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../../../../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../../../../_static/css/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="white" data-md-color-accent="red">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#_1" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon">school</i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              CTF Wiki
+            </span>
+            <span class="md-header-nav__topic">
+              
+                Heap structure zh
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+<a href="https://github.com/ctf-wiki/ctf-wiki/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    ctf-wiki/ctf-wiki
+  </div>
+</a>
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+        
+
+<nav class="md-tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../.." title="Introduction" class="md-tabs__link">
+          Introduction
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../misc/introduction/" title="Misc" class="md-tabs__link">
+          Misc
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../crypto/introduction/" title="Crypto" class="md-tabs__link">
+          Crypto
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../web/introduction/" title="Web" class="md-tabs__link">
+          Web
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../assembly/x86-x64/readme/" title="Assembly" class="md-tabs__link">
+          Assembly
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../executable/elf/elf-structure.md" title="Executable" class="md-tabs__link">
+          Executable
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../reverse/introduction/" title="Reverse" class="md-tabs__link">
+          Reverse
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../readme/" title="Pwn" class="md-tabs__link">
+          Pwn
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../mitigation/canary/" title="Linux Pwn" class="md-tabs__link">
+          Linux Pwn
+        </a>
+      
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../windows/readme/" title="Windows Pwn" class="md-tabs__link">
+          Windows Pwn
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../android/basic_develop/basic_develop/" title="Android" class="md-tabs__link">
+          Android
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../../../ics/ctfs/" title="ICS" class="md-tabs__link">
+          ICS
+        </a>
+      
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-nav__button md-logo">
+      
+        <i class="md-icon">school</i>
+      
+    </a>
+    CTF Wiki
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+<a href="https://github.com/ctf-wiki/ctf-wiki/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    ctf-wiki/ctf-wiki
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1">
+    
+    <label class="md-nav__link" for="nav-1">
+      Introduction
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-1">
+        Introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../.." title="Getting Started" class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/history/" title="CTF History" class="md-nav__link">
+      CTF History
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/mode/" title="Introduction to CTF Competition Mode" class="md-nav__link">
+      Introduction to CTF Competition Mode
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/content/" title="CTF Contest content" class="md-nav__link">
+      CTF Contest content
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/experience/" title="Offline attack and defense experience summary" class="md-nav__link">
+      Offline attack and defense experience summary
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/cgc/" title="CGC Super Challenge" class="md-nav__link">
+      CGC Super Challenge
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../introduction/resources/" title="Learning resources" class="md-nav__link">
+      Learning resources
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Misc
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Misc
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/introduction/" title="Miscellaneous introduction" class="md-nav__link">
+      Miscellaneous introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/recon/" title="Information gathering technology" class="md-nav__link">
+      Information gathering technology
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3">
+    
+    <label class="md-nav__link" for="nav-2-3">
+      Code analysis
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-3">
+        Code analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/encode/communication/" title="Commonly used coding in the communication field" class="md-nav__link">
+      Commonly used coding in the communication field
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/encode/computer/" title="Computer related code" class="md-nav__link">
+      Computer related code
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/encode/modern/" title="Commonly used encodings in the real world" class="md-nav__link">
+      Commonly used encodings in the real world
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/prefix/" title="Forensic steganography" class="md-nav__link">
+      Forensic steganography
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-5" type="checkbox" id="nav-2-5">
+    
+    <label class="md-nav__link" for="nav-2-5">
+      Image analysis
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-5">
+        Image analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/picture/introduction/" title="Introduction to image analysis" class="md-nav__link">
+      Introduction to image analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/picture/png.md" title="PNG" class="md-nav__link">
+      PNG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/picture/jpg/" title="JPG" class="md-nav__link">
+      JPG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/picture/gif/" title="GIF" class="md-nav__link">
+      GIF
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-6" type="checkbox" id="nav-2-6">
+    
+    <label class="md-nav__link" for="nav-2-6">
+      Traffic packet analysis
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-6">
+        Traffic packet analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/introduction/" title="Introduction to traffic packet analysis" class="md-nav__link">
+      Introduction to traffic packet analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/fix/" title="PCAP file repair" class="md-nav__link">
+      PCAP file repair
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-6-3" type="checkbox" id="nav-2-6-3">
+    
+    <label class="md-nav__link" for="nav-2-6-3">
+      Protocol analysis
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-2-6-3">
+        Protocol analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/" title="Overview of protocol analysis" class="md-nav__link">
+      Overview of protocol analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/Wireshark/" title="Wireshark" class="md-nav__link">
+      Wireshark
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/HTTP/" title="HTTP" class="md-nav__link">
+      HTTP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/HTTPS/" title="HTTPS" class="md-nav__link">
+      HTTPS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/FTP/" title="FTP" class="md-nav__link">
+      FTP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/DNS/" title="DNS" class="md-nav__link">
+      DNS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/WIFI/" title="WIFI" class="md-nav__link">
+      WIFI
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/protocols/USB/" title="USB" class="md-nav__link">
+      USB
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/traffic/data/" title="Data extraction" class="md-nav__link">
+      Data extraction
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-7" type="checkbox" id="nav-2-7">
+    
+    <label class="md-nav__link" for="nav-2-7">
+      Compressed package analysis
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-7">
+        Compressed package analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/archive/zip/" title="ZIP format" class="md-nav__link">
+      ZIP format
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/archive/rar/" title="RAR format" class="md-nav__link">
+      RAR format
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/audio/introduction/" title="Audio steganography" class="md-nav__link">
+      Audio steganography
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-9" type="checkbox" id="nav-2-9">
+    
+    <label class="md-nav__link" for="nav-2-9">
+      Disk memory analysis
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-9">
+        Disk memory analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/disk-memory/introduction/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/disk-memory/problem/" title="Title" class="md-nav__link">
+      Title
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2-10" type="checkbox" id="nav-2-10">
+    
+    <label class="md-nav__link" for="nav-2-10">
+      Other
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-10">
+        Other
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../misc/other/pyc/" title="pyc file" class="md-nav__link">
+      pyc file
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Crypto
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Crypto
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/introduction/" title="Introduction to cryptography" class="md-nav__link">
+      Introduction to cryptography
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-2" type="checkbox" id="nav-3-2">
+    
+    <label class="md-nav__link" for="nav-3-2">
+      Basic mathematics knowledge
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-2">
+        Basic mathematics knowledge
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/basic/introduction/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-3" type="checkbox" id="nav-3-3">
+    
+    <label class="md-nav__link" for="nav-3-3">
+      Classical password
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-3">
+        Classical password
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/introduction/" title="Introduction to classical passwords" class="md-nav__link">
+      Introduction to classical passwords
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/monoalphabetic/" title="Single table substitution encryption" class="md-nav__link">
+      Single table substitution encryption
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/polyalphabetic/" title="Multi-table substitution encryption" class="md-nav__link">
+      Multi-table substitution encryption
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/others/" title="Other types of encryption" class="md-nav__link">
+      Other types of encryption
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/classical/summary/" title="Summary" class="md-nav__link">
+      Summary
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4" type="checkbox" id="nav-3-4">
+    
+    <label class="md-nav__link" for="nav-3-4">
+      Stream password
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-4">
+        Stream password
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/intro/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-2" type="checkbox" id="nav-3-4-2">
+    
+    <label class="md-nav__link" for="nav-3-4-2">
+      Pseudo random number generator
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-2">
+        Pseudo random number generator
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/prng/intro/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/prng/csprng/" title="Cryptographic security pseudo-random number generator" class="md-nav__link">
+      Cryptographic security pseudo-random number generator
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/prng/problem/" title="Problem" class="md-nav__link">
+      Problem
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-3" type="checkbox" id="nav-3-4-3">
+    
+    <label class="md-nav__link" for="nav-3-4-3">
+      Linear Congruence Generator
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-3">
+        Linear Congruence Generator
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/lcg/intro/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/lcg/challenge/" title="Example" class="md-nav__link">
+      Example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-4" type="checkbox" id="nav-3-4-4">
+    
+    <label class="md-nav__link" for="nav-3-4-4">
+      Feedback Shift Register
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-4">
+        Feedback Shift Register
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/fsr/intro/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/fsr/lfsr/" title="Linear feedback shift register" class="md-nav__link">
+      Linear feedback shift register
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/fsr/nfsr/" title="Nonlinear feedback shift register" class="md-nav__link">
+      Nonlinear feedback shift register
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-4-5" type="checkbox" id="nav-3-4-5">
+    
+    <label class="md-nav__link" for="nav-3-4-5">
+      Special stream password
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-5">
+        Special stream password
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/streamcipher/special/rc4/" title="RC4" class="md-nav__link">
+      RC4
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5" type="checkbox" id="nav-3-5">
+    
+    <label class="md-nav__link" for="nav-3-5">
+      Block encryption
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-5">
+        Block encryption
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/introduction/" title="Introduction to block encryption" class="md-nav__link">
+      Introduction to block encryption
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/arx-operations/" title="ARX" class="md-nav__link">
+      ARX
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto / blockcipher / des.md" title="DES" class="md-nav__link">
+      DES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/idea/" title="IDEA" class="md-nav__link">
+      IDEA
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/aes.md" title="AES" class="md-nav__link">
+      AES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/simon-speck/" title="Simon and Speck" class="md-nav__link">
+      Simon and Speck
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-7" type="checkbox" id="nav-3-5-7">
+    
+    <label class="md-nav__link" for="nav-3-5-7">
+      Group mode
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-5-7">
+        Group mode
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/introduction/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/padding/" title="Filling method" class="md-nav__link">
+      Filling method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/ecb/" title="ECB" class="md-nav__link">
+      ECB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/cbc/" title="CBC" class="md-nav__link">
+      CBC
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/pcbc/" title="PCBC" class="md-nav__link">
+      PCBC
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/cfb/" title="CFB" class="md-nav__link">
+      CFB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto / blockcipher / mode / ofb.md" title="OFB" class="md-nav__link">
+      OFB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/ctr/" title="CTR" class="md-nav__link">
+      CTR
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/blockcipher/mode/padding-oracle-attack/" title="Padding Oracle Attack" class="md-nav__link">
+      Padding Oracle Attack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-8" type="checkbox" id="nav-3-5-8">
+    
+    <label class="md-nav__link" for="nav-3-5-8">
+      Asymmetric encryption
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-5-8">
+        Asymmetric encryption
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/introduction/" title="Introduction to asymmetric encryption" class="md-nav__link">
+      Introduction to asymmetric encryption
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-8-2" type="checkbox" id="nav-3-5-8-2">
+    
+    <label class="md-nav__link" for="nav-3-5-8-2">
+      RSA
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="4">
+      <label class="md-nav__title" for="nav-3-5-8-2">
+        RSA
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_theory/" title="RSA Basic introduction" class="md-nav__link">
+      RSA Basic introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_module_attack/" title="Modulo-related attacks" class="md-nav__link">
+      Modulo-related attacks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_e_attack/" title="Public key index related attacks" class="md-nav__link">
+      Public key index related attacks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_d_attack/" title="Private key d Related attacks" class="md-nav__link">
+      Private key d Related attacks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_coppersmith_attack.md" title="Coppersmith related attacks" class="md-nav__link">
+      Coppersmith related attacks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_chosen_plain_cipher/" title="Select a clear ciphertext attack" class="md-nav__link">
+      Select a clear ciphertext attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_side_channel/" title="Side channel attack" class="md-nav__link">
+      Side channel attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_pkcs_attack/" title="Bleichenbacher attack" class="md-nav__link">
+      Bleichenbacher attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/rsa/rsa_complex/" title="Synthesis" class="md-nav__link">
+      Synthesis
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/knapsack/knapsack/" title="Knapsack encryption" class="md-nav__link">
+      Knapsack encryption
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-8-4" type="checkbox" id="nav-3-5-8-4">
+    
+    <label class="md-nav__link" for="nav-3-5-8-4">
+      Discrete log correlation
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="4">
+      <label class="md-nav__title" for="nav-3-5-8-4">
+        Discrete log correlation
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/discrete-log/discrete-log/" title="Discrete logarithm" class="md-nav__link">
+      Discrete logarithm
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/discrete-log/elgamal/" title="Elgamal" class="md-nav__link">
+      Elgamal
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/discrete-log/ecc/" title="ECC" class="md-nav__link">
+      ECC
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-8-5" type="checkbox" id="nav-3-5-8-5">
+    
+    <label class="md-nav__link" for="nav-3-5-8-5">
+      Password
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="4">
+      <label class="md-nav__title" for="nav-3-5-8-5">
+        Password
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/lattice/overview/" title="Grid overview" class="md-nav__link">
+      Grid overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/lattice/introduction/" title="Introduction to Grid" class="md-nav__link">
+      Introduction to Grid
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/asymmetric/lattice/lattice-reduction/" title="Grid-based algorithm" class="md-nav__link">
+      Grid-based algorithm
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto / asymmetric / lattice / cvp.md" title="CVP" class="md-nav__link">
+      CVP
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-9" type="checkbox" id="nav-3-5-9">
+    
+    <label class="md-nav__link" for="nav-3-5-9">
+      Hash function
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-5-9">
+        Hash function
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/introduction/" title="Introduction to the hash function" class="md-nav__link">
+      Introduction to the hash function
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/md5/" title="MD5" class="md-nav__link">
+      MD5
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/sha1/" title="SHA1" class="md-nav__link">
+      SHA1
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/fnv/" title="FNV" class="md-nav__link">
+      FNV
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/attack/" title="Hash Attack" class="md-nav__link">
+      Hash Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/hash/complex/" title="Synthesis" class="md-nav__link">
+      Synthesis
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-10" type="checkbox" id="nav-3-5-10">
+    
+    <label class="md-nav__link" for="nav-3-5-10">
+      digital signature
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-5-10">
+        digital signature
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/signature/introduction/" title="Introduction to digital signatures" class="md-nav__link">
+      Introduction to digital signatures
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/signature/rsa/" title="RSA digital signature" class="md-nav__link">
+      RSA digital signature
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/signature/elgamal.md" title="ElGamal digital signature" class="md-nav__link">
+      ElGamal digital signature
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/signature/dsa/" title="DSA digital signature" class="md-nav__link">
+      DSA digital signature
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3-5-11" type="checkbox" id="nav-3-5-11">
+    
+    <label class="md-nav__link" for="nav-3-5-11">
+      Summary of attack ideas
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-5-11">
+        Summary of attack ideas
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/attack-summary/attack-mode/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/attack-summary/meet-in-the-middle/" title="Intermediate encounter attack" class="md-nav__link">
+      Intermediate encounter attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/attack-summary/bit-attack/" title="Bit attack" class="md-nav__link">
+      Bit attack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../crypto/certificate/introduction/" title="Certificate format" class="md-nav__link">
+      Certificate format
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Web
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Web
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/introduction/" title="Introduction to Web Applications" class="md-nav__link">
+      Introduction to Web Applications
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/sqli/" title="SQL injection" class="md-nav__link">
+      SQL injection
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/xss.md" title="XSS cross-site scripting attack" class="md-nav__link">
+      XSS cross-site scripting attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/csrf/" title="CSRF cross-site request forgery" class="md-nav__link">
+      CSRF cross-site request forgery
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/ssrf/" title="SSRF server request forgery" class="md-nav__link">
+      SSRF server request forgery
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../web/php/php/" title="PHP code auditing" class="md-nav__link">
+      PHP code auditing
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Assembly
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Assembly
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../assembly/x86-x64/readme/" title="x86_x64" class="md-nav__link">
+      x86_x64
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../assembly/mips/readme/" title="mips" class="md-nav__link">
+      mips
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../assembly/arm/readme/" title="arm" class="md-nav__link">
+      arm
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Executable
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Executable
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6-1" type="checkbox" id="nav-6-1">
+    
+    <label class="md-nav__link" for="nav-6-1">
+      ELF file
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-1">
+        ELF file
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../executable/elf/elf-structure.md" title="ELF file basic structure" class="md-nav__link">
+      ELF file basic structure
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../executable/elf/program-loading/" title="Program loading" class="md-nav__link">
+      Program loading
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../executable/elf/program-linking/" title="Program link" class="md-nav__link">
+      Program link
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../executable/elf/running-overview/" title="Program execution flow" class="md-nav__link">
+      Program execution flow
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-1" type="checkbox" id="nav-7-1">
+    
+    <label class="md-nav__link" for="nav-7-1">
+      Reverse Overview
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-1">
+        Reverse Overview
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/introduction/" title="Software Reverse Engineering Introduction" class="md-nav__link">
+      Software Reverse Engineering Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/Identify-Encode-Encryption/introduction/" title="Common encryption algorithms and code recognition" class="md-nav__link">
+      Common encryption algorithms and code recognition
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/maze/maze/" title="Labyrinth problem" class="md-nav__link">
+      Labyrinth problem
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/vm/vm/" title="Virtual machine command analysis" class="md-nav__link">
+      Virtual machine command analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/unicorn/introduction/" title="Unicorn Engine 简介" class="md-nav__link">
+      Unicorn Engine 简介
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-2" type="checkbox" id="nav-7-2">
+    
+    <label class="md-nav__link" for="nav-7-2">
+      Linux Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-2">
+        Linux Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-2-1" type="checkbox" id="nav-7-2-1">
+    
+    <label class="md-nav__link" for="nav-7-2-1">
+      Linux Reverse Technology
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-2-1">
+        Linux Reverse Technology
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/linux/ld_preload/" title="LD_PRELOAD" class="md-nav__link">
+      LD_PRELOAD
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/linux/false-disasm/" title="False Disassembly" class="md-nav__link">
+      False Disassembly
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/linux/detect-bp/" title="Detecting Breakpoints" class="md-nav__link">
+      Detecting Breakpoints
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/linux/detect-dbg/" title="Detecting debugging" class="md-nav__link">
+      Detecting debugging
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-3" type="checkbox" id="nav-7-3">
+    
+    <label class="md-nav__link" for="nav-7-3">
+      Windows Reverse
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-3">
+        Windows Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-3-1" type="checkbox" id="nav-7-3-1">
+    
+    <label class="md-nav__link" for="nav-7-3-1">
+      Shelling technology
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-3-1">
+        Shelling technology
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/packer-introduction/" title="Introduction to the protective case" class="md-nav__link">
+      Introduction to the protective case
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/trace/" title="Single step tracking method" class="md-nav__link">
+      Single step tracking method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/esp/" title="ESP law" class="md-nav__link">
+      ESP law
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/direct-oep/" title="One step to the OEP method" class="md-nav__link">
+      One step to the OEP method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/memory/" title="Memory mirroring method" class="md-nav__link">
+      Memory mirroring method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/last-exception/" title="Last exception method" class="md-nav__link">
+      Last exception method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/sfx/" title="SFX method" class="md-nav__link">
+      SFX method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/fix-iat/" title="DUMP and IAT reconstruction" class="md-nav__link">
+      DUMP and IAT reconstruction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/manually-fix-iat/" title="Manually find the IAT and rebuild it using ImportREC" class="md-nav__link">
+      Manually find the IAT and rebuild it using ImportREC
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/unpack/unpack-dll/" title="DLL file unpacking" class="md-nav__link">
+      DLL file unpacking
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7-3-2" type="checkbox" id="nav-7-3-2">
+    
+    <label class="md-nav__link" for="nav-7-3-2">
+      Anti-debugging technology
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-3-2">
+        Anti-debugging technology
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/ntglobalflag/" title="NtGlobalFlag" class="md-nav__link">
+      NtGlobalFlag
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/heap-flags/" title="Heap Flags" class="md-nav__link">
+      Heap Flags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/the-heap/" title="The Heap" class="md-nav__link">
+      The Heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/int-3/" title="Interrupt 3" class="md-nav__link">
+      Interrupt 3
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/isdebuggerpresent/" title="IsDebuggerPresent" class="md-nav__link">
+      IsDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/checkremotedebuggerpresent/" title="CheckRemoteDebuggerPresent" class="md-nav__link">
+      CheckRemoteDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/ntqueryinformationprocess/" title="NtQueryInformationProcess" class="md-nav__link">
+      NtQueryInformationProcess
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/junk-code/" title="Flower command" class="md-nav__link">
+      Flower command
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../reverse/windows/anti-debug/example/" title="Anti-debug technical example" class="md-nav__link">
+      Anti-debug technical example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8-1" type="checkbox" id="nav-8-1">
+    
+    <label class="md-nav__link" for="nav-8-1">
+      Pwn Overview
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-8-1">
+        Pwn Overview
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../readme/" title="Readme" class="md-nav__link">
+      Readme
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9">
+    
+    <label class="md-nav__link" for="nav-9">
+      Linux Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-9">
+        Linux Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-1" type="checkbox" id="nav-9-1">
+    
+    <label class="md-nav__link" for="nav-9-1">
+      Security protection mechanism
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-1">
+        Security protection mechanism
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../mitigation/canary/" title="canary" class="md-nav__link">
+      canary
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-2" type="checkbox" id="nav-9-2">
+    
+    <label class="md-nav__link" for="nav-9-2">
+      Stack overflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-2">
+        Stack overflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/stack-intro/" title="Stack introduction" class="md-nav__link">
+      Stack introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/stackoverflow-basic/" title="Stack overflow principle" class="md-nav__link">
+      Stack overflow principle
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/basic-rop/" title="Basic ROP" class="md-nav__link">
+      Basic ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/medium-rop/" title="Intermediate ROP" class="md-nav__link">
+      Intermediate ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/advanced-rop.md" title="Advanced ROP" class="md-nav__link">
+      Advanced ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow/fancy-rop/" title="Fancy stack overflow" class="md-nav__link">
+      Fancy stack overflow
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-3" type="checkbox" id="nav-9-3">
+    
+    <label class="md-nav__link" for="nav-9-3">
+      Format string vulnerability
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-3">
+        Format string vulnerability
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fmtstr/fmtstr_intro/" title="Format string vulnerability principle" class="md-nav__link">
+      Format string vulnerability principle
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fmtstr/fmtstr_exploit.md" title="Format string exploit" class="md-nav__link">
+      Format string exploit
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fmtstr/fmtstr_example/" title="Format string vulnerability example" class="md-nav__link">
+      Format string vulnerability example
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fmtstr/fmtstr_detect/" title="Format string vulnerability detection" class="md-nav__link">
+      Format string vulnerability detection
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-4" type="checkbox" id="nav-9-4">
+    
+    <label class="md-nav__link" for="nav-9-4">
+      Glibc Heap uses
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-4">
+        Glibc Heap uses
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../introduction/" title="Introduction to heap utilization" class="md-nav__link">
+      Introduction to heap utilization
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../heap_overview/" title="Heap overview" class="md-nav__link">
+      Heap overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../heap_structure/" title="Heap related data structure" class="md-nav__link">
+      Heap related data structure
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-4-4" type="checkbox" id="nav-9-4-4">
+    
+    <label class="md-nav__link" for="nav-9-4-4">
+      In-depth understanding of Ptmalloc2
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-9-4-4">
+        In-depth understanding of Ptmalloc2
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../implementation/overview/" title="Implementation" class="md-nav__link">
+      Implementation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../implementation/basic/" title="Basic functions in the heap" class="md-nav__link">
+      Basic functions in the heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../implementation/heap-init/" title="Heap initialization" class="md-nav__link">
+      Heap initialization
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../implementation/malloc/" title="Apply heap memory" class="md-nav__link">
+      Apply heap memory
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../implementation/free/" title="Free heap memory" class="md-nav__link">
+      Free heap memory
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../implementation/tcache/" title="Tcache" class="md-nav__link">
+      Tcache
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../implementation/malloc_state/" title="malloc_state" class="md-nav__link">
+      malloc_state
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../implementation/misc/" title="Other" class="md-nav__link">
+      Other
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../heapoverflow_basic/" title="Heap overflow" class="md-nav__link">
+      Heap overflow
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../off_by_one/" title="Off-By-One in the heap" class="md-nav__link">
+      Off-By-One in the heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../chunk_extend_overlapping/" title="Chunk Extend / Overlapping" class="md-nav__link">
+      Chunk Extend / Overlapping
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../unlink.md" title="Unlink" class="md-nav__link">
+      Unlink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../use_after_free/" title="Use After Free" class="md-nav__link">
+      Use After Free
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../fastbin_attack.md" title="Fastbin Attack" class="md-nav__link">
+      Fastbin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../unsorted_bin_attack/" title="Unsorted Bin Attack" class="md-nav__link">
+      Unsorted Bin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../large_bin_attack/" title="Large Bin Attack" class="md-nav__link">
+      Large Bin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../tcache_attack.md" title="Tcache Attack" class="md-nav__link">
+      Tcache Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_einherjar/" title="House Of Einherjar" class="md-nav__link">
+      House Of Einherjar
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_force/" title="House Of Force" class="md-nav__link">
+      House Of Force
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_lore/" title="House of Lore" class="md-nav__link">
+      House of Lore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_orange/" title="House of Orange" class="md-nav__link">
+      House of Orange
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_rabbit/" title="House of Rabbit" class="md-nav__link">
+      House of Rabbit
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../house_of_roman/" title="House of Roman" class="md-nav__link">
+      House of Roman
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-5" type="checkbox" id="nav-9-5">
+    
+    <label class="md-nav__link" for="nav-9-5">
+      IO_FILE uses
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-5">
+        IO_FILE uses
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../io_file/introduction/" title="FILE file structure description" class="md-nav__link">
+      FILE file structure description
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../io_file/fake-vtable-exploit/" title="Forged vtable hijacker process" class="md-nav__link">
+      Forged vtable hijacker process
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../pwn / linux / io_file / fsop.md" title="FSOP" class="md-nav__link">
+      FSOP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../io_file/exploit-in-libc2.24/" title="Use of IO_FILE under glibc 2.24" class="md-nav__link">
+      Use of IO_FILE under glibc 2.24
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-6" type="checkbox" id="nav-9-6">
+    
+    <label class="md-nav__link" for="nav-9-6">
+      Conditional competition
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-6">
+        Conditional competition
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../race-condition/introduction/" title="Conditional competition introduction" class="md-nav__link">
+      Conditional competition introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../race-condition/problem/" title="Example" class="md-nav__link">
+      Example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-7" type="checkbox" id="nav-9-7">
+    
+    <label class="md-nav__link" for="nav-9-7">
+      Integer overflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-7">
+        Integer overflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../integeroverflow/intof/" title="Introduction to the principle of integer overflow" class="md-nav__link">
+      Introduction to the principle of integer overflow
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-8" type="checkbox" id="nav-9-8">
+    
+    <label class="md-nav__link" for="nav-9-8">
+      Sandbox escape
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-8">
+        Sandbox escape
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../sandbox/python-sandbox-escape/" title="Python sandbox escape" class="md-nav__link">
+      Python sandbox escape
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-9" type="checkbox" id="nav-9-9">
+    
+    <label class="md-nav__link" for="nav-9-9">
+      kernel
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-9">
+        kernel
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/environment/" title="Environment setup" class="md-nav__link">
+      Environment setup
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/basic_knowledge/" title="Basics" class="md-nav__link">
+      Basics
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/kernel_uaf/" title="kernel-UAF" class="md-nav__link">
+      kernel-UAF
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/kernel_rop.md" title="kernel-ROP" class="md-nav__link">
+      kernel-ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/ret2usr/" title="ret2usr" class="md-nav__link">
+      ret2usr
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/bypass_smep/" title="bypass-smep" class="md-nav__link">
+      bypass-smep
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../kernel/double-fetch/" title="Double Fetch" class="md-nav__link">
+      Double Fetch
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-10" type="checkbox" id="nav-9-10">
+    
+    <label class="md-nav__link" for="nav-9-10">
+      arm-pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-10">
+        arm-pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../arm/environment/" title="Environment setup" class="md-nav__link">
+      Environment setup
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../arm/arm_rop/" title="arm-rop" class="md-nav__link">
+      arm-rop
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9-11" type="checkbox" id="nav-9-11">
+    
+    <label class="md-nav__link" for="nav-9-11">
+      Summary
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-11">
+        Summary
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../summary/get-address/" title="Get address" class="md-nav__link">
+      Get address
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../summary/hijack-control-flow/" title="Control program execution flow" class="md-nav__link">
+      Control program execution flow
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../summary/get-shell/" title="get shell" class="md-nav__link">
+      get shell
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10">
+    
+    <label class="md-nav__link" for="nav-10">
+      Windows Pwn
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-10">
+        Windows Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../windows/readme/" title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-10-2" type="checkbox" id="nav-10-2">
+    
+    <label class="md-nav__link" for="nav-10-2">
+      Stack overflow
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-10-2">
+        Stack overflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../windows/stackoverflow/stack-introduce/" title="Stack introduction" class="md-nav__link">
+      Stack introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../windows/stackoverflow/stackoverflow-basic/" title="Stack overflow principle" class="md-nav__link">
+      Stack overflow principle
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../windows/stackoverflow/shellcode-in-stack/" title="shellcode-in-stack" class="md-nav__link">
+      shellcode-in-stack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11" type="checkbox" id="nav-11">
+    
+    <label class="md-nav__link" for="nav-11">
+      Android
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-11">
+        Android
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_develop/basic_develop/" title="Android development basics" class="md-nav__link">
+      Android development basics
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11-2" type="checkbox" id="nav-11-2">
+    
+    <label class="md-nav__link" for="nav-11-2">
+      Android operating mechanism brief
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="2">
+      <label class="md-nav__title" for="nav-11-2">
+        Android operating mechanism brief
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/readme/" title="Basics" class="md-nav__link">
+      Basics
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11-2-2" type="checkbox" id="nav-11-2-2">
+    
+    <label class="md-nav__link" for="nav-11-2-2">
+      The operating mechanism of the Java layer in Android
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-11-2-2">
+        The operating mechanism of the Java layer in Android
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/java_layer/readme/" title="Andriod Native" class="md-nav__link">
+      Andriod Native
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/java_layer/smali/smali.md" title="Smali 介绍" class="md-nav__link">
+      Smali 介绍
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11-2-2-3" type="checkbox" id="nav-11-2-2-3">
+    
+    <label class="md-nav__link" for="nav-11-2-2-3">
+      Dex &amp;&amp; ODEX
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="4">
+      <label class="md-nav__title" for="nav-11-2-2-3">
+        Dex &amp;&amp; ODEX
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/java_layer/dex/dex/" title="DEX" class="md-nav__link">
+      DEX
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/java_layer/dex/odex/" title="ODEX" class="md-nav__link">
+      ODEX
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11-2-3" type="checkbox" id="nav-11-2-3">
+    
+    <label class="md-nav__link" for="nav-11-2-3">
+      Android Native layer introduction
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-11-2-3">
+        Android Native layer introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_operating_mechanism/native_layer/so/" title="Android So" class="md-nav__link">
+      Android So
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11-2-4" type="checkbox" id="nav-11-2-4">
+    
+    <label class="md-nav__link" for="nav-11-2-4">
+      Android reverse basic introduction
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="3">
+      <label class="md-nav__title" for="nav-11-2-4">
+        Android reverse basic introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/overview/" title="Brief description" class="md-nav__link">
+      Brief description
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/android_code_location/" title="Android key code targeting" class="md-nav__link">
+      Android key code targeting
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11-2-4-3" type="checkbox" id="nav-11-2-4-3">
+    
+    <label class="md-nav__link" for="nav-11-2-4-3">
+      Android simple static analysis
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="4">
+      <label class="md-nav__title" for="nav-11-2-4-3">
+        Android simple static analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/static/java-example/" title="Android Java layer static analysis" class="md-nav__link">
+      Android Java layer static analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/static/so-example/" title="Android Native layer static analysis" class="md-nav__link">
+      Android Native layer static analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/static/complex-example/" title="Android static analysis hybrid example" class="md-nav__link">
+      Android static analysis hybrid example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11-2-4-4" type="checkbox" id="nav-11-2-4-4">
+    
+    <label class="md-nav__link" for="nav-11-2-4-4">
+      Android simple dynamic analysis
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="4">
+      <label class="md-nav__title" for="nav-11-2-4-4">
+        Android simple dynamic analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/dynamic/dynamic_debug/" title="Dynamic Debugging" class="md-nav__link">
+      Dynamic Debugging
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../android/basic_reverse/dynamic/ida_native_debug/" title="Android Dynamic Debugging So" class="md-nav__link">
+      Android Dynamic Debugging So
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-12" type="checkbox" id="nav-12">
+    
+    <label class="md-nav__link" for="nav-12">
+      ICS
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-12">
+        ICS
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../ics/ctfs/" title="ICS_CTF Contest" class="md-nav__link">
+      ICS_CTF Contest
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../ics/discover/" title="ICS_CTF found" class="md-nav__link">
+      ICS_CTF found
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../ics/exploit/" title="ICS_CTF uses" class="md-nav__link">
+      ICS_CTF uses
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../ics/learn/" title="ICS_CTF Learning Resources" class="md-nav__link">
+      ICS_CTF Learning Resources
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" title="Overview？？？？" class="md-nav__link">
+    Overview？？？？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" title="微观结构" class="md-nav__link">
+    微观结构
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#malloc_chunk" title="malloc_chunk" class="md-nav__link">
+    malloc_chunk
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" title="概述" class="md-nav__link">
+    概述
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chunk" title="chunk相关宏" class="md-nav__link">
+    chunk相关宏
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bin" title="bin" class="md-nav__link">
+    bin
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" title="概述" class="md-nav__link">
+    概述
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fast-bin" title="Fast Bin" class="md-nav__link">
+    Fast Bin
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#small-bin" title="Small Bin" class="md-nav__link">
+    Small Bin
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#large-bin" title="Large Bin" class="md-nav__link">
+    Large Bin
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unsorted-bin" title="Unsorted Bin" class="md-nav__link">
+    Unsorted Bin
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-macro" title="common macro" class="md-nav__link">
+    common macro
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#top-chunk" title="Top Chunk" class="md-nav__link">
+    Top Chunk
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#last-remainder" title="last remainder" class="md-nav__link">
+    last remainder
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" title="宏观结构" class="md-nav__link">
+    宏观结构
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arena" title="arena" class="md-nav__link">
+    arena
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arena_1" title="arena 数量" class="md-nav__link">
+    arena 数量
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arena_2" title="arena 分配规则" class="md-nav__link">
+    arena 分配规则
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" title="区别" class="md-nav__link">
+    区别
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#heap_info" title="heap_info" class="md-nav__link">
+    heap_info
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#malloc_state" title="malloc_state" class="md-nav__link">
+    malloc_state
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#malloc_par" title="malloc_par" class="md-nav__link">
+    malloc_par
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/pwn/linux/glibc-heap/heap_structure-zh.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <p><a href="../heap_structure/">EN</a> | <a href="./">ZH</a></p>
+<h1 id="_1">堆相关数据结构<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>堆的操作就这么复杂，那么在 glibc 内部必然也有精心设计的数据结构来管理它。与堆相应的数据结构主要分为</p>
+<ul>
+<li>宏观结构，包含堆的宏观信息，可以通过这些数据结构索引堆的基本信息。</li>
+<li>微观结构，用于具体处理堆的分配与回收中的内存块。</li>
+</ul>
+<h2 id="overview">Overview？？？？<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p><strong>这里给一个宏观的图片。</strong></p>
+<h2 id="_2">微观结构<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>这里首先介绍堆中比较细节的结构，<strong>堆的漏洞利用与这些结构密切相关</strong>。</p>
+<h3 id="malloc_chunk">malloc_chunk<a class="headerlink" href="#malloc_chunk" title="Permanent link">&para;</a></h3>
+<h4 id="_3">概述<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h4>
+<p>在程序的执行过程中，我们称由 malloc 申请的内存为 chunk 。这块内存在 ptmalloc 内部用 malloc_chunk 结构体来表示。当程序申请的 chunk 被 free 后，会被加入到相应的空闲管理列表中。</p>
+<p>非常有意思的是，<strong>无论一个 chunk 的大小如何，处于分配状态还是释放状态，它们都使用一个统一的结构</strong>。虽然它们使用了同一个数据结构，但是根据是否被释放，它们的表现形式会有所不同。</p>
+<p>malloc_chunk 的结构如下</p>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm">  This struct declaration is misleading (but accurate and necessary).</span>
+<span class="cm">  It declares a &quot;view&quot; into memory allowing access to necessary</span>
+<span class="cm">  fields at known offsets from a given base. See explanation below.</span>
+<span class="cm">*/</span>
+<span class="k">struct</span> <span class="n">malloc_chunk</span> <span class="p">{</span>
+
+  <span class="n">INTERNAL_SIZE_T</span>      <span class="n">prev_size</span><span class="p">;</span>  <span class="cm">/* Size of previous chunk (if free).  */</span>
+  <span class="n">INTERNAL_SIZE_T</span>      <span class="n">size</span><span class="p">;</span>       <span class="cm">/* Size in bytes, including overhead. */</span>
+
+  <span class="k">struct</span> <span class="n">malloc_chunk</span><span class="o">*</span> <span class="n">fd</span><span class="p">;</span>         <span class="cm">/* double links -- used only if free. */</span>
+  <span class="k">struct</span> <span class="n">malloc_chunk</span><span class="o">*</span> <span class="n">bk</span><span class="p">;</span>
+
+  <span class="cm">/* Only used for large blocks: pointer to next larger size.  */</span>
+  <span class="k">struct</span> <span class="n">malloc_chunk</span><span class="o">*</span> <span class="n">fd_nextsize</span><span class="p">;</span> <span class="cm">/* double links -- used only if free. */</span>
+  <span class="k">struct</span> <span class="n">malloc_chunk</span><span class="o">*</span> <span class="n">bk_nextsize</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+
+<p>首先，这里给出一些必要的解释 INTERNAL_SIZE_T，SIZE_SZ，MALLOC_ALIGN_MASK：</p>
+<div class="codehilite"><pre><span></span><span class="cm">/* INTERNAL_SIZE_T is the word-size used for internal bookkeeping of</span>
+<span class="cm">   chunk sizes.</span>
+<span class="cm">   The default version is the same as size_t.</span>
+<span class="cm">   While not strictly necessary, it is best to define this as an</span>
+<span class="cm">   unsigned type, even if size_t is a signed type. This may avoid some</span>
+<span class="cm">   artificial size limitations on some systems.</span>
+<span class="cm">   On a 64-bit machine, you may be able to reduce malloc overhead by</span>
+<span class="cm">   defining INTERNAL_SIZE_T to be a 32 bit `unsigned int&#39; at the</span>
+<span class="cm">   expense of not being able to handle more than 2^32 of malloced</span>
+<span class="cm">   space. If this limitation is acceptable, you are encouraged to set</span>
+<span class="cm">   this unless you are on a platform requiring 16byte alignments. In</span>
+<span class="cm">   this case the alignment requirements turn out to negate any</span>
+<span class="cm">   potential advantages of decreasing size_t word size.</span>
+<span class="cm">   Implementors: Beware of the possible combinations of:</span>
+<span class="cm">     - INTERNAL_SIZE_T might be signed or unsigned, might be 32 or 64 bits,</span>
+<span class="cm">       and might be the same width as int or as long</span>
+<span class="cm">     - size_t might have different width and signedness as INTERNAL_SIZE_T</span>
+<span class="cm">     - int and long might be 32 or 64 bits, and might be the same width</span>
+<span class="cm">   To deal with this, most comparisons and difference computations</span>
+<span class="cm">   among INTERNAL_SIZE_Ts should cast them to unsigned long, being</span>
+<span class="cm">   aware of the fact that casting an unsigned int to a wider long does</span>
+<span class="cm">   not sign-extend. (This also makes checking for negative numbers</span>
+<span class="cm">   awkward.) Some of these casts result in harmless compiler warnings</span>
+<span class="cm">   on some systems.  */</span>
+<span class="cp">#ifndef INTERNAL_SIZE_T</span>
+<span class="cp"># define INTERNAL_SIZE_T size_t</span>
+<span class="cp">#endif</span>
+
+<span class="cm">/* The corresponding word size.  */</span>
+<span class="cp">#define SIZE_SZ (sizeof (INTERNAL_SIZE_T))</span>
+
+<span class="cm">/* The corresponding bit mask value.  */</span>
+<span class="cp">#define MALLOC_ALIGN_MASK (MALLOC_ALIGNMENT - 1)</span>
+</pre></div>
+
+<p>一般来说，size_t 在 64 位中是 64 位无符号整数，32 位中是 32 位无符号整数。</p>
+<p>每个字段的具体的解释如下</p>
+<ul>
+<li><strong>prev_size</strong>,  如果该 chunk 的<strong>物理相邻的前一地址chunk（两个指针的地址差值为前一chunk大小）</strong>是空闲的话，那该字段记录的是前一个 chunk 的大小(包括 chunk 头)。否则，该字段可以用来存储物理相邻的前一个chunk 的数据。<strong>这里的前一 chunk 指的是较低地址的 chunk </strong>。</li>
+<li><strong>size</strong> ，该 chunk 的大小，大小必须是 2 * SIZE_SZ 的整数倍。如果申请的内存大小不是 2 * SIZE_SZ 的整数倍，会被转换满足大小的最小的 2 * SIZE_SZ 的倍数。32 位系统中，SIZE_SZ 是 4；64 位系统中，SIZE_SZ 是 8。 该字段的低三个比特位对 chunk 的大小没有影响，它们从高到低分别表示<ul>
+<li>NON_MAIN_ARENA，记录当前 chunk 是否不属于主线程，1表示不属于，0表示属于。</li>
+<li>IS_MAPPED，记录当前 chunk 是否是由 mmap 分配的。 </li>
+<li>PREV_INUSE，记录前一个 chunk 块是否被分配。一般来说，堆中第一个被分配的内存块的 size 字段的P位都会被设置为1，以便于防止访问前面的非法内存。当一个 chunk 的 size 的 P 位为 0 时，我们能通过 prev_size 字段来获取上一个 chunk 的大小以及地址。这也方便进行空闲chunk之间的合并。</li>
+</ul>
+</li>
+<li><strong>fd，bk</strong>。 chunk 处于分配状态时，从 fd 字段开始是用户的数据。chunk 空闲时，会被添加到对应的空闲管理链表中，其字段的含义如下<ul>
+<li>fd 指向下一个（非物理相邻）空闲的 chunk</li>
+<li>bk 指向上一个（非物理相邻）空闲的 chunk</li>
+<li>通过 fd 和 bk 可以将空闲的 chunk 块加入到空闲的 chunk 块链表进行统一管理</li>
+</ul>
+</li>
+<li><strong>fd_nextsize， bk_nextsize</strong>，也是只有 chunk 空闲的时候才使用，不过其用于较大的 chunk（large chunk）。<ul>
+<li>fd_nextsize 指向前一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。</li>
+<li>bk_nextsize 指向后一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。</li>
+<li>一般空闲的 large chunk 在 fd 的遍历顺序中，按照由大到小的顺序排列。<strong>这样做可以避免在寻找合适chunk 时挨个遍历。</strong></li>
+</ul>
+</li>
+</ul>
+<p>一个已经分配的 chunk 的样子如下。<strong>我们称前两个字段称为 chunk header，后面的部分称为 user data。每次 malloc 申请得到的内存指针，其实指向 user data 的起始处。</strong> </p>
+<p>当一个 chunk 处于使用状态时，它的下一个 chunk 的 prev_size 域无效，所以下一个 chunk 的该部分也可以被当前chunk使用。<strong>这就是chunk中的空间复用。</strong></p>
+<div class="codehilite"><pre><span></span><span class="n">chunk</span><span class="o">-&gt;</span> <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">Size</span> <span class="n">of</span> <span class="n">previous</span> <span class="n">chunk</span><span class="p">,</span> <span class="k">if</span> <span class="n">unallocated</span> <span class="p">(</span><span class="n">P</span> <span class="n">clear</span><span class="p">)</span>  <span class="o">|</span>
+        <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">Size</span> <span class="n">of</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">in</span> <span class="n">bytes</span>                     <span class="o">|</span><span class="n">A</span><span class="o">|</span><span class="n">M</span><span class="o">|</span><span class="n">P</span><span class="o">|</span>
+  <span class="n">mem</span><span class="o">-&gt;</span> <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">User</span> <span class="n">data</span> <span class="n">starts</span> <span class="n">here</span><span class="p">...</span>                          <span class="p">.</span>
+        <span class="p">.</span>                                                               <span class="p">.</span>
+        <span class="p">.</span>             <span class="p">(</span><span class="n">malloc_usable_size</span><span class="p">()</span> <span class="n">bytes</span><span class="p">)</span>                      <span class="p">.</span>
+<span class="n">next</span>    <span class="p">.</span>                                                               <span class="o">|</span>
+<span class="n">chunk</span><span class="o">-&gt;</span> <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="p">(</span><span class="n">size</span> <span class="n">of</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">but</span> <span class="n">used</span> <span class="k">for</span> <span class="n">application</span> <span class="n">data</span><span class="p">)</span>    <span class="o">|</span>
+        <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">Size</span> <span class="n">of</span> <span class="n">next</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">in</span> <span class="n">bytes</span>                <span class="o">|</span><span class="n">A</span><span class="o">|</span><span class="mi">0</span><span class="o">|</span><span class="mi">1</span><span class="o">|</span>
+        <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+</pre></div>
+
+<p>被释放的 chunk 被记录在链表中（可能是循环双向链表，也可能是单向链表）。具体结构如下</p>
+<div class="codehilite"><pre><span></span><span class="n">chunk</span><span class="o">-&gt;</span> <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">Size</span> <span class="n">of</span> <span class="n">previous</span> <span class="n">chunk</span><span class="p">,</span> <span class="k">if</span> <span class="n">unallocated</span> <span class="p">(</span><span class="n">P</span> <span class="n">clear</span><span class="p">)</span>  <span class="o">|</span>
+        <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+<span class="err">`</span><span class="nl">head</span><span class="p">:</span><span class="err">&#39;</span> <span class="o">|</span>             <span class="n">Size</span> <span class="n">of</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">in</span> <span class="n">bytes</span>                     <span class="o">|</span><span class="n">A</span><span class="o">|</span><span class="mi">0</span><span class="o">|</span><span class="n">P</span><span class="o">|</span>
+  <span class="n">mem</span><span class="o">-&gt;</span> <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">Forward</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">next</span> <span class="n">chunk</span> <span class="n">in</span> <span class="n">list</span>             <span class="o">|</span>
+        <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">Back</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">previous</span> <span class="n">chunk</span> <span class="n">in</span> <span class="n">list</span>            <span class="o">|</span>
+        <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">Unused</span> <span class="n">space</span> <span class="p">(</span><span class="n">may</span> <span class="n">be</span> <span class="mi">0</span> <span class="n">bytes</span> <span class="kt">long</span><span class="p">)</span>                <span class="p">.</span>
+        <span class="p">.</span>                                                               <span class="p">.</span>
+ <span class="n">next</span>   <span class="p">.</span>                                                               <span class="o">|</span>
+<span class="n">chunk</span><span class="o">-&gt;</span> <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+<span class="err">`</span><span class="nl">foot</span><span class="p">:</span><span class="err">&#39;</span> <span class="o">|</span>             <span class="n">Size</span> <span class="n">of</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">in</span> <span class="n">bytes</span>                           <span class="o">|</span>
+        <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+        <span class="o">|</span>             <span class="n">Size</span> <span class="n">of</span> <span class="n">next</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">in</span> <span class="n">bytes</span>                <span class="o">|</span><span class="n">A</span><span class="o">|</span><span class="mi">0</span><span class="o">|</span><span class="mi">0</span><span class="o">|</span>
+        <span class="o">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span>
+</pre></div>
+
+<p>可以发现，如果一个 chunk 处于 free 状态，那么会有两个位置记录其相应的大小</p>
+<ol>
+<li>
+<p>本身的 size 字段会记录，</p>
+</li>
+<li>
+<p>它后面的 chunk 会记录。</p>
+</li>
+</ol>
+<p><strong>一般情况下</strong>，物理相邻的两个空闲 chunk 会被合并为一个 chunk 。堆管理器会通过 prev_size 字段以及 size 字段合并两个物理相邻的空闲 chunk 块。</p>
+<p><strong>！！！一些关于堆的约束，后面详细考虑！！！</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm">    The three exceptions to all this are:</span>
+<span class="cm">     1. The special chunk `top&#39; doesn&#39;t bother using the</span>
+<span class="cm">    trailing size field since there is no next contiguous chunk</span>
+<span class="cm">    that would have to index off it. After initialization, `top&#39;</span>
+<span class="cm">    is forced to always exist.  If it would become less than</span>
+<span class="cm">    MINSIZE bytes long, it is replenished.</span>
+<span class="cm">     2. Chunks allocated via mmap, which have the second-lowest-order</span>
+<span class="cm">    bit M (IS_MMAPPED) set in their size fields.  Because they are</span>
+<span class="cm">    allocated one-by-one, each must contain its own trailing size</span>
+<span class="cm">    field.  If the M bit is set, the other bits are ignored</span>
+<span class="cm">    (because mmapped chunks are neither in an arena, nor adjacent</span>
+<span class="cm">    to a freed chunk).  The M bit is also used for chunks which</span>
+<span class="cm">    originally came from a dumped heap via malloc_set_state in</span>
+<span class="cm">    hooks.c.</span>
+<span class="cm">     3. Chunks in fastbins are treated as allocated chunks from the</span>
+<span class="cm">    point of view of the chunk allocator.  They are consolidated</span>
+<span class="cm">    with their neighbors only in bulk, in malloc_consolidate.</span>
+<span class="cm">*/</span>
+</pre></div>
+
+<h4 id="chunk">chunk相关宏<a class="headerlink" href="#chunk" title="Permanent link">&para;</a></h4>
+<p>这里主要介绍 chunk 的大小、对齐检查以及一些转换的宏。</p>
+<p><strong>chunk 与 mem 指针头部的转换</strong></p>
+<p>mem指向用户得到的内存的起始位置。</p>
+<div class="codehilite"><pre><span></span><span class="cm">/* conversion from malloc headers to user pointers, and back */</span>
+<span class="cp">#define chunk2mem(p) ((void *) ((char *) (p) + 2 * SIZE_SZ))</span>
+<span class="cp">#define mem2chunk(mem) ((mchunkptr)((char *) (mem) -2 * SIZE_SZ))</span>
+</pre></div>
+
+<p><strong>最小的 chunk 大小</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* The smallest possible chunk */</span>
+<span class="cp">#define MIN_CHUNK_SIZE (offsetof(struct malloc_chunk, fd_nextsize))</span>
+</pre></div>
+
+<p>这里，offsetof 函数计算出 fd_nextsize 在 malloc_chunk 中的偏移，说明最小的 chunk 至少要包含 bk 指针。</p>
+<p><strong>最小申请的堆内存大小</strong></p>
+<p>用户最小申请的内存大小必须是 2 * SIZE_SZ 的最小整数倍。</p>
+<p><strong>注：就目前而看 MIN_CHUNK_SIZE 和 MINSIZE 大小是一致的，个人认为之所以要添加两个宏是为了方便以后修改 malloc_chunk 时方便一些。</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* The smallest size we can malloc is an aligned minimal chunk */</span>
+<span class="c1">//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1</span>
+<span class="cp">#define MINSIZE                                                                \</span>
+<span class="cp">    (unsigned long) (((MIN_CHUNK_SIZE + MALLOC_ALIGN_MASK) &amp;                   \</span>
+<span class="cp">                      ~MALLOC_ALIGN_MASK))</span>
+</pre></div>
+
+<p><strong>检查分配给用户的内存是否对齐</strong></p>
+<p>2 * SIZE_SZ 大小对齐。</p>
+<div class="codehilite"><pre><span></span><span class="cm">/* Check if m has acceptable alignment */</span>
+<span class="c1">// MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1</span>
+<span class="cp">#define aligned_OK(m) (((unsigned long) (m) &amp; MALLOC_ALIGN_MASK) == 0)</span>
+
+<span class="cp">#define misaligned_chunk(p)                                                    \</span>
+<span class="cp">    ((uintptr_t)(MALLOC_ALIGNMENT == 2 * SIZE_SZ ? (p) : chunk2mem(p)) &amp;       \</span>
+<span class="cp">     MALLOC_ALIGN_MASK)</span>
+</pre></div>
+
+<p><strong>请求字节数判断</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm">   Check if a request is so large that it would wrap around zero when</span>
+<span class="cm">   padded and aligned. To simplify some other code, the bound is made</span>
+<span class="cm">   low enough so that adding MINSIZE will also not wrap around zero.</span>
+<span class="cm"> */</span>
+
+<span class="cp">#define REQUEST_OUT_OF_RANGE(req)                                              \</span>
+<span class="cp">    ((unsigned long) (req) &gt;= (unsigned long) (INTERNAL_SIZE_T)(-2 * MINSIZE))</span>
+</pre></div>
+
+<p><strong>将用户请求内存大小转为实际分配内存大小</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* pad request bytes into a usable size -- internal version */</span>
+<span class="c1">//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1</span>
+<span class="cp">#define request2size(req)                                                      \</span>
+<span class="cp">    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)                           \</span>
+<span class="cp">         ? MINSIZE                                                             \</span>
+<span class="cp">         : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK)</span>
+
+<span class="cm">/*  Same, except also perform argument check */</span>
+
+<span class="cp">#define checked_request2size(req, sz)                                          \</span>
+<span class="cp">    if (REQUEST_OUT_OF_RANGE(req)) {                                           \</span>
+<span class="cp">        __set_errno(ENOMEM);                                                   \</span>
+<span class="cp">        return 0;                                                              \</span>
+<span class="cp">    }                                                                          \</span>
+<span class="cp">    (sz) = request2size(req);</span>
+</pre></div>
+
+<p>当一个 chunk 处于已分配状态时，它的物理相邻的下一个 chunk 的 prev_size 字段必然是无效的，故而这个字段就可以被当前这个 chunk 使用。这就是 ptmalloc 中 chunk 间的复用。具体流程如下</p>
+<ol>
+<li>首先，利用 REQUEST_OUT_OF_RANGE 判断是否可以分配用户请求的字节大小的 chunk。</li>
+<li>其次，需要注意的是用户请求的字节是用来存储数据的，即 chunk header 后面的部分。与此同时，由于chunk 间复用，所以可以使用下一个 chunk 的 prev_size 字段。因此，这里只需要再添加 SIZE_SZ 大小即可以完全存储内容。</li>
+<li>由于系统中所允许的申请的 chunk 最小是 MINSIZE，所以与其进行比较。如果不满足最低要求，那么就需要直接分配MINSIZE字节。</li>
+<li>如果大于的话，因为系统中申请的 chunk 需要 2 * SIZE_SZ 对齐，所以这里需要加上MALLOC_ALIGN_MASK 以便于对齐。</li>
+</ol>
+<p><strong>个人认为，这里在 request2size 的宏的第一行中没有必要加上 MALLOC_ALIGN_MASK。</strong></p>
+<p><strong>需要注意的是，通过这样的计算公式得到的 size 最终一定是满足用户需要的。</strong></p>
+<p><strong>标记位相关</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* size field is or&#39;ed with PREV_INUSE when previous adjacent chunk in use */</span>
+<span class="cp">#define PREV_INUSE 0x1</span>
+
+<span class="cm">/* extract inuse bit of previous chunk */</span>
+<span class="cp">#define prev_inuse(p) ((p)-&gt;mchunk_size &amp; PREV_INUSE)</span>
+
+<span class="cm">/* size field is or&#39;ed with IS_MMAPPED if the chunk was obtained with mmap() */</span>
+<span class="cp">#define IS_MMAPPED 0x2</span>
+
+<span class="cm">/* check for mmap()&#39;ed chunk */</span>
+<span class="cp">#define chunk_is_mmapped(p) ((p)-&gt;mchunk_size &amp; IS_MMAPPED)</span>
+
+<span class="cm">/* size field is or&#39;ed with NON_MAIN_ARENA if the chunk was obtained</span>
+<span class="cm">   from a non-main arena.  This is only set immediately before handing</span>
+<span class="cm">   the chunk to the user, if necessary.  */</span>
+<span class="cp">#define NON_MAIN_ARENA 0x4</span>
+
+<span class="cm">/* Check for chunk from main arena.  */</span>
+<span class="cp">#define chunk_main_arena(p) (((p)-&gt;mchunk_size &amp; NON_MAIN_ARENA) == 0)</span>
+
+<span class="cm">/* Mark a chunk as not being on the main arena.  */</span>
+<span class="cp">#define set_non_main_arena(p) ((p)-&gt;mchunk_size |= NON_MAIN_ARENA)</span>
+
+<span class="cm">/*</span>
+<span class="cm">   Bits to mask off when extracting size</span>
+<span class="cm">   Note: IS_MMAPPED is intentionally not masked off from size field in</span>
+<span class="cm">   macros for which mmapped chunks should never be seen. This should</span>
+<span class="cm">   cause helpful core dumps to occur if it is tried by accident by</span>
+<span class="cm">   people extending or adapting this malloc.</span>
+<span class="cm"> */</span>
+<span class="cp">#define SIZE_BITS (PREV_INUSE | IS_MMAPPED | NON_MAIN_ARENA)</span>
+</pre></div>
+
+<p><strong>获取chunk size</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* Get size, ignoring use bits */</span>
+<span class="cp">#define chunksize(p) (chunksize_nomask(p) &amp; ~(SIZE_BITS))</span>
+
+<span class="cm">/* Like chunksize, but do not mask SIZE_BITS.  */</span>
+<span class="cp">#define chunksize_nomask(p) ((p)-&gt;mchunk_size)</span>
+</pre></div>
+
+<p><strong>获取下一个物理相邻的chunk</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* Ptr to next physical malloc_chunk. */</span>
+<span class="cp">#define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))</span>
+</pre></div>
+
+<p><strong>获取前一个chunk的信息</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* Size of the chunk below P.  Only valid if !prev_inuse (P).  */</span>
+<span class="cp">#define prev_size(p) ((p)-&gt;mchunk_prev_size)</span>
+
+<span class="cm">/* Set the size of the chunk below P.  Only valid if !prev_inuse (P).  */</span>
+<span class="cp">#define set_prev_size(p, sz) ((p)-&gt;mchunk_prev_size = (sz))</span>
+
+<span class="cm">/* Ptr to previous physical malloc_chunk.  Only valid if !prev_inuse (P).  */</span>
+<span class="cp">#define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))</span>
+</pre></div>
+
+<p><strong>当前chunk使用状态相关操作</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* extract p&#39;s inuse bit */</span>
+<span class="cp">#define inuse(p)                                                               \</span>
+<span class="cp">    ((((mchunkptr)(((char *) (p)) + chunksize(p)))-&gt;mchunk_size) &amp; PREV_INUSE)</span>
+
+<span class="cm">/* set/clear chunk as being inuse without otherwise disturbing */</span>
+<span class="cp">#define set_inuse(p)                                                           \</span>
+<span class="cp">    ((mchunkptr)(((char *) (p)) + chunksize(p)))-&gt;mchunk_size |= PREV_INUSE</span>
+
+<span class="cp">#define clear_inuse(p)                                                         \</span>
+<span class="cp">    ((mchunkptr)(((char *) (p)) + chunksize(p)))-&gt;mchunk_size &amp;= ~(PREV_INUSE)</span>
+</pre></div>
+
+<p><strong>设置chunk的size字段</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* Set size at head, without disturbing its use bit */</span>
+<span class="c1">// SIZE_BITS = 7</span>
+<span class="cp">#define set_head_size(p, s)                                                    \</span>
+<span class="cp">    ((p)-&gt;mchunk_size = (((p)-&gt;mchunk_size &amp; SIZE_BITS) | (s)))</span>
+
+<span class="cm">/* Set size/use field */</span>
+<span class="cp">#define set_head(p, s) ((p)-&gt;mchunk_size = (s))</span>
+
+<span class="cm">/* Set size at footer (only when chunk is not in use) */</span>
+<span class="cp">#define set_foot(p, s)                                                         \</span>
+<span class="cp">    (((mchunkptr)((char *) (p) + (s)))-&gt;mchunk_prev_size = (s))</span>
+</pre></div>
+
+<p><strong>获取指定偏移的chunk</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* Treat space at ptr + offset as a chunk */</span>
+<span class="cp">#define chunk_at_offset(p, s) ((mchunkptr)(((char *) (p)) + (s)))</span>
+</pre></div>
+
+<p><strong>指定偏移处chunk使用状态相关操作</strong></p>
+<div class="codehilite"><pre><span></span><span class="cm">/* check/set/clear inuse bits in known places */</span>
+<span class="cp">#define inuse_bit_at_offset(p, s)                                              \</span>
+<span class="cp">    (((mchunkptr)(((char *) (p)) + (s)))-&gt;mchunk_size &amp; PREV_INUSE)</span>
+
+<span class="cp">#define set_inuse_bit_at_offset(p, s)                                          \</span>
+<span class="cp">    (((mchunkptr)(((char *) (p)) + (s)))-&gt;mchunk_size |= PREV_INUSE)</span>
+
+<span class="cp">#define clear_inuse_bit_at_offset(p, s)                                        \</span>
+<span class="cp">    (((mchunkptr)(((char *) (p)) + (s)))-&gt;mchunk_size &amp;= ~(PREV_INUSE))</span>
+</pre></div>
+
+<h3 id="bin">bin<a class="headerlink" href="#bin" title="Permanent link">&para;</a></h3>
+<h4 id="_4">概述<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
+<p>我们曾经说过，用户释放掉的 chunk 不会马上归还给系统，ptmalloc 会统一管理 heap 和 mmap 映射区域中的空闲的chunk。当用户再一次请求分配内存时，ptmalloc 分配器会试图在空闲的chunk中挑选一块合适的给用户。这样可以避免频繁的系统调用，降低内存分配的开销。</p>
+<p>在具体的实现中，ptmalloc 采用分箱式方法对空闲的 chunk 进行管理。首先，它会根据空闲的 chunk 的大小以及使用状态将 chunk 初步分为4类：fast bins，small bins，large bins，unsorted bin。每类中仍然有更细的划分，相似大小的 chunk 会用双向链表链接起来。也就是说，在每类 bin 的内部仍然会有多个互不相关的链表来保存不同大小的 chunk。</p>
+<p>对于 small bins，large bins，unsorted bin 来说，ptmalloc 将它们维护在同一个数组中。这些bin对应的数据结构在 malloc_state 中，如下</p>
+<div class="codehilite"><pre><span></span><span class="cp">#define NBINS 128</span>
+<span class="cm">/* Normal bins packed as described above */</span>
+<span class="n">mchunkptr</span> <span class="n">bins</span><span class="p">[</span> <span class="n">NBINS</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span> <span class="p">];</span>
+</pre></div>
+
+<p>虽然每个 bin 的表头使用 mchunkptr 这个数据结构，但是这只是为了方便我们将每个 bin 转化为 malloc_chunk 指针。我们在使用时，会将这个指针当做一个 chunk 的 fd 或 bk 指针来操作，以便于将处于空闲的堆块链接在一起。这样可以节省空间，并提高可用性。那到底是怎么节省的呢？这里我们以32位系统为例</p>
+<table>
+<thead>
+<tr>
+<th>含义</th>
+<th>bin1的fd/bin2的prev_size</th>
+<th>bin1的bk/bin2的size</th>
+<th>bin2的fd/bin3的prev_size</th>
+<th>bin2的bk/bin3的size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bin下标</td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p>可以看出除了第一个bin（unsorted bin）外，后面的每个bin会共享前面的bin的字段，将其视为malloc chunk部分的prev_size和size。这里也说明了一个问题，<strong>bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 的 prev_size 与 size 字段不能随便修改，因为这两个字段是被其它bin所利用的。</strong></p>
+<p>数组中的 bin 依次介绍如下</p>
+<ol>
+<li>第一个为 unsorted bin，字如其面，这里面的 chunk 没有进行排序，存储的 chunk 比较杂。</li>
+<li>索引从 2 到 63 的 bin 称为 small bin，同一个 small bin 链表中的 chunk 的大小相同。两个相邻索引的 small bin 链表中的 chunk 大小相差的字节数为<strong>2个机器字长</strong>，即32位相差8字节，64位相差16字节。</li>
+<li>small bins 后面的 bin 被称作 large bins。large bins 中的每一个 bin 都包含一定范围内的 chunk，其中的chunk 按 fd 指针的顺序从大到小排列。相同大小的chunk同样按照最近使用顺序排列。</li>
+</ol>
+<p>此外，上述这些bin的排布都会遵循一个原则：<strong>任意两个物理相邻的空闲chunk不能在一起</strong>。</p>
+<p>需要注意的是，并不是所有的 chunk 被释放后就立即被放到 bin 中。ptmalloc 为了提高分配的速度，会把一些小的 chunk <strong>先</strong>放到 fast bins 的容器内。<strong>而且，fastbin 容器中的 chunk 的使用标记总是被置位的，所以不满足上面的原则。</strong></p>
+<p>bin 通用的宏如下</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">malloc_chunk</span> <span class="o">*</span><span class="n">mbinptr</span><span class="p">;</span>
+
+<span class="cm">/* addressing -- note that bin_at(0) does not exist */</span>
+<span class="cp">#define bin_at(m, i)                                                           \</span>
+<span class="cp">    (mbinptr)(((char *) &amp;((m)-&gt;bins[ ((i) -1) * 2 ])) -                        \</span>
+<span class="cp">              offsetof(struct malloc_chunk, fd))</span>
+
+<span class="cm">/* analog of ++bin */</span>
+<span class="c1">//获取下一个bin的地址</span>
+<span class="cp">#define next_bin(b) ((mbinptr)((char *) (b) + (sizeof(mchunkptr) &lt;&lt; 1)))</span>
+
+<span class="cm">/* Reminders about list directionality within bins */</span>
+<span class="c1">// 这两个宏可以用来遍历bin</span>
+<span class="c1">// 获取 bin 的位于链表头的 chunk</span>
+<span class="cp">#define first(b) ((b)-&gt;fd)</span>
+<span class="c1">// 获取 bin 的位于链表尾的 chunk</span>
+<span class="cp">#define last(b) ((b)-&gt;bk)</span>
+</pre></div>
+
+<h4 id="fast-bin">Fast Bin<a class="headerlink" href="#fast-bin" title="Permanent link">&para;</a></h4>
+<p>大多数程序经常会申请以及释放一些比较小的内存块。如果将一些较小的 chunk 释放之后发现存在与之相邻的空闲的 chunk 并将它们进行合并，那么当下一次再次申请相应大小的 chunk 时，就需要对 chunk 进行分割，这样就大大降低了堆的利用效率。<strong>因为我们把大部分时间花在了合并、分割以及中间检查的过程中。</strong>因此，ptmalloc 中专门设计了 fast bin，对应的变量就是 malloc state 中的 fastbinsY </p>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm">   Fastbins</span>
+
+<span class="cm">    An array of lists holding recently freed small chunks.  Fastbins</span>
+<span class="cm">    are not doubly linked.  It is faster to single-link them, and</span>
+<span class="cm">    since chunks are never removed from the middles of these lists,</span>
+<span class="cm">    double linking is not necessary. Also, unlike regular bins, they</span>
+<span class="cm">    are not even processed in FIFO order (they use faster LIFO) since</span>
+<span class="cm">    ordering doesn&#39;t much matter in the transient contexts in which</span>
+<span class="cm">    fastbins are normally used.</span>
+
+<span class="cm">    Chunks in fastbins keep their inuse bit set, so they cannot</span>
+<span class="cm">    be consolidated with other free chunks. malloc_consolidate</span>
+<span class="cm">    releases all chunks in fastbins and consolidates them with</span>
+<span class="cm">    other free chunks.</span>
+<span class="cm"> */</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">malloc_chunk</span> <span class="o">*</span><span class="n">mfastbinptr</span><span class="p">;</span>
+
+<span class="cm">/*</span>
+<span class="cm">    This is in malloc_state.</span>
+<span class="cm">    /* Fastbins */</span>
+    <span class="n">mfastbinptr</span> <span class="n">fastbinsY</span><span class="p">[</span> <span class="n">NFASTBINS</span> <span class="p">];</span>
+<span class="err">*/</span>
+</pre></div>
+
+<p>为了更加高效地利用 fast bin，glibc 采用单向链表对其中的每个 bin 进行组织，并且<strong>每个 bin 采取 LIFO 策略</strong>，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的 chunk 的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中相应的 bin 中是否有对应大小的空闲块，如果有的话，就会直接从这个 bin 中获取 chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。</p>
+<p>默认情况下（<strong>32位系统为例</strong>）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为 8 字节开始一直到 80 字节（注意这里说的是数据空间大小，也即除去 prev_size 和 size 字段部分的大小）定义如下</p>
+<div class="codehilite"><pre><span></span><span class="cp">#define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)</span>
+
+<span class="cp">#ifndef DEFAULT_MXFAST</span>
+<span class="cp">#define DEFAULT_MXFAST (64 * SIZE_SZ / 4)</span>
+<span class="cp">#endif</span>
+
+<span class="cm">/* The maximum fastbin request size we support */</span>
+<span class="cp">#define MAX_FAST_SIZE (80 * SIZE_SZ / 4)</span>
+
+<span class="cm">/*</span>
+<span class="cm">   Since the lowest 2 bits in max_fast don&#39;t matter in size comparisons,</span>
+<span class="cm">   they are used as flags.</span>
+<span class="cm"> */</span>
+
+<span class="cm">/*</span>
+<span class="cm">   FASTCHUNKS_BIT held in max_fast indicates that there are probably</span>
+<span class="cm">   some fastbin chunks. It is set true on entering a chunk into any</span>
+<span class="cm">   fastbin, and cleared only in malloc_consolidate.</span>
+
+<span class="cm">   The truth value is inverted so that have_fastchunks will be true</span>
+<span class="cm">   upon startup (since statics are zero-filled), simplifying</span>
+<span class="cm">   initialization checks.</span>
+<span class="cm"> */</span>
+<span class="c1">//判断分配区是否有 fast bin chunk，1表示没有</span>
+<span class="cp">#define FASTCHUNKS_BIT (1U)</span>
+
+<span class="cp">#define have_fastchunks(M) (((M)-&gt;flags &amp; FASTCHUNKS_BIT) == 0)</span>
+<span class="cp">#define clear_fastchunks(M) catomic_or(&amp;(M)-&gt;flags, FASTCHUNKS_BIT)</span>
+<span class="cp">#define set_fastchunks(M) catomic_and(&amp;(M)-&gt;flags, ~FASTCHUNKS_BIT)</span>
+
+<span class="cm">/*</span>
+<span class="cm">   NONCONTIGUOUS_BIT indicates that MORECORE does not return contiguous</span>
+<span class="cm">   regions.  Otherwise, contiguity is exploited in merging together,</span>
+<span class="cm">   when possible, results from consecutive MORECORE calls.</span>
+
+<span class="cm">   The initial value comes from MORECORE_CONTIGUOUS, but is</span>
+<span class="cm">   changed dynamically if mmap is ever used as an sbrk substitute.</span>
+<span class="cm"> */</span>
+<span class="c1">// MORECODE是否返回连续的内存区域。</span>
+<span class="c1">// 主分配区中的MORECORE其实为sbr()，默认返回连续虚拟地址空间</span>
+<span class="c1">// 非主分配区使用mmap()分配大块虚拟内存，然后进行切分来模拟主分配区的行为</span>
+<span class="c1">// 而默认情况下mmap映射区域是不保证虚拟地址空间连续的，所以非主分配区默认分配非连续虚拟地址空间。</span>
+<span class="cp">#define NONCONTIGUOUS_BIT (2U)</span>
+
+<span class="cp">#define contiguous(M) (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) == 0)</span>
+<span class="cp">#define noncontiguous(M) (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) != 0)</span>
+<span class="cp">#define set_noncontiguous(M) ((M)-&gt;flags |= NONCONTIGUOUS_BIT)</span>
+<span class="cp">#define set_contiguous(M) ((M)-&gt;flags &amp;= ~NONCONTIGUOUS_BIT)</span>
+
+<span class="cm">/* ARENA_CORRUPTION_BIT is set if a memory corruption was detected on the</span>
+<span class="cm">   arena.  Such an arena is no longer used to allocate chunks.  Chunks</span>
+<span class="cm">   allocated in that arena before detecting corruption are not freed.  */</span>
+
+<span class="cp">#define ARENA_CORRUPTION_BIT (4U)</span>
+
+<span class="cp">#define arena_is_corrupt(A) (((A)-&gt;flags &amp; ARENA_CORRUPTION_BIT))</span>
+<span class="cp">#define set_arena_corrupt(A) ((A)-&gt;flags |= ARENA_CORRUPTION_BIT)</span>
+
+<span class="cm">/*</span>
+<span class="cm">   Set value of max_fast.</span>
+<span class="cm">   Use impossibly small value if 0.</span>
+<span class="cm">   Precondition: there are no existing fastbin chunks.</span>
+<span class="cm">   Setting the value clears fastchunk bit but preserves noncontiguous bit.</span>
+<span class="cm"> */</span>
+
+<span class="cp">#define set_max_fast(s)                                                        \</span>
+<span class="cp">    global_max_fast =                                                          \</span>
+<span class="cp">        (((s) == 0) ? SMALLBIN_WIDTH : ((s + SIZE_SZ) &amp; ~MALLOC_ALIGN_MASK))</span>
+<span class="cp">#define get_max_fast() global_max_fast</span>
+</pre></div>
+
+<p>ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fast 设置为 DEFAULT_MXFAST，也就是设置 fast bins 中 chunk 的最大值。当 MAX_FAST_SIZE 被设置为 0 时，系统就不会支持 fastbin 。</p>
+<p><strong>fastbin的索引</strong></p>
+<div class="codehilite"><pre><span></span><span class="cp">#define fastbin(ar_ptr, idx) ((ar_ptr)-&gt;fastbinsY[ idx ])</span>
+
+<span class="cm">/* offset 2 to use otherwise unindexable first 2 bins */</span>
+<span class="c1">// chunk size=2*size_sz*(2+idx)</span>
+<span class="c1">// 这里要减2，否则的话，前两个bin没有办法索引到。</span>
+<span class="cp">#define fastbin_index(sz)                                                      \</span>
+<span class="cp">    ((((unsigned int) (sz)) &gt;&gt; (SIZE_SZ == 8 ? 4 : 3)) - 2)</span>
+</pre></div>
+
+<p><strong>需要特别注意的是，fastbin 范围的 chunk 的 inuse 始终被置为 1。因此它们不会和其它被释放的 chunk 合并。</strong></p>
+<p>但是当释放的 chunk 与该 chunk 相邻的空闲 chunk 合并后的大小大于FASTBIN_CONSOLIDATION_THRESHOLD时，内存碎片可能比较多了，我们就需要把 fast bins 中的chunk都进行合并，以减少内存碎片对系统的影响。</p>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm">   FASTBIN_CONSOLIDATION_THRESHOLD is the size of a chunk in free()</span>
+<span class="cm">   that triggers automatic consolidation of possibly-surrounding</span>
+<span class="cm">   fastbin chunks. This is a heuristic, so the exact value should not</span>
+<span class="cm">   matter too much. It is defined at half the default trim threshold as a</span>
+<span class="cm">   compromise heuristic to only attempt consolidation if it is likely</span>
+<span class="cm">   to lead to trimming. However, it is not dynamically tunable, since</span>
+<span class="cm">   consolidation reduces fragmentation surrounding large chunks even</span>
+<span class="cm">   if trimming is not used.</span>
+<span class="cm"> */</span>
+
+<span class="cp">#define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)</span>
+</pre></div>
+
+<p><strong>malloc_consolidate 函数可以将 fastbin 中所有能和其它 chunk 合并的 chunk 合并在一起。具体地参见后续的详细函数的分析。</strong> </p>
+<div class="codehilite"><pre><span></span>/*
+    Chunks in fastbins keep their inuse bit set, so they cannot
+    be consolidated with other free chunks. malloc_consolidate
+    releases all chunks in fastbins and consolidates them with
+    other free chunks.
+ */
+</pre></div>
+
+<h4 id="small-bin">Small Bin<a class="headerlink" href="#small-bin" title="Permanent link">&para;</a></h4>
+<p>small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为：chunk_size = 2 * SIZE_SZ *index，具体如下</p>
+<table>
+<thead>
+<tr>
+<th>下标</th>
+<th>SIZE_SZ=4（32位）</th>
+<th>SIZE_SZ=8（64位）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>16</td>
+<td>32</td>
+</tr>
+<tr>
+<td>3</td>
+<td>24</td>
+<td>48</td>
+</tr>
+<tr>
+<td>4</td>
+<td>32</td>
+<td>64</td>
+</tr>
+<tr>
+<td>5</td>
+<td>40</td>
+<td>80</td>
+</tr>
+<tr>
+<td>x</td>
+<td>2*4*x</td>
+<td>2*8*x</td>
+</tr>
+<tr>
+<td>63</td>
+<td>504</td>
+<td>1008</td>
+</tr>
+</tbody>
+</table>
+<p>small bins 中一共有 62 个循环双向链表，每个链表中存储的 chunk 大小都一致。比如对于 32 位系统来说，下标 2 对应的双向链表中存储的 chunk 大小为均为 16 字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，<strong>small bins 中每个 bin 对应的链表采用 FIFO 的规则</strong>，所以同一个链表中先被释放的 chunk 会先被分配出去。</p>
+<p>small bin相关的宏如下</p>
+<div class="codehilite"><pre><span></span><span class="cp">#define NSMALLBINS 64</span>
+<span class="cp">#define SMALLBIN_WIDTH MALLOC_ALIGNMENT</span>
+<span class="c1">// 是否需要对small bin的下标进行纠正</span>
+<span class="cp">#define SMALLBIN_CORRECTION (MALLOC_ALIGNMENT &gt; 2 * SIZE_SZ)</span>
+
+<span class="cp">#define MIN_LARGE_SIZE ((NSMALLBINS - SMALLBIN_CORRECTION) * SMALLBIN_WIDTH)</span>
+<span class="c1">//判断chunk的大小是否在small bin范围内</span>
+<span class="cp">#define in_smallbin_range(sz)                                                  \</span>
+<span class="cp">    ((unsigned long) (sz) &lt; (unsigned long) MIN_LARGE_SIZE)</span>
+<span class="c1">// 根据chunk的大小得到small bin对应的索引。</span>
+<span class="cp">#define smallbin_index(sz)                                                     \</span>
+<span class="cp">    ((SMALLBIN_WIDTH == 16 ? (((unsigned) (sz)) &gt;&gt; 4)                          \</span>
+<span class="cp">                           : (((unsigned) (sz)) &gt;&gt; 3)) +                       \</span>
+<span class="cp">     SMALLBIN_CORRECTION)</span>
+</pre></div>
+
+<p><strong>或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？</strong> 其实不然，fast bin 中的 chunk 是有可能被放到 small bin 中去的，我们在后面分析具体的源代码时会有深刻的体会。</p>
+<h4 id="large-bin">Large Bin<a class="headerlink" href="#large-bin" title="Permanent link">&para;</a></h4>
+<p>large bins 中一共包括 63 个 bin，每个 bin 中的 chunk 的大小不一致，而是处于一定区间范围内。此外，这 63 个 bin 被分成了 6 组，每组 bin 中的 chunk 大小之间的公差一致，具体如下：</p>
+<table>
+<thead>
+<tr>
+<th>组</th>
+<th>数量</th>
+<th>公差</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>32</td>
+<td>64B</td>
+</tr>
+<tr>
+<td>2</td>
+<td>16</td>
+<td>512B</td>
+</tr>
+<tr>
+<td>3</td>
+<td>8</td>
+<td>4096B</td>
+</tr>
+<tr>
+<td>4</td>
+<td>4</td>
+<td>32768B</td>
+</tr>
+<tr>
+<td>5</td>
+<td>2</td>
+<td>262144B</td>
+</tr>
+<tr>
+<td>6</td>
+<td>1</td>
+<td>不限制</td>
+</tr>
+</tbody>
+</table>
+<p>这里我们以 32 位平台的 large bin 为例，第一个 large bin 的起始 chunk 大小为 512 字节，位于第一组，所以该bin 可以存储的 chunk 的大小范围为 [512,512+64)。</p>
+<p>关于 large bin 的宏如下，这里我们以 32 位平台下，第一个 large bin 的起始 chunk 大小为例，为 512 字节，那么 512&gt;&gt;6 = 8，所以其下标为56+8=64。</p>
+<div class="codehilite"><pre><span></span><span class="cp">#define largebin_index_32(sz)                                                  \</span>
+<span class="cp">    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 38)                                     \</span>
+<span class="cp">         ? 56 + (((unsigned long) (sz)) &gt;&gt; 6)                                  \</span>
+<span class="cp">         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)                               \</span>
+<span class="cp">               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)                            \</span>
+<span class="cp">               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)                        \</span>
+<span class="cp">                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)                    \</span>
+<span class="cp">                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)                   \</span>
+<span class="cp">                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)              \</span>
+<span class="cp">                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)             \</span>
+<span class="cp">                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)        \</span>
+<span class="cp">                                 : 126)</span>
+
+<span class="cp">#define largebin_index_32_big(sz)                                              \</span>
+<span class="cp">    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 45)                                     \</span>
+<span class="cp">         ? 49 + (((unsigned long) (sz)) &gt;&gt; 6)                                  \</span>
+<span class="cp">         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)                               \</span>
+<span class="cp">               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)                            \</span>
+<span class="cp">               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)                        \</span>
+<span class="cp">                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)                    \</span>
+<span class="cp">                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)                   \</span>
+<span class="cp">                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)              \</span>
+<span class="cp">                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)             \</span>
+<span class="cp">                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)        \</span>
+<span class="cp">                                 : 126)</span>
+
+<span class="c1">// XXX It remains to be seen whether it is good to keep the widths of</span>
+<span class="c1">// XXX the buckets the same or whether it should be scaled by a factor</span>
+<span class="c1">// XXX of two as well.</span>
+<span class="cp">#define largebin_index_64(sz)                                                  \</span>
+<span class="cp">    (((((unsigned long) (sz)) &gt;&gt; 6) &lt;= 48)                                     \</span>
+<span class="cp">         ? 48 + (((unsigned long) (sz)) &gt;&gt; 6)                                  \</span>
+<span class="cp">         : ((((unsigned long) (sz)) &gt;&gt; 9) &lt;= 20)                               \</span>
+<span class="cp">               ? 91 + (((unsigned long) (sz)) &gt;&gt; 9)                            \</span>
+<span class="cp">               : ((((unsigned long) (sz)) &gt;&gt; 12) &lt;= 10)                        \</span>
+<span class="cp">                     ? 110 + (((unsigned long) (sz)) &gt;&gt; 12)                    \</span>
+<span class="cp">                     : ((((unsigned long) (sz)) &gt;&gt; 15) &lt;= 4)                   \</span>
+<span class="cp">                           ? 119 + (((unsigned long) (sz)) &gt;&gt; 15)              \</span>
+<span class="cp">                           : ((((unsigned long) (sz)) &gt;&gt; 18) &lt;= 2)             \</span>
+<span class="cp">                                 ? 124 + (((unsigned long) (sz)) &gt;&gt; 18)        \</span>
+<span class="cp">                                 : 126)</span>
+
+<span class="cp">#define largebin_index(sz)                                                     \</span>
+<span class="cp">    (SIZE_SZ == 8 ? largebin_index_64(sz) : MALLOC_ALIGNMENT == 16             \</span>
+<span class="cp">                                                ? largebin_index_32_big(sz)    \</span>
+<span class="cp">                                                : largebin_index_32(sz))</span>
+</pre></div>
+
+<h4 id="unsorted-bin">Unsorted Bin<a class="headerlink" href="#unsorted-bin" title="Permanent link">&para;</a></h4>
+<p>unsorted bin 可以视为空闲 chunk 回归其所属 bin 之前的缓冲区。</p>
+<p>其在 glibc 中具体的说明如下</p>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm">   Unsorted chunks</span>
+
+<span class="cm">    All remainders from chunk splits, as well as all returned chunks,</span>
+<span class="cm">    are first placed in the &quot;unsorted&quot; bin. They are then placed</span>
+<span class="cm">    in regular bins after malloc gives them ONE chance to be used before</span>
+<span class="cm">    binning. So, basically, the unsorted_chunks list acts as a queue,</span>
+<span class="cm">    with chunks being placed on it in free (and malloc_consolidate),</span>
+<span class="cm">    and taken off (to be either used or placed in bins) in malloc.</span>
+
+<span class="cm">    The NON_MAIN_ARENA flag is never set for unsorted chunks, so it</span>
+<span class="cm">    does not have to be taken into account in size comparisons.</span>
+<span class="cm"> */</span>
+</pre></div>
+
+<p>从下面的宏我们可以看出</p>
+<div class="codehilite"><pre><span></span><span class="cm">/* The otherwise unindexable 1-bin is used to hold unsorted chunks. */</span>
+<span class="cp">#define unsorted_chunks(M) (bin_at(M, 1))</span>
+</pre></div>
+
+<p>unsorted bin 处于我们之前所说的 bin 数组下标 1 处。故而 unsorted bin 只有一个链表。unsorted bin 中的空闲 chunk 处于乱序状态，主要有两个来源</p>
+<ul>
+<li>当一个较大的 chunk 被分割成两半后，如果剩下的部分大于 MINSIZE，就会被放到 unsorted bin 中。</li>
+<li>释放一个不属于 fast bin 的 chunk，并且该 chunk 不和 top chunk 紧邻时，该 chunk 会被首先放到 unsorted bin 中。关于 top chunk 的解释，请参考下面的介绍。</li>
+</ul>
+<p>此外，Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO 。</p>
+<h4 id="common-macro">common macro<a class="headerlink" href="#common-macro" title="Permanent link">&para;</a></h4>
+<p>这里介绍一些通用的宏。</p>
+<p><strong>根据chunk的大小统一地获得chunk所在的索引</strong></p>
+<div class="codehilite"><pre><span></span><span class="cp">#define bin_index(sz)                                                          \</span>
+<span class="cp">    ((in_smallbin_range(sz)) ? smallbin_index(sz) : largebin_index(sz))</span>
+</pre></div>
+
+<h3 id="top-chunk">Top Chunk<a class="headerlink" href="#top-chunk" title="Permanent link">&para;</a></h3>
+<p>glibc 中对于 top chunk 的描述如下</p>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm">   Top</span>
+
+<span class="cm">    The top-most available chunk (i.e., the one bordering the end of</span>
+<span class="cm">    available memory) is treated specially. It is never included in</span>
+<span class="cm">    any bin, is used only if no other chunk is available, and is</span>
+<span class="cm">    released back to the system if it is very large (see</span>
+<span class="cm">    M_TRIM_THRESHOLD).  Because top initially</span>
+<span class="cm">    points to its own bin with initial zero size, thus forcing</span>
+<span class="cm">    extension on the first malloc request, we avoid having any special</span>
+<span class="cm">    code in malloc to check whether it even exists yet. But we still</span>
+<span class="cm">    need to do so when getting memory from system, so we make</span>
+<span class="cm">    initial_top treat the bin as a legal but unusable chunk during the</span>
+<span class="cm">    interval between initialization and the first call to</span>
+<span class="cm">    sysmalloc. (This is somewhat delicate, since it relies on</span>
+<span class="cm">    the 2 preceding words to be zero during this interval as well.)</span>
+<span class="cm"> */</span>
+
+<span class="cm">/* Conveniently, the unsorted bin can be used as dummy top on first call */</span>
+<span class="cp">#define initial_top(M) (unsorted_chunks(M))</span>
+</pre></div>
+
+<p>程序第一次进行 malloc 的时候，heap 会被分为两块，一块给用户，剩下的那块就是 top chunk。其实，所谓的top chunk 就是处于当前堆的物理地址最高的 chunk。这个 chunk 不属于任何一个 bin，它的作用在于当所有的bin 都无法满足用户请求的大小时，如果其大小不小于指定的大小，就进行分配，并将剩下的部分作为新的 top chunk。否则，就对heap进行扩展后再进行分配。在main arena中通过sbrk扩展heap，而在thread arena中通过mmap分配新的heap。</p>
+<p>需要注意的是，top chunk 的 prev_inuse 比特位始终为1，否则其前面的chunk就会被合并到top chunk中。</p>
+<p><strong>初始情况下，我们可以将 unsorted chunk 作为 top chunk。</strong></p>
+<h3 id="last-remainder">last remainder<a class="headerlink" href="#last-remainder" title="Permanent link">&para;</a></h3>
+<p>在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不和申请的内存大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin 也会存这一块。top chunk 分割剩下的部分不会作为last remainer.</p>
+<h2 id="_5">宏观结构<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h3 id="arena">arena<a class="headerlink" href="#arena" title="Permanent link">&para;</a></h3>
+<p>在我们之前介绍的例子中，无论是主线程还是新创建的线程，在第一次申请内存时，都会有独立的arena。那么会不会每个线程都有独立的arena呢？下面我们就具体介绍。</p>
+<h4 id="arena_1">arena 数量<a class="headerlink" href="#arena_1" title="Permanent link">&para;</a></h4>
+<p>对于不同系统，arena数量的<a href="https://github.com/sploitfun/lsploits/blob/master/glibc/malloc/arena.c#L847">约束</a>如下</p>
+<div class="codehilite"><pre><span></span>For 32 bit systems:
+     Number of arena = 2 * number of cores.
+For 64 bit systems:
+     Number of arena = 8 * number of cores.
+</pre></div>
+
+<p>显然，不是每一个线程都会有对应的 arena。至于为什么64位系统，要那么设置，我也没有想明白。此外，因为每个系统的核数是有限的，当线程数大于核数的二倍（超线程技术）时，就必然有线程处于等待状态，所以没有必要为每个线程分配一个 arena。</p>
+<h4 id="arena_2">arena 分配规则<a class="headerlink" href="#arena_2" title="Permanent link">&para;</a></h4>
+<p><strong>待补充。</strong></p>
+<h4 id="_6">区别<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
+<p>与 thread 不同的是，main_arena 并不在申请的 heap 中，而是一个全局变量，在 libc.so 的数据段。</p>
+<h3 id="heap_info">heap_info<a class="headerlink" href="#heap_info" title="Permanent link">&para;</a></h3>
+<p>程序刚开始执行时，每个线程是没有 heap 区域的。当其申请内存时，就需要一个结构来记录对应的信息，而heap_info 的作用就是这个。而且当该heap的资源被使用完后，就必须得再次申请内存了。此外，一般申请的heap 是不连续的，因此需要记录不同heap之间的链接结构。</p>
+<p><strong>该数据结构是专门为从 Memory Mapping Segment 处申请的内存准备的，即为非主线程准备的。</strong></p>
+<p>主线程可以通过 sbrk() 函数扩展 program break location 获得（直到触及Memory Mapping Segment），只有一个heap，没有 heap_info 数据结构。</p>
+<p>heap_info 的主要结构如下</p>
+<div class="codehilite"><pre><span></span><span class="cp">#define HEAP_MIN_SIZE (32 * 1024)</span>
+<span class="cp">#ifndef HEAP_MAX_SIZE</span>
+<span class="cp"># ifdef DEFAULT_MMAP_THRESHOLD_MAX</span>
+<span class="cp">#  define HEAP_MAX_SIZE (2 * DEFAULT_MMAP_THRESHOLD_MAX)</span>
+<span class="cp"># else</span>
+<span class="cp">#  define HEAP_MAX_SIZE (1024 * 1024) </span><span class="cm">/* must be a power of two */</span><span class="cp"></span>
+<span class="cp"># endif</span>
+<span class="cp">#endif</span>
+
+<span class="cm">/* HEAP_MIN_SIZE and HEAP_MAX_SIZE limit the size of mmap()ed heaps</span>
+<span class="cm">   that are dynamically created for multi-threaded programs.  The</span>
+<span class="cm">   maximum size must be a power of two, for fast determination of</span>
+<span class="cm">   which heap belongs to a chunk.  It should be much larger than the</span>
+<span class="cm">   mmap threshold, so that requests with a size just below that</span>
+<span class="cm">   threshold can be fulfilled without creating too many heaps.  */</span>
+
+<span class="cm">/***************************************************************************/</span>
+
+<span class="cm">/* A heap is a single contiguous memory region holding (coalesceable)</span>
+<span class="cm">   malloc_chunks.  It is allocated with mmap() and always starts at an</span>
+<span class="cm">   address aligned to HEAP_MAX_SIZE.  */</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">_heap_info</span>
+<span class="p">{</span>
+  <span class="n">mstate</span> <span class="n">ar_ptr</span><span class="p">;</span> <span class="cm">/* Arena for this heap. */</span>
+  <span class="k">struct</span> <span class="n">_heap_info</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span> <span class="cm">/* Previous heap. */</span>
+  <span class="kt">size_t</span> <span class="n">size</span><span class="p">;</span>   <span class="cm">/* Current size in bytes. */</span>
+  <span class="kt">size_t</span> <span class="n">mprotect_size</span><span class="p">;</span> <span class="cm">/* Size in bytes that has been mprotected</span>
+<span class="cm">                           PROT_READ|PROT_WRITE.  */</span>
+  <span class="cm">/* Make sure the following data is properly aligned, particularly</span>
+<span class="cm">     that sizeof (heap_info) + 2 * SIZE_SZ is a multiple of</span>
+<span class="cm">     MALLOC_ALIGNMENT. */</span>
+  <span class="kt">char</span> <span class="n">pad</span><span class="p">[</span><span class="o">-</span><span class="mi">6</span> <span class="o">*</span> <span class="n">SIZE_SZ</span> <span class="o">&amp;</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">];</span>
+<span class="p">}</span> <span class="n">heap_info</span><span class="p">;</span>
+</pre></div>
+
+<p>该结构主要是描述堆的基本信息，包括</p>
+<ul>
+<li>堆对应的 arena 的地址</li>
+<li>由于一个线程申请一个堆之后，可能会使用完，之后就必须得再次申请。因此，一个可能会有多个堆。prev即记录了上一个 heap_info 的地址。这里可以看到每个堆的 heap_info 是通过单向链表进行链接的。</li>
+<li>size 表示当前堆的大小</li>
+<li>最后一部分确保对齐（<strong>这里负数使用的缘由是什么呢</strong>？）</li>
+</ul>
+<p>看起来该结构应该是相当重要的，但是如果如果我们仔细看完整个 malloc 的实现的话，就会发现它出现的频率并不高。</p>
+<h3 id="malloc_state">malloc_state<a class="headerlink" href="#malloc_state" title="Permanent link">&para;</a></h3>
+<p>该结构用于管理堆，记录每个 arena 当前申请的内存的具体状态，比如说是否有空闲chunk，有什么大小的空闲chunk 等等。无论是 thread arena 还是 main arena，它们都只有一个 malloc state 结构。由于 thread 的 arena 可能有多个，malloc state结构会在最新申请的arena中。</p>
+<p><strong>注意，main arena 的 malloc_state 并不是 heap segment 的一部分，而是一个全局变量，存储在 libc.so 的数据段。</strong></p>
+<p>其结构如下</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">malloc_state</span> <span class="p">{</span>
+    <span class="cm">/* Serialize access.  */</span>
+    <span class="n">__libc_lock_define</span><span class="p">(,</span> <span class="n">mutex</span><span class="p">);</span>
+
+    <span class="cm">/* Flags (formerly in max_fast).  */</span>
+    <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span>
+
+    <span class="cm">/* Fastbins */</span>
+    <span class="n">mfastbinptr</span> <span class="n">fastbinsY</span><span class="p">[</span> <span class="n">NFASTBINS</span> <span class="p">];</span>
+
+    <span class="cm">/* Base of the topmost chunk -- not otherwise kept in a bin */</span>
+    <span class="n">mchunkptr</span> <span class="n">top</span><span class="p">;</span>
+
+    <span class="cm">/* The remainder from the most recent split of a small request */</span>
+    <span class="n">mchunkptr</span> <span class="n">last_remainder</span><span class="p">;</span>
+
+    <span class="cm">/* Normal bins packed as described above */</span>
+    <span class="n">mchunkptr</span> <span class="n">bins</span><span class="p">[</span> <span class="n">NBINS</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span> <span class="p">];</span>
+
+    <span class="cm">/* Bitmap of bins, help to speed up the process of determinating if a given bin is definitely empty.*/</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">binmap</span><span class="p">[</span> <span class="n">BINMAPSIZE</span> <span class="p">];</span>
+
+    <span class="cm">/* Linked list, points to the next arena */</span>
+    <span class="k">struct</span> <span class="n">malloc_state</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+
+    <span class="cm">/* Linked list for free arenas.  Access to this field is serialized</span>
+<span class="cm">       by free_list_lock in arena.c.  */</span>
+    <span class="k">struct</span> <span class="n">malloc_state</span> <span class="o">*</span><span class="n">next_free</span><span class="p">;</span>
+
+    <span class="cm">/* Number of threads attached to this arena.  0 if the arena is on</span>
+<span class="cm">       the free list.  Access to this field is serialized by</span>
+<span class="cm">       free_list_lock in arena.c.  */</span>
+    <span class="n">INTERNAL_SIZE_T</span> <span class="n">attached_threads</span><span class="p">;</span>
+
+    <span class="cm">/* Memory allocated from the system in this arena.  */</span>
+    <span class="n">INTERNAL_SIZE_T</span> <span class="n">system_mem</span><span class="p">;</span>
+    <span class="n">INTERNAL_SIZE_T</span> <span class="n">max_system_mem</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+
+<ul>
+<li>
+<p>__libc_lock_define(, mutex);</p>
+<ul>
+<li>该变量用于控制程序串行访问同一个分配区，当一个线程获取了分配区之后，其它线程要想访问该分配区，就必须等待该线程分配完成候才能够使用。</li>
+</ul>
+</li>
+<li>
+<p>flags</p>
+<ul>
+<li>flags记录了分配区的一些标志，比如 bit0 记录了分配区是否有 fast bin chunk ，bit1 标识分配区是否能返回连续的虚拟地址空间。具体如下</li>
+</ul>
+</li>
+</ul>
+<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<span class="cm">   FASTCHUNKS_BIT held in max_fast indicates that there are probably</span>
+<span class="cm">   some fastbin chunks. It is set true on entering a chunk into any</span>
+<span class="cm">   fastbin, and cleared only in malloc_consolidate.</span>
+<span class="cm">   The truth value is inverted so that have_fastchunks will be true</span>
+<span class="cm">   upon startup (since statics are zero-filled), simplifying</span>
+<span class="cm">   initialization checks.</span>
+<span class="cm"> */</span>
+
+<span class="cp">#define FASTCHUNKS_BIT (1U)</span>
+
+<span class="cp">#define have_fastchunks(M) (((M)-&gt;flags &amp; FASTCHUNKS_BIT) == 0)</span>
+<span class="cp">#define clear_fastchunks(M) catomic_or(&amp;(M)-&gt;flags, FASTCHUNKS_BIT)</span>
+<span class="cp">#define set_fastchunks(M) catomic_and(&amp;(M)-&gt;flags, ~FASTCHUNKS_BIT)</span>
+
+<span class="cm">/*</span>
+<span class="cm">   NONCONTIGUOUS_BIT indicates that MORECORE does not return contiguous</span>
+<span class="cm">   regions.  Otherwise, contiguity is exploited in merging together,</span>
+<span class="cm">   when possible, results from consecutive MORECORE calls.</span>
+<span class="cm">   The initial value comes from MORECORE_CONTIGUOUS, but is</span>
+<span class="cm">   changed dynamically if mmap is ever used as an sbrk substitute.</span>
+<span class="cm"> */</span>
+
+<span class="cp">#define NONCONTIGUOUS_BIT (2U)</span>
+
+<span class="cp">#define contiguous(M) (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) == 0)</span>
+<span class="cp">#define noncontiguous(M) (((M)-&gt;flags &amp; NONCONTIGUOUS_BIT) != 0)</span>
+<span class="cp">#define set_noncontiguous(M) ((M)-&gt;flags |= NONCONTIGUOUS_BIT)</span>
+<span class="cp">#define set_contiguous(M) ((M)-&gt;flags &amp;= ~NONCONTIGUOUS_BIT)</span>
+
+<span class="cm">/* ARENA_CORRUPTION_BIT is set if a memory corruption was detected on the</span>
+<span class="cm">   arena.  Such an arena is no longer used to allocate chunks.  Chunks</span>
+<span class="cm">   allocated in that arena before detecting corruption are not freed.  */</span>
+
+<span class="cp">#define ARENA_CORRUPTION_BIT (4U)</span>
+
+<span class="cp">#define arena_is_corrupt(A) (((A)-&gt;flags &amp; ARENA_CORRUPTION_BIT))</span>
+<span class="cp">#define set_arena_corrupt(A) ((A)-&gt;flags |= ARENA_CORRUPTION_BIT)</span>
+</pre></div>
+
+<ul>
+<li>fastbinsY[NFASTBINS]<ul>
+<li>存放每个 fast chunk 链表头部的指针</li>
+</ul>
+</li>
+<li>top<ul>
+<li>指向分配区的 top chunk</li>
+</ul>
+</li>
+<li>last_reminder<ul>
+<li>最新的 chunk 分割之后剩下的那部分</li>
+</ul>
+</li>
+<li>bins<ul>
+<li>用于存储 unstored bin，small bins 和 large bins 的 chunk 链表。</li>
+</ul>
+</li>
+<li>binmap<ul>
+<li>ptmalloc 用一个 bit 来标识某一个 bin 中是否包含空闲 chunk 。</li>
+</ul>
+</li>
+</ul>
+<h3 id="malloc_par">malloc_par<a class="headerlink" href="#malloc_par" title="Permanent link">&para;</a></h3>
+<p><strong>！！待补充！！</strong></p>
+                
+                  
+                
+              
+              
+                <!-- Set from config but allow override -->
+   
+
+<hr>
+<blockquote class="page-copyright">
+    <p>本页面的全部内容在 <strong>CC BY-NC-SA 4.0</strong> 协议之条款下提供，附加条款亦可能应用。</p>
+</blockquote>
+<!-- Comments Integration -->
+ 
+<h2 id="__comments">Comments</h2>
+<form id="gitalk-form" onsubmit="return false;">
+    <div id="gitalk-container"></div>
+</form>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="https://cdnjs.loli.net/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js"></script>
+<script>
+    const gitalk = new Gitalk({
+        clientID: 'd78d2e8d782d95560289',
+        clientSecret: '954f1e7f8ae9b2566272a2105fe8df60b50e8e9b',
+        repo: 'comment',
+        owner: 'ctf-wiki',
+        admin: ['40huo', 'iromise'],
+        id: md5(location.pathname),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+    })
+
+    gitalk.render('gitalk-container')
+</script> 
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 - 2018 CTF Wiki Team
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../../../assets/javascripts/application.ffb616e8.js"></script>
+      
+        
+        
+          
+          <script src="../../../../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          
+            
+              
+              
+            
+          
+          
+        
+      
+      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      
+        <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
+      
+        <script src="../../../../_static/js/extra.js"></script>
+      
+        <script src="https://cdnjs.loli.net/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+      
+        <script src="../../../../search/main.js"></script>
+      
+    
+  </body>
+</html>
