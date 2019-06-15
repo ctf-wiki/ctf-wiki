@@ -1,23 +1,36 @@
-"SFX"法利用了Ollydbg自带的OEP寻找功能, 可以选择直接让程序停在OD找到的OEP处, 此时壳的解压过程已经完毕, 可以直接dump程序.
+[EN](./sfx.md) | [ZH](./sfx-zh.md)
+The &quot;SFX&quot; method takes advantage of the OEP search function that comes with Ollydbg. You can choose to stop the program directly at the OEP found by the OD. At this time, the decompression process of the shell is completed, and you can directly dump the program.
+
 
 ## 要点
 
-1. 设置OD, 忽略所有异常, 也就是说异常选项卡里面都打上勾
-2. 切换到SFX选项卡, 选择"字节模式跟踪实际入口(速度非常慢)", 确定
-3. 重载程序(如果跳出是否"压缩代码?"选择"否", OD直接到达OEP)
 
-## 示例
+1. Set OD, ignore all exceptions, that is, check the exception tab
+2. Switch to the SFX tab and select &quot;Byte mode to track the actual entry (very slow)&quot;, OK
+3. Reload the program (if &quot;Block code?&quot; is selected, &quot;No&quot;, OD directly reaches OEP)
 
-示例程序可以点击此处下载: [6_sfx.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/6_sfx.zip)
 
-首先我们在菜单`选项->调试设置->异常标签页`中勾选所有忽略异常.
+##example
+
+
+The sample program can be downloaded here: [6_sfx.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/6_sfx.zip)
+
+
+First we check all ignore exceptions in the menu `Options -&gt; Debug Settings -&gt; Exceptions tab`.
+
 
 ![sfx_01.png](./figure/sfx_01.png)
 
-然后切换到`SFX`标签页, 点选"字节方式跟踪真正入口处(速度非常慢)"
+
+
+Then switch to the `SFX` tab and click on &quot;Byte mode to track the real entrance (very slow)&quot;
+
 
 ![sfx_02.png](./figure/sfx_02.png)
 
-重载程序，程序已经停在了代码入口点, 并且也不需要对OEP进行重新分析.
+
+
+Overloading the program, the program has stopped at the code entry point, and there is no need to re-analyze the OEP.
+
 
 ![sfx_03.png](./figure/sfx_03.png)

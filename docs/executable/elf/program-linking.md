@@ -1,85 +1,134 @@
+[EN](./program-linking.md) | [ZH](./program-linking-zh.md)
 ---
+
 typora-root-url: ../../../docs
+
 ---
 
 
-# 程序链接
 
-## 静态链接
 
-## 动态链接
 
-动态链接主要是在程序初始化时或者程序执行的过程中解析变量或者函数的引用。ELF文件中某些节区以及头部元素就与动态链接有关。动态链接的模型由操作系统定义并实现。
+#程序链接
+
+
+## Static link
+
+
+## Dynamic link
+
+
+Dynamic linking is mainly to resolve variables or references to functions during program initialization or during program execution. Some sections and head elements in an ELF file are related to dynamic links. Dynamically linked models are defined and implemented by the operating system.
+
 
 ### Dynamic Linker
 
-动态链接器可以用来帮助加载应用所需要的库并解析库所导出的动态符号（函数和全局变量）。
 
-当使用动态链接来构造程序时，链接编辑器会在可执行文件的程序头部添加一个 PT_INTERP 类型的元素，以便于告诉系统将动态链接器作为程序解释器来调用。
 
-> 需要注意的是，对于系统提供的动态链接器，不同的系统会不同。
+The dynamic linker can be used to help load the libraries needed by the application and parse the dynamic symbols (functions and global variables) exported by the library.
 
-可执行程序和动态链接器会合作起来为程序创建进程镜像，具体的细节如下：
 
-1. 将可执行文件的内存段添加到进程镜像中。
-2. 将共享目标文件的内存段添加到进程镜像中。
-3. 为可执行文件以及共享目标文件进行重定位。
-4. 如果传递给了动态链接器一个文件描述符的话，就将其关闭。
-5. 将控制权传递给程序。这让我们感觉起来就好像程序直接从可执行文件处拿到了执行权限。
+When using dynamic linking to construct a program, the link-editor adds an element of type PT_INTERP to the program&#39;s program header to tell the system to call the dynamic linker as a program interpreter.
 
-链接编辑器同样也创建了各种各样的数据来协助动态链接器来处理可执行文件和共享目标文件，例如
 
-- 类型为SHT_DYNAMIC的节.dynamic包含了各种各样的数据，在这个节的开始处包含了其它动态链接的信息。
-- 类型为SHT_HASH的节.hash包含了符号哈希表。
-- 类型为SHT_PROGBITS的节.got以及.plt包含了两个独立的表：全局偏移表，过程链接表。程序会利用过程链接表来处理地址独立代码。
+&gt; It should be noted that different systems will be different for the dynamic linker provided by the system.
 
-因为所有的UNIX System V都会从一个共享目标文件中导入基本的系统服务，动态链接器会参与到每一个TIS ELF-conforming的程序执行过程中。
 
-正如程序加载中所说的，共享目标文件中可能会占用与程序头部中记录的不一样的虚拟地址。动态链接器会在程序拿到控制权前，重定位内存镜像，更新绝对地址。如果共享目标文件确实加载到了其在程序头部中指定的地址的话，那么那些绝对地址的值就会是正确的。但通常情况下，这种情况不会发生。
+The executable and the dynamic linker work together to create a process image for the program, as detailed below:
 
-如果进程的环境中有名叫 LD_BIND_NOW 的非空值，那么动态连接器在把权限传递给程序时，会执行所有的重定位。例如，所有的如下环境变量的取值都会指定这一行为。
+
+1. Add the memory segment of the executable to the process image.
+2. Add the memory segment of the shared object file to the process image.
+3. Relocate the executable and shared object files.
+4. If passed to the dynamic linker a file descriptor, close it.
+5. Pass control to the program. This makes us feel as if the program got the execute permission directly from the executable.
+
+
+The link editor also creates a variety of data to assist the dynamic linker in handling executables and shared object files, such as
+
+
+- Sections of type SHT_DYNAMIC contain a variety of data, including information about other dynamic links at the beginning of this section.
+- The section .hash of type SHT_HASH contains a symbol hash table.
+- Sections .got and .plt of type SHT_PROGBITS contain two separate tables: global offset table, procedure linked table. The program uses the procedure link table to process the address independent code.
+
+
+Because all UNIX System V imports basic system services from a shared object file, the dynamic linker participates in the execution of each TIS ELF-conforming program.
+
+
+As stated in the program loading, the shared object file may occupy a different virtual address than that recorded in the program header. The dynamic linker relocates the memory image and updates the absolute address before the program takes control. If the shared object file is indeed loaded into the address specified in the program header, then the values of those absolute addresses will be correct. But usually, this will not happen.
+
+
+If the process&#39;s environment has a non-null value called LD_BIND_NOW, then the dynamic linker performs all relocations when passing permissions to the program. For example, all values of the following environment variables specify this behavior.
+
 
 - LD_BIND_NOW = 1
+
 - LD_BIND_NOW = on
+
 - LD_BIND_NOW = off
 
-否则，LD_BIND_NOW 要么不存在于当前的进程环境中，要么具有一个非空值。动态链接器可以延迟解析过程链接表的入口，这其实就是plt表的延迟绑定，即当程序需要使用某个符号时，再进行地址解析，这可以减少符号解析以及重定位的负载。
+
+
+Otherwise, LD_BIND_NOW either does not exist in the current process environment or has a non-null value. The dynamic linker can delay the entry of the link table of the parsing process. This is actually the delay binding of the plt table, that is, when the program needs to use a certain symbol, then address resolution, which can reduce the load of symbol resolution and relocation.
+
+
 
 
 ### Function Address
 
-可执行文件中的函数的地址引用和共享目标中与其相关的引用可能并不会被解析为一个值。共享目标文件中对应的引用将会被动态链接器解析到函数本身对应的虚拟地址处。可执行文件中对应的引用（来自于共享目标文件）将会被链接编辑器解析为过程链接表中对应函数的项中的地址。
 
-为了允许不同的函数地址可以按照期望进行工作，如果一个可执行文件引用了一个定义在共享目标文件中的函数，那么链接编辑器就会把相应函数的过程链接表项放到与它关联的符号表表项中。动态链接器会对这种符号表项进行特殊的处理。如果动态链接器在寻找一个符号，并且遇到了一个符号表项在可执行文件中的符号，那么它会遵循如下的规则：
 
-1. 如果符号表项的`st_shndx` 不是`SHN_UNDEF ` ，动态链接器就会找到这个符号的定义，并且使用它的st_value来作为符号的地址。
-2. 如果`st_shndx` 是`SHN_UNDEF` 并且符号的类型是`STT_FUNC` ，而且`st_value` 成员不是0，动态链接器就会把这个表项视为特殊的，并且使用`st_value` 的值作为符号的地址。
-3. 否则，动态链接器就会认为在可执行文件中的符号是未定义的，然后继续处理。
+The address reference of a function in the executable and the reference associated with it in the shared target may not be resolved to a value. The corresponding reference in the shared object file will be parsed by the dynamic linker to the virtual address corresponding to the function itself. The corresponding reference in the executable (from the shared object file) will be resolved by the link editor to the address in the entry for the corresponding function in the procedure link table.
 
-一些重定位与过程链接表的表项相关。这些表项被用于直接函数调用，而不是引用函数地址。这些重定位并不会按照上面的方式进行处理，因为动态链接器必须不能重定向过程链接表项并使其指向它们本身。
+
+In order to allow different function addresses to work as expected, if an executable file references a function defined in the shared object file, the link editor will put the process link table entry of the corresponding function into the symbol associated with it. In the table entry. The dynamic linker handles this symbol table item in a special way. If the dynamic linker is looking for a symbol and encounters a symbol in the executable file for a symbol table entry, it will follow the following rules:
+
+
+1. If the `st_shndx` of the symbol table entry is not `SHN_UNDEF `, the dynamic linker will find the definition of this symbol and use its st_value as the address of the symbol.
+2. If `st_shndx` is `SHN_UNDEF` and the symbol type is `STT_FUNC` and the `st_value` member is not 0, the dynamic linker will treat this entry as special and use the value of `st_value` as the symbol the address of.
+3. Otherwise, the dynamic linker will assume that the symbols in the executable are undefined and continue processing.
+
+
+Some relocations are related to the entries of the process linkage table. These entries are used for direct function calls, not for reference function addresses. These relocations are not handled as above because the dynamic linker must not be able to redirect process link table entries and point them to themselves.
+
 
 ### Shared Object Dependencies
 
-当链接编辑器在处理一个归档库的时候，它会提取出库成员并且把它们拷贝到输出目标文件中。这种静态链接的操作在执行过程中是不需要动态连接器参与的。共享目标文件同时也提供了服务，动态链接器必须将合适的共享目标文件attach到进程镜像中，以便于执行。因此，可执行文件以及共享目标文件会专门描述他们的依赖关系。
 
-当一个动态链接器为一个目标文件创建内存段时，在DT_NEEDED项中描述的依赖给出了需要什么依赖文件来支持程序的服务。通过不断地连接被引用的共享目标文件（即使一个共享目标文件被引用多次，它最后也只会被动态链接器连接一次）及它们的依赖，动态链接器建立了一个完全的进程镜像。当解析符号引用时，动态链接器会使用BFS（广度优先搜索）来检查符号表。也就是说，首先，它会检查可执行文件本身的符号表，然后才会按照顺序检查DT_NEEDED入口中的符号表，然后才会继续查看下一次依赖，依次类推。共享目标文件必须可以被程序读取，其它权限不一定需要。
 
-依赖列表中的名字要么是DT_SONAME中的字符串，要么是用于构建对应目标文件的共享目标文件的路径名。例如，如果一个链接器使用了一个带有DT_SONAME项名字叫做lib1的共享目标文件以及一个其他路径名为/usr/lib/lib2的共享目标文件，那么可执行文件中将会包含lib1以及/usr/lib/lib2依赖列表。
+When the link editor is processing an archive library, it extracts the library members and copies them into the output object file. This statically linked operation does not require dynamic connector participation during execution. The shared object file also provides the service, and the dynamic linker must attach the appropriate shared object file to the process image for easy execution. Therefore, executable files and shared object files specifically describe their dependencies.
 
-如果一个共享目标文件具有一个或者多个/，例如/usr/lib/lib2或者directory/file，那么动态链接器会直接使用那个字符串来作为路径的名字。如果名字中没有/，比如lib1，那么以下的三种机制给出了共享目标文件搜索的顺序。
 
-- 首先，动态数组标记DT_RPATH可能会给出一个包含一系列以:分割的目录的字符串。例如 /home/dir/lib:/home/dir2/lib: 告诉我们先在`/home/dir/lib`目录搜索，然后再在`/home/dir2/lib`搜索，最后在当前目录搜索。
+When a dynamic linker creates a memory segment for an object file, the dependencies described in the DT_NEEDED entry give the service that depends on the file to support the program. The dynamic linker creates a complete process image by continually connecting the referenced shared object files (even if a shared object file is referenced multiple times, it will only be connected once by the dynamic linker) and their dependencies. When parsing symbol references, the dynamic linker uses BFS (broadness first search) to check the symbol table. That is, first, it checks the symbol table of the executable itself, and then checks the symbol table in the DT_NEEDED entry in order before continuing to view the next dependency, and so on. The shared object file must be readable by the program, and other permissions are not required.
 
-- 其次，进程环境变量中的名叫LD_LIBRARY_PATH的变量包含了一系列上述所说格式的目录，最后可能会有一个;，后面跟着另外一个目录列表后面跟着另外一个目录列表。这里给出一个例子，效果与第一个所说的效果相同
+
+The name in the dependency list is either a string in DT_SONAME or the pathname of the shared object file used to build the corresponding target file. For example, if a linker uses a shared object file with the DT_SONAME entry name lib1 and a shared object file with a path named /usr/lib/lib2, the executable will contain lib1 and /usr/ Lib/lib2 dependency list.
+
+
+If a shared object file has one or more /, such as /usr/lib/lib2 or directory/file, the dynamic linker will use that string directly as the path name. If there is no / in the name, such as lib1, then the following three mechanisms give the order in which the shared object files are searched.
+
+
+- First, the dynamic array tag DT_RPATH may give a string containing a series of directories separated by :. For example /home/dir/lib:/home/dir2/lib: Tell us to search in the `/home/dir/lib` directory first, then search in `/home/dir2/lib`, and finally search in the current directory.
+
+
+- Second, the variable named LD_LIBRARY_PATH in the process environment variable contains a list of directories of the above mentioned format, and there may be one at the end; followed by another directory listing followed by another directory listing. Here is an example with the same effect as the first one.
+
 
   - LD_LIBRARY_PATH=/home/dir/lib:/home/dir2/lib:
+
   - LD_LIBRARY_PATH=/home/dir/lib;/home/dir2/lib:
+
   - LD_LIBRARY_PATH=/home/dir/lib:/home/dir2/lib:;
 
-  所有的LD_LIBRARY_PATH中的目录只会在搜索完DT_RPATH才会进行搜索。尽管有一些程序（如链接编辑器）在处理;前后的列表的方式不同，但是动态链接器处理的方式完全一样，除此之外，动态链接器接受分号表示语法，正如上面所描述的样子。
 
-- 最后，如果以上两组目录无法定位期望的库，则动态链接器搜索`/usr/lib` 路径下的库。
 
-注意
+All directories in LD_LIBRARY_PATH will only be searched after searching for DT_RPATH. Although some programs (such as the link editor) are dealing; the list is different in the way it is, but the dynamic linker handles it in exactly the same way. In addition, the dynamic linker accepts the semicolon representation syntax, as described above. .
 
-> **为了安全性，对于`set-user` 以及 `set-group` 标识的程序，动态链接器忽略搜索环境变量（例如`LD_LIBRARY_PATH`），仅仅搜索`DT_RPATH`指定的目录和`/usr/lib`。**
+
+- Finally, if the above two directories cannot locate the desired library, the dynamic linker searches for libraries under the `/usr/lib` path.
+
+
+note
+
+
+&gt; ** For security purposes, for programs identified by `set-user` and `set-group`, the dynamic linker ignores search environment variables (eg `LD_LIBRARY_PATH`) and only searches for directories specified by `DT_RPATH` and `/usr/ Lib`. **

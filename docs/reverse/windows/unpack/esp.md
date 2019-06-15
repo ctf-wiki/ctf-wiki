@@ -1,24 +1,36 @@
-ESP定律法是脱壳的利器, 是应用频率最高的脱壳方法之一.
+[EN](./esp.md) | [ZH](./esp-zh.md)
+ESP law is a weapon for shelling, and it is one of the most frequently used methods for shelling.
+
 
 ## 要点
 
-ESP定律的原理在于利用程序中堆栈平衡来快速找到OEP.
 
-由于在程序自解密或者自解压过程中, 不少壳会先将当前寄存器状态压栈, 如使用`pushad`, 在解压结束后, 会将之前的寄存器值出栈, 如使用`popad`. 因此在寄存器出栈时, 往往程序代码被恢复, 此时硬件断点触发. 然后在程序当前位置, 只需要少许单步操作, 就很容易到达正确的OEP位置.
+The principle of ESP law is to use the stack balance in the program to quickly find OEP.
 
-1. 程序刚载入开始pushad/pushfd
-2. 将全部寄存器压栈后就设对ESP寄存器设硬件断点
-3. 运行程序, 触发断点
-4. 删除硬件断点开始分析
 
-## 示例
+Because in the process of self-decryption or self-extraction, many shells will first push the current register state, such as using `pushad`, after the decompression ends, the previous register values will be popped, such as using `popad`. When the register is popped, the program code is often restored, and the hardware breakpoint is triggered. Then at the current position of the program, it is easy to reach the correct OEP position with only a few single steps.
 
-示例程序可以点击此处下载: [2_esp.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/2_esp.zip)
 
-还是上一篇的示例, 入口一句`popad`, 我们按下F8执行`popad`保存寄存器状态, 我们可以在右边的寄存器窗口里发现`ESP`寄存器的值变为了红色, 也即值发生了改变.
+1. The program just loaded and started pushad/pushfd
+2. Set all the registers to the ESP register and set the hardware breakpoint.
+3. Run the program, trigger a breakpoint
+4. Remove hardware breakpoints and start analyzing
+
+
+##example
+
+
+The sample program can be downloaded here: [2_esp.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/2_esp.zip)
+
+
+As the example in the previous article, enter a sentence `popad`, we press F8 to execute `popad` to save the register state. We can find in the register window on the right that the value of the `ESP` register has changed to red, that is, the value has changed. .
+
 
 ![esp_01.png](./figure/esp_01.png)
 
-我们鼠标右击`ESP`寄存器的值, 也就是图中的`0019FF64`, 选择`HW break[ESP]`后, 按下`F9`运行程序, 程序会在触发断点时断下. 如图来到了`0040D3B0`的位置. 这里就是上一篇我们单步跟踪时到达的位置, 剩余的就不再赘述.
+
+
+We right click on the value of the `ESP` register, which is `0019FF64` in the figure. After selecting `HW break[ESP]`, press `F9` to run the program, and the program will break when the breakpoint is triggered. Came to the position of `0040D3B0`. Here is the position we arrived in the single step tracking, the rest will not go into details.
+
 
 ![esp_02.png](./figure/esp_02.png)

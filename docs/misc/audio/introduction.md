@@ -1,97 +1,163 @@
-与音频相关的 CTF 题目主要使用了隐写的策略，主要分为 MP3 隐写，LSB 隐写，波形隐写，频谱隐写等等。
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
+The audio-related CTF topics mainly use steganographic strategies, which are mainly divided into MP3 steganography, LSB steganography, waveform steganography, spectrum steganography, and so on.
 
-## 常见手段
 
-通过 `binwalk` 以及 `strings` 可以发现的信息不再详述。
+## Common means
 
-## MP3 隐写
 
-### 原理
+Information that can be found through `binwalk` and `strings` is not detailed.
 
-MP3隐写主要是使用 [Mp3Stego](http://www.petitcolas.net/steganography/mp3stego/) 工具进行隐写，其基本介绍及使用方法如下
+
+## MP3 steganography
+
+
+### Principle
+
+
+MP3 steganography is mainly using the [Mp3Stego] (http://www.petitcolas.net/steganography/mp3stego/) tool for steganography. The basic introduction and usage are as follows:
+
 
 > MP3Stego will hide information in MP3 files during the compression process. The data is first compressed, encrypted and then hidden in the MP3 bit stream.
 
+
+
 ```shell
+
 encode -E hidden_text.txt -P pass svega.wav svega_stego.mp3
+
 decode -X -P pass svega_stego.mp3
+
 ```
 
-### 例题
+
+
+### Example
+
 
 > ISCC-2016: Music Never Sleep
 
-初步观察后，由 `strings` 无发现，听音频无异常猜测使用隐写软件隐藏数据。
+
+
+After the initial observation, no one was found by `strings`, and there was no abnormal guess in listening to the audio. The steganographic software was used to hide the data.
+
 
 ![](./figure/1.jpg)
 
-得到密码后使用 `Mp3Stego` 解密。
+
+
+After getting the password, use `Mp3Stego` to decrypt it.
+
 
 ```shell
+
 decode.exe -X ISCC2016.mp3 -P bfsiscc2016
+
 ```
 
-得到文件 `iscc2016.mp3.txt`:
+
+
+Get the file `iscc2016.mp3.txt`:
 ```
+
 Flag is SkYzWEk0M1JOWlNHWTJTRktKUkdJTVpXRzVSV0U2REdHTVpHT1pZPQ== ???
+
 ```
 
-Base64 && Base32 后得到 flag。
 
-## 波形
 
-### 原理
+Get flag after Base64 &amp;&amp; Base32.
 
-通常来说，波形方向的题，在观察到异常后，使用相关软件（Audacity, Adobe Audition 等）观察波形规律，将波形进一步转化为 01 字符串等，从而提取转化出最终的 flag。
 
-### 例题
+## Waveform
+
+
+### Principle
+
+
+Generally speaking, in the direction of the waveform, after observing the abnormality, the relevant software (Audacity, Adobe Audition, etc.) is used to observe the waveform law, and the waveform is further converted into a 01 string, etc., thereby extracting and converting the final flag.
+
+
+### Example
+
 
 > ISCC-2017: Misc-04
 
-其实这题隐藏的信息在最开始的一段音频内，不细心听可能会误认为是隐写软件。
+
+
+In fact, the hidden information in this question is in the first part of the audio. If you don&#39;t listen carefully, you may mistake it for steganography.
+
 
 ![](./figure/3.png)
 
-以高为 1 低为 0，转换得到 `01` 字符串。
+
+
+The high is 1 low and 0 is converted to get the `01` string.
+
 
 ```
+
 110011011011001100001110011111110111010111011000010101110101010110011011101011101110110111011110011111101
+
 ```
 
-转为 ASCII，摩斯密码解密，得到 flag。
+
+
+Convert to ASCII, decrypt the Morse password and get the flag.
+
 
 !!! note
-    一些较复杂的可能会先对音频进行一系列的处理，如滤波等。例如 [JarvisOJ - 上帝之音 Writeup](https://www.40huo.cn/blog/jarvisoj-misc-writeup.html)
 
-## 频谱
+Some of the more complicated ones may first perform a series of processing on the audio, such as filtering. For example [JarvisOJ - Voice of God Writeup] (https://www.40huo.cn/blog/jarvisoj-misc-writeup.html)
 
-### 原理
 
-音频中的频谱隐写是将字符串隐藏在频谱中，此类音频通常会有一个较明显的特征，听起来是一段杂音或者比较刺耳。
+## Spectrum
 
-### 例题
+
+### Principle
+
+
+Spectral steganography in audio hides strings in the spectrum. Such audio usually has a more pronounced feature that sounds a bit murmur or harsh.
+
+
+### Example
+
 
 > Su-ctf-quals-2014:hear_with_your_eyes
 
+
+
 ![](./figure/4.png)
 
-## LSB音频隐写
 
-### 原理
 
-类似于图片隐写中的 LSB 隐写，音频中也有对应的 LSB 隐写。主要可以使用 [Silenteye](http://silenteye.v1kings.io/) 工具，其介绍如下：
+## LSB audio steganography
+
+
+### Principle
+
+
+Similar to the LSB steganography in image steganography, there is also a corresponding LSB steganography in the audio. The [Silenteye] (http://silenteye.v1kings.io/) tool can be used mainly as follows:
+
 
 > SilentEye is a cross-platform application design for an easy use of steganography, in this case hiding messages into pictures or sounds. It provides a pretty nice interface and an easy integration of new steganography algorithm and cryptography process by using a plug-ins system.
 
-### 例题
 
-> 2015 广东省强网杯 - Little Apple
 
-直接使用 `slienteye` 即可。
+### Example
+
+
+&gt; 2015 Guangdong Strong Net Cup - Little Apple
+
+
+Just use `slienteye`.
+
 
 ![](./figure/2.jpg)
 
-## 延伸
 
--   [音频中的 LSB](https://ethackal.github.io/2015/10/05/derbycon-ctf-wav-steganography/)
--   [隐写术总结](http://bobao.360.cn/learning/detail/243.html)
+
+## Extension
+
+
+- [LSB in Audio] (https://ethackal.github.io/2015/10/05/derbycon-ctf-wav-steganography/)
+- [Stealth Summary] (http://bobao.360.cn/learning/detail/243.html)

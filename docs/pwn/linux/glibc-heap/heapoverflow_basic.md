@@ -1,171 +1,289 @@
-# 堆溢出
+[EN](./heapoverflow_basic.md) | [ZH](./heapoverflow_basic-zh.md)
+#堆溢
 
-## 介绍
 
-堆溢出是指程序向某个堆块中写入的字节数超过了堆块本身可使用的字节数（**之所以是可使用而不是用户申请的字节数，是因为堆管理器会对用户所申请的字节数进行调整，这也导致可利用的字节数都不小于用户申请的字节数**），因而导致了数据溢出，并覆盖到**物理相邻的高地址**的下一个堆块。
+## Introduction
 
-不难发现，堆溢出漏洞发生的基本前提是
 
-- 程序向堆上写入数据。
-- 写入的数据大小没有被良好地控制。
+Heap overflow means that the number of bytes written by the program into a heap block exceeds the number of bytes that can be used by the heap itself (** is the number of bytes that can be used instead of the number of bytes requested by the user, because the heap manager The number of bytes requested by the user is adjusted, which also causes the number of available bytes to be no less than the number of bytes requested by the user**), thus causing data overflow and covering to ** physically adjacent high The next heap of addresses**.
 
-对于攻击者来说，堆溢出漏洞轻则可以使得程序崩溃，重则可以使得攻击者控制程序执行流程。
 
-堆溢出是一种特定的缓冲区溢出（还有栈溢出， bss 段溢出等)。但是其与栈溢出所不同的是，堆上并不存在返回地址等可以让攻击者直接控制执行流程的数据，因此我们一般无法直接通过堆溢出来控制 EIP 。一般来说，我们利用堆溢出的策略是
+It is not difficult to find that the basic premise of a heap overflow vulnerability is
 
-1.  覆盖与其**物理相邻的下一个 chunk** 的内容。
+
+- The program writes data to the heap.
+- The size of the data written is not well controlled.
+
+
+For the attacker, the heap overflow vulnerability can make the program crash, and the attacker can control the execution flow of the program.
+
+
+A heap overflow is a specific buffer overflow (and stack overflow, bss segment overflow, etc.). However, unlike stack overflow, there is no return address on the heap that allows the attacker to directly control the execution flow, so we generally cannot control EIP directly through heap overflow. In general, our strategy for using heap overflow is
+
+
+1. Overwrite the contents of the next chunk** physically adjacent to its **.
     -   prev_size
-    -   size，主要有三个比特位，以及该堆块真正的大小。
+
+- size, which has three main bits and the true size of the heap.
         -   NON_MAIN_ARENA 
+
         -   IS_MAPPED  
+
         -   PREV_INUSE 
+
         -   the True chunk size
-    -   chunk content，从而改变程序固有的执行流。
-2.  利用堆中的机制（如 unlink 等 ）来实现任意地址写入（ Write-Anything-Anywhere）或控制堆块中的内容等效果，从而来控制程序的执行流。
 
-## 基本示例
+- chunk content, which changes the execution flow inherent in the program.
+2. Use the mechanism in the heap (such as unlink, etc.) to implement the arbitrary address write (Write-Anything-Anywhere) or control the contents of the heap block to control the execution flow of the program.
 
-下面我们举一个简单的例子：
+
+## Basic example
+
+
+Let&#39;s take a simple example:
+
 
 ```
+
 #include <stdio.h>
 
+
+
 int main(void) 
+
 {
+
   char *chunk;
+
   chunk=malloc(24);
+
   puts("Get input:");
+
   gets(chunk);
+
   return 0;
+
 }
+
 ```
 
-这个程序的主要目的是调用 malloc 分配一块堆上的内存，之后向这个堆块中写入一个字符串，如果输入的字符串过长会导致溢出 chunk 的区域并覆盖到其后的 top chunk 之中(实际上 puts 内部会调用 malloc 分配堆内存，覆盖到的可能并不是 top chunk)。
+
+
+The main purpose of this program is to call malloc to allocate memory on a heap, and then write a string to the heap. If the input string is too long, it will cause the area of the chunk to overflow and overwrite the top chunk. (In fact, puts internally calls malloc to allocate heap memory, which may not be covered by top chunk).
 ```
+
 0x602000:	0x0000000000000000	0x0000000000000021 <===chunk
+
 0x602010:	0x0000000000000000	0x0000000000000000
+
 0x602020:	0x0000000000000000	0x0000000000020fe1 <===top chunk
+
 0x602030:	0x0000000000000000	0x0000000000000000
+
 0x602040:	0x0000000000000000	0x0000000000000000
+
 ```
+
 print 'A'*100
-进行写入
+
+Write
 ```
+
 0x602000:	0x0000000000000000	0x0000000000000021 <===chunk
+
 0x602010:	0x4141414141414141	0x4141414141414141
-0x602020:	0x4141414141414141	0x4141414141414141 <===top chunk(已被溢出)
+
+0x602020: 0x4141414141414141 0x4141414141414141 &lt;===top chunk (has been overflowed)
 0x602030:	0x4141414141414141	0x4141414141414141
+
 0x602040:	0x4141414141414141	0x4141414141414141
-```
-
-
-## 小总结
-
-堆溢出中比较重要的几个步骤:
-
-### 寻找堆分配函数
-通常来说堆是通过调用 glibc 函数 malloc 进行分配的，在某些情况下会使用 calloc 分配。calloc 与 malloc 的区别是 **calloc 在分配后会自动进行清空，这对于某些信息泄露漏洞的利用来说是致命的**。
 
 ```
+
+
+
+
+
+## 小述
+
+
+Several important steps in heap overflow:
+
+
+### Looking for heap allocation functions
+Usually the heap is allocated by calling the glibc function malloc, which in some cases uses the calloc assignment. The difference between calloc and malloc is that **calloc is automatically emptied after allocation, which is fatal for the exploitation of certain information disclosure vulnerabilities**.
+
+
+```
+
 calloc(0x20);
-//等同于
-ptr=malloc(0x20);
+
+//Equivalent to
+ptr = malloc (0x20);
 memset(ptr,0,0x20);
+
 ```
-除此之外，还有一种分配是经由 realloc 进行的，realloc 函数可以身兼 malloc 和 free 两个函数的功能。
+
+In addition to this, there is another type of allocation via realloc, which can function as both malloc and free.
 ```
+
 #include <stdio.h>
 
+
+
 int main(void) 
+
 {
+
   char *chunk,*chunk1;
+
   chunk=malloc(16);
+
   chunk1=realloc(chunk,32);
+
   return 0;
+
 }
+
 ```
-realloc的操作并不是像字面意义上那么简单，其内部会根据不同的情况进行不同操作
 
--   当realloc(ptr,size)的size不等于ptr的size时
-    -   如果申请size>原来size
-        -   如果chunk与top chunk相邻，直接扩展这个chunk到新size大小
-        -   如果chunk与top chunk不相邻，相当于free(ptr),malloc(new_size) 
-    -   如果申请size<原来size
-        -   如果相差不足以容得下一个最小chunk(64位下32个字节，32位下16个字节)，则保持不变
-        -   如果相差可以容得下一个最小chunk，则切割原chunk为两部分，free掉后一部分
--   当realloc(ptr,size)的size等于0时，相当于free(ptr)
--   当realloc(ptr,size)的size等于ptr的size，不进行任何操作
+The operation of realloc is not as simple as it is literally, and its internal operations will be different depending on different situations.
 
-### 寻找危险函数
-通过寻找危险函数，我们快速确定程序是否可能有堆溢出，以及有的话，堆溢出的位置在哪里。
 
-常见的危险函数如下
+- When the size of realloc(ptr,size) is not equal to the size of ptr
+- If the application size&gt; original size
+- If the chunk is adjacent to the top chunk, extend the chunk directly to the new size.
+- If the chunk is not adjacent to the top chunk, it is equivalent to free(ptr), malloc(new_size)
+- If the application size &lt; original size
+- If the difference is not enough to accommodate the next smallest chunk (32 bytes under 64 bits, 16 bytes under 32 bits), it remains unchanged
+- If the difference can accommodate the next smallest chunk, then the original chunk is cut into two parts, and the part is free.
+- When the size of realloc(ptr,size) is equal to 0, it is equivalent to free(ptr)
+- When the size of realloc(ptr,size) is equal to the size of ptr, no action is taken.
 
--   输入
-    -   gets，直接读取一行，忽略 `'\x00'`
+
+### Looking for dangerous functions
+By looking for dangerous functions, we quickly determine if the program is likely to have a heap overflow and, if so, where the heap overflows.
+
+
+Common dangerous functions are as follows
+
+
+- Enter
+- gets, read a line directly, ignoring `&#39;\x00&#39;`
     -   scanf
+
     -   vscanf
--   输出
+
+- output
     -   sprintf
--   字符串
-    -   strcpy，字符串复制，遇到 `'\x00'` 停止
-    -   strcat，字符串拼接，遇到 `'\x00'` 停止
-    -   bcopy
 
-### 确定填充长度
-这一部分主要是计算**我们开始写入的地址与我们所要覆盖的地址之间的距离**。
-一个常见的误区是malloc的参数等于实际分配堆块的大小，但是事实上 ptmalloc 分配出来的大小是对齐的。这个长度一般是字长的2倍，比如32位系统是8个字节，64位系统是16个字节。但是对于不大于2倍字长的请求，malloc会直接返回2倍字长的块也就是最小chunk，比如64位系统执行`malloc(0)`会返回用户区域为16字节的块。
+- string
+- strcpy, string copy, encountered `&#39;\x00&#39;` stop
+- strcat, string stitching, encountered `&#39;\x00&#39;` stop
+- bcopy
+
+
+### Determine the fill length
+This part is mainly to calculate the distance between the address we started writing and the address we want to cover**.
+A common misconception is that the malloc parameter is equal to the actual allocated heap size, but in fact the size allocated by ptmalloc is aligned. This length is typically twice the word length, such as a 32-bit system with 8 bytes and a 64-bit system with 16 bytes. However, for requests that are no longer than 2 times the word length, malloc will directly return the block of 2 times the word length, which is the smallest chunk. For example, a 64-bit system executing `malloc(0)` will return a block with a user area of 16 bytes.
+
 
 ```
+
 #include <stdio.h>
 
+
+
 int main(void) 
+
 {
+
   char *chunk;
+
   chunk=malloc(0);
+
   puts("Get input:");
+
   gets(chunk);
   return 0;
+
 }
-```
 
 ```
-//根据系统的位数，malloc会分配8或16字节的用户空间
+
+
+
+```
+
+/ / According to the number of bits in the system, malloc will allocate 8 or 16 bytes of user space
 0x602000:	0x0000000000000000	0x0000000000000021
-0x602010:	0x0000000000000000	0x0000000000000000
-0x602020:	0x0000000000000000	0x0000000000020fe1
-0x602030:	0x0000000000000000	0x0000000000000000
-```
-注意用户区域的大小不等于 chunk_hear.size，chunk_hear.size=用户区域大小+2*字长
 
-还有一点是之前所说的用户申请的内存大小会被修改，其有可能会使用与其物理相邻的下一个chunk的prev_size字段储存内容。回头再来看下之前的示例代码
+0x602010:	0x0000000000000000	0x0000000000000000
+
+0x602020:	0x0000000000000000	0x0000000000020fe1
+
+0x602030:	0x0000000000000000	0x0000000000000000
+
 ```
+
+Note that the size of the user area is not equal to chunk_hear.size, chunk_hear.size=user area size + 2* word length
+
+
+Another point is that the memory size of the user application mentioned above will be modified, and it is possible to store the content using the prev_size field of the next chunk that is physically adjacent to it. Go back and look at the previous sample code.
+```
+
 #include <stdio.h>
 
+
+
 int main(void) 
+
 {
+
   char *chunk;
+
   chunk=malloc(24);
+
   puts("Get input:");
+
   gets(chunk);
+
   return 0;
+
 }
+
 ```
-观察如上代码，我们申请的chunk大小是24个字节。但是我们将其编译为64位可执行程序时，实际上分配的内存会是16个字节而不是24个。
+
+Looking at the above code, the chunk size we applied for is 24 bytes. But when we compile it into a 64-bit executable, the actual allocated memory will be 16 bytes instead of 24.
 ```
+
 0x602000:	0x0000000000000000	0x0000000000000021
+
 0x602010:	0x0000000000000000	0x0000000000000000
+
 0x602020:	0x0000000000000000	0x0000000000020fe1
+
 ```
-16个字节的空间是如何装得下24个字节的内容呢？答案是借用了下一个块的pre_size域。我们可来看一下用户申请的内存大小与glibc中实际分配的内存大小之间的转换。
+
+How does the 16-byte space fit the next 24 bytes of content? The answer is to borrow the pre_size field of the next block. Let&#39;s take a look at the conversion between the size of the memory requested by the user and the amount of memory actually allocated in glibc.
+
 
 ```c
+
 /* pad request bytes into a usable size -- internal version */
+
 //MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1
+
 #define request2size(req)                                                      \
+
     (((req) + SIZE_SZ + MALLOC_ALIGN_MASK < MINSIZE)                           \
+
          ? MINSIZE                                                             \
+
          : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK)
+
 ```
 
-当req=24时，request2size(24)=32。而除去chunk 头部的16个字节。实际上用户可用chunk的字节数为16。而根据我们前面学到的知识可以知道chunk的pre_size仅当它的前一块块处于释放状态时才起作用。所以用户这时候其实还可以使用下一个chunk的prev_size字段，正好24个字节。**实际上 ptmalloc 分配内存是以双字为基本单位，以64位系统为例，分配出来的空间是16的整数倍，即用户申请的chunk都是16字节对齐的。**
+
+
+When req=24, request2size(24)=32. And remove the 16 bytes of the chunk header. In fact, the number of bytes available to the user is 16. According to what we learned earlier, we know that the chunk&#39;s pre_size only works when its previous block is released. So the user can actually use the prev_size field of the next chunk at this time, exactly 24 bytes. **Actually, ptmalloc allocates memory in double words as the basic unit. Taking 64-bit system as an example, the allocated space is an integer multiple of 16, that is, the chunks applied by the user are 16-byte aligned. **

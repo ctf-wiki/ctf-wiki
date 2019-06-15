@@ -1,1 +1,2 @@
-简述 Windows 下的漏洞利用。
+[EN](./readme.md) | [ZH](./readme-zh.md)
+Briefly describe exploits under Windows.

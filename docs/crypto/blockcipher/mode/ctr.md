@@ -1,16 +1,28 @@
+[EN](./ctr.md) | [ZH](./ctr-zh.md)
 # CTR
 
-CTR全称为计数器模式（Counter mode），该模式由 Diffe 和 Hellman 设计。
 
-## 加密
+
+The CTR is called the Counter mode, which is designed by Diffe and Hellman.
+
+
+## Encryption
+
 
 ![](./figure/ctr_encryption.png)
 
-## 解密
+
+
+## decryption
+
 
 ![](./figure/ctr_encryption.png)
 
-## 题目
+
+
+## topic
+
 
 - 2017 star ctf ssss
+
 - 2017 star ctf ssss2

@@ -1,56 +1,104 @@
-gdb通过替换目标地址的字节为`0xcc`来实现断点, 这里给出一个简单的检测`int 3`断点的示例:
+[EN](./detect-bp.md) | [ZH](./detect-bp-zh.md)
+Gdb implements a breakpoint by replacing the byte of the destination address with `0xcc`. Here is a simple example of detecting the `int 3` breakpoint:
+
 
 ``` c
+
 void foo() {
+
     printf("Hello\n");
+
 }
+
 int main() {
+
     if ((*(volatile unsigned *)((unsigned)foo) & 0xff) == 0xcc) {
+
         printf("BREAKPOINT\n");
+
         exit(1);
+
     }
+
     foo();
+
 }
-```
-
-正常运行程序会输出Hello, 但是如果之前有在`foo`函数这里设置`cc`断点并运行, gdb则无法断下, 并会输出`BREAKPOINT`. 
 
 ```
+
+
+
+The normal running program will output Hello, but if you set the `cc` breakpoint and run it in the `foo` function, gdb will not be able to break, and will output `BREAKPOINT`.
+
+
+```
+
 # gdb ./x
+
 gdb> bp foo
+
 Breakpoint 1 at 0x804838c
+
 gdb> run
+
 BREAKPOINT
+
 Program exited with code 01.
+
 ```
 
-这个要绕过也很简单, 那就是需要阅读汇编代码并注意设置断点不要在`foo`函数入口处. 实际情况就要看检测断点的位置是哪里.
 
-这种监视断点的反调试技术, 关键不在于如何绕过它, 而是在于如何检测它. 在这个示例中可以很轻松的发现, 程序也有打印出相应的信息. 在实际情况中, 程序不会输出任何信息, 断点也无法轻易地断下. 我们可以使用`perl`脚本过滤反汇编代码中有关`0xcc`的代码出来进行检查.
 
-我们可以使用perl脚本过滤反汇编代码中有关0xcc的代码出来进行检查
+This is also very simple to bypass, that is, you need to read the assembly code and pay attention to set the breakpoint not at the entrance of the `foo` function. The actual situation depends on where the detection breakpoint is.
+
+
+The key to this anti-debugging technique for monitoring breakpoints is not how to bypass it, but how to detect it. In this example, it is easy to find that the program also prints out the corresponding information. In actual situations, the program does not Any information will be output, and the breakpoint will not be easily broken. We can use the `perl` script to filter the code for the `0xcc` in the disassembly code for checking.
+
+
+We can use the perl script to filter the 0xcc code in the disassembly code for checking.
+
+
 
 
 ``` perl
+
 #!/usr/bin/perl
+
 while(<>)
+
 {
+
     if($_ =~ m/([0-9a-f][4]:\s*[0-9a-f \t]*.*0xcc)/ ){ print; }
+
 }
-```
-
-显示结果
 
 ```
+
+
+
+show result
+
+
+```
+
 # objdump -M intel -d xxx | ./antibp.pl
+
       80483be: 3d cc 00 00 00 cmp eax,0xcc
+
 ```
 
-检测到后, 既可以将0xcc修改成0x00或0x90, 也可以做任何你想做的操作.
 
-改变0xcc也同样可能带来问题, 就如上篇介绍一样, 程序如果有进行文件校验, 那么我们的改变是会被检测到的. 可能的情况下, 程序也不只是对函数入口点进行检测, 也会在一个循环里对整个函数进行检测.
 
-因此你也可以用十六进制编辑器手动放置一个`ICEBP(0xF1)`字节到需要断下的位置(而非`int 3`). 因为`ICEBP`也一样能让gdb断下来.
+After detection, you can either change 0xcc to 0x00 or 0x90, or do whatever you want.
+
+
+Changing 0xcc can also cause problems. As mentioned in the previous article, if the program has file verification, then our changes will be detected. If possible, the program does not only detect the function entry point. The entire function is also tested in a loop.
+
+
+So you can also manually place an `ICEBP(0xF1)` byte into the location you want to break (not `int 3`) with a hex editor. Because `ICEBP` also breaks gdb.
+
+
+
 
 
 

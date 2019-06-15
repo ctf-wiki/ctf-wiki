@@ -1,32 +1,50 @@
-## 加载
+[EN](./program-loading.md) | [ZH](./program-loading-zh.md)
+## Loading
 
-程序加载过程其实就是系统创建或者或者扩充进程镜的过程。它只是按照一定的规则把文件的段拷贝到虚拟内存段中。进程只有在执行的过程中使用了对应的逻辑页面时，才会申请相应的物理页面。通常来说，一个进程中有很多页是没有被引用的。因此，延迟物理读写可以提高系统的性能。为了达到这样的效率，可执行文件以及共享目标文件所拥有的段的文件偏移以及虚拟地址必须是合适的，也就是说他们必须是页大小的整数倍。
 
-在Intel架构中，虚拟地址以及文件偏移必须是4KB的整数，或者说是更大的2的整数倍。
+The program loading process is actually the process of creating or expanding the process mirror. It simply copies the segments of the file into the virtual memory segment according to certain rules. The process will apply for the corresponding physical page only if the corresponding logical page is used in the process of execution. In general, many pages in a process are not referenced. Therefore, delaying physical reads and writes can improve system performance. In order to achieve such efficiency, the executable file and the file offset and virtual address of the segment owned by the shared object file must be appropriate, that is, they must be integer multiples of the page size.
 
-下面是一个可执行文件加载到内存中布局的例子
+
+In the Intel architecture, the virtual address and file offset must be 4KB integers, or a larger integer multiple of 2.
+
+
+Below is an example of an executable file loaded into memory layout
+
 
 ![](./figure/executable_file_example.png)
 
-对应的代码段以及数据段的解释如下
+
+
+The corresponding code segment and the data segment are explained as follows
+
 
 ![](./figure/program_header_segments.png)
 
-在这个例子中，尽管代码段和数据段在模4KB的意义下相等，但是仍然最多有4个页面包含有不纯的代码或者数据。当然，实际中会取决于页大小或者文件系统的块大小。
 
-- 代码段的第一个页包含了ELF头，程序头部表，以及其他信息。
-- 代码段的最后一页包含了数据段开始部分的副本。
-- 数据段的最后一页包含了代码段的最后部分的副本。至于多少，暂未说明。
-- 数据段的最后一部分可能会包含与程序运行无关的信息。
 
-逻辑上说，系统会对强制控制内存的权限，就好比每一个段的权限都是完全独立的；段的地址会被调整，以便于确保内存中的每一个逻辑页都只有一组类型的权限。在上面给出的例子中，文件的代码段的最后一部分和数据段的开始部分都会被映射两次：分别在数据段的虚拟地址以及代码段的虚拟地址。
+In this example, although the code segment and the data segment are equal in the sense of modulo 4KB, there are still up to 4 pages containing impure code or data. Of course, in practice it will depend on the page size or the block size of the file system.
 
-数据段的结尾需要好好处理没有被初始化的数据，一般来说，系统要求它们以0开始。因此，如果一个文件的最后一页包含不在逻辑页中的信息，那么剩下的数据必须被初始化为0。剩下的三个页中的杂质数据在逻辑上说并不是进程镜像的一部分，系统可以选择删除它们。该文件对应的虚拟内存镜像如下（假设每一页大小为4KB）
+
+- The first page of the code snippet contains the ELF header, the program header table, and other information.
+- The last page of the code segment contains a copy of the beginning of the data segment.
+- The last page of the data segment contains a copy of the last part of the code segment. As for how much, it has not been explained yet.
+- The last part of the data segment may contain information that is not relevant to the program&#39;s operation.
+
+
+Logically speaking, the system will force the control of memory permissions, just like the permissions of each segment are completely independent; the segment address will be adjusted to ensure that each logical page in memory has only one type of permission. . In the example given above, the last part of the code segment of the file and the beginning of the data segment are mapped twice: the virtual address of the data segment and the virtual address of the code segment.
+
+
+The end of the data segment needs to deal with the data that has not been initialized. Generally, the system requires them to start with 0. Therefore, if the last page of a file contains information that is not in the logical page, the remaining data must be initialized to zero. The impurity data in the remaining three pages is not logically part of the process image, and the system can choose to delete them. The virtual memory image corresponding to this file is as follows (assuming each page is 4KB in size)
+
 
 ![](./figure/process_segments_image.png)
 
-在加载段时，可执行文件与共享目标文件有所区别。可执行文件通常来说包含绝对代码。为了能够使得程序正确执行，每一个段应该在用于构建可执行文件的虚拟地址处。因此，系统直接使用p_vaddr作为虚拟地址。
 
-另一方面，共享目标文件通常包含地址独立代码。这使得在不同的进程中，同一段的虚拟地址可能会有所不同，但这并不会影响程序的执行行为。尽管系统会为不同的进程选择不同的虚拟地址，但是它仍旧维持了段的相对地址。因为地址独立代码在不同的段中使用相对地址，因此在虚拟内存中的虚拟地址之间的差肯定和在文件中的相应的虚拟地址的差相同。下面给出了可能的对于同一共享目标文件不同进程的情况，描述了相对地址寻址，此外这个表还给出了基地址的计算方法。
+
+When you load a segment, the executable is different from the shared object. Executable files usually contain absolute code. In order to be able to make the program execute correctly, each segment should be at the virtual address used to build the executable. Therefore, the system directly uses p_vaddr as a virtual address.
+
+
+On the other hand, shared object files usually contain address-independent code. This makes the virtual address of the same segment different in different processes, but this does not affect the execution behavior of the program. Although the system chooses different virtual addresses for different processes, it still maintains the relative addresses of the segments. Because the address independent code uses relative addresses in different segments, the difference between the virtual addresses in virtual memory is definitely the same as the difference between the corresponding virtual addresses in the file. The following is a list of possible different processes for the same shared object file, describing relative address addressing, and this table also gives a calculation of the base address.
+
 
 ![](./figure/shared_object_segments_addresses.png)

@@ -1,35 +1,51 @@
-# 哈希函数
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
+# hash function
 
-哈希函数（Hash Function）把消息或数据压缩成摘要，使得数据量变小。其一般模型如下
+
+A hash function compresses a message or data into a digest, making the amount of data smaller. Its general model is as follows
+
 
 ![](./figure/hash.png)
 
-显然对于任何一个hash值，理论上存在若干个消息与之对应，即碰撞。
 
-哈希函数的基本需求如下
 
-| 需求     | 描述                                       |
+Obviously for any hash value, there are theoretically several messages corresponding to it, namely collisions.
+
+
+The basic requirements of the hash function are as follows
+
+
+| Requirements | Description|
 | ------ | ---------------------------------------- |
-| 输入长度可变 | hash函数可以应用于任意长度的数据                       |
-| 输出长度固定 | hash函数的输出长度固定                            |
-| 效率     | 对于任意消息 $x$，计算 $H(x)$ 很容易                 |
-| 单向性    | 对于任意哈希值h，想要找到满足$H(x)=h$ 的x在计算上不可行。       |
-| 抗弱碰撞性  | 对于任意消息x，找到满足另一消息y，满足$H(x)=H(y)$ ，在计算上不可行。 |
-| 抗强碰撞性  | 找到任意一对满足 $H(x)=H(y)$ 的消息x和y在计算上不可行。      |
-| 伪随机性   | 哈希函数的输出满足伪随机性测试标准。                       |
 
-散列值的目的如下
+| Input length variable | hash function can be applied to data of any length |
+| Output length fixed | The output length of the hash function is fixed |
+| Efficiency | For any message $x$, calculating $H(x)$ is easy |
+| Unidirectional | For any hash value h, it is computationally infeasible to find x that satisfies $H(x)=h$. |
+| Weak Collision Resistance | For any message x, finding another message y that satisfies $H(x)=H(y)$ is not computationally feasible. |
+| Strong Collision Resistance | Finding any pair of messages x and y that satisfy $H(x)=H(y)$ is not computationally feasible. |
+| Pseudo-randomness | The output of the hash function satisfies the pseudo-randomness test criteria. |
 
-- 确保消息的完整性，即确保收到的数据确实和发送时的一样（即没有修改、插入、删除或重放），防止中间人篡改。
-- 冗余校验
-- 单向口令文件，比如linux系统的密码
-- 入侵检测和病毒检测中的特征码检测
 
-目前的Hash函数主要有MD5，SHA1，SHA256，SHA512。目前的大多数hash函数都是迭代性的，即使用同一个hash函数，不同的参数进行多次迭代运算。
+The purpose of the hash value is as follows
 
-| 算法类型   | 输出 Hash 值长度       |
+
+- Ensuring the integrity of the message, ie ensuring that the data received is exactly the same as it was sent (ie no modification, insertion, deletion or replay) to prevent tampering by the intermediary.
+- Redundancy check
+- One-way password file, such as the password of the Linux system
+- Signature detection in intrusion detection and virus detection
+
+
+The current Hash functions mainly include MD5, SHA1, SHA256, and SHA512. Most of the current hash functions are iterative, that is, using the same hash function and performing multiple iterations with different parameters.
+
+
+| Algorithm Type | Output Hash Value Length |
 | ------ | ----------------- |
+
 | MD5    | 128 bit / 256 bit |
+
 | SHA1   | 160 bit           |
+
 | SHA256 | 256 bit           |
+
 | SHA512 | 512 bit           |

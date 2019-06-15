@@ -1,3 +1,5 @@
-# 格式化字符串漏洞检测
+[EN](./fmtstr_detect.md) | [ZH](./fmtstr_detect-zh.md)
+#Format string vulnerability detection
 
-这里推荐一个简单的工具[LazyIDA](https://github.com/L4ys/LazyIDA)。基本的检测应该没有问题。
+
+A simple tool [LazyIDA] (https://github.com/L4ys/LazyIDA) is recommended here. Basic testing should be no problem.

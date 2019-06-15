@@ -1,138 +1,231 @@
-# Unicorn Engine简介
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
+# Unicorn Engine Introduction
 
-## 什么是Unicorn引擎
 
-Unicorn是一个轻量级, 多平台, 多架构的CPU模拟器框架. 我们可以更好地关注CPU操作, 忽略机器设备的差异. 想象一下, 我们可以将其应用于这些情景: 比如我们单纯只是需要模拟代码的执行而非需要一个真的CPU去完成那些操作, 又或者想要更安全地分析恶意代码, 检测病毒特征, 或者想要在逆向过程中验证某些代码的含义. 使用CPU模拟器可以很好地帮助我们提供便捷.
+## What is the Unicorn Engine?
 
-它的亮点(这也归功于Unicorn是基于[qemu](http://www.qemu.org)而开发的)有:
 
-* 支持多种架构: Arm, Arm64 (Armv8), M68K, Mips, Sparc, & X86 (include X86_64).
-* 对Windows和*nix系统(已确认包含Mac OSX, Linux, *BSD & Solaris)的原生支持
-* 具有平台独立且简洁易于使用的API
-* 使用JIT编译技术, 性能表现优异
+Unicorn is a lightweight, multi-platform, multi-architecture CPU simulator framework. We can better focus on CPU operation and ignore machine differences. Imagine we can apply it to these scenarios: for example, we simply need Simulate code execution instead of requiring a real CPU to do those operations, or want to analyze malicious code more securely, detect virus signatures, or want to verify the meaning of certain code in the reverse process. Using the CPU simulator can Good to help us provide convenience.
 
-你可以在[Black Hat USA 2015](http://www.unicorn-engine.org/BHUSA2015-unicorn.pdf)获悉有关Unicorn引擎的更多技术细节. Github项目主页: [unicorn](https://github.com/unicorn-engine/unicorn)
 
-尽管它不同寻常, 但它无法模拟整个程序或系统, 也不支持系统调用. 你需要手动映射内存并写入数据进去, 随后你才能从指定地址开始模拟. 
+Its highlights (which are also attributed to Unicorn&#39;s development based on [qemu] (http://www.qemu.org)) are:
 
-## 应用的情景
 
-什么时候能够用到Unicorn引擎呢? 
+* Support multiple architectures: Arm, Arm64 (Armv8), M68K, Mips, Sparc, &amp; X86 (include X86_64).
+* Native support for Windows and *nix systems (confirmed to include Mac OSX, Linux, *BSD &amp; Solaris)
+* API with platform independence and simplicity and ease of use
+* Excellent performance with JIT compilation technology
 
-* 你可以调用恶意软件中一些有趣的函数, 而不用创建一个有害的进程.
-* 用于CTF竞赛
-* 用于模糊测试
-* 用于gdb插件, 基于代码模拟执行的插件
-* 模拟执行一些混淆代码
 
-## 如何安装
+You can learn more about the technical details of the Unicorn engine at [Black Hat USA 2015] (http://www.unicorn-engine.org/BHUSA2015-unicorn.pdf). Github Project Homepage: [unicorn](https:// Github.com/unicorn-engine/unicorn)
 
-安装Unicorn最简单的方式就是使用pip安装, 只要在命令行中运行以下命令即可(这是适合于喜爱用python的用户的安装方法, 对于那些想要使用C的用户, 则需要去官网查看文档编译源码包):
+
+Although it is unusual, it can&#39;t simulate the entire program or system, nor does it support system calls. You need to manually map memory and write data in, then you can start the simulation from the specified address.
+
+
+## Application scenario
+
+
+When can I use the Unicorn engine?
+
+
+* You can call some interesting functions in malware without creating a harmful process.
+* for CTF competition
+* for fuzz testing
+* Plugin for gdb plugin, based on code emulation
+* Simulate execution of some obfuscated code
+
+
+## how to install
+
+
+The easiest way to install Unicorn is to use pip installation. Just run the following command from the command line (this is the installation method for users who like to use python. For those who want to use C, you need to go to the official website to view the document. Compile the source package):
+
 
 ``` shell
+
 pip install unicorn
+
 ```
 
-但如果你想用源代码进行本地编译的话, 你需要在[下载](http://www.unicorn-engine.org/download/)页面中下载源代码包, 然后可以按照以下命令执行:
 
-* *nix 平台用户
+
+But if you want to compile locally with source code, you need to download the source package from the [Download] (http://www.unicorn-engine.org/download/) page, and then follow these commands:
+
+
+* *nix platform users
+
 
 ``` shell
+
 $ cd bindings/python
+
 $ sudo make install
+
 ```
 
-* Windows平台用户
+
+
+* Windows platform users
+
 
 ``` shell
+
 cd bindings/python
+
 python setup.py install
+
 ```
 
-对于Windows, 在执行完上述命令后, 还需要将[下载](http://www.unicorn-engine.org/download/)页面的`Windows core engine`的所有dll文件复制到`C:\locationtopython\Lib\site-packages\unicorn`位置处. 
 
-## 使用unicorn的快速指南
 
-我们将会展示如何使用python调用unicorn的api以及它是如何轻易地模拟二进制代码. 当然这里用的api仅是一小部分, 但对于入门已经足够了.
+For Windows, after executing the above command, you need to copy all the dll files of the `Windows core engine` on the [Download] (http://www.unicorn-engine.org/download/) page to `C:\locationtopython \Lib\site-packages\unicorn` location.
+
+
+## Quick guide to using unicorn
+
+
+We&#39;ll show you how to use python to call unicorn&#39;s api and how easy it is to emulate binary code. Of course, the api used here is only a small part, but it&#39;s enough for getting started.
+
 
 ``` python
+
  1 from __future__ import print_function
+
  2 from unicorn import *
+
  3 from unicorn.x86_const import *
+
  4 
+
  5 # code to be emulated
+
  6 X86_CODE32 = b"\x41\x4a" # INC ecx; DEC edx
+
  7 
+
  8 # memory address where emulation starts
+
  9 ADDRESS = 0x1000000
+
 10 
+
 11 print("Emulate i386 code")
+
 12 try:
+
 13     # Initialize emulator in X86-32bit mode
-14     mu = Uc(UC_ARCH_X86, UC_MODE_32)
+
+14 mu = Uc (UC_ARCH_X86, UC_MODE_32)
 15 
+
 16     # map 2MB memory for this emulation
-17     mu.mem_map(ADDRESS, 2 * 1024 * 1024)
+
+17 mu.mem_map (ADDRESS, 2 * 1024 * 1024)
 18 
+
 19     # write machine code to be emulated to memory
+
 20     mu.mem_write(ADDRESS, X86_CODE32)
+
 21 
+
 22     # initialize machine registers
+
 23     mu.reg_write(UC_X86_REG_ECX, 0x1234)
+
 24     mu.reg_write(UC_X86_REG_EDX, 0x7890)
+
 25 
+
 26     # emulate code in infinite time & unlimited instructions
+
 27     mu.emu_start(ADDRESS, ADDRESS + len(X86_CODE32))
+
 28 
+
 29     # now print out some registers
+
 30     print("Emulation done. Below is the CPU context")
+
 31 
+
 32     r_ecx = mu.reg_read(UC_X86_REG_ECX)
+
 33     r_edx = mu.reg_read(UC_X86_REG_EDX)
-34     print(">>> ECX = 0x%x" %r_ecx)
+
+34 print (&quot;&gt;&gt;&gt; ECX = 0x% x&quot;% r_ecx)
 35     print(">>> EDX = 0x%x" %r_edx)
+
 36 
+
 37 except UcError as e:
+
 38     print("ERROR: %s" % e)
+
 ```
 
-运行结果如下:
+
+
+The results are as follows:
+
 
 ``` shell
+
 $ python test1.py 
+
 Emulate i386 code
+
 Emulation done. Below is the CPU context
->>> ECX = 0x1235
+
+&gt;&gt;&gt; ECX = 0x1235
 >>> EDX = 0x788f
+
 ```
 
-样例里的注释已经非常直观, 但我们还是对每一行代码做出解释:
-
-* 行号2~3: 在使用Unicorn前导入`unicorn`模块. 样例中使用了一些x86寄存器常量, 所以也需要导入`unicorn.x86_const`模块
-
-* 行号6: 这是我们需要模拟的二进制机器码, 使用十六进制表示, 代表的汇编指令是: "INC ecx" 和 "DEC edx".
-
-* 行号9: 我们将模拟执行上述指令的所在虚拟地址
-
-* 行号14: 使用`Uc`类初始化Unicorn, 该类接受2个参数: 硬件架构和硬件位数(模式). 在样例中我们需要模拟执行x86架构的32位代码, 我
-们使用变量`mu`来接受返回值.
-
-* 行号17: 使用`mem_map `方法根据在行号9处声明的地址, 映射2MB用于模拟执行的内存空间. 所有进程中的CPU操作都应该只访问该内存区域. 映射的内存具有默认的读,写和执行权限.
-
-* 行号20: 将需要模拟执行的代码写入我们刚刚映射的内存中. `mem_write`方法接受2个参数: 要写入的内存地址和需要写入内存的代码.
-
-* 行号23~24: 使用`reg_write`方法设置`ECX`和`EDX`寄存器的值
-
-* 行号27: 使用`emu_start`方法开始模拟执行, 该API接受4个参数: 要模拟执行的代码地址, 模拟执行停止的内存地址(这里是
-`X86_CODE32`的最后1字节处), 模拟执行的时间和需要执行的指令数目. 如果我们像样例一样忽略后两个参数, Unicorn将会默认以无穷时间和无穷指令数目的条件来模拟执行代码. 
-
-* 行号32~35: 打印输出`ECX`和`EDX`寄存器的值. 我们使用函数`reg_read`来读取寄存器的值.
 
 
-要想查看更多的python示例, 可以查看文件夹[bindings/python](https://github.com/unicorn-engine/unicorn/tree/master/bindings/python)下的代码. 而C的示例则可以查看[sample](https://github.com/unicorn-engine/unicorn/tree/master/samples)文件夹下的代码. 
+The comments in the sample are very intuitive, but we still explain each line of code:
 
 
-## 参考链接
+* Line number 2~3: Import the `unicorn` module before using Unicorn. Some x86 register constants are used in the example, so you need to import the `unicorn.x86_const` module.
+
+
+* Line number 6: This is the binary machine code we need to simulate. Using hexadecimal representation, the assembly instructions are: &quot;INC ecx&quot; and &quot;DEC edx&quot;.
+
+
+* Line number 9: We will simulate the virtual address where the above instructions are executed.
+
+
+* Line number 14: Initialize Unicorn with the `Uc` class, which accepts 2 parameters: hardware architecture and hardware bits (mode). In the example we need to simulate 32-bit code that executes the x86 architecture, I
+We use the variable `mu` to accept the return value.
+
+
+* Line number 17: Use the `mem_map` method to map 2MB for the memory space that is executed according to the address declared at line number 9. All CPU operations in the process should only access this memory area. The mapped memory has a default Read, write and execute permissions.
+
+
+* Line number 20: Write the code that needs to be simulated to the memory we just mapped. The `mem_write` method accepts 2 parameters: the memory address to be written and the code to be written to memory.
+
+
+* Line number 23~24: Set the values of the `ECX` and `EDX` registers using the `reg_write` method.
+
+
+* Line number 27: Start the simulation execution using the `emu_start` method. The API accepts 4 parameters: To simulate the code address of execution, simulate the memory address where execution is stopped (here
+The last byte of `X86_CODE32`, simulates the execution time and the number of instructions that need to be executed. If we ignore the last two parameters as in the example, Unicorn will default to simulate execution with infinite time and infinite number of instructions. Code.
+
+* Line number 32~35: Print out the values of the `ECX` and `EDX` registers. We use the function `reg_read` to read the value of the register.
+
+
+
+
+To see more python examples, look at the code in the folder [bindings/python] (https://github.com/unicorn-engine/unicorn/tree/master/bindings/python). The C example is You can view the code under the [sample](https://github.com/unicorn-engine/unicorn/tree/master/samples) folder.
+
+
+
+
+## Reference link
+
 
 * [Unicorn Official Site](http://www.unicorn-engine.org/)
+
 * [Quick tutorial on programming with Unicorn - with C & Python.](http://www.unicorn-engine.org/docs/)

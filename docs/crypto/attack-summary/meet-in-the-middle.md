@@ -1,39 +1,59 @@
-# 中间相遇攻击 - MITM
+[EN](./meet-in-the-middle.md) | [ZH](./meet-in-the-middle-zh.md)
+#中遇遇攻击- MITM
 
-## 概述
 
-中间相遇攻击是一种以空间换取时间的一种攻击方法，1977年由 Diffie 与 Hellman 提出。从个人角度看，者更多地指一种思想，不仅仅适用于密码学攻击，也适用于其他方面，可以降低算法的复杂度。
+## Overview
 
-基本原理如下
 
-假设 E 和 D 分别是加密函数和解密函数，k1 和 k2 分别是两次加密使用的密钥，则我们有
+The middle encounter attack is an attack method that exchanges space for time. It was proposed by Diffie and Hellman in 1977. From a personal point of view, people refer more to an idea, not only for cryptographic attacks, but also for other aspects, which can reduce the complexity of the algorithm.
 
-$C=E_{k_2}(E_{k_1}(P))$
+
+The basic principle is as follows
+
+
+Suppose E and D are encryption functions and decryption functions, respectively, k1 and k2 are the keys used for two encryptions respectively, then we have
+
+
+$ C = E k_2 (E k_1 (P)) $
+
 
 $P=D_{k_2}(D_{k_1}(C))$
 
-则我们可以推出
+
+
+Then we can launch
+
 
 $E_{k_1}(P)=D_{k_2}(C)$
 
-那么，当用户知道一对明文和密文时
 
-1. 攻击者可以枚举所有的 k1，将 P 所有加密后的结果存储起来，并按照密文的大小进行排序。
-2. 攻击者进一步枚举所有的k2，将密文 C 进行解密得到 C1，在第一步加密后的结果中搜索 C1，如果搜索到，则我们在一定程度上可以认为我们找到了正确的 k1 和  k2。
-3. 如果觉得第二步中得到的结果不保险，则我们还可以再找一些明密文对进行验证。
 
-假设 k1 和 k2 的密钥长度都为 n，则原先我们暴力枚举需要 $O(n^2)$，现在我们只需要 $O(n log_2n)$。
+Then, when the user knows a pair of plaintext and ciphertext
 
-这与 2DES 的中间相遇攻击类似。
 
-## 题目
+1. An attacker can enumerate all k1s, store all the encrypted results of P, and sort them according to the size of the ciphertext.
+2. The attacker further enumerates all k2, decrypts ciphertext C to get C1, and searches for C1 in the result of the first step of encryption. If we search, we can think that we have found the correct k1. And k2.
+3. If you feel that the results obtained in the second step are not insured, we can also find some clear cipher pairs to verify.
 
-- 2018 国赛 Crackmec，参见 Wiki AES 部分
-- 2018 Plaid CTF Transducipher，参见比特攻击部分的原理。
-- 2018 国赛 Crackme java，参见 Wiki 整数域上的离散对数部分
-- 2018 WCTF RSA，参见 wiki RSA Complex 部分
 
-## 参考文献
+Assuming that the key lengths for both k1 and k2 are n, then our violent enumeration would require $O(n^2)$, now we only need $O(n log_2n)$.
+
+
+This is similar to the middle encounter attack of 2DES.
+
+
+## topic
+
+
+- 2018 National Crackmec, see the Wiki AES section
+- 2018 Plaid CTF Transducipher, see the principle of the bit attack section.
+- 2018 National CrackMe, see the discrete logarithmic part of the Wiki integer field
+- 2018 WCTF RSA, see wiki RSA Complex section
+
+
+## references
+
 
 - https://zh.wikipedia.org/wiki/%E4%B8%AD%E9%80%94%E7%9B%B8%E9%81%87%E6%94%BB%E6%93%8A
+
 

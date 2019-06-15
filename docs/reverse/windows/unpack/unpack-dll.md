@@ -1,15 +1,25 @@
-这里需要联系上篇的 [手动查找IAT并使用ImportREC重建](/reverse/unpack/manually-fix-iat/index.html)
+[EN](./unpack-dll.md) | [ZH](./unpack-dll-zh.md)
+Here you need to contact the previous section [Manually find IAT and use ImportREC to rebuild] (/reverse/unpack/manually-fix-iat/index.html)
 
-例题文件你可以点击此处下载: [unpack_dll.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/unpack_dll.zip)
 
-因为`Dll`脱壳需要这一步骤. `Dll`脱壳的最关键的步骤在于`使用LordPE修改其Dll的标志`, 用`LordPE`打开`UnpackMe.dll`, 然后在特征值那里点击`...`, 然后取消勾选`DLL`标志, 保存后, 系统就会将该文件视作一个可执行文件.
+The example file can be downloaded here: [unpack_dll.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/unpack_dll.zip)
+
+
+This step is required for `Dll` shelling. The most critical step for `Dll` shelling is to use LordPE to modify its Dll flag, open `UnpackMe.dll` with `LordPE`, and click on the feature value. ...`, then uncheck the `DLL` flag. After saving, the system will treat the file as an executable file.
+
 
 ![12.png](./figure/unpack_dll/upx-dll-unpack-12.png)
 
-我们将`UnpackMe.dll`后缀名改成`UnpackMe.exe`, 然后用OD载入.
+
+
+We changed the `UnpackMe.dll` suffix to `UnpackMe.exe` and loaded it with OD.
+
 
 ![13.png](./figure/unpack_dll/upx-dll-unpack-13.png)
 
-一般在入口点, 程序都会保存一些信息, 这里就很简单, 只作了一个`cmp`. 要注意的一点是, 这里的`jnz`跳转直接就跳到了`unpacking`过程的末尾. 因此我们需要修改寄存器的`z`标志来使得跳转失效. 同时在`unpacking`过程的末尾设下一个断点以避免脱壳完然后直接运行.(程序会断在这个断点上, 但是脱壳已经完成, 代码都很清晰)
 
-`Dll`脱壳的基本步骤跟`exe`文件脱壳一样, 而在重建`IAT`时, 需要照着上篇 [手动查找IAT并使用ImportREC重建](/reverse/unpack/manually-fix-iat/index.html) 所说的那样, 手动找到`IAT`表并用`ImportREC`进行重建. 只是要注意, 在脱壳完dump后, 要记得用LordPE把`DLL`标志恢复过来并将文件后缀名改为`.dll`.
+
+Usually at the entry point, the program will save some information, here is very simple, just make a `cmp`. One thing to note is that the `jnz` jump here jumps directly to the end of the `unpacking` process. So we Need to modify the `z` flag of the register to invalidate the jump. Also set a breakpoint at the end of the `unpacking` process to avoid shelling and then run directly. (The program will break at this breakpoint, but the shell has been Finished, the code is very clear)
+
+
+The basic steps of `Dll` shelling are the same as the `exe` file shelling, and when rebuilding ʻIAT`, you need to follow the previous article [Manually find IAT and use ImportREC to rebuild] (/reverse/unpack/manually-fix-iat /index.html) As mentioned, manually find the `IAT` table and rebuild it with `ImportREC`. Just note that after unpacking the dump, remember to restore the `DLL` flag with LordPE and append the file name. Change to `.dll`.
