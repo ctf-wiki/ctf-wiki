@@ -8,6 +8,15 @@
 
 欢迎来到 **CTF Wiki**。
 
+*读者注意*：CTF Wiki最近转为双语，因此CTF中的每一页都是如此
+Wiki现在将以英文和中文提供。只需点击广告按钮即可
+每个页面的顶部看起来像这样
+
+*NOTE TO READER*: CTF Wiki has recently moved to being bilingual, so each page in CTF 
+Wiki will now be available in both English and Chinese. Simply click the button ad the 
+top of each page that looks like the link below: 
+[EN](./index.md) | [ZH](./index-zh.md)
+ 
 **CTF**（Capture The Flag，夺旗赛）起源于 1996 年 **DEFCON** 全球黑客大会，是网络安全爱好者之间的竞技游戏。
 
 **CTF** 竞赛涉及众多领域，内容繁杂。与此同时，安全技术的发展速度越来越快，**CTF** 题目的难度越来越高，初学者面对的门槛越来越高。而网上资料大都零散琐碎，初学者往往并不知道该如何系统性地学习 **CTF** 相关领域知识，常需要花费大量时间，苦不堪言。

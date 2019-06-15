@@ -15,6 +15,15 @@
 
 Welcome to the **CTF Wiki**.
 
+*NOTE TO READER*: CTF Wiki has recently moved to being bilingual, so each page in CTF
+Wiki will now be available in both English and Chinese. Simply click the button ad the 
+top of each page that looks like the link below.
+
+*读者注意*：CTF Wiki最近转为双语，因此CTF中的每一页都是如此
+Wiki现在将以英文和中文提供。只需点击广告按钮即可
+每个页面的顶部看起来像这样:
+[EN](./index.md) | [ZH](./index-zh.md)
+
 
 **CTF** (Capture The Flag) originated in the 1996 **DEFCON** Global Hacking Conference, a competitive game among cybersecurity enthusiasts.
 
