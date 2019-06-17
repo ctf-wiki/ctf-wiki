@@ -76,9 +76,7 @@ The $f$ function is $\text{Block Cipher Decryption}$ in the figure.
 For the original text and ciphertext of a certain information, then we can modify the $n$ ciphertext block $C_n$ to $C_n~\text{xor}~P_{n+1}~\text{xor}~ A$. Then decrypt the ciphertext, then the decrypted $n$ plaintext will soon become $A$.
 
 
-#### 0ops Training platform
-The following is an example of a topic on the 0ops training platform:
-
+#### Example
 
 ```python
 
