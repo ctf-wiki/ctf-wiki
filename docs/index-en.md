@@ -1,4 +1,4 @@
-[EN](./index.md) | [ZH](./index-zh.md)
+[EN](./index-en.md) | [ZH](./index.md)
 
 
 # CTF Wiki
