@@ -1,11 +1,11 @@
 [EN](./introduction.md) | [ZH](./introduction-zh.md)
-# basic introduction
+# Basic Introduction
 
 
-## grid definition
+## Lattice Definition
 
 
-The lattice is a linear combination of all integer coefficients of n ($m\geq n$) linearly independent vectors $b_i(1\leq i \leq n)$ of the m-dimensional European space $R^m$, ie
+The lattice is the linear combination of all integer coefficients of n ($m\geq n$) linearly independent vectors $b_i(1\leq i \leq n)$ of the m-dimensional Euclidean space $R^m$, ie
 $L(B)=\{\sum\limits_{i=1}^{n}x_ib_i:x_i \in Z,1\leq i \leq n\}$
 
 
@@ -13,30 +13,30 @@ $L(B)=\{\sum\limits_{i=1}^{n}x_ib_i:x_i \in Z,1\leq i \leq n\}$
 Here B is a collection of n vectors, we call
 
 
-- These n vectors are a set of bases of the lattice L.
-- The rank of the lattice L is n.
-- The number of bits in L is m.
+- These $n$ vectors a set of bases of the lattice $L$.
+- The rank of the lattice $L$ is $n$.
+- The number of bits in $L$ is $m$.
 
 
-If m = n, then we call this format full rank.
+If $m = n$, then we call this format full rank.
 
 
-Of course, it can be other groups, not $R^m$.
+Of course, the space can be other groups instead of $R^m$.
 
 
-## A few basic definitions in the grid
+## Basic Definition in Lattices
 
 
-### successive minimum
+### Successive Minimum
 
 
-The grid is the lattice of the m-dimensional European space $R^m$ with rank n, then the continuous minimum length of L (successive minima) is $\lambda_1,...,\lambda_n \in R$, which satisfies for any $1\ Leq i\leq n$, $\lambda_i$ is the minimum value of the vector linearly independent vector $v_i$, $||v_j||\leq \lambda_i,1\leq j\leq i$ in the lattice.
+Let lattice $L$ be a lattice in the m-dimensional Euclidean space $R^m$ with rank $n$, then the continuous minimum length of $L$ (successive minima) is $\lambda_1,...,\lambda_n \in R$, where for any $1 \leq i\leq n$, $\lambda_i$ is the minimum value to satisfy that for $i$ linearly independent vectors $v_i$, $||v_j||\leq \lambda_i,1\leq j\leq i$.
 
 
-Natural $\lambda_i \leq \lambda_j ,\forall i <j$。
+Obviously we have $\lambda_i \leq \lambda_j ,\forall i <j$。
 
 
-## Calculating difficult problems in the grid
+## Calculating Difficult Problems in the Lattice
 
 
 **Shortest Vector Problem (SVP)**: Given the lattice L and its base vector B, find the non-zero vector v in the lattice L such that for any other non-zero vector u in the lattice, $||v| | \leq ||u||$.

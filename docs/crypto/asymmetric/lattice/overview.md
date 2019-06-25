@@ -2,21 +2,21 @@
 #格概要
 
 
-Grid has at least two meanings in mathematics
+Lattice has at least two meanings in mathematics
 
 
 - Define a partial order set L on a non-empty finite set that satisfies any element a, b in set L such that a, b has a maximum lower bound, and a minimum upper bound in L. See https://en.wikipedia.org/wiki/Lattice_(order) for details.
 - The definition in group theory is a subset of $R^n$ that satisfies a certain property. Of course, it can also be other groups.
 
 
-At present, the research on the grid mainly has the following major directions.
+At present, the research on the lattice mainly has the following major directions.
 
 
-1. The difficulty of calculating problems in the grid, that is, the computational complexity of these problems, mainly including
+1. The difficulty of calculating problems in the lattice, that is, the computational complexity of these problems, mainly including
 1. SVP problem
 2. CVP issues
 2. How to solve the difficult problem in the lattice, there are both approximate algorithms and some precision algorithms.
-3. Grid-based cryptanalysis, that is, how to use lattice theory to analyze some existing cryptographic algorithms.
+3. Lattice-based cryptanalysis, that is, how to use lattice theory to analyze some existing cryptographic algorithms.
     1. Knapsack cryptosystems
 
 2. DSA nonce biases
