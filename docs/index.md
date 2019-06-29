@@ -8,12 +8,12 @@
 
 欢迎来到 **CTF Wiki**。
 
-*读者注意*：CTF Wiki最近转为双语，因此CTF中的每一页都是如此
-Wiki现在将以英文和中文提供。只需点击广告按钮即可
-每个页面的顶部看起来像这样
+*读者注意*：CTF Wiki最近转为双语，因此CTF Wiki中的每一页都将提供英文和中文。你只需点击
+每个页面的顶部按鈕，顶部按鈕看起来像这样:
+[EN](./index-en.md) | [ZH](./index.md)
 
 *NOTE TO READER*: CTF Wiki has recently moved to being bilingual, so each page in CTF 
-Wiki will now be available in both English and Chinese. Simply click the button ad the 
+Wiki will now be available in both English and Chinese. Simply click the button AT the 
 top of each page that looks like the link below: 
 [EN](./index-en.md) | [ZH](./index.md)
  
@@ -25,12 +25,12 @@ top of each page that looks like the link below:
 
 作为一个自由的站点，围绕 **CTF** 近几年赛题，**CTF Wiki** 对 **CTF** 中的各个方向的知识和技术进行介绍，以便于初学者更好地学习 **CTF** 相关的知识。
 
-目前，**CTF Wiki** 主要包含 **CTF** 各大方向的基础知识，正在着力完善以下内容
+目前，**CTF Wiki** 主要包含 **CTF** 各大範疇的基础知识，並正在着力完善以下内容
 
 - CTF 竞赛中的进阶知识
 - CTF 竞赛中的优质题目
 
-关于上述部分待完善内容，请参见 CTF Wiki 的 [Projects](https://github.com/ctf-wiki/ctf-wiki/projects)，详细列举了正在做的事情以及待做事项。
+关于上述部分待完善内容，请参见 CTF Wiki 的 [Projects](https://github.com/ctf-wiki/ctf-wiki/projects)，详细列出了正在做的事情以及待做事项。
 
 当然，**CTF Wiki** 基于 **CTF**，却不会局限于 **CTF**，在未来，**CTF Wiki** 将会
 
@@ -39,7 +39,7 @@ top of each page that looks like the link below:
 
 此外，鉴于以下两点
 
-- 技术更应该以开放的方式共享。
+- 技术应该以开放的方式共享。
 - 安全攻防技术总是保持不断更新，旧的技术在面对新的技术时随时可能失效。
 
 因此，**CTF Wiki** 永远不会出版书籍。
@@ -72,12 +72,12 @@ docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 
 ## How to practice？
 
- 首先，可以通过在线阅读来学习一些基本的安全知识。
+ 首先，可以通过浏览網上資料来学习一些基本的安全知识。
 
 其次，CTF Wiki 还有两个姊妹项目
 
 - CTF Wiki 中涉及的题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) 仓库中，请根据对应的分类自行寻找。
-    - 注：目前仍有部分题目在该仓库下，正在迁移中。。。（misc，web）
+    - 注：目前仍有部分题目正在迁移中。。。（misc，web）
 - CTF Wiki 中涉及的工具会不断补充到 [ctf-tools](https://github.com/ctf-wiki/ctf-tools) 仓库中。
 
 ## How to make CTF Wiki Better？
@@ -95,20 +95,20 @@ docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 - 快速学习新事物的能力
 - 一个不一样的思考方式
 - 一颗乐于解决问题的心
-- 一些有趣的安全技术
+- 一些有趣的網絡安全技术
 - 一段充实奋斗的时光
 
-在阅读 Wiki 之前，我们希望能给予你几点建议：
+在阅读 Wiki 之前，我们希望能给予你一些建議：
 
-- 阅读短文 [提问的智慧](http://www.jianshu.com/p/60dd8e9cd12f)
-- 善用 Google 搜索能帮助你更好地提升自己
-- 至少掌握一门编程语言，比如 Python
-- 动手实践比什么都要管用
+- 阅读 [提问的智慧](http://www.jianshu.com/p/60dd8e9cd12f)
+- 善用 Google 搜索可以帮助你更好地提升自己
+- 掌握至少一门编程语言，比如 Python
+- 实践比什么都要管用
 - 保持对技术的好奇与渴望并坚持下去
 
-> 世界很大，互联网让世界变小，真的黑客们应该去思考并创造，无论当下是在破坏还是在创造，记住，未来，那条主线是创造的就对了。 ——by 余弦
+> 世界很大，互联网让世界变小，真的黑客们应该去思考并创造，无论当下是在破坏还是在创造，记住，未来，那主线是创造就对了。 ——by 余弦
 
-安全圈很小，安全的海洋很深。安全之路的探险，不如就从 **CTF Wiki** 开始！
+安全圈很小，安全的海洋很深。與其盲目的進行在安全之路的探险，不如就从 **CTF Wiki** 开始！
 
 ## Copyleft
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a>进行许可。
