@@ -16,7 +16,7 @@ typora-root-url: ../../../
 ### basic introduction
 
 
-The LLL algorithm is to find a set of bases on the grid, which satisfies the following effects.
+The LLL algorithm is to find a set of bases on the lattice, which satisfies the following effects.
 
 
 

@@ -74,7 +74,7 @@ That is, we only need to find an n-dimensional vector $z_i=x_i-y_i$, which satis
 $ z_1g ^ {n-1} + z_2g ^ {n-2} + ... + z_ng ^ 0-k * 2 ^ {256} = 0 $
 
 
-That is, a set of vectors is found to satisfy the above formula. This can be thought of as a simple case of the second example in LLL Paper (see the Grid Question section).
+That is, a set of vectors is found to satisfy the above formula. This can be thought of as a simple case of the second example in LLL Paper (see the Lattice Question section).
 
 
 Then we can quickly construct the matrix as follows

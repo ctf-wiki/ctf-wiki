@@ -106,7 +106,7 @@ $\left[ \begin{matrix} p & 0 & \dots & 0 & 0 \\ 0 & p & \ddots & \vdots & \vdots
 
 
 
-We need to find the nearest vector from $\mathbf{u}=(u_1, u_2, \dots, u_{n}, 0)$ on the grid, so here we can use `Babai&#39;s nearest plane algorithm`. Finally we can get a set of vectors $\mathbf{v}=(\alpha \cdot t_1 \mod p, \alpha \cdot t_2 \mod p, \dots, \frac{\alpha}{2^{l+1} })$, which calculates $\alpha$.
+We need to find the nearest vector from $\mathbf{u}=(u_1, u_2, \dots, u_{n}, 0)$ on the lattice, so here we can use `Babai&#39;s nearest plane algorithm`. Finally we can get a set of vectors $\mathbf{v}=(\alpha \cdot t_1 \mod p, \alpha \cdot t_2 \mod p, \dots, \frac{\alpha}{2^{l+1} })$, which calculates $\alpha$.
 
 
 ### BCTF 2018 - guess_number
