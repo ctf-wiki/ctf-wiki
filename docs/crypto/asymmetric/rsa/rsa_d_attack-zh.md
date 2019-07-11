@@ -3,36 +3,18 @@
 
 ### 攻击原理
 
-首先当 d 泄露之后，我们自然可以解密所有加密的消息。我们甚至还可以对模数 N 进行分解。其基本原理如下
+首先当 $d$ 泄露之后，我们自然可以解密所有加密的消息。我们甚至还可以对模数 N 进行分解。其基本原理如下
 
-我们知道 $ed \equiv 1 \bmod \varphi(n)$，那么 $\varphi(n) | k=ed-1$。显然 k 是一个偶数，我们可以令 $k=2^tr$，其中 r 为奇数，t 不小于 1。那么对于任何的与 N 互素的数 g，我们都有 $g^k \equiv 1 \bmod n$。那么 $z=g^{\frac{k}{2}}$ 是模 N 的二次方根。那么我们有
+我们知道 $ed \equiv 1 \bmod \varphi(n)$，那么存在一个 $k$ 使得 $ed-1=k\varphi(n)$。又 $\forall a\in {Z}_n^*$，满足 $a^{ed-1}\equiv1(\bmod n)$。令$ed-1=2^st$，$t$ 是一个奇数。然后可以证明对于至少一半的 $a\in {Z}_n^*$，存在一个 $i\in[1,s]$，使得 $a^{2^{i-1}t}\not\equiv\pm1(\bmod n),a^{2^{i}t}\equiv1(\bmod n)$ 成立。
 
-$$
-z^2 \equiv 1 \bmod p \\
-z^2 \equiv 1 \bmod q
-$$
-
-进而我们我们知道方程有以下四个解，前两个是
-
-$$
-x \equiv \pm1 \bmod N
-$$
-
-后两个是 $\pm x$，其中 x 满足以下条件
-
-$$
-x \equiv 1 \bmod p \\
-x \equiv -1 \bmod q
-$$
-
-显然，$z=g^{\frac{k}{2}}$ 满足的是后面那个条件，我们可以计算 $gcd(z-1,N)$ 来对 N 进行分解。
+如果 $a,i$ 满足上述条件，$gcd(a^{2^{i-1}t}-1,n)$是 $n$ 的一个非平凡因子，所以可以对 $n$ 进行暴力分解。
 
 ### 工具
 
 利用以下工具可以直接进行计算
 
 - RsaConverter.exe (https://sourceforge.net/projects/rsaconverter/ , for windows )
-- [rsatool.py](https://github.com/ius/rsatool/blob/master/rsatool.py)
+- [rsatool.py](https://github.com/ius/rsatool/blob/master/rsatool.py)(分解原理如上)
 
 
 ### 2017 HITB - hack in the card II
@@ -199,3 +181,5 @@ true
 hctf{d8e8fca2dc0f896fd7cb4cb0031ba249}
 ```
 
+## 参考文献
+- http://cacr.uwaterloo.ca/hac/about/chap8.pdf
