@@ -5,9 +5,25 @@
 
 首先当 $d$ 泄露之后，我们自然可以解密所有加密的消息。我们甚至还可以对模数 N 进行分解。其基本原理如下
 
-我们知道 $ed \equiv 1 \bmod \varphi(n)$，那么存在一个 $k$ 使得 $ed-1=k\varphi(n)$。又 $\forall a\in {Z}_n^*$，满足 $a^{ed-1}\equiv1(\bmod n)$。令$ed-1=2^st$，$t$ 是一个奇数。然后可以证明对于至少一半的 $a\in {Z}_n^*$，存在一个 $i\in[1,s]$，使得 $a^{2^{i-1}t}\not\equiv\pm1(\bmod n),a^{2^{i}t}\equiv1(\bmod n)$ 成立。
+我们知道 $ed \equiv 1 \bmod \varphi(n)$，那么存在一个 $k$ 使得 
 
-如果 $a,i$ 满足上述条件，$gcd(a^{2^{i-1}t}-1,n)$是 $n$ 的一个非平凡因子，所以可以对 $n$ 进行暴力分解。
+$$
+ed-1=k\varphi(n)
+$$
+
+又 $\forall a\in {Z}_n^*$，满足$a^{ed-1}\equiv1(\bmod n)$。令
+
+$$
+ed-1=2^st
+$$
+
+其中，$t$ 是一个奇数。然后可以证明对于至少一半的 $a\in {Z}_n^*$，存在一个 $i\in[1,s]$，使得 
+
+$$
+a^{2^{i-1}t}\not\equiv\pm1(\bmod n),a^{2^{i}t}\equiv1(\bmod n)
+$$
+
+成立。如果 $a,i$ 满足上述条件，$gcd(a^{2^{i-1}t}-1,n)$是 $n$ 的一个非平凡因子，所以可以对 $n$ 进行暴力分解。
 
 ### 工具
 
