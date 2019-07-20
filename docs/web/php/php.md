@@ -941,7 +941,7 @@ class Example {
 was $ var = &quot;&quot;;
   function __destruct() {
 
-    eval($this->$var);
+    eval($this->var);
 
   }
 
