@@ -542,7 +542,7 @@ http://www.a.com/index.php?callback=phpinfo
 class Example {
   var $var = "";
   function __destruct() {
-    eval($this->$var);
+    eval($this->var);
   }
 }
 unserialize($_GET["saved_code"]);
