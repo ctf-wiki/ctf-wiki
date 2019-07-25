@@ -202,7 +202,7 @@ struct cred {
 另外要注意的是，`kernel 管理进程，因此 kernel 也记录了进程的权限`。kernel 中有两个可以方便的改变权限的函数：
 
 - **int commit_creds(struct cred *new)**
-- **struct cred* prepare_kernel_cred(struct task_struct* daemon)**
+- **struct cred\* prepare_kernel_cred(struct task_struct\* daemon)**
 
 从函数名也可以看出，执行 `commit_creds(prepare_kernel_cred(0))` 即可获得 root 权限（root 的 uid，gid 均为 0）
 
