@@ -332,9 +332,9 @@ Kernel state functions have some changes compared to user state library function
 Also note that the `kernel manages the process, so the kernel also records the permissions of the process`. There are two functions in the kernel that can easily change permissions:
 
 
-- **int commit_creds(struct cred *new)**
+- **int commit_creds(struct cred \*new)**
 
-- **struct cred* prepare_kernel_cred(struct task_struct* daemon)**
+- **struct cred\* prepare_kernel_cred(struct task_struct\* daemon)**
 
 
 
