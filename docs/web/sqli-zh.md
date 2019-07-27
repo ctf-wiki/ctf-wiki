@@ -7,10 +7,10 @@
 
 ## 常用工具
 
--   Burp Suite：[Burp Suite 使用介绍](http://static.hx99.net/static/drops/tools-1548.html)
+-   Burp Suite：[Burp Suite 使用介绍](http://drops.xmd5.com/static/drops/tools-1548.html)
 -   Tamper Data (Firefox addon)
 -   HackBar (Firefox addon)
--   sqlmap：[sqlmap 用户手册](http://static.hx99.net/static/drops/tips-143.html)
+-   sqlmap：[sqlmap 用户手册](http://drops.xmd5.com/static/drops/tips-143.html)
 
 ## 注入常见参数
 
