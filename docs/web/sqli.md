@@ -10,12 +10,12 @@
 ## Common tools
 
 
-- Burp Suite: [Introduction to Burp Suite] (http://static.hx99.net/static/drops/tools-1548.html)
+- Burp Suite: [Introduction to Burp Suite](http://drops.xmd5.com/static/drops/tools-1548.html)
 -   Tamper Data (Firefox addon)
 
 -   HackBar (Firefox addon)
 
-- sqlmap: [sqlmap user manual] (http://static.hx99.net/static/drops/tips-143.html)
+- sqlmap: [sqlmap user manual](http://drops.xmd5.com/static/drops/tips-143.html)
 
 
 ## Injecting common parameters
