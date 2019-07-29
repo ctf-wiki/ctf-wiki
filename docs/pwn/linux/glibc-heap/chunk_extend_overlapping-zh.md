@@ -54,6 +54,8 @@ chunk extend技术能够产生的原因在于ptmalloc在对堆chunk进行操作�
 简单来说，该利用的效果是通过更改第一个块的大小来控制第二个块的内容。
 **注意，我们的示例都是在64位的程序。如果想在32位下进行测试，可以把8字节偏移改为4字节**。
 ```
+#include<stdlib.h>
+#include<stdio.h>
 int main(void)
 {
     void *ptr,*ptr1;
@@ -106,6 +108,8 @@ rax = 0x602010
 通过之前深入理解堆的实现部分的内容，我们得知处于 fastbin 范围的 chunk 释放后会被置入 fastbin 链表中，而不处于这个范围的 chunk 被释放后会被置于unsorted bin链表中。
 以下这个示例中，我们使用 0x80 这个大小来分配堆（作为对比，fastbin 默认的最大的 chunk 可使用范围是0x70）
 ```
+#include<stdlib.h>
+#include<stdio.h>
 int main()
 {
     void *ptr,*ptr1;
@@ -114,7 +118,7 @@ int main()
     malloc(0x10); //分配第二个 0x10 的chunk2
     malloc(0x10); //防止与top chunk合并
     
-    *(int *)((int)ptr-0x8)=0xb1;
+    *(long long *)((long long)ptr-0x8)=0xb1;
     free(ptr);
     ptr1=malloc(0xa0);
 }
@@ -168,6 +172,8 @@ int main()
 ## 基本示例3：对free的smallbin进行extend
 示例3是在示例2的基础上进行的，这次我们先释放 chunk1，然后再修改处于 unsorted bin 中的 chunk1 的size域。
 ```
+#include<stdlib.h>
+#include<stdio.h>
 int main()
 {
     void *ptr,*ptr1;
@@ -177,7 +183,7 @@ int main()
     
     free(ptr);//首先进行释放，使得chunk1进入unsorted bin
     
-    *(int *)((int)ptr-0x8)=0xb1;
+    *(long long *)((long long)ptr-0x8)=0xb1;
     ptr1=malloc(0xa0);
 }
 ```
@@ -240,6 +246,8 @@ int main()
 ## 基本示例4：通过extend后向overlapping
 这里展示通过extend进行后向overlapping，这也是在CTF中最常出现的情况，通过overlapping可以实现其它的一些利用。
 ```
+#include<stdlib.h>
+#include<stdio.h>
 int main()
 {
     void *ptr,*ptr1;
@@ -248,7 +256,7 @@ int main()
     malloc(0x10); //分配第2个 0x10 的chunk2
     malloc(0x10); //分配第3个 0x10 的chunk3
     malloc(0x10); //分配第4个 0x10 的chunk4    
-    *(int *)((int)ptr-0x8)=0x61;
+    *(long long *)((long long )ptr-0x8)=0x61;
     free(ptr);
     ptr1=malloc(0x50);
 }
@@ -258,6 +266,8 @@ int main()
 ## 基本示例5：通过extend前向overlapping
 这里展示通过修改pre_inuse域和pre_size域实现合并前面的块
 ```
+#include<stdlib.h>
+#include<stdio.h>
 int main(void)
 {
 	void *ptr1,*ptr2,*ptr3,*ptr4;
@@ -267,8 +277,8 @@ int main(void)
 	ptr4=malloc(128);//smallbin2
 	malloc(0x10);//防止与top合并
 	free(ptr1);
-	*(int *)((long long)ptr4-0x8)=0x90;//修改pre_inuse域
-	*(int *)((long long)ptr4-0x10)=0xd0;//修改pre_size域
+	*(long long *)((long long)ptr4-0x8)=0x90;//修改pre_inuse域
+	*(long long *)((long long)ptr4-0x10)=0xd0;//修改pre_size域
 	free(ptr4);//unlink进行前向extend
 	malloc(0x150);//占位块
 	
