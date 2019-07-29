@@ -88,7 +88,8 @@ Similar to chunk extend, there is an operation called chunk shrink. Only the use
 In simple terms, the effect of this utilization is to control the content of the second block by changing the size of the first block.
 **Note that our examples are all in 64-bit programs. If you want to test under 32 bits, you can change the 8-byte offset to 4 bytes**.
 ```
-
+#include<stdlib.h>
+#include<stdio.h>
 int main(void)
 
 {
@@ -178,7 +179,8 @@ rax = 0x602010
 Through a deep understanding of the implementation part of the heap, we know that the chunks in the fastbin range will be placed in the fastbin list, and the chunks that are not in this range will be placed in the unsorted bin list.
 In the following example, we use the size 0x80 to allocate the heap (as a comparison, the default maximum chunk for fastbin can be used as 0x70)
 ```
-
+#include<stdlib.h>
+#include<stdio.h>
 int main()
 
 {
@@ -191,7 +193,7 @@ Malloc (0x10); / / allocate the second 0x10 chunk2
 Malloc (0x10); / / prevent merger with top chunk
     
 
-* (int *) ((int) ptr-0x8) = 0xb1;
+* (long long *) ((long long) ptr-0x8) = 0xb1;
     free(ptr);
 
     ptr1=malloc(0xa0);
@@ -286,7 +288,8 @@ When the allocation is made again, the chunk1 and chunk2 spaces are retrieved, a
 ## Basic example 3: Extend the free smallbin
 Example 3 is based on Example 2, this time we release chunk1 and then modify the size field of chunk1 in the unsorted bin.
 ```
-
+#include<stdlib.h>
+#include<stdio.h>
 int main()
 
 {
@@ -301,7 +304,7 @@ Malloc (0x10); / / assign the second 0x10 chunk2
 Free(ptr);//First release, so that chunk1 enters unsorted bin
     
 
-* (int *) ((int) ptr-0x8) = 0xb1;
+* (long long *) ((long long) ptr-0x8) = 0xb1;
     ptr1=malloc(0xa0);
 
 }
@@ -414,7 +417,8 @@ In addition, chunk overlap can be realized by extend, and the fd/bk pointer of t
 ## Basic example 4: Overlapping after extend
 Here we show backward overlapping through extend, which is also the most common case in CTF, and other uses can be achieved through overlay.
 ```
-
+#include<stdlib.h>
+#include<stdio.h>
 int main()
 
 {
@@ -426,7 +430,7 @@ Ptr=malloc(0x10);//Assign the first 0x80 chunk1
 Malloc (0x10); / / allocate the second 0x10 chunk2
 Malloc (0x10); / / allocate the third 0x10 chunk3
 Malloc (0x10); / / allocate the 4th 0x10 chunk4
-* (int *) ((int) ptr-0x8) = 0x61;
+* (long long *) ((long long) ptr-0x8) = 0x61;
     free(ptr);
 
     ptr1=malloc(0x50);
@@ -458,8 +462,8 @@ int main(void)
 Malloc (0x10); / / prevent merge with top
 	free(ptr1);
 
-*(int *)((long long)ptr4-0x8)=0x90;//Modify the pre_inuse field
-*(int *)((long long)ptr4-0x10)=0xd0;//Modify the pre_size field
+*(long long *)((long long)ptr4-0x8)=0x90;//Modify the pre_inuse field
+*(long long *)((long long)ptr4-0x10)=0xd0;//Modify the pre_size field
 Free(ptr4);//unlink for forward extend
 Malloc (0x150); / / placeholder block
 	
