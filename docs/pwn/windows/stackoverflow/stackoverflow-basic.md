@@ -5,7 +5,7 @@
 ## Introduction
 
 
-For an introduction to the stack, read the introduction in [Linux Pwn] (https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/stack_intro/).
+For an introduction to the stack, read the introduction in [Linux Pwn] (https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/stack-intro/).
 
 
 
