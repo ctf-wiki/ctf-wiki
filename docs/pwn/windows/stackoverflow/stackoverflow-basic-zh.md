@@ -3,7 +3,7 @@
 
 ## 介绍 
 
-关于栈的介绍，可以阅读 [Linux Pwn](https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/stack_intro/) 中的介绍。
+关于栈的介绍，可以阅读 [Linux Pwn](https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/stack-intro/) 中的介绍。
 
 
 
