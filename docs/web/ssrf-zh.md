@@ -152,8 +152,6 @@ header("Location: $scheme://$ip:$port/$data");
 ?>
 ```
 
-[腾讯某处 SSRF 漏洞（非常好的利用点）附利用脚本](https://_thorns.gitbooks.io/sec/content/teng_xun_mou_chu_ssrf_lou_6d1e28_fei_chang_hao_de_.html)
-
 ## 协议利用
 
 -   Dict 协议
