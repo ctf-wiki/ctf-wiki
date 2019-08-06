@@ -1131,7 +1131,7 @@ $array1[] = array(
 
 $array2 = array("foo", "bar", "hello", "world");
 
-var_dump (md5 ($ array1) == var_dump ($ array2)); //threaten
+var_dump (md5 ($ array1) == md5 ($ array2)); //threaten
 ```
 
 
@@ -1198,7 +1198,7 @@ At this time, the program outputs `i is less than 3 but not negative` because th
 
 
 
-In the PHP manual, the `in_array()` function is interpreted as `bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` . If the strict parameter is not provided, then `in_array` will be loose. Compare to see if `$needle` is in `$haystack`. When the value of strince is true, `in_array()` compares the type of needls with the type in haystack.
+In the PHP manual, the `in_array()` function is interpreted as `bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )` . If the strict parameter is not provided, then `in_array` will be loose. Compare to see if `$needle` is in `$haystack`. When the value of strict is true, `in_array()` compares the type of needls with the type in haystack.
 
 
 ```php
@@ -1492,7 +1492,7 @@ WEB-INF mainly contains the following files or directories:
 
 - `/WEB-INF/web.xml` : Web application configuration file that describes the servlet and other application component configuration and naming rules.
 - `/WEB-INF/classes/` : Contains all the class files used by the site, including servlet class and non-servlet class, they cannot be included. In the jar file.
-- `/WEB-INF/lib/` : Stores various JAR files required by the web application, and places jar files that are only required in this application, such as database driver jar files.
+- `/WEB-INF/lib/` : Stores various jar files required by the web application, and places jar files that are only required in this application, such as database driver jar files.
 - `/WEB-INF/src/` : source directory, each java file is placed according to the package name structure.
 - `/WEB-INF/database.properties` : Database configuration file.
 
