@@ -25,7 +25,7 @@ MIPS 有 32 个通用寄存器 （General purpose registers），以美元符号
 
 
 
-MIPS 作为一种 load-store 架构，意味着当我们要访问内存必须要通过加载和存储指令才能访问。所有其他指令（add，sub，mul，div和，等等）必须从寄存器获取其操作数并将其结果存储在寄存器中。例如下面的例子：
+MIPS 作为一种 load-store 架构，意味着当我们要访问内存必须要通过加载和存储指令才能访问。所有其他指令（add，sub，mul，div等等）必须从寄存器获取其操作数并将其结果存储在寄存器中。例如下面的例子：
 
 ```
     sum = x + y
@@ -80,6 +80,7 @@ MIPS32 架构还定义了3个特殊寄存器，分别是 PC（程序计数器）
 | Operation:   | $t = $s + imm; advance_pc (4);                               |
 | Syntax:      | addiu $t, $s, imm                                            |
 | Encoding:    | `0010 01ss ssst tttt iiii iiii iiii iiii`                    |
+
 **ADDU -- Add unsigned (no overflow)**
 
 | Description: | Adds two registers and stores the result in a register |
@@ -103,6 +104,7 @@ MIPS32 架构还定义了3个特殊寄存器，分别是 PC（程序计数器）
 | Operation:   | $t = $s & imm; advance_pc (4);                               |
 | Syntax:      | andi $t, $s, imm                                             |
 | Encoding:    | `0011 00ss ssst tttt iiii iiii iiii iiii`                    |
+
 **BEQ -- Branch on equal**
 
 | Description: | Branches if the two registers are equal                     |
@@ -420,3 +422,7 @@ Note: The encoding for a NOOP represents the instruction SLL $0, $0, 0 which has
 | Operation:   | $t = $s ^ imm; advance_pc (4);                               |
 | Syntax:      | xori $t, $s, imm                                             |
 | Encoding:    | `0011 10ss ssst tttt iiii iiii iiii iiii`                    |
+
+### 参考链接
+
+[MIPS Instruction Reference](http://www.mrc.uidaho.edu/mrc/people/jff/digital/MIPSir.html)
