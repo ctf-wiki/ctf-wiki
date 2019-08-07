@@ -34,16 +34,12 @@ We assume that sum and x , y are variables in the program, and their MIPS assemb
 
 
 ```
-
-# sum = x + y
+    # sum = x + y
+    
     lw      $t0, x          # Load x from memory into a CPU register
-
     lw      $t1, y          # Load y from memory into a CPU register
-
     add     $t0, $t0, $t1   # Add x and y
-
     sw      $t0, sum        # Store the result from the CPU register to memory
-
 ```
 
 #### ( 2 ) Special registers
