@@ -3,7 +3,7 @@
 
 
 
-分配跟 large bin 有关的 chunk，要经过 fastbin，unsorted bin，small bin 的分配，建议在学习 largin bin attack 之前搞清楚 fastbin，unsorted bin 分配的流程
+分配跟 large bin 有关的 chunk，要经过 fastbin，unsorted bin，small bin 的分配，建议在学习 large bin attack 之前搞清楚 fastbin，unsorted bin 分配的流程
 
 
 
@@ -145,7 +145,7 @@ pwngdb 走起，开始我们的分析之旅：
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-6feb46de8ada1a30.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack1.png)
 
 
 
@@ -155,7 +155,7 @@ pwngdb 走起，开始我们的分析之旅：
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-7855eac21f325082.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack2.png)
 
 
 
@@ -163,7 +163,7 @@ pwngdb 走起，开始我们的分析之旅：
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-95d1ee6b2b609b52.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack3.png)
 
 要注意的是：
 
@@ -173,7 +173,7 @@ p1 的大小是 `0x330 < 0x3f0` 大小属于 small bin，而 p2 的大小是 `0x
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-64dd1e441556e195.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240) 
+![](./figure/large_bin_attack/large_bin_attack4.png) 
 
 
 
@@ -193,7 +193,7 @@ p1 的大小是 `0x330 < 0x3f0` 大小属于 small bin，而 p2 的大小是 `0x
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-b8c172a318e5a355.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack5.png)
 
 
 
@@ -209,7 +209,7 @@ large bin 某一个序列的 bin 中有一个 chunk 大小是 `0x410`
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-c888a9b0a7bbe0ab.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack6.png)
 
 
 
@@ -221,7 +221,7 @@ large bin 某一个序列的 bin 中有一个 chunk 大小是 `0x410`
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-a16efb451a651513.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack7.png)
 
 
 
@@ -229,13 +229,13 @@ large bin 某一个序列的 bin 中有一个 chunk 大小是 `0x410`
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-0c4ba04622947847.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack8.png)
 
 再来看看`malloc(0x90)`做了什么：
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-fb8d527322693014.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack9.png)
 
 
 
@@ -252,7 +252,7 @@ large bin 某一个序列的 bin 中有一个 chunk 大小是 `0x410`
 + 从 unsorted bin 中拿出最后一个 chunk（size = 0x290），放入 small bin 中，标记该序列的 small bin 有空闲 chunk
 + 再从 unsorted bin 中拿出最后一个 chunk（size = 0x410）
 
-![](https://upload-images.jianshu.io/upload_images/15548795-fc3a5d7504bf017a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack10.png)
 
 
 
@@ -264,13 +264,13 @@ large bin 某一个序列的 bin 中有一个 chunk 大小是 `0x410`
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-01b72ef7ff5b0326.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack11.png)
 
 
 
 我们继续：
 
-![](https://upload-images.jianshu.io/upload_images/15548795-cec706ca1b8816c8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack12.png)
 
 
 
@@ -282,7 +282,7 @@ large bin 某一个序列的 bin 中有一个 chunk 大小是 `0x410`
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-c276b28efc34e5ca.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack13.png)
 
 这个原本的意思是把从 unsorted bin 中来的 chunk 插入这个序列中，但是这里没有检查合法性。这里存在这一个利用：
 
@@ -320,7 +320,7 @@ addr2->fd_nextsize = victim;
 
 
 
-![](https://upload-images.jianshu.io/upload_images/15548795-8760b8459973a00c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![](./figure/large_bin_attack/large_bin_attack14.png)
 
 
 
