@@ -878,9 +878,9 @@ def put(key, size, data):
     p.sendline(str(size))
     p.recvuntil('data:')
     if len(data) < size:
-        p.s(data.ljust(size, '\x00'))
+        p.send(data.ljust(size, '\x00'))
     else:
-        p.s(data)
+        p.send(data)
 
 
 def delete(key):
@@ -948,3 +948,4 @@ def main():
 if __name__ == '__main__':
     main()
 ```
+
