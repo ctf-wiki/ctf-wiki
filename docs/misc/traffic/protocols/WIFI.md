@@ -1,47 +1,71 @@
+[EN](./WIFI.md) | [ZH](./WIFI-zh.md)
 ### WIFI
 
-> `802.11` 是现今无线局域网通用的标准,常见认证方式
+
+
+&gt; `802.11` is a common standard for wireless LANs today, common authentication methods
 >
-> - 不启用安全‍‍
-> - `WEP‍‍`
-> - `WPA/WPA2-PSK`（预共享密钥）‍‍
-> - `PA/WPA2 802.1X` （`radius` 认证）
+
+&gt; - Do not enable security‍‍
+&gt; - `WEP‍‍`
+&gt; - `WPA/WPA2-PSK` (pre-shared key)‍‍
+&gt; - `PA/WPA2 802.1X` (`radius` certification)
+
 
 #### WPA-PSK
 
-认证大致过程如下图
+
+The general process of certification is as follows
+
 
 ![wpa-psk](./figure/wpa-psk.png)
 
-其中四次握手过程
+
+
+Four handshakes
+
 
 ![eapol](./figure/eapol.png)
 
-1. 4次握手开始于验证器(AP)，它产生一个随机的值(ANonce)发送给请求者
-2. 请求者也产生了它自己的随机SNonce，然后用这两个Nonces以及PMK生成了PTK。请求者回复消息2给验证器,还有一个MIC（message integrity code，消息验证码）作为PMK的验证
-3. 它先要验证请求者在消息2中发来的MIC等信息，验证成功后，如果需要就生成GTK。然后发送消息3
-4. 请求者收到消息3，验证MIC，安装密钥，发送消息4，一个确认信息。验证器收到消息4，验证MIC，安装相同的密钥
 
-### 例题  
 
-> 实验吧： `shipin.cap`
+1. The 4th handshake starts at the validator (AP), which generates a random value (ANonce) to send to the requester.
+2. The requester also generates its own random SNonce, and then uses these two Nonces and PMK to generate the PTK. The requester replies message 2 to the verifier, and also has a MIC (message integrity code) as the verification of the PMK.
+3. It first verifies the MIC and other information sent by the requester in message 2. After the verification is successful, the GTK is generated if necessary. Then send the message 3
+4. The requester receives message 3, verifies the MIC, installs the key, sends a message 4, and a confirmation message. The verifier receives message 4, verifies the MIC, installs the same key
 
-从大量的`Deauth` 攻击基本可以判断是一个破解 `wifi` 时的流量攻击
 
-同时也成功发现了握手包信息
+### Example
+
+
+&gt; Experiment: `shipin.cap`
+
+
+From a large number of `Deauth` attacks, it can be judged that it is a traffic attack when cracking `wifi`
+
+
+At the same time, the handshake packet information was successfully discovered.
+
 
 ![shiyanba-wpa](./figure/shiyanba-wpa.png)
 
-接下来跑密码
 
-- `linux` ： `aircrack` 套件
-- `windows` ： `wifipr` ，速度比 `esaw` 快， `GTX850` 能将近 `10w\s  :`)
+Next run the password
 
-得到密码`88888888`在 `wireshark` 中`Edit -> Preferences -> Protocols -> IEEE802.11 -> Edit`以`key:SSID`形式填入即可解密 `wifi` 包看到明文流量
 
-> KCARCK相关: https://www.krackattacks.com/
+- `linux` : `aircrack` kit
+- `windows` : `wifipr` , faster than `esaw`, `GTX850` can be close to `10w\s :`)
 
-### 参考文献
+
+Get the password `88888888` in `wireshark` `Edit -&gt; Preferences -&gt; Protocols -&gt; IEEE802.11 -&gt; Edit` Fill in the form `key:SSID` to decrypt the `wifi` package to see the clear text traffic
+
+
+&gt; KCARCK related: https://www.krackattacks.com/
+
+
+### references
+
 
 - http://www.freebuf.com/articles/wireless/58342.html
+
 - http://blog.csdn.net/keekjkj/article/details/46753883

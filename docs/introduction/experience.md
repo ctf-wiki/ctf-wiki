@@ -1,50 +1,69 @@
-首先正常比赛会提供提交 flag 的接口，接口地址类似 `http://172.16.4.1/Common/submitAnswer`。一般我们需要根据主办方给出的文档要求通过接口提交 flag。在比赛中要求接口地址使用 Post
-方式提交，提交时带两个参数，一个是 `Answer`，其值为获取到的 flag 字符串，而另一个则是 `token` ，其值为各个队伍的队伍 Token。
+[EN](./experience.md) | [ZH](./experience-zh.md)
+First of all, the normal game will provide the interface to submit the flag, the interface address is similar to `http://172.16.4.1/Common/submitAnswer`. In general, we need to submit the flag through the interface according to the documentation requirements given by the organizer. Require interface address to use Post in the game
+The method is submitted with two parameters, one is `Answer`, the value is the obtained flag string, and the other is `token`, which is the team token of each team.
 
-然后比赛时主办方也会给每个参赛队伍提供一台用于 **分析网络流量的虚拟机** ，选手需要访问地址下载流量文件进行分析。
 
-## 关注 Gamebox 状态
+Then the organizer will also provide each participating team with a virtual machine for analyzing network traffic**, and the player needs to access the address to download the traffic file for analysis.
 
-比赛中可以查看己方和敌方 GameBox 状态。时刻关注可以尽早获取比赛信息，根据信息做出调整。
 
-对于己方 GameBox，有存在如下原因造成 GameBox 被 down 掉：
+## Follow the Gamebox status
 
-1.  主办方裁判系统存在失误，误判 GameBox 为不可用状态。这种情况一般在比赛开始前可以发现，如果发现存在这种情况，要尽早向工作人员示意处理以减少损失。
-2.  程序 patch 失误导致服务不可用。在程序 patch 完之后要进入下一轮关注 GameBox 状态，如果 patch 失误导致不可用，需要及时挽救。但是也不要过度担心把原来的未修补过的漏洞程序换回去。因为 down
-    掉是所有队平分得很少的分，而直接上漏洞程序会使的强势的队伍直接利用得到很高的得分。所以要依据具体情况对待。
-3.  对手不正当攻击导致 GameBox 不可用。如果发现，需要及时补救。
-4.  主办方加强程序 check。这种情况主办方会对所有队员进行通知公告。在 GameBox 状态墙上的状态会显示该题的各队 GameBox 大面积不可用。
 
-对于敌方 GameBox。我们可以获取以下信息。
+You can check the status of your own and enemy GameBox during the game. Always pay attention to get the game information as soon as possible, and make adjustments based on the information.
 
-1.  根据攻击流观测哪些队伍的 GameBox 没有防御成功。针对这些队伍可以更多地实现攻击
-2.  有队伍拿出一血时。可以根据各队 GameBox 状态推断出一血队伍是否已经写出利用脚本。写出利用脚本后可以观测己方是否做好了防御。
 
-## 分清区段与端口
+For the own GameBox, there is a reason why the GameBox is down:
 
-比赛过程中会主办方会安排好合理的网段分布。
 
-维护的时候需要连接到本队 GameBox 所在网段上，根据主办方提供的 CTF 账号与密码登录。而与其他队伍的 GameBox 交互时则需要连接到对应的网段里与漏洞程序进行交互。提交 flag 则需要到指定的答题平台上提交。
+1. The organizer&#39;s referee system has made a mistake and misidentified GameBox as unavailable. This situation can usually be found before the start of the game. If this is the case, it should be reported to the staff as soon as possible to reduce the loss.
+2. The program patch error caused the service to be unavailable. After the program is finished, you need to enter the next round of attention to the GameBox state. If the patch error is not available, you need to save it in time. But don&#39;t worry too much about replacing the original unpatched vulnerability program. Because down
+Off is a small score for all teams, and the direct vulnerability program will make a strong team directly to get a high score. Therefore, it should be treated according to specific circumstances.
+3. The opponent&#39;s improper attack caused the GameBox to be unavailable. If found, it needs to be remedied in time.
+4. The organizer strengthens the program check. In this case, the organizer will announce the notice to all the players. The status on the GameBox status wall shows that the team&#39;s GameBox large area is not available.
+
+
+For the enemy GameBox. We can get the following information.
+
+
+1. Observe which teams&#39; GameBoxes are not defensively successful based on the attack flow. More attacks can be achieved for these teams
+2. When a team takes out a blood. It can be inferred from the status of each team GameBox whether a blood team has written a usage script. After writing the script, you can observe whether your own defense is done.
+
+
+## Clearing sections and ports
+
+
+During the competition, the organizer will arrange a reasonable network segment distribution.
+
+
+During maintenance, you need to connect to the network segment where the GameBox is located, and log in according to the CTF account and password provided by the organizer. When interacting with other teams&#39; GameBox, you need to connect to the corresponding network segment to interact with the vulnerability program. Submitting the flag will need to be submitted to the specified answering platform.
+
 
 !!! warning
-    这里尤其需要注意的就是端口。如果端口在不轻易间弄错的话，这样的错误是挺难察觉到的，而这样的失误也会带来不必要的损失。甚至会出现长时间无法提交 flag 的致命情况。所以需要小心注意。
 
-## 服务 patch 与防御
+Of particular note here is the port. If the port is not easily mistaken, such an error is difficult to detect, and such mistakes can also cause unnecessary losses. There may even be a fatal situation where the flag cannot be submitted for a long time. So you need to be careful.
 
-1.  程序 patch 要合理，符合裁判系统 check 条件。虽然系统的 check 是 check 哪里并未公开，但是一般情况下，系统是不会过度为难的。
-2.  程序 patch 使用 IDA 进行修改，IDA 提供了三种方式的
-    patch：byte，word，assemble.其中字节码修改比较好用。因为逐字节修改不需考虑汇编指令，一般这样的修改改动也很小，在一定场合下十分好用。汇编指令级别的修改虽然方便不需要修改字节码，但是也造成了一定的不便。比如需要额外考虑汇编指令的长度，结构是否合理完整，逻辑是否和原来一样，修改的汇编指令是否合法等问题。
-3.  在 patch 程序时要记得备份原来的漏洞程序，以供队伍分析使用。在上传 patch 的时候应该先删除原来的漏洞程序，然后将 patch 过的程序复制进去，复制进去之后还需要给程序赋予相应的权限。
-4.  一般比赛中，漏洞程序会有十几处需要 patch 的地方。Patch 的时候不仅要讲究有效合理，还要满足能够在一定程度上防范或混淆对手的分析。
 
-## 构造脚本框架快速展开攻击
+## Service patch and defense
 
-在攻防比赛过程中，一血显得尤其重要。因此有一个攻击脚本框架是非常有利的。快速开发攻击脚本，可以在前期保持优势地位，也可以在不断拿分的同时省下时间去做好防御。
 
-## 比赛的一些策略
+1. The program patch should be reasonable and meet the referee system check conditions. Although the system check is not public, it is generally not too difficult.
+2. Program patch is modified using IDA. IDA provides three ways.
+Patch: byte, word, assemble. The bytecode modification is easier to use. Because the byte-by-byte modification does not need to consider the assembly instructions, generally such modification changes are also very small, and are very easy to use in certain occasions. Although the modification of the assembly instruction level does not require modification of the bytecode, it also causes some inconvenience. For example, it is necessary to additionally consider the length of the assembly instruction, whether the structure is reasonable and complete, whether the logic is the same as the original, whether the modified assembly instruction is legal or not.
+3. Remember to back up the original vulnerability program for patch analysis when using the patch program. When uploading a patch, you should delete the original vulnerability program, and then copy the patched program into it. After copying it, you need to give the program the appropriate permissions.
+4. In the general game, the vulnerability program will have more than a dozen places to patch. Patches must not only be effective and reasonable, but also satisfy the analysis that can prevent or confuse opponents to a certain extent.
 
-1.  在比赛过程中，不宜死耗在一道题上，由于一血的优势性，在比赛过程中更应该全面了解赛题难度，先从 **简单题** 开始进行分析，步步为营。
-2.  比赛过程中，两极会严重分化。应该着力打击和自己实力相当和比自己队伍更强的队伍，尤其是分数相差无几的情况下，更要严防严守。
-3.  比赛中 NPC 会不定时发出攻击流量。从攻击流量中可以得到 payload。
-4.  一定要把 NPC 往死里打。
-5.  在开赛初可以将所有的管理密码都设置为同一个密码，这样方便队员登录管理。在初期将所有文件备份下来供队内分享。
+
+## Constructing a Script Framework to Quickly Launch an Attack
+
+
+In the course of the offensive and defensive competition, a blood is particularly important. So having an attack script framework is very beneficial. Quickly develop attack scripts, you can maintain a dominant position in the early stage, and you can save time and take time to defend.
+
+
+## Some strategies of the game
+
+
+1. In the course of the game, it is not advisable to die on a single question. Due to the superiority of a blood, it is necessary to fully understand the difficulty of the game during the competition. First, analyze the ** simple question **, step by step.
+2. During the competition, the two poles will be seriously differentiated. Efforts should be made to strike teams that are comparable to their own strengths and stronger than their own teams, especially if the scores are almost the same, and they must be strictly guarded against them.
+3. NPC will send attack traffic from time to time during the game. The payload can be obtained from the attack traffic.
+4. Be sure to fight the NPC to death.
+5. At the beginning of the game, all the management passwords can be set to the same password, which is convenient for the player to log in and manage. Back up all the files in the initial stage for sharing within the team.

@@ -1,120 +1,186 @@
-# 获取地址
+[EN](./get-address.md) | [ZH](./get-address-zh.md)
+# Get address
 
-在漏洞利用的过程中，我们常常需要获取一些变量，函数的地址，以便于能够进行进一步的利用。这里我将获取地址的方法分为如下几类
 
-- 直接寻找地址，即我们可以通过反编译等手段直接看到对应符号的地址。
-- 泄漏地址，即需要我们通过控制程序的执行流来泄漏程序中的某些符号指针的内容，来获取对应的地址。
-- 推测地址，这里我们一般常用的就是根据某个段内的符号之间的偏移是固定的，从而来推断一些新的符号的地址。
-- 猜测地址，一般主要指的是，我们需要自己去猜测对应符号的地址，这里伴随的往往就是暴力枚举了。
+In the process of exploiting, we often need to get some variables, the address of the function, so that it can be further utilized. Here I will divide the methods for obtaining addresses into the following categories.
 
-上述几种方法，是一种递进地考虑方式，我们在获取相关符号的地址时，应保持这样的思考方式。
 
-在上面的几种方式中，我认为主要有两点核心思想
+- Find the address directly, that is, we can directly see the address of the corresponding symbol by means of decompilation.
+- Leak address, which requires us to leak the contents of some symbol pointers in the program by controlling the execution flow of the program to obtain the corresponding address.
+- Speculative address, which we generally use here is based on the offset between the symbols in a segment is fixed, in order to infer the address of some new symbols.
+- Guess the address, generally speaking, we need to guess the address of the corresponding symbol, which is often accompanied by violent enumeration.
 
-- 充分利用代码本身的性质，比如程序某些代码的位置就是固定的，如不开启 PIE 时，代码段的位置；再比如，glibc 的后三位是固定的。
-- 充分利用相对偏移的性质，这是由于目前程序加载时往往加载的内存都是一段一段的，所以相对偏移往往是固定的。
 
-更加具体的，我们可以看如下的介绍。
+The above methods are a kind of progressive consideration. We should maintain this way of thinking when obtaining the address of the relevant symbol.
 
-## 直接寻找地址
 
-程序中已经给出了相关变量或者函数的地址了。这时候，我们就可以直接进行利用了。
+In the above several ways, I think there are two main core ideas.
 
-这种情形往往适用于程序没有开启 PIE 的情况。
 
-## 泄漏地址
+- Take full advantage of the nature of the code itself, such as the location of some code in the program is fixed, such as the location of the code segment when PIE is not turned on; for example, the last three bits of glibc are fixed.
+- Take advantage of the nature of relative offsets. This is due to the fact that the memory that is currently loaded during program loading is a segment, so the relative offset is often fixed.
 
-在泄漏地址的过程中，我们往往需要找到一些敏感的指针，这些指针里存储着要么就是我们想要的符号的地址，要么就是与我们想要的符号的地址相关。
 
-下面给出几个例子。
+More specific, we can look at the following introduction.
 
-### 泄漏变量指针
 
-比如
+## Directly looking for an address
 
-1. 泄漏 main arena 中各种 bin 的头表指针，可能就可以获取堆中或者 glibc 中某个变量的地址。
 
-### 泄漏 got 表
+The address of the relevant variable or function has been given in the program. At this time, we can use it directly.
 
-有时候我们并不一定非得直接知道某个函数的地址，可以利用 GOT 表跳转到对应函数的地址。当然，如果我们非得知道这个函数的地址，我们可以利用 write，puts 等输出函数将 GOT 表中地址处对应的内容输出出来（**前提是这个函数已经被解析一次了**）。
+
+This situation often applies when the program does not open PIE.
+
+
+## Leak address
+
+
+In the process of leaking addresses, we often need to find sensitive pointers that store either the address of the symbol we want or the address of the symbol we want.
+
+
+Here are a few examples.
+
+
+### Leaking variable pointer
+
+
+such as
+
+
+1. Leaking the header table pointers of various bins in the main arena, you may be able to get the address of a variable in the heap or glibc.
+
+
+### leaking got table
+
+
+Sometimes we don&#39;t have to know the address of a function directly. We can use the GOT table to jump to the address of the corresponding function. Of course, if we have to know the address of this function, we can use the output function such as write, puts and so on to output the corresponding content in the address of the GOT table (** premise that this function has been parsed once).
+
 
 ### ret2dl-resolve 
 
-当 ELF 文件采用动态链接时，got 表会采用延迟绑定技术。当第一次调用某个 libc 函数时，程序会调用_dl_runtime_resolve 函数对其地址解析。因此，我们可以利用栈溢出构造 ROP 链，伪造对其他函数（如：system）的解析。这也是我们在高级 rop 中介绍的技巧。
+
+
+When the ELF file is dynamically linked, the got table uses the delay binding technique. When the libc function is called for the first time, the program calls the _dl_runtime_resolve function to resolve its address. Therefore, we can use the stack overflow to construct the ROP chain and forge the parsing of other functions (such as: system). This is also the technique we introduced in the advanced rop.
+
 
 ### /proc/self/maps
 
-我们可以考虑通过读取程序的 `/proc/self/maps`来获取与程序相关的基地址。
 
-## 推测地址
 
-在大多数情况下，我们都不能直接获取想要的函数的地址，往往需要进行一些地址的推测，正如上面所说，这里就重点依赖于符号间的偏移是固定的这一思想。
+We can consider getting the base address associated with the program by reading the program&#39;s `/proc/self/maps`.
+
+
+## Speculative address
+
+
+In most cases, we can&#39;t directly get the address of the desired function, and often need to make some address speculation. As mentioned above, the emphasis here is on the idea that the offset between symbols is fixed.
+
 
 ### Stack Related
 
-关于栈上的地址，其实我们大多时候并不需要具体的栈地址，但是我们可以根据栈的寻址方式，推测出栈上某个变量相对于 EBP 的位置。
+
+
+Regarding the address on the stack, in fact, most of the time we do not need a specific stack address, but we can guess the position of a variable on the stack relative to the EBP according to the addressing mode of the stack.
+
 
 ### Glibc Related
 
-这里主要考虑的是如何找到 Glibc 中相关的函数。
 
-#### 有 libc
 
-这时候我们就需要考虑利用 libc 中函数的基地址一样这个特性来寻找了。比如我们可以通过 __libc_start_main 的地址来泄漏 libc 在内存中的基地址。
+The main consideration here is how to find related functions in Glibc.
 
-**注意：不要选择有 wapper的函数，这样会使得函数的基地址计算不正确。**
 
-常见的有wapper 的函数有？（待补充）。
+#### 有libc
 
-#### 无 libc
 
-其实，这种情况的解决策略分为两种
+At this time we need to consider using the same function as the base address of the function in libc. For example, we can leak the base address of libc in memory by the address of __libc_start_main.
 
-- 想办法获取 libc
-- 想办法直接获取对应的地址。
 
-而对于想要泄露的地址，我们只是单纯地需要其对应的内容，所以 puts ， write，printf 均可以。
+**Note: Do not select a function with wapper, which will make the base address of the function incorrectly calculated. **
 
-- puts，printf 会有 \x00 截断的问题
-- write 可以指定长度输出的内容。
 
-下面是一些相应的方法
+What are the common wapper functions? (To be added).
+
+
+#### 无libc
+
+
+In fact, the solution strategy for this situation is divided into two types.
+
+
+- Find a way to get libc
+- Find a way to get the corresponding address directly.
+
+
+For the address that we want to leak, we simply need the corresponding content, so puts, write, printf can be.
+
+
+- puts, printf will have \x00 truncation problem
+- write can specify the length of the output.
+
+
+Here are some corresponding methods
+
 
 ##### `pwnlib.dynelf`
 
-前提是我们可以泄露任意地址的内容。
 
-- **如果要使用 write 函数泄露的话，一次最好多输出一些地址的内容，因为我们一般是只是不断地向高地址读内容，很有可能导致高地址的环境变量被覆盖，就会导致 shell 不能启动。**
+The premise is that we can divulge the contents of any address.
 
-##### libc 数据库
+
+- ** If you want to use the write function to leak, it is better to output some address content at a time, because we generally just continuously read the content to the high address, it is likely to cause the high address environment variable to be overwritten, which will lead to the shell. Can not start. **
+
+
+##### libc database
+
 
 ```shell
-# 更新数据库
+
+#Update database
 ./get
-# 将已有libc添加到数据库中
+
+# Add existing libc to the database
 ./add libc.so 
+
 # Find all the libc's in the database that have the given names at the given addresses. 
+
 ./find function1 addr function2 addr
+
 # Dump some useful offsets, given a libc ID. You can also provide your own names to dump.
+
 ./dump __libc_start_main_ret system dup2
+
 ```
 
-去 libc 的数据库中找到对应的和已经出现的地址一样的 libc，这时候很有可能是一样的。
 
-也可以使用如下的在线网站:
 
-- [libcdb.com](http://libcdb.com)
+Go to the libc database and find the corresponding libc with the same address that already appears. This is probably the same.
+
+
+You can also use the following online website:
+
+
+- [libcdb.com] (http://libcdb.com)
 - [libc.blukat.me](https://libc.blukat.me)
 
-**当然，还有上面提到的 https://github.com/lieanu/LibcSearcher。**
+
+
+** Of course, there are also https://github.com/lieanu/LibcSearcher mentioned above. **
+
 
 ### Heap related
 
-关于堆的一些地址的推测，这就需要我们比较详细地知道堆里分配了多少内存，目前泄漏出的内存地址是哪一块，进而获取堆的基地址，以及堆中相关的内存地址。
 
-## 猜测地址
 
-在一些比较奇怪的情况下，我们可能可以使用如下的方式
+Regarding the speculation of some addresses of the heap, this requires us to know in more detail how much memory is allocated in the heap, which block of the memory address is currently leaked, and then obtain the base address of the heap, and the relevant memory address in the heap.
 
-- 使用一些暴力的方法来获取地址，比如 32 位时，地址随机化的空间比较小。
-- 当程序被特殊部署时，其不同的库被加载的位置可能会比较特殊。我们可以在本地尝试，然后猜测远程的情况。
+
+## Guess the address
+
+
+In some strange cases, we may be able to use the following
+
+
+- Use some violent methods to get the address, such as 32-bit, the address randomization space is relatively small.
+- When a program is specially deployed, the location where its different libraries are loaded may be special. We can try it locally and guess the situation at the remote.

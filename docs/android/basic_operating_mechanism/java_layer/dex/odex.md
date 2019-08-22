@@ -1,19 +1,30 @@
-# ODEX文件
+[EN](./odex.md) | [ZH](./odex-zh.md)
+# ODEX file
 
-## 基本介绍
 
-我们知道 Android 应用程序的 java 层的代码在 apk 文件的 class.dex 文件中。一般情况下，我们在每次启动程序时会从中获取到 dex 文件并进行解析，显然每次都这样做，效率会比较低下。Android 开发者提出了一种方式，即我们最初加载 dex 文件时，就对其进行优化，生成一个 ODEX 文件，存放在 /data/dalvik-cache 目录下。当以后再次运行这个程序时，我们只需要直接加载这个优化过的 ODEX 文件就行了，省去了每次都要优化的时间。对于 Android ROM 中系统自带的 app ，直接转换为 odex 文件，存放在与 apk 相同的目录下，这样，当手机每次开机启动的时候，就会快很多了。
+## basic introduction
 
-## 基本结构
 
-待补充。
+We know that the code for the java layer of the Android application is in the class.dex file of the apk file. In general, we get the dex file and parse it every time we start the program. Obviously, every time we do this, the efficiency will be lower. Android developers have come up with a way to optimize dex files when they are initially loaded, and generate an ODEX file, which is stored in the /data/dalvik-cache directory. When running this program again later, we only need to load the optimized ODEX file directly, eliminating the need to optimize each time. For the Android ROM&#39;s own app, it is directly converted to an odex file and stored in the same directory as the apk, so that when the phone is turned on every time, it will be much faster.
 
-## 生成过程
 
-待补充。
+## basic structure
+
+
+To be added.
+
+
+##Generation process
+
+
+To be added.
+
+
+
 
 
 
 # 参考阅读
 
-- Android 软件安全与逆向分析
+
+- Android software security and reverse analysis

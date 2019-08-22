@@ -1,129 +1,208 @@
+[EN](./ecc.md) | [ZH](./ecc-zh.md)
 
 
-# ECC
 
-## 概述
 
-ECC 全称为椭圆曲线加密，EllipseCurve Cryptography，是一种基于椭圆曲线数学的公钥密码。与传统的基于大质数因子分解困难性的加密方法不同，ECC依赖于解决椭圆曲线离散对数问题的困难性。它的优势主要在于相对于其它方法，它可以在使用较短密钥长度的同时保持相同的密码强度。目前椭圆曲线主要采用的有限域有
+# ETC
 
-- 以素数为模的整数域GF(p)，通常在通用处理器上更为有效。
-- 特征为 2 的伽罗华域GF（2^m），可以设计专门的硬件。
 
-## 基本知识
+## Overview
 
-我们首先来了解一下有限域上的椭圆曲线，有限域上的椭圆曲线是指在椭圆曲线的定义式
+
+ECC is called elliptic curve encryption, EllipseCurve Cryptography, which is a public key cryptography based on elliptic curve mathematics. Unlike traditional encryption methods based on the difficulty of large-scale factorization, ECC relies on the difficulty of solving the discrete logarithm problem of elliptic curves. Its main advantage is that it can maintain the same password strength while using a shorter key length than other methods. Currently, the finite field mainly used in the elliptic curve has
+
+
+- The integer field GF(p), which is modulo prime, is usually more efficient on general purpose processors.
+- The Galois Field GF (2^m) with a feature of 2 can be designed with dedicated hardware.
+
+
+## basic knowledge
+
+
+Let us first look at the elliptic curve on the finite field. The elliptic curve on the finite field is the definition of the elliptic curve.
+
 
 $y^2+axy+by=x^3+cx^2+dx+e$
 
-中所有的系数都是在某个有限域GF(p)中的元素，其中p为一个大素数。
 
-当然，并不是所有的椭圆曲线都适合于加密，最为常用的方程如下
+
+All coefficients in the finite element GF(p) are elements, where p is a large prime number.
+
+
+Of course, not all elliptic curves are suitable for encryption. The most common equations are as follows
+
 
 $y^2=x^3+ax+b$
 
-其中$4a^3+27b^2 \bmod p \neq 0$
 
-我们称该方程的所有解(x,y)，($x\in Fp , y \in Fp$)，以及一个称为“无穷远点”(O)组成的集合为定义在Fp上的一个椭圆曲线，记为E(Fp)。
 
-一般定义椭圆曲线密码需要以下条件
+Where $4a^3+27b^2 \bmod p \neq 0$
 
-假设E(Fp)对于点的运算$\oplus$ 形成一个able群（交换群，逆元存在，封闭性等），设$p\in E(Fq)$ ，且满足下列条件的t很大
 
-$p \oplus p \oplus ... \oplus p=O$
+We call all the solutions (x, y), ($x\in Fp, y \in Fp$) of the equation, and a set called &quot;infinity point&quot; (O) as an ellipse defined on Fp. The curve is denoted as E(Fp).
 
-其中共有t个p参与运算。这里我们称t为p的周期。此外，对于$Q\in E(Fq)$ ，定有某个正整数m使得下列式子成立，定义$m=log_pq$
 
-$Q=m\cdot p =p \oplus p \oplus ... \oplus p$ （m个p参与运算）
+Generally defining elliptic curve passwords requires the following conditions
 
-此外，假设G是该$E_q (a,b)$ 的生成元，即可以生成其中的所有元素，其阶为满足$nG=O$ 的最小正整数n。
 
-## ECC中的ElGamal
+Suppose E(Fp) for the point operation $\oplus$ forms a possible group (commutative group, inverse element existence, closure, etc.), set $p\in E(Fq)$, and the t satisfying the following conditions is very large
 
-这里我们假设用户B要把消息加密后传给用户A。
 
-### 密钥生成
+$ p \ oplus p \ oplus ... \ oplus p = O $
 
-用户A先选择一条椭圆曲线$E_q (a,b)$ ，然后选择其上的一个生成元G，假设其阶为n，之后再选择一个正整数$n_a$作为密钥，计算$P_a=n_aG$。
 
-其中，$E_q(a,b), q,G$都会被公开。
+There are a total of t p participating in the operation. Here we call t the period of p. In addition, for $Q\in E(Fq)$ , there is a positive integer m such that the following formula holds, defining $m=log_pq$
 
-公钥为$P_a$，私钥为$n_a $。
 
-### 加密
+$Q=m\cdot p =p \oplus p \oplus ... \oplus p$ (m p participating in the operation)
 
-用户B在向用户A发送消息m，这里假设消息m已经被编码为椭圆曲线上的点，其加密步骤如下
 
-1. 查询用户A的公钥$E_q(a,b), q, P_a,G$ 。
-2. 在(1,q-1) 的区间内选择随机数k 。
-3. 根据A的公钥计算点$(x_1,y_1)=kG$ 。
-4. 计算点$(x_2,y_2)=kP_a$ ，如果为O，则从第二步重新开始。
-5. 计算$C=m+(x_2,y_2)$
-6. 将$((x_1,y_1),C)$ 发送给A。
+In addition, suppose G is the generator of the $E_q (a,b)$, that is, all the elements in it can be generated, and the order is the smallest positive integer n satisfying $nG=O$.
 
-### 解密
 
-解密步骤如下
+##ElGamal in ECC
 
-1. 利用私钥计算点$n_a(x_1,y_1)=n_akG=kP_a=(x_2,y_2)$。
-2. 计算消息$m=C-(x_2,y_2)$ 。
 
-### 关键点
+Here we assume that User B wants to encrypt the message and pass it to User A.
 
-这里的关键点在于我们即使知道了$(x_1,y_1)$ 也难以知道k，这是由离散对数的问题的难度决定的。
+
+### Key Generation
+
+
+User A first selects an elliptic curve $E_q (a,b)$ and then selects a generator G on it, assuming its order is n, and then selects a positive integer $n_a$ as the key, and calculates $P_a=n_aG $.
+
+
+Among them, $E_q(a,b), q,G$ will be made public.
+
+
+The public key is $P_a$ and the private key is $n_a $.
+
+
+### Encryption
+
+
+User B is sending a message m to User A, assuming that message m has been encoded as a point on the elliptic curve, the encryption steps are as follows
+
+
+1. Query user A&#39;s public key $E_q(a,b), q, P_a,G$.
+2. Select the random number k in the interval of (1, q-1).
+3. Calculate the point $(x_1,y_1)=kG$ based on A&#39;s public key.
+4. Calculate the point $(x_2,y_2)=kP_a$. If it is O, restart from the second step.
+5. Calculate $C=m+(x_2,y_2)$
+6. Send $((x_1,y_1),C)$ to A.
+
+
+### Decryption
+
+
+The decryption steps are as follows
+
+
+1. Calculate the point $n_a(x_1,y_1)=n_akG=kP_a=(x_2,y_2)$ using the private key.
+2. Calculate the message $m=C-(x_2,y_2)$ .
+
+
+### key point
+
+
+The key point here is that even if we know $(x_1,y_1)$, it is difficult to know k, which is determined by the difficulty of the discrete logarithm problem.
+
 
 ## 2013 SECCON CTF quals Cryptanalysis
 
-这里我们以2013年SECCON CTF quals 中的 Cryptanalysis 为例，题目如下
+
+
+Here we take Cryptanalysis in SECCON CTF quals in 2013 as an example. The topics are as follows:
+
 
 ![img](./figure/2013-seccon-ctf-crypt-desp.png)
 
-这里，我们已知椭圆曲线方程以及对应的生成元 base，还知道相应的模数以及公钥以及加密后的结果。
 
-但是可以看出的我们的模数太小，我们暴力枚举获取结果。
 
-这里直接参考 github上的 sage 程序，暴力跑出 secret key。之后便可以解密了。
+Here, we know the elliptic curve equation and the corresponding generator element base, and also know the corresponding modulus and public key and the encrypted result.
+
+
+But we can see that our modulus is too small, we violently enumerate the results.
+
+
+Here directly refer to the sage program on github, violently ran out of the secret key. Then you can decrypt it.
+
 
 ```python
 
+
+
 a = 1234577
+
 b = 3213242
+
 n = 7654319
+
+
 
 E = EllipticCurve(GF(n), [0, 0, 0, a, b])
 
-base = E([5234568, 2287747])
-pub = E([2366653, 1424308])
 
-c1 = E([5081741, 6744615])
-c2 = E([610619, 6218])
+
+base = E ([5234568, 2287747])
+pub = E ([2366653, 1424308])
+
+
+c1 = E ([5081741, 6744615])
+c2 = E ([610619, 6218])
+
 
 X = base
 
+
+
 for i in range(1, n):
+
     if X == pub:
+
         secret = i
+
         print "[+] secret:", i
+
         break
+
     else:
+
         X = X + base
+
         print i
+
+
 
 m = c2 - (c1 * secret)
 
+
+
 print "[+] x:", m[0]
-print "[+] y:", m[1]
+
+print &quot;[+] y:&quot;, m [1]
 print "[+] x+y:", m[0] + m[1]
+
 ```
 
-暴力跑出结果
+
+
+Violence ran out of results
+
 
 ```shell
+
 [+] secret: 1584718
+
 [+] x: 2171002
-[+] y: 3549912
+
+[+] and: 3549912
 [+] x+y: 5720914
+
 ```
 
-## 参考
+
+
+## Reference
 
 - https://github.com/sonickun/ctf-crypto-writeups/tree/master/2013/seccon-ctf-quals/cryptanalysis

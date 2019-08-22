@@ -1,69 +1,101 @@
-# 块加密
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
+#块加密
 
-## 概述
 
-所谓块加密就是每次加密一块明文，常见的加密算法有
+## Overview
 
-- IDEA 加密
-- DES 加密
-- AES 加密
 
-块加密也是对称加密。
+The so-called block encryption is to encrypt a piece of plaintext each time. Common encryption algorithms are available.
 
-其实，我们也可以把块加密理解一种特殊的替代密码，但是其每次替代的是一大块。而正是由于一大块，明文空间巨大，而且对于不同的密钥，我们无法做一个表进行对应相应的密文，因此必须得有 **复杂** 的加解密算法来加解密明密文。
 
-而与此同时，明文往往可能很长也可能很短，因此在块加密时往往需要两个辅助
+- IDEA encryption
+- DES encryption
+- AES encryption
 
-- padding，即 padding 到指定分组长度
-- 分组加密模式，即明文分组加密的方式。
 
-## 基本策略
+Block encryption is also symmetric encryption.
 
-在分组密码设计时，充分使用了 Shannon 提出的两大策略：混淆与扩散两大策略。
 
-### 混淆
+In fact, we can also understand block encryption as a special alternative password, but each time it is replaced by a large block. It is precisely because of a large block, the plaintext space is huge, and for different keys, we can&#39;t make a table to correspond to the corresponding ciphertext, so we must have ** complex ** encryption and decryption algorithm to encrypt and decrypt the ciphertext .
 
-混淆，Confusion，将密文与密钥之间的统计关系变得尽可能复杂，使得攻击者即使获取了密文的一些统计特性，也无法推测密钥。一般使用复杂的非线性变换可以得到很好的混淆效果，常见的方法如下
 
-- S 盒
-- 乘法
+At the same time, plain text can often be very long or short, so two blocks are often needed for block encryption.
 
-### 扩散
 
-扩散，Diffusion，使得明文中的每一位影响密文中的许多位。常见的方法有
+- padding, ie padding to the specified packet length
+- Packet encryption mode, which is the way in which plaintext packets are encrypted.
 
-- 线性变换
-- 置换
-- 移位，循环移位
 
-## 常见加解密结构
+## Basic strategy
 
-目前块加密中主要使用的是结构是
 
-- 迭代结构，这是因为迭代结构便于设计与实现，同时方便安全性评估。
+In the design of block ciphers, Shannon proposed two strategies: confusion and diffusion.
 
-### 迭代结构
 
-#### 概述
+### Confusion
 
-迭代结构基本如下，一般包括三个部分
 
-- 密钥置换
-- 轮加密函数
-- 轮解密函数
+Confusion, Confusion, makes the statistical relationship between the ciphertext and the key as complex as possible, so that the attacker can not guess the key even if it acquires some statistical characteristics of the ciphertext. Generally, complex nonlinear transformations can be used to get a good confusion. The common methods are as follows:
+
+
+- S box
+- Multiplication
+
+
+### Diffusion
+
+
+Diffusion, Diffusion, makes every bit in the plaintext affect many bits in the ciphertext. Common methods are
+
+
+- Linear transformation
+- replacement
+- shift, rotate
+
+
+## Common encryption and decryption structure
+
+
+The main block block encryption currently used is the structure.
+
+
+- Iterative structure, because the iterative structure is easy to design and implement, while facilitating security assessment.
+
+
+### Iterative structure
+
+
+#### Overview
+
+
+The iterative structure is basically as follows, generally consisting of three parts
+
+
+- Key replacement
+- Round encryption function
+- Round decryption function
+
 
 ![image-20180714222206782](./figure/iterated_cipher.png)
 
-#### 轮函数
 
-目前来说，轮函数主要有主要有以下设计方法
 
-- Feistel Network，由 Horst Feistel 发明，DES 设计者之一。
-    - DES
+####轮函数
+
+
+At present, the main functions of the round function are mainly the following design methods.
+
+
+- Feistel Network, invented by Horst Feistel, one of the DES designers.
+- DES
 - Substitution-Permutation Network(SPN)
+
     - AES
-- 其他方案
 
-#### 密钥扩展
+- Other programs
 
-目前，密钥扩展的方法有很多，没有见到什么完美的密钥扩展方法，基本原则是使得密钥的每一个比特尽可能影响多轮的轮密钥。
+
+#### Key Expansion
+
+
+At present, there are many methods for key expansion. There is no perfect key expansion method. The basic principle is that each bit of the key affects multiple rounds of round keys as much as possible.

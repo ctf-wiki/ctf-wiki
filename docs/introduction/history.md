@@ -1,23 +1,33 @@
-> 本栏内容摘自诸葛建伟老师在 i 春秋上的公开视频「CTF 的过去、现在与未来」。
+[EN](./history.md) | [ZH](./history-zh.md)
+&gt; The content of this column is taken from the public video &quot;The Past, Present and Future of CTF&quot; by Teacher Zhuge Jianwei in the Spring Festival.
 
-## CTF 的起源
 
-CTF 的前身是传统黑客之间网络技术比拼的游戏，起源于 1996 年第四届 DEFCON。
+## Origin of CTF
 
-## 早期 CTF 竞赛
 
-最开始的 CTF 比赛（1996 年-2001
-年），没有明确的比赛规则，没有专业搭建的比赛平台与环境。由参数队伍各自准备比赛目标（自己准备的比赛目标自己防守并要尝试攻破对方提供的比赛目标）。而组织者大都只是一些非专业的志愿者，接受参赛队伍请求手工计分。
+The predecessor of CTF is the game of network technology competition between traditional hackers, which originated in the fourth DEFCON in 1996.
 
-没有后台自动系统支持和裁判技术能力认定，计分延迟和误差以及不可靠的网络和不当的配置，导致比赛带来了极大的争论与不满。
 
-## 「现代」CTF 竞赛
+## Early CTF Competition
 
-由专业队伍承担比赛平台、命题、赛事组织以及自动化积分系统。参赛队伍需提交参赛申请，由 DEFCON 会议组织者们进行评选。
 
-就 LegitBS 组织的三年 DEFCON CTF 比赛而言，有以下突出特点：
+The first CTF competition (1996-2001)
+Years), there are no clear rules of the game, no professional competition platform and environment. The target team prepares the game goals (the game targets they prepare themselves defend themselves and try to break the game goals provided by the opponent). Most of the organizers are just some non-professional volunteers, accepting the team to request manual scoring.
 
--   比赛侧重于对计算机底层和系统安全核心能力，Web 漏洞攻防技巧完全不受重视。
--   竞赛环境趋向多 CPU 指令架构集，多操作系统，多编程语言。
--   采用「零和」计分规则。
--   团队综合能力考研：逆向分析、漏洞挖掘、漏洞利用、漏洞修补加固、网络流量分析、系统安全运维以及面向安全的编程调试。
+
+There is no background automatic system support and referee technical ability identification, scoring delays and errors, as well as unreliable network and improper configuration, resulting in great controversy and dissatisfaction.
+
+
+## &quot;Modern&quot; CTF Competition
+
+
+The professional team will undertake the competition platform, proposition, event organization and automatic integration system. The participating teams are required to submit an application for participation and will be selected by the organizers of the DEFCON meeting.
+
+
+For the three-year DEFCON CTF competition organized by LegitBS, the following salient features:
+
+
+- The game focuses on the core capabilities of the underlying computer and system security, and the web vulnerability attack and defense skills are completely ignored.
+- The competition environment tends to be a multi-CPU instruction architecture set, multiple operating systems, and multiple programming languages.
+- Adopt the &quot;Zero sum&quot; scoring rule.
+- Team Comprehensive Capabilities: Reverse analysis, vulnerability mining, exploits, vulnerability patching, network traffic analysis, system security operations, and security-oriented programming debugging.

@@ -1,977 +1,1783 @@
-# 堆相关数据结构
+[EN](./heap_structure.md) | [ZH](./heap_structure-zh.md)
+#堆related data structure
 
-堆的操作就这么复杂，那么在 glibc 内部必然也有精心设计的数据结构来管理它。与堆相应的数据结构主要分为
 
-- 宏观结构，包含堆的宏观信息，可以通过这些数据结构索引堆的基本信息。
-- 微观结构，用于具体处理堆的分配与回收中的内存块。
+The operation of the heap is so complicated, so there must be a well-designed data structure inside glibc to manage it. The data structure corresponding to the heap is mainly divided into
+
+
+- A macro structure that contains macro information about the heap through which the basic information of the heap can be indexed.
+- Microstructure, which is used to specifically handle the allocation and reclaiming of memory blocks.
+
 
 ## Overview？？？？
 
-**这里给一个宏观的图片。**
 
-## 微观结构
 
-这里首先介绍堆中比较细节的结构，**堆的漏洞利用与这些结构密切相关**。
+** Give a macro picture here. **
+
+
+## micro structure
+
+
+Here we first introduce the structure of the details in the heap, and the vulnerability of the heap is closely related to these structures**.
+
 
 ### malloc_chunk
 
-#### 概述
 
-在程序的执行过程中，我们称由 malloc 申请的内存为 chunk 。这块内存在 ptmalloc 内部用 malloc_chunk 结构体来表示。当程序申请的 chunk 被 free 后，会被加入到相应的空闲管理列表中。
 
-非常有意思的是，**无论一个 chunk 的大小如何，处于分配状态还是释放状态，它们都使用一个统一的结构**。虽然它们使用了同一个数据结构，但是根据是否被释放，它们的表现形式会有所不同。
+#### Overview
 
-malloc_chunk 的结构如下
+
+During the execution of the program, we call the memory requested by malloc as chunk. This memory is represented inside the ptmalloc by the malloc_chunk structure. When the chunk requested by the program is free, it will be added to the corresponding idle management list.
+
+
+Very interestingly, ** they all use a uniform structure** regardless of the size of a chunk, whether it is allocated or released. Although they use the same data structure, they will behave differently depending on whether they are released.
+
+
+The structure of malloc_chunk is as follows
+
 
 ```c++
+
 /*
+
   This struct declaration is misleading (but accurate and necessary).
+
   It declares a "view" into memory allowing access to necessary
+
   fields at known offsets from a given base. See explanation below.
+
 */
+
 struct malloc_chunk {
 
+
+
   INTERNAL_SIZE_T      prev_size;  /* Size of previous chunk (if free).  */
+
   INTERNAL_SIZE_T      size;       /* Size in bytes, including overhead. */
 
+
+
   struct malloc_chunk* fd;         /* double links -- used only if free. */
+
   struct malloc_chunk* bk;
 
+
+
   /* Only used for large blocks: pointer to next larger size.  */
+
   struct malloc_chunk* fd_nextsize; /* double links -- used only if free. */
+
   struct malloc_chunk* bk_nextsize;
+
 };
+
 ```
 
-首先，这里给出一些必要的解释 INTERNAL_SIZE_T，SIZE_SZ，MALLOC_ALIGN_MASK：
+
+
+First, here are some necessary explanations INTERNAL_SIZE_T, SIZE_SZ, MALLOC_ALIGN_MASK:
+
 
 ```c
+
 /* INTERNAL_SIZE_T is the word-size used for internal bookkeeping of
+
    chunk sizes.
+
    The default version is the same as size_t.
+
    While not strictly necessary, it is best to define this as an
+
    unsigned type, even if size_t is a signed type. This may avoid some
+
    artificial size limitations on some systems.
+
    On a 64-bit machine, you may be able to reduce malloc overhead by
+
    defining INTERNAL_SIZE_T to be a 32 bit `unsigned int' at the
+
    expense of not being able to handle more than 2^32 of malloced
+
    space. If this limitation is acceptable, you are encouraged to set
+
    this unless you are on a platform requiring 16byte alignments. In
+
    this case the alignment requirements turn out to negate any
+
    potential advantages of decreasing size_t word size.
+
    Implementors: Beware of the possible combinations of:
+
      - INTERNAL_SIZE_T might be signed or unsigned, might be 32 or 64 bits,
+
        and might be the same width as int or as long
+
      - size_t might have different width and signedness as INTERNAL_SIZE_T
+
      - int and long might be 32 or 64 bits, and might be the same width
+
    To deal with this, most comparisons and difference computations
+
    among INTERNAL_SIZE_Ts should cast them to unsigned long, being
+
    aware of the fact that casting an unsigned int to a wider long does
+
    not sign-extend. (This also makes checking for negative numbers
+
    awkward.) Some of these casts result in harmless compiler warnings
+
    on some systems.  */
+
 #ifndef INTERNAL_SIZE_T
+
 # define INTERNAL_SIZE_T size_t
+
 #endif
 
+
 /* The corresponding word size.  */
+
 #define SIZE_SZ (sizeof (INTERNAL_SIZE_T))
 
+
+
 /* The corresponding bit mask value.  */
+
 #define MALLOC_ALIGN_MASK (MALLOC_ALIGNMENT - 1)
+
 ```
 
-一般来说，size_t 在 64 位中是 64 位无符号整数，32 位中是 32 位无符号整数。
 
-每个字段的具体的解释如下
 
--   **prev_size**,  如果该 chunk 的**物理相邻的前一地址chunk（两个指针的地址差值为前一chunk大小）**是空闲的话，那该字段记录的是前一个 chunk 的大小(包括 chunk 头)。否则，该字段可以用来存储物理相邻的前一个chunk 的数据。**这里的前一 chunk 指的是较低地址的 chunk **。
--   **size** ，该 chunk 的大小，大小必须是 2 * SIZE_SZ 的整数倍。如果申请的内存大小不是 2 * SIZE_SZ 的整数倍，会被转换满足大小的最小的 2 * SIZE_SZ 的倍数。32 位系统中，SIZE_SZ 是 4；64 位系统中，SIZE_SZ 是 8。 该字段的低三个比特位对 chunk 的大小没有影响，它们从高到低分别表示
-    -   NON_MAIN_ARENA，记录当前 chunk 是否不属于主线程，1表示不属于，0表示属于。
-    -   IS_MAPPED，记录当前 chunk 是否是由 mmap 分配的。 
-    -   PREV_INUSE，记录前一个 chunk 块是否被分配。一般来说，堆中第一个被分配的内存块的 size 字段的P位都会被设置为1，以便于防止访问前面的非法内存。当一个 chunk 的 size 的 P 位为 0 时，我们能通过 prev_size 字段来获取上一个 chunk 的大小以及地址。这也方便进行空闲chunk之间的合并。
--   **fd，bk**。 chunk 处于分配状态时，从 fd 字段开始是用户的数据。chunk 空闲时，会被添加到对应的空闲管理链表中，其字段的含义如下
-    -   fd 指向下一个（非物理相邻）空闲的 chunk
-    -   bk 指向上一个（非物理相邻）空闲的 chunk
-    -   通过 fd 和 bk 可以将空闲的 chunk 块加入到空闲的 chunk 块链表进行统一管理
--   **fd_nextsize， bk_nextsize**，也是只有 chunk 空闲的时候才使用，不过其用于较大的 chunk（large chunk）。
-    -   fd_nextsize 指向前一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。
-    -   bk_nextsize 指向后一个与当前 chunk 大小不同的第一个空闲块，不包含 bin 的头指针。
-    -   一般空闲的 large chunk 在 fd 的遍历顺序中，按照由大到小的顺序排列。**这样做可以避免在寻找合适chunk 时挨个遍历。**
+In general, size_t is a 64-bit unsigned integer in 64 bits and a 32-bit unsigned integer in 32 bits.
 
-一个已经分配的 chunk 的样子如下。**我们称前两个字段称为 chunk header，后面的部分称为 user data。每次 malloc 申请得到的内存指针，其实指向 user data 的起始处。** 
 
-当一个 chunk 处于使用状态时，它的下一个 chunk 的 prev_size 域无效，所以下一个 chunk 的该部分也可以被当前chunk使用。**这就是chunk中的空间复用。**
+The specific explanation of each field is as follows
+
+
+- **prev_size**, if the chunk&#39;s ** physically adjacent previous address chunk (the address difference between the two pointers is the previous chunk size)** is idle, then the field records the previous chunk The size (including the chunk header). Otherwise, this field can be used to store data for the physical chunk of the previous chunk. **The previous chunk here refers to the chunk ** of the lower address.
+- **size** , the size of the chunk, the size must be an integer multiple of 2 * SIZE_SZ. If the requested memory size is not an integer multiple of 2 * SIZE_SZ, it will be converted to a multiple of the smallest 2 * SIZE_SZ that satisfies the size. In a 32-bit system, SIZE_SZ is 4; in a 64-bit system, SIZE_SZ is 8. The lower three bits of this field have no effect on the size of the chunk, they are represented from high to low respectively.
+- NON_MAIN_ARENA, records whether the current chunk does not belong to the main thread, 1 means not belonging, 0 means belongs.
+- IS_MAPPED, which records whether the current chunk is allocated by mmap.
+- PREV_INUSE, records whether the previous chunk is allocated. In general, the P bit of the size field of the first allocated memory block in the heap is set to 1, in order to prevent access to the previous illegal memory. When the P bit of the size of a chunk is 0, we can get the size and address of the previous chunk through the prev_size field. This also facilitates the merging between free chunks.
+- **fd, bk**. When the chunk is in the allocation state, it is the user&#39;s data starting from the fd field. When chunk is idle, it will be added to the corresponding idle management list. The meaning of the fields is as follows
+- fd points to the next (non-physical neighbor) free chunk
+- bk points to the previous (non-physical neighbor) free chunk
+- Freed chunks can be added to the free chunk block list for unified management via fd and bk
+- **fd_nextsize, bk_nextsize**, which is only used when the chunk is free, but it is used for larger chunks.
+- fd_nextsize points to the first free block of the previous size that is different from the current chunk, and does not contain the head pointer of the bin.
+- bk_nextsize points to the next free block of the current chunk size, excluding the head pointer of the bin.
+- Large chunks that are generally free are arranged in descending order of fd, in descending order. **Doing so avoids traversing when looking for a suitable chunk. **
+
+
+The appearance of an already allocated chunk is as follows. ** We call the first two fields called chunk headers, and the latter part is called user data. The memory pointer obtained by each malloc application actually points to the beginning of user data. **
+
+
+When a chunk is in use, its prev_size field of the next chunk is invalid, and the part of the next chunk can also be used by the current chunk. **This is the spatial reuse in the chunk. **
+
 
 ```c++
+
 chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
         |             Size of previous chunk, if unallocated (P clear)  |
+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
         |             Size of chunk, in bytes                     |A|M|P|
-  mem-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+mem-&gt; + - + - + - + - + - + - + - + - + - + - + + + + + + + + + + - + - + - + - + - + - + - + - + - + - + - + - + - +
         |             User data starts here...                          .
+
         .                                                               .
+
         .             (malloc_usable_size() bytes)                      .
+
 next    .                                                               |
+
 chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
         |             (size of chunk, but used for application data)    |
+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
         |             Size of next chunk, in bytes                |A|0|1|
+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 ```
 
-被释放的 chunk 被记录在链表中（可能是循环双向链表，也可能是单向链表）。具体结构如下
+
+
+The released chunks are recorded in a linked list (either a circular doubly linked list or a singly linked list). The specific structure is as follows
+
 
 ```c++
+
 chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
         |             Size of previous chunk, if unallocated (P clear)  |
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 `head:' |             Size of chunk, in bytes                     |A|0|P|
-  mem-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+mem-&gt; + - + - + - + - + - + - + - + - + - + - + + + + + + + + + + - + - + - + - + - + - + - + - + - + - + - + - + - +
         |             Forward pointer to next chunk in list             |
+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
         |             Back pointer to previous chunk in list            |
+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
         |             Unused space (may be 0 bytes long)                .
+
         .                                                               .
+
  next   .                                                               |
+
 chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 `foot:' |             Size of chunk, in bytes                           |
+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
         |             Size of next chunk, in bytes                |A|0|0|
+
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 ```
 
-可以发现，如果一个 chunk 处于 free 状态，那么会有两个位置记录其相应的大小
 
-1. 本身的 size 字段会记录，
 
-2. 它后面的 chunk 会记录。
+It can be found that if a chunk is in the free state, there will be two locations to record their corresponding sizes.
 
-**一般情况下**，物理相邻的两个空闲 chunk 会被合并为一个 chunk 。堆管理器会通过 prev_size 字段以及 size 字段合并两个物理相邻的空闲 chunk 块。
 
-**！！！一些关于堆的约束，后面详细考虑！！！**
+1. The size field itself will be logged,
+
+
+2. The chunks following it will be logged.
+
+
+** In general, **, two free chunks of physical neighbors will be merged into one chunk. The heap manager merges two physically adjacent free chunk chunks through the prev_size field and the size field.
+
+
+**! ! ! Some constraints on the heap, consider it in detail later! ! ! **
+
 
 ```c++
+
 /*
+
     The three exceptions to all this are:
+
      1. The special chunk `top' doesn't bother using the
+
     trailing size field since there is no next contiguous chunk
+
     that would have to index off it. After initialization, `top'
+
     is forced to always exist.  If it would become less than
+
     MINSIZE bytes long, it is replenished.
+
      2. Chunks allocated via mmap, which have the second-lowest-order
+
     bit M (IS_MMAPPED) set in their size fields.  Because they are
+
     allocated one-by-one, each must contain its own trailing size
+
     field.  If the M bit is set, the other bits are ignored
+
     (because mmapped chunks are neither in an arena, nor adjacent
+
     to a freed chunk).  The M bit is also used for chunks which
+
     originally came from a dumped heap via malloc_set_state in
+
     hooks.c.
+
      3. Chunks in fastbins are treated as allocated chunks from the
+
     point of view of the chunk allocator.  They are consolidated
+
     with their neighbors only in bulk, in malloc_consolidate.
+
 */
+
 ```
 
-#### chunk相关宏
 
-这里主要介绍 chunk 的大小、对齐检查以及一些转换的宏。
 
-**chunk 与 mem 指针头部的转换**
+#### chunk related macro
 
-mem指向用户得到的内存的起始位置。
+
+Here mainly introduces the size of the chunk, the alignment check, and some macros for conversion.
+
+
+**chunk and mem pointer header conversion**
+
+
+Mem points to the starting position of the memory the user gets.
+
 
 ```c++
+
 /* conversion from malloc headers to user pointers, and back */
+
 #define chunk2mem(p) ((void *) ((char *) (p) + 2 * SIZE_SZ))
+
 #define mem2chunk(mem) ((mchunkptr)((char *) (mem) -2 * SIZE_SZ))
+
 ```
 
-**最小的 chunk 大小**
+
+
+**Minimum chunk size**
+
 
 ```c++
+
 /* The smallest possible chunk */
+
 #define MIN_CHUNK_SIZE (offsetof(struct malloc_chunk, fd_nextsize))
+
 ```
 
-这里，offsetof 函数计算出 fd_nextsize 在 malloc_chunk 中的偏移，说明最小的 chunk 至少要包含 bk 指针。
 
-**最小申请的堆内存大小**
 
-用户最小申请的内存大小必须是 2 * SIZE_SZ 的最小整数倍。
+Here, the offsetof function calculates the offset of fd_nextsize in malloc_chunk, indicating that the smallest chunk must contain at least the bk pointer.
 
-**注：就目前而看 MIN_CHUNK_SIZE 和 MINSIZE 大小是一致的，个人认为之所以要添加两个宏是为了方便以后修改 malloc_chunk 时方便一些。**
+
+**Minimum requested heap memory size**
+
+
+The memory size requested by the user must be a minimum integer multiple of 2 * SIZE_SZ.
+
+
+** Note: As for the current MIN_CHUNK_SIZE and MINSIZE sizes are the same, I personally think that the reason to add two macros is to facilitate the later modification of malloc_chunk. **
+
 
 ```c++
+
 /* The smallest size we can malloc is an aligned minimal chunk */
+
 //MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1
+
 #define MINSIZE                                                                \
+
     (unsigned long) (((MIN_CHUNK_SIZE + MALLOC_ALIGN_MASK) &                   \
+
                       ~MALLOC_ALIGN_MASK))
+
 ```
 
-**检查分配给用户的内存是否对齐**
 
-2 * SIZE_SZ 大小对齐。
+
+**Check if the memory allocated to the user is aligned**
+
+
+2 * SIZE_SZ size aligned.
+
 
 ```c++
+
 /* Check if m has acceptable alignment */
+
 // MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1
+
 #define aligned_OK(m) (((unsigned long) (m) & MALLOC_ALIGN_MASK) == 0)
 
+
+
 #define misaligned_chunk(p)                                                    \
+
     ((uintptr_t)(MALLOC_ALIGNMENT == 2 * SIZE_SZ ? (p) : chunk2mem(p)) &       \
+
      MALLOC_ALIGN_MASK)
+
 ```
 
-**请求字节数判断**
+
+
+**Request Byte Count Judgment**
+
 
 ```c++
+
 /*
+
    Check if a request is so large that it would wrap around zero when
+
    padded and aligned. To simplify some other code, the bound is made
+
    low enough so that adding MINSIZE will also not wrap around zero.
+
  */
 
+
+
 #define REQUEST_OUT_OF_RANGE(req)                                              \
+
     ((unsigned long) (req) >= (unsigned long) (INTERNAL_SIZE_T)(-2 * MINSIZE))
+
 ```
 
-**将用户请求内存大小转为实际分配内存大小**
+
+
+** Convert user request memory size to actual allocated memory size**
+
 
 ```c++
+
 /* pad request bytes into a usable size -- internal version */
+
 //MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1
+
 #define request2size(req)                                                      \
+
     (((req) + SIZE_SZ + MALLOC_ALIGN_MASK < MINSIZE)                           \
+
          ? MINSIZE                                                             \
+
          : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK)
+
+
 
 /*  Same, except also perform argument check */
 
+
+
 #define checked_request2size(req, sz)                                          \
+
     if (REQUEST_OUT_OF_RANGE(req)) {                                           \
         __set_errno(ENOMEM);                                                   \
+
         return 0;                                                              \
+
     }                                                                          \
+
     (sz) = request2size(req);
+
 ```
 
-当一个 chunk 处于已分配状态时，它的物理相邻的下一个 chunk 的 prev_size 字段必然是无效的，故而这个字段就可以被当前这个 chunk 使用。这就是 ptmalloc 中 chunk 间的复用。具体流程如下
 
-1. 首先，利用 REQUEST_OUT_OF_RANGE 判断是否可以分配用户请求的字节大小的 chunk。
-2. 其次，需要注意的是用户请求的字节是用来存储数据的，即 chunk header 后面的部分。与此同时，由于chunk 间复用，所以可以使用下一个 chunk 的 prev_size 字段。因此，这里只需要再添加 SIZE_SZ 大小即可以完全存储内容。
-3. 由于系统中所允许的申请的 chunk 最小是 MINSIZE，所以与其进行比较。如果不满足最低要求，那么就需要直接分配MINSIZE字节。
-4. 如果大于的话，因为系统中申请的 chunk 需要 2 * SIZE_SZ 对齐，所以这里需要加上MALLOC_ALIGN_MASK 以便于对齐。
 
-**个人认为，这里在 request2size 的宏的第一行中没有必要加上 MALLOC_ALIGN_MASK。**
+When a chunk is in the allocated state, the prev_size field of its next physical next chunk must be invalid, so this field can be used by the current chunk. This is the multiplexing between chunks in ptmalloc. The specific process is as follows
 
-**需要注意的是，通过这样的计算公式得到的 size 最终一定是满足用户需要的。**
 
-**标记位相关**
+1. First, use REQUEST_OUT_OF_RANGE to determine if the chunk of the byte size requested by the user can be allocated.
+2. Second, it should be noted that the byte requested by the user is used to store data, that is, the part after the chunk header. At the same time, due to the multiplexing between chunks, the prev_size field of the next chunk can be used. Therefore, you only need to add the SIZE_SZ size to fully store the content.
+3. Since the minimum chunk of the application allowed in the system is MINSIZE, it is compared. If the minimum requirement is not met, then the MINSIZE byte needs to be allocated directly.
+4. If it is greater, because the chunk requested in the system requires 2 * SIZE_SZ alignment, MALLOC_ALIGN_MASK needs to be added here to facilitate alignment.
+
+
+** Personally think that it is not necessary to add MALLOC_ALIGN_MASK in the first line of the request2size macro. **
+
+
+** It should be noted that the size obtained by such a calculation formula must ultimately satisfy the user&#39;s needs. **
+
+
+**Marker related**
+
 
 ```c++
+
 /* size field is or'ed with PREV_INUSE when previous adjacent chunk in use */
+
 #define PREV_INUSE 0x1
 
+
+
 /* extract inuse bit of previous chunk */
+
 #define prev_inuse(p) ((p)->mchunk_size & PREV_INUSE)
 
+
+
 /* size field is or'ed with IS_MMAPPED if the chunk was obtained with mmap() */
+
 #define IS_MMAPPED 0x2
 
+
+
 /* check for mmap()'ed chunk */
+
 #define chunk_is_mmapped(p) ((p)->mchunk_size & IS_MMAPPED)
 
+
+
 /* size field is or'ed with NON_MAIN_ARENA if the chunk was obtained
+
    from a non-main arena.  This is only set immediately before handing
+
    the chunk to the user, if necessary.  */
+
 #define NON_MAIN_ARENA 0x4
 
+
+
 /* Check for chunk from main arena.  */
+
 #define chunk_main_arena(p) (((p)->mchunk_size & NON_MAIN_ARENA) == 0)
 
+
+
 /* Mark a chunk as not being on the main arena.  */
+
 #define set_non_main_arena(p) ((p)->mchunk_size |= NON_MAIN_ARENA)
 
+
+
 /*
+
    Bits to mask off when extracting size
+
    Note: IS_MMAPPED is intentionally not masked off from size field in
+
    macros for which mmapped chunks should never be seen. This should
+
    cause helpful core dumps to occur if it is tried by accident by
+
    people extending or adapting this malloc.
+
  */
+
 #define SIZE_BITS (PREV_INUSE | IS_MMAPPED | NON_MAIN_ARENA)
+
 ```
 
-**获取chunk size**
+
+
+**Get chunk size**
+
 
 ```c++
+
 /* Get size, ignoring use bits */
+
 #define chunksize(p) (chunksize_nomask(p) & ~(SIZE_BITS))
 
+
+
 /* Like chunksize, but do not mask SIZE_BITS.  */
+
 #define chunksize_nomask(p) ((p)->mchunk_size)
+
 ```
 
-**获取下一个物理相邻的chunk**
+
+
+**Get the next physical neighboring chunk**
+
 
 ```c++
+
 /* Ptr to next physical malloc_chunk. */
+
 #define next_chunk(p) ((mchunkptr)(((char *) (p)) + chunksize(p)))
+
 ```
 
-**获取前一个chunk的信息**
+
+
+**Get information about the previous chunk**
+
 
 ```c++
+
 /* Size of the chunk below P.  Only valid if !prev_inuse (P).  */
+
 #define prev_size(p) ((p)->mchunk_prev_size)
 
+
+
 /* Set the size of the chunk below P.  Only valid if !prev_inuse (P).  */
+
 #define set_prev_size(p, sz) ((p)->mchunk_prev_size = (sz))
 
+
+
 /* Ptr to previous physical malloc_chunk.  Only valid if !prev_inuse (P).  */
+
 #define prev_chunk(p) ((mchunkptr)(((char *) (p)) - prev_size(p)))
+
 ```
 
-**当前chunk使用状态相关操作**
+
+
+**Current chunk usage status related operations**
+
 
 ```c++
+
 /* extract p's inuse bit */
+
 #define inuse(p)                                                               \
+
     ((((mchunkptr)(((char *) (p)) + chunksize(p)))->mchunk_size) & PREV_INUSE)
 
+
+
 /* set/clear chunk as being inuse without otherwise disturbing */
+
 #define set_inuse(p)                                                           \
+
     ((mchunkptr)(((char *) (p)) + chunksize(p)))->mchunk_size |= PREV_INUSE
 
+
+
 #define clear_inuse(p)                                                         \
+
     ((mchunkptr)(((char *) (p)) + chunksize(p)))->mchunk_size &= ~(PREV_INUSE)
+
 ```
 
-**设置chunk的size字段**
+
+
+**Set the size field of the chunk**
+
 
 ```c++
+
 /* Set size at head, without disturbing its use bit */
+
 // SIZE_BITS = 7
+
 #define set_head_size(p, s)                                                    \
+
     ((p)->mchunk_size = (((p)->mchunk_size & SIZE_BITS) | (s)))
 
+
+
 /* Set size/use field */
+
 #define set_head(p, s) ((p)->mchunk_size = (s))
 
+
+
 /* Set size at footer (only when chunk is not in use) */
+
 #define set_foot(p, s)                                                         \
+
     (((mchunkptr)((char *) (p) + (s)))->mchunk_prev_size = (s))
+
 ```
 
-**获取指定偏移的chunk**
+
+
+**Get the chunk of the specified offset**
+
 
 ```c++
+
 /* Treat space at ptr + offset as a chunk */
+
 #define chunk_at_offset(p, s) ((mchunkptr)(((char *) (p)) + (s)))
+
 ```
 
-**指定偏移处chunk使用状态相关操作**
+
+
+**Specify the offset at the chunk usage state related operation**
+
 
 ```c++
+
 /* check/set/clear inuse bits in known places */
+
 #define inuse_bit_at_offset(p, s)                                              \
+
     (((mchunkptr)(((char *) (p)) + (s)))->mchunk_size & PREV_INUSE)
 
+
 #define set_inuse_bit_at_offset(p, s)                                          \
+
     (((mchunkptr)(((char *) (p)) + (s)))->mchunk_size |= PREV_INUSE)
 
+
+
 #define clear_inuse_bit_at_offset(p, s)                                        \
+
     (((mchunkptr)(((char *) (p)) + (s)))->mchunk_size &= ~(PREV_INUSE))
+
 ```
 
-### bin
 
-#### 概述
 
-我们曾经说过，用户释放掉的 chunk 不会马上归还给系统，ptmalloc 会统一管理 heap 和 mmap 映射区域中的空闲的chunk。当用户再一次请求分配内存时，ptmalloc 分配器会试图在空闲的chunk中挑选一块合适的给用户。这样可以避免频繁的系统调用，降低内存分配的开销。
+### am
 
-在具体的实现中，ptmalloc 采用分箱式方法对空闲的 chunk 进行管理。首先，它会根据空闲的 chunk 的大小以及使用状态将 chunk 初步分为4类：fast bins，small bins，large bins，unsorted bin。每类中仍然有更细的划分，相似大小的 chunk 会用双向链表链接起来。也就是说，在每类 bin 的内部仍然会有多个互不相关的链表来保存不同大小的 chunk。
 
-对于 small bins，large bins，unsorted bin 来说，ptmalloc 将它们维护在同一个数组中。这些bin对应的数据结构在 malloc_state 中，如下
+#### Overview
+
+
+We have said that the chunks released by the user will not be returned to the system immediately, and ptmalloc will uniformly manage the free chunks in the heap area of the heap and mmap. When the user again requests memory allocation, the ptmalloc allocator will attempt to pick a suitable one for the user in the free chunk. This avoids frequent system calls and reduces the overhead of memory allocation.
+
+
+In a specific implementation, ptmalloc manages idle chunks in a bin-wise manner. First, it will initially classify chunks into four categories based on the size of the free chunks and the state of use: fast bins, small bins, large bins, unsorted bins. There is still a finer division in each class, and similarly sized chunks are linked by a doubly linked list. That is to say, there will still be multiple unrelated lists in each type of bin to hold chunks of different sizes.
+
+
+For small bins, large bins, unsorted bins, ptmalloc maintains them in the same array. The data structure corresponding to these bins is in malloc_state, as follows
+
 
 ```c++
+
 #define NBINS 128
+
 /* Normal bins packed as described above */
+
 mchunkptr bins[ NBINS * 2 - 2 ];
+
 ```
 
-虽然每个 bin 的表头使用 mchunkptr 这个数据结构，但是这只是为了方便我们将每个 bin 转化为 malloc_chunk 指针。我们在使用时，会将这个指针当做一个 chunk 的 fd 或 bk 指针来操作，以便于将处于空闲的堆块链接在一起。这样可以节省空间，并提高可用性。那到底是怎么节省的呢？这里我们以32位系统为例
 
-| 含义    | bin1的fd/bin2的prev_size | bin1的bk/bin2的size | bin2的fd/bin3的prev_size | bin2的bk/bin3的size |
+
+Although the header of each bin uses the mchunkptr data structure, this is just for the convenience of converting each bin into a malloc_chunk pointer. When we use it, we will use this pointer as a chunk&#39;s fd or bk pointer to link together the free heap blocks. This saves space and increases usability. How is it saved? Here we take 32-bit system as an example.
+
+
+| Meaning | bin1 fd/bin2 prev_size | bin1 bk/bin2 size | bin2 fd/bin3 prev_size | bin2 bk/bin3 size |
 | ----- | ---------------------- | ----------------- | ---------------------- | ----------------- |
-| bin下标 | 0                      | 1                 | 2                      | 3                 |
 
-可以看出除了第一个bin（unsorted bin）外，后面的每个bin会共享前面的bin的字段，将其视为malloc chunk部分的prev_size和size。这里也说明了一个问题，**bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 的 prev_size 与 size 字段不能随便修改，因为这两个字段是被其它bin所利用的。**
+| bin bottom board | 0 | 1 | 2 | 3 |
 
-数组中的 bin 依次介绍如下
 
-1. 第一个为 unsorted bin，字如其面，这里面的 chunk 没有进行排序，存储的 chunk 比较杂。
-2. 索引从 2 到 63 的 bin 称为 small bin，同一个 small bin 链表中的 chunk 的大小相同。两个相邻索引的 small bin 链表中的 chunk 大小相差的字节数为**2个机器字长**，即32位相差8字节，64位相差16字节。
-3. small bins 后面的 bin 被称作 large bins。large bins 中的每一个 bin 都包含一定范围内的 chunk，其中的chunk 按 fd 指针的顺序从大到小排列。相同大小的chunk同样按照最近使用顺序排列。
+It can be seen that in addition to the first bin (unsorted bin), each subsequent bin will share the field of the previous bin, which is treated as the prev_size and size of the malloc chunk. Here also illustrates a problem, the subscript of **bin is not consistent with the first few bins we are talking about. At the same time, the prev_size and size fields of the chunk of the bin header cannot be modified casually, because these two fields are used by other bins. **
 
-此外，上述这些bin的排布都会遵循一个原则：**任意两个物理相邻的空闲chunk不能在一起**。
 
-需要注意的是，并不是所有的 chunk 被释放后就立即被放到 bin 中。ptmalloc 为了提高分配的速度，会把一些小的 chunk **先**放到 fast bins 的容器内。**而且，fastbin 容器中的 chunk 的使用标记总是被置位的，所以不满足上面的原则。**
+The bin in the array is described as follows
 
-bin 通用的宏如下
+
+1. The first one is unsorted bin, the word is like this, the chunks inside are not sorted, and the stored chunks are more complicated.
+2. The bins with indexes from 2 to 63 are called small bins, and the chunks in the same small bin list are the same size. The number of bytes in the small bin list of two adjacent indexes differs by **2 machine words long**, that is, 32 bits differ by 8 bytes, and 64 bits differ by 16 bytes.
+3. The bin behind small bins is called large bins. Each bin in large bins contains a range of chunks, with chunks arranged in descending order of fd pointers. Chunks of the same size are also arranged in the order of recent use.
+
+
+In addition, the arrangement of these bins will follow a principle: ** Any two physically adjacent free chunks cannot be together**.
+
+
+It should be noted that not all chunks are released into the bin immediately after they are released. In order to increase the speed of allocation, ptmalloc will put some small chunks** into the container of fast bins. ** Moreover, the usage flags of the chunks in the fastbin container are always set, so the above principles are not met. **
+
+
+Bin general macro is as follows
+
 
 ```c++
+
 typedef struct malloc_chunk *mbinptr;
 
+
+
 /* addressing -- note that bin_at(0) does not exist */
+
 #define bin_at(m, i)                                                           \
+
     (mbinptr)(((char *) &((m)->bins[ ((i) -1) * 2 ])) -                        \
+
               offsetof(struct malloc_chunk, fd))
 
+
+
 /* analog of ++bin */
-//获取下一个bin的地址
+
+/ / Get the address of the next bin
 #define next_bin(b) ((mbinptr)((char *) (b) + (sizeof(mchunkptr) << 1)))
 
+
+
 /* Reminders about list directionality within bins */
-// 这两个宏可以用来遍历bin
-// 获取 bin 的位于链表头的 chunk
+
+// These two macros can be used to traverse the bin
+/ / Get the chunk of the bin at the head of the list header
 #define first(b) ((b)->fd)
-// 获取 bin 的位于链表尾的 chunk
+
+/ / Get the chunk of the bin at the end of the chain
 #define last(b) ((b)->bk)
+
 ```
+
+
 
 #### Fast Bin
 
-大多数程序经常会申请以及释放一些比较小的内存块。如果将一些较小的 chunk 释放之后发现存在与之相邻的空闲的 chunk 并将它们进行合并，那么当下一次再次申请相应大小的 chunk 时，就需要对 chunk 进行分割，这样就大大降低了堆的利用效率。**因为我们把大部分时间花在了合并、分割以及中间检查的过程中。**因此，ptmalloc 中专门设计了 fast bin，对应的变量就是 malloc state 中的 fastbinsY 
+
+Most programs often apply and release some smaller blocks of memory. If some smaller chunks are released and there are free chunks adjacent to them and merged, then the next time you apply for the chunk of the corresponding size again, you need to split the chunk, which greatly reduces the heap. usage efficiency. **Because we spend most of our time in the process of merging, segmentation, and intermediate checks. ** Therefore, the fast bin is specifically designed in ptmalloc, and the corresponding variable is fastbinsY in malloc state.
+
 
 ```c++
+
 /*
+
    Fastbins
 
+
+
     An array of lists holding recently freed small chunks.  Fastbins
+
     are not doubly linked.  It is faster to single-link them, and
+
     since chunks are never removed from the middles of these lists,
+
     double linking is not necessary. Also, unlike regular bins, they
+
     are not even processed in FIFO order (they use faster LIFO) since
+
     ordering doesn't much matter in the transient contexts in which
+
     fastbins are normally used.
 
+
+
     Chunks in fastbins keep their inuse bit set, so they cannot
+
     be consolidated with other free chunks. malloc_consolidate
+
     releases all chunks in fastbins and consolidates them with
+
     other free chunks.
+
  */
+
 typedef struct malloc_chunk *mfastbinptr;
 
+
+
 /*
+
     This is in malloc_state.
+
     /* Fastbins */
+
     mfastbinptr fastbinsY[ NFASTBINS ];
+
 */
+
 ```
 
-为了更加高效地利用 fast bin，glibc 采用单向链表对其中的每个 bin 进行组织，并且**每个 bin 采取 LIFO 策略**，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的 chunk 的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中相应的 bin 中是否有对应大小的空闲块，如果有的话，就会直接从这个 bin 中获取 chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。
 
-默认情况下（**32位系统为例**）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为 8 字节开始一直到 80 字节（注意这里说的是数据空间大小，也即除去 prev_size 和 size 字段部分的大小）定义如下
+
+In order to use the fast bin more efficiently, glibc uses a singly linked list to organize each bin, and ** each bin adopts the LIFO policy**, and the recently released chunk will be allocated earlier, so it is more suitable for Locality. That is to say, when the size of the chunk that the user needs is smaller than the maximum size of the fastbin, ptmalloc will first determine whether there is a free block of the corresponding size in the corresponding bin in the fastbin, if any, the chunk will be directly obtained from the bin. . If not, ptmalloc will do the next series of operations.
+
+
+By default (**32-bit system is an example**), the maximum chunk size supported by default in fastbin is 64 bytes. But the chunk of data that it can support is up to 80 bytes. In addition, fastbin can support up to 10 bins, starting from 8 bytes in data space up to 80 bytes (note that the size of the data space is the same, that is, the prev_size and size fields are removed. Size) is defined as follows
+
 
 ```c++
+
 #define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)
 
+
+
 #ifndef DEFAULT_MXFAST
+
 #define DEFAULT_MXFAST (64 * SIZE_SZ / 4)
+
 #endif
   
+
 /* The maximum fastbin request size we support */
+
 #define MAX_FAST_SIZE (80 * SIZE_SZ / 4)
 
-/*
-   Since the lowest 2 bits in max_fast don't matter in size comparisons,
-   they are used as flags.
- */
+
 
 /*
+
+   Since the lowest 2 bits in max_fast don't matter in size comparisons,
+
+   they are used as flags.
+
+ */
+
+
+
+/*
+
    FASTCHUNKS_BIT held in max_fast indicates that there are probably
+
    some fastbin chunks. It is set true on entering a chunk into any
+
    fastbin, and cleared only in malloc_consolidate.
 
+
+
    The truth value is inverted so that have_fastchunks will be true
+
    upon startup (since statics are zero-filled), simplifying
+
    initialization checks.
+
  */
-//判断分配区是否有 fast bin chunk，1表示没有
+
+/ / Determine whether the allocation area has fast bin chunk, 1 means no
 #define FASTCHUNKS_BIT (1U)
 
+
+
 #define have_fastchunks(M) (((M)->flags & FASTCHUNKS_BIT) == 0)
+
 #define clear_fastchunks(M) catomic_or(&(M)->flags, FASTCHUNKS_BIT)
 #define set_fastchunks(M) catomic_and(&(M)->flags, ~FASTCHUNKS_BIT)
 
+
+
 /*
+
    NONCONTIGUOUS_BIT indicates that MORECORE does not return contiguous
+
    regions.  Otherwise, contiguity is exploited in merging together,
+
    when possible, results from consecutive MORECORE calls.
 
+
+
    The initial value comes from MORECORE_CONTIGUOUS, but is
+
    changed dynamically if mmap is ever used as an sbrk substitute.
+
  */
-// MORECODE是否返回连续的内存区域。
-// 主分配区中的MORECORE其实为sbr()，默认返回连续虚拟地址空间
-// 非主分配区使用mmap()分配大块虚拟内存，然后进行切分来模拟主分配区的行为
-// 而默认情况下mmap映射区域是不保证虚拟地址空间连续的，所以非主分配区默认分配非连续虚拟地址空间。
+
+// Whether MORECODE returns a contiguous memory area.
+// MORECORE in the main allocation area is actually sbr(), which returns the default virtual address space by default.
+// The non-primary allocation area uses mmap() to allocate large blocks of virtual memory and then splits to simulate the behavior of the primary allocation area.
+// By default, the mmap mapping area does not guarantee that the virtual address space is continuous, so the non-primary allocation area allocates non-contiguous virtual address space by default.
 #define NONCONTIGUOUS_BIT (2U)
 
+
+
 #define contiguous(M) (((M)->flags & NONCONTIGUOUS_BIT) == 0)
+
 #define noncontiguous(M) (((M)->flags & NONCONTIGUOUS_BIT) != 0)
+
 #define set_noncontiguous(M) ((M)->flags |= NONCONTIGUOUS_BIT)
+
 #define set_contiguous(M) ((M)->flags &= ~NONCONTIGUOUS_BIT)
 
+
+
 /* ARENA_CORRUPTION_BIT is set if a memory corruption was detected on the
+
    arena.  Such an arena is no longer used to allocate chunks.  Chunks
+
    allocated in that arena before detecting corruption are not freed.  */
+
+
 
 #define ARENA_CORRUPTION_BIT (4U)
 
+
+
 #define arena_is_corrupt(A) (((A)->flags & ARENA_CORRUPTION_BIT))
+
 #define set_arena_corrupt(A) ((A)->flags |= ARENA_CORRUPTION_BIT)
 
+
+
 /*
+
    Set value of max_fast.
+
    Use impossibly small value if 0.
+
    Precondition: there are no existing fastbin chunks.
+
    Setting the value clears fastchunk bit but preserves noncontiguous bit.
+
  */
 
+
+
 #define set_max_fast(s)                                                        \
+
     global_max_fast =                                                          \
+
         (((s) == 0) ? SMALLBIN_WIDTH : ((s + SIZE_SZ) & ~MALLOC_ALIGN_MASK))
+
 #define get_max_fast() global_max_fast
+
 ```
 
-ptmalloc 默认情况下会调用 set_max_fast(s) 将全局变量 global_max_fast 设置为 DEFAULT_MXFAST，也就是设置 fast bins 中 chunk 的最大值。当 MAX_FAST_SIZE 被设置为 0 时，系统就不会支持 fastbin 。
 
-**fastbin的索引**
+
+By default, ptmalloc calls set_max_fast(s) to set the global variable global_max_fast to DEFAULT_MXFAST, which is the maximum value of the chunk in the fast bins. When MAX_FAST_SIZE is set to 0, the system does not support fastbin.
+
+
+**fastbin index**
+
 
 ```c++
+
+
 
 #define fastbin(ar_ptr, idx) ((ar_ptr)->fastbinsY[ idx ])
 
+
+
 /* offset 2 to use otherwise unindexable first 2 bins */
+
 // chunk size=2*size_sz*(2+idx)
-// 这里要减2，否则的话，前两个bin没有办法索引到。
+
+/ / Here to reduce 2, otherwise, the first two bins have no way to index.
 #define fastbin_index(sz)                                                      \
+
     ((((unsigned int) (sz)) >> (SIZE_SZ == 8 ? 4 : 3)) - 2)
+
 ```
 
-**需要特别注意的是，fastbin 范围的 chunk 的 inuse 始终被置为 1。因此它们不会和其它被释放的 chunk 合并。**
 
-但是当释放的 chunk 与该 chunk 相邻的空闲 chunk 合并后的大小大于FASTBIN_CONSOLIDATION_THRESHOLD时，内存碎片可能比较多了，我们就需要把 fast bins 中的chunk都进行合并，以减少内存碎片对系统的影响。
+
+** It is important to note that the inuse of the chunk of the fastbin range is always set to 1. Therefore they will not merge with other released chunks. **
+
+
+However, when the size of the released chunk and the free chunk adjacent to the chunk are larger than FASTBIN_CONSOLIDATION_THRESHOLD, the memory fragmentation may be more. We need to merge the chunks in the fast bins to reduce the impact of memory fragmentation on the system.
+
 
 ```c++
+
 /*
+
    FASTBIN_CONSOLIDATION_THRESHOLD is the size of a chunk in free()
+
    that triggers automatic consolidation of possibly-surrounding
+
    fastbin chunks. This is a heuristic, so the exact value should not
+
    matter too much. It is defined at half the default trim threshold as a
+
    compromise heuristic to only attempt consolidation if it is likely
+
    to lead to trimming. However, it is not dynamically tunable, since
+
    consolidation reduces fragmentation surrounding large chunks even
+
    if trimming is not used.
+
  */
+
+
 
 #define FASTBIN_CONSOLIDATION_THRESHOLD (65536UL)
-```
-
-**malloc_consolidate 函数可以将 fastbin 中所有能和其它 chunk 合并的 chunk 合并在一起。具体地参见后续的详细函数的分析。** 
 
 ```
+
+
+
+The **malloc_consolidate function combines all the chunks in the fastbin that can be merged with other chunks. See in detail the analysis of subsequent detailed functions. **
+
+
+```
+
 /*
+
 	Chunks in fastbins keep their inuse bit set, so they cannot
+
     be consolidated with other free chunks. malloc_consolidate
+
     releases all chunks in fastbins and consolidates them with
+
     other free chunks.
+
  */
+
 ```
+
+
 
 #### Small Bin
 
-small bins 中每个 chunk 的大小与其所在的 bin 的 index 的关系为：chunk_size = 2 * SIZE_SZ *index，具体如下
 
-| 下标   | SIZE_SZ=4（32位） | SIZE_SZ=8（64位） |
+
+The relationship between the size of each chunk in small bins and the index of the bin it is in is: chunk_size = 2 * SIZE_SZ *index, as follows
+
+
+| Subscript | SIZE_SZ=4 (32-bit) | SIZE_SZ=8 (64-bit) |
 | ---- | -------------- | -------------- |
+
 | 2    | 16             | 32             |
+
 | 3    | 24             | 48             |
+
 | 4    | 32             | 64             |
+
 | 5    | 40             | 80             |
+
 | x    | 2\*4\*x        | 2\*8\*x        |
+
 | 63   | 504            | 1008           |
 
-small bins 中一共有 62 个循环双向链表，每个链表中存储的 chunk 大小都一致。比如对于 32 位系统来说，下标 2 对应的双向链表中存储的 chunk 大小为均为 16 字节。每个链表都有链表头结点，这样可以方便对于链表内部结点的管理。此外，**small bins 中每个 bin 对应的链表采用 FIFO 的规则**，所以同一个链表中先被释放的 chunk 会先被分配出去。
 
-small bin相关的宏如下
+
+There are a total of 62 circular doubly linked lists in small bins, and the chunks stored in each linked list are the same size. For example, for a 32-bit system, the chunk size stored in the doubly linked list corresponding to subscript 2 is 16 bytes. Each linked list has a linked list node, which makes it easy to manage the internal nodes of the linked list. In addition, the linked list for each bin in **small bins uses the FIFO rule**, so the chunks that are first released in the same linked list are first allocated.
+
+
+The small bin related macros are as follows
+
 
 ```c++
+
 #define NSMALLBINS 64
+
 #define SMALLBIN_WIDTH MALLOC_ALIGNMENT
-// 是否需要对small bin的下标进行纠正
+
+// Do you need to correct the subscript of the small bin?
 #define SMALLBIN_CORRECTION (MALLOC_ALIGNMENT > 2 * SIZE_SZ)
 
+
+
 #define MIN_LARGE_SIZE ((NSMALLBINS - SMALLBIN_CORRECTION) * SMALLBIN_WIDTH)
-//判断chunk的大小是否在small bin范围内
+
+/ / Determine whether the size of the chunk is within the range of small bin
 #define in_smallbin_range(sz)                                                  \
+
     ((unsigned long) (sz) < (unsigned long) MIN_LARGE_SIZE)
-// 根据chunk的大小得到small bin对应的索引。
+
+// Get the index corresponding to the small bin according to the size of the chunk.
 #define smallbin_index(sz)                                                     \
+
     ((SMALLBIN_WIDTH == 16 ? (((unsigned) (sz)) >> 4)                          \
+
                            : (((unsigned) (sz)) >> 3)) +                       \
+
      SMALLBIN_CORRECTION)
+
 ```
 
-**或许，大家会很疑惑，那 fastbin 与 small bin 中 chunk 的大小会有很大一部分重合啊，那 small bin 中对应大小的 bin 是不是就没有什么作用啊？** 其实不然，fast bin 中的 chunk 是有可能被放到 small bin 中去的，我们在后面分析具体的源代码时会有深刻的体会。
+
+
+** Perhaps, everyone will be very confused, the size of the chunks in the fastbin and small bin will have a large part of the overlap, then the size of the bin in the small bin is not useful? ** In fact, the chunks in the fast bin are likely to be placed in the small bin. We will have a deep understanding when analyzing the specific source code later.
+
 
 #### Large Bin
 
-large bins 中一共包括 63 个 bin，每个 bin 中的 chunk 的大小不一致，而是处于一定区间范围内。此外，这 63 个 bin 被分成了 6 组，每组 bin 中的 chunk 大小之间的公差一致，具体如下：
 
-| 组    | 数量   | 公差      |
+
+A large total of 63 bins are included in the large bins. The size of the chunks in each bin is inconsistent, but within a certain range. In addition, the 63 bins are divided into 6 groups, and the tolerances between the chunk sizes in each group bin are the same, as follows:
+
+| Group | Quantity | Tolerance |
 | ---- | ---- | ------- |
-| 1    | 32   | 64B     |
-| 2    | 16   | 512B    |
+
+| 1 32 64B |
+| 2 16 512B |
 | 3    | 8    | 4096B   |
-| 4    | 4    | 32768B  |
+
+| 4 4 32768B |
 | 5    | 2    | 262144B |
-| 6    | 1    | 不限制     |
 
-这里我们以 32 位平台的 large bin 为例，第一个 large bin 的起始 chunk 大小为 512 字节，位于第一组，所以该bin 可以存储的 chunk 的大小范围为 [512,512+64)。
+| 6 | 1 | No limit |
 
-关于 large bin 的宏如下，这里我们以 32 位平台下，第一个 large bin 的起始 chunk 大小为例，为 512 字节，那么 512>>6 = 8，所以其下标为56+8=64。
+
+Here we take the large bin of the 32-bit platform as an example. The size of the first chunk of the first large bin is 512 bytes, which is in the first group, so the size of the chunk that the bin can store is [512, 512 + 64).
+
+
+The macro about large bin is as follows. Here we take the initial chunk size of the first large bin on the 32-bit platform as 512 bytes, then 512&gt;&gt;6 = 8, so the subscript is 56+8= 64.
+
 
 ```c++
+
 #define largebin_index_32(sz)                                                  \
+
     (((((unsigned long) (sz)) >> 6) <= 38)                                     \
+
          ? 56 + (((unsigned long) (sz)) >> 6)                                  \
+
          : ((((unsigned long) (sz)) >> 9) <= 20)                               \
+
                ? 91 + (((unsigned long) (sz)) >> 9)                            \
+
                : ((((unsigned long) (sz)) >> 12) <= 10)                        \
+
                      ? 110 + (((unsigned long) (sz)) >> 12)                    \
+
                      : ((((unsigned long) (sz)) >> 15) <= 4)                   \
+
                            ? 119 + (((unsigned long) (sz)) >> 15)              \
+
                            : ((((unsigned long) (sz)) >> 18) <= 2)             \
+
                                  ? 124 + (((unsigned long) (sz)) >> 18)        \
+
                                  : 126)
+
+
 
 #define largebin_index_32_big(sz)                                              \
+
     (((((unsigned long) (sz)) >> 6) <= 45)                                     \
+
          ? 49 + (((unsigned long) (sz)) >> 6)                                  \
+
          : ((((unsigned long) (sz)) >> 9) <= 20)                               \
+
                ? 91 + (((unsigned long) (sz)) >> 9)                            \
+
                : ((((unsigned long) (sz)) >> 12) <= 10)                        \
+
                      ? 110 + (((unsigned long) (sz)) >> 12)                    \
+
                      : ((((unsigned long) (sz)) >> 15) <= 4)                   \
+
                            ? 119 + (((unsigned long) (sz)) >> 15)              \
+
                            : ((((unsigned long) (sz)) >> 18) <= 2)             \
+
                                  ? 124 + (((unsigned long) (sz)) >> 18)        \
+
                                  : 126)
+
+
 
 // XXX It remains to be seen whether it is good to keep the widths of
+
 // XXX the buckets the same or whether it should be scaled by a factor
+
 // XXX of two as well.
+
 #define largebin_index_64(sz)                                                  \
+
     (((((unsigned long) (sz)) >> 6) <= 48)                                     \
+
          ? 48 + (((unsigned long) (sz)) >> 6)                                  \
+
          : ((((unsigned long) (sz)) >> 9) <= 20)                               \
+
                ? 91 + (((unsigned long) (sz)) >> 9)                            \
+
                : ((((unsigned long) (sz)) >> 12) <= 10)                        \
+
                      ? 110 + (((unsigned long) (sz)) >> 12)                    \
+
                      : ((((unsigned long) (sz)) >> 15) <= 4)                   \
+
                            ? 119 + (((unsigned long) (sz)) >> 15)              \
+
                            : ((((unsigned long) (sz)) >> 18) <= 2)             \
+
                                  ? 124 + (((unsigned long) (sz)) >> 18)        \
+
                                  : 126)
 
+
+
 #define largebin_index(sz)                                                     \
+
     (SIZE_SZ == 8 ? largebin_index_64(sz) : MALLOC_ALIGNMENT == 16             \
+
                                                 ? largebin_index_32_big(sz)    \
+
                                                 : largebin_index_32(sz))
+
 ```
+
+
 
 #### Unsorted Bin
 
-unsorted bin 可以视为空闲 chunk 回归其所属 bin 之前的缓冲区。
 
-其在 glibc 中具体的说明如下
+
+Unsorted bin can be thought of as a buffer before the free chunk returns to its own bin.
+
+
+Its specific description in glibc is as follows
+
 
 ```c++
+
 /*
+
    Unsorted chunks
 
+
+
     All remainders from chunk splits, as well as all returned chunks,
+
     are first placed in the "unsorted" bin. They are then placed
+
     in regular bins after malloc gives them ONE chance to be used before
+
     binning. So, basically, the unsorted_chunks list acts as a queue,
+
     with chunks being placed on it in free (and malloc_consolidate),
+
     and taken off (to be either used or placed in bins) in malloc.
 
+
+
     The NON_MAIN_ARENA flag is never set for unsorted chunks, so it
+
     does not have to be taken into account in size comparisons.
+
  */
+
 ```
 
-从下面的宏我们可以看出
+
+
+From the macro below we can see
+
 
 ```c++
+
 /* The otherwise unindexable 1-bin is used to hold unsorted chunks. */
+
 #define unsorted_chunks(M) (bin_at(M, 1))
+
 ```
 
-unsorted bin 处于我们之前所说的 bin 数组下标 1 处。故而 unsorted bin 只有一个链表。unsorted bin 中的空闲 chunk 处于乱序状态，主要有两个来源
 
-- 当一个较大的 chunk 被分割成两半后，如果剩下的部分大于 MINSIZE，就会被放到 unsorted bin 中。
-- 释放一个不属于 fast bin 的 chunk，并且该 chunk 不和 top chunk 紧邻时，该 chunk 会被首先放到 unsorted bin 中。关于 top chunk 的解释，请参考下面的介绍。
 
-此外，Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO 。
+The unsorted bin is at the subscript 1 of the bin array we mentioned earlier. Therefore, the unsorted bin has only one linked list. Idle chunks in unsorted bin are out of order, with two main sources
+
+
+- When a larger chunk is split into two halves, if the rest is greater than MINSIZE, it will be placed in the unsorted bin.
+- When a chunk that does not belong to the fast bin is released, and the chunk is not in close proximity to the top chunk, the chunk is first placed in the unsorted bin. For an explanation of the top chunk, please refer to the introduction below.
+
+
+In addition, the traversal order used by Unsorted Bin during the process is FIFO.
+
 
 #### common macro
 
-这里介绍一些通用的宏。
 
-**根据chunk的大小统一地获得chunk所在的索引**
+
+Here are some general macros.
+
+
+**Unified to get the index of the chunk according to the size of the chunk**
+
 
 ```c++
+
 #define bin_index(sz)                                                          \
+
     ((in_smallbin_range(sz)) ? smallbin_index(sz) : largebin_index(sz))
+
 ```
+
+
 
 ### Top Chunk
 
-glibc 中对于 top chunk 的描述如下
+
+
+The description of top chunk in glibc is as follows
+
 
 ```c++
+
 /*
+
    Top
 
+
+
     The top-most available chunk (i.e., the one bordering the end of
+
     available memory) is treated specially. It is never included in
+
     any bin, is used only if no other chunk is available, and is
+
     released back to the system if it is very large (see
+
     M_TRIM_THRESHOLD).  Because top initially
+
     points to its own bin with initial zero size, thus forcing
+
     extension on the first malloc request, we avoid having any special
+
     code in malloc to check whether it even exists yet. But we still
+
     need to do so when getting memory from system, so we make
     initial_top treat the bin as a legal but unusable chunk during the
+
     interval between initialization and the first call to
+
     sysmalloc. (This is somewhat delicate, since it relies on
+
     the 2 preceding words to be zero during this interval as well.)
+
  */
 
+
+
 /* Conveniently, the unsorted bin can be used as dummy top on first call */
+
 #define initial_top(M) (unsorted_chunks(M))
+
 ```
 
-程序第一次进行 malloc 的时候，heap 会被分为两块，一块给用户，剩下的那块就是 top chunk。其实，所谓的top chunk 就是处于当前堆的物理地址最高的 chunk。这个 chunk 不属于任何一个 bin，它的作用在于当所有的bin 都无法满足用户请求的大小时，如果其大小不小于指定的大小，就进行分配，并将剩下的部分作为新的 top chunk。否则，就对heap进行扩展后再进行分配。在main arena中通过sbrk扩展heap，而在thread arena中通过mmap分配新的heap。
 
-需要注意的是，top chunk 的 prev_inuse 比特位始终为1，否则其前面的chunk就会被合并到top chunk中。
 
-**初始情况下，我们可以将 unsorted chunk 作为 top chunk。**
+When the program first performs malloc, the heap is divided into two pieces, one for the user, and the remaining one is the top chunk. In fact, the so-called top chunk is the chunk with the highest physical address in the current heap. This chunk does not belong to any bin. Its function is to allocate all the bins if they are not up to the specified size. If the size is not less than the specified size, the allocation is made and the remaining part is used as the new top chunk. Otherwise, the heap is expanded and then allocated. The heap is extended by sbrk in the main arena, and the new heap is allocated by the mmap in the thread arena.
+
+
+It should be noted that the prev_inuse bit of the top chunk is always 1, otherwise the previous chunk will be merged into the top chunk.
+
+
+** In the initial case, we can use the unsorted chunk as the top chunk. **
+
 
 ### last remainder
 
-在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不和申请的内存大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin 也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
 
-## 宏观结构
+
+When a user uses malloc to request memory allocation, the chunk found by ptmalloc2 may not match the size of the requested memory. In this case, the remaining portion after the split is called the last remainder chunk, and the unsort bin will also store the chunk. The top chunk splits the rest of the section as a last remainer.
+
+
+## Macrostructure
+
 
 ### arena
 
-在我们之前介绍的例子中，无论是主线程还是新创建的线程，在第一次申请内存时，都会有独立的arena。那么会不会每个线程都有独立的arena呢？下面我们就具体介绍。
 
-#### arena 数量
 
-对于不同系统，arena数量的[约束](https://github.com/sploitfun/lsploits/blob/master/glibc/malloc/arena.c#L847)如下
+In the example we introduced earlier, whether it is the main thread or the newly created thread, there will be a separate arena when applying for memory for the first time. So will each thread have an independent arena? Below we will introduce in detail.
+
+
+#### arena Quantity
+
+
+For different systems, the [constraints] of the number of arena (https://github.com/sploitfun/lsploits/blob/master/glibc/malloc/arena.c#L847) are as follows
+
 
 ```text
+
 For 32 bit systems:
+
      Number of arena = 2 * number of cores.
+
 For 64 bit systems:
+
      Number of arena = 8 * number of cores.
+
 ```
 
-显然，不是每一个线程都会有对应的 arena。至于为什么64位系统，要那么设置，我也没有想明白。此外，因为每个系统的核数是有限的，当线程数大于核数的二倍（超线程技术）时，就必然有线程处于等待状态，所以没有必要为每个线程分配一个 arena。
 
-#### arena 分配规则
 
-**待补充。**
+Obviously, not every thread will have a corresponding arena. As for why the 64-bit system is set up, I don&#39;t want to understand it. In addition, because the number of cores per system is limited, when the number of threads is more than twice the number of cores (hyperthreading technology), there must be threads waiting, so there is no need to assign an arena to each thread.
 
-#### 区别
 
-与 thread 不同的是，main_arena 并不在申请的 heap 中，而是一个全局变量，在 libc.so 的数据段。
+#### arena Distribution Rules
+
+
+**To be added. **
+
+
+#### the difference
+
+
+Unlike thread, main_arena is not in the applied heap, but a global variable in the data segment of libc.so.
+
 
 ### heap_info
 
-程序刚开始执行时，每个线程是没有 heap 区域的。当其申请内存时，就需要一个结构来记录对应的信息，而heap_info 的作用就是这个。而且当该heap的资源被使用完后，就必须得再次申请内存了。此外，一般申请的heap 是不连续的，因此需要记录不同heap之间的链接结构。
 
-**该数据结构是专门为从 Memory Mapping Segment 处申请的内存准备的，即为非主线程准备的。**
 
-主线程可以通过 sbrk() 函数扩展 program break location 获得（直到触及Memory Mapping Segment），只有一个heap，没有 heap_info 数据结构。
+When the program first starts executing, each thread has no heap area. When it applies for memory, it needs a structure to record the corresponding information, and the role of heap_info is this. And when the resources of the heap are used, you must apply for memory again. In addition, the generally applied heap is not continuous, so it is necessary to record the link structure between different heaps.
 
-heap_info 的主要结构如下
+
+**This data structure is specifically prepared for memory requested from the Memory Mapping Segment, which is prepared for non-primary threads. **
+
+
+The main thread can be extended by the program break location via the sbrk() function (until it touches the Memory Mapping Segment), with only one heap and no heap_info data structure.
+
+
+The main structure of heap_info is as follows
+
 
 ```c++
+
 #define HEAP_MIN_SIZE (32 * 1024)
+
 #ifndef HEAP_MAX_SIZE
+
 # ifdef DEFAULT_MMAP_THRESHOLD_MAX
+
 #  define HEAP_MAX_SIZE (2 * DEFAULT_MMAP_THRESHOLD_MAX)
+
 # else
+
 #  define HEAP_MAX_SIZE (1024 * 1024) /* must be a power of two */
+
 # endif
 #endif
 
+
 /* HEAP_MIN_SIZE and HEAP_MAX_SIZE limit the size of mmap()ed heaps
+
    that are dynamically created for multi-threaded programs.  The
+
    maximum size must be a power of two, for fast determination of
+
    which heap belongs to a chunk.  It should be much larger than the
+
    mmap threshold, so that requests with a size just below that
+
    threshold can be fulfilled without creating too many heaps.  */
+
+
 
 /***************************************************************************/
 
+
+
 /* A heap is a single contiguous memory region holding (coalesceable)
+
    malloc_chunks.  It is allocated with mmap() and always starts at an
+
    address aligned to HEAP_MAX_SIZE.  */
 
+
+
 typedef struct _heap_info
+
 {
+
   mstate ar_ptr; /* Arena for this heap. */
+
   struct _heap_info *prev; /* Previous heap. */
+
   size_t size;   /* Current size in bytes. */
+
   size_t mprotect_size; /* Size in bytes that has been mprotected
+
                            PROT_READ|PROT_WRITE.  */
+
   /* Make sure the following data is properly aligned, particularly
+
      that sizeof (heap_info) + 2 * SIZE_SZ is a multiple of
+
      MALLOC_ALIGNMENT. */
+
   char pad[-6 * SIZE_SZ & MALLOC_ALIGN_MASK];
+
 } heap_info;
+
 ```
 
-该结构主要是描述堆的基本信息，包括
 
-- 堆对应的 arena 的地址
-- 由于一个线程申请一个堆之后，可能会使用完，之后就必须得再次申请。因此，一个可能会有多个堆。prev即记录了上一个 heap_info 的地址。这里可以看到每个堆的 heap_info 是通过单向链表进行链接的。
-- size 表示当前堆的大小
-- 最后一部分确保对齐（**这里负数使用的缘由是什么呢**？）
 
-看起来该结构应该是相当重要的，但是如果如果我们仔细看完整个 malloc 的实现的话，就会发现它出现的频率并不高。
+This structure is mainly to describe the basic information of the heap, including
+
+
+- the address of the corresponding arena of the heap
+- Since a thread requests a heap, it may be used up and must be applied again. Therefore, one may have multiple heaps. Prev records the address of the last heap_info. Here you can see that each heap&#39;s heap_info is linked through a singly linked list.
+- size indicates the size of the current heap
+- The last part ensures alignment (**What is the reason for the negative use here?**)
+
+
+It seems that the structure should be quite important, but if we look closely at the implementation of the full malloc, we will find that it does not appear frequently.
+
 
 ### malloc_state
 
-该结构用于管理堆，记录每个 arena 当前申请的内存的具体状态，比如说是否有空闲chunk，有什么大小的空闲chunk 等等。无论是 thread arena 还是 main arena，它们都只有一个 malloc state 结构。由于 thread 的 arena 可能有多个，malloc state结构会在最新申请的arena中。
 
-**注意，main arena 的 malloc_state 并不是 heap segment 的一部分，而是一个全局变量，存储在 libc.so 的数据段。**
 
-其结构如下
+This structure is used to manage the heap and record the specific state of the memory of each arena&#39;s current application, such as whether there are free chunks, what size of free chunks, and so on. Whether it is thread arena or main arena, they all have only one malloc state structure. Since there may be more than one of the thread&#39;s arena, the malloc state structure will be in the latest application&#39;s arena.
+
+
+**Note that the main arena&#39;s malloc_state is not part of the heap segment, but a global variable stored in the libc.so data segment. **
+
+
+Its structure is as follows
+
 
 ```c++
+
 struct malloc_state {
+
     /* Serialize access.  */
+
     __libc_lock_define(, mutex);
 
+
+
     /* Flags (formerly in max_fast).  */
+
     int flags;
 
+
+
     /* Fastbins */
+
     mfastbinptr fastbinsY[ NFASTBINS ];
 
+
+
     /* Base of the topmost chunk -- not otherwise kept in a bin */
+
     mchunkptr top;
 
+
+
     /* The remainder from the most recent split of a small request */
+
     mchunkptr last_remainder;
 
+
     /* Normal bins packed as described above */
+
     mchunkptr bins[ NBINS * 2 - 2 ];
 
+
+
     /* Bitmap of bins, help to speed up the process of determinating if a given bin is definitely empty.*/
+
     unsigned int binmap[ BINMAPSIZE ];
 
+
+
     /* Linked list, points to the next arena */
+
     struct malloc_state *next;
 
+
+
     /* Linked list for free arenas.  Access to this field is serialized
+
        by free_list_lock in arena.c.  */
+
     struct malloc_state *next_free;
 
+
+
     /* Number of threads attached to this arena.  0 if the arena is on
+
        the free list.  Access to this field is serialized by
+
        free_list_lock in arena.c.  */
+
     INTERNAL_SIZE_T attached_threads;
 
+
+
     /* Memory allocated from the system in this arena.  */
+
     INTERNAL_SIZE_T system_mem;
+
     INTERNAL_SIZE_T max_system_mem;
+
 };
+
 ```
 
+
+
 -   __libc_lock_define(, mutex);
-    -   该变量用于控制程序串行访问同一个分配区，当一个线程获取了分配区之后，其它线程要想访问该分配区，就必须等待该线程分配完成候才能够使用。
+
+- This variable is used to control the serial access of the program to the same allocation area. When a thread acquires the allocation area, other threads must wait for the thread allocation to complete before they can access the allocation area.
+
 
 -   flags
-    -   flags记录了分配区的一些标志，比如 bit0 记录了分配区是否有 fast bin chunk ，bit1 标识分配区是否能返回连续的虚拟地址空间。具体如下
+
+- flags records some flags of the allocation area. For example, bit0 records whether the allocation area has a fast bin chunk, and bit1 identifies whether the allocation area can return a continuous virtual address space. details as follows
+
 
 ```c
 
+
+
 /*
+
    FASTCHUNKS_BIT held in max_fast indicates that there are probably
+
    some fastbin chunks. It is set true on entering a chunk into any
+
    fastbin, and cleared only in malloc_consolidate.
+
    The truth value is inverted so that have_fastchunks will be true
+
    upon startup (since statics are zero-filled), simplifying
+
    initialization checks.
+
  */
+
+
 
 #define FASTCHUNKS_BIT (1U)
 
+
+
 #define have_fastchunks(M) (((M)->flags & FASTCHUNKS_BIT) == 0)
+
 #define clear_fastchunks(M) catomic_or(&(M)->flags, FASTCHUNKS_BIT)
+
 #define set_fastchunks(M) catomic_and(&(M)->flags, ~FASTCHUNKS_BIT)
 
+
+
 /*
+
    NONCONTIGUOUS_BIT indicates that MORECORE does not return contiguous
+
    regions.  Otherwise, contiguity is exploited in merging together,
+
    when possible, results from consecutive MORECORE calls.
+
    The initial value comes from MORECORE_CONTIGUOUS, but is
+
    changed dynamically if mmap is ever used as an sbrk substitute.
+
  */
+
+
 
 #define NONCONTIGUOUS_BIT (2U)
 
+
+
 #define contiguous(M) (((M)->flags & NONCONTIGUOUS_BIT) == 0)
+
 #define noncontiguous(M) (((M)->flags & NONCONTIGUOUS_BIT) != 0)
+
 #define set_noncontiguous(M) ((M)->flags |= NONCONTIGUOUS_BIT)
+
 #define set_contiguous(M) ((M)->flags &= ~NONCONTIGUOUS_BIT)
 
+
+
 /* ARENA_CORRUPTION_BIT is set if a memory corruption was detected on the
+
    arena.  Such an arena is no longer used to allocate chunks.  Chunks
+
    allocated in that arena before detecting corruption are not freed.  */
+
+
 
 #define ARENA_CORRUPTION_BIT (4U)
 
+
+
 #define arena_is_corrupt(A) (((A)->flags & ARENA_CORRUPTION_BIT))
+
 #define set_arena_corrupt(A) ((A)->flags |= ARENA_CORRUPTION_BIT)
+
+
 
 ```
 
+
+
 -   fastbinsY[NFASTBINS]
-    -   存放每个 fast chunk 链表头部的指针
+
+- a pointer to the head of each fast chunk list
 -   top
-    -   指向分配区的 top chunk
+
+- Point to the top chunk of the allocation area
 -   last_reminder
-    -   最新的 chunk 分割之后剩下的那部分
+
+- The remaining part after the latest chunk split
 -   bins
-    -   用于存储 unstored bin，small bins 和 large bins 的 chunk 链表。
+
+- A chunk list for storing unstored bins, small bins and large bins.
 -   binmap
-    -   ptmalloc 用一个 bit 来标识某一个 bin 中是否包含空闲 chunk 。
+
+- ptmalloc uses a bit to identify whether a bin contains free chunks.
+
 
 ### malloc_par
 
-**！！待补充！！**
+
+**! ! To be added! ! **

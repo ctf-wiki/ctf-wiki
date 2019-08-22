@@ -1,34 +1,54 @@
-内存镜像法是在加壳程序被加载时, 通过OD的`ALT+M`快捷键, 进入到程序虚拟内存区段. 然后通过加两次内存一次性断点, 到达程序正确OEP的位置.
+[EN](./memory.md) | [ZH](./memory-zh.md)
+The memory mirroring method is to enter the virtual memory section of the program by the ALT&#39;s `ALT+M` shortcut when the packer is loaded. Then, by adding two memory one-time breakpoints, the correct OEP position of the program is reached.
 
-内存镜像法的原理在于对于程序资源段和代码段下断点, 一般程序自解压或者自解密时, 会首先访问资源段获取所需资源, 然后在自动脱壳完成后, 转回程序代码段. 这时候下内存一次性断点, 程序就会停在OEP处.
+
+The principle of the memory mirroring method is that for the program resource segment and the code segment under the breakpoint, when the general program self-extracting or self-decrypting, the resource segment is first accessed to obtain the required resources, and then after the automatic shelling is completed, the program code segment is transferred back. At this time, the memory will be disconnected once, and the program will stop at OEP.
+
 
 ## 要点
 
-1. 选择菜单的`选项->调试选项->异常`
-2. 勾选所有的忽略异常
-3. 按下`ALT+M`, 打开内存镜像, 找到程序的第一个`.rsrc`, 按F2下断点, 然后按`SHIFT+F9`运行到断点
-4. 再按`ALT+M`, 打开内存镜像, 找到程序的第一个`.rsrc`上面的`.text`(在示例中是`00401000`处), 按F2下断点. 然后按`SHIFT+F9`（或者是在没异常情况下按F9）
 
-## 示例
+1. Select &#39;Options -&gt; Debug Options -&gt; Exceptions from the menu.
+2. Check all ignore exceptions
+3. Press `ALT+M` to open the memory image, find the first `.rsrc` of the program, press F2 to break the point, then press `SHIFT+F9` to run to the breakpoint.
+4. Press `ALT+M` again to open the memory image. Find the `.text` on the first `.rsrc` of the program (in the example, `00401000`), press F2 to break the point. Then press ` SHIFT+F9` (or press F9 without exception)
 
-示例程序可以点击此处下载: [4_memory.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/4_memory.zip)
 
-OD载入程序, 在菜单栏的`选项->调试设置->异常标签页`中勾选所有的忽略异常
+##example
+
+
+The sample program can be downloaded here: [4_memory.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/4_memory.zip)
+
+
+OD loader, check all ignore exceptions in the menu item &#39;Options -&gt; Debug Settings -&gt; Exceptions tab&gt;.
+
 
 ![memory_01.png](./figure/memory_01.png)
 
-按下`Alt+M`打开内存镜像, 找到资源段, 也就是`地址=00407000`, `大小=00005000`的`.rsrc`段, 选中F2下断
+
+
+Press `Alt+M` to open the memory image and find the resource segment, which is ``srcrc` of `address=00407000`, `size=00005000`, select F2 to break
+
 
 ![memory_02.png](./figure/memory_02.png)
 
-回到CPU窗口, 按下F9运行, 程序断在了`0040D75F`处
+
+
+Go back to the CPU window, press F9 to run, the program is broken at `0040D75F`
+
 
 ![memory_03.png](./figure/memory_03.png)
 
-再次按下`Alt+M`打开内存镜像, 对`.text`代码段下断
+
+
+Press `Alt+M` again to open the memory image and break the `.text` code snippet.
+
 
 ![memory_04.png](./figure/memory_04.png)
 
-再继续运行, 程序断在了`004010CC`处, 也就是OEP
+
+
+Continue to run, the program is broken at `004010CC`, which is OEP
+
 
 ![memory_05.png](./figure/memory_05.png)

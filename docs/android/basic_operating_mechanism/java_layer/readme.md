@@ -1,8 +1,11 @@
-#  Android 中 Java 层的运行机制
+[EN](./readme.md) | [ZH](./readme-zh.md)
+# Android Java layer running mechanism
 
-本部分主要关注 Android 中 Java 层代码的运行机制，主要介绍
 
-- Java 虚拟机，从宏观角度即程序执行流程来考虑 Java 代码是如何被执行的。
-- Smali 代码，从微观角度即指令级别考虑 Java 代码是如何对应到J Java 虚拟机中的指令。
-- Java 层可执行文件，考虑 Java 虚拟机的对应可执行文件的具体格式。
+This section focuses on the operating mechanism of Java layer code in Android.
+
+
+- Java virtual machine, from a macro perspective, the program execution flow to consider how Java code is executed.
+- Smali code that considers how Java code corresponds to instructions in the J Java virtual machine from a microscopic perspective, the instruction level.
+- Java layer executable, considering the specific format of the corresponding executable file of the Java virtual machine.
 

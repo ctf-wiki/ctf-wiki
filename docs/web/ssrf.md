@@ -1,219 +1,376 @@
-## SSRF 简介
+[EN](./ssrf.md) | [ZH](./ssrf-zh.md)
+## SSRF Introduction
 
-SSRF，Server-Side Request Forgery，服务端请求伪造，是一种由攻击者构造形成由服务器端发起请求的一个漏洞。一般情况下，SSRF 攻击的目标是从外网无法访问的内部系统。
 
-漏洞形成的原因大多是因为服务端提供了从其他服务器应用获取数据的功能且没有对目标地址作过滤和限制。
+SSRF, Server-Side Request Forgery, server request forgery, is a vulnerability that is constructed by an attacker to form a request initiated by the server. In general, the target of an SSRF attack is an internal system that is inaccessible from the external network.
 
-攻击者可以利用 SSRF 实现的攻击主要有 5 种：
 
-1.  可以对外网、服务器所在内网、本地进行端口扫描，获取一些服务的 banner 信息
-2.  攻击运行在内网或本地的应用程序（比如溢出）
-3.  对内网 WEB 应用进行指纹识别，通过访问默认文件实现
-4.  攻击内外网的 web 应用，主要是使用 GET 参数就可以实现的攻击（比如 Struts2，sqli 等）
-5.  利用 `file` 协议读取本地文件等
+The reason for the vulnerability is mostly because the server provides the function of obtaining data from other server applications and does not filter and limit the target address.
 
-## SSRF 漏洞出现的场景
 
--   能够对外发起网络请求的地方，就可能存在 SSRF 漏洞
--   从远程服务器请求资源（Upload from URL，Import & Export RSS Feed）
--   数据库内置功能（Oracle、MongoDB、MSSQL、Postgres、CouchDB）
--   Webmail 收取其他邮箱邮件（POP3、IMAP、SMTP）
--   文件处理、编码处理、属性信息处理（ffmpeg、ImageMagic、DOCX、PDF、XML）
+There are five main types of attacks that an attacker can make using SSRF:
 
-## 常用的后端实现
+
+1. You can perform port scanning on the external network, the intranet where the server is located, and local, and obtain banner information for some services.
+2. Attack applications running on intranet or local (such as overflow)
+3. Fingerprint recognition of the intranet WEB application, by accessing the default file
+4. Attack web applications inside and outside the network, mainly attacks that can be implemented using GET parameters (such as Struts2, sqti, etc.)
+5. Use the `file` protocol to read local files, etc.
+
+
+## SSRF Vulnerability scenarios
+
+
+- Where there is a possibility to initiate a network request, there may be an SSRF vulnerability
+- Request resources from a remote server (Upload from URL, Import &amp; Export RSS Feed)
+- Database built-in functions (Oracle, MongoDB, MSSQL, Postgres, CouchDB)
+- Webmail collects other emails (POP3, IMAP, SMTP)
+- File processing, encoding processing, attribute information processing (ffmpeg, ImageMagic, DOCX, PDF, XML)
+
+
+## Common backend implementation
+
 
 1.  `file_get_contents`
 
+
+
     ```php
+
     <?php
+
     if (isset($_POST['url'])) { 
+
         $content = file_get_contents($_POST['url']); 
+
         $filename ='./images/'.rand().';img1.jpg'; 
+
         file_put_contents($filename, $content); 
+
         echo $_POST['url']; 
+
         $img = "<img src=\"".$filename."\"/>"; 
+
     }
+
     echo $img;
+
     ?>
+
     ```
 
-    这段代码使用 `file_get_contents` 函数从用户指定的 URL 获取图片。然后把它用一个随机文件名保存在硬盘上，并展示给用户。
+
+
+This code uses the `file_get_contents` function to get the image from the URL specified by the user. It is then saved to the hard disk with a random file name and presented to the user.
+
 
 2.  `fsockopen()`
 
+
+
     ```php
+
     <?php 
+
     function GetFile($host,$port,$link) { 
+
         $fp = fsockopen($host, intval($port), $errno, $errstr, 30); 
+
         if (!$fp) { 
+
             echo "$errstr (error number $errno) \n"; 
+
         } else { 
+
             $out = "GET $link HTTP/1.1\r\n"; 
+
             $out .= "Host: $host\r\n"; 
+
             $out .= "Connection: Close\r\n\r\n"; 
+
             $out .= "\r\n"; 
+
             fwrite($fp, $out); 
+
             $contents=''; 
+
             while (!feof($fp)) { 
+
                 $contents.= fgets($fp, 1024); 
+
             } 
+
             fclose($fp); 
+
             return $contents; 
+
         } 
+
     }
+
     ?>
+
     ```
 
-    这段代码使用 `fsockopen` 函数实现获取用户制定 URL 的数据（文件或者 HTML）。这个函数会使用 socket 跟服务器建立 TCP 连接，传输原始数据。
+
+
+This code uses the `fsockopen` function to get the data (file or HTML) from the user&#39;s URL. This function uses a socket to establish a TCP connection with the server to transfer raw data.
+
 
 3.  `curl_exec()`
 
+
+
     ```php
+
     <?php 
+
     if (isset($_POST['url'])) {
+
         $link = $_POST['url'];
+
         $curlobj = curl_init();
+
         curl_setopt($curlobj, CURLOPT_POST, 0);
+
         curl_setopt($curlobj,CURLOPT_URL,$link);
+
         curl_setopt($curlobj, CURLOPT_RETURNTRANSFER, 1);
+
         $result=curl_exec($curlobj);
+
         curl_close($curlobj);
 
+
+
         $filename = './curled/'.rand().'.txt';
+
         file_put_contents($filename, $result); 
+
         echo $result;
+
     }
+
     ?>
+
     ```
 
-    使用 `curl` 获取数据。
 
-## 阻碍 SSRF 漏洞利用的场景
 
--   服务器开启 OpenSSL 无法进行交互利用
--   服务端需要鉴权（Cookies & User：Pass）不能完美利用
--   限制请求的端口为http常用的端口，比如，80,443,8080,8090。
--   禁用不需要的协议。仅仅允许http和https请求。可以防止类似于file:///,gopher://,ftp:// 等引起的问题。
--   统一错误信息，避免用户可以根据错误信息来判断远端服务器的端口状态。
-## 利用 SSRF 进行端口扫描
+Use `curl` to get the data.
 
-根据服务器的返回信息进行判断，大部分应用不会判别端口，可通过返回的 banner 信息判断端口状态。
 
-后端实现
+## Scenarios that hinder SSRF exploits
+
+
+- Server open OpenSSL cannot be used interactively
+- The server needs authentication (Cookies &amp; User: Pass) is not perfect
+- The port that restricts requests is the commonly used port of http, for example, 80, 443, 8080, 8090.
+- Disable unwanted protocols. Only http and https requests are allowed. Can prevent problems similar to file:///, gopher://, ftp://, etc.
+- Unify the error message to prevent the user from judging the port status of the remote server based on the error message.
+## Port scanning with SSRF
+
+
+According to the return information of the server, most applications will not judge the port, and the status of the port can be judged by the returned banner information.
+
+
+Backend implementation
+
 
 ```php
+
 <?php 
+
 if (isset($_POST['url'])) {
+
     $link = $_POST['url'];
+
     $filename = './curled/'.rand().'txt';
+
     $curlobj = curl_init($link);
+
     $fp = fopen($filename,"w");
+
     curl_setopt($curlobj, CURLOPT_FILE, $fp);
+
     curl_setopt($curlobj, CURLOPT_HEADER, 0);
+
     curl_exec($curlobj);
+
     curl_close($curlobj);
+
     fclose($fp);
+
     $fp = fopen($filename,"r");
+
     $result = fread($fp, filesize($filename)); 
+
     fclose($fp);
+
     echo $result;
+
 }
+
 ?>
+
 ```
 
-构造一个前端页面
+
+
+Construct a front page
+
 
 ```html
+
 <html>
 <body>
+
   <form name="px" method="post" action="http://127.0.0.1/ss.php">
+
     <input type="text" name="url" value="">
+
     <input type="submit" name="commit" value="submit">
+
   </form>
+
   <script></script>
+
 </body>
+
 </html>
+
 ```
 
-请求非 HTTP 的端口可以返回 banner 信息。
 
-或可利用 302 跳转绕过 HTTP 协议的限制。
 
-辅助脚本
+Requesting a non-HTTP port can return banner information.
+
+
+Or you can use the 302 jump to bypass the limitations of the HTTP protocol.
+
+
+Auxiliary script
+
 
 ```php
+
 <?php
+
 $ip = $_GET['ip'];
+
 $port = $_GET['port'];
+
 $scheme = $_GET['s'];
+
 $data = $_GET['data'];
+
 header("Location: $scheme://$ip:$port/$data");
+
 ?>
+
 ```
 
-[腾讯某处 SSRF 漏洞（非常好的利用点）附利用脚本](https://_thorns.gitbooks.io/sec/content/teng_xun_mou_chu_ssrf_lou_6d1e28_fei_chang_hao_de_.html)
 
-## 协议利用
 
--   Dict 协议
+[Tencent SSRF vulnerability (very good use point) with script] (https://_thorns.gitbooks.io/sec/content/teng_xun_mou_chu_ssrf_lou_6d1e28_fei_chang_hao_de_.html)
+
+
+## Agreement Utilization
+
+
+- Dict agreement
+
 
     ```
+
     dict://fuzz.wuyun.org:8080/helo:dict
-    ```
-
--   Gopher 协议
 
     ```
+
+
+
+- Gopher protocol
+
+
+    ```
+
     gopher://fuzz.wuyun.org:8080/gopher
-    ```
-
--   File 协议
 
     ```
+
+
+
+- File protocol
+
+
+    ```
+
     file:///etc/passwd
+
     ```
-    
-## 绕过姿势
-1.  更改IP地址写法
-    例如`192.168.0.1`
-    
-    - 8进制格式：`0300.0250.0.1`
-    - 16进制格式：`0xC0.0xA8.0.1`
-    - 10进制整数格式：`3232235521`
-    - 16进制整数格式：`0xC0A80001`
-    - 还有一种特殊的省略模式，例如`10.0.0.1`这个IP可以写成`10.1`
 
-2.  利用URL解析问题
-    在某些情况下，后端程序可能会对访问的URL进行解析，对解析出来的host地址进行过滤。这时候可能会出现对URL参数解析不当，导致可以绕过过滤。
-    例如：
-    -   `http://www.baidu.com@192.168.0.1/`与`http://192.168.0.1`请求的都是`192.168.0.1`的内容
-    -   可以指向任意ip的域名`xip.io`：`http://127.0.0.1.xip.io/`==>`http://127.0.0.1/`
-    -   短地址`http://dwz.cn/11SMa`==>`http://127.0.0.1`
-    -   利用句号`。`：`127。0。0。1`==>`127.0.0.1`
+    
+
+## Bypass posture
+1. Change the IP address
+For example `192.168.0.1`
+    
+
+- octal format: `0300.0250.0.1`
+- Hexadecimal format: `0xC0.0xA8.0.1`
+- 10-digit integer format: `3232235521`
+- Hexadecimal integer format: `0xC0A80001`
+- There is also a special omission mode, such as `10.0.0.1` which can be written as `10.1`
+
+
+2. Use the URL to resolve the problem
+In some cases, the backend program may parse the accessed URL and filter the resolved host address. At this time, the URL parameters may be parsed improperly, which may bypass the filtering.
+E.g:
+- `http://www.baidu.com@192.168.0.1/` and `http://192.168.0.1` are all requested for `192.168.0.1`
+- Can point to any ip domain name `xip.io`:`http://127.0.0.1.xip.io/`==&gt;`http://127.0.0.1/`
+- Short address `http://dwz.cn/11SMa`==&gt;`http://127.0.0.1`
+- Use the period `. `:`127.0.0.1`==&gt;`127.0.0.1`
     -   利用Enclosed alphanumerics
+
         ```
+
         ⓔⓧⓐⓜⓟⓛⓔ.ⓒⓞⓜ  >>>  example.com
+
         List:
+
         ① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨ ⑩ ⑪ ⑫ ⑬ ⑭ ⑮ ⑯ ⑰ ⑱ ⑲ ⑳ 
+
         ⑴ ⑵ ⑶ ⑷ ⑸ ⑹ ⑺ ⑻ ⑼ ⑽ ⑾ ⑿ ⒀ ⒁ ⒂ ⒃ ⒄ ⒅ ⒆ ⒇ 
+
         ⒈ ⒉ ⒊ ⒋ ⒌ ⒍ ⒎ ⒏ ⒐ ⒑ ⒒ ⒓ ⒔ ⒕ ⒖ ⒗ ⒘ ⒙ ⒚ ⒛ 
+
         ⒜ ⒝ ⒞ ⒟ ⒠ ⒡ ⒢ ⒣ ⒤ ⒥ ⒦ ⒧ ⒨ ⒩ ⒪ ⒫ ⒬ ⒭ ⒮ ⒯ ⒰ ⒱ ⒲ ⒳ ⒴ ⒵ 
+
         Ⓐ Ⓑ Ⓒ Ⓓ Ⓔ Ⓕ Ⓖ Ⓗ Ⓘ Ⓙ Ⓚ Ⓛ Ⓜ Ⓝ Ⓞ Ⓟ Ⓠ Ⓡ Ⓢ Ⓣ Ⓤ Ⓥ Ⓦ Ⓧ Ⓨ Ⓩ 
+
         ⓐ ⓑ ⓒ ⓓ ⓔ ⓕ ⓖ ⓗ ⓘ ⓙ ⓚ ⓛ ⓜ ⓝ ⓞ ⓟ ⓠ ⓡ ⓢ ⓣ ⓤ ⓥ ⓦ ⓧ ⓨ ⓩ 
+
         ⓪ ⓫ ⓬ ⓭ ⓮ ⓯ ⓰ ⓱ ⓲ ⓳ ⓴ 
+
         ⓵ ⓶ ⓷ ⓸ ⓹ ⓺ ⓻ ⓼ ⓽ ⓾ ⓿
+
         ```
+
         
-## 危害
 
-* 可以对外网、服务器所在内网、本地进行端口扫描，获取一些服务的banner信息;
-* 攻击运行在内网或本地的应用程序（比如溢出）;
-* 对内网web应用进行指纹识别，通过访问默认文件实现;
-* 攻击内外网的web应用，主要是使用get参数就可以实现的攻击（比如struts2，sqli等）;
-* 利用file协议读取本地文件等。
+## Hazard
 
-## 参考资料
 
--   [《Build Your SSRF EXP Autowork》猪猪侠](http://tools.40huo.cn/#!papers.md)
--   [腾讯某处 SSRF 漏洞（非常好的利用点）附利用脚本](https://_thorns.gitbooks.io/sec/content/teng_xun_mou_chu_ssrf_lou_6d1e28_fei_chang_hao_de_.html)
--   [bilibili 某分站从信息泄露到 ssrf 再到命令执行](https://_thorns.gitbooks.io/sec/content/bilibilimou_fen_zhan_cong_xin_xi_xie_lu_dao_ssrf_z.html)
+* You can scan the port on the external network, the intranet where the server is located, and the local port to obtain the banner information of some services.
+* Attack applications running on intranet or local (such as overflow);
+* Fingerprint recognition for intranet web applications, by accessing default files;
+* Attacking internal and external web applications, mainly using get parameters to achieve attacks (such as struts2, sqti, etc.);
+* Use the file protocol to read local files and so on.
+
+
+## References
+
+
+- [Build Your SSRF EXP Autowork] (http://tools.40huo.cn/#!papers.md)
+- [Tencent SSRF vulnerability (very good use point) with script] (https://_thorns.gitbooks.io/sec/content/teng_xun_mou_chu_ssrf_lou_6d1e28_fei_chang_hao_de_.html)
+- [Bilibili a substation leaked from information to ssrf to command execution] (https://_thorns.gitbooks.io/sec/content/bilibilimou_fen_zhan_cong_xin_xi_xie_lu_dao_ssrf_z.html)

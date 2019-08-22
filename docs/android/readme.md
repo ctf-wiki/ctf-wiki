@@ -1,1 +1,2 @@
-# Android 安全
+[EN](./readme.md) | [ZH](./readme-zh.md)
+# Android Security

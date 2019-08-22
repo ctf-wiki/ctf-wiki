@@ -1,32 +1,52 @@
+[EN](./md5.md) | [ZH](./md5-zh.md)
 # MD5
 
-## 基本描述
 
-MD5的输入输出如下
 
-- 输入：任意长的消息，512比特长的分组。
-- 输出：160比特的消息摘要。
+## Basic description
 
-关于详细的介绍，请自行搜索。
 
-此外，有时候我们获得到的md5是16位的，其实那16位是32位md5的长度，是从32位md5值来的。是将32位md5去掉前八位，去掉后八位得到的。
+The input and output of MD5 are as follows
 
-一般来说，我们可以通过函数的初始化来判断是不是MD5函数。一般来说，如果一个函数有如下四个初始化的变量，可以猜测该函数为MD5函数，因为这是MD5函数的初始化IV。
+
+- Input: Any long message, 512-bit long packet.
+- Output: 128-bit message digest.
+
+
+For a detailed introduction, please search for yourself.
+
+
+In addition, sometimes the md5 we get is 16-bit. In fact, the 16-bit is the length of the 32-bit md5, which is derived from the 32-bit md5 value. It is to remove the first eight bits of 32-bit md5 and get the last eight bits.
+
+
+In general, we can determine whether it is an MD5 function by initializing the function. In general, if a function has the following four initialized variables, you can guess that the function is an MD5 function, because this is the initialization IV of the MD5 function.
+
 
 ```
+
 0x67452301，0xEFCDAB89，0x98BADCFE，0x10325476
+
 ```
 
-## 破解
 
-目前可以说md5已经基本被攻破了，一般的MD5的碰撞都可以在如下网上获取到
+
+## Crack
+
+
+At present, it can be said that md5 has been basically broken. The general MD5 collision can be obtained on the following online.
+
 
 - http://www.cmd5.com/
+
 - http://www.ttmd5.com/
+
 - http://pmd5.com/
-- https://www.win.tue.nl/hashclash/fastcoll_v1.0.0.5.exe.zip (生成指定前缀的md5碰撞)
 
-## 题目
+- https://www.win.tue.nl/hashclash/fastcoll_v1.0.0.5.exe.zip (generate md5 collision with the specified prefix)
 
-- CFF 2016 好多盐
-- JarvisOJ 好多盐
+
+## topic
+
+
+- CFF 2016 a lot of salt
+- JarvisOJ a lot of salt

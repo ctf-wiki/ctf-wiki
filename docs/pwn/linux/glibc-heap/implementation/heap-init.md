@@ -1,3 +1,5 @@
-# 堆初始化
+[EN](./heap-init.md) | [ZH](./heap-init-zh.md)
+#堆 initialization
 
-堆初始化是在用户第一次申请内存时执行 malloc_consolidate 再执行 malloc_init_state 实现的。这里不做过多讲解。可以参见 `malloc_state` 相关函数。
+
+The heap initialization is performed by executing malloc_consolidate and then executing malloc_init_state when the user first requests memory. I won’t explain too much here. See the `malloc_state` correlation function.

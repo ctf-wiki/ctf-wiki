@@ -1,41 +1,65 @@
-单步跟踪法的原理就是通过Ollydbg的步过(F8), 步入(F7)和运行到(F4)功能, 完整走过程序的自脱壳过程, 跳过一些循环恢复代码的片段, 并用单步进入确保程序不会略过OEP. 这样可以在软件自动脱壳模块运行完毕后, 到达OEP, 并dump程序.
+[EN](./trace.md) | [ZH](./trace-zh.md)
+The principle of the single-step tracking method is to go through the steps of (F8), step (F7) and run to (F4) of Ollydbg, completely go through the self-shelling process of the program, skip some fragments of the loop recovery code, and use the single Step to ensure that the program will not skip OEP. This way, after the software auto-hull module is finished running, it will reach OEP and dump the program.
+
 
 ## 要点
 
-1. 打开程序按F8单步向下, 尽量实现向下的jmp跳转
-2. 会经常遇到大的循环, 这时要多用 F4 来跳过循环
-3. 如果函数载入时不远处就是一个call(近call), 那么我们尽量不要直接跳过, 而是进入这个call
-4. 一般跳转幅度大的jmp指令, 都极有可能是跳转到了原程序入口点(OEP)
 
-## 示例
+1. Open the program and press F8 to step down. Try to implement the downward jmp jump.
+2. You will often encounter large loops, then use F4 to skip the loop.
+3. If the function is not far away is a call (near call), then we try not to skip directly, but enter this call
+4. The jmp instruction with a large jump range is most likely to jump to the original program entry point (OEP).
 
-示例程序可以点击此处下载: [1_trace.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/1_trace.zip)
 
-单步跟踪法其实就是一步一步尽量从程序入口点往下走, 在单步的过程中注意EIP不要跑偏了, 但是对于一些比较复杂的壳而言, 单步的过程会显得异常枯燥而且容易把自己绕晕. 所以单步跟踪也常用于分析一些关键代码部分(跟静态分析相结合), 而不是完全地从头分析到尾, 这有违逆向工程的理念.
+##example
 
-用Ollydbg打开压缩包内的Notepad.exe, 停在了下图位置. 入口点是一个`pushad`保存所有寄存器状态到栈中, 随后便是一个`call`调用位于`0040D00A`处的函数. 调用后便无条件跳转到`459DD4F7`处, 之后的`push ebp`和`retn`显然没有任何意义. 像这种入口点附近就是一个`call`的我们称为`近call`, 对于近call我们选择步进, 按下F7(当然你也只能选择步进, 不然EIP就跑偏程序停止了).
+
+The sample program can be downloaded here: [1_trace.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/1_trace.zip)
+
+
+The single-step tracking method is to go down the program entry point step by step. In the single-step process, pay attention to the EIP not to go wrong, but for some complicated shells, the single-step process will be extremely boring and easy. I confuse myself. So single-step tracking is also often used to analyze some key code parts (combined with static analysis), rather than completely from the beginning to the end, which is contrary to the concept of reverse engineering.
+
+
+Open the Notepad.exe in the archive with Ollydbg and stop at the location below. The entry point is a `pushad` that saves all register states to the stack, followed by a `call` call to the function at `0040D00A`. After that, unconditionally jump to `459DD4F7`, then `push ebp` and `retn` obviously have no meaning. Like this entry point is a `call` we call `near call`, for near call us Select step, press F7 (of course you can only choose to step, or EIP will stop the program).
+
 
 ![trace_01.png](./figure/trace_01.png)
 
-步进后又是一个`call`, 我们继续步进, 按F7, 跟进后发现没有近call了, 我们可以看到程序在调`GetModuleHandleA`, `GetProcAddress`等API, 继续向下分析.
+
+
+After the stepping is a `call`, we continue to step, press F7, follow up and find that there is no near call, we can see the program in the `GetModuleHandleA`, `GetProcAddress` and other APIs, continue to analyze downwards.
+
 
 ![trace_02.png](./figure/trace_02.png)
 
-之后会遇到多个跳转，我们尽量满足向下的跳转，对于向上的跳转不予实现并利用F4跳出循环，直到`0040D3AF`处, 我们看以下的代码
 
-``` asm
+
+After that, we will encounter multiple jumps. We try to satisfy the downward jump. For the upward jump, we will not implement it and use F4 to jump out of the loop until `0040D3AF`. We look at the following code.
+
+
+`` `asm
 0040D3AF    61              	popad
+
 0040D3B0    75 08           	jnz short NotePad.0040D3BA
+
 0040D3B2    B8 01000000    	    mov eax,0x1
-0040D3B7    C2 0C00         	retn 0xC
+
+0040D3B7 C2 0C00 direction 0xC
 0040D3BA    68 CC104000     	push NotePad.004010CC
-0040D3BF    C3              	retn
+
+0040D3BF C3 retn
 ```
 
-这里`popad`可以恢复在程序入口点处保存的寄存器状态, 然后`jnz`跳转到`0040D3BA`处, 这里是利用`push`和`retn`来将`EIP`改变为`004010CC`, 也就是说在壳解压完代码等资源完毕后, 将通过`jnz`跳转到`push`处, 然后通过`push`和`ret`将`EIP`设置为程序原来的入口点(OEP)并返回到OEP处, 然后继续执行原程序的代码. 我们执行到`retn`返回后, 可以看到如下:
+
+
+Here `popad` can restore the state of the register saved at the program entry point, then `jnz` jumps to `0040D3BA`, here uses `push` and `retn` to change `EIP` to `004010CC`, also That is to say, after the shell decompresses the code and other resources, it will jump to `push` through `jnz`, then set `EIP` to the original entry point (OEP) and return by `push` and `ret`. Go to OEP, and then continue to execute the code of the original program. After we return to `retn`, we can see the following:
+
 
 ![trace_03.png](./figure/trace_03.png)
 
-显然, 我们到了一堆被`Ollydbg`误认为是数据的地方继续执行, 显然`Ollydbg`分析错误了, 我们需要让`Ollydbg`重新分析, 我们可以右键选择`分析->从模块中删除分析`, 或是按下`ctrl+a`, 这时正确地显示出OEP处的汇编指令.
+
+
+Obviously, we went to a bunch of places where `Ollydbg` was mistaken for data. Obviously `Ollydbg` analysis error, we need to let `Ollydbg` re-analyze, we can right-click `analysis-&gt;delete analysis from module. , or press `ctrl+a`, which correctly displays the assembly instructions at OEP.
+
 
 ![trace_04.png](./figure/trace_04.png)

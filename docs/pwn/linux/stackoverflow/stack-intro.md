@@ -1,33 +1,50 @@
-# 栈介绍
+[EN](./stack-intro.md) | [ZH](./stack-intro-zh.md)
+#栈介绍
 
-## 基本栈介绍
 
-栈是一种典型的后进先出( Last in First Out )的数据结构，其操作主要有压栈(push)与出栈(pop)两种操作，如下图所示（维基百科）。两种操作都操作栈顶，当然，它也有栈底。
+## Basic stack introduction
 
-![基本栈操作](./figure/Data_stack.png)
 
-高级语言在运行时都会被转换为汇编程序，在汇编程序运行过程中，充分利用了这一数据结构。每个程序在运行时都有虚拟地址空间，其中某一部分就是该程序对应的栈，用于保存函数调用信息和局部变量。此外，常见的操作也是压栈与出栈。需要注意的是，**程序的栈是从进程地址空间的高地址向低地址增长的**。
+The stack is a typical data structure of Last in First Out. Its operations mainly include push and pop operations, as shown in the following figure (Wikipedia). Both operations operate on the top of the stack, and of course, it also has a stack.
 
-## 函数调用栈
 
-请务必仔细看一下下面的文章来学习一下基本的函数调用栈。
+![Basic stack operation] (./figure/Data_stack.png)
 
-- [C语言函数调用栈(一)](http://www.cnblogs.com/clover-toeic/p/3755401.html)
-- [C语言函数调用栈(二)](http://www.cnblogs.com/clover-toeic/p/3756668.html)
 
-这里再给出另外一张寄存器的图
+High-level languages are converted to assembler at runtime, making full use of this data structure while the assembler is running. Each program has a virtual address space at runtime, and a part of it is the stack corresponding to the program, which is used to save function call information and local variables. In addition, common operations are also stacking and popping. It should be noted that the stack of the ** program is growing from the high address of the process address space to the low address.
+
+
+## function call stack
+
+
+Be sure to take a closer look at the following article to learn the basic function call stack.
+
+
+- [C language function call stack (1)] (http://www.cnblogs.com/clover-toeic/p/3755401.html)
+- [C language function call stack (2)] (http://www.cnblogs.com/clover-toeic/p/3756668.html)
+
+
+Here is another diagram of the register.
+
 
 ![](./figure/register.png)
 
-需要注意的是，32 位和 64 位程序有以下简单的区别
+
+
+It should be noted that 32-bit and 64-bit programs have the following simple differences.
+
 
 - **x86**
-    - **函数参数**在**函数返回地址**的上方
+
+- **Function parameter ** above the ** function return address**
 - **x64**
-    - System V AMD64 ABI (Linux、FreeBSD、macOS 等采用)中前六个整型或指针参数依次保存在**RDI, RSI, RDX, RCX, R8 和 R9 寄存器**中，如果还有更多的参数的话才会保存在栈上。
-    - 内存地址不能大于 0x00007FFFFFFFFFFF，**6 个字节长度**，否则会抛出异常。
 
-## 参考阅读
+- System V AMD64 ABI (used in Linux, FreeBSD, macOS, etc.) The first six integer or pointer parameters are stored in the **RDI, RSI, RDX, RCX, R8 and R9 registers**, if there are more The parameters will be saved on the stack.
+- The memory address cannot be greater than 0x00007FFFFFFFFFFF, **6 bytes long**, otherwise an exception will be thrown.
 
-- csapp
+
+## Reference reading
+
+
+- a tap
 - Calling conventions for different C++ compilers and operating systems, Agner Fog
