@@ -1,39 +1,66 @@
+[EN](./HTTP.md) | [ZH](./HTTP-zh.md)
 ### HTTP
 
-`HTTP` ( `Hyper Text Transfer Protocol` ，也称为超文本传输协议)是一种用于分布式、协作式和超媒体信息系统的应用层协议。 `HTTP` 是万维网的数据通信的基础。
 
-### 例题
 
-> 题目：江苏省领航杯-2017：hack
+`HTTP` (Hyper Text Transfer Protocol), also known as Hypertext Transfer Protocol, is an application layer protocol for distributed, collaborative, and hypermedia information systems. `HTTP` is the basis for data communication on the World Wide Web.
 
-总体观察可以得出:
 
-- `HTTP`为主
-- `102.168.173.134`为主
-- 不存在附件
+### Example
+
+
+&gt; Topic: Jiangsu Province Navigator Cup - 2017: hack
+
+
+The overall observation can be drawn:
+
+
+- `HTTP` for the main
+- `102.168.173.134` for the main
+- no attachments exist
+
 
 ![linghang_hack](./figure/linghang_hack.png)
 
-从这张图,基本可以判断初这是一个在`sql注入-盲注时产生的流量包`
 
-到此为止,基本可以判断flag的方向,提取出所有的url后,用`python`辅助即可得到flag
+From this picture, it can be basically judged that this is a traffic packet generated during the `sql injection-blind&quot;.
+
+
+At this point, you can basically determine the direction of the flag, extract all the urls, use the `python` helper to get the flag
+
 
 - 提取url: `tshark -r hack.pcap -T fields  -e http.request.full_uri|tr -s '\n'|grep flag > log`
-- 得到盲注结果
+
+- Get blind results
+
 
 ```python
+
 import re
 
+
+
 with open('log') as f:
+
     tmp = f.read()
+
     flag = ''
+
     data = re.findall(r'=(\d*)%23',tmp)
+
     data = [int(i) for i in data]
+
     for i,num in enumerate(data):
+
         try:
+
             if num > data[i+1]:
-                flag += chr(num)
+
+flag + = chr (num)
         except Exception:
+
             pass
+
     print flag
+
 ```

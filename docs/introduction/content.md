@@ -1,38 +1,54 @@
-因为 CTF 的考题范围其实比较宽广，目前也没有太明确的规定界限说会考哪些内容。但是就目前的比赛题型而言的话，主要还是依据常见的 **Web 网络攻防、RE 逆向工程、Pwn 二进制漏洞利用、Crypto 密码攻击、Mobile
-移动安全** 以及 **Misc 安全杂项** 来进行分类。
+[EN](./content.md) | [ZH](./content-zh.md)
+Because the scope of the CTF&#39;s questions is actually quite broad, there is currently no clear definition of what to say. However, in terms of current game questions, it is mainly based on common **Web network attack and defense, RE reverse engineering, Pwn binary exploit, Crypto password attack, Mobile.
+Mobile Security** and **Misc Security Miscellaneous** are used for categorization.
 
--   **Web - 网络攻防**
 
-    主要介绍了 Web 安全中常见的漏洞，如 SQL 注入、XSS、CSRF、文件包含、文件上传、代码审计、PHP 弱类型等，Web 安全中常见的题型及解题思路，提供了一些常用的工具。
+- **Web - Network Attack and Defense**
 
--   **Reverse Engineering - 逆向工程**
 
-    主要介绍了逆向工程中的常见题型、工具平台、解题思路，进阶部分介绍了逆向工程中常见的软件保护、反编译、反调试、加壳脱壳技术。
+It mainly introduces common vulnerabilities in Web security, such as SQL injection, XSS, CSRF, file inclusion, file uploading, code auditing, PHP weak type, etc., common problem types and problem solving ideas in Web security, and provides some commonly used tools. .
 
--   **Pwn - 二进制漏洞利用**
 
-    Pwn 题目主要考察二进制漏洞的发掘和利用，需要对计算机操作系统底层有一定的了解。在 CTF 竞赛中，PWN 题目主要出现在 Linux 平台上。
+- **Reverse Engineering - Reverse Engineering**
 
--   **Crypto - 密码攻击**
 
-    主要包括古典密码学和现代密码学两部分内容，古典密码学趣味性强，种类繁多，现代密码学安全性高，对算法理解的要求较高。
+It mainly introduces the common problem types, tool platforms and problem-solving ideas in reverse engineering. The advanced part introduces the common software protection, decompilation, anti-debugging and shelling technology in reverse engineering.
 
--   **Mobile - 移动安全**
 
-    主要介绍了安卓逆向中的常用工具和主要题型，安卓逆向常常需要一定的安卓开发知识，iOS 逆向题目在 CTF 竞赛中较少出现，因此不作过多介绍。
+- **Pwn - Binary exploits**
 
--   **Misc - 安全杂项**
 
-    以诸葛建伟翻译的《线上幽灵：世界头号黑客米特尼克自传》和一些典型 MISC 题为切入点，内容主要包括信息搜集、编码分析、取证分析、隐写分析等。
+The Pwn topic mainly examines the exploitation and utilization of binary vulnerabilities, and requires a certain understanding of the underlying computer operating system. In the CTF competition, the PWN topic mainly appeared on the Linux platform.
 
-## 全国大学生信息安全竞赛 - 竞赛内容
 
-2016 年全国大学生信息安全竞赛开始设立创新实践技能赛，采取的就是传统的 CTF 赛制。在《2016 年全国大学生信息安全竞赛参赛指南》中主办方给出的竞赛内容相对全面，值得参考。
+- **Crypto - Password Attack**
 
-1.  系统安全。涉及操作系统和 Web 系统安全，包括 Web 网站多种语言源代码审计分析（特别是 PHP）、数据库管理和 SQL 操作、Web 漏洞挖掘和利用（如 SQL 注入和
-    XSS）、服务器提权、编写代码补丁并修复网站漏洞等安全技能。
-2.  软件逆向。涉及 Windows/Linux/Android 平台的多种编程技术，要求利用常用工具对源代码及二进制文件进行逆向分析，掌握 Android 移动应用 APK
-    文件的逆向分析，掌握加解密、内核编程、算法、反调试和代码混淆技术。
-3.  漏洞挖掘和利用。掌握 C/C++/Python/PHP/Java/Ruby/汇编 等语言，挖掘 Windows/Linux（x86/x86＿64 平台）二进制程序漏洞，掌握缓冲区溢出和格式化字符串攻击，编写并利用 shellcode。
-4.  密码学原理及应用。掌握古典密码学和现代密码学，分析密码算法和协议，计算密钥和进行加解密操作。
-5.  其他内容。包括信息搜集能力，编程能力、移动安全、云计算安全、可信计算、自主可控、隐写术和信息隐藏、计算机取证（Forensics）技术和文件恢复技能，计算机网络基础以及对网络流量的分析能力。
+
+It mainly includes two parts: classical cryptography and modern cryptography. Classical cryptography has strong interest and variety, modern cryptography has high security, and requires high understanding of algorithms.
+
+
+- **Mobile - Mobile Security**
+
+
+It mainly introduces the common tools and main types of problems in Android reverse. Android reverse often requires a certain amount of Android development knowledge. iOS reverse problems are less common in CTF competitions, so do not introduce too much.
+
+
+- **Misc - Security Miscellaneous**
+
+
+According to Zhuge Jianwei&#39;s &quot;Online Ghost: The World&#39;s No. 1 Hacker Mitnick&quot; and some typical MISC topics, the content includes information gathering, coding analysis, forensic analysis, and steganalysis.
+
+
+## National University Student Information Security Competition - Contest Content
+
+
+In 2016, the National University Student Information Security Competition began to set up an innovative practical skill competition, which was based on the traditional CTF system. In the &quot;2016 National University Student Information Security Competition Entry Guide&quot;, the competition content given by the organizers is relatively comprehensive and worthy of reference.
+
+
+1. System security. Involves operating system and web system security, including web site multi-language source code audit analysis (especially PHP), database management and SQL operations, web vulnerability mining and utilization (such as SQL injection and
+XSS), server empowerment, writing code patches, and fixing security vulnerabilities such as website vulnerabilities.
+2. Software reverse. A variety of programming techniques involving the Windows/Linux/Android platform require reverse analysis of source and binary files using common tools to master Android mobile apps APK
+Reverse analysis of files, mastering encryption and decryption, kernel programming, algorithms, anti-debugging and code obfuscation techniques.
+3. Vulnerability mining and utilization. Master languages such as C/C++/Python/PHP/Java/Ruby/Assemble, explore Windows/Linux (x86/x86_64 platform) binary bugs, master buffer overflows and format string attacks, and write and utilize shellcode.
+4. Principles and applications of cryptography. Master classical cryptography and modern cryptography, analyze cryptographic algorithms and protocols, calculate keys and perform encryption and decryption operations.
+5. Other content. Including information gathering capabilities, programming capabilities, mobile security, cloud computing security, trusted computing, autonomous controllable, steganography and information hiding, Forensics technology and file recovery skills, computer network foundation and analysis of network traffic ability.

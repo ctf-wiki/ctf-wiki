@@ -1,1 +1,2 @@
-介绍 x86_x64 汇编相关基础内容。
+[EN](./readme.md) | [ZH](./readme-zh.md)
+Introduce the basic content of x86_x64 assembly.

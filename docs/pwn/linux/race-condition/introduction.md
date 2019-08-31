@@ -1,268 +1,425 @@
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
 ---
+
 typora-root-url: ../../../docs
+
 ---
+
+
 
 # Race Condition
 
-## 概述
 
-条件竞争是指一个系统的运行结果依赖于不受控制的事件的先后顺序。当这些不受控制的事件并没有按照开发者想要的方式运行时，就可能会出现 bug。这个术语最初来自于两个电信号互相竞争来影响输出结果。
+
+## Overview
+
+
+Conditional competition refers to the order in which a system&#39;s operations depend on the order of uncontrolled events. When these uncontrolled events do not run the way the developer wants, bugs can occur. This term originally comes from the fact that two electrical signals compete with each other to affect the output.
+
 
 ![](./figure/race_condition.png)
 
-条件竞争主要出现在如下领域
 
-- 电子系统，尤其是逻辑电路
-- 计算机，尤其是多线程程序和分布式程序。
 
-由于目前的系统中大量采用并发编程，经常对资源进行共享，往往会产生条件竞争漏洞。
+Conditional competition mainly occurs in the following fields
 
-这里我们主要考虑计算机程序方面的条件竞争。当一个软件的运行结果依赖于进程或者线程的顺序时，就可能会出现条件竞争。简单考虑一下，可以知道条件竞争需要如下的**条件**：
 
-- 并发，即至少存在两个并发执行流。这里的执行流包括线程，进程，任务等级别的执行流。
-- 共享对象，即多个并发流会访问同一对象。**常见的共享对象有共享内存，文件系统，信号。一般来说，这些共享对象是用来使得多个程序执行流相互交流。**此外，我们称访问共享对象的代码为**临界区**。在正常写代码时，这部分应该加锁。
-- 改变对象，即至少有一个控制流会改变竞争对象的状态。因为如果程序只是对对象进行读操作，那么并不会产生条件竞争。
+- Electronic systems, especially logic circuits
+- Computers, especially multithreaded programs and distributed programs.
 
-由于在并发时，执行流的不确定性很大，条件竞争相对**难察觉**，并且在**复现和调试方面会比较困难**。这给修复条件竞争也带来了不小的困难。
 
-条件竞争造成的影响也是多样的，轻则程序异常执行，重则程序崩溃。如果条件竞争漏洞被攻击者利用的话，很有可能会使得攻击者获得相应系统的特权。
+Due to the large number of concurrent programming in the current system, resources are often shared, which often leads to conditional competition loopholes.
 
-这里举一个简单的例子。
+
+Here we mainly consider the conditional competition in computer programs. Conditional contention can occur when the results of a piece of software depend on the order of processes or threads. For a simple consideration, you can know that conditional competition requires the following conditions**:
+
+
+- Concurrency, ie there are at least two concurrent execution flows. The execution flow here includes execution flows at the threads, processes, tasks, and so on.
+- Shared objects, that is, multiple concurrent streams access the same object. **Common shared objects have shared memory, file system, and signals. In general, these shared objects are used to allow multiple program execution flows to communicate with each other. ** In addition, we call the code to access the shared object **critical section**. This part should be locked when writing code normally.
+- Change the object, ie at least one control flow will change the state of the competing object. Because if the program just reads the object, it does not create conditional competition.
+
+
+Since the execution flow is highly uncertain at the time of concurrency, conditional competition is relatively difficult to detect, and it is difficult to reproduce and debug. This brings great difficulties to the competition for repair conditions.
+
+
+The effects of conditional competition are also diverse, and the program is executed abnormally and the program crashes. If the conditional contention vulnerability is exploited by an attacker, it is likely that the attacker will gain the privileges of the corresponding system.
+
+
+Here is a simple example.
+
 
 ```c
+
 #include <pthread.h>
+
 #include <stdio.h>
 
+
+
 int counter;
+
 void *IncreaseCounter(void *args) {
+
   counter += 1;
+
   sleep(0.1);
+
   printf("Thread %d has counter value %d\n", (unsigned int)pthread_self(),
+
          counter);
+
 }
+
+
 
 int main() {
+
   pthread_t p[10];
+
   for (int i = 0; i < 10; ++i) {
+
     pthread_create(&p[i], NULL, IncreaseCounter, NULL);
+
   }
+
   for (int i = 0; i < 10; ++i) {
+
     pthread_join(p[i], NULL);
+
   }
+
   return 0;
+
 }
 
+
+
 ```
 
-一般来说，我们可能希望按如下方式输出
+
+
+In general, we may wish to output as follows
+
 
 ```shell
+
 ➜  005race_condition ./example1
+
 Thread 1859024640 has counter value 1
+
 Thread 1841583872 has counter value 2
+
 Thread 1832863488 has counter value 3
+
 Thread 1824143104 has counter value 4
+
 Thread 1744828160 has counter value 5
+
 Thread 1736107776 has counter value 6
+
 Thread 1727387392 has counter value 7
+
 Thread 1850304256 has counter value 8
+
 Thread 1709946624 has counter value 9
+
 Thread 1718667008 has counter value 10
+
 ```
 
-但是，由于条件竞争的存在，最后输出的结果往往不尽人意
+
+
+However, due to the existence of conditional competition, the final output is often unsatisfactory.
+
 
 ```c
+
 ➜  005race_condition ./example1
+
 Thread 1417475840 has counter value 2
+
 Thread 1408755456 has counter value 2
+
 Thread 1391314688 has counter value 8
+
 Thread 1356433152 has counter value 8
+
 Thread 1365153536 has counter value 8
+
 Thread 1373873920 has counter value 8
+
 Thread 1382594304 has counter value 8
+
 Thread 1400035072 has counter value 8
+
 Thread 1275066112 has counter value 9
+
 Thread 1266345728 has counter value 10
+
 ```
 
-仔细思考一下条件竞争为什么可能会发生呢？以下面的为具体的例子
 
-- 程序首先执行了action1，然后执行了action2。其中 action 可能是应用级别的，也可能是操作系统级别的。正常来说，我们希望程序在执行 action2 时，action1 所产生的条件仍然是满足的。
-- 但是由于程序的并发性，攻击者很有可能可以在 action2 执行之前的这个短暂的时间窗口中破坏 action1 所产生的条件。这时候攻击者的操作与 action2 产生了条件竞争，所以可能会影响程序的执行效果。
+
+Think carefully about why conditional competition can happen? Take the following as a specific example
+
+
+- The program first executed action1 and then executed action2. The action may be at the application level or at the operating system level. Normally, we want the condition generated by action1 to be satisfied when the program executes action2.
+- But due to the concurrency of the program, it is very likely that the attacker can destroy the conditions generated by action1 in this short time window before action2 is executed. At this time, the attacker&#39;s operation competes with action2, so it may affect the execution of the program.
+
 
 ![](./figure/time_interval.png)
 
-所以我认为问题的根源在于程序员虽然假设某个条件在相应时间段应该是满足的，但是往往条件可能会在这个很小的时间窗口中被修改。**虽然这个时间的间隔可能非常小，但是攻击者仍然可能可以通过执行某些操作（如计算密集型操作，Dos攻击）使得受害机器的处理速度变得相对慢一些。**
 
-## 形式
 
-常见的条件竞争有以下形式。
+So I think the root of the problem is that although the programmer assumes that a certain condition should be satisfied in the corresponding time period, often the condition may be modified in this small time window. **Although the interval between this time may be very small, the attacker may still be able to perform some operations (such as computationally intensive operations, Dos attacks) to make the processing speed of the victim machine relatively slower. **
+
+
+## Form
+
+
+Common conditional competition has the following form.
+
 
 ### CWE-367: TOCTOU Race Condition
 
-#### 描述
 
-TOCTOC (Time-of-check Time-of-use) 指的是程序在使用资源（变量，内存，文件）前会对进行检查，但是在程序使用对应的资源前，该资源却被修改了。
+
+#### Description
+
+
+TOCTOC (Time-of-check Time-of-use) refers to the program will check before using resources (variables, memory, files), but the resources are modified before the program uses the corresponding resources.
+
 
 ![](./figure/toctou.png)
 
-下面给出一些更加具体的例子。
+
+
+Some more specific examples are given below.
+
 
 #### CWE-365: Race Condition in Switch
 
-当程序正在执行 switch 语句时，如果 switch 变量的值被改变，那么就可能造成不可预知的行为。尤其在case 语句后不写 break 语句的代码，一旦 switch 变量发生改变，很有可能会改变程序原有的逻辑。
+
+
+When the program is executing a switch statement, if the value of the switch variable is changed, it can cause unpredictable behavior. Especially after the case statement does not write the code of the break statement, once the switch variable changes, it is likely to change the original logic of the program.
+
 
 #### CWE-363: Race Condition Enabling Link Following
 
-我们知道 Linux 中提供了两种对于文件的命名方式
 
-- 文件路径名
-- 文件描述符
 
-但是，将这两种命名解析到相应对象上的方式有所不同
+We know that there are two ways to name files in Linux.
 
-- 文件路径名在解析的时候是通过传入的路径（文件名，硬链接，软连接）**间接解析**的，其传入的参数并不是相应文件的真实地址(inode)。
-- 文件描述符通过访问直接指向文件的指针来解析。
 
-正是由于间接性，产生了上面我们所说的时间窗口。
+- File path name
+- file descriptor
 
-以下面的代码为例子，程序在访问某个文件之前，会检查是否存在，之后会打开文件然后执行操作。但是如果在检查之后，真正使用文件之前，攻击者将文件修改为某个符号链接，那么程序将访问错误的文件。
+
+However, the way these two names are resolved to the corresponding object is different.
+
+
+- When the file path name is parsed, it is indirectly parsed by the passed path (file name, hard link, soft link)**, and the passed parameters are not the real address (inode) of the corresponding file.
+- File descriptors are resolved by accessing a pointer that points directly to the file.
+
+It is because of the indirectness that the time window we mentioned above is produced.
+
+
+Taking the following code as an example, the program checks for the existence of a file before accessing it, and then opens the file and then performs the operation. But if, after checking, the attacker modifies the file to a symbolic link before actually using the file, the program will access the wrong file.
+
 
 ![](./figure/race_condition_file.png)
 
-这种条件竞争出现的问题的根源在于文件系统中的名字对象绑定的问题。而下面的函数都会使用文件名作为参数：access(), open(), creat(), mkdir(), unlink(), rmdir(), chown(), symlink(), link(), rename(), chroot(),…
 
-那该如何避免这个问题呢？我们可以使用 fstat 函数来读取文件的信息并把它存入到stat结构体中，然后我们可以将该信息与我们已知的信息进行比较来判断我们是否读入了正确的信息。其中，stat结构体中的 `st_ino` 和 `st_dev` 变量可以唯一表示文件
 
-- `st_ino` ，包含了文件的序列号，即 `i-node`
-- `st_dev` ，包含了文件对应的设备。
+The root cause of this kind of conditional competition is the problem of name object binding in the file system. The following functions will use the file name as a parameter: access(), open(), creat(), mkdir(), unlink(), rmdir(), chown(), symlink(), link(), rename() , chroot(),...
+
+
+How to avoid this problem? We can use the fstat function to read the file information and store it in the stat structure, and then we can compare this information with our known information to determine if we have read the correct information. Among them, the `st_ino` and `st_dev` variables in the stat structure can uniquely represent files.
+
+
+- `st_ino` contains the serial number of the file, ie `i-node`
+- `st_dev` contains the device corresponding to the file.
+
 
 ![](./figure/race_condition_identify_file.png)
 
+
+
 ### CWE-364: Signal Handler Race Condition
 
-#### 概述
 
-条件竞争经常会发生在信号处理程序中，这是因为信号处理程序支持异步操作。尤其是当信号处理程序是**不可重入**的或者状态敏感的时候，攻击者可能通过利用信号处理程序中的条件竞争，可能可以达到拒绝服务攻击和代码执行的效果。比如说，如果在信号处理程序中执行了free操作，此时又来了一个信号，然后信号处理程序就会再次执行free操作，这时候就会出现 double free 的情况，再稍微操作一下，就可能可以达到任意地址写的效果了。
 
-一般来说，与信号处理程序有关的常见的条件竞争情况有
+#### Overview
 
-- 信号处理程序和普通的代码段共享全局变量和数据段。
-- 在不同的信号处理程序中共享状态。
-- 信号处理程序本身使用不可重入的函数，比如 malloc 和 free 。
-- 一个信号处理函数处理多个信号，这可能会进而导致use after free 和 double free 漏洞。
-- 使用 setjmp 或者 longjmp 等机制来使得信号处理程序不能够返回原来的程序执行流。
 
-#### 线程安全与可重入
+Conditional competition often occurs in signal handlers because the signal handler supports asynchronous operations. Especially when the signal processing program is **non-reentrant or state sensitive, the attacker may use the conditional competition in the signal processing program to achieve the effect of denial of service attack and code execution. For example, if the free operation is executed in the signal processing program, then a signal is sent again, and then the signal processing program will perform the free operation again. At this time, double free will occur, and then a little operation may be possible. Can achieve the effect of any address write.
 
-这里说明一下线程安全与可重入的关系。
 
--   线程安全
-    -   即该函数可以被多个线程调用，而不会出现任何问题。
-    -   条件
-        -   本身没有任何共享资源
-        -   有共享资源，需要加锁。
--   可重用
-    -   一个函数可以被多个实例可以同时运行在相同的地址空间中。
-    -   可重入函数可以被中断，并且其它代码在进入该函数时，不会丢失数据的完整性。所以可重入函数一定是线程安全的。
-    -   可重入强调的是单个线程执行时，重新进入同一个子程序仍然是安全的。
-    -   不满足条件
-        -   函数体内使用了静态数据结构，并且不是常量
-        -   函数体内使用了malloc 或者 free 函数
-        -   函数使用了标准 IO 函数。
-        -   调用的函数不是可重入的。
-    -   可重入函数使用的所有变量都保存在[调用栈](https://zh.wikipedia.org/wiki/%E8%B0%83%E7%94%A8%E6%A0%88)的当前[函数栈](https://zh.wikipedia.org/w/index.php?title=%E5%87%BD%E6%95%B0%E6%A0%88&action=edit&redlink=1)（frame）上。
+In general, the common conditions of competition related to signal processing procedures are
 
-## 防范
 
-如果想要消除条件竞争，那么首要的目标是找到竞争窗口（race windows）。
+- Signal handlers share common variables and data segments with normal code segments.
+- Share status in different signal handlers.
+- The signal handler itself uses functions that are not reentrant, such as malloc and free.
+- A signal handler handles multiple signals, which in turn can lead to use after free and double free vulnerabilities.
+- Use mechanisms such as setjmp or longjmp to prevent the signal handler from returning to the original program execution flow.
 
-所谓竞争窗口，就是访问竞争对象的代码段，这给攻击者相应的机会来修改相应的竞争对象。
 
-一般来说，如果我们可以使得冲突的竞争窗口相互排斥，那么就可以消除竞争条件。
+#### Thread safe and reentrant
 
-### 同步原语
 
-一般来说，我们会使用同步原语来消除竞争条件。常见的如下
+Here is a description of the relationship between thread safety and reentrancy.
 
--   锁变量
-    -   通常互斥琐，在等待期间放弃CPU，进入idle状态，过一段时间自动尝试。
-    -   自旋锁（spinlock），在等待期间不放弃CPU，一直尝试。
--   条件变量
-    -   **条件变量是用来等待而不是用来上锁的。条件变量用来自动阻塞一个线程，直到某特殊情况发生为止。通常条件变量和互斥锁同时使用。**
--   临界区对象，CRITICAL_SECTION
 
--   信号量（semaphore），控制可访问某个临界区的线程数量，一般比1大。
--   管道，指用于连接一个读进程和一个写进程以实现它们之间通信的一个共享文件。其生存期不超过创建管道的进程的生存期。
--   命名管道，生存期可以与操作系统运行期一样长。
+- Thread safe
+- That is, the function can be called by multiple threads without any problems.
+- conditions
+- There are no shared resources themselves
+- There are shared resources that need to be locked.
+- Reusable
+- A function can be run in the same address space by multiple instances at the same time.
+- Reentrant functions can be interrupted, and other code does not lose data integrity when entering the function. So the reentrant function must be thread safe.
+- Reentrant emphasizes that when a single thread executes, it is still safe to re-enter the same subroutine.
+- does not meet the conditions
+- The function body uses a static data structure and is not a constant
+- The function uses the malloc or free function
+- The function uses a standard IO function.
+- The function called is not reentrant.
+- All variables used by the reentrant function are saved in the current [Call Stack] (https://zh.wikipedia.org/wiki/%E8%B0%83%E7%94%A8%E6%A0%88) [Function stack] (https://zh.wikipedia.org/w/index.php?title=%E5%87%BD%E6%95%B0%E6%A0%88&amp;action=edit&amp;redlink=1)(frame) .
+
+
+## Prevention
+
+
+If you want to eliminate conditional competition, the primary goal is to find the race windows.
+
+
+The so-called competition window is the code segment that accesses the competing object, which gives the attacker a corresponding opportunity to modify the corresponding competing object.
+
+
+In general, if we can make the conflicting competition windows mutually exclusive, then we can eliminate the competition conditions.
+
+
+### Synchronization primitive
+
+
+In general, we use synchronization primitives to eliminate race conditions. Common as follows
+
+
+- lock variable
+- Usually mutual exclusion, give up the CPU during the wait, enter the idle state, and try automatically after a while.
+- Spinlock, do not give up the CPU while waiting, try it all the time.
+- Conditional variables
+- ** Condition variables are used to wait instead of being used for locking. Condition variables are used to automatically block a thread until a special condition occurs. Usually condition variables and mutex locks are used at the same time. **
+- Critical section object, CRITICAL_SECTION
+
+
+- A semaphore that controls the number of threads that can access a critical section, typically greater than one.
+- Pipeline, a shared file used to connect a read process and a write process to communicate between them. Its lifetime does not exceed the lifetime of the process that created the pipeline.
+- Named pipes, which can be as long as the operating system runtime.
+
 
 ```
-# 创建管道
+
+#Create a pipe
 mkfifo my_pipe
-# gzip从给定的管道中读取数据，并把数据压缩到out.gz中
+
+# gzip reads data from a given pipe and compresses the data into out.gz
 gzip -9 -c < my_pipe > out.gz &
-# 给管道传输数据
+
+#送数据数据数据
 cat file > my_pipe
+
 ```
 
-### 死锁
 
-#### 概述
 
-当同步原语使用的不恰当的时候，进程就可能会出现死锁。当两个或两个以上的执行流互相阻塞导致都不能继续执行，死锁就会发生。其实，死锁主要是因为在冲突的执行流中，出现了循环等待的执行流，即循环等待中的每一个执行流都获得一个资源，同时试图获得下一个资源。下图所示，P1、P2 两个进程都需要资源才能继续运行。P1 拥有资源 R2、还需要额外资源 R1 才能运行；P2 拥有资源 R1、还需要额外资源 R2 才能运行，两边都在互相等待而没有任何一个可运行。
+### Deadlock
+
+
+#### Overview
+
+
+When the synchronization primitive is used inappropriately, the process may be deadlocked. When two or more execution flows block each other and cannot continue execution, a deadlock occurs. In fact, the deadlock is mainly because in the execution flow of the conflict, there is a loop waiting execution flow, that is, each execution flow in the loop waits to obtain a resource while trying to obtain the next resource. As shown in the figure below, both P1 and P2 processes require resources to continue running. P1 owns resource R2 and needs additional resource R1 to run. P2 owns resource R1 and needs additional resource R2 to run. Both sides wait for each other and no one can run.
+
 
 ![](./figure/process_deadlock.png)
 
-一般来说，死锁有以下四个必要条件
 
-- 互斥，资源是互斥的。
-- 持有和等待，持有已有的资源，同时等待使用下一个资源。
-- 不可抢占，进程所获得的资源在未使用完毕之前，资源申请者不能强行地从资源占有者手中夺取资源，而只能由该资源的占有者进程自行释放。
-- 循环等待，循环等待资源。
 
-而如果想要消除死锁，也就是打破上面的四个必要条件。
+In general, deadlocks have the following four requirements:
 
-此外，死锁可能来源于以下的原因
 
-- 处理器速度
-- 进程或者线程调度算法的变动
-- 在执行的过程中，不同内存的限制。
-- 任何能够中断程序执行的异步事件。
+- Mutually exclusive, resources are mutually exclusive.
+- Hold and wait, hold existing resources while waiting for the next resource.
+- Cannot be preempted. Before the resources obtained by the process are not used, the resource applicant cannot forcibly seize resources from the resource occupants, but can only be released by the occupant process of the resource.
+- Loop wait, loop waiting for resources.
 
-#### 影响
 
-死锁一般情况下会造成拒绝服务攻击。
+And if you want to eliminate the deadlock, it is to break the four necessary conditions above.
 
-## 检测
 
-那么，说到这里，我们有没有可能来检测条件竞争漏洞呢？目前也确实有这方面的研究，也是主要从静态分析和动态分析两个方面来检测。
+In addition, the deadlock may be due to the following reasons
 
-### 静态检测
 
-目前已知的静态检测工具有
+- Processor speed
+- Changes in the process or thread scheduling algorithm
+- Different memory limits during the execution process.
+- Any asynchronous event that can interrupt program execution.
 
--   [Flawfinder](http://www.dwheeler.com/flawfinder/)
-    -   目标：C/C++源码
-    -   步骤
-        -   建立漏洞数据库
-        -   进行简单的文本模式匹配，没有任何的数据流或控制流分析
+
+#### influences
+
+
+Deadlocks typically cause a denial of service attack.
+
+
+## Detection
+
+
+So, when it comes to this, is it possible for us to detect conditional competition loopholes? At present, there is indeed research in this area, and it is mainly detected from two aspects of static analysis and dynamic analysis.
+
+
+### Static detection
+
+
+Currently known static detection tools are available
+
+
+- [Flawfinder] (http://www.dwheeler.com/flawfinder/)
+- Target: C/C++ source code
+- steps
+- Create a vulnerability database
+- Simple text pattern matching without any data flow or control flow analysis
 -   [ThreadSanitizer](https://github.com/google/sanitizers)
-    -   目标：C++和GO
-    -   实现：LLVM
 
-### 动态检测
+- Target: C++ and GO
+- Implementation: LLVM
+
+
+### Dynamic detection
 
 - [Intel Inspector](https://en.wikipedia.org/wiki/Intel_Inspector)
+
 - [Valgrind](https://en.wikipedia.org/wiki/Valgrind)
+
+
 
 # 参考
 
+
 - http://www.teraits.com/pitagoras/marcio/segapp/05.ppt
+
 - http://repository.root-me.org/Programmation/C%20-%20C++/EN%20-%20Secure%20Coding%20in%20C%20and%20C++%20Race%20Conditions.pdf
+
 - https://www.blackhat.com/presentations/bh-europe-04/bh-eu-04-tsyrklevich/bh-eu-04-tsyrklevich.pdf
+
 - https://xinhuang.github.io/posts/2014-09-23-detect-race-condition-using-clang-thread-sanitizer.html
+
 - https://llvm.org/devmtg/2011-11/Hutchins_ThreadSafety.pdf
+
 - http://www.cnblogs.com/biyeymyhjob/archive/2012/07/20/2601655.html
+
 - http://www.cnblogs.com/huxiao-tee/p/4660352.html
+
 - https://github.com/dirtycow/dirtycow.github.io

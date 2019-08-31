@@ -1,49 +1,85 @@
-示例程序可以从此链接下载: [manually_fix_iat.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/manually_fix_iat.zip)
+[EN](./manually-fix-iat.md) | [ZH](./manually-fix-iat-zh.md)
+The sample program can be downloaded from this link: [manually_fix_iat.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/manually_fix_iat.zip)
 
-我们常用的`ImportREC`脱壳是使用的软件自带的`IAT auto search`, 但是如果我们要手动查找`IAT`的地址并`dump`出来, 又该怎么操作呢？
 
-首先使用ESP定律, 可以很快地跳转到`OEP: 00401110`.
+Our commonly used `ImportREC` shelling is the `IAT auto search` that comes with the software, but if we want to manually find the address of `IAT` and `dump`, what should we do?
+
+
+First use the ESP law, you can quickly jump to `OEP: 00401110`.
+
 
 ![1.png](./figure/manually_fix_iat/upx-dll-unpack-1.png)
 
-我们右键点击, 选择`查找->所有模块间的调用`
+
+
+We right click and select `Find-&gt;call between all modules.
+
 
 ![2.png](./figure/manually_fix_iat/upx-dll-unpack-2.png)
 
-显示出调用的函数列表, 我们双击其中的某个函数(注意这里要双击的应该是程序的函数而不是系统函数)
+
+
+Shows the list of functions called, we double-click on one of the functions (note that the double-click here should be the function of the program instead of the system function)
+
 
 ![3.png](./figure/manually_fix_iat/upx-dll-unpack-3.png)
 
-我们来到了函数调用处
+
+
+We came to the function call
+
 
 ![4.png](./figure/manually_fix_iat/upx-dll-unpack-4.png)
 
-右键点击`跟随`, 进入函数
+
+
+Right click on `follow` to enter the function
+
 
 ![5.png](./figure/manually_fix_iat/upx-dll-unpack-5.png)
 
-然后再右键点击`数据窗口中跟随->内存地址`
+
+
+Then right click on the `data window to follow -&gt; memory address`
+
 
 ![6.png](./figure/manually_fix_iat/upx-dll-unpack-6.png)
 
-这里因为显示是十六进制值, 不方便查看, 我们可以在数据窗口点击右键选择`长型->地址`, 就可以显示函数名
+
+
+Here, because the display is a hexadecimal value, it is not convenient to view, we can right-click in the data window and select `long-&gt;address` to display the function name.
+
 
 ![7.png](./figure/manually_fix_iat/upx-dll-unpack-7.png)
 
-注意我们要向上翻到IAT表的起始位置, 可以看到最开始的函数地址是`004050D8`的`kernel.AddAtomA`, 我们向下找到最后一个函数, 也就是`user32.MessageBoxA`函数, 计算一下整个IAT表的大小。在OD的最下方有显示`块大小：0x7C`, 所以我们整个IAT块大小就是`0x7C`
+
+
+Note that we have to scroll up to the beginning of the IAT table. We can see that the initial function address is `kernel.AddAtomA` of `004050D8`. We find the last function down, which is the `user32.MessageBoxA` function. Look at the size of the entire IAT table. At the bottom of the OD there is a display of &#39;block size: 0x7C`, so our entire IAT block size is `0x7C`
+
 
 ![8.png](./figure/manually_fix_iat/upx-dll-unpack-8.png)
 
-打开`ImportREC`, 选择我们正在调试的这个程序, 然后分别输入`OEP：1110, RVA:50D8, SIZE:7C`, 然后点击`获取输入表`
+
+
+Open `ImportREC`, select the program we are debugging, then enter `OEP:1110, RVA:50D8, SIZE:7C`, and then click `Get Input Table`.
+
 
 ![9.png](./figure/manually_fix_iat/upx-dll-unpack-9.png)
 
-这里在输入表窗口中右键选择`高级命令->选择代码块`.
+
+
+Here in the input table window, right click and select &quot;Advanced Command -&gt; Select Code Block&quot;.
+
 
 ![10.png](./figure/manually_fix_iat/upx-dll-unpack-10.png)
 
-然后会弹出窗口, 选择完整转储, 保存为`dump.exe`文件
+
+
+Then a pop-up window will appear, select the full dump, save as `dump.exe` file
+
 
 ![11.png](./figure/manually_fix_iat/upx-dll-unpack-11.png)
 
-dump完成后, 选择`转储到文件`, 这里选择修复我们刚刚dump出的dump.exe, 得到一个`dump\_.exe`. 这时整个脱壳就完成了
+
+
+After the dump is complete, select `Dump to file`, here choose to repair the dump.exe we just dumped, get a `dump\_.exe`. At this point, the whole shelling is completed.

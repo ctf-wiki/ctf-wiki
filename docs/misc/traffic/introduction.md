@@ -1,32 +1,42 @@
-## 流量包分析
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
+## Traffic Packet Analysis
 
-CTF 比赛中,流量包的取证分析是另一项重要的考察方向。
 
-通常比赛中会提供一个包含流量数据的 PCAP 文件，有时候也会需要选手们先进行修复或重构传输文件后，再进行分析。
+In the CTF competition, forensic analysis of traffic packets is another important direction of investigation.
 
-PCAP 这一块作为重点考察方向，复杂的地方在于数据包里充满着大量无关的流量信息，因此如何分类和过滤数据是参赛者需要完成的工作。
 
-总的来说有以下几个步骤
+Usually, a PCAP file containing traffic data is provided during the game, and sometimes the player is required to repair or reconstruct the transferred file before analyzing.
 
-- 总体把握
-    - 协议分级
-    - 端点统计
-- 过滤赛选
-    - 过滤语法
-    - Host，Protocol，contains，特征值
-- 发现异常
-    - 特殊字符串
-    - 协议某字段
-    - flag 位于服务器中
-- 数据提取
-    - 字符串取
-    - 文件提取
 
-总的来说比赛中的流量分析可以概括为以下三个方向:
+The PCAP section focuses on the direction of the investigation. The complicated part is that the data packet is filled with a large amount of irrelevant traffic information. Therefore, how to classify and filter the data is the work that the entrant needs to complete.
 
-- 流量包修复
-- 协议分析
-- 数据提取
+
+In general, there are the following steps
+
+
+- Overall grasp
+- Agreement rating
+- Endpoint statistics
+- Filter match selection
+- Filter syntax
+- Host, Protocol, contains, eigenvalue
+- Found an exception
+- special string
+- Agreement a field
+- flag is in the server
+- Data Extraction
+- String fetch
+- File extraction
+
+
+In general, traffic analysis in the game can be summarized in the following three directions:
+
+
+- Traffic packet repair
+- Protocol analysis
+- Data Extraction
+
+
 
 
 

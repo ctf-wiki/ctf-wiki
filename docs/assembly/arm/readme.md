@@ -1,160 +1,255 @@
-介绍 arm 基础内容。
+[EN](./readme.md) | [ZH](./readme-zh.md)
+Introduce the basic content of arm.
 
 
 
-## 1. arm汇编基础
+
+
+
+## 1. arm assembly basis
+
 
 ### 1. LDMIA R0 , {R1,R2,R3,R4}
 
-LDM为: 多寄存器”内存取”指令
-IA表示每次LDM指令结束之后R0增加1个字
-最终结果为R1 = [R0], R1 = [R0+#4], R1 = [R0+#8], R1 = [R0+#0xC]
 
-### 2. 堆栈寻址 (FA、EA、FD、ED)
 
-STMFD SP! , {R1-R7,LR} @ 将R1~R7以及LR入栈
-LDMFD SP! , {R1-R7,LR} @ 将R1~R7以及LR出栈
+LDM is: Multi-register &quot;internal access&quot; instruction
+IA indicates that R0 is incremented by 1 word after each LDM instruction ends.
+The final result is R1 = [R0], R1 = [R0+#4], R1 = [R0+#8], R1 = [R0+#0xC]
 
-### 3. 块拷贝寻址
 
-LDM和STM为指令前缀，表示多寄存器寻址，指令后缀(IA、DA、IB、DB)。
-LDMIA R0!, {R1-R3} @从R0所指向的内存地址依次取出3个字到R1、R2、R3寄存器
-STMIA R0!, {R1-R3} @将R1、R2、R3所存储的内容依次存放在R0所指向的内存。
+### 2. Stack addressing (FA, EA, FD, ED)
 
-### 4. 相对寻址
+
+STMFD SP! , {R1-R7, LR} @ Push R1~R7 and LR onto the stack
+LDMFD SP! , {R1-R7, LR} @ Pop R1~R7 and LR
+
+
+### 3. Block copy addressing
+
+
+LDM and STM are instruction prefixes, indicating multi-register addressing, instruction suffixes (IA, DA, IB, DB).
+LDMIA R0!, {R1-R3} @Retrieve 3 words from the memory address pointed to by R0 to the R1, R2, R3 registers
+STMIA R0!, {R1-R3} @ Stores the contents stored by R1, R2, and R3 in the memory pointed to by R0.
+
+
+### 4. Relative addressing
+
 
 ```
-以当前程序计数器PC的当前值为基地址，将标号标记位置为偏移量，两者相加得
-到有效地址。
+
+With the current value of the current program counter PC as the base address, the label mark position is offset, and the two are added together.
+To a valid address.
+
+
 
 
 BL NEXT
+
     ...        
+
 NEXT:
+
     ...
-```
-
-## 2. 指令集
-
-### 1. 由于arm芯片更新很快，所以指令集很多，使用较为普遍的就是arm指令集以及Thumb指令集。
-
-
-
-### 2.跳转指令
-
-arm实现了两种跳转类型，一种是直接使用跳转指令，另外一种则是给PC寄存器直接赋值。
-
-#### 1. B跳转指令
 
 ```
-结构 B{cond} label    
-直接跳走，如`BNE LABEL`
+
+
+
+## 2. Instruction set
+
+
+### 1. Since the arm chip is updated very quickly, there are many instruction sets. The most common ones are the arm instruction set and the Thumb instruction set.
+
+
+
+
+
+
+### 2. Jump instruction
+
+
+Arm implements two types of jumps, one is to use jump instructions directly, and the other is to directly assign values to PC registers.
+
+
+#### 1. B jump instruction
+
+
 ```
 
-#### 2. BL跳转指令
-
-```
-结构 BL{cond} label    
-执行BL指令时，若条件满足，则首先将当前指令的下一条指令的地址赋值给R14寄存器(LR)，然
-后跳转到label标记的地址处继续执行。一般用在过程调用中，过程结束之后通过`MOV PC, LR`返回
+Structure B{cond} label
+Jump directly, such as `BNE LABEL`
 ```
 
-#### 3. BX带状态切换的跳转指令
+
+
+#### 2. BL jump instruction
+
 
 ```
-结构 BX{cond}Rm   
-当执行BX指令时，如果条件满足，会判断Rm寄存器的位[0]是否为1，如果是1则会在跳转时自动将CPSR寄存器的T标志位置为1,并将目标位置处的指令解析为Thumb指令，相反，若Rm寄存器的位[0]为0，则将CPSR寄存器的T标志位复位，同时将目标位置的指令解析为arm指令。
+
+Structure BL{cond} label
+When the BL instruction is executed, if the condition is satisfied, the address of the next instruction of the current instruction is first assigned to the R14 register (LR).
+Then jump to the address marked by the label to continue execution. Generally used in process calls, after the process is over, return via `MOV PC, LR`
 ```
 
-如下:
+
+
+#### 3. BX jump instruction with state switching
+
 
 ```
+
+Structure BX{cond}Rm
+When the BX instruction is executed, if the condition is satisfied, it will judge whether the bit [0] of the Rm register is 1, and if it is 1, the T flag of the CPSR register is automatically set to 1 at the time of the jump, and the instruction at the target position is Resolved as a Thumb instruction. Conversely, if bit [0] of the Rm register is 0, the T flag of the CPSR register is reset and the instruction at the target position is interpreted as an arm instruction.
+```
+
+
+
+as follows:
+
+
+```
+
 ADR R0, thumbcode + 1
-BX R0       @跳转到thumbcode。并且处理器运行为thumb模式
+
+BX R0 @ Jump to thumbcode. And the processor runs in thumb mode
 thumbcode:
+
 .code 16
+
+```
+
+
+
+
+
+
+
+#### 4.BLX jump instruction with link and state switch
+
+
+```
+
+Structure BLX{cond}Rm
+The BLX instruction aggregates the functions of BL and BX, and simultaneously saves the return address to R14 (LR) on the function of BX.
 ```
 
 
 
-#### 4.BLX带链接和状态切换的跳转指令
+### 3. Register access instruction
 
-```
-结构 BLX{cond}Rm
-BLX指令集合了BL和BX的功能，在BX的功能上同时保存返回地址到R14(LR)
-```
 
-### 3.寄存器访问指令
+Memory access instruction operations include loading data from a memory area, storing data to a memory, exchanging data between registers and memory, and the like.
 
-存储器访问指令操作包括从存储区加载数据，存储数据到存储器，寄存器与存储器之间的数据交换等。
 
 #### `LDR`
 
-将内存中的数据放入到寄存器中
 
-指令示例：
+Put the data in memory into the register
+
+
+Example of instruction:
+
 
 ```
-LDRH R0，[R1]         ；将存储器地址为R1的半字数据读入寄存器R0，并将R0的高16位清零。
-LDRH R0，[R1，＃8]    ；将存储器地址为R1＋8的半字数据读入寄存器R0，并将R0的高16位清零。
-LDRH R0，[R1，R2]    ；将存储器地址为R1＋R2的半字数据读入寄存器R0，并将R0的高16位清零。
+
+LDRH R0, [R1] ; Read halfword data with memory address R1 into register R0 and clear the upper 16 bits of R0.
+LDRH R0, [R1, #8] ; Read halfword data with memory address R1+8 into register R0 and clear the upper 16 bits of R0.
+LDRH R0, [R1, R2] ; Read halfword data with memory address R1+R2 into register R0 and clear the upper 16 bits of R0.
 ```
+
+
+
 
 
 #### `STR`
 
-STR用于存储数据到制定地址。格式如下：
+
+The STR is used to store data to an address. The format is as follows:
 STR{type}{cond}Rd,label
-STRD{cond}Rd,Rd2,label
-用法如下:
-`STR R0,[R2,#04]` 将R0的值存储到R2+4的地址处
+
+Harden {cond} Rd, Rd2, label
+The usage is as follows:
+`STR R0,[R2,#04]` Store the value of R0 at the address of R2+4
+
 
 #### `LDM`
 
+
+
 ```
+
 LDM{addr_mode}{cond}Rn{!}reglist
+
 ```
 
-该指令是将内存中堆栈内的数据，批量的赋值给寄存器，即是出栈操作。
 
-> 特别注意, ! 为可选后缀。如果有 ! 则最终地址会写回到Rn寄存器
+
+This instruction is to allocate the data in the stack in memory to the register in batches, that is, the pop operation.
+
+
+&gt; Special note, ! is an optional suffix. If there is! Then the final address will be written back to the Rn register.
+
 
 #### `STM`
 
-STM将一个寄存器列表的数据存储到指定的地址单元中。格式如下
+
+The STM stores the data of a register list into a specified address location. Format is as follows
+
 
 ```
+
 STM{addr_mod}{cond}Rn{!}reglist
 ```
 
+
+
 #### `PUSH&&POP`
 
-格式如下：
-PUSH{cond}reglist
-POP{cond}reglist
-栈操作指令
+
+
+The format is as follows:
+PUSH {cond} reglist
+POP {cond}
+Stack operation instruction
+
 
 ```
+
 PUSH {r0,r4-r7}
+
 POP {r0,r4-r7}
+
 ```
+
+
+
+
 
 
 
 #### `SWP`
 
-### 寄存器之间的数据交换。
 
-格式为`SWP{B}{cond}Rd,Rm,[Rn]`
-B是可选的字节，若有B，则交换字节，否则交换字
-Rd为临时存放的寄存器，Rm是`要替换`的值
-Rn是`要被替换`的数据地址
+### Data exchange between registers.
 
-### 参考链接
 
-[arm 指令学习](https://ring3.xyz/2017/03/05/[%E9%80%86%E5%90%91%E7%AF%87]arm%E6%8C%87%E4%BB%A4%E5%AD%A6%E4%B9%A0/)
+The format is `SWP{B}{cond}Rd,Rm,[Rn]`
+B is an optional byte. If there is B, the byte is exchanged. Otherwise, the word is exchanged.
+Rd is a temporarily stored register, and Rm is the value to be replaced.
+Rn is the data address of `to be replaced&#39;
 
-[常用arm指令](http://www.51-arm.com/upload/ARM_%E6%8C%87%E4%BB%A4.pdf)
+
+### Reference link
+
+
+[arm instruction learning] (https://ring3.xyz/2017/03/05/[%E9%80%86%E5%90%91%E7%AF%87]arm%E6%8C%87%E4% BB%A4%E5%AD%A6%E4%B9%A0/)
+
+
+[Common arm command] (http://www.51-arm.com/upload/ARM_%E6%8C%87%E4%BB%A4.pdf)
+
 
 [arm-opcode-map](http://imrannazar.com/ARM-Opcode-Map)
+
 

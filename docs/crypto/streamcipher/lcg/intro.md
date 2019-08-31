@@ -1,3 +1,5 @@
-# 线性同余生成器
+[EN](./intro.md) | [ZH](./intro-zh.md)
+# Linear Congruence Generator
 
-待补充。
+
+To be added.

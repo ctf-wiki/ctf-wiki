@@ -1,70 +1,99 @@
-# Android 开发基础
+[EN](./basic_develop.md) | [ZH](./basic_develop-zh.md)
+# Android Development Fundamentals
 
-在做 Android 安全之前，我们应该尽可能地了解 Android 开发的基本流程。
 
-## 基础知识
+Before doing Android security, we should understand the basic process of Android development as much as possible.
 
-依次阅读以下书籍，由浅入深地了解 Android 基本开发知识
 
-- 第一行代码，阅读完前七章即可
-- JNI/NDK 开发，目前尚未找到一本相关合适的指南。
-- Android 编程权威指南（可选）
-- Android 高级进阶（可选）
+## Basic knowledge
 
-在学习的过程中，个人觉得需要着重了解 Android 开发中如下知识
 
-- Android 系统架构
-- 基本源文件架构
-- 基本开发方式与代码编写惯例，了解常见代码的意思。
-- 了解 xml 等一些配置资源的文件格式。
+Read the following books in order to learn about Android basic development knowledge from the shallower
 
-**一定要搭好基本的 Android 开发环境！！！！！**
+
+- The first line of code, after reading the first seven chapters
+- JNI/NDK development, there is currently no suitable guide available.
+- The authoritative guide to Android programming (optional)
+- Android Advanced Advanced (optional)
+
+
+In the process of learning, I feel that I need to focus on the following knowledge in Android development.
+
+
+- Android system architecture
+- Basic source file architecture
+- Basic development methods and code writing conventions to understand the meaning of common code.
+- Understand the file format of some configuration resources such as xml.
+
+
+** Be sure to set up a basic Android development environment! ! ! ! ! **
+
 
 - java
+
 - ddms
+
 - ndk
-- sdk，多安装几个版本的 sdk，5.0-8.0
+- sdk, install several versions of sdk, 5.0-8.0
 
-## Apk 打包流程
 
-当编写完 App 相关的代码后，我们的最后一步就是将 App 中所有使用到的资源文件进行打包，打包流程如下图（<u>http://androidsrc.net/android-app-build-overview/</u>）所示：
+## Apk Packaging Process
+
+
+After writing the App-related code, our final step is to package all the resource files used in the App. The packaging process is as shown in the following figure ( <u>http://androidsrc.net/android-app-build-overview/</u> ). :
+
 
 ![](./figure/android_app_build.png)
 
-具体的操作如下
 
-1. 使用 aapt( The Android Asset Packing Tool ) 对资源文件进行打包，生成 R.java 文件。
-2. 如果项目中使用到了 AIDL（Android Interface Definition Language）提供的服务，则需要使用 AIDL 工具解析 AIDL 接口文件生成相应的 Java 代码。
-3. 使用 javac 将 R.java 和 AIDL 文件编译为 .class 文件。
-4. 使用 dx 工具将 class 和第三方的 library 转换为 dex 文件。
-5. 利用 apkbuilder 将第一步编译后的资源、第四步生成的 .dex 文件，以及一些其它资源打包到 APK 文件中。
-6. 这一部主要是对 APK 进行签名。可以分为两种情况，如果我们是要发布 App，那就采用 RealeaseKeystore  签名；反之，我们如果只是想要对 App 进行调试，那就使用 debug.keystore 签名。
-7. 在发布正式版之前，我们需要将 APK 包中资源文件距离文件的起始偏移修改为 4 字节的整数倍数，这样，在之后运行 App 的时候，速度会比较快。
 
-## Apk 文件结构
+The specific operation is as follows
 
-APK 文件也是一种 ZIP 文件。因此，我们可以使用解压 zip 的工具来对其进行解压。一个典型的 APK 文件的结构如下图所示。其中，关于每一部分的介绍如下
+
+1. Use aapt ( The Android Asset Packing Tool ) to package the resource files to generate R.java files.
+2. If the service provided by AIDL (Android Interface Definition Language) is used in the project, you need to use the AIDL tool to parse the AIDL interface file to generate the corresponding Java code.
+3. Compile the R.java and AIDL files into a .class file using javac.
+4. Use the dx tool to convert class and third-party libraries to dex files.
+5. Use apkbuilder to package the first compiled resource, the .dex file generated in step 4, and some other resources into the APK file.
+6. This section mainly signs the APK. There are two cases. If we want to publish the app, we will use the RealeaseKeystore signature. Otherwise, if we just want to debug the app, we will use the debug.keystore signature.
+7. Before releasing the official version, we need to change the starting offset of the resource file in the APK package from the file to an integer multiple of 4 bytes, so that the speed will be faster when the App is run later.
+
+
+## Apk file structure
+
+
+The APK file is also a ZIP file. Therefore, we can decompress it using the tool that unpacks the zip. The structure of a typical APK file is shown below. Among them, the introduction of each part is as follows
+
 
 ![](./figure/apk_structure.png)
 
 
+
+
+
 - AndroidManifest.xml
 
-    - 该文件主要用于声明应用程序的名称，组件，权限等基本信息。
+
+- This file is mainly used to declare basic information such as the name, components, permissions of the application.
+
 
 - class.dex
-    - 该文件是 dalvik 虚拟机对应的可执行文件，包含应用程序的可执行代码。
+
+- This file is the executable file for the dalvik virtual machine and contains the executable code of the application.
 - resource.arsc
-    - 该文件主要是应用程序编译后的二进制资源以及资源位置与资源 id 之间的映射关系，如字符串。
+
+- This file is mainly a binary resource compiled by the application and a mapping relationship between the resource location and the resource id, such as a string.
 - assets
-    - 该文件夹一般用于包含应用程序的原始资源文件，例如字体和音乐文件。程序在运行的时候，可以通过API 获取这些信息。
+
+- This folder is typically used for the original resource files that contain the application, such as fonts and music files. This information can be obtained through the API while the program is running.
 - lib/
-    - lib目录下主要用于存储通过 JNI（Java Native Interface）机制使用的本地库文件，并且会按照其支持的架构，分别创建对应的子目录。
-- res/
-    - 该目录主要包含了 Android 应用引用的资源，并且会按照资源类型进行存储，如图片，动画，菜单等。主要还有一个 value 文件夹，包含了各类属性资源
-- colors.xml-->颜色资源
-- dimens.xml--->尺寸资源
-- strings--->字符串资源
-- styles.xml-->样式资源
-- META-INF/
-    - 类似于 JAR 文件，APK 文件中也包含了 META-INF 目录，用于存放代码签名等文件，以便于用来确保 APK 文件不会被人随意修改。
+
+- The lib directory is mainly used to store local library files used by the JNI (Java Native Interface) mechanism, and the corresponding subdirectories are created according to the supported architecture.
+- res /
+- This directory mainly contains resources referenced by Android apps, and will be stored according to resource types, such as images, animations, menus, etc. There is also a value folder that contains various attribute resources.
+- colors.xml--&gt;color resources
+- dimens.xml---&gt;size resources
+- strings---&gt;string resources
+- styles.xml--&gt;style resources
+- META-INF /
+- Similar to JAR files, the APK file also contains the META-INF directory, which is used to store files such as code signatures, so that it can be used to ensure that APK files are not modified at will.

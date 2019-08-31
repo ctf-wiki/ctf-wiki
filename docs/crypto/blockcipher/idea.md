@@ -1,101 +1,154 @@
+[EN](./idea.md) | [ZH](./idea-zh.md)
 # IDEA
 
-## 概述
 
-**国际数据加密算法**（International Data Encryption Algorithm，IDEA），最早称为**改良建议加密标准**（Improved Proposed Encryption Standard，IPES），是密码学上一种对称密钥分组密码，由 James Massey 与来学嘉设计，在1991年首次提出。这个算法的提出，是为了取代旧有的数据加密标准 DES。（来自维基百科）
 
-## 基本流程
+## Overview
 
-### 密钥生成
 
-IDEA 在加密的每轮中使用 6个密钥，然后最后输出轮使用4个密钥。所以一共有52个。
+**International Data Encryption Algorithm (IDEA), first known as the Improved Proposed Encryption Standard (IPES), is a symmetric key block cipher in cryptography. James Massey and Lai Xuejia Design, first introduced in 1991. This algorithm was proposed to replace the old data encryption standard DES. (from Wikipedia)
 
-1. 前8个密钥来自与该算法最初的密钥，K1 取自密钥的高16比特，K8 取自密钥的低16比特。
-2. 将密钥循环左移 25 位获取下一轮密钥，然后再次分为8组。
 
-### 加密流程
+## Basic Process
 
-IDEA 加密的数据块的大小为 64 比特，其使用的密钥长度为128 比特。该算法会对输入的数据块进行8次相同的变换，只是每次使用的密钥不同，最后会进行一次输出变换。每一轮的操作
+
+### Key Generation
+
+
+IDEA uses 6 keys in each round of encryption and then 4 keys in the final output round. So there are a total of 52.
+
+
+1. The first 8 keys are from the original key of the algorithm, K1 is taken from the upper 16 bits of the key, and K8 is taken from the lower 16 bits of the key.
+2. Move the key loop left by 25 bits to get the next round key, and then divide it into 8 groups again.
+
+
+### Encryption process
+
+
+The IDEA encrypted block is 64 bits in size and uses a key length of 128 bits. The algorithm performs the same transformation 8 times on the input data block, except that the key used each time is different, and finally an output transformation is performed. Each round of operation
+
 
 ![](figure/IDEA_Round.png)
 
-可以输入和输出都是 16 比特位一组。每一轮的主要执行的运算有
 
-- 按位异或，⊕
-- 模加，模数为 $2^{16}$ ，⊞
-- 模乘，模数为 $2^{16}+1$ ，⊙。但是需要注意的是 0x0000 的输入会被修改为 $2^{16}$ ，$2^{16}$ 的输出结果会被修改为0x0000。
 
-这里我们称由 K5，K6 构成的中间那个方格的加密方式为MA。这也是 IDEA 算法中重要的一部分，此外，我们称 MA_L 为该部分加密后的左侧结果，其最后会和最左边的 16 比特操作；MA_R 为该部分加密后的右半部分的结果，其最后会和第三个 16 比特操作。
+Both input and output can be a group of 16 bits. The main execution of each round has
 
-在最后输出轮的操作如下
+
+- Bitwise XOR, ⊕
+- Modular plus, the modulus is $2^{16}$, ⊞
+- Modular multiplication, the modulus is $2^{16}+1$, ⊙. However, it should be noted that the input of 0x0000 will be modified to $2^{16}$, and the output of $2^{16}$ will be modified to 0x0000.
+
+
+Here we call the encryption method of the middle square consisting of K5 and K6 as MA. This is also an important part of the IDEA algorithm. In addition, we call MA_L the left side result of this part of the encryption, which will end up with the leftmost 16 bits; MA_R is the result of the encrypted right part of the part, and finally Will work with the third 16 bits.
+
+
+The operation of the last output wheel is as follows
+
 
 ![](figure/IDEA_Output_Trans.png)
 
-### 解密流程
 
-解密流程与加密流程相似，主要在于其密钥的选取
 
-- 第 i(1-9) 轮的解密的密钥的前 4 个子密钥由加密过程中第10-i 轮的前 4 个子密钥得出
-  - 其中第 1 个和第 4 个解密子密钥为相应的子密钥关于 $2^{16}+1$ 的乘法逆元。
-  - 第 2 个和第 3 个子密钥的取法为
-    - 当轮数为2，...，8时，取相应的第3个和第2个的子密钥的$2^{16}$ 的加密逆元。
-    - 当轮数为 1 或 9 时，取相应的第 2 个和第 3 个子密钥对应的$2^{16}$ 的加密逆元。
-- 第 5 和第 6 个密钥不变。
+### Decryption process
 
-### 总体流程
+
+The decryption process is similar to the encryption process, mainly in the selection of its key.
+
+
+- The first 4 subkeys of the decrypted key of the i(1-9)th round are derived from the first 4 subkeys of the 10th-ith round of the encryption process
+- where the 1st and 4th decryption subkeys are the multiplicative inverses of the corresponding subkeys for $2^{16}+1$.
+- The second and third subkeys are taken as
+- When the number of rounds is 2, ..., 8, the encrypted inverse of $2^{16}$ of the corresponding 3rd and 2nd subkeys is taken.
+- When the number of rounds is 1 or 9, the encrypted inverse of $2^{16}$ corresponding to the corresponding 2nd and 3rd subkeys is taken.
+- The 5th and 6th keys are unchanged.
+
+
+### Overall process
+
 
 ![](figure/IDEA_All.png)
 
-我们来证明一下算法的正确性，这里我们关注于解密算法的第一轮，首先我们先看一下$Y_i$ 是如何得到的
 
-$Y_1 = W_{81} \odot Z_{49}$
 
-$Y_2=W_{83}\boxplus Z_{50}$
+Let&#39;s prove the correctness of the algorithm. Here we focus on the first round of the decryption algorithm. First, let&#39;s first look at how $Y_i$ is obtained.
 
-$Y_3=W_{82}\boxplus Z_{51}$
 
-$Y_4=W_{83}\odot Z_{52}$
+$ Y_1 = W_ {81} \ odot Z_ {49} $
 
-解密时，第一轮直接进行的变换为
 
-$J_{11}=Y_1 \odot U_1=Y_1 \odot Z_{49}^{-1}=W_{81}$
+$ Y_2 = W_ {83} \ boxplus Z_ {50} $
 
-$J_{12}=Y_2 \boxplus U2=Y_2\boxplus Z_{50}^{-1}=W_{83}$
 
-$J_{13}=Y_3 \boxplus U3=Y_3\boxplus Z_{51}^{-1}=W_{82}$
+$ Y_3 = W_ {82} \ boxplus Z_ {51} $
 
-$J_{14}=Y_4 \odot U_4=Y_4 \odot Z_{52}^{-1}=W_{84}$
 
-可以看出得到的结果只有中间的两个16位加密结果恰好相反。我们进一步看一下$W_{8i}$ 是如何得到的。
+$ Y_4 = W_ {83} \ odot Z_ {52} $
 
-$W_{81}=I_{81} \oplus MA_R(I_{81}\oplus I_{83},I_{82}\oplus I_{84})$
 
-$W_{82}=I_{83} \oplus MA_R(I_{81}\oplus I_{83},I_{82}\oplus I_{84})$
+When decrypting, the first round of direct conversion is
 
-$W_{83}=I_{82} \oplus MA_L(I_{81}\oplus I_{83},I_{82}\oplus I_{84})$
 
-$W_{84}=I_{84} \oplus MA_L(I_{81}\oplus I_{83},I_{82}\oplus I_{84})$
+$ J_ {11} = Y_1 \ odot U_1 = Y_1 \ odot Z_ {49} ^ {- 1} = W_ {81} $
 
-那么对于V11来说
 
-$V_{11}=J_{11} \oplus MA_R(J_{11}\oplus J_{13},J_{12}\oplus J_{14})$
+$ J_ {12} = Y_2 \ boxplus U2 = Y_2 \ boxplus Z_ {50} ^ {- 1} = W_ {83} $
 
-通过简单带入已有的值，显然
 
-$V_{11}=W_{81} \oplus MA_R(I_{81}\oplus I_{83},I_{82} \oplus I_{84})=I_{81}$
+$ J_ {13} = Y_3 \ boxplus U3 = Y_3 \ boxplus Z_ {51} ^ {- 1} = W_ {82} $
 
-对于其他的元素也类似，那么其实我们会发现第一轮解密后的结果恰好是$I_{81},I_{83},I_{82},I_{84}$。
 
-类似地，这个关系可以一直满足直到
+$ J_ {14} = Y_4 \ odot U_4 = Y_4 \ odot Z_ {52} ^ {- 1} = W_ {84} $
 
-$V_{81}=I_{11},V_{82}=I_{13},V_{83}=I_{12},V_{84}=I_{14}$
 
-那么最后再经过一次简单的输出变换，恰好得到最初加密的数值。
+It can be seen that the result is only the opposite of the two 16-bit encryption results in the middle. Let&#39;s take a closer look at how $W_{8i}$ was obtained.
+
+
+$ W_ {81} = I_ {81} \ oplus MA_R (I_ {81} \ oplus I_ {83}, I_ {82} \ oplus I_ {84}) $
+
+
+$ W_ {82} = I_ {83} \ oplus MA_R (I_ {81} \ oplus I_ {83}, I_ {82} \ oplus I_ {84}) $
+
+
+$ W_ {83} = I_ {82} \ oplus MA_L (I_ {81} \ oplus I_ {83}, I_ {82} \ oplus I_ {84}) $
+
+
+$ W_ {84} = I_ {84} \ oplus MA_L (I_ {81} \ oplus I_ {83}, I_ {82} \ oplus I_ {84}) $
+
+
+So for V11
+
+
+$ V_ {11} = J_ {11} \ oplus MA_R (J_ {11} \ oplus J_ {13}, J_ {12} \ oplus J_ {14}) $
+
+
+By simply bringing in the existing values, obviously
+
+
+$ V_ {11} = W_ {81} \ oplus MA_R (I_ {81} \ oplus I_ {83}, I_ {82} \ oplus I_ {84}) = I_ {81} $
+
+
+For other elements, it is similar, then we will find that the first round of decryption results are exactly $I_{81}, I_{83}, I_{82}, I_{84}$.
+
+
+Similarly, this relationship can be satisfied until
+
+
+$ V_ {81} = I_ {11}, V_ {82} = I_ {13}, V_ {83} = I_ {12}, V_ {84} = I_ {14} $
+
+
+Then finally a simple output transformation happens to get the value that was originally encrypted.
+
 
 ![](figure/IDEA_Round.png)
 
 
 
-## 题目
+
+
+
+
+## topic
+
 
 - 2017 HITCON seccomp

@@ -1,22 +1,33 @@
-所谓的一步到达OEP的脱壳方法, 是根据所脱壳的特征, 寻找其距离OEP最近的一处汇编指令, 然后下int3断点, 在程序走到OEP的时候dump程序.
+[EN](./direct-oep.md) | [ZH](./direct-oep-zh.md)
+The so-called one-step OEP shelling method is based on the characteristics of the shelling, looking for the assembly instruction closest to OEP, then the int3 breakpoint, and the dump program when the program goes to OEP.
 
-如一些压缩壳往往popad指令距离OEP或者大jmp特别近, 因此使用Ollydbg的搜索功能, 可以搜索壳的特征汇编代码, 达到一步断点到达OEP的效果.
+
+For example, some compression shells tend to be particularly close to OEP or large jmp. Therefore, using Ollydbg&#39;s search function, you can search the shell&#39;s feature assembly code to achieve the effect of one step breakpoint to OEP.
+
 
 ## 要点
 
-1. ctrl+f 查找popad
-2. ctrl+l 跳转到下一个匹配处
-3. 找到匹配处, 确认是壳解压完毕即将跳转到OEP部分, 则设下断点运行到该处
-4. 只适用于极少数压缩壳
 
-## 示例
+1. ctrl+f find popad
+2. ctrl+l jumps to the next match
+3. Find the match, confirm that the shell is ready to jump to the OEP part, then set the breakpoint to run there.
+4. Only for a very small number of compression shells
 
-示例程序可以点击此处下载: [3_direct2oep.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/3_direct2oep.zip)
 
-还是用的原先的notepad.exe来示例, 用`Ollydbg`打开后, 我们按下`ctrl+f`来查找指定的字符串, 像`popad`是典型的一个特征, 有部分壳它就常用`popad`来恢复状态, 所以如下图所示来搜索`popad`.
+##example
+
+
+The sample program can be downloaded here: [3_direct2oep.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/3_direct2oep.zip)
+
+
+Still use the original notepad.exe to illustrate, after opening with `Ollydbg`, we press `ctrl+f` to find the specified string, like `popad` is a typical feature, some shells are commonly used. Popad` to restore state, so search for `popad` as shown below.
+
 
 ![direct2oep_01.png](./figure/direct2oep_01.png)
 
-在本例中, 当搜索到的`popad`不符合我们的要求时, 可以按下`ctrl+l`来搜索下一个匹配处, 大概按下个三四次, 我们找到了跳转到OEP的位置处.
+
+
+In this example, when the searched &#39;popad` does not meet our requirements, you can press `ctrl+l` to search for the next match, about three or four times, we found a jump to OEP. Location.
+
 
 ![direct2oep_02.png](./figure/direct2oep_02.png)

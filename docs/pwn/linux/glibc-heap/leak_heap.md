@@ -1,132 +1,231 @@
-# 通过堆进行信息泄漏
+[EN](./leak_heap.md) | [ZH](./leak_heap-zh.md)
+# Information leakage through the heap
 
-## 什么叫信息泄漏
-在CTF中，Pwn题目一般都是运行在远端服务器上的。因此我们不能获知服务器上的libc.so地址、Heap基地址等地址信息，但是在进行利用的时候往往需要这些地址，此时就需要进行信息泄漏。
 
-## 信息泄漏的目标
-信息泄漏的目标有哪些？我们可以通过观察内存空间来获知这一点
+## What is information leakage?
+In the CTF, the Pwn topic is generally run on a remote server. Therefore, we can not know the address information such as libc.so address and Heap base address on the server, but these addresses are often needed when utilizing, and information leakage is required.
+
+
+## Information leakage target
+What are the targets of information leakage? We can know this by observing the memory space.
+
 
 ```
+
 Start              End                Offset             Perm Path
-0x0000000000400000 0x0000000000401000 0x0000000000000000 r-x /home/pwn
-0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/pwn
-0x0000000000601000 0x0000000000602000 0x0000000000001000 rw- /home/pwn
-0x0000000000602000 0x0000000000623000 0x0000000000000000 rw- [heap]
-0x00007ffff7a0d000 0x00007ffff7bcd000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/libc-2.23.so
-0x00007ffff7bcd000 0x00007ffff7dcd000 0x00000000001c0000 --- /lib/x86_64-linux-gnu/libc-2.23.so
-0x00007ffff7dcd000 0x00007ffff7dd1000 0x00000000001c0000 r-- /lib/x86_64-linux-gnu/libc-2.23.so
-0x00007ffff7dd1000 0x00007ffff7dd3000 0x00000000001c4000 rw- /lib/x86_64-linux-gnu/libc-2.23.so
-0x00007ffff7dd3000 0x00007ffff7dd7000 0x0000000000000000 rw- 
-0x00007ffff7dd7000 0x00007ffff7dfd000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/ld-2.23.so
-0x00007ffff7fdb000 0x00007ffff7fde000 0x0000000000000000 rw- 
-0x00007ffff7ff6000 0x00007ffff7ff8000 0x0000000000000000 rw- 
-0x00007ffff7ff8000 0x00007ffff7ffa000 0x0000000000000000 r-- [vvar]
-0x00007ffff7ffa000 0x00007ffff7ffc000 0x0000000000000000 r-x [vdso]
-0x00007ffff7ffc000 0x00007ffff7ffd000 0x0000000000025000 r-- /lib/x86_64-linux-gnu/ld-2.23.so
-0x00007ffff7ffd000 0x00007ffff7ffe000 0x0000000000026000 rw- /lib/x86_64-linux-gnu/ld-2.23.so
-0x00007ffff7ffe000 0x00007ffff7fff000 0x0000000000000000 rw- 
-0x00007ffffffde000 0x00007ffffffff000 0x0000000000000000 rw- [stack]
-0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
-```
-首先第一个是主模块的基地址，因为只有在开启PIE(地址无关代码)的情况下主模块的基地址才会发生改变，因此通常情况下主模块的地址不需要泄漏。
-第二个是堆地址，堆地址对于进程来说是每次运行都会改变，当然需要控制堆中的数据时可能就需要先泄漏堆基地址。
-第三个是libc.so的地址，在很多情况下我们只有通过libc中的system等函数才能实现代码执行，并且malloc_hook、one_gadgets、IO_FILE等结构也都储存在libc中，因此libc的地址也是我们泄漏的目标。
 
-## 通过什么进行泄漏
-通过前面的知识我们知道heap分为unsorted bin、fastbin、smallbin、large bin等，我们逐个考察这些结构来查看如何进行泄漏。
+0x0000000000400000 0x0000000000401000 0x0000000000000000 r-x /home/pwn
+
+0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/pwn
+
+0x0000000000601000 0x0000000000602000 0x0000000000001000 rw- /home/pwn
+
+0x0000000000602000 0x0000000000623000 0x0000000000000000 rw- [heap]
+
+0x00007ffff7a0d000 0x00007ffff7bcd000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/libc-2.23.so
+
+0x00007ffff7bcd000 0x00007ffff7dcd000 0x00000000001c0000 --- /lib/x86_64-linux-gnu/libc-2.23.so
+
+0x00007ffff7dcd000 0x00007ffff7dd1000 0x00000000001c0000 r-- /lib/x86_64-linux-gnu/libc-2.23.so
+
+0x00007ffff7dd1000 0x00007ffff7dd3000 0x00000000001c4000 rw- /lib/x86_64-linux-gnu/libc-2.23.so
+
+0x00007ffff7dd3000 0x00007ffff7dd7000 0x0000000000000000 rw- 
+
+0x00007ffff7dd7000 0x00007ffff7dfd000 0x0000000000000000 r-x /lib/x86_64-linux-gnu/ld-2.23.so
+
+0x00007ffff7fdb000 0x00007ffff7fde000 0x0000000000000000 rw- 
+
+0x00007ffff7ff6000 0x00007ffff7ff8000 0x0000000000000000 rw- 
+
+0x00007ffff7ff8000 0x00007ffff7ffa000 0x0000000000000000 r-- [vvar]
+
+0x00007ffff7ffa000 0x00007ffff7ffc000 0x0000000000000000 r-x [vdso]
+
+0x00007ffff7ffc000 0x00007ffff7ffd000 0x0000000000025000 r-- /lib/x86_64-linux-gnu/ld-2.23.so
+
+0x00007ffff7ffd000 0x00007ffff7ffe000 0x0000000000026000 rw- /lib/x86_64-linux-gnu/ld-2.23.so
+
+0x00007ffff7ffe000 0x00007ffff7fff000 0x0000000000000000 rw- 
+
+0x00007ffffffde000 0x00007ffffffff000 0x0000000000000000 rw- [stack]
+
+0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
+
+```
+
+First, the first one is the base address of the main module, because the base address of the main module will change only when the PIE (address-independent code) is turned on. Therefore, the address of the main module does not need to be leaked normally.
+The second is the heap address. The heap address is changed for each process. For example, when you need to control the data in the heap, you may need to leak the base address first.
+The third is the address of libc.so. In many cases, we can only implement code execution through functions such as system in libc, and structures such as malloc_hook, one_gadgets, and IO_FILE are also stored in libc, so the address of libc is also leaked. The goal.
+
+
+## By what to leak
+Through the previous knowledge, we know that the heap is divided into unsorted bin, fastbin, smallbin, large bin, etc. We examine these structures one by one to see how to leak.
+
 
 ## unsorted bin
-我们构造两个unsorted bin然后查看它的内存，现在在unsorted bin链表中存在两个块，第一个块的地址是0x602000、第二个块的地址是0x6020f0
+
+We construct two unsorted bins and look at its memory. Now there are two blocks in the unsorted bin list. The address of the first block is 0x602000 and the address of the second block is 0x6020f0.
+
 
 ```
+
 0x602000:	0x0000000000000000	0x00000000000000d1
-0x602010:	0x00007ffff7dd1b78	0x00000000006020f0 <=== 指向下一个块
+
+0x602010: 0x00007ffff7dd1b78 0x00000000006020f0 &lt;=== points to the next block
 0x602020:	0x0000000000000000	0x0000000000000000
+
 0x602030:	0x0000000000000000	0x0000000000000000
-```
 
 ```
-0x6020f0:	0x0000000000000000	0x00000000000000d1
-0x602100:	0x0000000000602000	0x00007ffff7dd1b78 <=== 指向main_arena
-0x602110:	0x0000000000000000	0x0000000000000000
-0x602120:	0x0000000000000000	0x0000000000000000
+
+
+
 ```
-因此我们知道通过unsorted bin我们可以获取到某个堆块的地址和main_areana的地址。一旦获取到某个堆块的地址就可以通过malloc的size进行计算从而获得堆基地址。一旦获取到main_arena的地址，因为main_arena存在于libc.so中就可以计算偏移得出libc.so的基地址。
-因此，通过unsorted bin可以获得：1.libc.so的基地址 2.heap基地址
+
+0x6020f0:	0x0000000000000000	0x00000000000000d1
+
+0x602100: 0x0000000000602000 0x00007ffff7dd1b78 &lt;=== pointing to main_arena
+0x602110:	0x0000000000000000	0x0000000000000000
+
+0x602120:	0x0000000000000000	0x0000000000000000
+
+```
+
+So we know that through the unsorted bin we can get the address of a certain heap block and the address of main_areana. Once the address of a heap block is obtained, it can be calculated by the size of malloc to obtain the heap base address. Once the address of main_arena is obtained, since main_arena exists in libc.so, the offset can be calculated to get the base address of libc.so.
+Therefore, through the unsorted bin, you can get: 1. The base address of 1.libc.so 2. Heap base address
+
 
 ## fastbin
-我们构造了两个fastbin然后查看它们的内存，现在在fastbin链表中存在两个块，第一个块的地址是0x602040，第二个块的地址是0x602000
+
+We constructed two fastbins and looked at their memory. Now there are two blocks in the fastbin list. The address of the first block is 0x602040 and the address of the second block is 0x602000.
+
 
 ```
+
 0x602000:	0x0000000000000000	0x0000000000000021
+
 0x602010:	0x0000000000000000	0x0000000000000000
-```
 
 ```
-0x602040:	0x0000000000000000	0x0000000000000021
-0x602050:	0x0000000000602000 	0x0000000000000000 <=== 指向第一个块
+
+
+
 ```
-根据前面的知识我们知道fastbin链表最末端的块fd域为0，此后每个块的fd域指向前一个块。因此通过fastbin只能泄漏heap的基地址
+
+0x602040:	0x0000000000000000	0x0000000000000021
+
+0x602050: 0x0000000000602000 0x0000000000000000 &lt;=== points to the first block
+```
+
+According to the previous knowledge, we know that the block fd field at the end of the fastbin list is 0, after which the fd field of each block points to the previous block. Therefore, only the base address of the heap can be leaked by fastbin.
+
 
 ## smallbin
-我们构造了两个fastbin然后查看它们的内存，现在在fastbin链表中存在两个块，第一个块的地址是0x602000，第二个块的地址是0x6020f0
+
+We constructed two fastbins and looked at their memory. Now there are two blocks in the fastbin list. The address of the first block is 0x602000 and the address of the second block is 0x6020f0.
 ```
+
 0x602000:	0x0000000000000000	0x00000000000000d1
-0x602010:	0x00007ffff7dd1c38	0x00000000006020f0 <=== 下一个块的地址
+
+0x602010: 0x00007ffff7dd1c38 0x00000000006020f0 &lt;=== Address of the next block
 0x602020:	0x0000000000000000	0x0000000000000000
+
 0x602030:	0x0000000000000000	0x0000000000000000
-```
 
 ```
+
+
+
+```
+
 0x6020f0:	0x0000000000000000	0x00000000000000d1
-0x602100:	0x0000000000602000	0x00007ffff7dd1c38 <=== main_arena的地址
+
+0x602100: 0x0000000000602000 0x00007ffff7dd1c38 &lt;=== address of main_arena
 0x602110:	0x0000000000000000	0x0000000000000000
+
 0x602120:	0x0000000000000000	0x0000000000000000
+
 ```
-因此，通过smallbin可以获得：1.libc.so的基地址 2.heap基地址
 
-## 哪些漏洞可以用于泄漏
-通过前面的知识我们可以获知堆中存在哪些地址信息，但是想要获取到这些地址需要通过漏洞来实现
-一般来说以下漏洞是可以进行信息漏洞的
+Therefore, through the smallbin can get: 1.libc.so base address 2.heap base address
 
-* 堆内存未初始化
-* 堆溢出
+
+## Which vulnerabilities can be used for leaks
+Through the previous knowledge, we can know what address information exists in the heap, but to obtain these addresses, we need to implement the vulnerability.
+Generally speaking, the following vulnerabilities are available for information vulnerabilities.
+
+
+* heap memory is not initialized
+* Heap overflow
 * Use-After-Free
-* 越界读
+
+* Cross-border reading
 * heap extend 
 
-###  0x01 read UAF
 
-通过，UAF ，泄露 heapbase：
+
+# ## 0x01 read UAF
+
+
+By, UAF, leaking heapbase:
+
 
 ```c
+
 p0 = malloc(0x20);
+
 p1 = malloc(0x20);
 
+
+
 free(p0);
+
 free(p1);
+
     
+
 printf('heap base:%p',*p1);
+
 ```
 
- 由于 fastbin list 的特性，当我们构造一条fastbin list的时候
+
+
+Due to the nature of the fastbin list, when we construct a fastbin list
+
 
 ```bash
+
 (0x30)     fastbin[1]: 0x602030 --> 0x602000 --> 0x0
+
 ```
 
-存在 chunk 1 -> chunk 0 的现象，如果此时 UAF漏洞存在，我们可以通过 show chunk 1，将chunk 0的地址打印出来
+
+
+There is a phenomenon of chunk 1 -&gt; chunk 0. If the UAF vulnerability exists at this time, we can print the address of chunk 0 through show chunk 1.
 
 
 
-同理，泄露 libc base
+
+
+
+Similarly, leaking libc base
+
 
 ```c
+
 p0 = malloc(0x100);
+
 free(p0);
+
 printf("libc: %p\n", *p0);
 
+
 ```
+
+
+
+
 
 
 
@@ -136,7 +235,17 @@ printf("libc: %p\n", *p0);
 
 
 
+
+
+
+
+
+
 ### 0x03 Partial Overwrite
+
+
+
+
 
 
 

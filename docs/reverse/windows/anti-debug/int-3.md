@@ -1,5 +1,8 @@
-无论何时触发了一个软件中断异常, 异常地址以及EIP寄存器的值都会同时指向产生异常的下一句指令. 但断点异常是其中的一个特例. 
+[EN](./int-3.md) | [ZH](./int-3-zh.md)
+Whenever a software interrupt exception is triggered, the exception address and the value of the EIP register will point to the next instruction that generated the exception. But the breakpoint exception is one of the special cases.
 
-当`EXCEPTION_BREAKPOINT(0x80000003)`异常触发时, Windows会认定这是由单字节的"`CC`"操作码(也即`Int 3`指令)造成的. Windows递减异常地址以指向所认定的"`CC`"操作码, 随后传递该异常给异常处理句柄. 但是EIP寄存器的值并不会发生变化. 
 
-因此, 如果使用了 `CD 03`（这是 `Int 03` 的机器码表示），那么当异常处理句柄接受控制时, 异常地址是指向 `03` 的位置.
+When the `EXCEPTION_BREAKPOINT(0x80000003)` exception is triggered, Windows will assume that this is caused by a single-byte &quot;`CC`&quot; opcode (that is, the `Int 3` instruction). Windows decrements the exception address to point to the asserted &quot; `CC`&quot; opcode, then pass the exception to the exception handler. But the value of the EIP register does not change.
+
+
+Therefore, if `CD 03` is used (this is the machine code representation of `Int 03`), then when the exception handling handle accepts control, the exception address is the location pointing to `03`.

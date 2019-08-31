@@ -1,11 +1,14 @@
-网络协议为计算机网络中进行数据交换而建立的规则、标准或约定的集合。例如，网络中一个微机用户和一个大型主机的操作员进行通信，由于这两个数据终端所用字符集不同，因此操作员所输入的命令彼此不认识。为了能进行通信，规定每个终端都要将各自字符集中的字符先变换为标准字符集的字符后，才进入网络传送，到达目的终端之后，再变换为该终端字符集的字符。当然，对于不相容终端，除了需变换字符集字符外还需转换其他特性，如显示格式、行长、行数、屏幕滚动方式等也需作相应的变换。
+[EN](./README.md) | [ZH](./README-zh.md)
+A network protocol is a collection of rules, standards, or conventions established for data exchange in a computer network. For example, a computer user in the network communicates with an operator of a mainframe. Since the character sets used by the two data terminals are different, the commands entered by the operator are not known to each other. In order to communicate, it is stipulated that each terminal first converts the characters in the respective character sets into the characters of the standard character set, and then enters the network transmission, and after reaching the destination terminal, it is converted into the character of the terminal character set. Of course, for incompatible terminals, in addition to changing the character set characters, other characteristics, such as display format, line length, number of lines, and screen scrolling mode, need to be converted accordingly.
 
-相应的，我们在协议分析这一章节中，将会从以下几个方面来介绍这一部分的知识：
 
-- `Wireshark` 常用功能的介绍
-- `HTTP` 协议分析
-- `HTTPS` 协议分析
-- `FTP` 协议分析
-- `DNS` 协议分析
-- `WIFI` 协议分析
-- `USB` 协议分析
+Correspondingly, in the chapter on protocol analysis, we will introduce this part of the knowledge from the following aspects:
+
+
+- Introduction to the commonly used functions of `Wireshark`
+- `HTTP` protocol analysis
+- `HTTPS` protocol analysis
+- `FTP` protocol analysis
+- `DNS` protocol analysis
+- `WIFI` protocol analysis
+- `USB` protocol analysis

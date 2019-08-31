@@ -1,10 +1,14 @@
-在古典密码学中，我们主要介绍单表替代密码，多表替代密码，以及一些其它比较有意思的密码。
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
+In classical cryptography, we mainly introduce single-table alternative passwords, multi-table alternative passwords, and some other more interesting passwords.
 
-值得一提的是，在古典密码学中，设计者主要考虑消息的保密性，使得只有相关密钥的人才可以解密密文获得消息的内容，对于消息的完整性和不可否认性则并没有进行太多的考虑。
 
--   拓展阅读
+It is worth mentioning that in classical cryptography, the designer mainly considers the confidentiality of the message, so that only the person with the relevant key can decrypt the ciphertext to obtain the content of the message, and the integrity and non-repudiation of the message are not carried out. Too many considerations.
 
-    -   [CTF 中那些脑洞大开的编码和加密](http://www.tuicool.com/articles/2E3INnm)
-    -   [古典密码学发展史](http://www.oscca.gov.cn/sca/zxfw/2017-04/24/content_1011709.shtml)
-    -   [古典密码——维基百科](https://zh.wikipedia.org/wiki/%E5%8F%A4%E5%85%B8%E5%AF%86%E7%A2%BC)
+
+- Expand reading
+
+
+- [The coding and encryption of those brain holes in the CTF] (http://www.tuicool.com/articles/2E3INnm)
+- [History of Classical Cryptography] (http://www.oscca.gov.cn/sca/zxfw/2017-04/24/content_1011709.shtml)
+- [Classical Password - Wikipedia] (https://en.wikipedia.org/wiki/%E5%8F%A4%E5%85%B8%E5%AF%86%E7%A2%BC)
 

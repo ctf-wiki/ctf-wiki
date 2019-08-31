@@ -1,3 +1,5 @@
-# 分组模式
+[EN](./introduction.md) | [ZH](./introduction-zh.md)
+#组模式
 
-分组加密会将明文消息划分为固定大小的块，每块明文分别在密钥控制下加密为密文。当然并不是每个消息都是相应块大小的整数倍，所以我们可能需要进行填充。
+
+Packet encryption divides the plaintext message into fixed-size blocks, and each block of plaintext is encrypted into ciphertext under key control. Of course not every message is an integer multiple of the corresponding block size, so we may need to do the padding.

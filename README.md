@@ -45,7 +45,7 @@ Of course, it can be deployed locally, do as following
 
 ```shell
 # 1. clone
-git clone git@github.com:ctf-wiki/ctf-wiki.git
+git clone https://github.com/ctf-wiki/ctf-wiki.git
 # 2. requirements
 pip install -r requirements.txt
 # generate static file in site/

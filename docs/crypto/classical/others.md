@@ -1,310 +1,511 @@
-## 培根密码
+[EN](./others.md) | [ZH](./others-zh.md)
+## Bacon Password
 
-### 原理
 
-培根密码使用两种不同的字体，代表 A 和 B，结合加密表进行加解密。
+### Principle
 
-| a   | AAAAA | g   | AABBA | n   | ABBAA | t   | BAABA |
+
+The Bacon password uses two different fonts, representing A and B, combined with an encryption table for encryption and decryption.
+
+
+| a | AAAAA | g | AABBA | n | ABBAA | t | BAABA |
 | --- | ----- | --- | ----- | --- | ----- | --- | ----- |
-| b   | AAAAB | h   | AABBB | o   | ABBAB | u-v | BAABB |
-| c   | AAABA | i-j | ABAAA | p   | ABBBA | w   | BABAA |
-| d   | AAABB | k   | ABAAB | q   | ABBBB | x   | BABAB |
-| e   | AABAA | l   | ABABA | r   | BAAAA | y   | BABBA |
-| f   | AABAB | m   | ABABB | s   | BAAAB | z   | BABBB |
 
-上面的是常用的加密表。还有另外的一种加密表，可认为是将 26 个字母从 0 到 25 排序，以二进制表示，A 代表 0，B 代表 1。
+| b AAAAB | h. | AABBB | o | ABBAB | uv | BAABB |
+| c | AAABA | ij | ABAAA | p | ABBBA | w | BABAA |
+| d | AAABB | k | ABAAB | q | ABBBB | x | BABAB |
+| e | AABAA | l | ABABA | r | BAAAA | y | BABBA |
+| f AABAB m ABABB | s BAAAB z BABBB
 
-下面这一段内容就是明文 steganography 加密后的内容，正常字体是 A，粗体是 B：
+
+The above is a commonly used encryption table. There is another type of encryption table that can be thought of as sorting 26 letters from 0 to 25, expressed in binary, with A representing 0 and B representing 1.
+
+
+The following paragraph is the encrypted content of plain text steganography, the normal font is A, and the bold is B:
+
 
 **T**o en**co**de **a** mes**s**age e**ac**h letter **of** the **pl**a**i**nt**ex**t **i**s replaced b**y a g**rou**p of f**i**ve** of **th**e lett**ers** **'A'** o**r 'B'**.
 
-可以看到，培根密码主要有以下特点
 
-- 只有两种字符
-- 每一段的长度为 5
-- 加密内容会有特殊的字体之分，亦或者大小写之分。
 
-### 工具
+It can be seen that the Bacon password mainly has the following characteristics.
+
+
+- only two characters
+- the length of each segment is 5
+- Encrypted content will have a special font, or case.
+
+
+### Tools
+
 
 - http://rumkin.com/tools/cipher/baconian.php
 
-## 栅栏密码
 
-### 原理
 
-栅栏密码把要加密的明文分成 N 个一组，然后把每组的第 1 个字连起来，形成一段无规律的话。这里给出一个例子
+## fence password
+
+
+### Principle
+
+
+The fence password divides the plaintext to be encrypted into N groups, and then connects the first word of each group to form an irregular word. Here is an example
+
 
 ```
+
 明文：THERE IS A CIPHER
-```
-
-去掉空格后变为
 
 ```
+
+
+
+Changed after removing the space
+
+
+```
+
 THEREISACIPHER
-```
-
-分成两栏，两个一组得到
 
 ```
-TH ER EI SA CI PH ER
+
+
+
+Divided into two columns, two groups get
+
+
 ```
 
-先取出第一个字母，再取出第二个字母
+TH IS EI SA CI PH ER
+```
+
+
+
+First take the first letter and then take the second letter
+
 
 ```
+
 TEESCPE
+
 HRIAIHR
 ```
 
-连在一起就是
+
+
+Connected together
+
 
 ```
+
 TEESCPEHRIAIHR
-```
-
-上述明文也可以分为2栏。
 
 ```
+
+
+
+The above plain text can also be divided into 2 columns.
+
+
+```
+
 THEREIS ACIPHER
-```
-
-组合得到密文
 
 ```
+
+
+
+Combine to get ciphertext
+
+
+```
+
 TAHCEIRPEHIESR
+
 ```
 
-### 工具
 
-待补充。
+
+### Tools
+
+
+To be added.
+
 
 ## 曲路密码
 
-### 原理
 
-曲路密码（Curve Cipher）是一种换位密码，需要事先双方约定密钥（也就是曲路路径）。下面给出一个例子
+### Principle
+
+
+Curve Cipher is a transposition password that requires the two parties to agree on the key (that is, the path of the curve). An example is given below
+
 
 ```
+
 明文：The quick brown fox jumps over the lazy dog
+
 ```
 
-填入 5 行 7 列表（事先约定填充的行列数）
+
+
+Fill in 5 rows and 7 lists (pre-agreed the number of rows and columns filled)
+
 
 ![qulu-table](./figure/qulu-table.png)
 
-加密的回路线（事先约定填充的行列数）
+
+
+Encrypted loop line (pre-agreed the number of rows and columns filled)
+
 
 ![qulu-road](./figure/qulu-road.png)
 
+
+
 ```
-密文：gesfc inpho dtmwu qoury zejre hbxva lookT
+
+密 文: gesfc inpho dtmwu qoury zejre hbxva lookT
 ```
 
-## 列移位加密
 
-### 原理
 
-列移位密码（Columnar Transposition Cipher）是一种比较简单，易于实现的换位密码，通过一个简单的规则将明文打乱混合成密文。下面给出一个例子。
+## Column Shift Encryption
 
-我们以明文 `The quick brown fox jumps over the lazy dog`，密钥 `how are u` 为例：
 
-将明文填入 5 行 7 列表（事先约定填充的行列数，如果明文不能填充完表格可以约定使用某个字母进行填充）
+### Principle
+
+
+Column Transposition Cipher is a relatively simple and easy-to-implement transposition cipher that mixes plaintext into ciphertext through a simple rule. An example is given below.
+
+
+We use the clear text `The quick brown fox jumps over the lazy dog`, the key `how are u` as an example:
+
+
+Fill in the clear line with 5 rows and 7 lists (pre-agreed the number of rows and columns to be filled in. If the plain text cannot be filled in, the form can be filled with a letter)
+
 
 ![明文](./figure/columnar-transposition-plaintext.png)
 
-密钥： `how are u`，按 `how are u` 在字母表中的出现的先后顺序进行编号，我们就有 a 为 1，e 为 2，h 为 3，o 为 4，r 为 5，u 为 6，w 为 7，所以先写出 a 列，其次 e 列，以此类推写出的结果便是密文：
 
-![密钥](./figure/columnar-transposition-key.png)
-
-密文： `qoury inpho Tkool hbxva uwmtd cfseg erjez`
-
-### 工具
-
-- http://www.practicalcryptography.com/ciphers/classical-era/columnar-transposition/ 行列数相等
+Key: `how are u`, press `how are u` to number in the order in which the alphabet appears. We have a for 1, e for 2, h for 3, o for 4, and r for 5. u is 6, and w is 7, so write a column first, followed by column e, and so on. The result is cipher text:
 
 
-## 01248 密码
+![key](./figure/columnar-transposition-key.png)
 
-### 原理
 
-该密码又称为云影密码，使用 0，1，2，4，8 四个数字，其中 0 用来表示间隔，其他数字以加法可以表示出 如：28=10，124=7，18=9，再用 1->26 表示 A->Z。
+密 文: `qoury inpho takool hbxva uwmtd cfseg erjez`
 
-可以看出该密码有以下特点
 
-- 只有 0，1，2，4，8
+### Tools
 
-### 例子
 
-这里我们以CFF 2016 影之密码为例进行介绍，题目
+- http://www.practicalcryptography.com/ciphers/classical-era/columnar-transposition/ The number of rows and columns is equal
+
+
+
+
+## 01248 Password
+
+### Principle
+
+
+This password, also known as cloud shadow password, uses 0, 1, 2, 4, 8 four digits, where 0 is used to indicate the interval, and other numbers can be expressed by addition: 28=10,124=7,18=9 Then use 1-&gt;26 to indicate A-&gt;Z.
+
+
+It can be seen that the password has the following characteristics
+
+
+- only 0, 1, 2, 4, 8
+
+
+### Examples
+
+
+Here we take CFF 2016 shadow password as an example, the topic
+
 
 > 8842101220480224404014224202480122
 
-我们按照0来进行分割，如下
 
-| 内容   | 数字           | 字符 |
+
+We divide by 0, as follows
+
+
+| Content | Numbers | Characters |
 | ------ | -------------- | ---- |
-| 88421  | 8+8+4+2+1=23   | W    |
-| 122    | 1+2+2=5        | E    |
-| 48     | 4+8=12         | L    |
-| 2244   | 2+2+4+4=12     | L    |
-| 4      | 4              | D    |
-| 142242 | 1+4+2+2+4+2=15 | O    |
-| 248    | 2+4+8=14       | N    |
-| 122    | 1+2+2=5        | E    |
 
-所以最后的 flag 为 WELLDONE。
+| 88421 | 8 + 8 + 4 + 2 + 1 = 23 W |
+| 122 | 1 + 2 + 2 = 5 | E |
+| 48 | 4 + 8 = 12 | L |
+| 2244 | 2 + 2 + 4 + 4 = 12 | L |
+| 4      | 4              | D    |
+
+| 142242 | 1 + 4 + 2 + 2 + 4 + 2 = 15 | O |
+| 248    | 2+4+8=14       | N    |
+
+| 122 | 1 + 2 + 2 = 5 | E |
+
+
+So the final flag is WELLDONE.
+
 
 ## JSFuck
 
-### 原理
 
-JSFuck 可以只用 6 个字符 `[]()!+` 来编写 JavaScript 程序。比如我们想用 JSFuck 来实现 `alert(1)` 代码如下
+
+### Principle
+
+
+JSFuck can write JavaScript programs with only 6 characters `[]()!+`. For example, we want to use JSFuck to implement the `alert(1)` code as follows
+
 
 ```javascript
+
 [][(![]+[])[+[[+[]]]]+([][[]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]]]]+(![]+[])[+[[!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+(!![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]][([][(![]+[])[+[[+[]]]]+([][[]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]]]]+(![]+[])[+[[!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+(!![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]]+[])[+[[!+[]+!+[]+!+[]]]]+([][(![]+[])[+[[+[]]]]+([][[]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]]]]+(![]+[])[+[[!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+(!![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]+!+[]]]]+([][[]]+[])[+[[+!+[]]]]+(![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+(!![]+[])[+[[+!+[]]]]+([][[]]+[])[+[[+[]]]]+([][(![]+[])[+[[+[]]]]+([][[]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]]]]+(![]+[])[+[[!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+(!![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+([][(![]+[])[+[[+[]]]]+([][[]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]]]]+(![]+[])[+[[!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+(!![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]]((![]+[])[+[[+!+[]]]]+(![]+[])[+[[!+[]+!+[]]]]+(!![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]+(!![]+[])[+[[+[]]]]+([][(![]+[])[+[[+[]]]]+([][[]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]]]]+(![]+[])[+[[!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+(!![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]]+[])[+[[+!+[]]]+[[!+[]+!+[]+!+[]+!+[]+!+[]]]]+[+!+[]]+([][(![]+[])[+[[+[]]]]+([][[]]+[])[+[[!+[]+!+[]+!+[]+!+[]+!+[]]]]+(![]+[])[+[[!+[]+!+[]]]]+(!![]+[])[+[[+[]]]]+(!![]+[])[+[[!+[]+!+[]+!+[]]]]+(!![]+[])[+[[+!+[]]]]]+[])[+[[+!+[]]]+[[!+[]+!+[]+!+[]+!+[]+!+[]+!+[]]]])()
+
 ```
 
-其他一些基本的表达：
+
+
+Some other basic expressions:
+
 
 ```javascript
+
 false       =>  ![]
+
 true        =>  !![]
+
 undefined   =>  [][[]]
-NaN         =>  +[![]]
+
+NaN =&gt; + [! []]
 0           =>  +[]
+
 1           =>  +!+[]
+
 2           =>  !+[]+!+[]
+
 10          =>  [+!+[]]+[+[]]
+
 Array       =>  []
+
 Number      =>  +[]
+
 String      =>  []+[]
+
 Boolean     =>  ![]
+
 Function    =>  []["filter"]
+
 eval        =>  []["filter"]["constructor"]( CODE )()
+
 window      =>  []["filter"]["constructor"]("return this")()
+
 ```
 
-### 工具
 
-- [JSFuck 在线加密网站](http://www.jsfuck.com/)
+
+### Tools
+
+
+- [JSFuck Online Encryption Website] (http://www.jsfuck.com/)
+
 
 ## BrainFuck
 
-### 原理
 
-Brainfuck，是一种极小化的计算机语言，它是由 Urban Müller 在 1993 年创建的。我们举一个例子，如果我们想要一个在屏幕上打印Hello World！，那么对应的程序如下。对于其中的原理，感兴趣的可以自行网上搜索。
+
+### Principle
+
+
+Brainfuck, a minimal computer language, was created in 1993 by Urban Müller. Let&#39;s take an example if we want to print Hello World on the screen! , then the corresponding program is as follows. For the principles, you can search online for your own interest.
+
 
 ```
+
 ++++++++++[>+++++++>++++++++++>+++>+<<<<-]
+
 >++.>+.+++++++..+++.>++.<<+++++++++++++++.
+
 >.+++.------.--------.>+.>.
+
 ```
 
-与其对应的还有 ook。
 
-### 工具
+
+Corresponding to it is ook.
+
+
+### Tools
+
 
 - https://www.splitbrain.org/services/ook
 
-## 猪圈密码
 
-### 原理
 
-猪圈密码是一种以格子为基础的简单替代式密码，格子如下
+## Pigsty password
 
-![猪圈密码对照表](./figure/pigpen.png)
 
-我们举一个例子，如明文为 `X marks the spot` ，那么密文如下
+### Principle
 
-![猪圈密码示例](./figure/pigpen_example.png)
 
-### 工具
+The pigsty password is a simple alternative password based on the grid. The grid is as follows
+
+
+![Pig password comparison table] (./figure/pigpen.png)
+
+
+Let&#39;s take an example, such as the plain text is `X marks the spot`, then the ciphertext is as follows
+
+
+![pig password example] (./figure/pigpen_example.png)
+
+
+### Tools
+
 
 - http://www.simonsingh.net/The_Black_Chamber/pigpen.html
 
-## 舞动的小人密码
 
-### 原理
 
-这种密码出自于福尔摩斯探案集。每一个跳舞的小人实际上对应的是英文二十六个字母中的一个，而小人手中的旗子则表明该字母是单词的最后一个字母，如果仅仅是一个单词而不是句子，或者是句子中最后的一个单词，则单词中最后一个字母不必举旗。
+## Dancing villain password
 
-![舞动的小人密码](./figure/dancingman.jpg)
 
-## 键盘密码
+### Principle
 
-所谓键盘密码，就是采用手机键盘或者电脑键盘进行加密。
 
-### 手机键盘密码
+This password comes from the Sherlock Holmes collection. Each dancing villain actually corresponds to one of the twenty-six letters in English, while the flag in the hand of the villain indicates that the letter is the last letter of the word, if it is just a word instead of a sentence, or a sentence The last word in the word, the last letter in the word does not have to be raised.
 
-手机键盘加密方式，是每个数字键上有 3-4 个字母，用两位数字来表示字母，例如：ru 用手机键盘表示就是：7382，那么这里就可以知道了，手机键盘加密方式不可能用 1 开头，第二位数字不可能超过 4，解密的时候参考此
+
+![Dancing Man&#39;s Password] (./figure/dancingman.jpg)
+
+
+## Keyboard password
+
+
+The so-called keyboard password is encrypted using a mobile phone keyboard or a computer keyboard.
+
+
+### Mobile keyboard password
+
+
+The phone keyboard encryption method is that there are 3-4 letters on each number key, and the two-digit number is used to represent the letter. For example: ru is represented by the phone keypad: 7382, then you can know here, the phone keyboard encryption method is impossible. Start with 1, the second digit cannot exceed 4, refer to this when decrypting
+
 
 ![picture](./figure/mobile.jpg)
 
-关于手机键盘加密还有另一种方式，就是「音的」式（这一点可能根据手机的不同会有所不同），具体参照手机键盘来打，例如：「数字」表示出来就是：748 94。在手机键盘上面按下这几个数，就会出：「数字」的拼音。
-
-### 电脑键盘棋盘
-
-电脑键盘棋盘加密，利用了电脑的棋盘方阵。
-
-![电脑棋盘加密](./figure/computer-chess.jpg)
 
 
+Another way to encrypt your phone&#39;s keyboard is the &quot;sound&quot; style (this may vary depending on the phone). Refer to the phone keypad for details. For example, &quot;Number&quot; means: 748 94. Pressing these numbers on the phone keypad will bring out the pinyin of &quot;number&quot;.
 
-### 电脑键盘坐标
 
-电脑键盘坐标加密，利用键盘上面的字母行和数字行来加密，例：bye 用电脑键盘 XY 表示就是：351613
+### Computer keyboard board
 
-![电脑键盘坐标加密](./figure/computer-x-y.jpg)
+
+The computer keyboard is encrypted and uses the square of the computer&#39;s board.
+
+
+![Computer Board Encryption](./figure/computer-chess.jpg)
 
 
 
-### 电脑键盘 QWE
 
-电脑键盘 QWE 加密法，就是用字母表替换键盘上面的排列顺序。
+
+
+### Computer keyboard coordinates
+
+Encryption of the computer keyboard coordinates, using the letter lines and numbers on the keyboard to encrypt, for example: bye using the computer keyboard XY means: 351613
+
+
+![Computer keyboard coordinate encryption] (./figure/computer-xy.jpg)
+
+
+
+
+
+
+### Computer keyboard QWE
+
+
+Computer keyboard QWE encryption method is to replace the order of the keyboard with the alphabet.
+
 
 ![computer-qwe](./figure/computer-qwe.jpg)
 
 
 
-### 键盘布局加密
 
-简单地说就是根据给定的字符在键盘上的样子来进行加密。
+
+
+
+### Keyboard layout encryption
+
+
+Simply put, it is encrypted according to how the given character looks on the keyboard.
+
 
 ### 0CTF 2014 classic
 
-> 小丁丁发现自己置身于一个诡异的房间，面前只有一扇刻着奇怪字符的门。 他发现门边上还有一道密码锁，似乎要输入密码才能开门。。4esxcft5 rdcvgt 6tfc78uhg 098ukmnb
 
-发现这么乱，还同时包括数字和字母猜想可能是键盘密码，试着在键盘上按照字母顺序描绘一下，可得到0ops字样，猜测就是flag了。
 
-### 2017年xman选拔赛——一二三，木头人
+&gt; Xiaoding Ding found himself in a strange room with only a door with strange characters in front of him. He found a password lock on the side of the door, which seemed to require a password to open the door. . 4esxcft5 rdcvgt 6tfc78uhg 098ukmnb
 
-> 我数123木头人，再不行动就要被扣分。
+
+Found so chaotic, but also including the number and letter guess may be the keyboard password, try to draw in the alphabetical order on the keyboard, you can get 0ops, guess is the flag.
+
+
+### 2017 xman trials - one two three, wood people
+
+
+&gt; I count 123 wood people, and I will be deducted if I don&#39;t act.
 >
+
 > 23731263111628163518122316391715262121
->
-> 密码格式xman{flag}
 
-题目中有很明显的提示123，那么就自然需要联想到键盘密码中电脑键盘坐标密码，可以发现前几个数字第二个数字都是1-3范围内的，也验证了我们的猜测。于是
+>
+
+&gt; password format xman{flag}
+
+
+There are obvious hints 123 in the title, then it is natural to think of the computer keyboard coordinate password in the keyboard password. You can find that the second digits of the first few digits are in the range of 1-3, which also verifies our guess. then
+
 
 > 23-x
+
 >
+
 > 73-m
+
 >
+
 > 12-a
+
 >
+
 > 63-n
+
 >
+
 > 11-q
 
-不对呀，密码格式是 `xman{`，第四个字符是 `{`，于是看了看 `{` 的位置，其并没有对应的横坐标，但是如果我们手动把它视为 11 的话，那么111就是 `{`。然后依次往后推，发现确实可行，，最后再把 121 视为 `}` 即可得到 flag。
+
+
+No, the password format is `xman{`, the fourth character is `{`, so I look at the position of `{`, which does not have a corresponding abscissa, but if we manually treat it as 11, then 111 is `{`. Then push back in turn and find that it is feasible. Finally, treat 121 as `}` to get the flag.
+
 
 ```
+
 xman{hintisenough}
+
 ```
 
-从这里我们可以看出，我们还是要注意迁移性，不能单纯地照搬一些已有的知识。
 
-### 题目
 
-- 实验吧 奇怪的短信
+From here we can see that we still have to pay attention to mobility, and we cannot simply copy some existing knowledge.
+
+
+### Title
+
+
+- Experiment with strange text messages

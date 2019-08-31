@@ -1,147 +1,240 @@
-# 基础操作
+[EN](./basic.md) | [ZH](./basic-zh.md)
+# 基本操作
+
 
 ## unlink
 
-unlink 用来将一个双向链表（只存储空闲的 chunk）中的一个元素取出来，可能在以下地方使用
+
+
+Unlink is used to take out an element in a doubly linked list (only free chunks), which may be used in the following places.
+
 
 - malloc
-    - 从恰好大小合适的 large bin 中获取 chunk。
-        - **这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。**
-        - 依次遍历处理 unsorted bin 时也没有使用 unlink 的。
-    - 从比请求的 chunk 所在的 bin 大的 bin 中取 chunk。
-- Free
-    - 后向合并，合并物理相邻低地址空闲 chunk。
-    - 前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
-- malloc_consolidate
-    - 后向合并，合并物理相邻低地址空闲 chunk。
-    - 前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
-- realloc
-    - 前向扩展，合并物理相邻高地址空闲 chunk（除了top chunk）。
 
-由于 unlink 使用非常频繁，所以 unlink 被实现为了一个宏，如下
+- Get chunks from a large bin of exactly the right size.
+- ** It should be noted here that fastbin and small bin do not use unlink, which is why vulnerabilities often appear here. **
+- Unlink is also not used when traversing the unsorted bin in turn.
+- Take a chunk from the bin larger than the bin where the requested chunk is located.
+- Free
+
+- Backward merge, merge physical adjacent low address free chunks.
+- Forward merge, merge physical neighbor high address free chunks (except top chunk).
+- malloc_consolidate
+
+- Backward merge, merge physical adjacent low address free chunks.
+- Forward merge, merge physical neighbor high address free chunks (except top chunk).
+- realloc
+
+- Forward expansion, merging physical adjacent high address free chunks (except top chunk).
+
+
+Since unlink is used very frequently, unlink is implemented as a macro, as follows
+
 
 ```c
+
 /* Take a chunk off a bin list */
+
 // unlink p
-#define unlink(AV, P, BK, FD) {                                            \
-    // 由于 P 已经在双向链表中，所以有两个地方记录其大小，所以检查一下其大小是否一致。
+
+#define unlink (AV, P, BK, FD) {
+// Since P is already in the doubly linked list, there are two places to record its size, so check if the size is the same.
     if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
+
       malloc_printerr ("corrupted size vs. prev_size");			      \
+
     FD = P->fd;                                                                      \
+
     BK = P->bk;                                                                      \
-    // 防止攻击者简单篡改空闲的 chunk 的 fd 与 bk 来实现任意写的效果。
+
+/ / Prevent the attacker from simply tampering with the fd and bk of the free chunk to achieve arbitrary write effects.
     if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
+
       malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
+
     else {                                                                      \
-        FD->bk = BK;                                                              \
-        BK->fd = FD;                                                              \
-        // 下面主要考虑 P 对应的 nextsize 双向链表的修改
+
+FD-&gt; bk = BK; \
+BK-&gt; fd = FD; \
+/ / The following mainly consider the modification of the nextsize doubly linked list corresponding to P
         if (!in_smallbin_range (chunksize_nomask (P))                              \
-            // 如果P->fd_nextsize为 NULL，表明 P 未插入到 nextsize 链表中。
-            // 那么其实也就没有必要对 nextsize 字段进行修改了。
-            // 这里没有去判断 bk_nextsize 字段，可能会出问题。
+
+// If P-&gt;fd_nextsize is NULL, it means that P is not inserted into the nextsize list.
+// Then there is no need to modify the nextsize field.
+// There is no way to determine the bk_nextsize field, which may cause problems.
             && __builtin_expect (P->fd_nextsize != NULL, 0)) {                      \
-            // 类似于小的 chunk 的检查思路
+
+/ / Similar to the small chunk check idea
             if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
+
                 || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
+
               malloc_printerr (check_action,                                      \
+
                                "corrupted double-linked list (not small)",    \
-                               P, AV);                                              \
-            // 这里说明 P 已经在 nextsize 链表中了。
-            // 如果 FD 没有在 nextsize 链表中
+
+P, AV); \
+// This shows that P is already in the nextsize list.
+// If the FD is not in the nextsize list
             if (FD->fd_nextsize == NULL) {                                      \
-                // 如果 nextsize 串起来的双链表只有 P 本身，那就直接拿走 P
-                // 令 FD 为 nextsize 串起来的
+
+// If the double-linked list of nextsize is only P itself, then take P directly
+// Let FD be a string of nextsize
                 if (P->fd_nextsize == P)                                      \
-                  FD->fd_nextsize = FD->bk_nextsize = FD;                      \
+
+FD-&gt; fd_nextsize = FD-&gt; bk_nextsize = FD; \
                 else {                                                              \
-                // 否则我们需要将 FD 插入到 nextsize 形成的双链表中
+
+// Otherwise we need to insert the FD into the double-linked list formed by nextsize
                     FD->fd_nextsize = P->fd_nextsize;                              \
+
                     FD->bk_nextsize = P->bk_nextsize;                              \
+
                     P->fd_nextsize->bk_nextsize = FD;                              \
+
                     P->bk_nextsize->fd_nextsize = FD;                              \
+
                   }                                                              \
+
               } else {                                                              \
-                // 如果在的话，直接拿走即可
+
+// If you are, take it straight away.
                 P->fd_nextsize->bk_nextsize = P->bk_nextsize;                      \
+
                 P->bk_nextsize->fd_nextsize = P->fd_nextsize;                      \
+
               }                                                                      \
+
           }                                                                      \
+
       }                                                                              \
+
 }
+
 ```
 
-这里我们以 small bin 的 unlink 为例子介绍一下。对于 large bin 的 unlink，与其类似，只是多了一个nextsize 的处理。
+
+
+Here we introduce the unlink of small bin as an example. For unbin of large bin, it is similar to just one additional size.
+
 
 ![](./figure/unlink_smallbin_intro.png)
 
-可以看出， **P 最后的 fd 和 bk 指针并没有发生变化**，但是当我们去遍历整个双向链表时，已经遍历不到对应的链表了。这一点没有变化还是很有用处的，因为我们有时候可以使用这个方法来泄漏地址
 
-- libc 地址
-    - P 位于双向链表头部，bk 泄漏
-    - P 位于双向链表尾部，fd 泄漏
-    - 双向链表只包含一个空闲 chunk 时，P 位于双向链表中，fd 和 bk 均可以泄漏
-- 泄漏堆地址，双向链表包含多个空闲 chunk
-    - P 位于双向链表头部，fd 泄漏
-    - P 位于双向链表中，fd 和 bk 均可以泄漏
-    - P 位于双向链表尾部，bk 泄漏
 
-**注意**
+It can be seen that the final fd and bk pointers of **P have not changed**, but when we go through the entire doubly linked list, we have not traversed the corresponding linked list. This is not useful for change, because we can sometimes use this method to leak addresses.
 
-- 这里的头部指的是 bin 的 fd 指向的 chunk，即双向链表中最新加入的 chunk。
-- 这里的尾部指的是 bin 的 bk 指向的 chunk，即双向链表中最先加入的 chunk。
 
-同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都会检测 fd 和 bk 是否满足对应的要求。
+- libc address
+- P is located in the head of the doubly linked list, bk leaks
+- P is located at the end of the doubly linked list, fd leaks
+- When the doubly linked list contains only one free chunk, P is in the doubly linked list, and both fd and bk can leak.
+- Leaked heap address, doubly linked list contains multiple free chunks
+- P is located in the head of the doubly linked list, fd leaks
+- P is in the doubly linked list, both fd and bk can leak
+- P is located at the end of the doubly linked list, bk leaks
+
+
+**note**
+
+
+- The header here refers to the chunk pointed to by the fd of bin, which is the latest chunk added in the doubly linked list.
+- The tail here refers to the chunk pointed to by bk of bin, which is the first chunk added in the doubly linked list.
+
+
+At the same time, for both fd, bk and fd_nextsize, bk_nextsize, the program will check if fd and bk meet the corresponding requirements.
+
 
 ```c
+
 // fd bk
 if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
+
   malloc_printerr (check_action, "corrupted double-linked list", P, AV);  \
 
+
+
   // next_size related
+
               if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)              \
+
                 || __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
+
               malloc_printerr (check_action,                                      \
+
                                "corrupted double-linked list (not small)",    \
-                               P, AV);
+
+P, AV);
 ```
 
-看起来似乎很正常。我们以 fd 和 bk 为例，P 的 forward chunk 的 bk 很自然是 P ，同样 P 的 backward chunk 的 fd 也很自然是 P 。如果没有做相应的检查的话，我们可以修改 P 的 fd 与 bk，从而可以很容易地达到任意地址写的效果。关于更加详细的例子，可以参见利用部分的 unlink 。
 
-**注意：堆的第一个 chunk 所记录的 prev_inuse 位默认为1。**
+
+It seems to be normal. Let us take fd and bk as an example. The bk of the forward chunk of P is naturally P, and the fd of the backward chunk of P is also naturally P. If we do not check the corresponding, we can modify the fd and bk of P, so that the effect of writing at any address can be easily achieved. For a more detailed example, see the Unlink section of the Utilization section.
+
+
+**Note: The prev_inuse bit recorded by the first chunk of the heap defaults to 1. **
+
 
 ## malloc_printerr
 
-在 glibc malloc 时检测到错误的时候，会调用 `malloc_printerr` 函数。
 
-```cpp
+
+The `malloc_printerr` function is called when an error is detected in glibc malloc.
+
+
+`` `Cpp
 static void malloc_printerr(const char *str) {
+
   __libc_message(do_abort, "%s\n", str);
+
   __builtin_unreachable();
+
 }
+
 ```
 
-主要会调用 `__libc_message` 来执行`abort` 函数，如下
+
+
+Mainly will call `__libc_message` to execute the `abort` function, as follows
+
 
 ```c
+
   if ((action & do_abort)) {
     if ((action & do_backtrace))
+
       BEFORE_ABORT(do_abort, written, fd);
 
+
+
     /* Kill the application.  */
-    abort();
+
+abortion();
   }
+
 ```
 
-在`abort` 函数里，在 glibc 还是2.23 版本时，会 fflush stream。
+
+
+In the `abort` function, flibsh stream will be used when glibc is still 2.23.
+
 
 ```c
+
   /* Flush all streams.  We cannot close them now because the user
+
      might have registered a handler for SIGABRT.  */
+
   if (stage == 1)
+
     {
+
       ++stage;
+
       fflush (NULL);
+
     }
+
 ```
+
 
