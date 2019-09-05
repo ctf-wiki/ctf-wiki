@@ -365,8 +365,6 @@ ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
 
 
 
-&gt; In general, the contents of /proc/kallsyms require root privileges to view
-
 
 ## Mitigation
 
