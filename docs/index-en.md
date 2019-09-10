@@ -15,9 +15,9 @@
 
 Welcome to the **CTF Wiki**.
 
-*NOTE TO READER*: CTF Wiki has recently moved to being bilingual, so each page in CTF
-Wiki will now be available in both English and Chinese. Simply click the button ad the 
-top of each page that looks like the link below.
+*A NOTE TO THE READER*: CTF Wiki has been translated into English. Each page in CTF
+Wiki is available in both English and Chinese now. Simply click the button at the 
+top of the website that looks like the link below to view different language version.
 
 *读者注意*：CTF Wiki最近转为双语，因此CTF中的每一页都是如此
 Wiki现在将以英文和中文提供。只需点击广告按钮即可
@@ -25,16 +25,16 @@ Wiki现在将以英文和中文提供。只需点击广告按钮即可
 [EN](./index-en.md) | [ZH](./index.md)
 
 
-**CTF** (Capture The Flag) originated in the 1996 **DEFCON** Global Hacking Conference, a competitive game among cybersecurity enthusiasts.
+**CTF** (Capture The Flag) is originated in the 1996 **DEFCON** Global Hacking Conference, a competitive game among cybersecurity enthusiasts.
 
 
-The **CTF** competition covers a wide range of fields and is confusing. At the same time, the development of security technology is getting faster and faster, and the difficulty of **CTF** is getting higher and higher, and the threshold for beginners is getting higher and higher. Most of the online information is scattered and trivial. Beginners often don&#39;t know how to systematically learn the knowledge of **CTF** related fields, often taking a lot of time and suffering.
+The **CTF** competition covers a wide range of fields and has a complex content. At the same time, the development of security technology is getting faster and faster, and the difficulty of **CTF** is getting higher and higher, the threshold for beginners is getting higher and higher. Most of the online information is scattered and trivial. Beginners often don&#39;t know how to systematically learn the knowledge of **CTF** related fields, often taking a lot of time and suffering.
 
 
-In order to make the **CTF** partners better **CTF**, in October 2016, **CTF Wiki** had the first commit on Github. As content continues to improve, the **CTF Wiki** has been loved by more and more security enthusiasts, and there are also a lot of friends who have never met.
+In order to make the **CTF** players life of entering this field easier, in October 2016, **CTF Wiki** had the first commit on Github. As content continues to improve, the **CTF Wiki** has been loved by more and more security enthusiasts, and there are also a lot of friends who have never met participating in this project.
 
 
-As a free site, around the **CTF** recent years, **CTF Wiki** introduces the knowledge and techniques in all directions of **CTF** to make it easier for beginners to learn* *CTF** related knowledge.
+As a free site, with the recent years' **CTF** challenges, **CTF Wiki** introduces the knowledge and techniques in all directions of **CTF** to make it easier for beginners to learn how to getting started at playing **CTF**.
 
 
 At present, **CTF Wiki** mainly contains the basic knowledge of **CTF** in all major directions, and is working hard to improve the following contents.
@@ -50,8 +50,8 @@ For more information on the above, see the [Projects] (https://github.com/ctf-wi
 Of course, the **CTF Wiki** is based on **CTF**, but it is not limited to **CTF**. In the future, **CTF Wiki** will
 
 
-- Introducing tools in security research
-- More integration with security
+- Introducing tools in security research area
+- More integration with security area
 
 
 In addition, given the following two points
@@ -61,10 +61,10 @@ In addition, given the following two points
 - Security offensive and defensive technologies are always up to date, and old technologies may fail at any time in the face of new technologies.
 
 
-Therefore, **CTF Wiki** will never publish books.
+**CTF Wiki** will never publish books.
 
 
-Finally, the **CTF Wiki** originates from the community, as an independent organization**, advocates **freedom of knowledge**, will never be commercialized in the future, and will always maintain the nature of **freedom and freedom**.
+Finally, the **CTF Wiki** originates from the community, as an independent organization**, advocates **freedom of knowledge**, will never be commercialized in the future, and will always remain **independent and freedom**.
 
 
 ## How to build？
@@ -95,7 +95,7 @@ mkdocs serve
 
 
 
-**mkdocs Locally deployed websites are dynamically updated, ie when you modify and save the md file, the refresh page will be dynamically updated. **
+**mkdocs Locally deployed websites are dynamically updated, i.e. when you modify and save the md file, refreshing the page and the contents will be dynamically updated. **
 
 
 
@@ -117,11 +117,11 @@ You can then access the CTF Wiki by visiting [http://localhost:4100/] (http://lo
 First, you can learn some basic security knowledge by reading online.
 
 
-Second, the CTF Wiki has two sister projects.
+Second, the CTF Wiki has two accompany projects.
 
 
-- The topics covered in the CTF Wiki are in the [ctf-challenges] (https://github.com/ctf-wiki/ctf-challenges) repository, so look for them according to the corresponding category.
-- Note: There are still some topics under the warehouse that are currently being migrated. . . (misc, web)
+- The challenges mentioned in the CTF Wiki are in the [ctf-challenges] (https://github.com/ctf-wiki/ctf-challenges) repository, so look for them according to the corresponding category.
+- Note: There are still some challenges that are currently being migrated. . . (misc, web)
 - The tools involved in the CTF Wiki are constantly being added to the [ctf-tools](https://github.com/ctf-wiki/ctf-tools) repository.
 
 
@@ -129,13 +129,13 @@ Second, the CTF Wiki has two sister projects.
 
 
 
-We welcome you to write content for the wiki and share your knowledge with you. For details, please refer to [CONTRIBUTING] (https://github.com/ctf-wiki/ctf-wiki/wiki/Contributing-Guide ).
+It is welcomed to write content for the wiki and share your knowledge with everybody else. For details, please refer to [CONTRIBUTING] (https://github.com/ctf-wiki/ctf-wiki/wiki/Contributing-Guide).
 
 
-**Before you decide to contribute content, please be sure to read the content**. We look forward to your joining.
+**Before you decide to contribute anything, please be sure to finish reading that document**. We look forward to your joining.
 
 
-Thank you very much for improving the CTF Wiki&#39;s friends.
+Thanks give to the contributors who dedicated to make CTF Wiki better and better.
 
 
 <a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" /></a>
@@ -148,12 +148,12 @@ Thank you very much for improving the CTF Wiki&#39;s friends.
 
 - Ability to learn new things quickly
 - A different way of thinking
-- A heart that is easy to solve problems
+- A heart that is happy to solve problems
 - Some interesting security techniques
-- A time of fulfilling struggle
+- A rememebered hard-working time
 
 
-Before we read the wiki, we hope to give you some advice:
+Before reading the wiki, we hope to give you some advice:
 
 
 - Read the essay [Wisdom of Question] (http://www.jianshu.com/p/60dd8e9cd12f)
@@ -163,10 +163,10 @@ Before we read the wiki, we hope to give you some advice:
 - Keep curiosity and desire for technology and stick to it
 
 
-&gt; The world is big, the Internet makes the world smaller. Real hackers should think and create. Whether it is destroying or creating, remembering, the future, the main line is created. ——by cosine
+> The world is big, the Internet makes the world smaller. Real hackers should think and create. Whether it is destroying or creating, remembering, the future, the main line is creation. ——by cosine
 
 
-The safety circle is small and the safe ocean is deep. The adventure of the safe road is worse than starting with the **CTF Wiki**!
+The circle of security is small and the ocean of security is deep. Instead of error testing on the way of learning security, try getting started at just **CTF Wiki**!
 
 
 ## Copyleft
@@ -183,10 +183,10 @@ The safety circle is small and the safe ocean is deep. The adventure of the safe
 ### Primary colors Main colors
 
 
-&gt; default `white`
+> default `white`
 
 
-Click on the color patch to change the main color of the theme
+Click on the color block to change the main color of the theme.
 
 
 <button data-md-color-primary="red">Red</button>
@@ -253,10 +253,10 @@ Click on the color patch to change the main color of the theme
 ### Accent colors Auxiliary color
 
 
-&gt; Default `red`
+> Default `red`
 
 
-Click on the patch to change the auxiliary color of the theme
+Click on the color block to change the auxiliary color of the theme.
 
 
 <button data-md-color-accent="red">Red</button>
