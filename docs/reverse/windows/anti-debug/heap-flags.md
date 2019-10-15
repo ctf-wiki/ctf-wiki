@@ -87,7 +87,7 @@ Because of the relationship of the `NtGlobalFlag` flag, `heap` will also set som
 There are several ways to know the location of the `heap`. One of the methods is the `GetProcessHeap()` function of `kernel32`. Of course, you can also use the following 32-bit assembly code to detect the 32-bit environment (there are actually some shells to avoid). Use this api function to directly query PEB):
 
 
-`` `asm
+```asm
 mov eax, fs:[30h] ;Process Environment Block
 
 mov eax, [eax+18h] ;get process heap base
@@ -99,7 +99,7 @@ mov eax, [eax+18h] ;get process heap base
 Or use the following 64-bit code to detect a 64-bit environment
 
 
-`` `asm
+```asm
 push 60h
 
 pop rsi
@@ -114,7 +114,7 @@ mov eax, [rax+30h] ;get process heap base
 Or use the following 32-bit code to detect a 64-bit environment
 
 
-`` `asm
+```asm
 mov eax, fs:[30h] ;Process Environment Block
 
 ;64-bit Process Environment Block
@@ -137,7 +137,7 @@ The other method is to use the `GetProcessHeaps()` function of `kernel32`. In fa
 This process can be implemented with 32-bit code detection for 32-bit windows environments:
 
 
-`` `asm
+```asm
 push 30h
 
 pop how
@@ -155,7 +155,7 @@ lodsd
 As above, the code for detecting 64-bit windows environment with 64-bit code is:
 
 
-`` `asm
+```asm
 push 60h
 
 pop rsi
@@ -173,7 +173,7 @@ lodsd
 Or use a 32-bit code to detect a 64-bit window environment:
 
 
-`` `asm
+```asm
 mov eax, fs:[30h] ;Process Environment Block
 
 ;64-bit Process Environment Block
@@ -197,7 +197,7 @@ So obviously, we can detect the debuggers from the flags of `Flags` and `ForgeFl
 First look at the detection code of the `Flags` field, use a 32-bit code to detect the 32-bit windows environment, and the `subsystem` version is between `3.10-3.50`:
 
 
-`` `asm
+```asm
 call GetVersion
 
 cmp al, 6
@@ -236,7 +236,7 @@ je being_debugged
 The 32-bit code detects the 32-bit windows environment, and the `subsystem` is `3.51` and higher:
 
 
-`` `asm
+```asm
 call GetVersion
 
 cmp al, 6
@@ -277,7 +277,7 @@ je being_debugged
 64-bit code detects 64-bit windows environments (64-bit processes don&#39;t have to be bothered by the `subsystem` version):
 
 
-`` `asm
+```asm
 push 60h
 
 pop rsi
@@ -310,7 +310,7 @@ je being_debugged
 Detect 64-bit windows environment with 32-bit code:
 
 
-`` `asm
+```asm
 push 30h
 
 pop eax
@@ -361,7 +361,7 @@ If you get this value directly through the `NtMajorVersion` field of the `KUSER_
 Of course, another method is to detect the `ForgeFlags` field. The following is a 32-bit code detection for a 32-bit Windows environment. The `subsystem` version is between `3.10-3.50`:
 
 
-`` `asm
+```asm
 call GetVersion
 
 cmp al, 6
@@ -396,7 +396,7 @@ je being_debugged
 The 32-bit code detects the 32-bit windows environment, and the `subsystem` is `3.51` and higher:
 
 
-`` `asm
+```asm
 call GetVersion
 
 cmp al, 6
@@ -428,7 +428,7 @@ je being_debugged
 64-bit code detects 64-bit windows environments (64-bit processes don&#39;t have to be bothered by the `subsystem` version):
 
 
-`` `asm
+```asm
 push 60h
 
 pop rsi
@@ -458,7 +458,7 @@ je being_debugged
 Detect 64-bit windows environment with 32-bit code:
 
 
-`` `asm
+```asm
 call GetVersion
 
 cmp al, 6
