@@ -26,7 +26,7 @@ For the above-mentioned parts to be improved, please refer to [Projects](https:/
 Although **CTF Wiki** mainly revolves around **CTF**, it is not strictly limited to **CTF** topics. In the future, **CTF Wiki** will include
 
 - Tools used in security research
-- Security in the national level
+- Increased discussion of security in the world
 
 In addition, given the following two points
 
