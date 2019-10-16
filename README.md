@@ -8,40 +8,40 @@
 
 Welcome to **CTF Wiki**！
 
-**CTF** (Capture The Flag) started from **DEFCON CTF**, a competitive game among network security enthusiasts, originally hosted in 1996.
+**CTF** (Capture The Flag) started from **DEFCON CTF**, a competitive game among computer security enthusiasts, originally hosted in 1996.
 
-**CTF** covers a wide range of fields. While, the security technology is evolving faster and faster, the difficulty of **CTF** is getting progressively harder. As a result, the threshold for beginners is getting progressively higher. Most of the online information is scattered and trivial. Beginners often don't know how to systematically learn **CTF** related domain knowledge. Also, it takes a lot of time.
+**CTF** covers a wide range of fields. Along with the evolving security technology, the difficulty of **CTF** challenges is getting harder and harder. As a result, the learning curve for beginners is getting steeper. Most online information is scattered and trivial. Beginners often don't know how to systematically learn **CTF**, which requires a lot of work and effort.
 
-In order to make the people who love **CTF** get started **CTF**ing, in October 2016, **CTF Wiki** was launched on Github. With rich content, **CTF Wiki** receives a lots of appreciation from security enthusiasts, many friends whom we never thought we'ed meet.
+In order to let those people who are interested in **CTF**s start easily, in October 2016, **CTF Wiki** was establisged on Github. Along with gradually improved content over time, **CTF Wiki** has received lots of appreciation from security enthusiasts, many of those are guys that we think we would never meet.
 
-As a freedom site, focusing on recent year's CTF, **CTF Wiki** introduces the knowledge and techniques from all directions of **CTF** to make it easier for beginners to learn **CTF**.
+As a freedom site, primarily focusing on recent CTFs, **CTF Wiki** introduces the knowledge and techniques in all aspects of **CTF** to make it easier for beginners to learn **CTF**.
 
-Now, **CTF Wiki** mainly contains the basic knowledge of **CTF**, and we are now working hard to enrich the following contents.
+Now, **CTF Wiki** mainly contains the basic skill-set for **CTF**, but we are working hard to improve the following contents.
 
-- Advanced knowledge about CTF
-- High quality topics about CTF
+- Advanced skills used in CTF
+- Special topics appearing in CTF
 
-For the above-mentioned parts to be improved, please refer to the [Projects](https://github.com/ctf-wiki/ctf-wiki/projects) which details what to do.
+For the above-mentioned parts to be improved, please refer to [Projects](https://github.com/ctf-wiki/ctf-wiki/projects) which details what are planned.
 
-While **CTF Wiki** is now based on **CTF**, it is not limited to **CTF**. In future, **CTF Wiki** will
+Although now **CTF Wiki** mainly focus **CTF**, it is not strictly limited to **CTF** topics. In the future, **CTF Wiki** will include
 
-- Introducing tools in security research
-- More integration with security
+- Tools used in security research
+- Increased discussion of security in the world
 
 In addition, given the following two points
 
-- Technology should be shared in an open manner.
-- Security offensive and defensive technologies are always up to date. Old attack technologies may fail at any time in the face of new defense technologies.
+- Information about technology should be openly shared.
+- As new techniques are always being developed, old techniques will start to fade over time and they should be replaced with new techniques.
 
 Therefore, **CTF Wiki** will never publish books.
 
-Finally, originating from the community, as an independent organization, **CTF Wiki** advocates **freedom of knowledge**, will **never be commercialized** in the future, and will always maintain the nature of **independence and freedom**.
+Finally, originating from the community, as an independent organization, **CTF Wiki** advocates **freedom of knowledge**, will **never be commercialized**, and will always maintain the character of **independence and freedom**.
 
 ## How to build？
 
-Now, CTF Wiki uses [mkdocs](https://github.com/mkdocs/mkdocs) to show its contents. And it is deployed at [https://ctf-wiki.github.io/ctf-wiki/](https://ctf-wiki.github.io/ctf-wiki/).
+CTF Wiki uses [mkdocs](https://github.com/mkdocs/mkdocs) to show its contents. And it is deployed at [https://ctf-wiki.github.io/ctf-wiki/](https://ctf-wiki.github.io/ctf-wiki/).
 
-Of course, it can be deployed locally, do as following
+It can also be deployed locally, with the following steps:
 
 ```shell
 # 1. clone
@@ -54,9 +54,9 @@ mkdocs build
 mkdocs serve
 ```
 
-The locally deployed mkdocs website is dynamically updated, i.e. when you modify and save the markdown file, the page will be dynamically updated.
+** A local instance of mkdocs is dynamically updated, for instance when a markdown file is modified, the corresponding page will be modified too.**
 
-If you just want to view it without any modify, try Docker!
+If you just want to view it statically, try Docker!
 
 ```
 docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
@@ -65,18 +65,19 @@ And then access [http://localhost:4100/](http://localhost:4100/) .
 
 ## How to practice？
 
-First, learn some basic security knowledge through online reading.
+Firstly, learn some basic security knowledge through online reading.
 
-Second, CTF Wiki has two sister projects.
+Secondly, CTF Wiki has two sister projects.
 
-- All of the challenges talked in the readings are in the [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) repository, you can look for them according to the corresponding category. Note: There are still some topics under the warehouse that are currently being migrated. . . (misc, web)
-- The tools involved in the CTF Wiki are constantly added to the [ctf-tools](https://github.com/ctf-wiki/ctf-tools) repository.
+- All of the challenges that are mentioned are in the [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) repository, you can locate them with their corresponding category.
+  - Note: There are still some topics that are still being migrated. . . (misc, web)
+- The tools mentioned in the CTF Wiki are constantly added to the [ctf-tools](https://github.com/ctf-wiki/ctf-tools) repository.
 
 ## How to make CTF Wiki Better？
 
-Welcome to write content for the wiki and share what you have learned. 
+We welcome to write content for the wiki and share what you have learned. 
 
-**Before you decide to contribute content, please be sure to read [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/wiki/Contributing-Guide)**.
+**Before you decide to contribute content, please read [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/wiki/Contributing-Guide)**.
 
 Thank you to all the people who have already contributed to CTF Wiki.
 
@@ -86,16 +87,16 @@ Thank you to all the people who have already contributed to CTF Wiki.
 
 - Ability to learn new things quickly
 - Different ways of thinking
-- A willing heart to solve problems
-- Interesting security technology
-- Memorable time
+- A love for solving problems
+- Interesting security techniques
+- Memorable and enriching experience
 
 Before reading the Wiki, we hope to give you some advice:
 
-- Learn [smart-questions](http://www.catb.org/~esr/faqs/smart-questions.html) .
-- Making good use of Google Search can help you better improve yourself.
-- Master at least one programming language, such as Python.
-- Practice is more useful than anything.
-- Keep curiosity and desire for technology and stick to it.
+- Learn to ask [smart-questions](http://www.catb.org/~esr/faqs/smart-questions.html) .
+- Learn to use Google Search for self-improvement.
+- Be good at least one programming language, such as Python.
+- Practice is the most important learning tool.
+- Maintain the passions and desire to learn about new techniques.
 
-The security circle is small and the security ocean is deep. Let's get started from **CTF Wiki**!
+The security circle is small and the areas of exploration is vast. Let's get started with **CTF Wiki**!
