@@ -5,29 +5,26 @@
 ## Origin of CTF
 
 
-The predecessor of CTF is the game of network technology competition between traditional hackers, which originated in the fourth DEFCON in 1996.
+CTF originated from the game of networking competition between traditional hackers, which originated in the fourth DEFCON in 1996.
 
 
-## Early CTF Competition
+## Early years of CTF
 
+Early years of CTF (1996-2001), there are no clear rules, no professional competition platform and environment. The organising team prepares the rules of the competition (preparation of methods of securing the network, as well as exploiting its vulnerabilities). Most of the organizers are just enthusiastic non-professional volunteers who assists in manual scoring.
 
-The first CTF competition (1996-2001)
-Years), there are no clear rules of the game, no professional competition platform and environment. The target team prepares the game goals (the game targets they prepare themselves defend themselves and try to break the game goals provided by the opponent). Most of the organizers are just some non-professional volunteers, accepting the team to request manual scoring.
-
-
-There is no background automatic system support and referee technical ability identification, scoring delays and errors, as well as unreliable network and improper configuration, resulting in great controversy and dissatisfaction.
+Due to lack of automated scoring and technical referees, along with scoring delays and errors, unreliable network and improper configuration, great controversy and dissatisfaction is widespread.
 
 
 ## &quot;Modern&quot; CTF Competition
 
 
-The professional team will undertake the competition platform, proposition, event organization and automatic integration system. The participating teams are required to submit an application for participation and will be selected by the organizers of the DEFCON meeting.
+A professional team will handle the competition platform, problems, organization of the event and automated scoring system. The participating teams are required to submit an application for participation and will be selected by the organizers of the DEFCON in a meeting.
 
 
-For the three-year DEFCON CTF competition organized by LegitBS, the following salient features:
+During the three years with LegitBS organising the DEFCON CTF competition, a few modifications have been amde:
 
 
-- The game focuses on the core capabilities of the underlying computer and system security, and the web vulnerability attack and defense skills are completely ignored.
-- The competition environment tends to be a multi-CPU instruction architecture set, multiple operating systems, and multiple programming languages.
-- Adopt the &quot;Zero sum&quot; scoring rule.
-- Team Comprehensive Capabilities: Reverse analysis, vulnerability mining, exploits, vulnerability patching, network traffic analysis, system security operations, and security-oriented programming debugging.
+- The competition focuses on the inner workings of the computer, its security features and capabilities, web exploitation has been completely ignored
+- A greater variety of CPU architectures, operating systems and languages.
+- Usage of &quot;Zero sum&quot; scoring rule.
+- A wider skillset demanded: Reverse engineering, exploiting loopholes, pwning, patching, network traffic analysis, system security, and security-oriented system for programming and debugging.
