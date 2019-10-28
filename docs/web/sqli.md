@@ -24,6 +24,23 @@
 -   `load_file()`：以文本方式读取文件，在 Windows 中，路径设置为 `\\`
 -   `select xxoo into outfile '路径'`：权限较高时可直接写文件
 
+## 常见注入分类
+
+### 根据提交方式分类
+
+-  GET注入
+-  POST注入
+-  COOKIE注入
+-  HTTP头注入（X-Forwarded-For、UserAgent，Referrer）
+
+### 根据获取信息的方式分类
+
+-  联合查询注入
+-  基于报错的注入
+-  堆查询注入
+-  基于时间的盲注
+-  基于布尔的盲注
+
 ## 语法参考与小技巧
 
 ### 行间注释
