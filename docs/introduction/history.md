@@ -5,12 +5,11 @@
 ## Origin of CTF
 
 
-CTF originated from the game of networking competition between traditional hackers, which originated in the fourth DEFCON in 1996.
-
+CTF originated from the competition game between hackers in the fourth DEFCON in 1996.
 
 ## Early years of CTF
 
-Early years of CTF (1996-2001), there are no clear rules, no professional competition platform and environment. The organising team prepares the rules of the competition (preparation of methods of securing the network, as well as exploiting its vulnerabilities). Most of the organizers are just enthusiastic non-professional volunteers who assists in manual scoring.
+Early years of CTF (1996-2001), there are no clear rules, no professional competition platform and environment. The organizer prepares the rules of the competition (preparation of securing the network, as well as exploiting its vulnerabilities). Most of the organizers are just enthusiastic non-professional volunteers who assists in manual scoring.
 
 Due to lack of automated scoring and technical referees, along with scoring delays and errors, unreliable network and improper configuration, great controversy and dissatisfaction is widespread.
 
@@ -21,8 +20,7 @@ Due to lack of automated scoring and technical referees, along with scoring dela
 A professional team will handle the competition platform, problems, organization of the event and automated scoring system. The participating teams are required to submit an application for participation and will be selected by the organizers of the DEFCON in a meeting.
 
 
-During the three years with LegitBS organising the DEFCON CTF competition, a few modifications have been amde:
-
+During the three years with LegitBS organising the DEFCON CTF competition, a few modifications have been made:
 
 - The competition focuses on the inner workings of the computer, its security features and capabilities, web exploitation has been completely ignored
 - A greater variety of CPU architectures, operating systems and languages.
