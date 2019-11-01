@@ -248,14 +248,14 @@ if ( IsDebuggerPresent() == 1 )     // 2. API: IsDebuggerPresent()
 Obviously, if the input `password` is correct, it will output the prompt `Your password is correct.`. ??? Not surprising. Is it `I have a pen.` is our flag? No, no, of course not. This is actually a trap. Since you know `I have a pen.` then there is definitely some way to analyze the program through some reverse means. So the next part will start some anti-debugging or other means of detection (actual Such a trap can also occur in the middle).
 
 
-At the beginning is `IsDebuggerPresent()`, which determines if there is debugging based on the returned result. If you are not sure, you can go back and look at [IsDebuggerPresent()](./isdebuggerpresent/index.html)
+At the beginning is `IsDebuggerPresent()`, which determines if there is debugging based on the returned result. If you are not sure, you can go back and look at [IsDebuggerPresent()](./isdebuggerpresent.md)
 
 
 ## NtGlobalFlag
 
 
 
-Next is to detect the flag of the `NtGlobalFlag` field. Detect the debugger by checking if the field value of the PEB is `0x70`. If it is not clear, you can go back and look at [NtGlobalFlag](./ntglobalflag/index.html )
+Next is to detect the flag of the `NtGlobalFlag` field. Detect the debugger by checking if the field value of the PEB is `0x70`. If it is not clear, you can go back and look at [NtGlobalFlag](./ntglobalflag.md )
 
 
 ``` c
@@ -325,7 +325,7 @@ if ( pbDebuggerPresent )            // 4. API: CheckRemoteDebuggerPresent()
 
 ```
 
-Here I will list the function prototype of the `CheckRemoteDebuggerPresent()` API in the comments. If the debugger is detected, `pbDebuggerPresent` will be set to a non-zero value. Detect the debugger based on its value ([CheckRemoteDebuggerPresent( )](./checkremotedebuggerpresent/index.html)
+Here I will list the function prototype of the `CheckRemoteDebuggerPresent()` API in the comments. If the debugger is detected, `pbDebuggerPresent` will be set to a non-zero value. Detect the debugger based on its value ([CheckRemoteDebuggerPresent( )](./checkremotedebuggerpresent.md)
 
 
 
