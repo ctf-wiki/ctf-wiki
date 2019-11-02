@@ -1,7 +1,7 @@
 [EN](./pe-export-table.md) | [ZH](./pe-export-table-zh.md)
 
 
-# 3 导出表
+# 导出表
 
 DLL 通过导出表向外界提供导出函数名称，序号以及入口地址等信息。从导入角度来看，Windows 装载器完善 IAT 时就是通过 DLL 的导出表读取从其导入的函数的地址的。导出表通常存在于大多数 DLL 中，但在少数 EXE 文件中同样存在。
 

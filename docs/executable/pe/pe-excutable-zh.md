@@ -1,9 +1,9 @@
 [EN](./pe-excutable.md) | [ZH](./pe-excutable-zh.md)
 
 
-# 1 PE 文件格式
+# PE 文件格式
 
-## 1.1 PE 简介
+## PE 简介
 
 PE 文件的全称是 Portable Executable ，意为可移植的可执行的文件，常见的EXE、DLL、OCX、SYS、COM都是PE 文件，PE 文件是微软Windows操作系统上的程序文件，可能是间接被执行，如DLL）。
 一个 32-bits 的 PE 文件布局如下图所示：
@@ -62,7 +62,7 @@ int main(){
 
 假设某一个属于 .data 节的数据的 RVA 是 0x3100，.data 节的 节区RVA 为 0x3000，那么该数据相对于 .data 节的相对偏移就是 0x100。而 .data 节在的 节区FOA 为 0x1C00，那么该数据在磁盘文件中的 FOA 就是 0x1D00。完整的计算公式是：`FOA = 节区FOA + (RVA - 节区RVA)`。如果该映像文件的加载基址为0x40000000，那么该数据的 VA 就是 0x40003100。
 
-## 1.2 PE文件头
+## PE文件头
 
 PE 文件的最开始便是 PE 文件头，它由 `MS-DOS 文件头` 和 `IMAGE_NT_HEADERS` 结构体组成。
 
@@ -336,7 +336,7 @@ DataDirectory[15] =  Reserverd                  // 保留
 ![可选头上](../figure/pe2-imageoptionalheader1.png "图 5 - IMAGE_OPTIONAL_HEADER 结构体")
 ![可选头下](../figure/pe2-imageoptionalheader2.png "图 6 - DataDirectory 成员")
 
-## 1.3 PE 数据主体
+## PE 数据主体
 
 PE 数据主体包括 `Section Header` 和所有的节区。
 

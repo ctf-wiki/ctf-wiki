@@ -1,6 +1,6 @@
 [EN](./pe-import-table.md) | [ZH](./pe-import-table-zh.md)
 
-# 2 导入表
+# 导入表
 
 当可执行文件使用外来 DLL 的代码或数据时，需要 Windows 装载器记录所有要导入的函数和数据，并将 DLL 装载到可执行文件的虚拟地址空间中；装载器会确保可执行文件运行需要的所有 DLL 都被装载。
 
@@ -8,7 +8,7 @@
 
 导入表相关数据包括 `IMAGE_IMPORT_DESCRIPTOR` 和 `IMAGE_IMPORT_BY_NAME` 以及相应的字符串数据。导入表是用来修正并存储 DLL 装载进内存后对应函数实际地址的数据节。
 
-## 2.1 INT 与 IAT
+## INT 与 IAT
 
 `DataDirectory[1]` 处保存着 IMPORT TABLE（即导入表）的 RVA。该 RVA 指向 `IMAGE_IMPORT_DESCRIPTOR` 结构体数组，`IMAGE_IMPORT_DESCRIPTOR` 结构体记录着 PE 文件导入库文件所需的信息。
 
@@ -99,7 +99,7 @@ RVA       Data      Description               Value
 
 此时 `IAT` 中的指针已经全部替换成了函数在内存中的实际地址。
 
-## 2.2 绑定导入
+## 绑定导入
 
 绑定导入是一种提高 PE 加载速度的技术。它只影响加载的过程，并不影响 PE 最终的加载结果和运行结果。如果一个 PE 文件要导入的函数很多，那么在装载时就会占用一部分时间来完成函数导入，这会使得 PE 的装载时间变长。**绑定导入将 IAT 地址的修正工作提前到装载前进行。要么由用户手动完成，要么由专门的绑定工具完成；然后在 PE 文件中声明绑定导入数据，以此告诉装载器不必重复装载。**
 
