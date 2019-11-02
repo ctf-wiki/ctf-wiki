@@ -7,7 +7,7 @@ DLL 通过导出表向外界提供导出函数名称，序号以及入口地址�
 
 对于 DLL 里导出函数的调用，既可以通过函数名称，也可以通过函数在导出表的索引进行。Windows 装载器将与进程相关的 DLL 加载到虚拟地址空间后，会根据导入表中登记的与该 DLL 相关的名称或编号来遍历 DLL 的虚拟地址空间并查找导出表结构，从而确定该导出函数在虚拟地址空间中的起始地址 VA，并将该 VA 覆盖写入 IAT 对应项处。
 
-## 3.1 EAT
+## EAT
 
 `DataDirectory[0]` 处保存者 EXPORT TABLE （即导出表）的 RVA。该 RVA 指向 `IMAGE_EXPORT_DIRECTORY` 结构体。PE 文件中最多只存在 1 个 `IMAGE_EXPORT_DIRECTORY` 结构体。**但 PE 文件可以有多个 `IMAGE_IMPORT_DESCRIPTOR` 结构体，因为 PE 文件可以一次导入多个库。**
 

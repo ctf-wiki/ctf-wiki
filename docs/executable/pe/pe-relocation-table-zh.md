@@ -6,7 +6,7 @@
 
 对于 EXE 文件，每个文件在执行时都会使用独立的虚拟地址空间，即总是能装载到在默认基地址处，也就不需要重定位信息；但是，同一个虚拟地址空间中可能存在多个 DLL，可能有的 DLL 就会面临默认基地址已经被占用的情况，所以 DLL 需要重定位信息。
 
-### 4.1 重定位结构体
+## 4.1 重定位结构体
 
 在 PE 文件中，所有可能需要重定位的地址都被放在一个数组中，即基址重定位表。如果装载地址改变了，就会对数组中所有的地址进行修正。基址重定位表位于节区 .reloc 内，不过找到它的正确方式是通过 `DataDirectory[5]` 即 BASE RELOCATION TABLE 项。
 
@@ -30,7 +30,7 @@ typedef IMAGE_BASE_RELOCATION UNALIGNED * PIMAGE_BASE_RELOCATION;
   - **type 高 4 位用于表示重定位的类型。**
   - **offset 低 12 位用于表示重定位数据位置相对于页 RVA 的偏移量。与 VirtualAddress 相加就是要修改的重定位数据的指针，再加上映像装载基址就是修改后的指针。**
 
-### 4.2 重定位过程
+## 4.2 重定位过程
 
 **利用重定位表定位需要修改的地址。**比如在 me.dll 中，重定位表的开头部分如下：
 
@@ -52,7 +52,7 @@ RVA       Data      Description
 
 **修改待重定位数据**程序运行后，me.dll 被加载到了 0x633C0000 处：
 
-{% asset_img ../figure/pe5-relocdll.png %}
+![dll 装载处](../figure/pe5-relocdll.png)
 
 计算待重定位修正后的值，然后将修正的值写到待重定位地址处：
 
@@ -70,6 +70,6 @@ RVA       Data      Description
 
 查看内存中实际的值：
 
-{% asset_img ../figure/pe5-relocdata.png %}
+![重定位后的地址](../figure/pe5-relocdata.png)
 
-> 提个问题，什么时候 EXE 会需要重定位？
+> 留个问题，什么时候 EXE 会需要重定位？
