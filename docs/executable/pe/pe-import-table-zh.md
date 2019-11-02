@@ -2,6 +2,10 @@
 
 # 2 导入表
 
+当可执行文件使用外来 DLL 的代码或数据时，需要 Windows 装载器记录所有要导入的函数和数据，并将 DLL 装载到可执行文件的虚拟地址空间中；装载器会确保可执行文件运行需要的所有 DLL 都被装载。
+
+但对于可执行文件，它无法确定导入函数在内存中的位置，于是 Windows 装载器在装载 DLL 时将定位导入函数需要的信息写入到 IAT(Import Address Table，导入地址表)。待执行中遇到导入函数的调用时，就通过 IAT 确定导入函数在内存中的位置。
+
 导入表相关数据包括 `IMAGE_IMPORT_DESCRIPTOR` 和 `IMAGE_IMPORT_BY_NAME` 以及相应的字符串数据。导入表是用来修正并存储 DLL 装载进内存后对应函数实际地址的数据节。
 
 ## 2.1 INT 与 IAT
@@ -36,7 +40,8 @@ typedef struct _IMAGE_IMPORT_BY_NAME {
 } IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;
 ```
 
-`Hint` 成员表示函数的编号。通常在 DLL 中对每一个函数都进行了编号，对函数进行定位时可以通过名称，也可以通过编号；`Name[1]` 成员是一个以 "\0" 为结尾的 ANSI 字符串，表示函数名称。
+- **`Hint` 成员表示函数的编号。通常在 DLL 中对每一个函数都进行了编号，定位函数时可以通过名称定位，也可以通过编号定位。**
+- **`Name[1]` 成员是一个以 "\0" 为结尾的 ANSI 字符串，表示函数名称。**
 
 接下来看一下示例文件中的 `IMAGE_IMPORT_DESCRIPTOR` 结构体数组：
 

@@ -428,6 +428,18 @@ No.  Name    VirtualSize  VirtualOffset  RawSize   RawOffset  Characteristics
 
 ### Sections
 
-紧跟在 `Section Header`  后面的便是各个 Section 了。
+紧跟在 `Section Header`  后面的就是各个 sections，即节区。PE 文件一般至少要求有两个节区，用于存储可执行数据的代码节区 .text，和存储数据的数据节区 .data。通过节区名可以猜测节区的用途，但节区名不是决定节区用途的因素，只作为一种参考。比如也可以将代码节区的节区名修改为 .data，对于程序执行不会有影响。这里讲一下常见节区的用途：
+
+```text
+ .text  默认的代码节区。用于保存可执行代码。
+ .data  默认的读/写数据节区。用于保存已初始化的全局变量，静态变量。
+.rdata  默认的只读数据节区。
+.idata  用于保存导入表信息。包含IAT, INT, 导入函数名称以及导入 DLL 名称等。
+.edata  用于保存导出表信息。
+ .rsrc  用于保存资源表信息。
+  .bss  用于保存未初始化数据。
+  .tls  用于保存 TLS（线程局部存储）信息。
+.reloc  用于保存重定位表信息。
+```
 
 其中有一些 Section 需要重点关注，比如保存着库文件导入相关数据的 .idata 节，或者与线程私有存储相关的 .tls 节等等。对这些重要节进行分析，就是之后学习的主要内容。
