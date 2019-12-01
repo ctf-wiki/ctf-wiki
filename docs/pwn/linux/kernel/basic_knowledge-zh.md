@@ -56,7 +56,7 @@ LKMs 的文件格式和用户态的可执行程序相同，Linux 下为 ELF，Wi
 
 > 在 */usr/include/x86_64-linux-gnu/asm/unistd_64.h* 和 */usr/include/x86_64-linux-gnu/asm/unistd_32.h* 分别可以查看 64 位和 32 位的系统调用号。
 
-> 同时推荐一个很好用的网站 [Linux Syscall Reference](https://syscalls.kernelgrok.com)，可以查阅 32 位系统调用对应的寄存器含义以及源码。欢迎师傅们推荐 64 位类似功能的网站。
+> 同时推荐一个很好用的网站 [Linux Syscall Reference](https://syscalls.kernelgrok.com)，可以查阅 32 位系统调用对应的寄存器含义以及源码。64位系统调用可以查看 [Linux Syscall64 Reference](https://syscalls64.paolostivanin.com/)
 
 ## ioctl
 直接查看 man 手册
