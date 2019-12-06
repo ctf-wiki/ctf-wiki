@@ -939,7 +939,7 @@ By default (**32-bit system is an example**), the maximum chunk size supported b
 
  */
 
-// Whether MORECODE returns a contiguous memory area.
+// Whether MORECORE returns a contiguous memory area.
 // MORECORE in the main allocation area is actually sbr(), which returns the default virtual address space by default.
 // The non-primary allocation area uses mmap() to allocate large blocks of virtual memory and then splits to simulate the behavior of the primary allocation area.
 // By default, the mmap mapping area does not guarantee that the virtual address space is continuous, so the non-primary allocation area allocates non-contiguous virtual address space by default.

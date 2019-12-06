@@ -517,7 +517,7 @@ typedef struct malloc_chunk *mfastbinptr;
    The initial value comes from MORECORE_CONTIGUOUS, but is
    changed dynamically if mmap is ever used as an sbrk substitute.
  */
-// MORECODE是否返回连续的内存区域。
+// MORECORE是否返回连续的内存区域。
 // 主分配区中的MORECORE其实为sbr()，默认返回连续虚拟地址空间
 // 非主分配区使用mmap()分配大块虚拟内存，然后进行切分来模拟主分配区的行为
 // 而默认情况下mmap映射区域是不保证虚拟地址空间连续的，所以非主分配区默认分配非连续虚拟地址空间。
