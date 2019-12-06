@@ -8,9 +8,9 @@ unlink 用来将一个双向链表（只存储空闲的 chunk）中的一个元�
 - malloc
     - 从恰好大小合适的 large bin 中获取 chunk。
         - **这里需要注意的是 fastbin 与 small bin 就没有使用 unlink，这就是为什么漏洞会经常出现在它们这里的原因。**
-        - 依次遍历处理 unsorted bin 时也没有使用 unlink 的。
+        - 依次遍历处理 unsorted bin 时也没有使用 unlink 。
     - 从比请求的 chunk 所在的 bin 大的 bin 中取 chunk。
-- Free
+- free
     - 后向合并，合并物理相邻低地址空闲 chunk。
     - 前向合并，合并物理相邻高地址空闲 chunk（除了 top chunk）。
 - malloc_consolidate
@@ -92,7 +92,7 @@ unlink 用来将一个双向链表（只存储空闲的 chunk）中的一个元�
 - 这里的头部指的是 bin 的 fd 指向的 chunk，即双向链表中最新加入的 chunk。
 - 这里的尾部指的是 bin 的 bk 指向的 chunk，即双向链表中最先加入的 chunk。
 
-同时，对于无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都会检测 fd 和 bk 是否满足对应的要求。
+同时，无论是对于 fd，bk 还是 fd_nextsize ，bk_nextsize，程序都会检测 fd 和 bk 是否满足对应的要求。
 
 ```c
 // fd bk

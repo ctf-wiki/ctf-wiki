@@ -1422,7 +1422,7 @@ It should be noted that the prev_inuse bit of the top chunk is always 1, otherwi
 
 
 
-When a user uses malloc to request memory allocation, the chunk found by ptmalloc2 may not match the size of the requested memory. In this case, the remaining portion after the split is called the last remainder chunk, and the unsort bin will also store the chunk. The top chunk splits the rest of the section as a last remainer.
+When a user uses malloc to request memory allocation, the chunk found by ptmalloc2 may not match the size of the requested memory. In this case, the remaining portion after the split is called the last remainder chunk, and the unsort bin will also store the chunk. The top chunk splits the rest of the section as a last remainder.
 
 
 ## Macrostructure
@@ -1562,7 +1562,7 @@ This structure is mainly to describe the basic information of the heap, includin
 
 
 - the address of the corresponding arena of the heap
-- Since a thread requests a heap, it may be used up and must be applied again. Therefore, one may have multiple heaps. Prev records the address of the last heap_info. Here you can see that each heap&#39;s heap_info is linked through a singly linked list.
+- Since a thread requests a heap, it may be used up and must be applied again. Therefore, one thread may have multiple heaps. Prev records the address of the last heap_info. Here you can see that each heap&#39;s heap_info is linked through a singly linked list.
 - size indicates the size of the current heap
 - The last part ensures alignment (**What is the reason for the negative use here?**)
 
