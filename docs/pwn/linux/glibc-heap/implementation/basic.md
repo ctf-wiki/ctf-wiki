@@ -15,7 +15,7 @@ Unlink is used to take out an element in a doubly linked list (only free chunks)
 - **It should be noted here that fastbin and small bin do not use unlink, which is why vulnerabilities often appear here.**
 - Unlink is also not used when traversing the unsorted bin in turn.
 - Take a chunk from the bin larger than the bin where the requested chunk is located.
-- Free
+- free
 
 - Backward merge, merge physical adjacent low address free chunks.
 - Forward merge, merge physical neighbor high address free chunks (except top chunk).
