@@ -350,8 +350,8 @@ io.interactive ()
 
 
 
-For Canary, not only is the Canary different after each process restart (the same as GS, GS is restarted), but the Canary of each thread in the same process is also different.
-However, there is a class that opens the child process interaction through the fork function, because the fork function directly copies the memory of the parent process, so the Canary of each child process created is the same. We can use this feature to completely blast Canary byte by byte.
+For Canary, although the Canary is different each time the same process restarts (the same as GS, GS is restarted), but the Canary of each thread in the same process is identical.
+Also, there is a class that opens the child process interaction through the fork function, because the fork function directly copies the memory of the parent process, so the Canary of each child process created is the same. We can use this feature to completely blast Canary byte by byte.
 In the famous offset2libc bypassing all protected linux64bit articles, the author is using this way to blast the Canary:
 This is the Python code for blasting:
 
