@@ -201,8 +201,8 @@ io.interactive()
 ```
 ### one-by-one 爆破 Canary
 
-对于 Canary，不仅每次进程重启后的 Canary 不同(相比 GS，GS 重启后是相同的)，而且同一个进程中的每个线程的 Canary 也不同。
-但是存在一类通过 fork 函数开启子进程交互的题目，因为 fork 函数会直接拷贝父进程的内存，因此每次创建的子进程的 Canary 是相同的。我们可以利用这样的特点，彻底逐个字节将 Canary 爆破出来。
+对于 Canary，虽然每次进程重启后的 Canary 不同(相比 GS，GS 重启后是相同的)，但是同一个进程中的不同线程的 Canary 是相同的， 并且
+通过 fork 函数创建的子进程的 Canary 也是相同的，因为 fork 函数会直接拷贝父进程的内存。我们可以利用这样的特点，彻底逐个字节将 Canary 爆破出来。
 在著名的 offset2libc 绕过 linux64bit 的所有保护的文章中，作者就是利用这样的方式爆破得到的 Canary:
 这是爆破的 Python 代码:
 
