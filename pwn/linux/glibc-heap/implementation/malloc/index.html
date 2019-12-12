@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.5.1">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
     
     
       
@@ -62,7 +62,7 @@
     
       
         <link href="https://gstatic.loli.net" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Sans:300,400,400i,700|Source+Code+Pro&display=fallback">
+        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Sans:300,400,400i,700%7CSource+Code+Pro&display=fallback">
         <style>body,input{font-family:"Noto Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Source Code Pro","Courier New",Courier,monospace}</style>
       
     
@@ -4637,6 +4637,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#fast-bin" class="md-nav__link">
+    fast bin
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#small-bin" class="md-nav__link">
     small bin
   </a>
@@ -4651,16 +4658,16 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#big-loop-traversing-unsortedbin" class="md-nav__link">
-    Big loop - traversing unsortedbin
+  <a href="#big-loop-traversing-unsorted-bin" class="md-nav__link">
+    Big loop - traversing unsorted bin
   </a>
   
     <nav class="md-nav">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#unsort-bin-traversing" class="md-nav__link">
-    unsort bin Traversing
+  <a href="#unsorted-bin-traversing" class="md-nav__link">
+    unsorted bin Traversing
   </a>
   
     <nav class="md-nav">
@@ -5052,20 +5059,18 @@
                 <p><a href="./">EN</a> | <a href="../malloc-zh/">ZH</a></p>
 <h1 id="apply-for-a-memory-block">Apply for a memory block<a class="headerlink" href="#apply-for-a-memory-block" title="Permanent link">&para;</a></h1>
 <h2 id="__libc_malloc">__libc_malloc<a class="headerlink" href="#__libc_malloc" title="Permanent link">&para;</a></h2>
-<p>In general, we will use the malloc function to apply for a block of memory, but when we look closely at the source implementation of glibc, there is actually no malloc function. In fact, the function actually calls the __libc_malloc function. Why not just write a malloc function directly, because sometimes we may need different names. In addition, the __libc_malloc function is simply used to simply wrap the _int_malloc function. _int_malloc is the core of the application memory block. Let&#39;s take a closer look at the specific implementation.</p>
+<p>In general, we will use the malloc function to apply for a block of memory, but when we look closely at the source implementation of glibc, there is actually no malloc function. In fact, the function actually calls the __libc_malloc function. Why not just write a malloc function directly, because sometimes we may need different names. In addition, the __libc_malloc function is simply used to simply wrap the _int_malloc function. _int_malloc is the core of the application memory block. Let's take a closer look at the specific implementation.</p>
 <p>This function first checks if there is a hook function (__malloc_hook) for the memory allocation function. This is mainly used for user-defined heap allocation functions, which is convenient for users to quickly modify and evaluate the allocation function. It should be noted here that the <strong> user-applied byte becomes an unsigned integer</strong> once it enters the application memory function.</p>
 <div class="codehilite"><pre><span></span><span class="c1">// wapper for int_malloc</span>
 
 <span class="kt">void</span> <span class="o">*</span><span class="nf">__libc_malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span> <span class="p">{</span>
-
-<span class="n">mstate</span> <span class="n">ar_ptr</span><span class="p">;</span>
+    <span class="n">mstate</span> <span class="n">ar_ptr</span><span class="p">;</span>
     <span class="kt">void</span> <span class="o">*</span> <span class="n">victim</span><span class="p">;</span>
 
-<span class="c1">// Check if there is a memory allocation hook, if so, call the hook and return.</span>
+    <span class="c1">// Check if there is a memory allocation hook, if so, call the hook and return.</span>
     <span class="kt">void</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">hook</span><span class="p">)(</span><span class="kt">size_t</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="o">=</span> <span class="n">atomic_forced_read</span><span class="p">(</span><span class="n">__malloc_hook</span><span class="p">);</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span><span class="p">(</span><span class="n">hook</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-
         <span class="k">return</span> <span class="p">(</span><span class="o">*</span><span class="n">hook</span><span class="p">)(</span><span class="n">bytes</span><span class="p">,</span> <span class="n">RETURN_ADDRESS</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
 </pre></div>
 
@@ -5079,17 +5084,11 @@
 
 <p>If the allocation fails, ptmalloc will try to find another available arena and allocate memory.</p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/* Retry with another arena only if we were able to find a usable arena</span>
-
 <span class="cm">       before.  */</span>
-
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">victim</span> <span class="o">&amp;&amp;</span> <span class="n">ar_ptr</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-
         <span class="n">LIBC_PROBE</span><span class="p">(</span><span class="n">memory_malloc_retry</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
         <span class="n">ar_ptr</span> <span class="o">=</span> <span class="n">arena_get_retry</span><span class="p">(</span><span class="n">ar_ptr</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
         <span class="n">victim</span> <span class="o">=</span> <span class="n">_int_malloc</span><span class="p">(</span><span class="n">ar_ptr</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
     <span class="p">}</span>
 </pre></div>
 
@@ -5099,288 +5098,186 @@
 
 <p>Determine if the current status meets the following conditions</p>
 <ul>
-<li>Either didn&#39;t apply to memory</li>
+<li>Either didn't apply to memory</li>
 <li>either mmap memory</li>
 <li><strong>Either the requested memory must be in its assigned arena</strong></li>
 </ul>
 <div class="codehilite"><pre><span></span>    <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">victim</span> <span class="o">||</span> <span class="n">chunk_is_mmapped</span><span class="p">(</span><span class="n">mem2chunk</span><span class="p">(</span><span class="n">victim</span><span class="p">))</span> <span class="o">||</span>
-
            <span class="n">ar_ptr</span> <span class="o">==</span> <span class="n">arena_for_chunk</span><span class="p">(</span><span class="n">mem2chunk</span><span class="p">(</span><span class="n">victim</span><span class="p">)));</span>
 </pre></div>
 
 <p>Finally return to memory.</p>
 <div class="codehilite"><pre><span></span>    <span class="k">return</span> <span class="n">victim</span><span class="p">;</span>
-
 <span class="p">}</span>
 </pre></div>
 
 <h2 id="_int_malloc">_int_malloc<a class="headerlink" href="#_int_malloc" title="Permanent link">&para;</a></h2>
 <p>_int_malloc is the core function of memory allocation, and its core ideas are as follows</p>
 <ol>
-<li>It implements different allocation methods in turn according to the <strong>memory block size</strong> and **fastbin chunk, small chunk, large chunk of the user&#39;s application.</li>
+<li>It implements different allocation methods in turn according to the <strong>memory block size</strong> and <strong>frequency of use</strong> of fastbin chunk, small chunk, large chunk of the user's application.</li>
 <li>It checks from small to large whether there are corresponding free blocks in different bins to satisfy the memory requested by the user.</li>
 <li>When all free chunks are not met, it considers the top chunk.</li>
 <li>The heap allocator will only request the memory block when the top chunk is not satisfied.</li>
 </ol>
 <p>After entering the function, the function immediately defines a series of variables that you need, and converts the memory size requested by the user to the internal chunk size.</p>
 <div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="o">*</span><span class="nf">_int_malloc</span><span class="p">(</span><span class="n">mstate</span> <span class="n">av</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span> <span class="p">{</span>
-
     <span class="n">INTERNAL_SIZE_T</span> <span class="n">nb</span><span class="p">;</span>  <span class="cm">/* normalized request size */</span>
-
     <span class="kt">unsigned</span> <span class="kt">int</span>    <span class="n">idx</span><span class="p">;</span> <span class="cm">/* associated bin index */</span>
-
     <span class="n">mbinptr</span>         <span class="n">bin</span><span class="p">;</span> <span class="cm">/* associated bin */</span>
 
-
-
     <span class="n">mchunkptr</span>       <span class="n">victim</span><span class="p">;</span>       <span class="cm">/* inspected/selected chunk */</span>
-
     <span class="n">INTERNAL_SIZE_T</span> <span class="n">size</span><span class="p">;</span>         <span class="cm">/* its size */</span>
-
     <span class="kt">int</span>             <span class="n">victim_index</span><span class="p">;</span> <span class="cm">/* its bin index */</span>
 
-
-
     <span class="n">mchunkptr</span>     <span class="n">remainder</span><span class="p">;</span>      <span class="cm">/* remainder from a split */</span>
-
     <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">remainder_size</span><span class="p">;</span> <span class="cm">/* its size */</span>
 
-
-
     <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">block</span><span class="p">;</span> <span class="cm">/* bit map traverser */</span>
-
     <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">bit</span><span class="p">;</span>   <span class="cm">/* bit map traverser */</span>
-
     <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">map</span><span class="p">;</span>   <span class="cm">/* current word of binmap */</span>
 
-
-
     <span class="n">mchunkptr</span> <span class="n">fwd</span><span class="p">;</span> <span class="cm">/* misc temp for linking */</span>
-
     <span class="n">mchunkptr</span> <span class="n">bck</span><span class="p">;</span> <span class="cm">/* misc temp for linking */</span>
-
-
 
     <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">errstr</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
 
-
-
     <span class="cm">/*</span>
-
 <span class="cm">       Convert request size to internal form by adding SIZE_SZ bytes</span>
-
 <span class="cm">       overhead plus possibly more to obtain necessary alignment and/or</span>
-
 <span class="cm">       to obtain a size of at least MINSIZE, the smallest allocatable</span>
-
 <span class="cm">       size. Also, checked_request2size traps (returning 0) request sizes</span>
-
 <span class="cm">       that are so large that they wrap around zero when padded and</span>
-
 <span class="cm">       aligned.</span>
-
 <span class="cm">     */</span>
-
-
 
     <span class="n">checked_request2size</span><span class="p">(</span><span class="n">bytes</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
 </pre></div>
 
 <h3 id="arena">arena<a class="headerlink" href="#arena" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span>    <span class="cm">/* There are no usable arenas.  Fall back to sysmalloc to get a chunk from</span>
-
 <span class="cm">       mmap.  */</span>
-
     <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span><span class="p">(</span><span class="n">av</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">))</span> <span class="p">{</span>
-
-<span class="kt">void</span> <span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="n">sysmalloc</span> <span class="p">(</span><span class="n">nb</span><span class="p">,</span> <span class="n">av</span><span class="p">);</span>
+        <span class="kt">void</span> <span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="n">sysmalloc</span> <span class="p">(</span><span class="n">nb</span><span class="p">,</span> <span class="n">av</span><span class="p">);</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
         <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
     <span class="p">}</span>
 </pre></div>
 
-<p>I am almost</p>
+<h3 id="fast-bin">fast bin<a class="headerlink" href="#fast-bin" title="Permanent link">&para;</a></h3>
 <p>If the size of the requested chunk is in the fastbin range, <strong> note that the comparison here is an unsigned integer</strong>. <strong> In addition, chunk</strong> is taken from the head node of fastbin.</p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/*</span>
-
 <span class="cm">       If the size qualifies as a fastbin, first check corresponding bin.</span>
-
 <span class="cm">       This code is safe to execute even if av is not yet initialized, so we</span>
-
 <span class="cm">       can try it without checking, which saves some time on this fast path.</span>
-
 <span class="cm">     */</span>
-
-
-
     <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">get_max_fast</span><span class="p">()))</span> <span class="p">{</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">subscript</span> <span class="n">of</span> <span class="n">fastbin</span>
+        <span class="c1">// Get the corresponding subscript of fastbin</span>
         <span class="n">idx</span>             <span class="o">=</span> <span class="n">fastbin_index</span><span class="p">(</span><span class="n">nb</span><span class="p">);</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">the</span> <span class="n">fastbin</span>
-<span class="n">mfastbinptr</span> <span class="o">*</span> <span class="n">fb</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">fastbin</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+        <span class="c1">// Get the corresponding pointer to the fastbin</span>
+        <span class="n">mfastbinptr</span> <span class="o">*</span> <span class="n">fb</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">fastbin</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
         <span class="n">mchunkptr</span>    <span class="n">pp</span> <span class="o">=</span> <span class="o">*</span><span class="n">fb</span><span class="p">;</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Use</span> <span class="n">fd</span> <span class="n">to</span> <span class="n">traverse</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">bin</span> <span class="n">whether</span> <span class="n">there</span> <span class="n">are</span> <span class="n">free</span> <span class="n">chunks</span><span class="p">,</span>
+        <span class="c1">// Use fd to traverse the corresponding bin whether there are free chunks,</span>
         <span class="k">do</span> <span class="p">{</span>
-
             <span class="n">victim</span> <span class="o">=</span> <span class="n">pp</span><span class="p">;</span>
-
             <span class="k">if</span> <span class="p">(</span><span class="n">victim</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
-
         <span class="p">}</span> <span class="k">while</span> <span class="p">((</span><span class="n">pp</span> <span class="o">=</span> <span class="n">catomic_compare_and_exchange_val_acq</span><span class="p">(</span><span class="n">fb</span><span class="p">,</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span>
-
                                                             <span class="n">victim</span><span class="p">))</span> <span class="o">!=</span> <span class="n">victim</span><span class="p">);</span>
-
-<span class="c1">// There are chunks that can be used</span>
+        <span class="c1">// There are chunks that can be used</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">victim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-
-<span class="c1">// Check if the chunk size retrieved is consistent with the corresponding fastbin index.</span>
-<span class="c1">// Calculate its size using chunksize based on the obtained victim.</span>
-<span class="c1">// Calculate the index of the chunk using fastbin_index.</span>
+            <span class="c1">// Check if the chunk size retrieved is consistent with the corresponding fastbin index.</span>
+            <span class="c1">// Calculate its size using chunksize based on the obtained victim.</span>
+            <span class="c1">// Calculate the index of the chunk using fastbin_index.</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span><span class="p">(</span><span class="n">fastbin_index</span><span class="p">(</span><span class="n">chunksize</span><span class="p">(</span><span class="n">victim</span><span class="p">))</span> <span class="o">!=</span> <span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
-
                 <span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;malloc(): memory corruption (fast)&quot;</span><span class="p">;</span>
 
             <span class="nl">errout</span><span class="p">:</span>
-
                 <span class="n">malloc_printerr</span><span class="p">(</span><span class="n">check_action</span><span class="p">,</span> <span class="n">errstr</span><span class="p">,</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">),</span> <span class="n">av</span><span class="p">);</span>
-
                 <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-
             <span class="p">}</span>
-
-<span class="c1">// Careful inspection. . Useful only when DEBUG</span>
+            <span class="c1">// Careful inspection. . Useful only when DEBUG</span>
             <span class="n">check_remalloced_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-
-<span class="c1">// Convert the obtained chunk to mem mode</span>
+            <span class="c1">// Convert the obtained chunk to mem mode</span>
             <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
-<span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
+            <span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
             <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
             <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
         <span class="p">}</span>
-
     <span class="p">}</span>
 </pre></div>
 
 <h3 id="small-bin">small bin<a class="headerlink" href="#small-bin" title="Permanent link">&para;</a></h3>
 <p>If the range of the obtained memory block is in the range of the small bin, then the following process is performed.</p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/*</span>
-
 <span class="cm">       If a small request, check regular bin.  Since these &quot;smallbins&quot;</span>
-
 <span class="cm">       hold one size each, no searching within bins is necessary.</span>
-
 <span class="cm">       (For a large request, we need to wait until unsorted chunks are</span>
-
 <span class="cm">       processed to find best fit. But for small ones, fits are exact</span>
-
 <span class="cm">       anyway, so we can check now, which is faster.)</span>
-
 <span class="cm">     */</span>
 
-
-
     <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">nb</span><span class="p">))</span> <span class="p">{</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">index</span> <span class="n">of</span> <span class="n">the</span> <span class="n">small</span> <span class="n">bin</span>
+        <span class="c1">// Get the index of the small bin</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">smallbin_index</span><span class="p">(</span><span class="n">nb</span><span class="p">);</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">chunk</span> <span class="n">pointer</span> <span class="n">in</span> <span class="n">the</span> <span class="n">small</span> <span class="n">bin</span>
-<span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
-<span class="c1">// first execute victim = last(bin) to get the last chunk of the small bin</span>
-<span class="c1">// If victim = bin , then the bin is empty.</span>
-<span class="c1">// If they are not equal, then there will be two cases</span>
+        <span class="c1">// Get the corresponding chunk pointer in the small bin</span>
+        <span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+        <span class="c1">// first execute victim = last(bin) to get the last chunk of the small bin</span>
+        <span class="c1">// If victim = bin , then the bin is empty.</span>
+        <span class="c1">// If they are not equal, then there will be two cases</span>
         <span class="k">if</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">last</span><span class="p">(</span><span class="n">bin</span><span class="p">))</span> <span class="o">!=</span> <span class="n">bin</span><span class="p">)</span> <span class="p">{</span>
-
-<span class="c1">// In the first case, the small bin has not yet been initialized.</span>
+            <span class="c1">// In the first case, the small bin has not yet been initialized.</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">victim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="cm">/* initialization check */</span>
-
-<span class="c1">// Perform initialization to merge chunks in fast bins</span>
-<span class="n">malloc_consolidate</span> <span class="p">(</span><span class="n">of</span><span class="p">);</span>
-<span class="c1">// In the second case, there is a free chunk in the small bin</span>
+                <span class="c1">// Perform initialization to merge chunks in fast bins</span>
+                <span class="n">malloc_consolidate</span> <span class="p">(</span><span class="n">of</span><span class="p">);</span>
+            <span class="c1">// In the second case, there is a free chunk in the small bin</span>
             <span class="k">else</span> <span class="p">{</span>
-
-<span class="c1">// Get the second-to-last chunk in the small bin.</span>
+                <span class="c1">// Get the second-to-last chunk in the small bin.</span>
                 <span class="n">bck</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
-
-<span class="c1">// Check if bck-&amp;gt;fd is victim, prevent forgery</span>
+                <span class="c1">// Check if bck-&gt;fd is victim, prevent forgery</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span><span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">!=</span> <span class="n">victim</span><span class="p">))</span> <span class="p">{</span>
-
                     <span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;malloc(): smallbin double linked list corrupted&quot;</span><span class="p">;</span>
-
                     <span class="k">goto</span> <span class="n">errout</span><span class="p">;</span>
-
                 <span class="p">}</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">inuse</span> <span class="n">bit</span> <span class="n">of</span> <span class="n">victim</span>
+                <span class="c1">// Set the corresponding inuse bit of victim</span>
                 <span class="n">set_inuse_bit_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Modify</span> <span class="n">the</span> <span class="n">small</span> <span class="n">bin</span> <span class="n">list</span><span class="p">,</span> <span class="n">take</span> <span class="n">the</span> <span class="n">last</span> <span class="n">chunk</span> <span class="n">of</span> <span class="n">the</span> <span class="n">small</span> <span class="n">bin</span>
-<span class="n">bin</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
+                <span class="c1">// Modify the small bin list, take the last chunk of the small bin</span>
+                <span class="n">bin</span><span class="o">-&gt;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
                 <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">bin</span><span class="p">;</span>
-
-<span class="c1">// If it is not main_arena, set the corresponding flag</span>
+                <span class="c1">// If it is not main_arena, set the corresponding flag</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="n">set_non_main_arena</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
-<span class="c1">// Detailed inspection, non-debug status has no effect</span>
-<span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-<span class="c1">// Convert the requested chunk to the corresponding mem state</span>
+                <span class="c1">// Detailed inspection, non-debug status has no effect</span>
+                <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="c1">// Convert the requested chunk to the corresponding mem state</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
-<span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
+                <span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
                 <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
                 <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
             <span class="p">}</span>
-
         <span class="p">}</span>
-
     <span class="p">}</span>
 </pre></div>
 
 <h3 id="large-bin">large bin<a class="headerlink" href="#large-bin" title="Permanent link">&para;</a></h3>
-<p>When the chunks in the fast bin and small bin cannot satisfy the user request chunk hour, it will consider whether it is a large bin. However, in the large bin, there is no direct scan of the chunk in the corresponding bin. Instead, the malloc_consolidate (see malloc_state related function) function is used to process the chunk in the fast bin, and the chunks that may be merged are merged and then placed. In the unsorted bin, if you can&#39;t merge, put it directly into the unsorted bin, and then process it in the big loop below. <strong> Why not just take the large chunk directly from the corresponding bin? This is the mechanism of ptmalloc, which merges fragment chunks in the heap before allocating large chunks to reduce fragmentation in the heap. </strong></p>
+<p>When the chunks in the fast bin and small bin cannot satisfy the user request chunk hour, it will consider whether it is a large bin. However, in the large bin, there is no direct scan of the chunk in the corresponding bin. Instead, the malloc_consolidate (see malloc_state related function) function is used to process the chunk in the fast bin, and the chunks that may be merged are merged and then placed. In the unsorted bin, if you can't merge, put it directly into the unsorted bin, and then process it in the big loop below. <strong> Why not just take the large chunk directly from the corresponding bin? This is the mechanism of ptmalloc, which merges fragment chunks in the heap before allocating large chunks to reduce fragmentation in the heap. </strong></p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/*</span>
-
 <span class="cm">       If this is a large request, consolidate fastbins before continuing.</span>
-
 <span class="cm">       While it might look excessive to kill all fastbins before</span>
-
 <span class="cm">       even seeing if there is space available, this avoids</span>
-
 <span class="cm">       fragmentation problems normally associated with fastbins.</span>
-
 <span class="cm">       Also, in practice, programs tend to have runs of either small or</span>
-
 <span class="cm">       large requests, but less often mixtures, so consolidation is not</span>
-
 <span class="cm">       invoked all that often in most programs. And the programs that</span>
-
 <span class="cm">       it is called frequently in otherwise tend to fragment.</span>
-
 <span class="cm">     */</span>
 
-
-
     <span class="k">else</span> <span class="p">{</span>
-
-<span class="c1">// Get the subscript of the large bin.</span>
+        <span class="c1">// Get the subscript of the large bin.</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">largebin_index</span><span class="p">(</span><span class="n">nb</span><span class="p">);</span>
-
-<span class="c1">// If there is fastbin, it will handle fastbin</span>
-<span class="k">if</span> <span class="p">(</span><span class="n">have_fastchunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="n">malloc_consolidate</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
+        <span class="c1">// If there is fastbin, it will handle fastbin</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">have_fastchunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="n">malloc_consolidate</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
     <span class="p">}</span>
 </pre></div>
 
-<h3 id="big-loop-traversing-unsortedbin">Big loop - traversing unsortedbin<a class="headerlink" href="#big-loop-traversing-unsortedbin" title="Permanent link">&para;</a></h3>
+<h3 id="big-loop-traversing-unsorted-bin">Big loop - traversing unsorted bin<a class="headerlink" href="#big-loop-traversing-unsorted-bin" title="Permanent link">&para;</a></h3>
 <p>**If the program is executed here, it means that there is no chunk in the bin (fast bin, small bin) that is exactly the same as the chunk size, which can directly satisfy the demand, but the large chunk is processed in this big loop.</p>
 <p>In the next cycle, the main operations are as follows</p>
 <ul>
@@ -5389,440 +5286,292 @@
 <li>If not, put it in the corresponding bin.</li>
 <li>Try to allocate the memory required by the user from the large bin</li>
 </ul>
-<p>This part is a big loop, this is to try to redistribute the small bin chunk, because we will first use the large bin, top chunk to try to satisfy the user&#39;s request, but if it is not satisfied, because we did not assign it successfully Small bin, we didn&#39;t merge the chunks in the fast bin, so we&#39;ll merge the fast bin chunks and use a big loop to try to allocate the small bin chunk again.</p>
+<p>This part is a big loop, this is to try to redistribute the small bin chunk, because we will first use the large bin, top chunk to try to satisfy the user's request, but if it is not satisfied, because we did not assign it successfully Small bin, we didn't merge the chunks in the fast bin, so we'll merge the fast bin chunks and use a big loop to try to allocate the small bin chunk again.</p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/*</span>
-
 <span class="cm">       Process recently freed or remaindered chunks, taking one only if</span>
-
 <span class="cm">       it is exact fit, or, if this a small request, the chunk is remainder from</span>
-
 <span class="cm">       the most recent non-exact fit.  Place other traversed chunks in</span>
-
 <span class="cm">       bins.  Note that this step is the only place in any routine where</span>
-
 <span class="cm">       chunks are placed in bins.</span>
 
-
-
 <span class="cm">       The outer loop here is needed because we might not realize until</span>
-
 <span class="cm">       near the end of malloc that we should have consolidated, so must</span>
-
 <span class="cm">       do so and retry. This happens at most once, and only when we would</span>
-
 <span class="cm">       otherwise need to expand memory to service a &quot;small&quot; request.</span>
-
 <span class="cm">     */</span>
 
-
-
     <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
-
-<span class="kt">int</span> <span class="n">iters</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">iters</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 </pre></div>
 
-<h4 id="unsort-bin-traversing">unsort bin Traversing<a class="headerlink" href="#unsort-bin-traversing" title="Permanent link">&para;</a></h4>
+<h4 id="unsorted-bin-traversing">unsorted bin Traversing<a class="headerlink" href="#unsorted-bin-traversing" title="Permanent link">&para;</a></h4>
 <p>Consider the unsorted bin first, then consider the last remainder, but there are exceptions to the request for the small bin chunk.</p>
 <p><strong> Note that the traversal order of unsorted bin is bk. </strong></p>
-<div class="codehilite"><pre><span></span><span class="c1">// If the unsorted bin is not empty</span>
+<div class="codehilite"><pre><span></span>        <span class="c1">// If the unsorted bin is not empty</span>
         <span class="c1">// First In First Out</span>
-
-<span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">bk</span><span class="p">)</span><span class="o">!</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="p">{</span>
-<span class="c1">// victim is the last chunk of unsorted bin</span>
-<span class="c1">// bck is the penultimate chunk of unsorted bin</span>
+        <span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bk</span><span class="p">)</span><span class="o">!</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="p">{</span>
+            <span class="c1">// victim is the last chunk of unsorted bin</span>
+            <span class="c1">// bck is the penultimate chunk of unsorted bin</span>
             <span class="n">bck</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
 
-<span class="o">/</span> <span class="o">/</span> <span class="n">Determine</span> <span class="n">whether</span> <span class="n">the</span> <span class="n">obtained</span> <span class="n">chunk</span> <span class="n">meets</span> <span class="n">the</span> <span class="n">requirements</span><span class="p">,</span> <span class="n">can</span> <span class="n">not</span> <span class="n">be</span> <span class="n">too</span> <span class="n">small</span><span class="p">,</span> <span class="n">can</span> <span class="n">not</span> <span class="n">be</span> <span class="n">too</span> <span class="n">large</span>
-<span class="c1">// The size of the general system_mem is 132K</span>
+            <span class="c1">// Determine whether the obtained chunk meets the requirements, can not be too small, can not be too large</span>
+            <span class="c1">// The size of the general system_mem is 132K</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span><span class="p">(</span><span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
-
                 <span class="n">__builtin_expect</span><span class="p">(</span><span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-
                 <span class="n">malloc_printerr</span><span class="p">(</span><span class="n">check_action</span><span class="p">,</span> <span class="s">&quot;malloc(): memory corruption&quot;</span><span class="p">,</span>
-
-<span class="n">chunk2mem</span> <span class="p">(</span><span class="n">victim</span><span class="p">),</span> <span class="n">off</span><span class="p">);</span>
-<span class="c1">// Get the chunk size corresponding to the victim.</span>
+                                <span class="n">chunk2mem</span> <span class="p">(</span><span class="n">victim</span><span class="p">),</span> <span class="n">off</span><span class="p">);</span>
+            <span class="c1">// Get the chunk size corresponding to the victim.</span>
             <span class="n">size</span> <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
 </pre></div>
 
 <h5 id="small-request">small request<a class="headerlink" href="#small-request" title="Permanent link">&para;</a></h5>
-<p>If the user&#39;s request is a small bin chunk, then we first consider the last remainder. If the last remainder is the only one in the unsorted bin, and the size of the last remainder is enough to be a chunk, why is there no equal sign**?</p>
+<p>If the user's request is a small bin chunk, then we first consider the last remainder. If the last remainder is the only one in the unsorted bin, and the size of the last remainder is enough to be a chunk, why is there no equal sign**?</p>
 <div class="codehilite"><pre><span></span>            <span class="cm">/*</span>
-
 <span class="cm">               If a small request, try to use last remainder if it is the</span>
-
 <span class="cm">               only chunk in unsorted bin.  This helps promote locality for</span>
-
 <span class="cm">               runs of consecutive small requests. This is the only</span>
-
 <span class="cm">               exception to best-fit, and applies only when there is</span>
-
 <span class="cm">               no exact fit for a small chunk.</span>
-
 <span class="cm">             */</span>
 
-
-
             <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">bck</span> <span class="o">==</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
-
-<span class="n">victim</span> <span class="o">==</span> <span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">last_remainder</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span>
+                <span class="n">victim</span> <span class="o">==</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">last_remainder</span> <span class="o">&amp;&amp;</span>
                 <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span> <span class="o">+</span> <span class="n">MINSIZE</span><span class="p">))</span> <span class="p">{</span>
-
                 <span class="cm">/* split and reattach remainder */</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">new</span> <span class="n">retriever</span>
+                <span class="c1">// Get the size of the new retriever</span>
                 <span class="n">remainder_size</span>          <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
-
-<span class="c1">// Get the location of the new retriever</span>
+                <span class="c1">// Get the location of the new retriever</span>
                 <span class="n">remainder</span>               <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-
-<span class="c1">// update the unsorted bin</span>
-<span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-<span class="c1">// update the last_remainder recorded in av</span>
-<span class="n">av</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">last_remainder</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-<span class="o">/</span> <span class="o">/</span> <span class="n">Update</span> <span class="n">the</span> <span class="n">pointer</span> <span class="n">of</span> <span class="n">the</span> <span class="n">last</span> <span class="n">remainder</span>
+                <span class="c1">// update the unsorted bin</span>
+                <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
+                <span class="c1">// update the last_remainder recorded in av</span>
+                <span class="n">av</span><span class="o">-&gt;</span> <span class="n">last_remainder</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
+                <span class="c1">// Update the pointer of the last remainder</span>
                 <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
-
                 <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">remainder_size</span><span class="p">))</span> <span class="p">{</span>
-
                     <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-
                     <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-
                 <span class="p">}</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">victim</span><span class="o">&amp;</span><span class="err">#</span><span class="mi">39</span><span class="p">;</span><span class="n">s</span> <span class="n">head</span><span class="p">,</span>
+                <span class="c1">// Set the victim&#39;s head,</span>
                 <span class="n">set_head</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
-
-<span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
-<span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">head</span> <span class="n">of</span> <span class="n">the</span> <span class="n">remainder</span>
+                                    <span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
+                <span class="c1">// Set the head of the remainder</span>
                 <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
-<span class="c1">// Set the prev_size field of the record remainder size because the retriever is idle at this time.</span>
+                <span class="c1">// Set the prev_size field of the record remainder size because the retriever is idle at this time.</span>
                 <span class="n">set_foot</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span><span class="p">);</span>
-
-<span class="c1">// Detailed inspection, no effect in non-debug mode</span>
-<span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-<span class="c1">// Convert victim from chunk mode to mem mode</span>
+                <span class="c1">// Detailed inspection, no effect in non-debug mode</span>
+                <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="c1">// Convert victim from chunk mode to mem mode</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
-<span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
+                <span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
                 <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
                 <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
             <span class="p">}</span>
 </pre></div>
 
 <h5 id="initial-take-out">Initial take out<a class="headerlink" href="#initial-take-out" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>            <span class="cm">/* remove from unsorted list */</span>
-
-<span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-<span class="n">bck</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
+            <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
+            <span class="n">bck</span><span class="o">-&gt;</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
 </pre></div>
 
 <h5 id="exact-fit">exact fit<a class="headerlink" href="#exact-fit" title="Permanent link">&para;</a></h5>
 <p>If the chunk size taken from the unsorted bin is just right, use it directly. Here we should have allocated the appropriate chunks after the merger.</p>
 <div class="codehilite"><pre><span></span>            <span class="cm">/* Take now instead of binning if exact fit */</span>
-
             <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">==</span> <span class="n">nb</span><span class="p">)</span> <span class="p">{</span>
-
                 <span class="n">set_inuse_bit_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
-
                 <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="n">set_non_main_arena</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
-<span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
                 <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
                 <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
             <span class="p">}</span>
 </pre></div>
 
 <h5 id="place-chunk-in-small-bin">place chunk in small bin<a class="headerlink" href="#place-chunk-in-small-bin" title="Permanent link">&para;</a></h5>
 <p>Put the extracted chunk into the corresponding small bin.</p>
 <div class="codehilite"><pre><span></span>            <span class="cm">/* place chunk in bin */</span>
-
-
             <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">size</span><span class="p">))</span> <span class="p">{</span>
-
                 <span class="n">victim_index</span> <span class="o">=</span> <span class="n">smallbin_index</span><span class="p">(</span><span class="n">size</span><span class="p">);</span>
-
-<span class="n">bck</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
+                <span class="n">bck</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
                 <span class="n">fwd</span>          <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
 </pre></div>
 
 <h5 id="place-chunk-in-large-bin">place chunk in large bin<a class="headerlink" href="#place-chunk-in-large-bin" title="Permanent link">&para;</a></h5>
 <p>Put the fetched chunks into the corresponding large bin.</p>
 <div class="codehilite"><pre><span></span>            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-
-<span class="c1">// large bin range</span>
+                <span class="c1">// large bin range</span>
                 <span class="n">victim_index</span> <span class="o">=</span> <span class="n">largebin_index</span><span class="p">(</span><span class="n">size</span><span class="p">);</span>
-
-<span class="n">Bck</span> <span class="o">=</span> <span class="n">bin_at</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span> <span class="c1">// the head of the current large bin</span>
+                <span class="n">bck</span> <span class="o">=</span> <span class="n">bin_at</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span> <span class="c1">// the head of the current large bin</span>
                 <span class="n">fwd</span>          <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
 
-
-
                 <span class="cm">/* maintain large bins in sorted order */</span>
-
-<span class="cm">/* From here we can conclude that largebin is sorted in descending order by fd_nextsize.</span>
-<span class="cm">The same size chunk, later will only be inserted into the same size chunk before.</span>
-<span class="cm">It is easy to understand without modifying the same size fd/bk_nextsize.</span>
-<span class="cm">Can reduce overhead. In addition, the bin header does not participate in the nextsize link. */</span>
-<span class="c1">// If the large bin list is not empty</span>
+                <span class="cm">/* From here we can conclude that largebin is sorted in descending order by fd_nextsize.</span>
+<span class="cm">                The same size chunk, later will only be inserted into the same size chunk before.</span>
+<span class="cm">                It is easy to understand without modifying the same size fd/bk_nextsize.</span>
+<span class="cm">                Can reduce overhead. In addition, the bin header does not participate in the nextsize link. */</span>
+                <span class="c1">// If the large bin list is not empty</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">fwd</span> <span class="o">!=</span> <span class="n">bck</span><span class="p">)</span> <span class="p">{</span>
-
                     <span class="cm">/* Or with inuse bit to speed comparisons */</span>
-
-<span class="c1">// Accelerate comparisons, not only should this be considered, because the chunks in the list will set this bit.</span>
+                    <span class="c1">// Accelerate comparisons, not only should this be considered, because the chunks in the list will set this bit.</span>
                     <span class="n">size</span> <span class="o">|=</span> <span class="n">PREV_INUSE</span><span class="p">;</span>
-
                     <span class="cm">/* if smaller than smallest, bypass loop below */</span>
-
-<span class="c1">// bck-bk stores the smallest chunk in the corresponding large bin.</span>
-<span class="c1">// If the traversed chunk is smaller than the current minimum, then it only needs to be inserted at the end of the list.</span>
-<span class="c1">// Determine if bck-&amp;gt;bk is in main arena.</span>
+                    <span class="c1">// bck-&gt;bk stores the smallest chunk in the corresponding large bin.</span>
+                    <span class="c1">// If the traversed chunk is smaller than the current minimum, then it only needs to be inserted at the end of the list.</span>
+                    <span class="c1">// Determine if bck-&gt;bk is in main arena.</span>
                     <span class="n">assert</span><span class="p">(</span><span class="n">chunk_main_arena</span><span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">));</span>
-
                     <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">&lt;</span>
-
                         <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">))</span> <span class="p">{</span>
-
-<span class="c1">// Let fwd point to the big bin header</span>
+                        <span class="c1">// Let fwd point to the big bin header</span>
                         <span class="n">fwd</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-
-<span class="c1">// Let bck point to the largin bin tail chunk</span>
+                        <span class="c1">// Let bck point to the largin bin tail chunk</span>
                         <span class="n">bck</span> <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
-
-<span class="c1">// victim&amp;#39;s fd_nextsize points to the first chunk of largin bin</span>
+                        <span class="c1">// victim&#39;s fd_nextsize points to the first chunk of largin bin</span>
                         <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
-
-<span class="c1">// victim&amp;#39;s bk_nextsize points to the bk_nextsize pointed to by the first chunk of the original list.</span>
+                        <span class="c1">// victim&#39;s bk_nextsize points to the bk_nextsize pointed to by the first chunk of the original list.</span>
                         <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
-
-<span class="c1">// The bk_nextsize of the first chunk of the original list points to the victim</span>
-<span class="c1">// The original fd_nextsize pointing to the first chunk of the list points to victim</span>
+                        <span class="c1">// The bk_nextsize of the first chunk of the original list points to the victim</span>
+                        <span class="c1">// The original fd_nextsize pointing to the first chunk of the list points to victim</span>
                         <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span>
-
                             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-
                     <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-
-<span class="c1">// The size of the victim currently being inserted is larger than the smallest chunk</span>
-<span class="c1">// Determine if fwd is in main arena</span>
+                        <span class="c1">// The size of the victim currently being inserted is larger than the smallest chunk</span>
+                        <span class="c1">// Determine if fwd is in main arena</span>
                         <span class="n">assert</span><span class="p">(</span><span class="n">chunk_main_arena</span><span class="p">(</span><span class="n">fwd</span><span class="p">));</span>
-
-<span class="c1">// Start from the head of the list to find a chunk that is no bigger than the victim.</span>
+                        <span class="c1">// Start from the head of the list to find a chunk that is no bigger than the victim.</span>
                         <span class="k">while</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">fwd</span><span class="p">))</span> <span class="p">{</span>
-
                             <span class="n">fwd</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span><span class="p">;</span>
-
                             <span class="n">assert</span><span class="p">(</span><span class="n">chunk_main_arena</span><span class="p">(</span><span class="n">fwd</span><span class="p">));</span>
-
                         <span class="p">}</span>
-
-<span class="c1">// If you find a chunk that is as big as the victim,</span>
-<span class="c1">// Then insert the chunk directly after the chunk and don&amp;#39;t modify the nextsize pointer.</span>
+                        <span class="c1">// If you find a chunk that is as big as the victim,</span>
+                        <span class="c1">// Then insert the chunk directly after the chunk and don&#39;t modify the nextsize pointer.</span>
                         <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">size</span> <span class="o">==</span>
-
                             <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">fwd</span><span class="p">))</span>
-
                             <span class="cm">/* Always insert in the second position.  */</span>
-
                             <span class="n">fwd</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
-
                         <span class="k">else</span> <span class="p">{</span>
-
-<span class="c1">// If the chunk found is not the same size as the current victim</span>
-<span class="c1">// Then you need to construct a nextsize doubly linked list.</span>
+                            <span class="c1">// If the chunk found is not the same size as the current victim</span>
+                            <span class="c1">// Then you need to construct a nextsize doubly linked list.</span>
                             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span>              <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-
                             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span>              <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
-
                             <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span>                 <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-
                             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-
                         <span class="p">}</span>
-
                         <span class="n">bck</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
-
                     <span class="p">}</span>
-
                 <span class="p">}</span> <span class="k">else</span>
-
-<span class="c1">// If it is empty, simply make fd_nextsize and bk_nextsize form a doubly linked list.</span>
+                    <span class="c1">// If it is empty, simply make fd_nextsize and bk_nextsize form a doubly linked list.</span>
                     <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
 
             <span class="p">}</span>
 </pre></div>
 
 <h5 id="final-take-out">Final take out<a class="headerlink" href="#final-take-out" title="Permanent link">&para;</a></h5>
-<div class="codehilite"><pre><span></span><span class="c1">// Put it in the corresponding bin to form bck&amp;lt;--&amp;gt;victim&amp;lt;--&amp;gt;fwd.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Put it in the corresponding bin to form bck&lt;--&gt;victim&lt;--&gt;fwd.</span>
 <span class="n">mark_bin</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-
             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-
             <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span>    <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-
             <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span>    <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
 </pre></div>
 
 <h5 id="while-iterations">while Iterations<a class="headerlink" href="#while-iterations" title="Permanent link">&para;</a></h5>
 <p>While exits up to 10,000 iterations and exits.</p>
-<div class="codehilite"><pre><span></span>            <span class="c1">//</span>
-
-<span class="cp">## define MAX_ITERS 10000</span>
-<span class="k">if</span> <span class="p">(</span><span class="o">++</span> <span class="n">iters</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="o">=</span> <span class="n">MAX_ITERS</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
-        <span class="p">}</span>
+<div class="codehilite"><pre><span></span>            <span class="c1">// # define MAX_ITERS 10000</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">++</span> <span class="n">iters</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">MAX_ITERS</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+                    <span class="p">}</span>
 </pre></div>
 
 <h4 id="large-chunk">large chunk<a class="headerlink" href="#large-chunk" title="Permanent link">&para;</a></h4>
 <p><strong>Note: It may be very strange, why not go to see if the small chunk meets the new requirements first? This is because the small bin has already been judged before the loop. If there is one, the chunk will appear after the merge. But outside the big loop, the large chunk simply finds its index, so it feels reasonable to judge directly here, and also to find larger chunks for the following. </strong></p>
 <p>If the requested chunk is in the large chunk range, it is scanned from small to large in the corresponding bin to find the first one.</p>
 <div class="codehilite"><pre><span></span>        <span class="cm">/*</span>
-
 <span class="cm">           If a large request, scan through the chunks of current bin in</span>
-
 <span class="cm">           sorted order to find smallest that fits.  Use the skip list for this.</span>
-
 <span class="cm">         */</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">nb</span><span class="p">))</span> <span class="p">{</span>
-
-<span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+            <span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
             <span class="cm">/* skip scan if empty or largest chunk is too small */</span>
-
-<span class="c1">// If the corresponding bin is empty or the chunks in it are the smallest, skip it</span>
-<span class="c1">// first(bin)=bin-&amp;gt;fd means the largest chunk in the current list.</span>
+            <span class="c1">// If the corresponding bin is empty or the chunks in it are the smallest, skip it</span>
+            <span class="c1">// first(bin)=bin-&gt;fd means the largest chunk in the current list.</span>
             <span class="k">if</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">first</span><span class="p">(</span><span class="n">bin</span><span class="p">))</span> <span class="o">!=</span> <span class="n">bin</span> <span class="o">&amp;&amp;</span>
-
                 <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&gt;=</span>
-
                     <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span><span class="p">))</span> <span class="p">{</span>
-
-<span class="c1">// Reverse traversing the list until the first chunk is found that is not less than the desired chunk size</span>
+                <span class="c1">// Reverse traversing the list until the first chunk is found that is not less than the desired chunk size</span>
                 <span class="n">victim</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
-
                 <span class="k">while</span> <span class="p">(((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">victim</span><span class="p">))</span> <span class="o">&lt;</span>
-
                         <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span><span class="p">)))</span>
-
                     <span class="n">victim</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
 
-
-
                 <span class="cm">/* Avoid removing the first entry for a size so that the skip</span>
-
 <span class="cm">                   list does not have to be rerouted.  */</span>
-<span class="c1">// If the final chunk is not the last chunk in the bin, and the chunk is in front of the chunk</span>
-<span class="c1">// The size is the same, then we take the chunk in front of it, so we can avoid adjusting bk_nextsize, fd_nextsize</span>
-<span class="c1">// linked list. Because only one chunk of the same size will be chained to the nextsize chain.</span>
+                <span class="c1">// If the final chunk is not the last chunk in the bin, and the chunk is in front of the chunk</span>
+                <span class="c1">// The size is the same, then we take the chunk in front of it, so we can avoid adjusting bk_nextsize, fd_nextsize</span>
+                <span class="c1">// linked list. Because only one chunk of the same size will be chained to the nextsize chain.</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">victim</span> <span class="o">!=</span> <span class="n">last</span><span class="p">(</span><span class="n">bin</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
-
                     <span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">==</span> <span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">))</span>
-
                     <span class="n">victim</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Calculate</span> <span class="n">the</span> <span class="n">remaining</span> <span class="n">size</span> <span class="n">after</span> <span class="n">the</span> <span class="n">allocation</span>
+                <span class="c1">// Calculate the remaining size after the allocation</span>
                 <span class="n">remainder_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
-
-<span class="c1">// unlink</span>
-<span class="n">unlink</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">bck</span><span class="p">,</span> <span class="n">fwd</span><span class="p">);</span>
-
-
+                <span class="c1">// unlink</span>
+                <span class="n">unlink</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">bck</span><span class="p">,</span> <span class="n">fwd</span><span class="p">);</span>
                 <span class="cm">/* Exhaust */</span>
-
-<span class="c1">// The remaining size is not enough to be a block</span>
-<span class="c1">// Very curious what will happen next?</span>
+                <span class="c1">// The remaining size is not enough to be a block</span>
+                <span class="c1">// Very curious what will happen next?</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">remainder_size</span> <span class="o">&lt;</span> <span class="n">MINSIZE</span><span class="p">)</span> <span class="p">{</span>
-
                     <span class="n">set_inuse_bit_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
-
                     <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="n">set_non_main_arena</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
                 <span class="p">}</span>
-
                 <span class="cm">/* Split */</span>
-
-<span class="c1">// The remaining size can also be split as a chunk.</span>
+                <span class="c1">// The remaining size can also be split as a chunk.</span>
                 <span class="k">else</span> <span class="p">{</span>
-
-<span class="c1">// Get the pointer to the remaining chunk, called the reducer</span>
+                    <span class="c1">// Get the pointer to the remaining chunk, called the reducer</span>
                     <span class="n">remainder</span> <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-
                     <span class="cm">/* We cannot assume the unsorted list is empty and therefore</span>
-
 <span class="cm">                       have to perform a complete insert here.  */</span>
-
-<span class="c1">// Insert in unsorted bin</span>
-<span class="n">bck</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
+                    <span class="c1">// Insert in unsorted bin</span>
+                    <span class="n">bck</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
                     <span class="n">fwd</span> <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
 
-<span class="c1">// Determine if the unsorted bin is destroyed.</span>
+                    <span class="c1">// Determine if the unsorted bin is destroyed.</span>
                     <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span><span class="p">(</span><span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">!=</span> <span class="n">bck</span><span class="p">))</span> <span class="p">{</span>
-
                         <span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;malloc(): corrupted unsorted chunks&quot;</span><span class="p">;</span>
-
                         <span class="k">goto</span> <span class="n">errout</span><span class="p">;</span>
-
                     <span class="p">}</span>
-
                     <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-
                     <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-
                     <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span>       <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-
                     <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span>       <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-
-<span class="c1">// If it is not in the range of small bin, set the corresponding field</span>
+                    <span class="c1">// If it is not in the range of small bin, set the corresponding field</span>
                     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">remainder_size</span><span class="p">))</span> <span class="p">{</span>
-
                         <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-
                         <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-
                     <span class="p">}</span>
 
-<span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">flag</span> <span class="n">of</span> <span class="n">the</span> <span class="n">assigned</span> <span class="n">chunk</span>
+                    <span class="c1">// Set the flag of the assigned chunk</span>
                     <span class="n">set_head</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span>
-
                              <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
-
-<span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
-
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">last</span> <span class="n">chunk</span> <span class="n">of</span> <span class="n">the</span> <span class="n">remainder</span><span class="p">,</span> <span class="n">that</span> <span class="n">is</span><span class="p">,</span> <span class="n">the</span> <span class="n">usage</span> <span class="n">status</span> <span class="n">of</span> <span class="n">the</span> <span class="n">allocated</span> <span class="n">chunk</span>
-<span class="c1">// The rest of the rules are inherited directly from above.</span>
+                                <span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
+                    <span class="c1">// Set the last chunk of the remainder, that is, the usage status of the allocated chunk</span>
+                    <span class="c1">// The rest of the rules are inherited directly from above.</span>
                     <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">remainder</span>
+                    <span class="c1">// Set the size of the remainder</span>
                     <span class="n">set_foot</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span><span class="p">);</span>
-
                 <span class="p">}</span>
-
-<span class="c1">// an examination</span>
-<span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-<span class="o">/</span> <span class="o">/</span> <span class="n">Convert</span> <span class="n">to</span> <span class="n">mem</span> <span class="n">state</span>
+                <span class="c1">// an examination</span>
+                <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="c1">// Convert to mem state</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
-<span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
+                <span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
                 <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
                 <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
             <span class="p">}</span>
-
         <span class="p">}</span>
 </pre></div>
 
 <h4 id="looking-for-a-larger-chunk">Looking for a larger chunk<a class="headerlink" href="#looking-for-a-larger-chunk" title="Permanent link">&para;</a></h4>
-<p>If you get here, it means that for the chunks that the user needs, you can&#39;t get the chunk directly from the corresponding bin, so we need to find the faster bin, small bin or large bin larger than the current bin.</p>
+<p>If you get here, it means that for the chunks that the user needs, you can't get the chunk directly from the corresponding bin, so we need to find the faster bin, small bin or large bin larger than the current bin.</p>
 <div class="codehilite"><pre><span></span>        <span class="cm">/*</span>
 
 <span class="cm">           Search for a chunk by scanning bins, starting with next largest</span>
@@ -5857,7 +5606,7 @@
         <span class="n">block</span> <span class="o">=</span> <span class="n">idx2block</span><span class="p">(</span><span class="n">idx</span><span class="p">);</span>
 
 <span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">mapping</span> <span class="n">corresponding</span> <span class="n">to</span> <span class="n">the</span> <span class="n">current</span> <span class="n">block</span> <span class="n">size</span><span class="p">,</span> <span class="n">here</span> <span class="n">you</span> <span class="n">can</span> <span class="n">know</span> <span class="n">whether</span> <span class="n">there</span> <span class="n">is</span> <span class="n">a</span> <span class="n">free</span> <span class="n">block</span> <span class="n">in</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">bin</span>
-<span class="n">map</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">binmap</span> <span class="p">[</span><span class="n">block</span><span class="p">];</span>
+<span class="n">map</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span> <span class="n">binmap</span> <span class="p">[</span><span class="n">block</span><span class="p">];</span>
         <span class="c1">// #define idx2bit(i) ((1U &lt;&lt; ((i) &amp; ((1U &lt;&lt; BINMAPSHIFT) - 1))))</span>
 
 <span class="c1">// Set the bit corresponding to idx to 1, and the other bits to 0.</span>
@@ -5871,14 +5620,14 @@
 
 <span class="cm">             */</span>
 
-<span class="c1">// If bit&amp;gt;map, it means that there is no free block in the map that is larger than the current required chunk.</span>
+<span class="c1">// If bit&gt;map, it means that there is no free block in the map that is larger than the current required chunk.</span>
 <span class="c1">// If the bit is 0, then the parameter brought by idx2bit above is 0.</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">bit</span> <span class="o">&gt;</span> <span class="n">map</span> <span class="o">||</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
 
                 <span class="k">do</span> <span class="p">{</span>
 
 <span class="c1">// Find the next block until its corresponding map is not 0.</span>
-<span class="c1">// If it doesn&amp;#39;t exist, you can only use the top chunk.</span>
+<span class="c1">// If it doesn&#39;t exist, you can only use the top chunk.</span>
                     <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">block</span> <span class="o">&gt;=</span> <span class="n">BINMAPSIZE</span><span class="p">)</span> <span class="cm">/* out of bins */</span>
 
                         <span class="k">goto</span> <span class="n">use_top</span><span class="p">;</span>
@@ -5887,7 +5636,7 @@
 
 <span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">its</span> <span class="n">corresponding</span> <span class="n">bin</span><span class="p">,</span> <span class="n">because</span> <span class="n">the</span> <span class="n">chunk</span> <span class="n">size</span> <span class="n">in</span> <span class="n">the</span> <span class="n">map</span> <span class="n">is</span> <span class="n">larger</span> <span class="n">than</span> <span class="n">the</span> <span class="n">required</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">and</span>
 <span class="c1">// map itself is not 0, so there must be a chunk that meets the requirements.</span>
-<span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="p">(</span><span class="n">block</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">BINMAPSHIFT</span><span class="p">));</span>
+<span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="p">(</span><span class="n">block</span> <span class="o">&lt;&lt;</span> <span class="n">BINMAPSHIFT</span><span class="p">));</span>
                 <span class="n">bit</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
 
             <span class="p">}</span>
@@ -6020,7 +5769,7 @@
 
                              <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
 
-<span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
+<span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
 <span class="c1">// Set the usage status of the remainder. Why is this?</span>
                     <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
 
@@ -6075,7 +5824,7 @@
 <span class="cm">         */</span>
 
 <span class="c1">// Get the current top chunk and calculate its corresponding size</span>
-<span class="n">victim</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">top</span><span class="p">;</span>
+<span class="n">victim</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span><span class="p">;</span>
         <span class="n">size</span>   <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
 
 <span class="c1">// If the top chunk size still satisfies the minimum size of chunk after splitting, then you can split directly.</span>
@@ -6085,12 +5834,12 @@
 
             <span class="n">remainder</span>      <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
 
-<span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">top</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-<span class="c1">// Here, set PREV_INUSE because the chunk of the top chunk is bound to be fastbin.</span>
-<span class="c1">// The top chunk is merged, so PREV_INUSE is set here.</span>
+<span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
+<span class="c1">// Here, set PREV_INUSE because if the previous chunk of the top chunk is bound to be fastbin,</span>
+<span class="c1">// The top chunk will merged, so PREV_INUSE is set here.</span>
             <span class="n">set_head</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
 
-<span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
+<span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
             <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
 
 
@@ -6332,7 +6081,7 @@
 <span class="k">if</span> <span class="p">(</span><span class="n">of</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span>
       <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">mp_</span><span class="p">.</span><span class="n">mmap_threshold</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
 
-<span class="p">(</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps_max</span><span class="p">))</span> <span class="p">{</span>
+<span class="p">(</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps</span> <span class="o">&lt;</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps_max</span><span class="p">))</span> <span class="p">{</span>
     <span class="kt">char</span> <span class="o">*</span><span class="n">mm</span><span class="p">;</span> <span class="cm">/* return value from mmap call*/</span>
 
 
@@ -6474,7 +6223,7 @@
 
 
 
-<span class="n">old_top</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">top</span><span class="p">;</span>
+<span class="n">old_top</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span><span class="p">;</span>
   <span class="n">old_size</span> <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">old_top</span><span class="p">);</span>
 
   <span class="n">old_end</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span><span class="p">));</span>
@@ -6504,10 +6253,10 @@
 
 <p>This check requires that any one of the conditions be met</p>
 <ol>
-<li><code>old_top == initial_top(av) &amp;amp;&amp;amp; old_size == 0</code>, ie if it is the first time, the heap size needs to be 0.</li>
+<li><code>old_top == initial_top(av) &amp;&amp; old_size == 0</code>, ie if it is the first time, the heap size needs to be 0.</li>
 <li>The new heap, then</li>
-<li><code>(unsigned long)(old_size) &amp;gt;= MINSIZE &amp;amp;&amp;amp; prev_inuse(old_top)</code>, the heap size should be no smaller than <code>MINSIZE</code>, and the previous heap block should be in use.</li>
-<li><code>((unsigned long)old_end &amp;amp; (pagesize - 1)) == 0)</code>, the end address of the heap should be page-aligned. Since the page alignment size defaults to 0x1000, the lower 12 bits need to be 0.</li>
+<li><code>(unsigned long)(old_size) &gt;= MINSIZE &amp;&amp; prev_inuse(old_top)</code>, the heap size should be no smaller than <code>MINSIZE</code>, and the previous heap block should be in use.</li>
+<li><code>((unsigned long)old_end &amp;(pagesize - 1)) == 0)</code>, the end address of the heap should be page-aligned. Since the page alignment size defaults to 0x1000, the lower 12 bits need to be 0.</li>
 </ol>
 <h3 id="check-old-heap-information-2">Check old heap information 2<a class="headerlink" href="#check-old-heap-information-2" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span>  <span class="cm">/* Precondition: not enough current space to satisfy nb request */</span>
@@ -6524,7 +6273,7 @@
 <p><code>nb</code> should be the byte that has been added to the chunk header. Why add <code>MINSIZE</code>? This is because the size of the top chunk should at least reserve the MINSIZE space for easy merging.</p>
 <h3 id="non-main_arena">Non main_arena<a class="headerlink" href="#non-main_arena" title="Permanent link">&para;</a></h3>
 <p>This is not the focus of care for the time being, and it will not be analyzed for the time being.</p>
-<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">by</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">main_arena</span><span class="p">)</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">by</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">heap_info</span> <span class="o">*</span><span class="n">old_heap</span><span class="p">,</span> <span class="o">*</span><span class="n">heap</span><span class="p">;</span>
 
     <span class="kt">size_t</span> <span class="n">old_heap_size</span><span class="p">;</span>
@@ -6553,10 +6302,10 @@
 
       <span class="cm">/* Use a newly allocated heap.  */</span>
 
-<span class="n">heap</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">ar_ptr</span> <span class="o">=</span> <span class="n">off</span><span class="p">;</span>
+<span class="n">heap</span><span class="o">-&gt;</span> <span class="n">ar_ptr</span> <span class="o">=</span> <span class="n">off</span><span class="p">;</span>
       <span class="n">heap</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">old_heap</span><span class="p">;</span>
 
-<span class="n">of</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">heap</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">size</span><span class="p">;</span>
+<span class="n">of</span><span class="o">-&gt;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">heap</span><span class="o">-&gt;</span> <span class="n">size</span><span class="p">;</span>
       <span class="cm">/* Set up the new top.  */</span>
 
       <span class="n">top</span><span class="p">(</span><span class="n">av</span><span class="p">)</span> <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">heap</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">heap</span><span class="p">));</span>
@@ -6784,7 +6533,7 @@
       <span class="k">if</span> <span class="p">(</span><span class="n">mp_</span><span class="p">.</span><span class="n">sbrk_base</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
 
 <span class="n">mp_srk_base</span> <span class="o">=</span> <span class="n">brk</span><span class="p">;</span>
-<span class="n">av</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
+<span class="n">av</span><span class="o">-&gt;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
 </pre></div>
 
 <h5 id="situation-1">Situation 1<a class="headerlink" href="#situation-1" title="Permanent link">&para;</a></h5>
@@ -6866,7 +6615,7 @@
 
           <span class="k">if</span> <span class="p">(</span><span class="n">old_size</span><span class="p">)</span>
 
-<span class="n">av</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">brk</span> <span class="o">-</span> <span class="n">old_end</span><span class="p">;</span>
+<span class="n">av</span><span class="o">-&gt;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">brk</span> <span class="o">-</span> <span class="n">old_end</span><span class="p">;</span>
 
 
           <span class="cm">/* Guarantee alignment of first new chunk made from this space */</span>
@@ -7027,10 +6776,10 @@
 
         <span class="k">if</span> <span class="p">(</span><span class="n">snd_brk</span> <span class="o">!=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE_FAILURE</span><span class="p">))</span> <span class="p">{</span>
 
-<span class="n">av</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">top</span> <span class="o">=</span> <span class="p">(</span><span class="n">mchunkptr</span><span class="p">)</span> <span class="n">aligned_brk</span><span class="p">;</span>
+<span class="n">av</span><span class="o">-&gt;</span> <span class="n">top</span> <span class="o">=</span> <span class="p">(</span><span class="n">mchunkptr</span><span class="p">)</span> <span class="n">aligned_brk</span><span class="p">;</span>
           <span class="n">set_head</span><span class="p">(</span><span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span><span class="p">,</span> <span class="p">(</span><span class="n">snd_brk</span> <span class="o">-</span> <span class="n">aligned_brk</span> <span class="o">+</span> <span class="n">correction</span><span class="p">)</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
 
-<span class="n">av</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">correction</span><span class="p">;</span>
+<span class="n">av</span><span class="o">-&gt;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">correction</span><span class="p">;</span>
 
 
           <span class="cm">/*</span>
@@ -7106,8 +6855,8 @@
 
 <p>It should be noted that here the program releases the old top chunk, and it will enter different bins or tcaches depending on the size.</p>
 <h4 id="update-maximum-memory">Update maximum memory<a class="headerlink" href="#update-maximum-memory" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">system_mem</span><span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">max_system_mem</span><span class="p">))</span>
-<span class="n">av</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">max_system_mem</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">system_mem</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">system_mem</span><span class="o">&gt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">off</span><span class="o">-&gt;</span> <span class="n">max_system_mem</span><span class="p">))</span>
+<span class="n">av</span><span class="o">-&gt;</span> <span class="n">max_system_mem</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span> <span class="n">system_mem</span><span class="p">;</span>
 <span class="n">check_malloc_state</span> <span class="p">(</span><span class="n">of</span><span class="p">);</span>
 </pre></div>
 
@@ -7115,7 +6864,7 @@
 <h5 id="get-the-size">Get the size<a class="headerlink" href="#get-the-size" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>  <span class="cm">/* finally, do the allocation */</span>
 
-<span class="n">p</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">top</span><span class="p">;</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span><span class="p">;</span>
   <span class="n">size</span> <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
 </pre></div>
 
@@ -7128,7 +6877,7 @@
 
     <span class="n">remainder</span> <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
 
-<span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">top</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
+<span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
     <span class="n">set_head</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span> <span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span> <span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
 
     <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
@@ -7148,6 +6897,7 @@
 </pre></div>
                 
                   
+                
                 
               
               

@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.5.1">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
     
     
       
@@ -62,7 +62,7 @@
     
       
         <link href="https://gstatic.loli.net" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Sans:300,400,400i,700|Source+Code+Pro&display=fallback">
+        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Sans:300,400,400i,700%7CSource+Code+Pro&display=fallback">
         <style>body,input{font-family:"Noto Sans","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Source Code Pro","Courier New",Courier,monospace}</style>
       
     
@@ -3484,16 +3484,16 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-unsortedbin" class="md-nav__link">
-    大循环-遍历 unsortedbin
+  <a href="#-unsorted-bin" class="md-nav__link">
+    大循环-遍历 unsorted bin
   </a>
   
     <nav class="md-nav">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#unsort-bin" class="md-nav__link">
-    unsort bin 遍历
+  <a href="#unsorted-bin" class="md-nav__link">
+    unsorted bin 遍历
   </a>
   
     <nav class="md-nav">
@@ -5122,16 +5122,16 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-unsortedbin" class="md-nav__link">
-    大循环-遍历 unsortedbin
+  <a href="#-unsorted-bin" class="md-nav__link">
+    大循环-遍历 unsorted bin
   </a>
   
     <nav class="md-nav">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#unsort-bin" class="md-nav__link">
-    unsort bin 遍历
+  <a href="#unsorted-bin" class="md-nav__link">
+    unsorted bin 遍历
   </a>
   
     <nav class="md-nav">
@@ -5524,7 +5524,7 @@
 <h1 id="_1">申请内存块<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <h2 id="__libc_malloc">__libc_malloc<a class="headerlink" href="#__libc_malloc" title="Permanent link">&para;</a></h2>
 <p>一般我们会使用 malloc 函数来申请内存块，可是当仔细看 glibc 的源码实现时，其实并没有 malloc 函数。其实该函数真正调用的是 __libc_malloc 函数。为什么不直接写个 malloc 函数呢，因为有时候我们可能需要不同的名称。此外，__libc_malloc 函数只是用来简单封装 _int_malloc 函数。_int_malloc 才是申请内存块的核心。下面我们来仔细分析一下具体的实现。</p>
-<p>该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook），这个主要用于用户自定义的堆分配函数，方便用户快速修改对分配函数并进行测试。这里需要注意的是，<strong>用户申请的字节一旦进入申请内存函数中就变成了无符号整数</strong>。</p>
+<p>该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook），这个主要用于用户自定义的堆分配函数，方便用户快速修改堆分配函数并进行测试。这里需要注意的是，<strong>用户申请的字节一旦进入申请内存函数中就变成了无符号整数</strong>。</p>
 <div class="codehilite"><pre><span></span><span class="c1">// wapper for int_malloc</span>
 <span class="kt">void</span> <span class="o">*</span><span class="nf">__libc_malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">mstate</span> <span class="n">ar_ptr</span><span class="p">;</span>
@@ -5738,7 +5738,7 @@
     <span class="p">}</span>
 </pre></div>
 
-<h3 id="-unsortedbin">大循环-遍历 unsortedbin<a class="headerlink" href="#-unsortedbin" title="Permanent link">&para;</a></h3>
+<h3 id="-unsorted-bin">大循环-遍历 unsorted bin<a class="headerlink" href="#-unsorted-bin" title="Permanent link">&para;</a></h3>
 <p><strong>如果程序执行到了这里，那么说明 与 chunk 大小正好一致的 bin (fast bin， small bin) 中没有 chunk可以直接满足需求 ，但是 large chunk  则是在这个大循环中处理</strong>。</p>
 <p>在接下来的这个循环中，主要做了以下的操作</p>
 <ul>
@@ -5767,7 +5767,7 @@
         <span class="kt">int</span> <span class="n">iters</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 </pre></div>
 
-<h4 id="unsort-bin">unsort bin 遍历<a class="headerlink" href="#unsort-bin" title="Permanent link">&para;</a></h4>
+<h4 id="unsorted-bin">unsorted bin 遍历<a class="headerlink" href="#unsorted-bin" title="Permanent link">&para;</a></h4>
 <p>先考虑 unsorted bin，再考虑 last remainder ，但是对于 small bin chunk 的请求会有所例外。</p>
 <p><strong>注意 unsorted bin 的遍历顺序为 bk。</strong></p>
 <div class="codehilite"><pre><span></span>        <span class="c1">// 如果 unsorted bin 不为空</span>
@@ -5787,7 +5787,7 @@
 </pre></div>
 
 <h5 id="small-request">small request<a class="headerlink" href="#small-request" title="Permanent link">&para;</a></h5>
-<p>如果用户的请求为 small bin chunk，那么我们首先考虑 last remainder，如果 last remainder 是 unsorted bin 中的唯一一块的话， 并且 last remainder 的大小分割够还可以作为一个 chunk ，<strong>为什么没有等号</strong>？</p>
+<p>如果用户的请求为 small bin chunk，那么我们首先考虑 last remainder，如果 last remainder 是 unsorted bin 中的唯一一块的话， 并且 last remainder 的大小分割后还可以作为一个 chunk ，<strong>为什么没有等号</strong>？</p>
 <div class="codehilite"><pre><span></span>            <span class="cm">/*</span>
 <span class="cm">               If a small request, try to use last remainder if it is the</span>
 <span class="cm">               only chunk in unsorted bin.  This helps promote locality for</span>
@@ -5879,7 +5879,7 @@
                     <span class="c1">// 加速比较，应该不仅仅有这个考虑，因为链表里的 chunk 都会设置该位。</span>
                     <span class="n">size</span> <span class="o">|=</span> <span class="n">PREV_INUSE</span><span class="p">;</span>
                     <span class="cm">/* if smaller than smallest, bypass loop below */</span>
-                    <span class="c1">// bck-bk 存储着相应 large bin 中最小的chunk。</span>
+                    <span class="c1">// bck-&gt;bk 存储着相应 large bin 中最小的chunk。</span>
                     <span class="c1">// 如果遍历的 chunk 比当前最小的还要小，那就只需要插入到链表尾部。</span>
                     <span class="c1">// 判断 bck-&gt;bk 是不是在 main arena。</span>
                     <span class="n">assert</span><span class="p">(</span><span class="n">chunk_main_arena</span><span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">));</span>
@@ -5939,8 +5939,7 @@
 
 <h5 id="while">while 迭代次数<a class="headerlink" href="#while" title="Permanent link">&para;</a></h5>
 <p>while 最多迭代10000次后退出。</p>
-<div class="codehilite"><pre><span></span>            <span class="c1">//</span>
-<span class="cp">##define MAX_ITERS 10000</span>
+<div class="codehilite"><pre><span></span>            <span class="c1">// #define MAX_ITERS 10000</span>
             <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">iters</span> <span class="o">&gt;=</span> <span class="n">MAX_ITERS</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
         <span class="p">}</span>
 </pre></div>
@@ -6197,7 +6196,7 @@
             <span class="n">remainder_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
             <span class="n">remainder</span>      <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
             <span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span>        <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-            <span class="c1">// 这里设置 PREV_INUSE 是因为 top chunk 的 chunk 如果不是 fastbin，就必然会和</span>
+            <span class="c1">// 这里设置 PREV_INUSE 是因为 top chunk 前面的 chunk 如果不是 fastbin，就必然会和</span>
             <span class="c1">// top chunk 合并，所以这里设置了 PREV_INUSE。</span>
             <span class="n">set_head</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
                                  <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span> <span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span> <span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
@@ -6834,6 +6833,7 @@
 </pre></div>
                 
                   
+                
                 
               
               
