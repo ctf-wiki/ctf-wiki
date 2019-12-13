@@ -5157,7 +5157,7 @@
 <div class="codehilite"><pre><span></span>    <span class="cm">/* There are no usable arenas.  Fall back to sysmalloc to get a chunk from</span>
 <span class="cm">       mmap.  */</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span><span class="p">(</span><span class="n">av</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">))</span> <span class="p">{</span>
-        <span class="kt">void</span> <span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="n">sysmalloc</span> <span class="p">(</span><span class="n">nb</span><span class="p">,</span> <span class="n">av</span><span class="p">);</span>
+        <span class="kt">void</span> <span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="n">sysmalloc</span><span class="p">(</span><span class="n">nb</span><span class="p">,</span> <span class="n">av</span><span class="p">);</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
         <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
     <span class="p">}</span>
@@ -5174,7 +5174,7 @@
         <span class="c1">// Get the corresponding subscript of fastbin</span>
         <span class="n">idx</span>             <span class="o">=</span> <span class="n">fastbin_index</span><span class="p">(</span><span class="n">nb</span><span class="p">);</span>
         <span class="c1">// Get the corresponding pointer to the fastbin</span>
-        <span class="n">mfastbinptr</span> <span class="o">*</span> <span class="n">fb</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">fastbin</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+        <span class="n">mfastbinptr</span> <span class="o">*</span> <span class="n">fb</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">fastbin</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
         <span class="n">mchunkptr</span>    <span class="n">pp</span> <span class="o">=</span> <span class="o">*</span><span class="n">fb</span><span class="p">;</span>
         <span class="c1">// Use fd to traverse the corresponding bin whether there are free chunks,</span>
         <span class="k">do</span> <span class="p">{</span>
@@ -5219,7 +5219,7 @@
         <span class="c1">// Get the index of the small bin</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">smallbin_index</span><span class="p">(</span><span class="n">nb</span><span class="p">);</span>
         <span class="c1">// Get the corresponding chunk pointer in the small bin</span>
-        <span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+        <span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
         <span class="c1">// first execute victim = last(bin) to get the last chunk of the small bin</span>
         <span class="c1">// If victim = bin , then the bin is empty.</span>
         <span class="c1">// If they are not equal, then there will be two cases</span>
@@ -5227,7 +5227,7 @@
             <span class="c1">// In the first case, the small bin has not yet been initialized.</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">victim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="cm">/* initialization check */</span>
                 <span class="c1">// Perform initialization to merge chunks in fast bins</span>
-                <span class="n">malloc_consolidate</span> <span class="p">(</span><span class="n">of</span><span class="p">);</span>
+                <span class="n">malloc_consolidate</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
             <span class="c1">// In the second case, there is a free chunk in the small bin</span>
             <span class="k">else</span> <span class="p">{</span>
                 <span class="c1">// Get the second-to-last chunk in the small bin.</span>
@@ -5240,12 +5240,12 @@
                 <span class="c1">// Set the corresponding inuse bit of victim</span>
                 <span class="n">set_inuse_bit_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
                 <span class="c1">// Modify the small bin list, take the last chunk of the small bin</span>
-                <span class="n">bin</span><span class="o">-&gt;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
+                <span class="n">bin</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
                 <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">bin</span><span class="p">;</span>
                 <span class="c1">// If it is not main_arena, set the corresponding flag</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="n">set_non_main_arena</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
                 <span class="c1">// Detailed inspection, non-debug status has no effect</span>
-                <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="n">check_malloced_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
                 <span class="c1">// Convert the requested chunk to the corresponding mem state</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
                 <span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
@@ -5257,7 +5257,7 @@
 </pre></div>
 
 <h3 id="large-bin">large bin<a class="headerlink" href="#large-bin" title="Permanent link">&para;</a></h3>
-<p>When the chunks in the fast bin and small bin cannot satisfy the user request chunk hour, it will consider whether it is a large bin. However, in the large bin, there is no direct scan of the chunk in the corresponding bin. Instead, the malloc_consolidate (see malloc_state related function) function is used to process the chunk in the fast bin, and the chunks that may be merged are merged and then placed. In the unsorted bin, if you can't merge, put it directly into the unsorted bin, and then process it in the big loop below. <strong> Why not just take the large chunk directly from the corresponding bin? This is the mechanism of ptmalloc, which merges fragment chunks in the heap before allocating large chunks to reduce fragmentation in the heap. </strong></p>
+<p>When the chunks in the fast bin and small bin cannot satisfy the user request chunk hour, it will consider whether it is a large bin. However, in the large bin, there is no direct scan of the chunk in the corresponding bin. Instead, the malloc_consolidate(see malloc_state related function) function is used to process the chunk in the fast bin, and the chunks that may be merged are merged and then placed. In the unsorted bin, if you can't merge, put it directly into the unsorted bin, and then process it in the big loop below. <strong> Why not just take the large chunk directly from the corresponding bin? This is the mechanism of ptmalloc, which merges fragment chunks in the heap before allocating large chunks to reduce fragmentation in the heap. </strong></p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/*</span>
 <span class="cm">       If this is a large request, consolidate fastbins before continuing.</span>
 <span class="cm">       While it might look excessive to kill all fastbins before</span>
@@ -5273,7 +5273,7 @@
         <span class="c1">// Get the subscript of the large bin.</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">largebin_index</span><span class="p">(</span><span class="n">nb</span><span class="p">);</span>
         <span class="c1">// If there is fastbin, it will handle fastbin</span>
-      <span class="k">if</span> <span class="p">(</span><span class="n">have_fastchunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="n">malloc_consolidate</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">have_fastchunks</span><span class="p">(</span><span class="n">av</span><span class="p">))</span> <span class="n">malloc_consolidate</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
     <span class="p">}</span>
 </pre></div>
 
@@ -5309,7 +5309,7 @@
 <p><strong> Note that the traversal order of unsorted bin is bk. </strong></p>
 <div class="codehilite"><pre><span></span>        <span class="c1">// If the unsorted bin is not empty</span>
         <span class="c1">// First In First Out</span>
-        <span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bk</span><span class="p">)</span><span class="o">!</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">)</span><span class="o">!</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">))</span> <span class="p">{</span>
             <span class="c1">// victim is the last chunk of unsorted bin</span>
             <span class="c1">// bck is the penultimate chunk of unsorted bin</span>
             <span class="n">bck</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
@@ -5319,7 +5319,7 @@
             <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span><span class="p">(</span><span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
                 <span class="n">__builtin_expect</span><span class="p">(</span><span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
                 <span class="n">malloc_printerr</span><span class="p">(</span><span class="n">check_action</span><span class="p">,</span> <span class="s">&quot;malloc(): memory corruption&quot;</span><span class="p">,</span>
-                                <span class="n">chunk2mem</span> <span class="p">(</span><span class="n">victim</span><span class="p">),</span> <span class="n">off</span><span class="p">);</span>
+                                <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">),</span> <span class="n">av</span><span class="p">);</span>
             <span class="c1">// Get the chunk size corresponding to the victim.</span>
             <span class="n">size</span> <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
 </pre></div>
@@ -5335,7 +5335,7 @@
 <span class="cm">             */</span>
 
             <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">bck</span> <span class="o">==</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
-                <span class="n">victim</span> <span class="o">==</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">last_remainder</span> <span class="o">&amp;&amp;</span>
+                <span class="n">victim</span> <span class="o">==</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">last_remainder</span> <span class="o">&amp;&amp;</span>
                 <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span> <span class="o">+</span> <span class="n">MINSIZE</span><span class="p">))</span> <span class="p">{</span>
                 <span class="cm">/* split and reattach remainder */</span>
                 <span class="c1">// Get the size of the new retriever</span>
@@ -5343,9 +5343,9 @@
                 <span class="c1">// Get the location of the new retriever</span>
                 <span class="n">remainder</span>               <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
                 <span class="c1">// update the unsorted bin</span>
-                <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
+                <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
                 <span class="c1">// update the last_remainder recorded in av</span>
-                <span class="n">av</span><span class="o">-&gt;</span> <span class="n">last_remainder</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
+                <span class="n">av</span><span class="o">-&gt;</span><span class="n">last_remainder</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
                 <span class="c1">// Update the pointer of the last remainder</span>
                 <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
                 <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">remainder_size</span><span class="p">))</span> <span class="p">{</span>
@@ -5360,7 +5360,7 @@
                 <span class="c1">// Set the prev_size field of the record remainder size because the retriever is idle at this time.</span>
                 <span class="n">set_foot</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span><span class="p">);</span>
                 <span class="c1">// Detailed inspection, no effect in non-debug mode</span>
-                <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="n">check_malloced_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
                 <span class="c1">// Convert victim from chunk mode to mem mode</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
                 <span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
@@ -5371,8 +5371,8 @@
 
 <h5 id="initial-take-out">Initial take out<a class="headerlink" href="#initial-take-out" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>            <span class="cm">/* remove from unsorted list */</span>
-            <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-            <span class="n">bck</span><span class="o">-&gt;</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
+            <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
+            <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
 </pre></div>
 
 <h5 id="exact-fit">exact fit<a class="headerlink" href="#exact-fit" title="Permanent link">&para;</a></h5>
@@ -5381,7 +5381,7 @@
             <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">==</span> <span class="n">nb</span><span class="p">)</span> <span class="p">{</span>
                 <span class="n">set_inuse_bit_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="n">set_non_main_arena</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-                <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="n">check_malloced_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
                 <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
                 <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
@@ -5393,7 +5393,7 @@
 <div class="codehilite"><pre><span></span>            <span class="cm">/* place chunk in bin */</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">size</span><span class="p">))</span> <span class="p">{</span>
                 <span class="n">victim_index</span> <span class="o">=</span> <span class="n">smallbin_index</span><span class="p">(</span><span class="n">size</span><span class="p">);</span>
-                <span class="n">bck</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
+                <span class="n">bck</span> <span class="o">=</span> <span class="n">bin_at</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
                 <span class="n">fwd</span>          <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
 </pre></div>
 
@@ -5467,8 +5467,8 @@
 </pre></div>
 
 <h5 id="final-take-out">Final take out<a class="headerlink" href="#final-take-out" title="Permanent link">&para;</a></h5>
-<div class="codehilite"><pre><span></span><span class="c1">// Put it in the corresponding bin to form bck&lt;--&gt;victim&lt;--&gt;fwd.</span>
-<span class="n">mark_bin</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span>            <span class="c1">// Put it in the corresponding bin to form bck&lt;--&gt;victim&lt;--&gt;fwd.</span>
+            <span class="n">mark_bin</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
             <span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
             <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span>    <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
@@ -5478,7 +5478,7 @@
 <h5 id="while-iterations">while Iterations<a class="headerlink" href="#while-iterations" title="Permanent link">&para;</a></h5>
 <p>While exits up to 10,000 iterations and exits.</p>
 <div class="codehilite"><pre><span></span>            <span class="c1">// # define MAX_ITERS 10000</span>
-            <span class="k">if</span> <span class="p">(</span><span class="o">++</span> <span class="n">iters</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">MAX_ITERS</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">iters</span> <span class="o">&gt;=</span> <span class="n">MAX_ITERS</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
                     <span class="p">}</span>
 </pre></div>
 
@@ -5491,7 +5491,7 @@
 <span class="cm">         */</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">nb</span><span class="p">))</span> <span class="p">{</span>
-            <span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+            <span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
             <span class="cm">/* skip scan if empty or largest chunk is too small */</span>
             <span class="c1">// If the corresponding bin is empty or the chunks in it are the smallest, skip it</span>
             <span class="c1">// first(bin)=bin-&gt;fd means the largest chunk in the current list.</span>
@@ -5515,7 +5515,7 @@
                 <span class="c1">// Calculate the remaining size after the allocation</span>
                 <span class="n">remainder_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
                 <span class="c1">// unlink</span>
-                <span class="n">unlink</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">bck</span><span class="p">,</span> <span class="n">fwd</span><span class="p">);</span>
+                <span class="n">unlink</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">bck</span><span class="p">,</span> <span class="n">fwd</span><span class="p">);</span>
                 <span class="cm">/* Exhaust */</span>
                 <span class="c1">// The remaining size is not enough to be a block</span>
                 <span class="c1">// Very curious what will happen next?</span>
@@ -5531,7 +5531,7 @@
                     <span class="cm">/* We cannot assume the unsorted list is empty and therefore</span>
 <span class="cm">                       have to perform a complete insert here.  */</span>
                     <span class="c1">// Insert in unsorted bin</span>
-                    <span class="n">bck</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
+                    <span class="n">bck</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
                     <span class="n">fwd</span> <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
 
                     <span class="c1">// Determine if the unsorted bin is destroyed.</span>
@@ -5560,7 +5560,7 @@
                     <span class="n">set_foot</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span><span class="p">);</span>
                 <span class="p">}</span>
                 <span class="c1">// an examination</span>
-                <span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="n">check_malloced_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
                 <span class="c1">// Convert to mem state</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
                 <span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
@@ -5573,86 +5573,60 @@
 <h4 id="looking-for-a-larger-chunk">Looking for a larger chunk<a class="headerlink" href="#looking-for-a-larger-chunk" title="Permanent link">&para;</a></h4>
 <p>If you get here, it means that for the chunks that the user needs, you can't get the chunk directly from the corresponding bin, so we need to find the faster bin, small bin or large bin larger than the current bin.</p>
 <div class="codehilite"><pre><span></span>        <span class="cm">/*</span>
-
 <span class="cm">           Search for a chunk by scanning bins, starting with next largest</span>
-
 <span class="cm">           bin. This search is strictly by best-fit; i.e., the smallest</span>
-
 <span class="cm">           (with ties going to approximately the least recently used) chunk</span>
-
 <span class="cm">           that fits is selected.</span>
 
-
-
 <span class="cm">           The bitmap avoids needing to check that most blocks are nonempty.</span>
-
 <span class="cm">           The particular case of skipping all bins during warm-up phases</span>
-
 <span class="cm">           when no chunks have been returned yet is faster than it might look.</span>
-
 <span class="cm">         */</span>
 
-
-
         <span class="o">++</span><span class="n">idx</span><span class="p">;</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">bin</span>
-<span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">current</span> <span class="n">index</span> <span class="n">in</span> <span class="n">the</span> <span class="n">binmap</span> <span class="n">block</span> <span class="n">index</span>
+        <span class="c1">// Get the corresponding bin</span>
+        <span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
+        <span class="c1">// Get the current index in the binmap block index</span>
         <span class="c1">// #define idx2block(i) ((i) &gt;&gt; BINMAPSHIFT)  ,BINMAPSHIFT=5</span>
-
-<span class="c1">// Binmap is managed by block. Each block is an int with a total of 32 bits. It can indicate whether there are free chunks in 32 bins.</span>
-<span class="c1">// So here is the right shift 5</span>
+        <span class="c1">// Binmap is managed by block. Each block is an int with a total of 32 bits. It can indicate whether there are free chunks in 32 bins.</span>
+        <span class="c1">// So here is the right shift 5</span>
         <span class="n">block</span> <span class="o">=</span> <span class="n">idx2block</span><span class="p">(</span><span class="n">idx</span><span class="p">);</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">mapping</span> <span class="n">corresponding</span> <span class="n">to</span> <span class="n">the</span> <span class="n">current</span> <span class="n">block</span> <span class="n">size</span><span class="p">,</span> <span class="n">here</span> <span class="n">you</span> <span class="n">can</span> <span class="n">know</span> <span class="n">whether</span> <span class="n">there</span> <span class="n">is</span> <span class="n">a</span> <span class="n">free</span> <span class="n">block</span> <span class="n">in</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">bin</span>
-<span class="n">map</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span> <span class="n">binmap</span> <span class="p">[</span><span class="n">block</span><span class="p">];</span>
+        <span class="c1">// Get the mapping corresponding to the current block size, here you can know whether there is a free block in the corresponding bin</span>
+        <span class="n">map</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">binmap</span> <span class="p">[</span><span class="n">block</span><span class="p">];</span>
         <span class="c1">// #define idx2bit(i) ((1U &lt;&lt; ((i) &amp; ((1U &lt;&lt; BINMAPSHIFT) - 1))))</span>
-
-<span class="c1">// Set the bit corresponding to idx to 1, and the other bits to 0.</span>
+        <span class="c1">// Set the bit corresponding to idx to 1, and the other bits to 0.</span>
         <span class="n">bit</span>   <span class="o">=</span> <span class="n">idx2bit</span><span class="p">(</span><span class="n">idx</span><span class="p">);</span>
-
         <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
 </pre></div>
 
 <h5 id="find-a-suitable-map">Find a suitable map<a class="headerlink" href="#find-a-suitable-map" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>            <span class="cm">/* Skip rest of block if there are no more set bits in this block.</span>
-
 <span class="cm">             */</span>
 
-<span class="c1">// If bit&gt;map, it means that there is no free block in the map that is larger than the current required chunk.</span>
-<span class="c1">// If the bit is 0, then the parameter brought by idx2bit above is 0.</span>
+            <span class="c1">// If bit&gt;map, it means that there is no free block in the map that is larger than the current required chunk.</span>
+            <span class="c1">// If the bit is 0, then the parameter brought by idx2bit above is 0.</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">bit</span> <span class="o">&gt;</span> <span class="n">map</span> <span class="o">||</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-
                 <span class="k">do</span> <span class="p">{</span>
-
-<span class="c1">// Find the next block until its corresponding map is not 0.</span>
-<span class="c1">// If it doesn&#39;t exist, you can only use the top chunk.</span>
+                    <span class="c1">// Find the next block until its corresponding map is not 0.</span>
+                    <span class="c1">// If it doesn&#39;t exist, you can only use the top chunk.</span>
                     <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">block</span> <span class="o">&gt;=</span> <span class="n">BINMAPSIZE</span><span class="p">)</span> <span class="cm">/* out of bins */</span>
-
                         <span class="k">goto</span> <span class="n">use_top</span><span class="p">;</span>
-
                 <span class="p">}</span> <span class="k">while</span> <span class="p">((</span><span class="n">map</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">binmap</span><span class="p">[</span> <span class="n">block</span> <span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">its</span> <span class="n">corresponding</span> <span class="n">bin</span><span class="p">,</span> <span class="n">because</span> <span class="n">the</span> <span class="n">chunk</span> <span class="n">size</span> <span class="n">in</span> <span class="n">the</span> <span class="n">map</span> <span class="n">is</span> <span class="n">larger</span> <span class="n">than</span> <span class="n">the</span> <span class="n">required</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">and</span>
-<span class="c1">// map itself is not 0, so there must be a chunk that meets the requirements.</span>
-<span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="p">(</span><span class="n">block</span> <span class="o">&lt;&lt;</span> <span class="n">BINMAPSHIFT</span><span class="p">));</span>
+                <span class="c1">// Get its corresponding bin, because the chunk size in the map is larger than the required chunk, and</span>
+                <span class="c1">// map itself is not 0, so there must be a chunk that meets the requirements.</span>
+                <span class="n">bin</span> <span class="o">=</span> <span class="n">bin_at</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="p">(</span><span class="n">block</span> <span class="o">&lt;&lt;</span> <span class="n">BINMAPSHIFT</span><span class="p">));</span>
                 <span class="n">bit</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-
             <span class="p">}</span>
 </pre></div>
 
 <h5 id="find-the-right-bin">Find the right bin<a class="headerlink" href="#find-the-right-bin" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>            <span class="cm">/* Advance to bin with set bit. There must be one. */</span>
 
-<span class="c1">// Find from the smallest bin of the current map until you find the appropriate bin.</span>
-<span class="c1">// This is definitely there.</span>
+            <span class="c1">// Find from the smallest bin of the current map until you find the appropriate bin.</span>
+            <span class="c1">// This is definitely there.</span>
             <span class="k">while</span> <span class="p">((</span><span class="n">bit</span> <span class="o">&amp;</span> <span class="n">map</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-
                 <span class="n">bin</span> <span class="o">=</span> <span class="n">next_bin</span><span class="p">(</span><span class="n">bin</span><span class="p">);</span>
-
                 <span class="n">bit</span> <span class="o">&lt;&lt;=</span> <span class="mi">1</span><span class="p">;</span>
-
                 <span class="n">assert</span><span class="p">(</span><span class="n">bit</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">);</span>
             <span class="p">}</span>
 </pre></div>
@@ -5660,323 +5634,202 @@
 <h5 id="simple-check-chunk">Simple check chunk<a class="headerlink" href="#simple-check-chunk" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>            <span class="cm">/* Inspect the bin. It is likely to be non-empty */</span>
 
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">bin</span>
+            <span class="c1">// Get the corresponding bin</span>
             <span class="n">victim</span> <span class="o">=</span> <span class="n">last</span><span class="p">(</span><span class="n">bin</span><span class="p">);</span>
 
-
-
-            <span class="cm">/*  If a false alarm (empty bin), clear the bit. */</span>
-
-<span class="c1">// If victim=bin, then we clear the bit corresponding to the map to 0 and then get the next bin.</span>
-<span class="c1">// The probability of this happening should be small.</span>
+            <span class="cm">/*  If a false alarm(empty bin), clear the bit. */</span>
+            <span class="c1">// If victim=bin, then we clear the bit corresponding to the map to 0 and then get the next bin.</span>
+            <span class="c1">// The probability of this happening should be small.</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">victim</span> <span class="o">==</span> <span class="n">bin</span><span class="p">)</span> <span class="p">{</span>
-
                 <span class="n">av</span><span class="o">-&gt;</span><span class="n">binmap</span><span class="p">[</span> <span class="n">block</span> <span class="p">]</span> <span class="o">=</span> <span class="n">map</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">bit</span><span class="p">;</span> <span class="cm">/* Write through */</span>
-
                 <span class="n">bin</span>                 <span class="o">=</span> <span class="n">next_bin</span><span class="p">(</span><span class="n">bin</span><span class="p">);</span>
-
                 <span class="n">bit</span> <span class="o">&lt;&lt;=</span> <span class="mi">1</span><span class="p">;</span>
-
             <span class="p">}</span>
 </pre></div>
 
 <h5 id="really-take-out-chunk">Really take out chunk<a class="headerlink" href="#really-take-out-chunk" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>            <span class="k">else</span> <span class="p">{</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Get</span> <span class="n">the</span> <span class="n">size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">corresponding</span> <span class="n">victim</span>
+                <span class="c1">// Get the size of the corresponding victim</span>
                 <span class="n">size</span> <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
 
-
-
                 <span class="cm">/*  We know the first chunk in this bin is big enough to use. */</span>
-
                 <span class="n">assert</span><span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span><span class="p">));</span>
-
-<span class="c1">// Calculate the remaining size after splitting</span>
+                <span class="c1">// Calculate the remaining size after splitting</span>
                 <span class="n">remainder_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
 
-
-
                 <span class="cm">/* unlink */</span>
-
-<span class="n">unlink</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">bck</span><span class="p">,</span> <span class="n">fwd</span><span class="p">);</span>
-
+                <span class="n">unlink</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">bck</span><span class="p">,</span> <span class="n">fwd</span><span class="p">);</span>
 
                 <span class="cm">/* Exhaust */</span>
-
-<span class="c1">// What if there is not enough chunk after splitting?</span>
+                <span class="c1">// What if there is not enough chunk after splitting?</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">remainder_size</span> <span class="o">&lt;</span> <span class="n">MINSIZE</span><span class="p">)</span> <span class="p">{</span>
-
                     <span class="n">set_inuse_bit_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
-
                     <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="n">set_non_main_arena</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
                 <span class="p">}</span>
-
-
 
                 <span class="cm">/* Split */</span>
-
-<span class="c1">// If enough, despite the segmentation</span>
+                <span class="c1">// If enough, despite the segmentation</span>
                 <span class="k">else</span> <span class="p">{</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Calculate</span> <span class="n">the</span> <span class="n">offset</span> <span class="n">of</span> <span class="n">the</span> <span class="n">remaining</span> <span class="n">chunk</span>
+                    <span class="c1">// Calculate the offset of the remaining chunk</span>
                     <span class="n">remainder</span> <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
 
-
-
                     <span class="cm">/* We cannot assume the unsorted list is empty and therefore</span>
-
 <span class="cm">                       have to perform a complete insert here.  */</span>
 
-<span class="c1">// Insert the remaining chunks into the unsorted bin</span>
-<span class="n">bck</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
+                    <span class="c1">// Insert the remaining chunks into the unsorted bin</span>
+                    <span class="n">bck</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
                     <span class="n">fwd</span> <span class="o">=</span> <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
-
                     <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span><span class="p">(</span><span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">!=</span> <span class="n">bck</span><span class="p">))</span> <span class="p">{</span>
-
                         <span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;malloc(): corrupted unsorted chunks 2&quot;</span><span class="p">;</span>
-
                         <span class="k">goto</span> <span class="n">errout</span><span class="p">;</span>
-
                     <span class="p">}</span>
-
                     <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
-
                     <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
-
                     <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span>       <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-
                     <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span>       <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
 
-
-
                     <span class="cm">/* advertise as last remainder */</span>
-
-<span class="c1">// If it is in the range of small bin, mark it as a remainder</span>
+                    <span class="c1">// If it is in the range of small bin, mark it as a remainder</span>
                     <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">nb</span><span class="p">))</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">last_remainder</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-
                     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">remainder_size</span><span class="p">))</span> <span class="p">{</span>
-
                         <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-
                         <span class="n">remainder</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-
                     <span class="p">}</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">use</span> <span class="n">status</span> <span class="n">of</span> <span class="n">the</span> <span class="n">victim</span>
+                    <span class="c1">// Set the use status of the victim</span>
                     <span class="n">set_head</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span>
-
                              <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
-
-<span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
-<span class="c1">// Set the usage status of the remainder. Why is this?</span>
+                                <span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
+                    <span class="c1">// Set the usage status of the remainder. Why is this?</span>
                     <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">size</span> <span class="n">of</span> <span class="n">the</span> <span class="n">remainder</span>
+                    <span class="c1">// Set the size of the remainder</span>
                     <span class="n">set_foot</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span><span class="p">);</span>
-
                 <span class="p">}</span>
-
-<span class="c1">// an examination</span>
-<span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-<span class="c1">// The chunk state is converted to the mem state.</span>
+                <span class="c1">// an examination</span>
+                <span class="n">check_malloced_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+                <span class="c1">// The chunk state is converted to the mem state.</span>
                 <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
-<span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
+                <span class="c1">// If perturb_type is set, the obtained chunk is initialized to perturb_type ^ 0xff</span>
                 <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
                 <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
             <span class="p">}</span>
 </pre></div>
 
 <h3 id="using-top-chunk">Using top chunk<a class="headerlink" href="#using-top-chunk" title="Permanent link">&para;</a></h3>
 <p>If all the chunks in the bin have no way to directly meet the requirements (that is, not merged), or there are no free chunks. Then we can only use the top chunk.</p>
 <div class="codehilite"><pre><span></span>    <span class="nl">use_top</span><span class="p">:</span>
-
         <span class="cm">/*</span>
-
 <span class="cm">           If large enough, split off the chunk bordering the end of memory</span>
-
 <span class="cm">           (held in av-&gt;top). Note that this is in accord with the best-fit</span>
-
 <span class="cm">           search rule.  In effect, av-&gt;top is treated as larger (and thus</span>
-
 <span class="cm">           less well fitting) than any other available chunk since it can</span>
-
 <span class="cm">           be extended to be as large as necessary (up to system</span>
-
 <span class="cm">           limitations).</span>
 
-
-
 <span class="cm">           We require that av-&gt;top always exists (i.e., has size &gt;=</span>
-
 <span class="cm">           MINSIZE) after initialization, so if it would otherwise be</span>
-
 <span class="cm">           exhausted by current request, it is replenished. (The main</span>
-
 <span class="cm">           reason for ensuring it exists is that we may need MINSIZE space</span>
-
 <span class="cm">           to put in fenceposts in sysmalloc.)</span>
-
 <span class="cm">         */</span>
 
-<span class="c1">// Get the current top chunk and calculate its corresponding size</span>
-<span class="n">victim</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span><span class="p">;</span>
+        <span class="c1">// Get the current top chunk and calculate its corresponding size</span>
+        <span class="n">victim</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span><span class="p">;</span>
         <span class="n">size</span>   <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
-<span class="c1">// If the top chunk size still satisfies the minimum size of chunk after splitting, then you can split directly.</span>
+        <span class="c1">// If the top chunk size still satisfies the minimum size of chunk after splitting, then you can split directly.</span>
         <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span> <span class="o">+</span> <span class="n">MINSIZE</span><span class="p">))</span> <span class="p">{</span>
-
             <span class="n">remainder_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
-
             <span class="n">remainder</span>      <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-
-<span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
-<span class="c1">// Here, set PREV_INUSE because if the previous chunk of the top chunk is bound to be fastbin,</span>
-<span class="c1">// The top chunk will merged, so PREV_INUSE is set here.</span>
+            <span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
+            <span class="c1">// Here, set PREV_INUSE because if the previous chunk of the top chunk is bound to be fastbin,</span>
+            <span class="c1">// The top chunk will merged, so PREV_INUSE is set here.</span>
             <span class="n">set_head</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
-
-<span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
+                                <span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
             <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
-
-
-<span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+            <span class="n">check_malloced_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
             <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">chunk2mem</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
-
             <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
             <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
         <span class="p">}</span>
-<span class="c1">// Otherwise, determine if there is a fast chunk</span>
+        <span class="c1">// Otherwise, determine if there is a fast chunk</span>
         <span class="cm">/* When we are using atomic ops to free fast chunks we can get</span>
-
 <span class="cm">           here for all block sizes.  */</span>
-
-<span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">have_fastchunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="p">{</span>
-<span class="c1">// Perform a fast bin merge first</span>
-<span class="n">malloc_consolidate</span> <span class="p">(</span><span class="n">of</span><span class="p">);</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">have_fastchunks</span><span class="p">(</span><span class="n">av</span><span class="p">))</span> <span class="p">{</span>
+            <span class="c1">// Perform a fast bin merge first</span>
+            <span class="n">malloc_consolidate</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
             <span class="cm">/* restore original bin index */</span>
-
-<span class="o">/</span> <span class="o">/</span> <span class="n">Determine</span> <span class="n">whether</span> <span class="n">the</span> <span class="n">required</span> <span class="n">chunk</span> <span class="n">is</span> <span class="n">in</span> <span class="n">the</span> <span class="n">range</span> <span class="n">of</span> <span class="n">small</span> <span class="n">bin</span> <span class="n">or</span> <span class="n">large</span> <span class="n">bin</span>
-<span class="c1">// and calculate the corresponding index</span>
-<span class="c1">// Wait for the next time to see if you can</span>
+            <span class="c1">// Determine whether the required chunk is in the range of small bin or large bin</span>
+            <span class="c1">// and calculate the corresponding index</span>
+            <span class="c1">// Wait for the next time to see if you can</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">in_smallbin_range</span><span class="p">(</span><span class="n">nb</span><span class="p">))</span>
-
                 <span class="n">idx</span> <span class="o">=</span> <span class="n">smallbin_index</span><span class="p">(</span><span class="n">nb</span><span class="p">);</span>
-
             <span class="k">else</span>
-
                 <span class="n">idx</span> <span class="o">=</span> <span class="n">largebin_index</span><span class="p">(</span><span class="n">nb</span><span class="p">);</span>
-
         <span class="p">}</span>
 </pre></div>
 
 <h3 id="heap-memory-is-not-enough">Heap memory is not enough<a class="headerlink" href="#heap-memory-is-not-enough" title="Permanent link">&para;</a></h3>
 <p>If the heap memory is not enough, we need to use <code>sysmalloc</code> to apply for memory.</p>
 <div class="codehilite"><pre><span></span>        <span class="cm">/*</span>
-
 <span class="cm">           Otherwise, relay to handle system-dependent cases</span>
-
 <span class="cm">         */</span>
 
-<span class="c1">// Otherwise, we can only apply for a bit of memory from the system again.</span>
+        <span class="c1">// Otherwise, we can only apply for a bit of memory from the system again.</span>
         <span class="k">else</span> <span class="p">{</span>
-
-<span class="kt">void</span> <span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="n">sysmalloc</span> <span class="p">(</span><span class="n">nb</span><span class="p">,</span> <span class="n">av</span><span class="p">);</span>
+            <span class="kt">void</span> <span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="n">sysmalloc</span><span class="p">(</span><span class="n">nb</span><span class="p">,</span> <span class="n">av</span><span class="p">);</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="n">alloc_perturb</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">bytes</span><span class="p">);</span>
-
             <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-
         <span class="p">}</span>
 </pre></div>
 
 <h2 id="_libc_calloc">_libc_calloc<a class="headerlink" href="#_libc_calloc" title="Permanent link">&para;</a></h2>
 <p>Calloc is also a function in libc that requests memory blocks. The package in <code>libc</code> is <code>_libc_calloc</code>, which is described below.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/*</span>
-
 <span class="cm">  calloc(size_t n_elements, size_t element_size);</span>
-
 <span class="cm">  Returns a pointer to n_elements * element_size bytes, with all locations</span>
-
 <span class="cm">  set to zero.</span>
-
 <span class="cm">*/</span>
-
 <span class="kt">void</span><span class="o">*</span>  <span class="nf">__libc_calloc</span><span class="p">(</span><span class="kt">size_t</span><span class="p">,</span> <span class="kt">size_t</span><span class="p">);</span>
 </pre></div>
 
 <h2 id="sysmalloc">sysmalloc<a class="headerlink" href="#sysmalloc" title="Permanent link">&para;</a></h2>
 <p>As the comment in the function header says, this function is used to request more memory from the system when the current heap is out of memory.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/*</span>
-
 <span class="cm">   sysmalloc handles malloc cases requiring more memory from the system.</span>
-
 <span class="cm">   On entry, it is assumed that av-&gt;top does not have enough</span>
-
 <span class="cm">   space to service request for nb bytes, thus requiring that av-&gt;top</span>
-
 <span class="cm">   be extended or replaced.</span>
-
 <span class="cm"> */</span>
 </pre></div>
 
 <h3 id="basic-definition">Basic definition<a class="headerlink" href="#basic-definition" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="o">*</span><span class="nf">sysmalloc</span><span class="p">(</span><span class="n">INTERNAL_SIZE_T</span> <span class="n">nb</span><span class="p">,</span> <span class="n">mstate</span> <span class="n">av</span><span class="p">)</span> <span class="p">{</span>
-
   <span class="n">mchunkptr</span> <span class="n">old_top</span><span class="p">;</span>        <span class="cm">/* incoming value of av-&gt;top */</span>
-
   <span class="n">INTERNAL_SIZE_T</span> <span class="n">old_size</span><span class="p">;</span> <span class="cm">/* its size */</span>
-
   <span class="kt">char</span> <span class="o">*</span><span class="n">old_end</span><span class="p">;</span>            <span class="cm">/* its end address */</span>
 
-
-
   <span class="kt">long</span> <span class="n">size</span><span class="p">;</span> <span class="cm">/* arg to first MORECORE or mmap call */</span>
-
   <span class="kt">char</span> <span class="o">*</span><span class="n">brk</span><span class="p">;</span> <span class="cm">/* return value from MORECORE */</span>
 
-
-
   <span class="kt">long</span> <span class="n">correction</span><span class="p">;</span> <span class="cm">/* arg to 2nd MORECORE call */</span>
-
   <span class="kt">char</span> <span class="o">*</span><span class="n">snd_brk</span><span class="p">;</span>   <span class="cm">/* 2nd return val */</span>
 
-
-
   <span class="n">INTERNAL_SIZE_T</span> <span class="n">front_misalign</span><span class="p">;</span> <span class="cm">/* unusable bytes at front of new space */</span>
-
   <span class="n">INTERNAL_SIZE_T</span> <span class="n">end_misalign</span><span class="p">;</span>   <span class="cm">/* partial page left at end of new space */</span>
-
   <span class="kt">char</span> <span class="o">*</span><span class="n">aligned_brk</span><span class="p">;</span>              <span class="cm">/* aligned offset into brk */</span>
 
-
-
   <span class="n">mchunkptr</span> <span class="n">p</span><span class="p">;</span>                  <span class="cm">/* the allocated/returned chunk */</span>
-
   <span class="n">mchunkptr</span> <span class="n">remainder</span><span class="p">;</span>          <span class="cm">/* remainder frOm allocation */</span>
-
   <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">remainder_size</span><span class="p">;</span> <span class="cm">/* its size */</span>
 
-
-
   <span class="kt">size_t</span> <span class="n">pagesize</span> <span class="o">=</span> <span class="n">GLRO</span><span class="p">(</span><span class="n">dl_pagesize</span><span class="p">);</span>
-
   <span class="kt">bool</span> <span class="n">tried_mmap</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
 </pre></div>
 
 <p>We can mainly focus on <code>pagesize</code>, which</p>
 <div class="codehilite"><pre><span></span><span class="cp">#ifndef EXEC_PAGESIZE</span>
-
 <span class="cp">#define EXEC_PAGESIZE   4096</span>
-
 <span class="cp">#endif</span>
 <span class="cp"># define GLRO(name) _##name</span>
-
 <span class="kt">size_t</span> <span class="n">_dl_pagesize</span> <span class="o">=</span> <span class="n">EXEC_PAGESIZE</span><span class="p">;</span>
 </pre></div>
 
@@ -5989,265 +5842,149 @@
 </ol>
 <p>By default, the threshold is</p>
 <div class="codehilite"><pre><span></span><span class="k">static</span> <span class="k">struct</span> <span class="n">malloc_par</span> <span class="n">mp_</span> <span class="o">=</span> <span class="p">{</span>
-
     <span class="p">.</span><span class="n">top_pad</span> <span class="o">=</span> <span class="n">DEFAULT_TOP_PAD</span><span class="p">,</span>
-
     <span class="p">.</span><span class="n">n_mmaps_max</span> <span class="o">=</span> <span class="n">DEFAULT_MMAP_MAX</span><span class="p">,</span>
-
     <span class="p">.</span><span class="n">mmap_threshold</span> <span class="o">=</span> <span class="n">DEFAULT_MMAP_THRESHOLD</span><span class="p">,</span>
-
     <span class="p">.</span><span class="n">trim_threshold</span> <span class="o">=</span> <span class="n">DEFAULT_TRIM_THRESHOLD</span><span class="p">,</span>
-
 <span class="cp">#define NARENAS_FROM_NCORES(n) ((n) * (sizeof(long) == 4 ? 2 : 8))</span>
-
     <span class="p">.</span><span class="n">arena_test</span> <span class="o">=</span> <span class="n">NARENAS_FROM_NCORES</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
 <span class="cp">#if USE_TCACHE</span>
-
         <span class="p">,</span>
-
     <span class="p">.</span><span class="n">tcache_count</span> <span class="o">=</span> <span class="n">TCACHE_FILL_COUNT</span><span class="p">,</span>
-
     <span class="p">.</span><span class="n">tcache_bins</span> <span class="o">=</span> <span class="n">TCACHE_MAX_BINS</span><span class="p">,</span>
-
     <span class="p">.</span><span class="n">tcache_max_bytes</span> <span class="o">=</span> <span class="n">tidx2usize</span><span class="p">(</span><span class="n">TCACHE_MAX_BINS</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
-
     <span class="p">.</span><span class="n">tcache_unsorted_limit</span> <span class="o">=</span> <span class="mi">0</span> <span class="cm">/* No limit.  */</span>
-
 <span class="cp">#endif</span>
 <span class="p">};</span>
 </pre></div>
 
 <p><code>DEFAULT_MMAP_THRESHOLD</code> is 128*1024 bytes, or 128 K.</p>
 <div class="codehilite"><pre><span></span><span class="cp">#ifndef DEFAULT_MMAP_THRESHOLD</span>
-
 <span class="cp">#define DEFAULT_MMAP_THRESHOLD DEFAULT_MMAP_THRESHOLD_MIN</span>
-
 <span class="cp">#endif</span>
 <span class="cm">/*</span>
-
 <span class="cm">  MMAP_THRESHOLD_MAX and _MIN are the bounds on the dynamically</span>
-
 <span class="cm">  adjusted MMAP_THRESHOLD.</span>
-
 <span class="cm">*/</span>
 
-
-
 <span class="cp">#ifndef DEFAULT_MMAP_THRESHOLD_MIN</span>
-
 <span class="cp">#define DEFAULT_MMAP_THRESHOLD_MIN (128 * 1024)</span>
-
 <span class="cp">#endif</span>
 
-
 <span class="cp">#ifndef DEFAULT_MMAP_THRESHOLD_MAX</span>
-
 <span class="cm">/* For 32-bit platforms we cannot increase the maximum mmap</span>
-
 <span class="cm">   threshold much because it is also the minimum value for the</span>
-
 <span class="cm">   maximum heap size and its alignment.  Going above 512k (i.e., 1M</span>
-
 <span class="cm">   for new heaps) wastes too much address space.  */</span>
-
 <span class="cp">#if __WORDSIZE == 32</span>
-
 <span class="cp">#define DEFAULT_MMAP_THRESHOLD_MAX (512 * 1024)</span>
-
 <span class="cp">#else</span>
-
 <span class="cp">#define DEFAULT_MMAP_THRESHOLD_MAX (4 * 1024 * 1024 * sizeof(long))</span>
-
 <span class="cp">#endif</span>
 <span class="cp">#endif</span>
 </pre></div>
 
 <p>The following is part of the code, which is not the focus of our concern at present, and can be skipped temporarily.</p>
 <div class="codehilite"><pre><span></span>  <span class="cm">/*</span>
-
 <span class="cm">     If have mmap, and the request size meets the mmap threshold, and</span>
-
 <span class="cm">     the system supports mmap, and there are few enough currently</span>
-
 <span class="cm">     allocated mmapped regions, try to directly map this request</span>
-
 <span class="cm">     rather than expanding top.</span>
-
 <span class="cm">   */</span>
 
-
-
-<span class="k">if</span> <span class="p">(</span><span class="n">of</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span>
       <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">mp_</span><span class="p">.</span><span class="n">mmap_threshold</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
-
-<span class="p">(</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps</span> <span class="o">&lt;</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps_max</span><span class="p">))</span> <span class="p">{</span>
+      <span class="p">(</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps</span> <span class="o">&lt;</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps_max</span><span class="p">))</span> <span class="p">{</span>
     <span class="kt">char</span> <span class="o">*</span><span class="n">mm</span><span class="p">;</span> <span class="cm">/* return value from mmap call*/</span>
 
-
-
   <span class="nl">try_mmap</span><span class="p">:</span>
-
     <span class="cm">/*</span>
-
 <span class="cm">       Round up size to nearest page.  For mmapped chunks, the overhead</span>
-
 <span class="cm">       is one SIZE_SZ unit larger than for normal chunks, because there</span>
-
 <span class="cm">       is no following chunk whose prev_size field could be used.</span>
 
-
-
 <span class="cm">       See the front_misalign handling below, for glibc there is no</span>
-
 <span class="cm">       need for further alignments unless we have have high alignment.</span>
-
 <span class="cm">     */</span>
-
     <span class="k">if</span> <span class="p">(</span><span class="n">MALLOC_ALIGNMENT</span> <span class="o">==</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">)</span>
-
       <span class="n">size</span> <span class="o">=</span> <span class="n">ALIGN_UP</span><span class="p">(</span><span class="n">nb</span> <span class="o">+</span> <span class="n">SIZE_SZ</span><span class="p">,</span> <span class="n">pagesize</span><span class="p">);</span>
-
     <span class="k">else</span>
-
       <span class="n">size</span> <span class="o">=</span> <span class="n">ALIGN_UP</span><span class="p">(</span><span class="n">nb</span> <span class="o">+</span> <span class="n">SIZE_SZ</span> <span class="o">+</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">,</span> <span class="n">pagesize</span><span class="p">);</span>
-
     <span class="n">tried_mmap</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
 
-
-
     <span class="cm">/* Don&#39;t try if size wraps around 0 */</span>
-
     <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">size</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">nb</span><span class="p">))</span> <span class="p">{</span>
-
       <span class="n">mm</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MMAP</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
 
-
-
       <span class="k">if</span> <span class="p">(</span><span class="n">mm</span> <span class="o">!=</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
-
         <span class="cm">/*</span>
-
 <span class="cm">           The offset to the start of the mmapped region is stored</span>
-
 <span class="cm">           in the prev_size field of the chunk. This allows us to adjust</span>
-
 <span class="cm">           returned start address to meet alignment requirements here</span>
-
 <span class="cm">           and in memalign(), and still be able to compute proper</span>
-
 <span class="cm">           address argument for later munmap in free() and realloc().</span>
-
 <span class="cm">         */</span>
 
-
-
         <span class="k">if</span> <span class="p">(</span><span class="n">MALLOC_ALIGNMENT</span> <span class="o">==</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">)</span> <span class="p">{</span>
-
           <span class="cm">/* For glibc, chunk2mem increases the address by 2*SIZE_SZ and</span>
-
 <span class="cm">             MALLOC_ALIGN_MASK is 2*SIZE_SZ-1.  Each mmap&#39;ed area is page</span>
-
 <span class="cm">             aligned and therefore definitely MALLOC_ALIGN_MASK-aligned.  */</span>
-
           <span class="n">assert</span><span class="p">(((</span><span class="n">INTERNAL_SIZE_T</span><span class="p">)</span><span class="n">chunk2mem</span><span class="p">(</span><span class="n">mm</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
-
           <span class="n">front_misalign</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-
         <span class="p">}</span> <span class="k">else</span>
-
           <span class="n">front_misalign</span> <span class="o">=</span> <span class="p">(</span><span class="n">INTERNAL_SIZE_T</span><span class="p">)</span><span class="n">chunk2mem</span><span class="p">(</span><span class="n">mm</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">;</span>
-
         <span class="k">if</span> <span class="p">(</span><span class="n">front_misalign</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-
           <span class="n">correction</span> <span class="o">=</span> <span class="n">MALLOC_ALIGNMENT</span> <span class="o">-</span> <span class="n">front_misalign</span><span class="p">;</span>
-
           <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">mchunkptr</span><span class="p">)(</span><span class="n">mm</span> <span class="o">+</span> <span class="n">correction</span><span class="p">);</span>
-
           <span class="n">set_prev_size</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">correction</span><span class="p">);</span>
-
           <span class="n">set_head</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="p">(</span><span class="n">size</span> <span class="o">-</span> <span class="n">correction</span><span class="p">)</span> <span class="o">|</span> <span class="n">IS_MMAPPED</span><span class="p">);</span>
-
         <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-
           <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">mchunkptr</span><span class="p">)</span><span class="n">mm</span><span class="p">;</span>
-
           <span class="n">set_prev_size</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-
           <span class="n">set_head</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">size</span> <span class="o">|</span> <span class="n">IS_MMAPPED</span><span class="p">);</span>
-
         <span class="p">}</span>
-
-
 
         <span class="cm">/* update statistics */</span>
 
-
-
         <span class="kt">int</span> <span class="n">new</span> <span class="o">=</span> <span class="n">atomic_exchange_and_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mp_</span><span class="p">.</span><span class="n">n_mmaps</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
-
         <span class="n">atomic_max</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mp_</span><span class="p">.</span><span class="n">max_n_mmaps</span><span class="p">,</span> <span class="n">new</span><span class="p">);</span>
 
-
-
         <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">sum</span><span class="p">;</span>
-
         <span class="n">sum</span> <span class="o">=</span> <span class="n">atomic_exchange_and_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mp_</span><span class="p">.</span><span class="n">mmapped_mem</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span> <span class="o">+</span> <span class="n">size</span><span class="p">;</span>
-
         <span class="n">atomic_max</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mp_</span><span class="p">.</span><span class="n">max_mmapped_mem</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
 
-
-
-<span class="n">check_chunk</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
-
+        <span class="n">check_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
 
         <span class="k">return</span> <span class="nf">chunk2mem</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
-
       <span class="p">}</span>
-
     <span class="p">}</span>
-
   <span class="p">}</span>
 </pre></div>
 
 <h3 id="mmap-failed-or-unallocated-heap">mmap failed or unallocated heap<a class="headerlink" href="#mmap-failed-or-unallocated-heap" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span>  <span class="cm">/* There are no usable arenas and mmap also failed.  */</span>
-
-<span class="k">if</span> <span class="p">(</span><span class="n">of</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">av</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </pre></div>
 
 <p>If it is any of these two situations, you can actually quit. .</p>
 <h3 id="recording-old-heap-information">Recording old heap information<a class="headerlink" href="#recording-old-heap-information" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span>  <span class="cm">/* Record incoming configuration of top */</span>
-
-
-
-<span class="n">old_top</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span><span class="p">;</span>
+  <span class="n">old_top</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span><span class="p">;</span>
   <span class="n">old_size</span> <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">old_top</span><span class="p">);</span>
-
   <span class="n">old_end</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span><span class="p">));</span>
-
-
 
   <span class="n">brk</span> <span class="o">=</span> <span class="n">snd_brk</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE_FAILURE</span><span class="p">);</span>
 </pre></div>
 
 <h3 id="check-old-heap-information-1">Check old heap information 1<a class="headerlink" href="#check-old-heap-information-1" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span>  <span class="cm">/*</span>
-
 <span class="cm">     If not the first time through, we require old_size to be</span>
-
 <span class="cm">     at least MINSIZE and to have prev_inuse set.</span>
-
 <span class="cm">   */</span>
 
-
-
   <span class="n">assert</span><span class="p">((</span><span class="n">old_top</span> <span class="o">==</span> <span class="n">initial_top</span><span class="p">(</span><span class="n">av</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">old_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
-
          <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">old_size</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MINSIZE</span> <span class="o">&amp;&amp;</span> <span class="n">prev_inuse</span><span class="p">(</span><span class="n">old_top</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
-
           <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span><span class="n">old_end</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pagesize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">));</span>
 </pre></div>
 
@@ -6260,101 +5997,60 @@
 </ol>
 <h3 id="check-old-heap-information-2">Check old heap information 2<a class="headerlink" href="#check-old-heap-information-2" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span>  <span class="cm">/* Precondition: not enough current space to satisfy nb request */</span>
-
   <span class="n">assert</span><span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">old_size</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">nb</span> <span class="o">+</span> <span class="n">MINSIZE</span><span class="p">));</span>
 </pre></div>
 
 <p>According to the definition in malloc</p>
 <div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="o">*</span><span class="nf">_int_malloc</span><span class="p">(</span><span class="n">mstate</span> <span class="n">av</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span> <span class="p">{</span>
-
     <span class="n">INTERNAL_SIZE_T</span> <span class="n">nb</span><span class="p">;</span>  <span class="cm">/* normalized request size */</span>
 </pre></div>
 
 <p><code>nb</code> should be the byte that has been added to the chunk header. Why add <code>MINSIZE</code>? This is because the size of the top chunk should at least reserve the MINSIZE space for easy merging.</p>
 <h3 id="non-main_arena">Non main_arena<a class="headerlink" href="#non-main_arena" title="Permanent link">&para;</a></h3>
 <p>This is not the focus of care for the time being, and it will not be analyzed for the time being.</p>
-<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">by</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span>  <span class="k">if</span> <span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">main_arena</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">heap_info</span> <span class="o">*</span><span class="n">old_heap</span><span class="p">,</span> <span class="o">*</span><span class="n">heap</span><span class="p">;</span>
-
     <span class="kt">size_t</span> <span class="n">old_heap_size</span><span class="p">;</span>
 
-
-
     <span class="cm">/* First try to extend the current heap. */</span>
-
     <span class="n">old_heap</span> <span class="o">=</span> <span class="n">heap_for_ptr</span><span class="p">(</span><span class="n">old_top</span><span class="p">);</span>
-
     <span class="n">old_heap_size</span> <span class="o">=</span> <span class="n">old_heap</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">;</span>
-
     <span class="k">if</span> <span class="p">((</span><span class="kt">long</span><span class="p">)(</span><span class="n">MINSIZE</span> <span class="o">+</span> <span class="n">nb</span> <span class="o">-</span> <span class="n">old_size</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span>
-
         <span class="n">grow_heap</span><span class="p">(</span><span class="n">old_heap</span><span class="p">,</span> <span class="n">MINSIZE</span> <span class="o">+</span> <span class="n">nb</span> <span class="o">-</span> <span class="n">old_size</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-
       <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span> <span class="o">+=</span> <span class="n">old_heap</span><span class="o">-&gt;</span><span class="n">size</span> <span class="o">-</span> <span class="n">old_heap_size</span><span class="p">;</span>
-
       <span class="n">set_head</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span>
-
                <span class="p">(((</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">old_heap</span> <span class="o">+</span> <span class="n">old_heap</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">old_top</span><span class="p">)</span> <span class="o">|</span>
-
                    <span class="n">PREV_INUSE</span><span class="p">);</span>
-
     <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">((</span><span class="n">heap</span> <span class="o">=</span> <span class="n">new_heap</span><span class="p">(</span><span class="n">nb</span> <span class="o">+</span> <span class="p">(</span><span class="n">MINSIZE</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">heap</span><span class="p">)),</span> <span class="n">mp_</span><span class="p">.</span><span class="n">top_pad</span><span class="p">)))</span> <span class="p">{</span>
-
       <span class="cm">/* Use a newly allocated heap.  */</span>
-
-<span class="n">heap</span><span class="o">-&gt;</span> <span class="n">ar_ptr</span> <span class="o">=</span> <span class="n">off</span><span class="p">;</span>
+      <span class="n">heap</span><span class="o">-&gt;</span><span class="n">ar_ptr</span> <span class="o">=</span> <span class="n">av</span><span class="p">;</span>
       <span class="n">heap</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">old_heap</span><span class="p">;</span>
-
-<span class="n">of</span><span class="o">-&gt;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">heap</span><span class="o">-&gt;</span> <span class="n">size</span><span class="p">;</span>
+      <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">heap</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">;</span>
       <span class="cm">/* Set up the new top.  */</span>
-
       <span class="n">top</span><span class="p">(</span><span class="n">av</span><span class="p">)</span> <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">heap</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">heap</span><span class="p">));</span>
-
       <span class="n">set_head</span><span class="p">(</span><span class="n">top</span><span class="p">(</span><span class="n">av</span><span class="p">),</span> <span class="p">(</span><span class="n">heap</span><span class="o">-&gt;</span><span class="n">size</span> <span class="o">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">heap</span><span class="p">))</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
 
-
-
       <span class="cm">/* Setup fencepost and free the old top chunk with a multiple of</span>
-
 <span class="cm">         MALLOC_ALIGNMENT in size. */</span>
-
       <span class="cm">/* The fencepost takes at least MINSIZE bytes, because it might</span>
-
 <span class="cm">         become the top chunk again later.  Note that a footer is set</span>
-
 <span class="cm">         up, too, although the chunk is marked in use. */</span>
-
       <span class="n">old_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">old_size</span> <span class="o">-</span> <span class="n">MINSIZE</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">MALLOC_ALIGN_MASK</span><span class="p">;</span>
-
       <span class="n">set_head</span><span class="p">(</span><span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">),</span>
-
                <span class="mi">0</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
       <span class="k">if</span> <span class="p">(</span><span class="n">old_size</span> <span class="o">&gt;=</span> <span class="n">MINSIZE</span><span class="p">)</span> <span class="p">{</span>
-
         <span class="n">set_head</span><span class="p">(</span><span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span><span class="p">),</span>
-
                  <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">)</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
         <span class="n">set_foot</span><span class="p">(</span><span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">));</span>
-
         <span class="n">set_head</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span> <span class="n">NON_MAIN_ARENA</span><span class="p">);</span>
-
-<span class="n">_int_free</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">old_top</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="n">_int_free</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">old_top</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
       <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-
         <span class="n">set_head</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="p">(</span><span class="n">old_size</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">)</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
         <span class="n">set_foot</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="p">(</span><span class="n">old_size</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">));</span>
-
       <span class="p">}</span>
-
     <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">tried_mmap</span><span class="p">)</span>
-
       <span class="cm">/* We can at least try to use to mmap memory.  */</span>
-
       <span class="k">goto</span> <span class="n">try_mmap</span><span class="p">;</span>
-
   <span class="p">}</span>
 </pre></div>
 
@@ -6363,17 +6059,13 @@
 <p>The calculation can satisfy the requested memory size.</p>
 <div class="codehilite"><pre><span></span><span class="k">else</span> <span class="p">{</span><span class="o">/</span> <span class="o">*</span> <span class="n">by</span> <span class="o">==</span> <span class="n">main_arena</span> <span class="o">*</span> <span class="o">/</span>
 
-
     <span class="cm">/* Request enough space for nb + pad + overhead */</span>
-
     <span class="n">size</span> <span class="o">=</span> <span class="n">nb</span> <span class="o">+</span> <span class="n">mp_</span><span class="p">.</span><span class="n">top_pad</span> <span class="o">+</span> <span class="n">MINSIZE</span><span class="p">;</span>
 </pre></div>
 
 <p>By default <code>top_pad</code> is defined as</p>
 <div class="codehilite"><pre><span></span><span class="cp">#ifndef DEFAULT_TOP_PAD</span>
-
 <span class="cp"># define DEFAULT_TOP_PAD 131072</span>
-
 <span class="cp">#endif</span>
 </pre></div>
 
@@ -6381,74 +6073,47 @@
 <h4 id="whether-it-is-continuous">Whether it is continuous<a class="headerlink" href="#whether-it-is-continuous" title="Permanent link">&para;</a></h4>
 <p>If we want the heap space to be continuous, then we can actually reuse the previous memory.</p>
 <div class="codehilite"><pre><span></span>    <span class="cm">/*</span>
-
 <span class="cm">       If contiguous, we can subtract out existing space that we hope to</span>
-
 <span class="cm">       combine with new space. We add it back later only if</span>
-
 <span class="cm">       we don&#39;t actually get contiguous space.</span>
-
 <span class="cm">     */</span>
 
-
-
-<span class="k">if</span> <span class="p">(</span><span class="n">contiguous</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">contiguous</span><span class="p">(</span><span class="n">av</span><span class="p">))</span>
       <span class="n">size</span> <span class="o">-=</span> <span class="n">old_size</span><span class="p">;</span>
 </pre></div>
 
 <h4 id="align-page-size">Align page size<a class="headerlink" href="#align-page-size" title="Permanent link">&para;</a></h4>
 <div class="codehilite"><pre><span></span>    <span class="cm">/*</span>
-
 <span class="cm">       Round to a multiple of page size.</span>
-
 <span class="cm">       If MORECORE is not contiguous, this ensures that we only call it</span>
-
 <span class="cm">       with whole-page arguments.  And if MORECORE is contiguous and</span>
-
 <span class="cm">       this is not first time through, this preserves page-alignment of</span>
-
 <span class="cm">       previous calls. Otherwise, we correct to page-align below.</span>
 
 <span class="cm">     */</span>
-
-
 
     <span class="n">size</span> <span class="o">=</span> <span class="n">ALIGN_UP</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">pagesize</span><span class="p">);</span>
 </pre></div>
 
 <h4 id="applying-for-memory">Applying for memory<a class="headerlink" href="#applying-for-memory" title="Permanent link">&para;</a></h4>
 <div class="codehilite"><pre><span></span>    <span class="cm">/*</span>
-
 <span class="cm">       Don&#39;t try to call MORECORE if argument is so big as to appear</span>
-
 <span class="cm">       negative. Note that since mmap takes size_t arg, it may succeed</span>
-
 <span class="cm">       below even if we cannot call MORECORE.</span>
-
 <span class="cm">     */</span>
 
-
-
     <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-
       <span class="n">brk</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE</span><span class="p">(</span><span class="n">size</span><span class="p">));</span>
-
       <span class="n">LIBC_PROBE</span><span class="p">(</span><span class="n">memory_sbrk_more</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">brk</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
-
     <span class="p">}</span>
 </pre></div>
 
 <h5 id="may-succeed">May succeed<a class="headerlink" href="#may-succeed" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="n">brk</span> <span class="o">!=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE_FAILURE</span><span class="p">))</span> <span class="p">{</span>
-
       <span class="cm">/* Call the `morecore&#39; hook if necessary.  */</span>
-
       <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">hook</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="n">atomic_forced_read</span><span class="p">(</span><span class="n">__after_morecore_hook</span><span class="p">);</span>
-
       <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span><span class="p">(</span><span class="n">hook</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-
         <span class="p">(</span><span class="o">*</span><span class="n">hook</span><span class="p">)();</span>
-
     <span class="p">}</span>
 </pre></div>
 
@@ -6456,70 +6121,40 @@
 <h5 id="failed">Failed<a class="headerlink" href="#failed" title="Permanent link">&para;</a></h5>
 <p>Failure, consider mmap.</p>
 <div class="codehilite"><pre><span></span><span class="k">else</span> <span class="p">{</span>
-
       <span class="cm">/*</span>
-
 <span class="cm">         If have mmap, try using it as a backup when MORECORE fails or</span>
-
 <span class="cm">         cannot be used. This is worth doing on systems that have &quot;holes&quot; in</span>
-
 <span class="cm">         address space, so sbrk cannot extend to give contiguous space, but</span>
-
 <span class="cm">         space is available elsewhere.  Note that we ignore mmap max count</span>
-
 <span class="cm">         and threshold limits, since the space will not be used as a</span>
-
 <span class="cm">         segregated mmap region.</span>
-
 <span class="cm">       */</span>
 
-
-
       <span class="cm">/* Cannot merge with old top, so add its size back in */</span>
-
-<span class="k">if</span> <span class="p">(</span><span class="n">contiguous</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">contiguous</span><span class="p">(</span><span class="n">av</span><span class="p">))</span>
         <span class="n">size</span> <span class="o">=</span> <span class="n">ALIGN_UP</span><span class="p">(</span><span class="n">size</span> <span class="o">+</span> <span class="n">old_size</span><span class="p">,</span> <span class="n">pagesize</span><span class="p">);</span>
 
-
-
       <span class="cm">/* If we are relying on mmap as backup, then use larger units */</span>
-
       <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">size</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">MMAP_AS_MORECORE_SIZE</span><span class="p">))</span>
-
         <span class="n">size</span> <span class="o">=</span> <span class="n">MMAP_AS_MORECORE_SIZE</span><span class="p">;</span>
 
-
-
       <span class="cm">/* Don&#39;t try if size wraps around 0 */</span>
-
       <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">size</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">nb</span><span class="p">))</span> <span class="p">{</span>
-
         <span class="kt">char</span> <span class="o">*</span><span class="n">mbrk</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MMAP</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
 
-
-
         <span class="k">if</span> <span class="p">(</span><span class="n">mbrk</span> <span class="o">!=</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
-
           <span class="cm">/* We do not need, and cannot use, another sbrk call to find end */</span>
-
-<span class="n">brk</span> <span class="o">=</span> <span class="n">mbrk</span><span class="p">;</span>
+          <span class="n">brk</span> <span class="o">=</span> <span class="n">mbrk</span><span class="p">;</span>
           <span class="n">snd_brk</span> <span class="o">=</span> <span class="n">brk</span> <span class="o">+</span> <span class="n">size</span><span class="p">;</span>
 
-
-
           <span class="cm">/*</span>
-
 <span class="cm">             Record that we no longer have a contiguous sbrk region.</span>
-
 <span class="cm">             After the first time mmap is used as backup, we do not</span>
-
 <span class="cm">             ever rely on contiguous space since this could incorrectly</span>
-
 <span class="cm">             bridge regions.</span>
-
 <span class="cm">           */</span>
 
-<span class="n">set_noncontiguous</span> <span class="p">(</span><span class="n">of</span><span class="p">);</span>
+          <span class="n">set_noncontiguous</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
         <span class="p">}</span>
 
       <span class="p">}</span>
@@ -6529,370 +6164,215 @@
 
 <h4 id="memory-may-be-applied-successfully">Memory may be applied successfully<a class="headerlink" href="#memory-may-be-applied-successfully" title="Permanent link">&para;</a></h4>
 <div class="codehilite"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="n">brk</span> <span class="o">!=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE_FAILURE</span><span class="p">))</span> <span class="p">{</span>
-
       <span class="k">if</span> <span class="p">(</span><span class="n">mp_</span><span class="p">.</span><span class="n">sbrk_base</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-
-<span class="n">mp_srk_base</span> <span class="o">=</span> <span class="n">brk</span><span class="p">;</span>
-<span class="n">av</span><span class="o">-&gt;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
+        <span class="n">mp_srk_base</span> <span class="o">=</span> <span class="n">brk</span><span class="p">;</span>
+        <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
 </pre></div>
 
 <h5 id="situation-1">Situation 1<a class="headerlink" href="#situation-1" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>      <span class="cm">/*</span>
-
 <span class="cm">         If MORECORE extends previous space, we can likewise extend top size.</span>
-
 <span class="cm">       */</span>
 
-
-
       <span class="k">if</span> <span class="p">(</span><span class="n">brk</span> <span class="o">==</span> <span class="n">old_end</span> <span class="o">&amp;&amp;</span> <span class="n">snd_brk</span> <span class="o">==</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE_FAILURE</span><span class="p">))</span>
-
         <span class="n">set_head</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="p">(</span><span class="n">size</span> <span class="o">+</span> <span class="n">old_size</span><span class="p">)</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
 </pre></div>
 
 <h5 id="case-2-unexpected-memory-exhaustion">Case 2 - Unexpected memory exhaustion<a class="headerlink" href="#case-2-unexpected-memory-exhaustion" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>      <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">contiguous</span><span class="p">(</span><span class="n">av</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">old_size</span> <span class="o">&amp;&amp;</span> <span class="n">brk</span> <span class="o">&lt;</span> <span class="n">old_end</span><span class="p">)</span>
-
         <span class="cm">/* Oops!  Someone else killed our space..  Can&#39;t touch anything.  */</span>
-
         <span class="n">malloc_printerr</span><span class="p">(</span><span class="s">&quot;break adjusted to free malloc space&quot;</span><span class="p">);</span>
 </pre></div>
 
 <h5 id="handling-other-unexpected-situations">Handling other unexpected situations<a class="headerlink" href="#handling-other-unexpected-situations" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>      <span class="cm">/*</span>
-
 <span class="cm">         Otherwise, make adjustments:</span>
 
-
-
 <span class="cm">       * If the first time through or noncontiguous, we need to call sbrk</span>
-
 <span class="cm">          just to find out where the end of memory lies.</span>
 
-
-
 <span class="cm">       * We need to ensure that all returned chunks from malloc will meet</span>
-
 <span class="cm">          MALLOC_ALIGNMENT</span>
-
-
 
 <span class="cm">       * If there was an intervening foreign sbrk, we need to adjust sbrk</span>
 <span class="cm">          request size to account for fact that we will not be able to</span>
-
 <span class="cm">          combine new space with existing space in old_top.</span>
 
-
-
 <span class="cm">       * Almost all systems internally allocate whole pages at a time, in</span>
-
 <span class="cm">          which case we might as well use the whole last page of request.</span>
-
 <span class="cm">          So we allocate enough more memory to hit a page boundary now,</span>
-
 <span class="cm">          which in turn causes future contiguous calls to page-align.</span>
-
 <span class="cm">       */</span>
 
-
-
       <span class="k">else</span> <span class="p">{</span>
-
         <span class="n">front_misalign</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-
         <span class="n">end_misalign</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-
         <span class="n">correction</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-
-<span class="n">aligned_brk</span> <span class="o">=</span> <span class="n">brk</span><span class="p">;</span>
+        <span class="n">aligned_brk</span> <span class="o">=</span> <span class="n">brk</span><span class="p">;</span>
 </pre></div>
 
 <h6 id="processing-contiguous-memory">Processing contiguous memory<a class="headerlink" href="#processing-contiguous-memory" title="Permanent link">&para;</a></h6>
 <div class="codehilite"><pre><span></span>        <span class="cm">/* handle contiguous cases */</span>
-
-<span class="k">if</span> <span class="p">(</span><span class="n">contiguous</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">contiguous</span><span class="p">(</span><span class="n">av</span><span class="p">))</span> <span class="p">{</span>
           <span class="cm">/* Count foreign sbrk as system_mem.  */</span>
-
           <span class="k">if</span> <span class="p">(</span><span class="n">old_size</span><span class="p">)</span>
-
-<span class="n">av</span><span class="o">-&gt;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">brk</span> <span class="o">-</span> <span class="n">old_end</span><span class="p">;</span>
-
+            <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">brk</span> <span class="o">-</span> <span class="n">old_end</span><span class="p">;</span>
 
           <span class="cm">/* Guarantee alignment of first new chunk made from this space */</span>
 
-
-
           <span class="n">front_misalign</span> <span class="o">=</span> <span class="p">(</span><span class="n">INTERNAL_SIZE_T</span><span class="p">)</span><span class="n">chunk2mem</span><span class="p">(</span><span class="n">brk</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">;</span>
-
           <span class="k">if</span> <span class="p">(</span><span class="n">front_misalign</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-
             <span class="cm">/*</span>
-
 <span class="cm">               Skip over some bytes to arrive at an aligned position.</span>
-
 <span class="cm">               We don&#39;t need to specially mark these wasted front bytes.</span>
-
 <span class="cm">               They will never be accessed anyway because</span>
-
 <span class="cm">               prev_inuse of av-&gt;top (and any chunk created from its start)</span>
-
 <span class="cm">               is always true after initialization.</span>
-
 <span class="cm">             */</span>
 
-
-
             <span class="n">correction</span> <span class="o">=</span> <span class="n">MALLOC_ALIGNMENT</span> <span class="o">-</span> <span class="n">front_misalign</span><span class="p">;</span>
-
             <span class="n">aligned_brk</span> <span class="o">+=</span> <span class="n">correction</span><span class="p">;</span>
-
           <span class="p">}</span>
-
-
-
           <span class="cm">/*</span>
-
 <span class="cm">             If this isn&#39;t adjacent to existing space, then we will not</span>
-
 <span class="cm">             be able to merge with old_top space, so must add to 2nd request.</span>
-
 <span class="cm">           */</span>
-
-
 
           <span class="n">correction</span> <span class="o">+=</span> <span class="n">old_size</span><span class="p">;</span>
 
-
-
           <span class="cm">/* Extend the end address to hit a page boundary */</span>
-
           <span class="n">end_misalign</span> <span class="o">=</span> <span class="p">(</span><span class="n">INTERNAL_SIZE_T</span><span class="p">)(</span><span class="n">brk</span> <span class="o">+</span> <span class="n">size</span> <span class="o">+</span> <span class="n">correction</span><span class="p">);</span>
-
           <span class="n">correction</span> <span class="o">+=</span> <span class="p">(</span><span class="n">ALIGN_UP</span><span class="p">(</span><span class="n">end_misalign</span><span class="p">,</span> <span class="n">pagesize</span><span class="p">))</span> <span class="o">-</span> <span class="n">end_misalign</span><span class="p">;</span>
 
-
-
           <span class="n">assert</span><span class="p">(</span><span class="n">correction</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">);</span>
-
           <span class="n">snd_brk</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE</span><span class="p">(</span><span class="n">correction</span><span class="p">));</span>
 
-
-
           <span class="cm">/*</span>
-
 <span class="cm">             If can&#39;t allocate correction, try to at least find out current</span>
-
 <span class="cm">             brk.  It might be enough to proceed without failing.</span>
 
-
-
 <span class="cm">             Note that if second sbrk did NOT fail, we assume that space</span>
-
 <span class="cm">             is contiguous with first sbrk. This is a safe assumption unless</span>
-
 <span class="cm">             program is multithreaded but doesn&#39;t use locks and a foreign sbrk</span>
-
 <span class="cm">             occurred between our first and second calls.</span>
-
 <span class="cm">           */</span>
 
-
-
           <span class="k">if</span> <span class="p">(</span><span class="n">snd_brk</span> <span class="o">==</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE_FAILURE</span><span class="p">))</span> <span class="p">{</span>
-
             <span class="n">correction</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-
-<span class="n">snd_brk</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">MORECORE</span> <span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+            <span class="n">snd_brk</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">MORECORE</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
           <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-
             <span class="cm">/* Call the `morecore&#39; hook if necessary.  */</span>
-
             <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">hook</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="n">atomic_forced_read</span><span class="p">(</span><span class="n">__after_morecore_hook</span><span class="p">);</span>
-
             <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span><span class="p">(</span><span class="n">hook</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-
               <span class="p">(</span><span class="o">*</span><span class="n">hook</span><span class="p">)();</span>
-
           <span class="p">}</span>
-
         <span class="p">}</span>
 </pre></div>
 
 <h6 id="handling-discontinuous-memory">Handling discontinuous memory<a class="headerlink" href="#handling-discontinuous-memory" title="Permanent link">&para;</a></h6>
 <div class="codehilite"><pre><span></span>        <span class="cm">/* handle non-contiguous cases */</span>
-
         <span class="k">else</span> <span class="p">{</span>
-
           <span class="k">if</span> <span class="p">(</span><span class="n">MALLOC_ALIGNMENT</span> <span class="o">==</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">)</span>
-
             <span class="cm">/* MORECORE/mmap must correctly align */</span>
-
             <span class="n">assert</span><span class="p">(((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span><span class="n">chunk2mem</span><span class="p">(</span><span class="n">brk</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
-
           <span class="k">else</span> <span class="p">{</span>
-
             <span class="n">front_misalign</span> <span class="o">=</span>
-
                 <span class="p">(</span><span class="n">INTERNAL_SIZE_T</span><span class="p">)</span><span class="n">chunk2mem</span><span class="p">(</span><span class="n">brk</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">;</span>
-
             <span class="k">if</span> <span class="p">(</span><span class="n">front_misalign</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-
               <span class="cm">/*</span>
-
 <span class="cm">                 Skip over some bytes to arrive at an aligned position.</span>
-
 <span class="cm">                 We don&#39;t need to specially mark these wasted front bytes.</span>
-
 <span class="cm">                 They will never be accessed anyway because</span>
-
 <span class="cm">                 prev_inuse of av-&gt;top (and any chunk created from its start)</span>
-
 <span class="cm">                 is always true after initialization.</span>
-
 <span class="cm">               */</span>
 
-
-
               <span class="n">aligned_brk</span> <span class="o">+=</span> <span class="n">MALLOC_ALIGNMENT</span> <span class="o">-</span> <span class="n">front_misalign</span><span class="p">;</span>
-
             <span class="p">}</span>
-
           <span class="p">}</span>
-
-
 
           <span class="cm">/* Find out current end of memory */</span>
-
           <span class="k">if</span> <span class="p">(</span><span class="n">snd_brk</span> <span class="o">==</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE_FAILURE</span><span class="p">))</span> <span class="p">{</span>
-
-<span class="n">snd_brk</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">MORECORE</span> <span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+            <span class="n">snd_brk</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">MORECORE</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
           <span class="p">}</span>
-
         <span class="p">}</span>
 </pre></div>
 
 <h6 id="adjustment">Adjustment<a class="headerlink" href="#adjustment" title="Permanent link">&para;</a></h6>
 <div class="codehilite"><pre><span></span>        <span class="cm">/* Adjust top based on results of second sbrk */</span>
-
         <span class="k">if</span> <span class="p">(</span><span class="n">snd_brk</span> <span class="o">!=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">MORECORE_FAILURE</span><span class="p">))</span> <span class="p">{</span>
-
-<span class="n">av</span><span class="o">-&gt;</span> <span class="n">top</span> <span class="o">=</span> <span class="p">(</span><span class="n">mchunkptr</span><span class="p">)</span> <span class="n">aligned_brk</span><span class="p">;</span>
+          <span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span> <span class="o">=</span> <span class="p">(</span><span class="n">mchunkptr</span><span class="p">)</span> <span class="n">aligned_brk</span><span class="p">;</span>
           <span class="n">set_head</span><span class="p">(</span><span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span><span class="p">,</span> <span class="p">(</span><span class="n">snd_brk</span> <span class="o">-</span> <span class="n">aligned_brk</span> <span class="o">+</span> <span class="n">correction</span><span class="p">)</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
-<span class="n">av</span><span class="o">-&gt;</span> <span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">correction</span><span class="p">;</span>
-
+          <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span> <span class="o">+</span> <span class="o">=</span> <span class="n">correction</span><span class="p">;</span>
 
           <span class="cm">/*</span>
-
 <span class="cm">             If not the first time through, we either have a</span>
-
 <span class="cm">             gap due to foreign sbrk or a non-contiguous region.  Insert a</span>
-
 <span class="cm">             double fencepost at old_top to prevent consolidation with space</span>
-
 <span class="cm">             we don&#39;t own. These fenceposts are artificial chunks that are</span>
-
 <span class="cm">             marked as inuse and are in any case too small to use.  We need</span>
-
 <span class="cm">             two to make sizes and alignments work out.</span>
-
 <span class="cm">           */</span>
-
-
 
           <span class="k">if</span> <span class="p">(</span><span class="n">old_size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
             <span class="cm">/*</span>
-
 <span class="cm">               Shrink old_top to insert fenceposts, keeping size a</span>
-
 <span class="cm">               multiple of MALLOC_ALIGNMENT. We know there is at least</span>
-
 <span class="cm">               enough space in old_top to do this.</span>
-
 <span class="cm">             */</span>
-
             <span class="n">old_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">old_size</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">MALLOC_ALIGN_MASK</span><span class="p">;</span>
-
             <span class="n">set_head</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
 
-
-
             <span class="cm">/*</span>
-
 <span class="cm">               Note that the following assignments completely overwrite</span>
-
 <span class="cm">               old_top when old_size was previously MINSIZE.  This is</span>
-
 <span class="cm">               intentional. We need the fencepost, even if old_top otherwise</span>
-
 <span class="cm">               gets lost.</span>
-
 <span class="cm">             */</span>
-
             <span class="n">set_head</span><span class="p">(</span><span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span><span class="p">),</span>
-
                      <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">)</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
             <span class="n">set_head</span><span class="p">(</span><span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">old_top</span><span class="p">,</span> <span class="n">old_size</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">),</span>
-
                      <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">)</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
-
 
             <span class="cm">/* If possible, release the rest. */</span>
-
             <span class="k">if</span> <span class="p">(</span><span class="n">old_size</span> <span class="o">&gt;=</span> <span class="n">MINSIZE</span><span class="p">)</span> <span class="p">{</span>
-
-<span class="n">_int_free</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">old_top</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+              <span class="n">_int_free</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">old_top</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
             <span class="p">}</span>
-
           <span class="p">}</span>
-
         <span class="p">}</span>
-
       <span class="p">}</span>
 </pre></div>
 
 <p>It should be noted that here the program releases the old top chunk, and it will enter different bins or tcaches depending on the size.</p>
 <h4 id="update-maximum-memory">Update maximum memory<a class="headerlink" href="#update-maximum-memory" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">system_mem</span><span class="o">&gt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">off</span><span class="o">-&gt;</span> <span class="n">max_system_mem</span><span class="p">))</span>
-<span class="n">av</span><span class="o">-&gt;</span> <span class="n">max_system_mem</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span> <span class="n">system_mem</span><span class="p">;</span>
-<span class="n">check_malloc_state</span> <span class="p">(</span><span class="n">of</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span>  <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">av</span><span class="o">-&gt;</span><span class="n">max_system_mem</span><span class="p">))</span>
+    <span class="n">av</span><span class="o">-&gt;</span><span class="n">max_system_mem</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span><span class="p">;</span>
+  <span class="n">check_malloc_state</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
 </pre></div>
 
 <h4 id="allocating-memory-blocks">Allocating memory blocks<a class="headerlink" href="#allocating-memory-blocks" title="Permanent link">&para;</a></h4>
 <h5 id="get-the-size">Get the size<a class="headerlink" href="#get-the-size" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>  <span class="cm">/* finally, do the allocation */</span>
-
-<span class="n">p</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span><span class="p">;</span>
+  <span class="n">p</span> <span class="o">=</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span><span class="p">;</span>
   <span class="n">size</span> <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
 </pre></div>
 
 <h5 id="top">切分 top<a class="headerlink" href="#top" title="Permanent link">&para;</a></h5>
 <div class="codehilite"><pre><span></span>  <span class="cm">/* check that one of the above allocation paths succeeded */</span>
-
   <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">size</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="n">nb</span> <span class="o">+</span> <span class="n">MINSIZE</span><span class="p">))</span> <span class="p">{</span>
-
     <span class="n">remainder_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
-
     <span class="n">remainder</span> <span class="o">=</span> <span class="n">chunk_at_offset</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
-
-<span class="n">off</span><span class="o">-&gt;</span> <span class="n">top</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
+    <span class="n">av</span><span class="o">-&gt;</span><span class="n">top</span> <span class="o">=</span> <span class="n">remainder</span><span class="p">;</span>
     <span class="n">set_head</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span> <span class="p">(</span><span class="n">av</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">main_arena</span> <span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span> <span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
-
     <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-
-<span class="n">check_malloced_chunk</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
+    <span class="n">check_malloced_chunk</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
     <span class="k">return</span> <span class="nf">chunk2mem</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
-
   <span class="p">}</span>
 </pre></div>
 
 <h4 id="capture-all-errors">Capture all errors<a class="headerlink" href="#capture-all-errors" title="Permanent link">&para;</a></h4>
 <div class="codehilite"><pre><span></span>  <span class="cm">/* catch all failure paths */</span>
-
   <span class="n">__set_errno</span><span class="p">(</span><span class="n">ENOMEM</span><span class="p">);</span>
-
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </pre></div>
                 
