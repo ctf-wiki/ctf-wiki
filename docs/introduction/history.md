@@ -1,5 +1,5 @@
 [EN](./history.md) | [ZH](./history-zh.md)
-&gt; The content of this column is taken from the public video &quot;The Past, Present and Future of CTF&quot; by Teacher Zhuge Jianwei in the Spring Festival.
+> The content of this column is taken from the public video "The Past, Present and Future of CTF" by Teacher Zhuge Jianwei in the Spring Festival.
 
 
 ## Origin of CTF
@@ -14,7 +14,7 @@ Early years of CTF (1996-2001), there are no clear rules, no professional compet
 Due to lack of automated scoring and technical referees, along with scoring delays and errors, unreliable network and improper configuration, great controversy and dissatisfaction is widespread.
 
 
-## &quot;Modern&quot; CTF Competition
+## "Modern" CTF Competition
 
 
 A professional team will handle the competition platform, problems, organization of the event and automated scoring system. The participating teams are required to submit an application for participation and will be selected by the organizers of the DEFCON in a meeting.
@@ -24,5 +24,5 @@ During the three years with LegitBS organising the DEFCON CTF competition, a few
 
 - The competition focuses on the inner workings of the computer, its security features and capabilities, web exploitation has been completely ignored
 - A greater variety of CPU architectures, operating systems and languages.
-- Usage of &quot;Zero sum&quot; scoring rule.
+- Usage of "Zero sum" scoring rule.
 - A wider skillset demanded: Reverse engineering, exploiting loopholes, pwning, patching, network traffic analysis, system security, and security-oriented system for programming and debugging.
