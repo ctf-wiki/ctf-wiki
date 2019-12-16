@@ -22,7 +22,7 @@ A professional team will handle the competition platform, problems, organization
 
 During the three years with LegitBS organising the DEFCON CTF competition, a few modifications have been made:
 
-- The competition focuses on the inner workings of the computer, its security features and capabilities, web exploitation has been completely ignored
-- A greater variety of CPU architectures, operating systems and languages.
-- Usage of "Zero sum" scoring rule.
+- The competition focuses on the inner workings of the computer, its security features and capabilities, web exploitation has been completely ignored.
+- Various of CPU architectures, operating systems and languages.
+- "Zero Sum" scoring rule.
 - A wider skillset demanded: Reverse engineering, exploiting loopholes, pwning, patching, network traffic analysis, system security, and security-oriented system for programming and debugging.
