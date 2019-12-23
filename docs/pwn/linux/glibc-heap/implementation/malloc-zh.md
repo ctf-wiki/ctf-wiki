@@ -1029,7 +1029,7 @@ static struct malloc_par mp_ = {
           ((unsigned long)old_end & (pagesize - 1)) == 0));
 ```
 
-这个检查要求满足任何其中一个条件
+这个检查要求满足其中任何一个条件
 
 1. `old_top == initial_top(av) && old_size == 0`，即如果是第一次的话，堆的大小需要是 0。
 2. 新的堆，那么

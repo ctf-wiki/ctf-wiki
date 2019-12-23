@@ -278,7 +278,7 @@ static void _int_free(mstate av, mchunkptr p, int have_lock) {
 
 #### 下一块不是top chunk-前向合并-合并高地址chunk
 
-需要注意的是，如果下一块不是 top chunk 后，则合并高地址的 chunk ，并将合并后的 chunk 放入到unsorted bin中。
+需要注意的是，如果下一块不是 top chunk ，则合并高地址的 chunk ，并将合并后的 chunk 放入到unsorted bin中。
 
 ```c++
 		// 如果下一个chunk不是top chunk

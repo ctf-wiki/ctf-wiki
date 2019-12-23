@@ -169,4 +169,4 @@ int main(void)
          : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK)
 ```
 
-当req=24时，request2size(24)=32。而除去chunk 头部的16个字节。实际上用户可用chunk的字节数为16。而根据我们前面学到的知识可以知道chunk的pre_size仅当它的前一块块处于释放状态时才起作用。所以用户这时候其实还可以使用下一个chunk的prev_size字段，正好24个字节。**实际上 ptmalloc 分配内存是以双字为基本单位，以64位系统为例，分配出来的空间是16的整数倍，即用户申请的chunk都是16字节对齐的。**
+当req=24时，request2size(24)=32。而除去chunk 头部的16个字节。实际上用户可用chunk的字节数为16。而根据我们前面学到的知识可以知道chunk的pre_size仅当它的前一块处于释放状态时才起作用。所以用户这时候其实还可以使用下一个chunk的prev_size字段，正好24个字节。**实际上 ptmalloc 分配内存是以双字为基本单位，以64位系统为例，分配出来的空间是16的整数倍，即用户申请的chunk都是16字节对齐的。**

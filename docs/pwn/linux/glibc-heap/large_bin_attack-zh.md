@@ -275,7 +275,7 @@ large bin 某一个序列的 bin 中有一个 chunk 大小是 `0x410`
 
 
 
-**在一个序列的 large bin chunk 中 fd_nexesize 的方向是 size 变小的方向。这个循环的意思是找到一个比当前 fwd 指的 chunk 要大的地址，存入 fwd 中**。
+**在一个序列的 large bin chunk 中 fd_nextsize 的方向是 size 变小的方向。这个循环的意思是找到一个比当前 fwd 指的 chunk 要大的地址，存入 fwd 中**。
 
 
 
