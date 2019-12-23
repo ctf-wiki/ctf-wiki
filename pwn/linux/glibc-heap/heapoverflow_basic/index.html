@@ -46,7 +46,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.82a18eb7.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
       
         <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
       
@@ -93,7 +93,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#_1" tabindex="1" class="md-skip">
+      <a href="#heap-overflow" tabindex="0" class="md-skip">
         跳转至
       </a>
     
@@ -102,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-header-nav__button md-logo">
+        <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" aria-label="CTF Wiki" class="md-header-nav__button md-logo">
           
             <i class="md-icon">school</i>
           
@@ -133,7 +133,7 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <input type="text" class="md-search__input" aria-label="search" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
       <label class="md-icon md-search__icon" for="__search"></label>
       <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
         &#xE5CD;
@@ -4629,7 +4629,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
+  <a href="#_1" class="md-nav__link">
     小述
   </a>
   
@@ -4688,7 +4688,7 @@
                 
                 
                 <p><a href="./">EN</a> | <a href="../heapoverflow_basic-zh/">ZH</a></p>
-<h1 id="_1">堆溢<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<h1 id="heap-overflow">Heap Overflow<a class="headerlink" href="#heap-overflow" title="Permanent link">&para;</a></h1>
 <h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
 <p>Heap overflow means that the number of bytes written by the program into a heap block exceeds the number of bytes that can be used by the heap itself (<strong> is the number of bytes that can be used instead of the number of bytes requested by the user, because the heap manager The number of bytes requested by the user is adjusted, which also causes the number of available bytes to be no less than the number of bytes requested by the user</strong>), thus causing data overflow and covering to <strong> physically adjacent high The next heap of addresses</strong>.</p>
 <p>It is not difficult to find that the basic premise of a heap overflow vulnerability is</p>
@@ -4723,56 +4723,38 @@
 <li>Use the mechanism in the heap (such as unlink, etc.) to implement the arbitrary address write (Write-Anything-Anywhere) or control the contents of the heap block to control the execution flow of the program.</li>
 </ol>
 <h2 id="basic-example">Basic example<a class="headerlink" href="#basic-example" title="Permanent link">&para;</a></h2>
-<p>Let&#39;s take a simple example:</p>
+<p>Let's take a simple example:</p>
 <div class="codehilite"><pre><span></span>#include &lt;stdio.h&gt;
 
-
-
 int main(void) 
-
 {
-
   char *chunk;
-
   chunk=malloc(24);
-
   puts(&quot;Get input:&quot;);
-
   gets(chunk);
-
   return 0;
-
 }
 </pre></div>
 
 <p>The main purpose of this program is to call malloc to allocate memory on a heap, and then write a string to the heap. If the input string is too long, it will cause the area of the chunk to overflow and overwrite the top chunk. (In fact, puts internally calls malloc to allocate heap memory, which may not be covered by top chunk).
 <div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;===chunk
-
 0x602010:   0x0000000000000000  0x0000000000000000
-
 0x602020:   0x0000000000000000  0x0000000000020fe1 &lt;===top chunk
-
 0x602030:   0x0000000000000000  0x0000000000000000
-
 0x602040:   0x0000000000000000  0x0000000000000000
 </pre></div></p>
-<p>print 'A'*100</p>
-<p>Write
+<p>Write 'A'*100
 <div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;===chunk
-
 0x602010:   0x4141414141414141  0x4141414141414141
-
-0x602020: 0x4141414141414141 0x4141414141414141 &amp;lt;===top chunk (has been overflowed)
+0x602020: 0x4141414141414141  0x4141414141414141 &lt;===top chunk (has been overflowed)
 0x602030:   0x4141414141414141  0x4141414141414141
-
 0x602040:   0x4141414141414141  0x4141414141414141
 </pre></div></p>
-<h2 id="_2">小述<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h2 id="_1">小述<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>Several important steps in heap overflow:</p>
 <h3 id="looking-for-heap-allocation-functions">Looking for heap allocation functions<a class="headerlink" href="#looking-for-heap-allocation-functions" title="Permanent link">&para;</a></h3>
 <p>Usually the heap is allocated by calling the glibc function malloc, which in some cases uses the calloc assignment. The difference between calloc and malloc is that <strong>calloc is automatically emptied after allocation, which is fatal for the exploitation of certain information disclosure vulnerabilities</strong>.</p>
 <div class="codehilite"><pre><span></span>calloc(0x20);
-
 //Equivalent to
 ptr = malloc (0x20);
 memset(ptr,0,0x20);
@@ -4781,26 +4763,18 @@ memset(ptr,0,0x20);
 <p>In addition to this, there is another type of allocation via realloc, which can function as both malloc and free.
 <div class="codehilite"><pre><span></span>#include &lt;stdio.h&gt;
 
-
-
 int main(void) 
-
 {
-
   char *chunk,*chunk1;
-
   chunk=malloc(16);
-
   chunk1=realloc(chunk,32);
-
   return 0;
-
 }
 </pre></div></p>
 <p>The operation of realloc is not as simple as it is literally, and its internal operations will be different depending on different situations.</p>
 <ul>
 <li>When the size of realloc(ptr,size) is not equal to the size of ptr</li>
-<li>If the application size&gt; original size</li>
+<li>If the application size &gt; original size</li>
 <li>If the chunk is adjacent to the top chunk, extend the chunk directly to the new size.</li>
 <li>If the chunk is not adjacent to the top chunk, it is equivalent to free(ptr), malloc(new_size)</li>
 <li>If the application size &lt; original size</li>
@@ -4814,28 +4788,18 @@ int main(void)
 <p>Common dangerous functions are as follows</p>
 <ul>
 <li>Enter</li>
-<li>
-<p>gets, read a line directly, ignoring <code>&amp;#39;\x00&amp;#39;</code></p>
-<ul>
-<li>
-<p>scanf</p>
-</li>
-<li>
-<p>vscanf</p>
-</li>
+<li>gets, read a line directly, ignoring <code>'\x00'</code><ul>
+<li>scanf</li>
+<li>vscanf</li>
 </ul>
 </li>
-<li>
-<p>output</p>
-<ul>
+<li>output<ul>
 <li>sprintf</li>
 </ul>
 </li>
-<li>
-<p>string</p>
-</li>
-<li>strcpy, string copy, encountered <code>&amp;#39;\x00&amp;#39;</code> stop</li>
-<li>strcat, string stitching, encountered <code>&amp;#39;\x00&amp;#39;</code> stop</li>
+<li>string</li>
+<li>strcpy, string copy, encountered <code>'\x00'</code> stop</li>
+<li>strcat, string stitching, encountered <code>'\x00'</code> stop</li>
 <li>bcopy</li>
 </ul>
 <h3 id="determine-the-fill-length">Determine the fill length<a class="headerlink" href="#determine-the-fill-length" title="Permanent link">&para;</a></h3>
@@ -4843,31 +4807,20 @@ int main(void)
 A common misconception is that the malloc parameter is equal to the actual allocated heap size, but in fact the size allocated by ptmalloc is aligned. This length is typically twice the word length, such as a 32-bit system with 8 bytes and a 64-bit system with 16 bytes. However, for requests that are no longer than 2 times the word length, malloc will directly return the block of 2 times the word length, which is the smallest chunk. For example, a 64-bit system executing <code>malloc(0)</code> will return a block with a user area of 16 bytes.</p>
 <div class="codehilite"><pre><span></span>#include &lt;stdio.h&gt;
 
-
-
 int main(void) 
-
 {
-
   char *chunk;
-
   chunk=malloc(0);
-
   puts(&quot;Get input:&quot;);
-
   gets(chunk);
   return 0;
-
 }
 </pre></div>
 
-<div class="codehilite"><pre><span></span>/ / According to the number of bits in the system, malloc will allocate 8 or 16 bytes of user space
+<div class="codehilite"><pre><span></span>// According to the number of bits in the system, malloc will allocate 8 or 16 bytes of user space
 0x602000:   0x0000000000000000  0x0000000000000021
-
 0x602010:   0x0000000000000000  0x0000000000000000
-
 0x602020:   0x0000000000000000  0x0000000000020fe1
-
 0x602030:   0x0000000000000000  0x0000000000000000
 </pre></div>
 
@@ -4875,46 +4828,31 @@ int main(void)
 <p>Another point is that the memory size of the user application mentioned above will be modified, and it is possible to store the content using the prev_size field of the next chunk that is physically adjacent to it. Go back and look at the previous sample code.
 <div class="codehilite"><pre><span></span>#include &lt;stdio.h&gt;
 
-
-
 int main(void) 
-
 {
-
   char *chunk;
-
   chunk=malloc(24);
-
   puts(&quot;Get input:&quot;);
-
   gets(chunk);
-
   return 0;
-
 }
 </pre></div></p>
 <p>Looking at the above code, the chunk size we applied for is 24 bytes. But when we compile it into a 64-bit executable, the actual allocated memory will be 16 bytes instead of 24.
 <div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021
-
 0x602010:   0x0000000000000000  0x0000000000000000
-
 0x602020:   0x0000000000000000  0x0000000000020fe1
 </pre></div></p>
-<p>How does the 16-byte space fit the next 24 bytes of content? The answer is to borrow the pre_size field of the next block. Let&#39;s take a look at the conversion between the size of the memory requested by the user and the amount of memory actually allocated in glibc.</p>
+<p>How does the 16-byte space fit the next 24 bytes of content? The answer is to borrow the pre_size field of the next block. Let's take a look at the conversion between the size of the memory requested by the user and the amount of memory actually allocated in glibc.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/* pad request bytes into a usable size -- internal version */</span>
-
 <span class="c1">//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1</span>
 
 <span class="cp">#define request2size(req)                                                      \</span>
-
-    <span class="p">(((</span><span class="n">req</span><span class="p">)</span> <span class="o">+</span> <span class="n">SIZE_SZ</span> <span class="o">+</span> <span class="n">MALLOC_ALIGN_MASK</span> <span class="o">&lt;</span> <span class="n">MINSIZE</span><span class="p">)</span>                           \
-
-         <span class="o">?</span> <span class="n">MINSIZE</span>                                                             \
-
-         <span class="o">:</span> <span class="p">((</span><span class="n">req</span><span class="p">)</span> <span class="o">+</span> <span class="n">SIZE_SZ</span> <span class="o">+</span> <span class="n">MALLOC_ALIGN_MASK</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">MALLOC_ALIGN_MASK</span><span class="p">)</span>
+<span class="cp">    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)                           \</span>
+<span class="cp">         ? MINSIZE                                                             \</span>
+<span class="cp">         : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK)</span>
 </pre></div>
 
-<p>When req=24, request2size(24)=32. And remove the 16 bytes of the chunk header. In fact, the number of bytes available to the user is 16. According to what we learned earlier, we know that the chunk&#39;s pre_size only works when its previous block is released. So the user can actually use the prev_size field of the next chunk at this time, exactly 24 bytes. <strong>Actually, ptmalloc allocates memory in double words as the basic unit. Taking 64-bit system as an example, the allocated space is an integer multiple of 16, that is, the chunks applied by the user are 16-byte aligned. </strong></p>
+<p>When req=24, request2size(24)=32. And remove the 16 bytes of the chunk header. In fact, the number of bytes available to the user is 16. According to what we learned earlier, we know that the chunk's pre_size only works when its previous block is released. So the user can actually use the prev_size field of the next chunk at this time, exactly 24 bytes. <strong>Actually, ptmalloc allocates memory in double words as the basic unit. Taking 64-bit system as an example, the allocated space is an integer multiple of 16, that is, the chunks applied by the user are 16-byte aligned. </strong></p>
                 
                   
                 
@@ -4968,9 +4906,9 @@ int main(void)
           </div>
         
         powered by
-        <a href="https://www.mkdocs.org">MkDocs</a>
+        <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>
         and
-        <a href="https://squidfunk.github.io/mkdocs-material/">
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
           Material for MkDocs</a>
       </div>
       
@@ -4980,7 +4918,7 @@ int main(void)
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.d151b584.js"></script>
+      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
       
         
         
