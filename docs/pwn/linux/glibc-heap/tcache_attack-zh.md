@@ -3,7 +3,7 @@
 
 ### 0x01 Tcache overview
 
-在 tcache 中新增了两个结构体，分别是 tcache_entry 和 tcache_pertheread_struct
+在 tcache 中新增了两个结构体，分别是 tcache_entry 和 tcache_perthread_struct
 
 ```C
 /* We overlay this structure on the user-data portion of a chunk when the chunk is stored in the per-thread cache.  */
@@ -50,7 +50,7 @@ tcache_get (size_t tc_idx)
 
 ```
 
-这两个函数的会在函数 [_int_free](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l4173) 和 [__libc_malloc](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l3051) 的开头被调用，其中 `tcache_put` 当所请求的分配大小不大于`0x408`并且当给定大小的 tcache bin 未满时调用。一个tcache bin中的最大块数`mp_.tcache_count`是`7`。
+这两个函数会在函数 [_int_free](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l4173) 和 [__libc_malloc](https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l3051) 的开头被调用，其中 `tcache_put` 当所请求的分配大小不大于`0x408`并且当给定大小的 tcache bin 未满时调用。一个tcache bin中的最大块数`mp_.tcache_count`是`7`。
 
 ```c
 /* This is another arbitrary limit, which tunables can change.  Each
@@ -81,7 +81,7 @@ tcache_get (size_t tc_idx)
 
 
 
-- 内存存放：
+- 内存释放：
 
   可以看到，在free函数的最先处理部分，首先是检查释放块是否页对齐及前后堆块的释放情况，便优先放入tcache结构中。
   
@@ -120,11 +120,11 @@ tcache_get (size_t tc_idx)
       size_t tc_idx = csize2tidx (size);
   
       if (tcache
-  	&& tc_idx < mp_.tcache_bins
-  	&& tcache->counts[tc_idx] < mp_.tcache_count)
+        && tc_idx < mp_.tcache_bins
+        && tcache->counts[tc_idx] < mp_.tcache_count)
         {
-  	tcache_put (p, tc_idx);
-  	return;
+          tcache_put (p, tc_idx);
+          return;
         }
     }
   #endif
@@ -139,9 +139,9 @@ tcache_get (size_t tc_idx)
 
 在内存分配的malloc函数中有多处，会将内存块移入tcache中。
 
-（1）首先，申请的内存块符合fastbin大小时并且找到在fastbin内找到可用的空闲块时，会把该fastbin链上的其他内存块放入tcache中。
+（1）首先，申请的内存块符合fastbin大小时并且在fastbin内找到可用的空闲块时，会把该fastbin链上的其他内存块放入tcache中。
 
-（2）其次，申请的内存块符合smallbin大小时并且找到在smallbin内找到可用的空闲块时，会把该smallbin链上的其他内存块放入tcache中。
+（2）其次，申请的内存块符合smallbin大小时并且在smallbin内找到可用的空闲块时，会把该smallbin链上的其他内存块放入tcache中。
 
 （3）当在unsorted bin链上循环处理时，当找到大小合适的链时，并不直接返回，而是先放到tcache中，继续处理。
 
@@ -165,31 +165,31 @@ tcache_get (size_t tc_idx)
 	    {
 	      size_t victim_idx = fastbin_index (chunksize (victim));
 	      if (__builtin_expect (victim_idx != idx, 0))
-		malloc_printerr ("malloc(): memory corruption (fast)");
+		      malloc_printerr ("malloc(): memory corruption (fast)");
 	      check_remalloced_chunk (av, victim, nb);
 #if USE_TCACHE
 	      /* While we're here, if we see other chunks of the same size,
 		 stash them in the tcache.  */
 	      size_t tc_idx = csize2tidx (nb);
 	      if (tcache && tc_idx < mp_.tcache_bins)
-		{
-		  mchunkptr tc_victim;
+        {
+          mchunkptr tc_victim;
 
-		  /* While bin not empty and tcache not full, copy chunks.  */
-		  while (tcache->counts[tc_idx] < mp_.tcache_count
-			 && (tc_victim = *fb) != NULL)
-		    {
-		      if (SINGLE_THREAD_P)
-			*fb = tc_victim->fd;
-		      else
-			{
-			  REMOVE_FB (fb, pp, tc_victim);
-			  if (__glibc_unlikely (tc_victim == NULL))
-			    break;
-			}
-		      tcache_put (tc_victim, tc_idx);
-		    }
-		}
+          /* While bin not empty and tcache not full, copy chunks.  */
+          while (tcache->counts[tc_idx] < mp_.tcache_count
+            && (tc_victim = *fb) != NULL)
+            {
+              if (SINGLE_THREAD_P)
+               *fb = tc_victim->fd;
+              else
+              {
+                REMOVE_FB (fb, pp, tc_victim);
+                if (__glibc_unlikely (tc_victim == NULL))
+                  break;
+              }
+              tcache_put (tc_victim, tc_idx);
+            }
+        }
 #endif
 	      void *p = chunk2mem (victim);
 	      alloc_perturb (p, bytes);
@@ -205,7 +205,7 @@ tcache_get (size_t tc_idx)
 
 - tcache 取出：在内存申请的开始部分，首先会判断申请大小块，在tcache是否存在，如果存在就直接从tcache中摘取，否则再使用_int_malloc分配。
 
-- 在循环处理unsorted bin内存块是，如果达到放入unsorted bin块最大数量时，会立即返回。默认是0，即不存在上限。
+- 在循环处理unsorted bin内存块时，如果达到放入unsorted bin块最大数量，会立即返回。默认是0，即不存在上限。
 
   ```c
   #if USE_TCACHE
@@ -213,11 +213,11 @@ tcache_get (size_t tc_idx)
   	 filling the cache, return one of the cached ones.  */
         ++tcache_unsorted_count;
         if (return_cached
-  	  && mp_.tcache_unsorted_limit > 0
-  	  && tcache_unsorted_count > mp_.tcache_unsorted_limit)
-  	{
-  	  return tcache_get (tc_idx);
-  	}
+          && mp_.tcache_unsorted_limit > 0
+          && tcache_unsorted_count > mp_.tcache_unsorted_limit)
+        {
+          return tcache_get (tc_idx);
+        }
   #endif
   ```
 
@@ -227,9 +227,9 @@ tcache_get (size_t tc_idx)
   #if USE_TCACHE
         /* If all the small chunks we found ended up cached, return one now.  */
         if (return_cached)
-  	{
-  	  return tcache_get (tc_idx);
-  	}
+        {
+          return tcache_get (tc_idx);
+        }
   #endif
   ```
 
@@ -715,7 +715,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 pwndbg> i r rax
 rax            0x7fffffffdfa8	140737488347048
 ```
-可以看出 `tache posioning` 这种方法和 fastbin attack 类似，但因为没有 size 的限制有了更大的利用范围。
+可以看出 `tcache posioning` 这种方法和 fastbin attack 类似，但因为没有 size 的限制有了更大的利用范围。
 
 #### tcache dup
 类似 `fastbin dup`，不过利用的是 `tcache_put()` 的不严谨
@@ -1029,7 +1029,7 @@ gdb-peda$ heapinfo
 
 
 
-Tache 里就存放了一块 栈上的内容，我们之后只需 malloc，就可以控制这块内存。
+Tcache 里就存放了一块 栈上的内容，我们之后只需 malloc，就可以控制这块内存。
 
 #### smallbin unlink
 
