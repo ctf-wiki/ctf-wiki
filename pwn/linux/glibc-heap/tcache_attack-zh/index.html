@@ -5215,7 +5215,7 @@
                 <p><a href="./tcache_attack.md">EN</a> | <a href="./">ZH</a></p>
 <h2 id="tcache-makes-heap-exploitation-easy-again">tcache makes heap exploitation easy again<a class="headerlink" href="#tcache-makes-heap-exploitation-easy-again" title="Permanent link">&para;</a></h2>
 <h3 id="0x01-tcache-overview">0x01 Tcache overview<a class="headerlink" href="#0x01-tcache-overview" title="Permanent link">&para;</a></h3>
-<p>在 tcache 中新增了两个结构体，分别是 tcache_entry 和 tcache_pertheread_struct</p>
+<p>在 tcache 中新增了两个结构体，分别是 tcache_entry 和 tcache_perthread_struct</p>
 <div class="codehilite"><pre><span></span><span class="cm">/* We overlay this structure on the user-data portion of a chunk when the chunk is stored in the per-thread cache.  */</span>
 <span class="k">typedef</span> <span class="k">struct</span> <span class="n">tcache_entry</span>
 <span class="p">{</span>
@@ -5255,7 +5255,7 @@
 <span class="p">}</span>
 </pre></div>
 
-<p>这两个函数的会在函数 <a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l4173">_int_free</a> 和 <a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l3051">__libc_malloc</a> 的开头被调用，其中 <code>tcache_put</code> 当所请求的分配大小不大于<code>0x408</code>并且当给定大小的 tcache bin 未满时调用。一个tcache bin中的最大块数<code>mp_.tcache_count</code>是<code>7</code>。</p>
+<p>这两个函数会在函数 <a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l4173">_int_free</a> 和 <a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l3051">__libc_malloc</a> 的开头被调用，其中 <code>tcache_put</code> 当所请求的分配大小不大于<code>0x408</code>并且当给定大小的 tcache bin 未满时调用。一个tcache bin中的最大块数<code>mp_.tcache_count</code>是<code>7</code>。</p>
 <div class="codehilite"><pre><span></span><span class="cm">/* This is another arbitrary limit, which tunables can change.  Each</span>
 <span class="cm">   tcache bin will hold at most this number of chunks.  */</span>
 <span class="cp"># define TCACHE_FILL_COUNT 7</span>
@@ -5277,7 +5277,7 @@
 在 <code>tcache_get</code> 中，仅仅检查了 <strong>tc_idx</strong> ，此外，我们可以将 tcache 当作一个类似于 fastbin 的单独链表，只是它的check，并没有 fastbin 那么复杂，仅仅检查 <code>tcache-&gt;entries[tc_idx] = e-&gt;next;</code></p>
 <h3 id="0x02-tcache-usage">0x02 Tcache Usage<a class="headerlink" href="#0x02-tcache-usage" title="Permanent link">&para;</a></h3>
 <ul>
-<li>内存存放：</li>
+<li>内存释放：</li>
 </ul>
 <p>可以看到，在free函数的最先处理部分，首先是检查释放块是否页对齐及前后堆块的释放情况，便优先放入tcache结构中。</p>
 <div class="codehilite"><pre><span></span><span class="n">_int_free</span> <span class="p">(</span><span class="n">mstate</span> <span class="n">av</span><span class="p">,</span> <span class="n">mchunkptr</span> <span class="n">p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">have_lock</span><span class="p">)</span>
@@ -5312,11 +5312,11 @@
     <span class="kt">size_t</span> <span class="n">tc_idx</span> <span class="o">=</span> <span class="n">csize2tidx</span> <span class="p">(</span><span class="n">size</span><span class="p">);</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="n">tcache</span>
-  <span class="o">&amp;&amp;</span> <span class="n">tc_idx</span> <span class="o">&lt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_bins</span>
-  <span class="o">&amp;&amp;</span> <span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_count</span><span class="p">)</span>
+      <span class="o">&amp;&amp;</span> <span class="n">tc_idx</span> <span class="o">&lt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_bins</span>
+      <span class="o">&amp;&amp;</span> <span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_count</span><span class="p">)</span>
       <span class="p">{</span>
-  <span class="n">tcache_put</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">tc_idx</span><span class="p">);</span>
-  <span class="k">return</span><span class="p">;</span>
+        <span class="n">tcache_put</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">tc_idx</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
       <span class="p">}</span>
   <span class="p">}</span>
 <span class="cp">#endif</span>
@@ -5329,8 +5329,8 @@
 <li>内存申请：</li>
 </ul>
 <p>在内存分配的malloc函数中有多处，会将内存块移入tcache中。</p>
-<p>（1）首先，申请的内存块符合fastbin大小时并且找到在fastbin内找到可用的空闲块时，会把该fastbin链上的其他内存块放入tcache中。</p>
-<p>（2）其次，申请的内存块符合smallbin大小时并且找到在smallbin内找到可用的空闲块时，会把该smallbin链上的其他内存块放入tcache中。</p>
+<p>（1）首先，申请的内存块符合fastbin大小时并且在fastbin内找到可用的空闲块时，会把该fastbin链上的其他内存块放入tcache中。</p>
+<p>（2）其次，申请的内存块符合smallbin大小时并且在smallbin内找到可用的空闲块时，会把该smallbin链上的其他内存块放入tcache中。</p>
 <p>（3）当在unsorted bin链上循环处理时，当找到大小合适的链时，并不直接返回，而是先放到tcache中，继续处理。</p>
 <p>代码太长就不全贴了，贴个符合fastbin 的时候</p>
 <div class="codehilite"><pre><span></span>  <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">get_max_fast</span> <span class="p">()))</span>
@@ -5350,7 +5350,7 @@
         <span class="p">{</span>
           <span class="kt">size_t</span> <span class="n">victim_idx</span> <span class="o">=</span> <span class="n">fastbin_index</span> <span class="p">(</span><span class="n">chunksize</span> <span class="p">(</span><span class="n">victim</span><span class="p">));</span>
           <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span> <span class="p">(</span><span class="n">victim_idx</span> <span class="o">!=</span> <span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-        <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;malloc(): memory corruption (fast)&quot;</span><span class="p">);</span>
+              <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;malloc(): memory corruption (fast)&quot;</span><span class="p">);</span>
           <span class="n">check_remalloced_chunk</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">victim</span><span class="p">,</span> <span class="n">nb</span><span class="p">);</span>
 <span class="cp">#if USE_TCACHE</span>
           <span class="cm">/* While we&#39;re here, if we see other chunks of the same size,</span>
@@ -5362,16 +5362,16 @@
 
           <span class="cm">/* While bin not empty and tcache not full, copy chunks.  */</span>
           <span class="k">while</span> <span class="p">(</span><span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_count</span>
-             <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">tc_victim</span> <span class="o">=</span> <span class="o">*</span><span class="n">fb</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
+            <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">tc_victim</span> <span class="o">=</span> <span class="o">*</span><span class="n">fb</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
             <span class="p">{</span>
               <span class="k">if</span> <span class="p">(</span><span class="n">SINGLE_THREAD_P</span><span class="p">)</span>
-            <span class="o">*</span><span class="n">fb</span> <span class="o">=</span> <span class="n">tc_victim</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
+               <span class="o">*</span><span class="n">fb</span> <span class="o">=</span> <span class="n">tc_victim</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
               <span class="k">else</span>
-            <span class="p">{</span>
-              <span class="n">REMOVE_FB</span> <span class="p">(</span><span class="n">fb</span><span class="p">,</span> <span class="n">pp</span><span class="p">,</span> <span class="n">tc_victim</span><span class="p">);</span>
-              <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span> <span class="p">(</span><span class="n">tc_victim</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">))</span>
-                <span class="k">break</span><span class="p">;</span>
-            <span class="p">}</span>
+              <span class="p">{</span>
+                <span class="n">REMOVE_FB</span> <span class="p">(</span><span class="n">fb</span><span class="p">,</span> <span class="n">pp</span><span class="p">,</span> <span class="n">tc_victim</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span> <span class="p">(</span><span class="n">tc_victim</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">))</span>
+                  <span class="k">break</span><span class="p">;</span>
+              <span class="p">}</span>
               <span class="n">tcache_put</span> <span class="p">(</span><span class="n">tc_victim</span><span class="p">,</span> <span class="n">tc_idx</span><span class="p">);</span>
             <span class="p">}</span>
         <span class="p">}</span>
@@ -5389,7 +5389,7 @@
 <p>tcache 取出：在内存申请的开始部分，首先会判断申请大小块，在tcache是否存在，如果存在就直接从tcache中摘取，否则再使用_int_malloc分配。</p>
 </li>
 <li>
-<p>在循环处理unsorted bin内存块是，如果达到放入unsorted bin块最大数量时，会立即返回。默认是0，即不存在上限。</p>
+<p>在循环处理unsorted bin内存块时，如果达到放入unsorted bin块最大数量，会立即返回。默认是0，即不存在上限。</p>
 </li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="cp">#if USE_TCACHE</span>
@@ -5397,11 +5397,11 @@
 <span class="cm">   filling the cache, return one of the cached ones.  */</span>
       <span class="o">++</span><span class="n">tcache_unsorted_count</span><span class="p">;</span>
       <span class="k">if</span> <span class="p">(</span><span class="n">return_cached</span>
-    <span class="o">&amp;&amp;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_unsorted_limit</span> <span class="o">&gt;</span> <span class="mi">0</span>
-    <span class="o">&amp;&amp;</span> <span class="n">tcache_unsorted_count</span> <span class="o">&gt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_unsorted_limit</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="k">return</span> <span class="n">tcache_get</span> <span class="p">(</span><span class="n">tc_idx</span><span class="p">);</span>
-  <span class="p">}</span>
+        <span class="o">&amp;&amp;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_unsorted_limit</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="o">&amp;&amp;</span> <span class="n">tcache_unsorted_count</span> <span class="o">&gt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_unsorted_limit</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="k">return</span> <span class="n">tcache_get</span> <span class="p">(</span><span class="n">tc_idx</span><span class="p">);</span>
+      <span class="p">}</span>
 <span class="cp">#endif</span>
 </pre></div>
 
@@ -5411,9 +5411,9 @@
 <div class="codehilite"><pre><span></span><span class="cp">#if USE_TCACHE</span>
       <span class="cm">/* If all the small chunks we found ended up cached, return one now.  */</span>
       <span class="k">if</span> <span class="p">(</span><span class="n">return_cached</span><span class="p">)</span>
-  <span class="p">{</span>
-    <span class="k">return</span> <span class="n">tcache_get</span> <span class="p">(</span><span class="n">tc_idx</span><span class="p">);</span>
-  <span class="p">}</span>
+      <span class="p">{</span>
+        <span class="k">return</span> <span class="n">tcache_get</span> <span class="p">(</span><span class="n">tc_idx</span><span class="p">);</span>
+      <span class="p">}</span>
 <span class="cp">#endif</span>
 </pre></div>
 
@@ -5883,7 +5883,7 @@ We got the control
 <span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">i</span> <span class="no">r</span> <span class="no">rax</span>
 <span class="nf">rax</span>            <span class="mi">0x7fffffffdfa8</span>   <span class="mi">140737488347048</span>
 </pre></div>
-可以看出 <code>tache posioning</code> 这种方法和 fastbin attack 类似，但因为没有 size 的限制有了更大的利用范围。</p>
+可以看出 <code>tcache posioning</code> 这种方法和 fastbin attack 类似，但因为没有 size 的限制有了更大的利用范围。</p>
 <h4 id="tcache-dup">tcache dup<a class="headerlink" href="#tcache-dup" title="Permanent link">&para;</a></h4>
 <p>类似 <code>fastbin dup</code>，不过利用的是 <code>tcache_put()</code> 的不严谨
 <div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">__always_inline</span> <span class="kt">void</span>
@@ -6170,7 +6170,7 @@ tcache 的第一条链放入了一个 chunk</p>
 <span class="o">(</span>0x90<span class="o">)</span>   tcache_entry<span class="o">[</span><span class="m">7</span><span class="o">]</span>: 0x7fffffffe510 --&gt; 0x401340
 </pre></div>
 
-<p>Tache 里就存放了一块 栈上的内容，我们之后只需 malloc，就可以控制这块内存。</p>
+<p>Tcache 里就存放了一块 栈上的内容，我们之后只需 malloc，就可以控制这块内存。</p>
 <h4 id="smallbin-unlink">smallbin unlink<a class="headerlink" href="#smallbin-unlink" title="Permanent link">&para;</a></h4>
 <p>在smallbin中包含有空闲块的时候，会同时将同大小的其他空闲块，放入tcache中，此时也会出现解链操作，但相比于unlink宏，缺少了链完整性校验。因此，原本unlink操作在该条件下也可以使用。</p>
 <h4 id="libc-leak">libc leak<a class="headerlink" href="#libc-leak" title="Permanent link">&para;</a></h4>
