@@ -2062,8 +2062,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    参考文献
+  <a href="#2019-36c3-sav-ls-l-aas" class="md-nav__link">
+    2019 36c3 SaV-ls-l-aaS
   </a>
   
 </li>
@@ -4679,8 +4679,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    参考文献
+  <a href="#2019-36c3-sav-ls-l-aas" class="md-nav__link">
+    2019 36c3 SaV-ls-l-aaS
   </a>
   
 </li>
@@ -4768,10 +4768,600 @@ Preparing to copy data...
 Software update installed successfully.
 </pre></div>
 
-<h2 id="_2">参考文献<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>参考文献</p>
 <ul>
 <li><a href="https://sectt.github.io/writeups/34C3CTF/crypto_182_software_update/Readme">https://sectt.github.io/writeups/34C3CTF/crypto_182_software_update/Readme</a></li>
 <li><a href="https://github.com/OOTS/34c3ctf/blob/master/software_update/solution/exploit.py">https://github.com/OOTS/34c3ctf/blob/master/software_update/solution/exploit.py</a></li>
+</ul>
+<h2 id="2019-36c3-sav-ls-l-aas">2019 36c3 SaV-ls-l-aaS<a class="headerlink" href="#2019-36c3-sav-ls-l-aas" title="Permanent link">&para;</a></h2>
+<p>这个题的分类是 Crypto&amp;Web，捋一下流程：</p>
+<p>60601端口开着一个Web服务，题目描述给了连接方法：</p>
+<div class="codehilite"><pre><span></span><span class="nv">url</span><span class="o">=</span><span class="s1">&#39;http://78.47.240.226:60601&#39;</span> <span class="o">&amp;&amp;</span> <span class="nv">ip</span><span class="o">=</span><span class="k">$(</span>curl -s <span class="s2">&quot;</span><span class="nv">$url</span><span class="s2">/ip&quot;</span><span class="k">)</span> <span class="o">&amp;&amp;</span> <span class="nv">sig</span><span class="o">=</span><span class="k">$(</span>curl -s -d <span class="s2">&quot;cmd=ls -l&amp;ip=</span><span class="nv">$ip</span><span class="s2">&quot;</span> <span class="s2">&quot;</span><span class="nv">$url</span><span class="s2">/sign&quot;</span><span class="k">)</span> <span class="o">&amp;&amp;</span> curl --data-urlencode <span class="s2">&quot;signature=</span><span class="nv">$sig</span><span class="s2">&quot;</span> <span class="s2">&quot;</span><span class="nv">$url</span><span class="s2">/exec&quot;</span>
+</pre></div>
+
+<p>可以看到，先是访问 <code>/ip</code> 得到 ip，再向 <code>/sign</code> post 过去 ip 和我们要执行的命令，得到签名，最后向 <code>/exec</code> post signature 来执行命令。我们执行这一行可以发现回显了<code>ls -l</code>执行的结果，发现有个 flag.txt。</p>
+<p>看源码，Web 服务是由 go 起的：</p>
+<div class="codehilite"><pre><span></span><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&quot;bytes&quot;</span>
+    <span class="s">&quot;crypto/sha1&quot;</span>
+    <span class="s">&quot;encoding/json&quot;</span>
+    <span class="s">&quot;fmt&quot;</span>
+    <span class="s">&quot;io&quot;</span>
+    <span class="s">&quot;io/ioutil&quot;</span>
+    <span class="s">&quot;log&quot;</span>
+    <span class="s">&quot;net&quot;</span>
+    <span class="s">&quot;net/http&quot;</span>
+    <span class="s">&quot;strings&quot;</span>
+    <span class="s">&quot;time&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">m</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nx">NewServeMux</span><span class="p">()</span>
+
+    <span class="nx">m</span><span class="p">.</span><span class="nx">HandleFunc</span><span class="p">(</span><span class="s">&quot;/ip&quot;</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">ip</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nx">SplitHostPort</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RemoteAddr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprint</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">ip</span><span class="p">)</span>
+    <span class="p">})</span>
+
+    <span class="nx">m</span><span class="p">.</span><span class="nx">HandleFunc</span><span class="p">(</span><span class="s">&quot;/sign&quot;</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">ip</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nx">SplitHostPort</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RemoteAddr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+        <span class="nx">remoteAddr</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nx">ParseIP</span><span class="p">(</span><span class="nx">ip</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">remoteAddr</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">ip</span> <span class="p">=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">PostFormValue</span><span class="p">(</span><span class="s">&quot;ip&quot;</span><span class="p">)</span>
+        <span class="nx">signIP</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nx">ParseIP</span><span class="p">(</span><span class="nx">ip</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">signIP</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span> <span class="p">!</span><span class="nx">signIP</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">remoteAddr</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;lol, not ip :&gt;&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">cmd</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">PostFormValue</span><span class="p">(</span><span class="s">&quot;cmd&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">cmd</span> <span class="o">!=</span> <span class="s">&quot;ls -l&quot;</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;lol, nope :&gt;&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">msg</span> <span class="o">:=</span> <span class="nx">ip</span> <span class="o">+</span> <span class="s">&quot;|&quot;</span> <span class="o">+</span> <span class="nx">cmd</span>
+        <span class="nx">digest</span> <span class="o">:=</span> <span class="nx">sha1</span><span class="p">.</span><span class="nx">Sum</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">msg</span><span class="p">))</span>
+
+        <span class="nx">b</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">)</span>
+        <span class="nx">err</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">NewEncoder</span><span class="p">(</span><span class="nx">b</span><span class="p">).</span><span class="nx">Encode</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">digest</span><span class="p">[:]))</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nx">Post</span><span class="p">(</span><span class="s">&quot;http://127.0.0.1/index.php?action=sign&quot;</span><span class="p">,</span> <span class="s">&quot;application/json; charset=utf-8&quot;</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">StatusCode</span> <span class="o">!=</span> <span class="mi">200</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, hsm is down&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">body</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ioutil</span><span class="p">.</span><span class="nx">ReadAll</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Body</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, hsm is bodyless?&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="kd">var</span> <span class="nx">signature</span> <span class="kt">string</span>
+        <span class="nx">err</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">Unmarshal</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">signature</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, hsm is jsonless?&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprint</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">signature</span><span class="o">+</span><span class="nx">msg</span><span class="p">)</span>
+    <span class="p">})</span>
+
+    <span class="nx">m</span><span class="p">.</span><span class="nx">HandleFunc</span><span class="p">(</span><span class="s">&quot;/exec&quot;</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">ip</span><span class="p">,</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nx">SplitHostPort</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RemoteAddr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+        <span class="nx">remoteAddr</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nx">ParseIP</span><span class="p">(</span><span class="nx">ip</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">remoteAddr</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">signature</span> <span class="o">:=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">PostFormValue</span><span class="p">(</span><span class="s">&quot;signature&quot;</span><span class="p">)</span>
+        <span class="nx">digest</span> <span class="o">:=</span> <span class="nx">sha1</span><span class="p">.</span><span class="nx">Sum</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">signature</span><span class="p">[</span><span class="mi">172</span><span class="p">:]))</span>
+
+        <span class="nx">b</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">)</span>
+        <span class="nx">err</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">NewEncoder</span><span class="p">(</span><span class="nx">b</span><span class="p">).</span><span class="nx">Encode</span><span class="p">(</span><span class="nx">signature</span><span class="p">[:</span><span class="mi">172</span><span class="p">]</span> <span class="o">+</span> <span class="nb">string</span><span class="p">(</span><span class="nx">digest</span><span class="p">[:]))</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, json encode&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nx">Post</span><span class="p">(</span><span class="s">&quot;http://127.0.0.1/index.php?action=verify&quot;</span><span class="p">,</span> <span class="s">&quot;application/json; charset=utf-8&quot;</span><span class="p">,</span> <span class="nx">b</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">StatusCode</span> <span class="o">!=</span> <span class="mi">200</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, hsm is down?&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="nx">body</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ioutil</span><span class="p">.</span><span class="nx">ReadAll</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Body</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, hsm is bodyless?&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="kd">var</span> <span class="nx">valid</span> <span class="kt">bool</span>
+        <span class="nx">err</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">Unmarshal</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">valid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, json unmarshal&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="nx">valid</span> <span class="p">{</span>
+            <span class="nx">t</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Split</span><span class="p">(</span><span class="nx">signature</span><span class="p">[</span><span class="mi">172</span><span class="p">:],</span> <span class="s">&quot;|&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="p">{</span>
+                <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, split&quot;</span><span class="p">)</span>
+            <span class="p">}</span>
+
+            <span class="nx">signIP</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nx">ParseIP</span><span class="p">(</span><span class="nx">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nx">signIP</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span> <span class="p">!</span><span class="nx">signIP</span><span class="p">.</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">remoteAddr</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;lol, not ip :&gt;&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="p">}</span>
+
+            <span class="nx">conn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nx">DialTimeout</span><span class="p">(</span><span class="s">&quot;tcp&quot;</span><span class="p">,</span> <span class="s">&quot;127.0.0.1:1024&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&quot;oops, dial&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="p">}</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintf</span><span class="p">(</span><span class="nx">conn</span><span class="p">,</span> <span class="nx">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s">&quot;\n&quot;</span><span class="p">)</span>
+            <span class="nx">conn</span><span class="p">.(</span><span class="o">*</span><span class="nx">net</span><span class="p">.</span><span class="nx">TCPConn</span><span class="p">).</span><span class="nx">CloseWrite</span><span class="p">()</span>
+            <span class="nx">io</span><span class="p">.</span><span class="nx">Copy</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">conn</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">})</span>
+
+    <span class="nx">s</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">http</span><span class="p">.</span><span class="nx">Server</span><span class="p">{</span>
+        <span class="nx">Addr</span><span class="p">:</span>           <span class="s">&quot;:60601&quot;</span><span class="p">,</span>
+        <span class="nx">Handler</span><span class="p">:</span>        <span class="nx">m</span><span class="p">,</span>
+        <span class="nx">ReadTimeout</span><span class="p">:</span>    <span class="mi">5</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">,</span>
+        <span class="nx">WriteTimeout</span><span class="p">:</span>   <span class="mi">5</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">,</span>
+        <span class="nx">MaxHeaderBytes</span><span class="p">:</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">ListenAndServe</span><span class="p">())</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>代码很容易看，限制了 cmd 只能是<code>ls -l</code>，其余不给签名，看样子我们是要伪造其他命令的签名来读flag，这里注意到签名和验签的过程是传给本地起的一个 php 来完成的，看一下这部分源码：</p>
+<div class="codehilite"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">&#39;ALGO&#39;</span><span class="p">,</span> <span class="s1">&#39;md5WithRSAEncryption&#39;</span><span class="p">);</span>
+<span class="nv">$d</span> <span class="o">=</span> <span class="nb">json_decode</span><span class="p">(</span><span class="nb">file_get_contents</span><span class="p">(</span><span class="s1">&#39;php://input&#39;</span><span class="p">),</span> <span class="nx">JSON_THROW_ON_ERROR</span><span class="p">);</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">===</span> <span class="s1">&#39;sign&#39;</span><span class="p">){</span>
+    <span class="nv">$pkeyid</span> <span class="o">=</span> <span class="nb">openssl_pkey_get_private</span><span class="p">(</span><span class="s2">&quot;file:///var/www/private_key.pem&quot;</span><span class="p">);</span>
+    <span class="nb">openssl_sign</span><span class="p">(</span><span class="nv">$d</span><span class="p">,</span> <span class="nv">$signature</span><span class="p">,</span> <span class="nv">$pkeyid</span><span class="p">,</span> <span class="nx">ALGO</span><span class="p">);</span>
+    <span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nb">base64_encode</span><span class="p">(</span><span class="nv">$signature</span><span class="p">));</span>
+    <span class="nb">openssl_free_key</span><span class="p">(</span><span class="nv">$pkeyid</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">elseif</span> <span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">===</span> <span class="s1">&#39;verify&#39;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$pkeyid</span> <span class="o">=</span> <span class="nb">openssl_pkey_get_public</span><span class="p">(</span><span class="s2">&quot;file:///var/www/public_key.pem&quot;</span><span class="p">);</span>
+    <span class="k">echo</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nb">openssl_verify</span><span class="p">(</span><span class="nb">substr</span><span class="p">(</span><span class="nv">$d</span><span class="p">,</span> <span class="mi">172</span><span class="p">),</span> <span class="nb">base64_decode</span><span class="p">(</span><span class="nb">substr</span><span class="p">(</span><span class="nv">$d</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="mi">172</span><span class="p">)),</span> <span class="nv">$pkeyid</span><span class="p">,</span> <span class="nx">ALGO</span><span class="p">)</span> <span class="o">===</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="nb">openssl_free_key</span><span class="p">(</span><span class="nv">$pkeyid</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>采用的是<code>md5WithRSAEncryption</code>的方式签名，本地试了一下，是把我们传入的 <code>$d</code> md5 后转为hex，填充到<code>0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff003020300c06082a864886f70d020505000410</code>后面，组成数字然后用RSA签名。</p>
+<p>看样子整个逻辑找不到一点问题，用的都是标准库，基本无法攻击。有个思路是通过代理更换 ip，可以拿到两个 ip|ls -l 的签名，这样我们就拥有了两组 RSA 的 m 和 c，因为题目给了 dockerfile 给了生成公私钥的方法，使用 openssl 默认生成，e为65537，那么我们可以通过求公因数的方式来求出 n。</p>
+<p>在得到两组签名后，我们要得到 RSA 的m，就是填充后的数，所以按照代码逻辑，在 go 里面先是 sha1:</p>
+<div class="codehilite"><pre><span></span><span class="nx">msg</span> <span class="o">:=</span> <span class="nx">ip</span> <span class="o">+</span> <span class="s">&quot;|&quot;</span> <span class="o">+</span> <span class="nx">cmd</span>
+<span class="nx">digest</span> <span class="o">:=</span> <span class="nx">sha1</span><span class="p">.</span><span class="nx">Sum</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">msg</span><span class="p">))</span>
+
+<span class="nx">b</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">)</span>
+<span class="nx">err</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">NewEncoder</span><span class="p">(</span><span class="nx">b</span><span class="p">).</span><span class="nx">Encode</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">digest</span><span class="p">[:]))</span>
+</pre></div>
+
+<p>再 php 里的 md5，得到两组 m 和 c，但是总是求不出公因数 n，怀疑求的 m 不对。看代码发现 go 里把 sha1的结果用 json 编码，然后传到 php里 json 解码。这部分非常可疑，为何要用 json 编码（用 hex 传过去它不香么），本地搭一下环境跟一下。（题目给了dockerfile）</p>
+<p>起个docker，改一下 index.php，加一个<code>var_dump($d);</code>，再改一下 go，返回一下 php 的结果：</p>
+<div class="codehilite"><pre><span></span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Fprintln</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span><span class="nb">string</span><span class="p">(</span><span class="nx">body</span><span class="p">))</span>
+</pre></div>
+
+<p>现在让程序签名，返回结果：</p>
+<div class="codehilite"><pre><span></span>string(38) &quot;   ��.���?-�KC��@�&quot;
+&quot;K4FEmxz4yuTsjDAbRZQmHJ+MBiCSGaOnpZTLbThXpCkDYe3siAIPfihX6ppjN2Tz6XqOr4tF\/u1\/+ccfhj8NNLIL+2hknyDXbosmMBV8mEGYsMqQHAE0f+3OhDWlzN5RnteSMYNZbTipFErB8ZOWCiXmynWxsqJhyaN9J6\/\/h6I=&quot;
+oops, hsm is jsonless?
+</pre></div>
+
+<p>$d 竟然是长度为 38 的字符串，看来果然是这里编码有问题，我们需要看一下每个步骤的结果，先看一下 go 里 json编码后的 sha1 结果是什么：</p>
+<div class="codehilite"><pre><span></span><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&quot;bytes&quot;</span>
+    <span class="s">&quot;crypto/sha1&quot;</span>
+    <span class="s">&quot;encoding/json&quot;</span>
+    <span class="s">&quot;fmt&quot;</span>
+<span class="p">)</span>
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">msg</span> <span class="o">:=</span> <span class="s">&quot;172.17.0.1|ls -l&quot;</span>
+    <span class="nx">digest</span> <span class="o">:=</span> <span class="nx">sha1</span><span class="p">.</span><span class="nx">Sum</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">msg</span><span class="p">))</span>
+
+    <span class="nx">b</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span><span class="p">)</span>
+    <span class="nx">json</span><span class="p">.</span><span class="nx">NewEncoder</span><span class="p">(</span><span class="nx">b</span><span class="p">).</span><span class="nx">Encode</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">digest</span><span class="p">[:]))</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Print</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">Bytes</span><span class="p">()));</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>运行一下：</p>
+<div class="codehilite"><pre><span></span>&quot;\u000e\t\u001d\ufffd\u0012\ufffd.\ufffd\ufffd\ufffd?-\ufffdKC\ufffd\u0005\ufffd@\ufffd&quot;
+</pre></div>
+
+<p>和正常的sha1的结果来比较一下：</p>
+<div class="codehilite"><pre><span></span>Python <span class="m">2</span>.7.16 <span class="o">(</span>default, Sep  <span class="m">2</span> <span class="m">2019</span>, <span class="m">11</span>:59:44<span class="o">)</span>
+<span class="o">[</span>GCC <span class="m">4</span>.2.1 Compatible Apple LLVM <span class="m">10</span>.0.1 <span class="o">(</span>clang-1001.0.46.4<span class="o">)]</span> on darwin
+Type <span class="s2">&quot;help&quot;</span>, <span class="s2">&quot;copyright&quot;</span>, <span class="s2">&quot;credits&quot;</span> or <span class="s2">&quot;license&quot;</span> <span class="k">for</span> more information.
+&gt;&gt;&gt; <span class="s2">&quot;\u000e\t\u001d\ufffd\u0012\ufffd.\ufffd\ufffd\ufffd?-\ufffdKC\ufffd\u0005\ufffd@\ufffd&quot;</span>
+<span class="s1">&#39;\\u000e\t\\u001d\\ufffd\\u0012\\ufffd.\\ufffd\\ufffd\\ufffd?-\\ufffdKC\\ufffd\\u0005\\ufffd@\\ufffd&#39;</span>
+&gt;&gt;&gt; from hashlib import *
+&gt;&gt;&gt; sha1<span class="o">(</span><span class="s1">&#39;172.17.0.1|ls -l&#39;</span><span class="o">)</span>.digest<span class="o">()</span>
+<span class="s1">&#39;\x0e\t\x1d\xbd\x12\x90.\xca\xf0\xd9?-\x98KC\xeb\x05\xa1@\xd1&#39;</span>
+</pre></div>
+
+<p>由于 go 的 json 编码，很多不可见字符都被转为了 <code>U+fffd</code>，丢失了很多信息。</p>
+<p>再经过 php 接口的接收，我们来看一下结果：</p>
+<div class="codehilite"><pre><span></span><span class="x">$d = json_decode(file_get_contents(&#39;php://input&#39;), JSON_THROW_ON_ERROR);</span>
+<span class="x">var_dump(file_get_contents(&#39;php://input&#39;));</span>
+<span class="x">var_dump($d);</span>
+<span class="x">var_dump(bin2hex($d));</span>
+</pre></div>
+
+<p>结果：</p>
+<div class="codehilite"><pre><span></span>string(89) &quot;&quot;\u000e\t\u001d\ufffd\u0012\ufffd.\ufffd\ufffd\ufffd?-\ufffdKC\ufffd\u0005\ufffd@\ufffd&quot;
+&quot;
+string(38) &quot;   ��.���?-�KC��@�&quot;
+string(76) &quot;0e091defbfbd12efbfbd2eefbfbdefbfbdefbfbd3f2defbfbd4b43efbfbd05efbfbd40efbfbd&quot;
+&quot;K4FEmxz4yuTsjDAbRZQmHJ+MBiCSGaOnpZTLbThXpCkDYe3siAIPfihX6ppjN2Tz6XqOr4tF\/u1\/+ccfhj8NNLIL+2hknyDXbosmMBV8mEGYsMqQHAE0f+3OhDWlzN5RnteSMYNZbTipFErB8ZOWCiXmynWxsqJhyaN9J6\/\/h6I=&quot;
+oops, hsm is jsonless?
+</pre></div>
+
+<p><code>U+fffd</code>变成了<code>\xef\xbf\xbd</code>。所以由于 go 的 json 编码问题，丢失了很多信息，造成了 md5 前的数据有很多相同字符。当时做题时往下并没有细想，得到 n 后总是想构造出任意命令的签名，也很疑惑如果构造出岂不是这种签名就不安全了？其实是无法得到的。</p>
+<p>正解是 go 的这种问题 ，为碰撞创造了条件。我们可以碰撞出在这种编码情况下与 <code>ls -l</code>有相同结果的<code>cat *</code> 此类命令。但是问题是我们需要非常大量 ip 来提供碰撞的数据。</p>
+<p>可以发现，go 取 ip 的时候，是先用<code>net.ParseIP</code>解析了 ip，我们在 ip 每个数字前面加 0 ，解析后还是原来的 ip 结果，每个数字最多添加 256 个 0，四个数字就已经产生了 <code>2^32</code>种不同的组合，足以碰撞出 <code>ls -l</code>与 <code>cat *</code>之间的冲突。</p>
+<p>官方题解的 c++ 碰撞脚本我本地编译的有点问题，加了一些引入的头文件：</p>
+<div class="codehilite"><pre><span></span><span class="c1">// g++ -std=c++17 -march=native -O3 -lcrypto -lpthread gewalt.cpp -o gewalt</span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;cassert&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;iomanip&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sstream&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;functional&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;random&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;unordered_map&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;algorithm&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;thread&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;atomic&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;mutex&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;array&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;openssl/sha.h&gt;</span><span class="cp"></span>
+
+<span class="k">const</span> <span class="kt">unsigned</span> <span class="n">num_threads</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">::</span><span class="n">hardware_concurrency</span><span class="p">();</span>
+
+
+
+<span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">hash</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">s</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">SHA_CTX</span> <span class="n">ctx</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">SHA1_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">))</span> <span class="k">throw</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">SHA1_Update</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">,</span> <span class="n">s</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">s</span><span class="p">.</span><span class="n">length</span><span class="p">()))</span> <span class="k">throw</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">d</span><span class="p">(</span><span class="n">SHA_DIGEST_LENGTH</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">SHA1_Final</span><span class="p">((</span><span class="kt">uint8_t</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">ctx</span><span class="p">))</span> <span class="k">throw</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">d</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">u32string</span> <span class="n">kapot</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">s</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">u32string</span> <span class="n">r</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="kt">size_t</span> <span class="n">o</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">length</span><span class="p">();</span> <span class="p">)</span> <span class="p">{</span>
+
+        <span class="k">auto</span> <span class="n">T</span> <span class="o">=</span> <span class="p">[](</span><span class="kt">uint8_t</span> <span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">c</span> <span class="o">&lt;</span> <span class="mh">0x80</span><span class="p">)</span>         <span class="o">?</span> <span class="mi">1</span>   <span class="cm">/* ASCII */</span>
+                 <span class="o">:</span> <span class="p">(</span><span class="n">c</span> <span class="o">&amp;</span> <span class="mh">0xc0</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0x80</span> <span class="o">?</span> <span class="mi">0</span>   <span class="cm">/* continuation */</span>
+                 <span class="o">:</span> <span class="p">(</span><span class="n">c</span> <span class="o">&amp;</span> <span class="mh">0xe0</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0xc0</span> <span class="o">?</span> <span class="mi">2</span>   <span class="cm">/* 2-byte chunk */</span>
+                 <span class="o">:</span> <span class="p">(</span><span class="n">c</span> <span class="o">&amp;</span> <span class="mh">0xf0</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0xe0</span> <span class="o">?</span> <span class="mi">3</span>   <span class="cm">/* 3-byte chunk */</span>
+                 <span class="o">:</span> <span class="p">(</span><span class="n">c</span> <span class="o">&amp;</span> <span class="mh">0xf8</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0xf0</span> <span class="o">?</span> <span class="mi">4</span>   <span class="cm">/* 4-byte chunk */</span>
+                 <span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+        <span class="p">};</span>
+
+        <span class="kt">uint32_t</span> <span class="n">c</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">];</span>
+        <span class="k">auto</span> <span class="n">cont</span> <span class="o">=</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">]()</span> <span class="p">{</span> <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span> <span class="o">&lt;&lt;</span> <span class="mi">6</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3f</span><span class="p">);</span> <span class="p">};</span>
+
+        <span class="k">switch</span> <span class="p">(</span><span class="n">T</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="p">{</span>
+
+        <span class="k">case</span> <span class="o">-</span><span class="mi">1</span><span class="o">:</span>
+        <span class="k">case</span>  <span class="mi">0</span><span class="o">:</span>
+        <span class="nl">invalid</span><span class="p">:</span> <span class="n">c</span> <span class="o">=</span> <span class="mh">0xfffd</span><span class="p">;</span> <span class="cm">/* fall through */</span>
+
+        <span class="k">case</span>  <span class="mi">1</span><span class="o">:</span>
+        <span class="nl">valid</span><span class="p">:</span>   <span class="n">r</span><span class="p">[</span><span class="n">o</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+
+        <span class="k">case</span>  <span class="mi">2</span><span class="o">:</span>
+                 <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">&amp;=</span> <span class="mh">0x1f</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">0</span> <span class="o">&gt;=</span> <span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">||</span> <span class="n">T</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">0</span><span class="p">]))</span>
+                     <span class="k">goto</span> <span class="n">invalid</span><span class="p">;</span>
+                 <span class="k">goto</span> <span class="n">one</span><span class="p">;</span>
+
+        <span class="k">case</span>  <span class="mi">3</span><span class="o">:</span>
+                 <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">&amp;=</span> <span class="mh">0x1f</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span> <span class="o">&gt;=</span> <span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">||</span> <span class="n">T</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">0</span><span class="p">])</span> <span class="o">||</span> <span class="n">T</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]))</span>
+                     <span class="k">goto</span> <span class="n">invalid</span><span class="p">;</span>
+                 <span class="k">goto</span> <span class="n">two</span><span class="p">;</span>
+
+        <span class="k">case</span>  <span class="mi">4</span><span class="o">:</span>
+                 <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">&amp;=</span> <span class="mh">0x1f</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">2</span> <span class="o">&gt;=</span> <span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">||</span> <span class="n">T</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">0</span><span class="p">])</span> <span class="o">||</span> <span class="n">T</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> <span class="o">||</span> <span class="n">T</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">]))</span>
+                     <span class="k">goto</span> <span class="n">invalid</span><span class="p">;</span>
+                 <span class="n">cont</span><span class="p">();</span>
+        <span class="nl">two</span><span class="p">:</span>     <span class="n">cont</span><span class="p">();</span>
+        <span class="nl">one</span><span class="p">:</span>     <span class="n">cont</span><span class="p">();</span>
+                 <span class="k">goto</span> <span class="n">valid</span><span class="p">;</span>
+
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+
+    <span class="n">r</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">o</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">r</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">uint64_t</span><span class="o">&gt;</span> <span class="n">hcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">kcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">u32string</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">tab_t</span><span class="p">;</span>
+<span class="n">tab_t</span> <span class="n">tab0</span><span class="p">,</span> <span class="n">tab1</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mtx</span><span class="p">;</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="p">,</span><span class="mi">4</span><span class="o">&gt;</span> <span class="n">ip</span><span class="p">;</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">cmd0</span><span class="p">,</span> <span class="n">cmd1</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">stuffer_t</span>
+<span class="p">{</span>
+    <span class="k">private</span><span class="o">:</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="p">,</span><span class="mi">4</span><span class="o">&gt;</span> <span class="n">cnts</span><span class="p">;</span>
+        <span class="kt">size_t</span> <span class="n">step</span><span class="p">;</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">cmd</span><span class="p">;</span>
+    <span class="k">public</span><span class="o">:</span>
+        <span class="n">stuffer_t</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">t</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">s</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">c</span><span class="p">)</span> <span class="o">:</span> <span class="n">cnts</span><span class="p">{</span><span class="n">t</span><span class="p">},</span> <span class="n">step</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">cmd</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="p">{}</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="k">operator</span><span class="p">()()</span>
+        <span class="p">{</span>
+            <span class="c1">//XXX this is by far not the most efficient way of doing this, but yeah</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">cnts</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">cnts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">{</span>
+                <span class="n">cnts</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">cnts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">cnts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">{</span>
+                    <span class="n">cnts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="o">++</span><span class="n">cnts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">cnts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">{</span>
+                        <span class="n">cnts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                        <span class="n">cnts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">step</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">o</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">o</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">i</span> <span class="o">?</span> <span class="s">&quot;.&quot;</span> <span class="o">:</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+                  <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="n">cnts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="sc">&#39;0&#39;</span><span class="p">)</span>
+                  <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="kt">unsigned</span><span class="p">)</span> <span class="n">ip</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+            <span class="n">o</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;|&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">cmd</span><span class="p">;</span>
+            <span class="k">return</span> <span class="n">o</span><span class="p">.</span><span class="n">str</span><span class="p">();</span>
+        <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="nf">go</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">tid</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">//XXX tid stuff is a hack, but YOLO</span>
+
+    <span class="kt">bool</span> <span class="n">one</span> <span class="o">=</span> <span class="n">tid</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="n">stuffer_t</span> <span class="n">next</span><span class="p">(</span><span class="n">tid</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">num_threads</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="n">one</span> <span class="o">?</span> <span class="nl">cmd1</span> <span class="p">:</span> <span class="n">cmd0</span><span class="p">);</span>
+
+    <span class="n">tab_t</span><span class="o">&amp;</span> <span class="n">mytab</span> <span class="o">=</span> <span class="n">one</span> <span class="o">?</span> <span class="nl">tab1</span> <span class="p">:</span> <span class="n">tab0</span><span class="p">;</span>
+    <span class="n">tab_t</span><span class="o">&amp;</span> <span class="n">thtab</span> <span class="o">=</span> <span class="n">one</span> <span class="o">?</span> <span class="nl">tab0</span> <span class="p">:</span> <span class="n">tab1</span><span class="p">;</span>
+
+    <span class="kt">uint64_t</span> <span class="n">myhcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">mykcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">r</span> <span class="o">=</span> <span class="n">next</span><span class="p">();</span>
+
+        <span class="p">{</span>
+
+            <span class="o">++</span><span class="n">myhcount</span><span class="p">;</span>
+
+            <span class="k">auto</span> <span class="n">h</span> <span class="o">=</span> <span class="n">hash</span><span class="p">(</span><span class="n">r</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">h</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span> <span class="n">std</span><span class="o">::</span><span class="n">count_if</span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">h</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+                                            <span class="p">[](</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">c</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="mh">0x80</span><span class="p">;</span> <span class="p">}))</span>
+                <span class="k">continue</span><span class="p">;</span>
+
+            <span class="o">++</span><span class="n">mykcount</span><span class="p">;</span>
+
+            <span class="k">auto</span> <span class="n">k</span> <span class="o">=</span> <span class="n">kapot</span><span class="p">(</span><span class="n">h</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">k</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="o">+</span> <span class="p">(</span><span class="kt">size_t</span><span class="p">)</span> <span class="n">std</span><span class="o">::</span><span class="n">count</span><span class="p">(</span><span class="n">k</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">k</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="mh">0xfffd</span><span class="p">))</span>
+                <span class="k">continue</span><span class="p">;</span>
+
+            <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lck</span><span class="p">(</span><span class="n">mtx</span><span class="p">);</span>
+
+            <span class="n">hcount</span> <span class="o">+=</span> <span class="n">myhcount</span><span class="p">,</span> <span class="n">myhcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+            <span class="n">kcount</span> <span class="o">+=</span> <span class="n">mykcount</span><span class="p">,</span> <span class="n">mykcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">thtab</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">!=</span> <span class="n">thtab</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+
+                <span class="n">mytab</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">;</span>
+
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\r\x1b</span><span class="s">[K&quot;</span>
+                          <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[32m&quot;</span><span class="p">;</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">tab0</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span>
+                          <span class="o">&lt;&lt;</span> <span class="n">tab1</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m&quot;</span><span class="p">;</span>
+
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">hex</span><span class="p">;</span>
+                <span class="kt">bool</span> <span class="n">first</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="nl">c</span><span class="p">:</span> <span class="n">k</span><span class="p">)</span>
+                    <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">first</span> <span class="o">?</span> <span class="n">first</span> <span class="o">=</span> <span class="nb">false</span><span class="p">,</span> <span class="s">&quot;&quot;</span> <span class="o">:</span> <span class="s">&quot; &quot;</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">c</span><span class="p">;</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">dec</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;hash count:  </span><span class="se">\x1b</span><span class="s">[35m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">hcount</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m&quot;</span><span class="p">;</span>
+                <span class="p">{</span>
+                    <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">s</span><span class="p">;</span>
+                    <span class="n">s</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">fixed</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setprecision</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">log</span><span class="p">(</span><span class="n">hcount</span><span class="o">|</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+                    <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; (2^</span><span class="se">\x1b</span><span class="s">[35m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">str</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m&quot;</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;)&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;kapot count: &quot;</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[35m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">kcount</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m&quot;</span><span class="p">;</span>
+                <span class="p">{</span>
+                    <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">s</span><span class="p">;</span>
+                    <span class="n">s</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">fixed</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setprecision</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">log</span><span class="p">(</span><span class="n">kcount</span><span class="o">|</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+                    <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; (2^</span><span class="se">\x1b</span><span class="s">[35m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">str</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m)&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;table sizes: </span><span class="se">\x1b</span><span class="s">[35m&quot;</span>
+                          <span class="o">&lt;&lt;</span> <span class="n">tab0</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m </span><span class="se">\x1b</span><span class="s">[35m&quot;</span>
+                          <span class="o">&lt;&lt;</span> <span class="n">tab1</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+                <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">mytab</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">))</span>
+                <span class="n">mytab</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">;</span>
+
+        <span class="p">}</span>
+
+        <span class="n">hcount</span> <span class="o">+=</span> <span class="n">myhcount</span><span class="p">;</span>
+        <span class="n">kcount</span> <span class="o">+=</span> <span class="n">mykcount</span><span class="p">;</span>
+
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">status</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="p">{</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lck</span><span class="p">(</span><span class="n">mtx</span><span class="p">);</span>
+
+            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\r\x1b</span><span class="s">[K&quot;</span><span class="p">;</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;hash count: </span><span class="se">\x1b</span><span class="s">[35m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">hcount</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m &quot;</span><span class="p">;</span>
+            <span class="p">{</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">s</span><span class="p">;</span>
+                <span class="n">s</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">fixed</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setprecision</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">log</span><span class="p">(</span><span class="n">hcount</span><span class="o">|</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;(2^</span><span class="se">\x1b</span><span class="s">[35m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">str</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m) | &quot;</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;kapot count: </span><span class="se">\x1b</span><span class="s">[35m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">kcount</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m &quot;</span><span class="p">;</span>
+            <span class="p">{</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">s</span><span class="p">;</span>
+                <span class="n">s</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">fixed</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setprecision</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">log</span><span class="p">(</span><span class="n">kcount</span><span class="o">|</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;(2^</span><span class="se">\x1b</span><span class="s">[35m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">str</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m) | &quot;</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;tables: </span><span class="se">\x1b</span><span class="s">[35m&quot;</span>
+                      <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">tab0</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; &quot;</span>
+                      <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">setw</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">tab1</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[0m &quot;</span>
+                      <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">flush</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[31mneed IPv4 in argv[1]</span><span class="se">\x1b</span><span class="s">[0m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">ss</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="nl">v</span><span class="p">:</span> <span class="n">ip</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">s</span><span class="p">;</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">getline</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="sc">&#39;.&#39;</span><span class="p">);</span>
+            <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">atoi</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;::</span><span class="n">min</span><span class="p">()</span> <span class="o">||</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;::</span><span class="n">max</span><span class="p">())</span>
+                <span class="k">goto</span> <span class="n">bad_ip</span><span class="p">;</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">n</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">ss</span><span class="p">)</span> <span class="p">{</span>
+<span class="nl">bad_ip</span><span class="p">:</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[31mbad IPv4 given?</span><span class="se">\x1b</span><span class="s">[0m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\x1b</span><span class="s">[31mneed commands in argv[2] and argv[3]</span><span class="se">\x1b</span><span class="s">[0m&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">cmd0</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+    <span class="n">cmd1</span> <span class="o">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+
+
+    <span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">status_thread</span><span class="p">(</span><span class="n">status</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">&gt;</span> <span class="n">ts</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_threads</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">ts</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="p">(</span><span class="n">go</span><span class="p">,</span> <span class="n">i</span><span class="p">));</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="nl">t</span><span class="p">:</span> <span class="n">ts</span><span class="p">)</span>
+        <span class="n">t</span><span class="p">.</span><span class="n">join</span><span class="p">();</span>
+
+<span class="p">}</span>
+</pre></div>
+
+<p>编译可能会找不到 <code>lcrypto</code>，编译命令加上 lcrypto 路径（我本地是 /usr/local/opt/openssl/lib）</p>
+<div class="codehilite"><pre><span></span>g++ -std<span class="o">=</span>c++17 -march<span class="o">=</span>native -O3 -lcrypto -lpthread gewalt.cpp -o gewalt -L/usr/local/opt/openssl/lib
+</pre></div>
+
+<p>与 go 交互的脚本：</p>
+<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">requests</span><span class="o">,</span> <span class="nn">subprocess</span>
+
+<span class="n">benign_cmd</span> <span class="o">=</span> <span class="s1">&#39;ls -l&#39;</span>
+<span class="n">exploit_cmd</span> <span class="o">=</span> <span class="s1">&#39;cat *&#39;</span>
+
+<span class="n">ip</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://</span><span class="si">{}</span><span class="s1">:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+
+<span class="n">my_ip</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;/ip&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[+] IP: &#39;</span> <span class="o">+</span> <span class="n">my_ip</span><span class="p">)</span>
+
+<span class="n">o</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s1">&#39;./gewalt&#39;</span><span class="p">,</span> <span class="n">my_ip</span><span class="p">,</span> <span class="n">benign_cmd</span><span class="p">,</span> <span class="n">exploit_cmd</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[+] gewalt:&#39;</span> <span class="o">+</span> <span class="n">o</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+    <span class="n">ip</span><span class="p">,</span> <span class="n">cmd</span> <span class="o">=</span> <span class="n">l</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)</span>
+    <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;benign&#39;</span> <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="n">benign_cmd</span> <span class="k">else</span> <span class="s1">&#39;pwn&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ip</span><span class="p">,</span> <span class="n">cmd</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+<span class="n">sig</span>  <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;/sign&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ip&#39;</span><span class="p">:</span> <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;benign&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;cmd&#39;</span><span class="p">:</span> <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;benign&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]})</span><span class="o">.</span><span class="n">text</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[+] sig: &#39;</span> <span class="o">+</span> <span class="n">sig</span><span class="p">)</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;/exec&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;signature&#39;</span><span class="p">:</span> <span class="n">sig</span><span class="p">[:</span><span class="mi">172</span><span class="p">]</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;pwn&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="o">+</span> <span class="s1">&#39;|&#39;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;pwn&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+</pre></div>
+
+<div class="codehilite"><pre><span></span> ⚙  SaV-ls-l-aaS  python solve.py <span class="m">127</span>.0.0.1 <span class="m">60601</span>
+<span class="o">[</span>+<span class="o">]</span> IP: <span class="m">172</span>.17.0.1
+fffd fffd fffd fffd fffd fffd <span class="m">55</span> fffd fffd fffd fffd c fffd fffd fffd fffd fffd fffd fffd fffd
+<span class="nb">hash</span> count:  <span class="m">168104875</span> <span class="o">(</span><span class="m">2</span>^27.32<span class="o">)</span>
+kapot count: <span class="m">3477222</span> <span class="o">(</span><span class="m">2</span>^21.73<span class="o">)</span>
+table sizes: <span class="m">8745</span> <span class="m">8856</span>
+<span class="o">[</span>+<span class="o">]</span> gewalt:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000172.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017.000000000000000000000000000000000000000000000000000000000000000000000000000000000.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001<span class="p">|</span>ls -l
+<span class="m">00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000172</span>.17.000000000000000000000000.0000000000000000000000000000000000000001<span class="p">|</span>cat *
+
+<span class="o">{</span><span class="s1">&#39;pwn&#39;</span>: <span class="o">(</span>u<span class="s1">&#39;00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000172.17.000000000000000000000000.0000000000000000000000000000000000000001&#39;</span>, u<span class="s1">&#39;cat *&#39;</span><span class="o">)</span>, <span class="s1">&#39;benign&#39;</span>: <span class="o">(</span>u<span class="s1">&#39;00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000172.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017.000000000000000000000000000000000000000000000000000000000000000000000000000000000.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001&#39;</span>, u<span class="s1">&#39;ls -l&#39;</span><span class="o">)}</span>
+<span class="o">[</span>+<span class="o">]</span> sig: ODxSukwtu4rHICBpzT23WGD7DCJNawhA0DUN/tcyv1AgwNmS8OPUnO5FnBBDgiaVx5OTYd4OjH8LVbKiXUBUBuFx1OHDgKBKG5umkKMLt+350SlgMWY5qWny9tPIU3I+X0A9FcADCBCi6f0PkXfc0CSCZXuFu9rAKnVGsbmaUwY<span class="o">=</span><span class="m">00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000172</span>.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017.000000000000000000000000000000000000000000000000000000000000000000000000000000000.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001<span class="p">|</span>ls -l
+hxp<span class="o">{</span>FLAG<span class="o">}</span>
+</pre></div>
+
+<p>参考：</p>
+<ul>
+<li><a href="https://ctftime.org/writeup/17966">https://ctftime.org/writeup/17966</a></li>
 </ul>
                 
                   
