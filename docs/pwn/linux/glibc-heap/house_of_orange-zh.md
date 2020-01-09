@@ -23,7 +23,7 @@ Otherwise, relay to handle system-dependent cases
 else {
       void *p = sysmalloc(nb, av);
       if (p != NULL && __builtin_expect (perturb_byte, 0))
-	alloc_perturb (p, bytes);
+	    alloc_perturb (p, bytes);
       return p;
 }
 ```
@@ -47,7 +47,7 @@ assert((old_top == initial_top(av) && old_size == 0) ||
 	  ((unsigned long)old_end & pagemask) == 0));
 ```
 这里检查了top chunk的合法性，如果第一次调用本函数，top chunk可能没有初始化，所以可能old_size为0。
-如果top chunk已经初始化了，那么top chunk的大小必须大于等于MINSIZE，因为top chunk中包含了 fencepost，所以top chunk的大小必须要大于MINSIZE。其次Top chunk必须标识前一个chunk处于inuse状态，并且top chunk的结束地址必定是页对齐的。此外top chunk除去fencepost的大小必定要小于所需chunk的大小，否则在_int_malloc()函数中会使用top chunk分割出chunk。
+如果top chunk已经初始化了，那么top chunk的大小必须大于等于MINSIZE，因为top chunk中包含了 fencepost，所以top chunk的大小必须要大于MINSIZE。其次top chunk必须标识前一个chunk处于inuse状态，并且top chunk的结束地址必定是页对齐的。此外top chunk除去fencepost的大小必定要小于所需chunk的大小，否则在_int_malloc()函数中会使用top chunk分割出chunk。
 
 我们总结一下伪造的top chunk size的要求
 
