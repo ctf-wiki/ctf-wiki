@@ -3,7 +3,7 @@
 
 ## 概述
 
-House of Lore 攻击与 Glibc 堆管理中的的 Small Bin 的机制紧密相关。
+House of Lore 攻击与 Glibc 堆管理中的 Small Bin 的机制紧密相关。
 
 House of Lore 可以实现分配任意指定位置的 chunk，从而修改任意地址的内存。
 
@@ -185,4 +185,4 @@ int main(int argc, char * argv[]){
 
 ## 参考文献
 
-- [https://github.com/shellphish/how2heap/blob/master/house_of_lore.c](https://github.com/shellphish/how2heap/blob/master/house_of_lore.c)
+- [https://github.com/shellphish/how2heap/blob/master/glibc_2.25/house_of_lore.c](https://github.com/shellphish/how2heap/blob/master/glibc_2.25/house_of_lore.c)

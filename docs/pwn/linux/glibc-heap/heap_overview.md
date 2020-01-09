@@ -330,19 +330,19 @@ Malloc will use [mmap] (http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L12
 
 /* Private anonymous mapping example using mmap syscall */
 
-##include <stdio.h>
+#include <stdio.h>
 
-##include <sys/mman.h>
+#include <sys/mman.h>
 
-##include <sys/types.h>
+#include <sys/types.h>
 
-##include <sys/stat.h>
+#include <sys/stat.h>
 
-##include <fcntl.h>
+#include <fcntl.h>
 
-##include <unistd.h>
+#include <unistd.h>
 
-##include <stdlib.h>
+#include <stdlib.h>
 
 
 
@@ -483,15 +483,15 @@ Here is an example.
 
 /* Per thread arena example. */
 
-##include <stdio.h>
+#include <stdio.h>
 
-##include <stdlib.h>
+#include <stdlib.h>
 
-##include <pthread.h>
+#include <pthread.h>
 
-##include <unistd.h>
+#include <unistd.h>
 
-##include <sys/types.h>
+#include <sys/types.h>
 
 
 
