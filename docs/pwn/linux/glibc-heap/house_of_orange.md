@@ -62,23 +62,15 @@ assert((old_top == initial_top(av) && old_size == 0) ||
 ```
 
 This checks the legitimacy of the top chunk. If this function is called for the first time, the top chunk may not be initialized, so the old_size may be 0.
-If the top chunk has already been initialized, then the size of the top chunk must be greater than or equal to MINSIZE, because the top chunk contains fencepost, so the top chunk must be larger than MINSIZE. Second, the Top chunk must identify that the previous chunk is in the inuse state, and the end chunk's end address must be page-aligned. In addition, the top chunk removes the fencepost size must be smaller than the required chunk size, otherwise the top chunk will be used to split the chunk in the _int_malloc() function.
+If the top chunk has already been initialized, then the size of the top chunk must be greater than or equal to MINSIZE, because the top chunk contains fencepost, so the top chunk must be larger than MINSIZE. Second, the top chunk must identify that the previous chunk is in the inuse state, and the end chunk's end address must be page-aligned. In addition, the top chunk removes the fencepost size must be smaller than the required chunk size, otherwise the top chunk will be used to split the chunk in the _int_malloc() function.
 
 
 Let's summarize the requirements for forged top chunk size
 
-
 1. Forged size must be aligned to the memory page
-
-
-2.size is greater than MINSIZE (0x10)
-
-
-3.size is smaller than the chunk size + MINSIZE (0x10) applied afterwards
-
-
-The prev inuse bit of 4.size must be 1
-
+2. size is greater than MINSIZE (0x10)
+3. size is smaller than the chunk size + MINSIZE (0x10) applied afterwards
+4. The prev inuse bit of size must be 1
 
 After that, the original top chunk will execute `_int_free` and smoothly enter the unsorted bin.
 
@@ -116,7 +108,7 @@ But when we execute this example, we find that this program can't be used succes
 [#0] 0x7ffff7a42428 → Name: __GI_raise(sig=0x6)
 [#1] 0x7ffff7a4402a → Name: __GI_abort()
 [#2] 0x7ffff7a8a2e8 → Name: __malloc_assert(assertion=0x7ffff7b9e150 "(old_top == initial_top (av) && old_size == 0) || ((unsigned long) (old_size) >= MINSIZE && prev_inuse (old_top) && ((unsigned long) old_end & (pagesize - 1)) == 0)", file=0x7ffff7b9ab85 "malloc.c", line=0x95a, function=0x7ffff7b9e998 <__func__.11509> "sysmalloc")
-[# 3] 0x7ffff7a8e426 → Name: sysmalloc (nb = 0x70, av = 0x7ffff7dd1b20 <main_arena> )
+[#3] 0x7ffff7a8e426 → Name: sysmalloc (nb = 0x70, av = 0x7ffff7dd1b20 <main_arena> )
 ```
 
 

@@ -51,13 +51,10 @@ assert((old_top == initial_top(av) && old_size == 0) ||
 
 我们总结一下伪造的top chunk size的要求
 
-1.伪造的size必须要对齐到内存页
-
-2.size要大于MINSIZE(0x10)
-
-3.size要小于之后申请的chunk size + MINSIZE(0x10)
-
-4.size的prev inuse位必须为1
+1. 伪造的size必须要对齐到内存页
+2. size要大于MINSIZE(0x10)
+3. size要小于之后申请的chunk size + MINSIZE(0x10)
+4. size的prev inuse位必须为1
 
 之后原有的top chunk就会执行`_int_free`从而顺利进入unsorted bin中。
 
@@ -147,7 +144,7 @@ int main(void)
  →   Chunk(addr=0x602030, size=0x1fc0, flags=PREV_INUSE)
 ```
 
-因为unsorted bin中存在块，所以我们一下次的分配会切割这个块
+因为unsorted bin中存在块，所以我们下次的分配会切割这个块
 
 ```
  malloc(0x60);
