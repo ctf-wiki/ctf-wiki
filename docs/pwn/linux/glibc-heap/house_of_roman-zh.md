@@ -157,7 +157,7 @@ pwndbg> x/40ag 0x555555757000
 libc : 0x7ffff7a23d28 ("malloc_hook")
 ```
 
-这个时候我们的 FD 已经在 malloc hook 附近，未之后的爆破做准备。
+这个时候我们的 FD 已经在 malloc hook 附近，为之后的爆破做准备。
 
 ### 第二步
 
