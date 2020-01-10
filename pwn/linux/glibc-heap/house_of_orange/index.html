@@ -4711,14 +4711,14 @@ First, the size of malloc cannot be greater than <code>mmp_.mmap_threshold</code
 </pre></div>
 
 <p>This checks the legitimacy of the top chunk. If this function is called for the first time, the top chunk may not be initialized, so the old_size may be 0.
-If the top chunk has already been initialized, then the size of the top chunk must be greater than or equal to MINSIZE, because the top chunk contains fencepost, so the top chunk must be larger than MINSIZE. Second, the Top chunk must identify that the previous chunk is in the inuse state, and the end chunk's end address must be page-aligned. In addition, the top chunk removes the fencepost size must be smaller than the required chunk size, otherwise the top chunk will be used to split the chunk in the _int_malloc() function.</p>
+If the top chunk has already been initialized, then the size of the top chunk must be greater than or equal to MINSIZE, because the top chunk contains fencepost, so the top chunk must be larger than MINSIZE. Second, the top chunk must identify that the previous chunk is in the inuse state, and the end chunk's end address must be page-aligned. In addition, the top chunk removes the fencepost size must be smaller than the required chunk size, otherwise the top chunk will be used to split the chunk in the _int_malloc() function.</p>
 <p>Let's summarize the requirements for forged top chunk size</p>
 <ol>
 <li>Forged size must be aligned to the memory page</li>
+<li>size is greater than MINSIZE (0x10)</li>
+<li>size is smaller than the chunk size + MINSIZE (0x10) applied afterwards</li>
+<li>The prev inuse bit of size must be 1</li>
 </ol>
-<p>2.size is greater than MINSIZE (0x10)</p>
-<p>3.size is smaller than the chunk size + MINSIZE (0x10) applied afterwards</p>
-<p>The prev inuse bit of 4.size must be 1</p>
 <p>After that, the original top chunk will execute <code>_int_free</code> and smoothly enter the unsorted bin.</p>
 <h2 id="example">example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <p>Here is a sample program that simulates an overflow overlay to the size field of the top chunk. We tried to reduce the size to achieve the brk extension and put the original top chunk into the unsorted bin.</p>
@@ -4743,7 +4743,7 @@ But when we execute this example, we find that this program can't be used succes
 <div class="codehilite"><pre><span></span>[#0] 0x7ffff7a42428 → Name: __GI_raise(sig=0x6)
 [#1] 0x7ffff7a4402a → Name: __GI_abort()
 [#2] 0x7ffff7a8a2e8 → Name: __malloc_assert(assertion=0x7ffff7b9e150 &quot;(old_top == initial_top (av) &amp;&amp; old_size == 0) || ((unsigned long) (old_size) &gt;= MINSIZE &amp;&amp; prev_inuse (old_top) &amp;&amp; ((unsigned long) old_end &amp; (pagesize - 1)) == 0)&quot;, file=0x7ffff7b9ab85 &quot;malloc.c&quot;, line=0x95a, function=0x7ffff7b9e998 &lt;__func__.11509&gt; &quot;sysmalloc&quot;)
-[# 3] 0x7ffff7a8e426 → Name: sysmalloc (nb = 0x70, av = 0x7ffff7dd1b20 &lt;main_arena&gt; )
+[#3] 0x7ffff7a8e426 → Name: sysmalloc (nb = 0x70, av = 0x7ffff7dd1b20 &lt;main_arena&gt; )
 </pre></div>
 
 <h2 id="the-correct-example">The correct example<a class="headerlink" href="#the-correct-example" title="Permanent link">&para;</a></h2>

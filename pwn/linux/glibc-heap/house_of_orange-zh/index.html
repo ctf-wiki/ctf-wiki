@@ -4792,10 +4792,12 @@ else {
 这里检查了top chunk的合法性，如果第一次调用本函数，top chunk可能没有初始化，所以可能old_size为0。
 如果top chunk已经初始化了，那么top chunk的大小必须大于等于MINSIZE，因为top chunk中包含了 fencepost，所以top chunk的大小必须要大于MINSIZE。其次top chunk必须标识前一个chunk处于inuse状态，并且top chunk的结束地址必定是页对齐的。此外top chunk除去fencepost的大小必定要小于所需chunk的大小，否则在_int_malloc()函数中会使用top chunk分割出chunk。</p>
 <p>我们总结一下伪造的top chunk size的要求</p>
-<p>1.伪造的size必须要对齐到内存页</p>
-<p>2.size要大于MINSIZE(0x10)</p>
-<p>3.size要小于之后申请的chunk size + MINSIZE(0x10)</p>
-<p>4.size的prev inuse位必须为1</p>
+<ol>
+<li>伪造的size必须要对齐到内存页</li>
+<li>size要大于MINSIZE(0x10)</li>
+<li>size要小于之后申请的chunk size + MINSIZE(0x10)</li>
+<li>size的prev inuse位必须为1</li>
+</ol>
 <p>之后原有的top chunk就会执行<code>_int_free</code>从而顺利进入unsorted bin中。</p>
 <h2 id="_4">示例<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>这里给出了一个示例程序，程序模拟了一个溢出覆盖到top chunk的size域。我们试图把size改小从而实现brk扩展，并把原有的top chunk放入unsorted bin中。</p>
@@ -4865,7 +4867,7 @@ int main(void)
  →   Chunk(addr=0x602030, size=0x1fc0, flags=PREV_INUSE)
 </pre></div>
 
-<p>因为unsorted bin中存在块，所以我们一下次的分配会切割这个块</p>
+<p>因为unsorted bin中存在块，所以我们下次的分配会切割这个块</p>
 <div class="codehilite"><pre><span></span> malloc(0x60);
  0x602030
 
