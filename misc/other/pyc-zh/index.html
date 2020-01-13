@@ -1058,6 +1058,26 @@
     Stegosaurus
   </a>
   
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    例题
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    参考文献
+  </a>
+  
 </li>
         
       </ul>
@@ -4738,6 +4758,26 @@
     Stegosaurus
   </a>
   
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    例题
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    参考文献
+  </a>
+  
 </li>
         
       </ul>
@@ -4863,13 +4903,478 @@ code object
 <blockquote>
 <p>将python字节码转换为可读的python 源代码,包含了反汇编(pycads)和反编译(pycdc)两种工具</p>
 </blockquote>
-<h3 id="stegosaurus"><a href="https://bitbucket.org/jherron/stegosaurus/src">Stegosaurus</a><a class="headerlink" href="#stegosaurus" title="Permanent link">&para;</a></h3>
+<h3 id="stegosaurus"><a href="https://github.com/AngelKitty/stegosaurus">Stegosaurus</a><a class="headerlink" href="#stegosaurus" title="Permanent link">&para;</a></h3>
 <blockquote>
-<p>允许我们在Python字节码文件（pyc或pyo）中嵌入任意Payload。由于编码密度较低，因此我们嵌入Payload的过程既不会改变源代码的运行行为，也不会改变源文件的文件大小</p>
+<p>Stegosaurus 是一款隐写工具，它允许我们在 Python 字节码文件( pyc 或 pyo )中嵌入任意 Payload。由于编码密度较低，因此我们嵌入 Payload 的过程既不会改变源代码的运行行为，也不会改变源文件的文件大小。 Payload 代码会被分散嵌入到字节码之中，所以类似 strings 这样的代码工具无法查找到实际的 Payload。 Python 的 dis 模块会返回源文件的字节码，然后我们就可以使用 Stegosaurus 来嵌入 Payload 了。</p>
 </blockquote>
-<p>原理是在python的字节码文件中,利用冗余空间,将完整的payload代码分散隐藏到这些零零碎碎的空间中.</p>
-<p><strong>Ref</strong>: <a href="http://www.freebuf.com/sectool/129357.html">一种用于在Python字节码中嵌入Payload的隐写工具 – Stegosaurus</a></p>
-<p><strong>Challenges</strong>: <a href="https://www.xctf.org.cn/library/details/whctf-writeup/">WHCTF-2017:Py-Py-Py</a></p>
+<p>原理是在 python 的字节码文件中，利用冗余空间，将完整的 payload 代码分散隐藏到这些零零碎碎的空间中。</p>
+<p>具体用法可参看 <a href="https://ctf-wiki.github.io/ctf-tools/misc/">ctf-tools</a>。</p>
+<h4 id="_3">例题<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h4>
+<p>Bugku QAQ</p>
+<p>赛题链接如下：</p>
+<div class="codehilite"><pre><span></span>http://ctf.bugku.com/files/447e4b626f2d2481809b8690613c1613/QAQ
+http://ctf.bugku.com/files/5c02892cd05a9dcd1c5a34ef22dd9c5e/cipher.txt
+</pre></div>
+
+<p>首先拿到这道题，用 <code>010Editor</code> 乍一眼看过去，我们可以看到一些特征信息：</p>
+<p><img alt="feature" src="../figure/feature.png" /></p>
+<p>可以判断这是个跟 <code>python</code> 有关的东西，通过查阅相关资料可以判断这是个 <code>python</code> 经编译过后的 <code>pyc</code> 文件。这里可能很多小伙伴们可能不理解了，什么是 <code>pyc</code> 文件呢？为什么会生成 <code>pyc</code> 文件？ <code>pyc</code> 文件又是何时生成的呢？下面我将一一解答这些问题。</p>
+<p>简单来说， <code>pyc</code> 文件就是 <code>Python</code> 的字节码文件，是个二进制文件。我们都知道 <code>Python</code> 是一种全平台的解释性语言，全平台其实就是 <code>Python</code> 文件在经过解释器解释之后(或者称为编译)生成的 <code>pyc</code> 文件可以在多个平台下运行，这样同样也可以隐藏源代码。其实， <code>Python</code> 是完全面向对象的语言， <code>Python</code> 文件在经过解释器解释后生成字节码对象 <code>PyCodeObject</code> ， <code>pyc</code> 文件可以理解为是 <code>PyCodeObject</code> 对象的持久化保存方式。而 <code>pyc</code> 文件只有在文件被当成模块导入时才会生成。也就是说， <code>Python</code> 解释器认为，只有 <code>import</code> 进行的模块才需要被重用。 生成 <code>pyc</code> 文件的好处显而易见，当我们多次运行程序时，不需要重新对该模块进行重新的解释。主文件一般只需要加载一次，不会被其他模块导入，所以一般主文件不会生成 <code>pyc</code> 文件。</p>
+<p>我们举个例子来说明这个问题：</p>
+<p>为了方便起见，我们事先创建一个test文件夹作为此次实验的测试：</p>
+<div class="codehilite"><pre><span></span>mkdir <span class="nb">test</span> <span class="o">&amp;&amp;</span> <span class="nb">cd</span> test/
+</pre></div>
+
+<p>假设我们现在有个 <code>test.py</code> 文件，文件内容如下：</p>
+<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">print_test</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hello,Kitty!&#39;</span><span class="p">)</span>
+
+<span class="n">print_test</span><span class="p">()</span>
+</pre></div>
+
+<p>我们执行以下命令：</p>
+<div class="codehilite"><pre><span></span>python3 test.py
+</pre></div>
+
+<p>不用说，想必大家都知道打印出的结果是下面这个：</p>
+<div class="codehilite"><pre><span></span>Hello,Kitty!
+</pre></div>
+
+<p>我们通过下面命令查看下当前文件夹下有哪些文件：</p>
+<div class="codehilite"><pre><span></span>ls -alh
+</pre></div>
+
+<p><img alt="test" src="../figure/test-01.png" /></p>
+<p>我们可以发现，并没有 <code>pyc</code> 文件生成。</p>
+<p>‘我们再去创建一个文件为 <code>import_test.py</code> 文件，文件内容如下：</p>
+<blockquote>
+<p>注： <code>test.py</code> 和 <code>import_test.py</code> 应当放在同一文件夹下</p>
+</blockquote>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">test</span>
+
+<span class="n">test</span><span class="o">.</span><span class="n">print_test</span><span class="p">()</span>
+</pre></div>
+
+<p>我们执行以下命令：</p>
+<div class="codehilite"><pre><span></span>python3 import_test.py
+</pre></div>
+
+<p>结果如下：</p>
+<div class="codehilite"><pre><span></span>Hello,Kitty!
+Hello,Kitty!
+</pre></div>
+
+<p>诶，为啥会打印出两句相同的话呢？我们再往下看，我们通过下面命令查看下当前文件夹下有哪些文件：</p>
+<div class="codehilite"><pre><span></span>ls -alh
+</pre></div>
+
+<p>结果如下：</p>
+<div class="codehilite"><pre><span></span>总用量 20K
+drwxr-xr-x <span class="m">3</span> python python <span class="m">4</span>.0K 11月  <span class="m">5</span> <span class="m">20</span>:38 .
+drwxrwxr-x <span class="m">4</span> python python <span class="m">4</span>.0K 11月  <span class="m">5</span> <span class="m">20</span>:25 ..
+-rw-r--r-- <span class="m">1</span> python python   <span class="m">31</span> 11月  <span class="m">5</span> <span class="m">20</span>:38 import_test.py
+drwxr-xr-x <span class="m">2</span> python python <span class="m">4</span>.0K 11月  <span class="m">5</span> <span class="m">20</span>:38 __pycache__
+-rw-r--r-- <span class="m">1</span> python python   <span class="m">58</span> 11月  <span class="m">5</span> <span class="m">20</span>:28 test.py
+</pre></div>
+
+<p>诶，多了个 <code>__pycache__</code> 文件夹，我们进入文件夹下看看有什么？</p>
+<div class="codehilite"><pre><span></span><span class="nb">cd</span> __pycache__ <span class="o">&amp;&amp;</span> ls
+</pre></div>
+
+<p><img alt="test" src="../figure/test-02.png" /></p>
+<p>我们可以看到生成了一个 <code>test.cpython-36.pyc</code> 。为什么是这样子呢？</p>
+<p>我们可以看到，我们在执行 <code>python3 import_test.py</code> 命令的时候，首先开始执行的是 <code>import test</code> ，即导入 <code>test</code> 模块，而一个模块被导入时， <code>PVM(Python Virtual Machine)</code> 会在后台从一系列路径中搜索该模块，其搜索过程如下：</p>
+<ul>
+<li>在当前目录下搜索该模块</li>
+<li>在环境变量 <code>PYTHONPATH</code> 中指定的路径列表中依次搜索</li>
+<li>在 <code>python</code> 安装路径中搜索</li>
+</ul>
+<p>事实上， <code>PVM</code> 通过变量 <code>sys.path</code> 中包含的路径来搜索，这个变量里面包含的路径列表就是上面提到的这些路径信息。</p>
+<p>模块的搜索路径都放在了 <code>sys.path</code> 列表中，如果缺省的 <code>sys.path</code> 中没有含有自己的模块或包的路径，可以动态的加入 <code>(sys.path.apend)</code> 即可。</p>
+<p>事实上， <code>Python</code> 中所有加载到内存的模块都放在 <code>sys.modules</code> 。当 <code>import</code> 一个模块时首先会在这个列表中查找是否已经加载了此模块，如果加载了则只是将模块的名字加入到正在调用 <code>import</code> 的模块的 <code>Local</code> 名字空间中。如果没有加载则从 <code>sys.path</code> 目录中按照模块名称查找模块文件，模块文件可以是 <code>py</code> 、 <code>pyc</code> 、 <code>pyd</code> ，找到后将模块载入内存，并加入到 <code>sys.modules</code> 中，并将名称导入到当前的 <code>Local</code> 名字空间。</p>
+<p>可以看出来，<strong>一个模块不会重复载入</strong>。多个不同的模块都可以用 <code>import</code> 引入同一个模块到自己的 <code>Local</code> 名字空间，其实背后的 <code>PyModuleObject</code> 对象只有一个。</p>
+<p>在这里，我还要说明一个问题，<strong><code>import</code> 只能导入模块，不能导入模块中的对象(类、函数、变量等)。</strong>例如像上面这个例子，我在 <code>test.py</code> 里面定义了一个函数 <code>print_test()</code> ，我在另外一个模块文件 <code>import_test.py</code>不能直接通过 <code>import test.print_test</code> 将 <code>print_test</code> 导入到本模块文件中，只能用 <code>import test</code> 进行导入。如果我想只导入特定的类、函数、变量，用 <code>from test import print_test</code> 即可。 </p>
+<p><img alt="import-test" src="../figure/import-test.png" /></p>
+<p>既然说到了 <code>import</code> 导入机制，再提一提嵌套导入和 <code>Package</code> 导入。</p>
+<p><strong><code>import</code> 嵌套导入</strong></p>
+<p>嵌套，不难理解，就是一个套着一个。小时候我们都玩过俄罗斯套娃吧，俄罗斯套娃就是一个大娃娃里面套着一个小娃娃，小娃娃里面还有更小的娃娃，而这个嵌套导入也是同一个意思。假如我们现在有一个模块，我们想要导入模块 <code>A</code> ，而模块 <code>A</code> 中有含有其他模块需要导入，比如模块 <code>B</code> ，模块 <code>B</code> 中又含有模块 <code>C</code> ，一直这样延续下去，这种方式我们称之为 <code>import</code> 嵌套导入。</p>
+<p>对这种嵌套比较容易理解，我们需要注意的一点就是各个模块的 <code>Local</code> 名字空间是独立的，所以上面的例子，本模块 <code>import A</code> 完了后，本模块只能访问模块 <code>A</code> ，不能访问 <code>B</code> 及其它模块。虽然模块 <code>B</code> 已经加载到内存了，如果要访问，还必须明确在本模块中导入 <code>import B</code> 。</p>
+<p>那如果我们有以下嵌套这种情况，我们该怎么处理呢？</p>
+<p>比如我们现在有个模块 <code>A</code> ：</p>
+<div class="codehilite"><pre><span></span><span class="c1"># A.py</span>
+<span class="kn">from</span> <span class="nn">B</span> <span class="kn">import</span> <span class="n">D</span>
+<span class="k">class</span> <span class="nc">C</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+<p>还有个模块 <code>B</code> ：</p>
+<div class="codehilite"><pre><span></span><span class="c1"># B.py</span>
+<span class="kn">from</span> <span class="nn">A</span> <span class="kn">import</span> <span class="n">C</span>
+<span class="k">class</span> <span class="nc">D</span><span class="p">:</span>
+    <span class="k">pass</span>
+</pre></div>
+
+<p>我们简单分析一下程序，如果程序运行，应该会去从模块B中调用对象D。</p>
+<p>我们尝试执行一下 <code>python A.py</code> ：</p>
+<p><img alt="import-error" src="../figure/import-error.png" /></p>
+<p>报 <code>ImportError</code> 的错误，似乎是没有加载到对象 <code>D</code> ，而我们将 <code>from B import D</code> 改成 <code>import B</code> ，我们似乎就能执行成功了。</p>
+<p><img alt="import-success" src="../figure/import-success.png" /></p>
+<p>这是怎么回事呢？这其实是跟 <code>Python</code> 内部 <code>import</code> 的机制是有关的，具体到 <code>from B import D</code> ， <code>Python</code> 内部会分成以下几个步骤：</p>
+<ul>
+<li>在 <code>sys.modules</code> 中查找符号 <code>B</code></li>
+<li>如果符号 <code>B</code> 存在，则获得符号 <code>B</code> 对应的 <code>module</code> 对象 <code>&lt;module B&gt;</code> 。从 <code>&lt;module B&gt;</code> 的 <code>__dict__</code> 中获得符号 <code>D</code> 对应的对象，如果 <code>D</code> 不存在，则抛出异常</li>
+<li>如果符号 <code>B</code> 不存在，则创建一个新的 <code>module</code> 对象 <code>&lt;module B&gt;</code> ，注意，此时 <code>module</code> 对象的 <code>__dict__</code> 为空。执行 <code>B.py</code> 中的表达式，填充 <code>&lt;module B&gt;</code> 的 <code>__dict__</code>  。从 <code>&lt;module B&gt;</code> 的 <code>__dict__</code> 中获得 <code>D</code> 对应的对象。如果 <code>D</code> 不存在，则抛出异常。</li>
+</ul>
+<p>所以，这个例子的执行顺序如下：</p>
+<p>1、执行 <code>A.py</code> 中的 <code>from B import D</code> </p>
+<blockquote>
+<p>注：由于是执行的 <code>python A.py</code> ，所以在 <code>sys.modules</code> 中并没有 <code>&lt;module B&gt;</code> 存在，首先为 <code>B.py</code> 创建一个 <code>module</code> 对象( <code>&lt;module B&gt;</code> )，注意，这时创建的这个 <code>module</code> 对象是空的，里边啥也没有，在 <code>Python</code> 内部创建了这个 <code>module</code> 对象之后，就会解析执行 <code>B.py</code> ，其目的是填充 <code>&lt;module B&gt;</code> 这个 <code>dict</code> 。</p>
+</blockquote>
+<p>2、执行 <code>B.py</code> 中的 <code>from A import C</code> </p>
+<blockquote>
+<p>注：在执行 <code>B.py</code> 的过程中，会碰到这一句，首先检查 <code>sys.modules</code> 这个 <code>module</code> 缓存中是否已经存在 <code>&lt;module A&gt;</code> 了，由于这时缓存还没有缓存 <code>&lt;module A&gt;</code> ，所以类似的， <code>Python</code> 内部会为 <code>A.py</code> 创建一个 <code>module</code> 对象( <code>&lt;module A&gt;</code> )，然后，同样地，执行 <code>A.py</code> 中的语句。</p>
+</blockquote>
+<p>3、再次执行 <code>A.py</code> 中的 <code>from B import D</code> </p>
+<blockquote>
+<p>注：这时，由于在第 <code>1</code> 步时，创建的 <code>&lt;module B&gt;</code> 对象已经缓存在了 <code>sys.modules</code> 中，所以直接就得到了 <code>&lt;module B&gt;</code> ，但是，注意，从整个过程来看，我们知道，这时 <code>&lt;module B&gt;</code> 还是一个空的对象，里面啥也没有，所以从这个 <code>module</code> 中获得符号 <code>D</code> 的操作就会抛出异常。如果这里只是 <code>import B</code> ，由于 <code>B</code> 这个符号在 <code>sys.modules</code> 中已经存在，所以是不会抛出异常的。</p>
+</blockquote>
+<p>我们可以从下图很清楚的看到 <code>import</code> 嵌套导入的过程：</p>
+<p><img alt="PyImportFlow" src="../figure/PyImportFlow.png" /></p>
+<p><strong><code>Package</code> 导入</strong></p>
+<p>包 <code>(Package)</code> 可以看成模块的集合，只要一个文件夹下面有个 <code>__init__.py</code> 文件，那么这个文件夹就可以看做是一个包。包下面的文件夹还可以成为包(子包)。更进一步的讲，多个较小的包可以聚合成一个较大的包。通过包这种结构，我们可以很方便的进行类的管理和维护，也方便了用户的使用。比如 <code>SQLAlchemy</code> 等都是以包的形式发布给用户的。</p>
+<p>包和模块其实是很类似的东西，如果查看包的类型： <code>import SQLAlchemy type(SQLAlchemy)</code> ，可以看到其实也是 <code>&lt;type 'module'&gt;</code> 。 <code>import</code> 包的时候查找的路径也是 <code>sys.path</code>。</p>
+<p>包导入的过程和模块的基本一致，只是导入包的时候会执行此包目录下的 <strong><code>__init__.py</code></strong> ，而不是模块里面的语句了。另外，如果只是单纯的导入包，而包的 <code>__init__.py</code> 中又没有明确的其他初始化操作，那么此包下面的模块是不会自动导入的。</p>
+<p>假设我们有如下文件结构：</p>
+<div class="codehilite"><pre><span></span>.
+└── PA
+    ├── __init__.py
+    ├── PB1
+    │   ├── __init__.py
+    │   └── pb1_m.py
+    ├── PB2
+    │   ├── __init__.py
+    │   └── pb2_m.py
+    └── wave.py
+</pre></div>
+
+<p><img alt="tree" src="../figure/tree.png" /></p>
+<p><code>wave.py</code> ， <code>pb1_m.py</code> ， <code>pb2_m.py</code> 文件中我们均定义了如下函数：</p>
+<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">getName</span><span class="p">():</span>
+    <span class="k">pass</span>
+</pre></div>
+
+<p><code>__init__.py</code> 文件内容均为空。</p>
+<p>我们新建一个 <code>test.py</code> ，内容如下：</p>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">PA.wave</span> <span class="c1">#1</span>
+<span class="kn">import</span> <span class="nn">PA.PB1</span> <span class="c1">#2</span>
+<span class="kn">import</span> <span class="nn">PA.PB1.pb1_m</span> <span class="k">as</span> <span class="nn">m1</span> <span class="c1">#3</span>
+<span class="kn">import</span> <span class="nn">PA.PB2.pb2_m</span> <span class="c1">#4</span>
+<span class="n">PA</span><span class="o">.</span><span class="n">wave</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="c1">#5</span>
+<span class="n">m1</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="c1">#6</span>
+<span class="n">PA</span><span class="o">.</span><span class="n">PB2</span><span class="o">.</span><span class="n">pb2_m</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="c1">#7</span>
+</pre></div>
+
+<p>我们运行以后，可以看出是成功执行成功了，我们再看看目录结构：</p>
+<div class="codehilite"><pre><span></span>.
+├── PA
+│   ├── __init__.py
+│   ├── __init__.pyc
+│   ├── PB1
+│   │   ├── __init__.py
+│   │   ├── __init__.pyc
+│   │   ├── pb1_m.py
+│   │   └── pb1_m.pyc
+│   ├── PB2
+│   │   ├── __init__.py
+│   │   ├── __init__.pyc
+│   │   ├── pb2_m.py
+│   │   └── pb2_m.pyc
+│   ├── wave.py
+│   └── wave.pyc
+└── test.py
+</pre></div>
+
+<p><img alt="test-success" src="../figure/test-success.png" /></p>
+<p>我们来分析一下这个过程：</p>
+<ul>
+<li>当执行<code>#1</code> 后， <code>sys.modules</code> 会同时存在 <code>PA</code> 、 <code>PA.wave</code> 两个模块，此时可以调用 <code>PA.wave</code> 的任何类或函数了。但不能调用 <code>PA.PB1(2)</code> 下的任何模块。当前 <code>Local</code> 中有了 <code>PA</code> 名字。</li>
+<li>当执行 <code>#2</code> 后，只是将 <code>PA.PB1</code> 载入内存， <code>sys.modules</code> 中会有 <code>PA</code> 、 <code>PA.wave</code> 、 <code>PA.PB1</code> 三个模块，但是 <code>PA.PB1</code> 下的任何模块都没有自动载入内存，此时如果直接执行 <code>PA.PB1.pb1_m.getName()</code> 则会出错，因为 <code>PA.PB1</code> 中并没有 <code>pb1_m</code> 。当前 <code>Local</code> 中还是只有 <code>PA</code> 名字，并没有 <code>PA.PB1</code> 名字。</li>
+<li>当执行 <code>#3</code> 后，会将 <code>PA.PB1</code> 下的 <code>pb1_m</code> 载入内存， <code>sys.modules</code> 中会有 <code>PA</code> 、 <code>PA.wave</code> 、 <code>PA.PB1</code> 、 <code>PA.PB1.pb1_m</code> 四个模块，此时可以执行 <code>PA.PB1.pb1_m.getName()</code> 了。由于使用了 <code>as</code> ，当前 <code>Local</code> 中除了 <code>PA</code> 名字，另外添加了 <code>m1</code> 作为 <code>PA.PB1.pb1_m</code> 的别名。</li>
+<li>当执行 <code>#4</code> 后，会将 <code>PA.PB2</code> 、 <code>PA.PB2.pb2_m</code> 载入内存， <code>sys.modules</code> 中会有 <code>PA</code> 、 <code>PA.wave</code> 、 <code>PA.PB1</code> 、 <code>PA.PB1.pb1_m</code> 、 <code>PA.PB2</code> 、 <code>PA.PB2.pb2_m</code> 六个模块。当前 <code>Local</code> 中还是只有 <code>PA</code> 、 <code>m1</code> 。</li>
+<li>下面的 <code>#5</code> ，<code>#6</code> ， <code>#7</code> 都是可以正确运行的。</li>
+</ul>
+<blockquote>
+<p>注：需要注意的问题是如果 <code>PA.PB2.pb2_m</code> 想导入 <code>PA.PB1.pb1_m</code> 、 <code>PA.wave</code> 是可以直接成功的。最好是采用明确的导入路径，对于 <code>../..</code> 相对导入路径还是不推荐使用。</p>
+</blockquote>
+<p>既然我们已经知道 <code>pyc</code> 文件的产生，再回到那道赛题，我们尝试将 <code>pyc</code> 文件反编译回 <code>python</code> 源码。我们使用在线的开源工具进行尝试：</p>
+<p><img alt="error" src="../figure/error.png" /></p>
+<p>部分代码没有反编译成功？？？我们可以尝试分析一下，大概意思就是读取 <code>cipher.txt</code> 那个文件，将那个文件内容是通过 <code>base64</code> 编码的，我们的目的是将文件内容解码，然后又已知 <code>key</code> ，通过 <code>encryt</code> 函数进行加密的，我们可以尝试将代码补全：</p>
+<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">encryt</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">plain</span><span class="p">):</span>
+    <span class="n">cipher</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">plain</span><span class="p">)):</span>
+        <span class="n">cipher</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)])</span> <span class="o">^</span> <span class="nb">ord</span><span class="p">(</span><span class="n">plain</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">cipher</span>
+
+
+<span class="k">def</span> <span class="nf">getPlainText</span><span class="p">():</span>
+    <span class="n">plain</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;cipher.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="p">(</span><span class="n">f</span><span class="p">):</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">plain</span> <span class="o">+=</span> <span class="n">line</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+
+    <span class="k">return</span> <span class="n">plain</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;base_64&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;LordCasser&#39;</span>
+    <span class="n">plain</span> <span class="o">=</span> <span class="n">getPlainText</span><span class="p">()</span>
+    <span class="n">cipher</span> <span class="o">=</span> <span class="n">encryt</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">plain</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;xxx.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="p">(</span><span class="n">f</span><span class="p">):</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">cipher</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+<p>结果如下：</p>
+<div class="codehilite"><pre><span></span>YOU ARE FOOLED
+THIS IS NOT THAT YOU WANT
+GO ON DUDE
+CATCH THAT STEGOSAURUS
+</pre></div>
+
+<p>提示告诉我们用 <code>STEGOSAURUS</code> 工具进行隐写的，我们直接将隐藏的payload分离出来即可。</p>
+<div class="codehilite"><pre><span></span>python3 stegosaurus.py -x QAQ.pyc
+</pre></div>
+
+<p><img alt="flag" src="../figure/flag.png" /></p>
+<p>我们得到了最终的 <code>flag</code> 为：<strong><code>flag{fin4lly_z3r0_d34d}</code></strong></p>
+<p>既然都说到这个份子上了，我们就来分析一下我们是如何通过 <code>Stegosaurus</code> 来嵌入 <code>Payload</code> 。</p>
+<p>我们仍然以上面这个代码为例子，我们设置脚本名称为 <code>encode.py</code> 。</p>
+<p>第一步，我们使用 <code>Stegosaurus</code> 来查看在不改变源文件 <code>(Carrier)</code> 大小的情况下，我们的 <code>Payload</code> 能携带多少字节的数据：</p>
+<div class="codehilite"><pre><span></span>python3 -m stegosaurus encode.py -r
+</pre></div>
+
+<p><img alt="carry-bytes" src="../figure/carry-bytes.png" /></p>
+<p>现在，我们可以安全地嵌入最多24个字节的 <code>Payload</code> 了。如果不想覆盖源文件的话，我们可以使用 <code>-s</code> 参数来单独生成一个嵌入了 <code>Payload</code> 的 <code>py</code> 文件：</p>
+<div class="codehilite"><pre><span></span>python3 -m stegosaurus encode.py -s --payload <span class="s2">&quot;flag{fin4lly_z3r0_d34d}&quot;</span>
+</pre></div>
+
+<p><img alt="payload-embedded" src="../figure/payload-embedded.png" /></p>
+<p>现在我们可以用 <code>ls</code> 命令查看磁盘目录，嵌入了 <code>Payload</code> 的文件( <code>carrier</code> 文件)和原始的字节码文件两者大小是完全相同的：</p>
+<p><img alt="bytes-similar" src="../figure/bytes-similar.png" /></p>
+<blockquote>
+<p>注：如果没有使用 <code>-s</code> 参数，那么原始的字节码文件将会被覆盖。</p>
+</blockquote>
+<p>我们可以通过向 <code>Stegosaurus</code> 传递 <code>-x</code> 参数来提取出 <code>Payload</code> ：</p>
+<div class="codehilite"><pre><span></span>python3 -m stegosaurus __pycache__/encode.cpython-36-stegosaurus.pyc -x
+</pre></div>
+
+<p><img alt="extract-payload" src="../figure/extract-payload.png" /></p>
+<p>我们构造的 <code>Payload</code> 不一定要是一个 <code>ASCII</code> 字符串， <code>shellcode</code> 也是可以的：</p>
+<p><img alt="payload-shellcode" src="../figure/payload-shellcode.png" /></p>
+<p>我们重新编写一个 <code>example.py</code> 模块，代码如下：</p>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">sum1</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span>
+
+<span class="k">def</span> <span class="nf">sum2</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="o">/</span><span class="mi">3</span>
+
+<span class="k">def</span> <span class="nf">sum3</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="o">-</span><span class="mi">3</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">sum1</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">sum2</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">sum3</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+<p>我们让它携带 <code>Payload</code> 为 <code>flag_is_here</code>。</p>
+<p><img alt="example" src="../figure/example.png" /> </p>
+<p>我们可以查看嵌入 <code>Payload</code> 之前和之后的 <code>Python</code> 代码运行情况：</p>
+<p><img alt="example-run" src="../figure/example-run.png" /></p>
+<p>通过 <code>strings</code> 查看 <code>Stegosaurus</code> 嵌入了 <code>Payload</code> 之后的文件输出情况( <code>payload</code> 并没有显示出来)：</p>
+<p><img alt="strings" src="../figure/strings.png" /></p>
+<p>接下来使用 <code>Python</code> 的 <code>dis</code> 模块来查看 <code>Stegosaurus</code> 嵌入 <code>Payload</code> 之前和之后的文件字节码变化情况：</p>
+<p>嵌入payload之前：</p>
+<div class="codehilite"><pre><span></span><span class="c1">#( 11/29/18@ 5:14下午 )( python@Sakura ):~/桌面</span>
+   python3 -m dis example.py 
+  <span class="m">1</span>           <span class="m">0</span> LOAD_CONST               <span class="m">0</span> <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+              <span class="m">2</span> LOAD_CONST               <span class="m">1</span> <span class="o">(</span>None<span class="o">)</span>
+              <span class="m">4</span> IMPORT_NAME              <span class="m">0</span> <span class="o">(</span>sys<span class="o">)</span>
+              <span class="m">6</span> STORE_NAME               <span class="m">0</span> <span class="o">(</span>sys<span class="o">)</span>
+
+  <span class="m">2</span>           <span class="m">8</span> LOAD_CONST               <span class="m">0</span> <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+             <span class="m">10</span> LOAD_CONST               <span class="m">1</span> <span class="o">(</span>None<span class="o">)</span>
+             <span class="m">12</span> IMPORT_NAME              <span class="m">1</span> <span class="o">(</span>os<span class="o">)</span>
+             <span class="m">14</span> STORE_NAME               <span class="m">1</span> <span class="o">(</span>os<span class="o">)</span>
+
+  <span class="m">3</span>          <span class="m">16</span> LOAD_CONST               <span class="m">0</span> <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+             <span class="m">18</span> LOAD_CONST               <span class="m">1</span> <span class="o">(</span>None<span class="o">)</span>
+             <span class="m">20</span> IMPORT_NAME              <span class="m">2</span> <span class="o">(</span>math<span class="o">)</span>
+             <span class="m">22</span> STORE_NAME               <span class="m">2</span> <span class="o">(</span>math<span class="o">)</span>
+
+  <span class="m">4</span>          <span class="m">24</span> LOAD_CONST               <span class="m">2</span> <span class="o">(</span>&lt;code object add at 0x7f90479778a0, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">4</span>&gt;<span class="o">)</span>
+             <span class="m">26</span> LOAD_CONST               <span class="m">3</span> <span class="o">(</span><span class="s1">&#39;add&#39;</span><span class="o">)</span>
+             <span class="m">28</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">30</span> STORE_NAME               <span class="m">3</span> <span class="o">(</span>add<span class="o">)</span>
+
+  <span class="m">6</span>          <span class="m">32</span> LOAD_CONST               <span class="m">4</span> <span class="o">(</span>&lt;code object sum1 at 0x7f9047977810, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">6</span>&gt;<span class="o">)</span>
+             <span class="m">34</span> LOAD_CONST               <span class="m">5</span> <span class="o">(</span><span class="s1">&#39;sum1&#39;</span><span class="o">)</span>
+             <span class="m">36</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">38</span> STORE_NAME               <span class="m">4</span> <span class="o">(</span>sum1<span class="o">)</span>
+
+  <span class="m">9</span>          <span class="m">40</span> LOAD_CONST               <span class="m">6</span> <span class="o">(</span>&lt;code object sum2 at 0x7f9047977ae0, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">9</span>&gt;<span class="o">)</span>
+             <span class="m">42</span> LOAD_CONST               <span class="m">7</span> <span class="o">(</span><span class="s1">&#39;sum2&#39;</span><span class="o">)</span>
+             <span class="m">44</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">46</span> STORE_NAME               <span class="m">5</span> <span class="o">(</span>sum2<span class="o">)</span>
+
+ <span class="m">12</span>          <span class="m">48</span> LOAD_CONST               <span class="m">8</span> <span class="o">(</span>&lt;code object sum3 at 0x7f9047977f60, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">12</span>&gt;<span class="o">)</span>
+             <span class="m">50</span> LOAD_CONST               <span class="m">9</span> <span class="o">(</span><span class="s1">&#39;sum3&#39;</span><span class="o">)</span>
+             <span class="m">52</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">54</span> STORE_NAME               <span class="m">6</span> <span class="o">(</span>sum3<span class="o">)</span>
+
+ <span class="m">15</span>          <span class="m">56</span> LOAD_CONST              <span class="m">10</span> <span class="o">(</span>&lt;code object main at 0x7f904798c300, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">15</span>&gt;<span class="o">)</span>
+             <span class="m">58</span> LOAD_CONST              <span class="m">11</span> <span class="o">(</span><span class="s1">&#39;main&#39;</span><span class="o">)</span>
+             <span class="m">60</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">62</span> STORE_NAME               <span class="m">7</span> <span class="o">(</span>main<span class="o">)</span>
+
+ <span class="m">23</span>          <span class="m">64</span> LOAD_NAME                <span class="m">8</span> <span class="o">(</span>__name__<span class="o">)</span>
+             <span class="m">66</span> LOAD_CONST              <span class="m">12</span> <span class="o">(</span><span class="s1">&#39;__main__&#39;</span><span class="o">)</span>
+             <span class="m">68</span> COMPARE_OP               <span class="m">2</span> <span class="o">(==)</span>
+             <span class="m">70</span> POP_JUMP_IF_FALSE       <span class="m">78</span>
+
+ <span class="m">24</span>          <span class="m">72</span> LOAD_NAME                <span class="m">7</span> <span class="o">(</span>main<span class="o">)</span>
+             <span class="m">74</span> CALL_FUNCTION            <span class="m">0</span>
+             <span class="m">76</span> POP_TOP
+        &gt;&gt;   <span class="m">78</span> LOAD_CONST               <span class="m">1</span> <span class="o">(</span>None<span class="o">)</span>
+             <span class="m">80</span> RETURN_VALUE
+</pre></div>
+
+<p>嵌入 <code>payload</code> 之后：</p>
+<div class="codehilite"><pre><span></span><span class="c1">#( 11/29/18@ 5:31下午 )( python@Sakura ):~/桌面</span>
+   python3 -m dis example.py                                 
+  <span class="m">1</span>           <span class="m">0</span> LOAD_CONST               <span class="m">0</span> <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+              <span class="m">2</span> LOAD_CONST               <span class="m">1</span> <span class="o">(</span>None<span class="o">)</span>
+              <span class="m">4</span> IMPORT_NAME              <span class="m">0</span> <span class="o">(</span>sys<span class="o">)</span>
+              <span class="m">6</span> STORE_NAME               <span class="m">0</span> <span class="o">(</span>sys<span class="o">)</span>
+
+  <span class="m">2</span>           <span class="m">8</span> LOAD_CONST               <span class="m">0</span> <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+             <span class="m">10</span> LOAD_CONST               <span class="m">1</span> <span class="o">(</span>None<span class="o">)</span>
+             <span class="m">12</span> IMPORT_NAME              <span class="m">1</span> <span class="o">(</span>os<span class="o">)</span>
+             <span class="m">14</span> STORE_NAME               <span class="m">1</span> <span class="o">(</span>os<span class="o">)</span>
+
+  <span class="m">3</span>          <span class="m">16</span> LOAD_CONST               <span class="m">0</span> <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+             <span class="m">18</span> LOAD_CONST               <span class="m">1</span> <span class="o">(</span>None<span class="o">)</span>
+             <span class="m">20</span> IMPORT_NAME              <span class="m">2</span> <span class="o">(</span>math<span class="o">)</span>
+             <span class="m">22</span> STORE_NAME               <span class="m">2</span> <span class="o">(</span>math<span class="o">)</span>
+
+  <span class="m">4</span>          <span class="m">24</span> LOAD_CONST               <span class="m">2</span> <span class="o">(</span>&lt;code object add at 0x7f146e7038a0, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">4</span>&gt;<span class="o">)</span>
+             <span class="m">26</span> LOAD_CONST               <span class="m">3</span> <span class="o">(</span><span class="s1">&#39;add&#39;</span><span class="o">)</span>
+             <span class="m">28</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">30</span> STORE_NAME               <span class="m">3</span> <span class="o">(</span>add<span class="o">)</span>
+
+  <span class="m">6</span>          <span class="m">32</span> LOAD_CONST               <span class="m">4</span> <span class="o">(</span>&lt;code object sum1 at 0x7f146e703810, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">6</span>&gt;<span class="o">)</span>
+             <span class="m">34</span> LOAD_CONST               <span class="m">5</span> <span class="o">(</span><span class="s1">&#39;sum1&#39;</span><span class="o">)</span>
+             <span class="m">36</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">38</span> STORE_NAME               <span class="m">4</span> <span class="o">(</span>sum1<span class="o">)</span>
+
+  <span class="m">9</span>          <span class="m">40</span> LOAD_CONST               <span class="m">6</span> <span class="o">(</span>&lt;code object sum2 at 0x7f146e703ae0, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">9</span>&gt;<span class="o">)</span>
+             <span class="m">42</span> LOAD_CONST               <span class="m">7</span> <span class="o">(</span><span class="s1">&#39;sum2&#39;</span><span class="o">)</span>
+             <span class="m">44</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">46</span> STORE_NAME               <span class="m">5</span> <span class="o">(</span>sum2<span class="o">)</span>
+
+ <span class="m">12</span>          <span class="m">48</span> LOAD_CONST               <span class="m">8</span> <span class="o">(</span>&lt;code object sum3 at 0x7f146e703f60, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">12</span>&gt;<span class="o">)</span>
+             <span class="m">50</span> LOAD_CONST               <span class="m">9</span> <span class="o">(</span><span class="s1">&#39;sum3&#39;</span><span class="o">)</span>
+             <span class="m">52</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">54</span> STORE_NAME               <span class="m">6</span> <span class="o">(</span>sum3<span class="o">)</span>
+
+ <span class="m">15</span>          <span class="m">56</span> LOAD_CONST              <span class="m">10</span> <span class="o">(</span>&lt;code object main at 0x7f146e718300, file <span class="s2">&quot;example.py&quot;</span>, line <span class="m">15</span>&gt;<span class="o">)</span>
+             <span class="m">58</span> LOAD_CONST              <span class="m">11</span> <span class="o">(</span><span class="s1">&#39;main&#39;</span><span class="o">)</span>
+             <span class="m">60</span> MAKE_FUNCTION            <span class="m">0</span>
+             <span class="m">62</span> STORE_NAME               <span class="m">7</span> <span class="o">(</span>main<span class="o">)</span>
+
+ <span class="m">23</span>          <span class="m">64</span> LOAD_NAME                <span class="m">8</span> <span class="o">(</span>__name__<span class="o">)</span>
+             <span class="m">66</span> LOAD_CONST              <span class="m">12</span> <span class="o">(</span><span class="s1">&#39;__main__&#39;</span><span class="o">)</span>
+             <span class="m">68</span> COMPARE_OP               <span class="m">2</span> <span class="o">(==)</span>
+             <span class="m">70</span> POP_JUMP_IF_FALSE       <span class="m">78</span>
+
+ <span class="m">24</span>          <span class="m">72</span> LOAD_NAME                <span class="m">7</span> <span class="o">(</span>main<span class="o">)</span>
+             <span class="m">74</span> CALL_FUNCTION            <span class="m">0</span>
+             <span class="m">76</span> POP_TOP
+        &gt;&gt;   <span class="m">78</span> LOAD_CONST               <span class="m">1</span> <span class="o">(</span>None<span class="o">)</span>
+             <span class="m">80</span> RETURN_VALUE
+</pre></div>
+
+<blockquote>
+<p>注： <code>Payload</code> 的发送和接受方法完全取决于用户个人喜好， <code>Stegosaurus</code> 只提供了一种向 <code>Python</code> 字节码文件嵌入或提取 <code>Payload</code> 的方法。但是为了保证嵌入之后的代码文件大小不会发生变化，因此 <code>Stegosaurus</code> 所支持嵌入的 <code>Payload</code> 字节长度十分有限。因此 ，如果你需要嵌入一个很大的 <code>Payload</code> ，那么你可能要将其分散存储于多个字节码文件中了。</p>
+</blockquote>
+<p>为了在不改变源文件大小的情况下向其嵌入 <code>Payload</code> ，我们需要识别出字节码中的无效空间( <code>Dead Zone</code> )。这里所谓的无效空间指的是那些即使被修改也不会改变原 <code>Python</code> 脚本正常行为的那些字节数据。</p>
+<p>需要注意的是，我们可以轻而易举地找出 <code>Python3.6</code> 代码中的无效空间。 <code>Python</code> 的引用解释器 <code>CPython</code> 有两种类型的操作码：即无参数的和有参数的。在版本号低于 <code>3.5</code> 的 <code>Python</code> 版本中，根据操作码是否带参，字节码中的操作指令将需要占用 <code>1</code> 个字节或 <code>3</code> 个字节。在 <code>Python3.6</code> 中就不一样了， <code>Python3.6</code> 中所有的指令都占用 <code>2</code> 个字节，并会将无参数指令的第二个字节设置为 <code>0</code> ，这个字节在其运行过程中将会被解释器忽略。这也就意味着，对于字节码中每一个不带参数的操作指令， <code>Stegosaurus</code> 都可以安全地嵌入长度为 <code>1</code> 个字节的 <code>Payload</code> 代码。</p>
+<p>我们可以通过 <code>Stegosaurus</code> 的 <code>-vv</code> 选项来查看 <code>Payload</code> 是如何嵌入到这些无效空间之中的：</p>
+<div class="codehilite"><pre><span></span><span class="c1">#( 11/29/18@10:35下午 )( python@Sakura ):~/桌面</span>
+   python3 -m stegosaurus example.py -s -p <span class="s2">&quot;ABCDE&quot;</span> -vv          
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,795 - stegosaurus - DEBUG - Validated args
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,797 - stegosaurus - INFO - Compiled example.py as __pycache__/example.cpython-36.pyc <span class="k">for</span> use as carrier
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,797 - stegosaurus - DEBUG - Read header and bytecode from carrier
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - POP_TOP <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - POP_TOP <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - POP_TOP <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - BINARY_SUBTRACT <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - BINARY_TRUE_DIVIDE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - BINARY_MULTIPLY <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - BINARY_ADD <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - POP_TOP <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,798 - stegosaurus - INFO - Found <span class="m">14</span> bytes available <span class="k">for</span> payload
+Payload embedded in carrier
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - POP_TOP <span class="o">(</span><span class="m">65</span><span class="o">)</span> ----A
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - POP_TOP <span class="o">(</span><span class="m">66</span><span class="o">)</span> ----B
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - POP_TOP <span class="o">(</span><span class="m">67</span><span class="o">)</span> ----C
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">68</span><span class="o">)</span> ----D
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - BINARY_SUBTRACT <span class="o">(</span><span class="m">69</span><span class="o">)</span> ----E
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - BINARY_TRUE_DIVIDE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - BINARY_MULTIPLY <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - BINARY_ADD <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - POP_TOP <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - RETURN_VALUE <span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - DEBUG - Creating new carrier file name <span class="k">for</span> side-by-side install
+<span class="m">2018</span>-11-29 <span class="m">22</span>:36:26,799 - stegosaurus - INFO - Wrote carrier file as __pycache__/example.cpython-36-stegosaurus.pyc
+</pre></div>
+
+<p><strong>Challenges:</strong> <a href="https://www.xctf.org.cn/library/details/whctf-writeup/">WHCTF-2017:Py-Py-Py</a></p>
+<h3 id="_4">参考文献<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://github.com/AngelKitty/stegosaurus">https://github.com/AngelKitty/stegosaurus</a></li>
+<li><a href="http://www.freebuf.com/sectool/129357.html">一种用于在Python字节码中嵌入Payload的隐写工具 – Stegosaurus</a></li>
+</ul>
                 
                   
                 
