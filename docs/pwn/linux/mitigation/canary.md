@@ -87,29 +87,15 @@ If the canary has been illegally modified, the program flow will go to `__stack_
 
 
 ```C
-
 eglibc-2.19/debug/stack_chk_fail.c
-
-
-
 void __attribute__ ((noreturn)) __stack_chk_fail (void)
-
 {
-
   __fortify_fail ("stack smashing detected");
-
 }
-
-
-
 void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *msg)
-
 {
-
   /* The loop is added only to keep gcc happy.  */
-
   while (1)
-
     __libc_message (2, "*** %s ***: %s terminated\n",
                     msg, __libc_argv[0] ?: "<unknown>");
 }
@@ -176,56 +162,31 @@ The sample source code for the vulnerability is as follows:
 
 
 ```C
-
 // ex2.c
-
 #include <stdio.h>
-
 #include <unistd.h>
-
 #include <stdlib.h>
-
 #include <string.h>
-
 void getshell(void) {
-
     system("/bin/sh");
-
 }
-
 void init() {
-
     setbuf(stdin, NULL);
-
     setbuf(stdout, NULL);
-
     setbuf(stderr, NULL);
-
 }
-
 void vuln() {
-
     char buf[100];
-
     for(int i=0;i<2;i++){
-
         read(0, buf, 0x200);
-
         printf(buf);
-
     }
-
 }
-
 int main(void) {
-
     init();
-
     puts("Hello Hacker!");
-
-vuln ();
+    vuln ();
     return 0;
-
 }
 
 ```
