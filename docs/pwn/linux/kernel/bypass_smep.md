@@ -32,7 +32,7 @@ Check if the protection is turned on.
 The system judges whether to enable smep protection according to the value of the CR4 register. When the 20th bit of the CR4 register is 1, the protection is turned on; when it is 0, the protection is turned off.
 
 
-![](http://ww1.sinaimg.cn/large/006AWYXBly1fvzmqcu1irj30py06egmo.jpg)
+![smep](./figure/smep.jpg)
 
 
 
@@ -68,7 +68,7 @@ The method chosen here is to first control a `tty_struct` structure through uaf,
 
 
 The [source] of `tty_struct` (https://code.woboq.org/linux/linux/include/linux/tty.h.html#tty_struct) is as follows:
-```C
+​```C
 
 struct tty_struct {
 
