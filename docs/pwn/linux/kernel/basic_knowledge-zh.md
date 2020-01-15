@@ -6,7 +6,7 @@
 ## Kernel
 kernel 也是一个程序，用来管理软件发出的数据 I/O 要求，将这些要求转义为指令，交给 CPU 和计算机中的其他组件处理，kernel 是现代操作系统最基本的部分。
 
-![](https://upload.wikimedia.org/wikipedia/commons/8/8f/Kernel_Layout.svg)
+![Kernel_Layout](./figure/Kernel_Layout.svg)
 
 kernel 最主要的功能有两点：
 
