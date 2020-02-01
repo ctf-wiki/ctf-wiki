@@ -51,7 +51,7 @@
 题目名称：tplink_tddp
 
 从题目描述中，我们可以得知我们的关键分析对象时 tddp，然后题目附件是一个固件，利用 binwalk 解析，在 `usr/bin` 中找到 tddp，然后通过谷歌搜索 tddp 关键词可以发现有在 TP-Link 路由器中有该协议的漏洞，基于 UDP 运行于 1040 端口，发送数据的第 2 个字节（采用 tddp v1 协议）为 0x31（CMD_FTEST_CONFIG）时，会导致远程代码执行。参考链接：https://paper.seebug.org/879/ 。
-将tddp拖入IDA搜索字符串CMD_FTEST_CONFIG可以找到会执行sub_A580函数
+将 tddp 拖入 IDA 搜索字符串 `CMD_FTEST_CONFIG` 可以找到会执行 `sub_A580` 函数
 
 ![tddp](./figure/tddp_1.png)
 
