@@ -78,7 +78,7 @@
 
 ![mms](./figure/mms_2.png)
 
-可以看到在第1764条报文中有flag.txt，功能码是fileDirectory，所以猜测会使用fileopen来进行打开，对这个功能码的请求报文进行过滤
+可以看到在第 1764 条报文中有 flag.txt，功能码是 fileDirectory，所以猜测会使用 fileopen 来进行打开，对这个功能码的请求报文进行过滤
 
 ![mms](./figure/mms_3.png)
 
