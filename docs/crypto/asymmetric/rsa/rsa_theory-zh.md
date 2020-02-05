@@ -11,7 +11,7 @@ RSA 算法的可靠性由极大整数因数分解的难度决定。换言之，�
 
 1. 随机选择两个不同大质数 $p$ 和 $q$，计算 $N = p \times q$
 2. 根据欧拉函数，求得 $\varphi (N)=\varphi (p)\varphi (q)=(p-1)(q-1)$
-3. 选择一个小于 $\varphi (N)$ 的整数 $e$，使 $e$ 和 $\varphi (N)$ 互质。并求得 $e$ 关于 $\varphi (N)$ 的模反元素，命名为 $d$，有 $ed\equiv 1 \pmod {\varphi (N)} $
+3. 选择一个小于 $\varphi (N)$ 的整数 $e$，使 $e$ 和 $\varphi (N)$ 互质。并求得 $e$ 关于 $\varphi (N)$ 的模反元素，命名为 $d$，有 $ed\equiv 1 \pmod {\varphi (N)}$
 4. 将 $p​$ 和 $q​$ 的记录销毁
 
 此时，$(N,e)$ 是公钥，$(N,d)$ 是私钥。
@@ -44,7 +44,7 @@ $$
 
 第一种情况 $gcd(m,N)=1​$，那么 $m^{\phi(N)} \equiv 1 \bmod N​$，因此原式成立。
 
-第二种情况 $gcd(m,N)!=1$，那么 m 必然是 p 或者 q 的倍数，并且 n=m 小于 N。我们假设
+第二种情况 $gcd(m,N)\neq 1$，那么 m 必然是 p 或者 q 的倍数，并且 n=m 小于 N。我们假设
 
 $$
 m=xp
