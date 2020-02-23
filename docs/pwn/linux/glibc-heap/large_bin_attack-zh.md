@@ -319,23 +319,32 @@ addr2->fd_nextsize = victim;
 
 接着还存着另外一个利用：
 
+```c
+bck = fwd->bk;
+// ......
+mark_bin (av, victim_index);
+victim->bk = bck;
+victim->fd = fwd;
+fwd->bk = victim;
+bck->fd = victim;
+```
 
-
-![](./figure/large_bin_attack/large_bin_attack14.png)
 
 
 
 
 
 ```c
-fwd->bk = victim;
+bck->fd = victim;
 // 等价于
-*(addr+1) = victim;
+(fwd->bk)->fd = victim;
+// 等价于
+*(addr1+2) = victim;
 ```
 
 
 
-修改了 stack_var1 的值。
+修改了 `stack_var1` 的值。
 
 
 
