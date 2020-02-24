@@ -294,9 +294,9 @@ large bin 某一个序列的 bin 中有一个 chunk 大小是 `0x410`
 
 
 ```c
-victim->bk_nextsize = fwd->nextsize
+victim->bk_nextsize = fwd->bk_nextsize
 // then
-victim->bk->nextsize->fd_nextsize = victim;
+victim->bk_nextsize->fd_nextsize = victim;
 ```
 
 
