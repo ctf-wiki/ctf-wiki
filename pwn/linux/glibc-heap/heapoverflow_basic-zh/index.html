@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4808,7 +4808,7 @@
 </ol>
 <h2 id="_3">基本示例<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>下面我们举一个简单的例子：</p>
-<div class="codehilite"><pre><span></span>#include &lt;stdio.h&gt;
+<div class="codehilite"><pre><span></span><code>#include &lt;stdio.h&gt;
 
 int main(void) 
 {
@@ -4818,34 +4818,34 @@ int main(void)
   gets(chunk);
   return 0;
 }
-</pre></div>
+</code></pre></div>
 
 <p>这个程序的主要目的是调用 malloc 分配一块堆上的内存，之后向这个堆块中写入一个字符串，如果输入的字符串过长会导致溢出 chunk 的区域并覆盖到其后的 top chunk 之中(实际上 puts 内部会调用 malloc 分配堆内存，覆盖到的可能并不是 top chunk)。
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;===chunk
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021 &lt;===chunk
 0x602010:   0x0000000000000000  0x0000000000000000
 0x602020:   0x0000000000000000  0x0000000000020fe1 &lt;===top chunk
 0x602030:   0x0000000000000000  0x0000000000000000
 0x602040:   0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 print 'A'*100
 进行写入
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;===chunk
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021 &lt;===chunk
 0x602010:   0x4141414141414141  0x4141414141414141
 0x602020:   0x4141414141414141  0x4141414141414141 &lt;===top chunk(已被溢出)
 0x602030:   0x4141414141414141  0x4141414141414141
 0x602040:   0x4141414141414141  0x4141414141414141
-</pre></div></p>
+</code></pre></div></p>
 <h2 id="_4">小总结<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>堆溢出中比较重要的几个步骤:</p>
 <h3 id="_5">寻找堆分配函数<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>通常来说堆是通过调用 glibc 函数 malloc 进行分配的，在某些情况下会使用 calloc 分配。calloc 与 malloc 的区别是 <strong>calloc 在分配后会自动进行清空，这对于某些信息泄露漏洞的利用来说是致命的</strong>。</p>
-<p><div class="codehilite"><pre><span></span>calloc(0x20);
+<p><div class="codehilite"><pre><span></span><code>calloc(0x20);
 //等同于
 ptr=malloc(0x20);
 memset(ptr,0,0x20);
-</pre></div>
+</code></pre></div>
 除此之外，还有一种分配是经由 realloc 进行的，realloc 函数可以身兼 malloc 和 free 两个函数的功能。
-<div class="codehilite"><pre><span></span>#include &lt;stdio.h&gt;
+<div class="codehilite"><pre><span></span><code>#include &lt;stdio.h&gt;
 
 int main(void) 
 {
@@ -4854,7 +4854,7 @@ int main(void)
   chunk1=realloc(chunk,32);
   return 0;
 }
-</pre></div>
+</code></pre></div>
 realloc的操作并不是像字面意义上那么简单，其内部会根据不同的情况进行不同操作</p>
 <ul>
 <li>当realloc(ptr,size)的size不等于ptr的size时<ul>
@@ -4897,7 +4897,7 @@ realloc的操作并不是像字面意义上那么简单，其内部会根据不�
 <h3 id="_7">确定填充长度<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <p>这一部分主要是计算<strong>我们开始写入的地址与我们所要覆盖的地址之间的距离</strong>。
 一个常见的误区是malloc的参数等于实际分配堆块的大小，但是事实上 ptmalloc 分配出来的大小是对齐的。这个长度一般是字长的2倍，比如32位系统是8个字节，64位系统是16个字节。但是对于不大于2倍字长的请求，malloc会直接返回2倍字长的块也就是最小chunk，比如64位系统执行<code>malloc(0)</code>会返回用户区域为16字节的块。</p>
-<div class="codehilite"><pre><span></span>#include &lt;stdio.h&gt;
+<div class="codehilite"><pre><span></span><code>#include &lt;stdio.h&gt;
 
 int main(void) 
 {
@@ -4907,17 +4907,17 @@ int main(void)
   gets(chunk);
   return 0;
 }
-</pre></div>
+</code></pre></div>
 
-<p><div class="codehilite"><pre><span></span>//根据系统的位数，malloc会分配8或16字节的用户空间
+<p><div class="codehilite"><pre><span></span><code>//根据系统的位数，malloc会分配8或16字节的用户空间
 0x602000:   0x0000000000000000  0x0000000000000021
 0x602010:   0x0000000000000000  0x0000000000000000
 0x602020:   0x0000000000000000  0x0000000000020fe1
 0x602030:   0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 注意用户区域的大小不等于 chunk_hear.size，chunk_hear.size=用户区域大小+2*字长</p>
 <p>还有一点是之前所说的用户申请的内存大小会被修改，其有可能会使用与其物理相邻的下一个chunk的prev_size字段储存内容。回头再来看下之前的示例代码
-<div class="codehilite"><pre><span></span>#include &lt;stdio.h&gt;
+<div class="codehilite"><pre><span></span><code>#include &lt;stdio.h&gt;
 
 int main(void) 
 {
@@ -4927,20 +4927,20 @@ int main(void)
   gets(chunk);
   return 0;
 }
-</pre></div>
+</code></pre></div>
 观察如上代码，我们申请的chunk大小是24个字节。但是我们将其编译为64位可执行程序时，实际上分配的内存会是16个字节而不是24个。
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021
 0x602010:   0x0000000000000000  0x0000000000000000
 0x602020:   0x0000000000000000  0x0000000000020fe1
-</pre></div>
+</code></pre></div>
 16个字节的空间是如何装得下24个字节的内容呢？答案是借用了下一个块的pre_size域。我们可来看一下用户申请的内存大小与glibc中实际分配的内存大小之间的转换。</p>
-<div class="codehilite"><pre><span></span><span class="cm">/* pad request bytes into a usable size -- internal version */</span>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* pad request bytes into a usable size -- internal version */</span>
 <span class="c1">//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1</span>
 <span class="cp">#define request2size(req)                                                      \</span>
 <span class="cp">    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)                           \</span>
 <span class="cp">         ? MINSIZE                                                             \</span>
 <span class="cp">         : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK)</span>
-</pre></div>
+</code></pre></div>
 
 <p>当req=24时，request2size(24)=32。而除去chunk 头部的16个字节。实际上用户可用chunk的字节数为16。而根据我们前面学到的知识可以知道chunk的pre_size仅当它的前一块处于释放状态时才起作用。所以用户这时候其实还可以使用下一个chunk的prev_size字段，正好24个字节。<strong>实际上 ptmalloc 分配内存是以双字为基本单位，以64位系统为例，分配出来的空间是16的整数倍，即用户申请的chunk都是16字节对齐的。</strong></p>
                 
@@ -5043,7 +5043,7 @@ int main(void)
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5058,7 +5058,7 @@ int main(void)
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

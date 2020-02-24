@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4801,10 +4801,10 @@
 <h4 id="_2">流量包是如何捕获的？<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h4>
 <p>首先我们从上面的数据包分析可以知道，这是个 <code>USB</code> 的流量包，我们可以先尝试分析一下 <code>USB</code> 的数据包是如何捕获的。</p>
 <p>在开始前，我们先介绍一些 <code>USB</code> 的基础知识。 <code>USB</code> 有不同的规格，以下是使用 <code>USB</code> 的三种方式：</p>
-<div class="codehilite"><pre><span></span>l USB UART
+<div class="codehilite"><pre><span></span><code>l USB UART
 l USB HID
 l USB Memory
-</pre></div>
+</code></pre></div>
 
 <p><code>UART</code> 或者 <code>Universal Asynchronous Receiver/Transmitter</code> 。这种方式下，设备只是简单的将 <code>USB</code> 用于接受和发射数据，除此之外就再没有其他通讯功能了。</p>
 <p><code>HID</code> 是人性化的接口。这一类通讯适用于交互式，有这种功能的设备有：键盘，鼠标，游戏手柄和数字显示设备。</p>
@@ -4814,19 +4814,19 @@ l USB Memory
 <p><img alt="Product-ID" src="../figure/Product-ID.png" /></p>
 <p>上图是我在虚拟机环境下连接在我电脑上的 <code>USB</code> 设备列表，通过 <code>lsusb</code> 查看命令。</p>
 <p>例如说，我在 <code>VMware</code> 下有一个无线鼠标。它是属于 <code>HID</code> 设备。这个设备正常的运行，并且通过<code>lsusb</code> 这个命令查看所有 <code>USB</code> 设备，现在大家能找出哪一条是这个鼠标吗？？没有错，就是第四个，就是下面这条：</p>
-<div class="codehilite"><pre><span></span>Bus <span class="m">002</span> Device <span class="m">002</span>: ID 0e0f:0003 VMware, Inc. Virtual Mouse
-</pre></div>
+<div class="codehilite"><pre><span></span><code>Bus <span class="m">002</span> Device <span class="m">002</span>: ID 0e0f:0003 VMware, Inc. Virtual Mouse
+</code></pre></div>
 
 <p>其中，<code>ID 0e0f:0003</code> 就是 <code>Vendor-Product ID</code> 对， <code>Vendor ID</code> 的值是 <code>0e0f</code> ，并且 <code>Product ID</code> 的值是 <code>0003</code> 。 <code>Bus 002 Device 002</code> 代表 <code>usb</code> 设备正常连接，这点需要记下来。</p>
 <p>我们用 <code>root</code> 权限运行 <code>Wireshark</code> 捕获 <code>USB</code> 数据流。但是通常来说我们不建议这么做。我们需要给用户足够的权限来获取 <code>Linux</code> 中的 <code>usb</code> 数据流。我们可以用 <code>udev</code> 来达到我们的目的。我们需要创建一个用户组 <code>usbmon</code> ，然后把我们的账户添加到这个组中。</p>
-<div class="codehilite"><pre><span></span>addgroup usbmon
+<div class="codehilite"><pre><span></span><code>addgroup usbmon
 gpasswd -a <span class="nv">$USER</span> usbmon
 <span class="nb">echo</span> <span class="s1">&#39;SUBSYSTEM==&quot;usbmon&quot;, GROUP=&quot;usbmon&quot;, MODE=&quot;640&quot;&#39;</span> &gt; /etc/udev/rules.d/99-usbmon.rules
-</pre></div>
+</code></pre></div>
 
 <p>接下来，我们需要 <code>usbmon</code> 内核模块。如果该模块没有被加载，我们可以通过以下命令加载该模块：</p>
-<div class="codehilite"><pre><span></span>modprobe usbmon
-</pre></div>
+<div class="codehilite"><pre><span></span><code>modprobe usbmon
+</code></pre></div>
 
 <p>打开 <code>wireshark</code> ，你会看到 <code>usbmonX</code> 其中 <code>X</code> 代表数字。下图是我们本次的结果（我使用的是<code>root</code>）：</p>
 <p><img alt="usbmon0" src="../figure/usbmon0.png" /></p>
@@ -4839,14 +4839,14 @@ gpasswd -a <span class="nv">$USER</span> usbmon
 <p>我们先拿 <code>GitHub</code> 上一个简单的例子开始讲起：</p>
 <p><img alt="example-usbpcap" src="../figure/example-usbpcap.png" /></p>
 <p>我们分析可以知道， <code>USB</code> 协议的数据部分在 <code>Leftover Capture Data</code> 域之中，在 <code>Mac</code> 和 <code>Linux</code> 下可以用 <code>tshark</code> 命令可以将 <code>leftover capture data</code> 单独提取出来，命令如下：</p>
-<div class="codehilite"><pre><span></span>tshark -r example.pcap -T fields -e usb.capdata //如果想导入usbdata.txt文件中，后面加上参数：&gt;usbdata.txt
-</pre></div>
+<div class="codehilite"><pre><span></span><code>tshark -r example.pcap -T fields -e usb.capdata //如果想导入usbdata.txt文件中，后面加上参数：&gt;usbdata.txt
+</code></pre></div>
 
 <p><code>Windows</code> 下装了 <code>wireshark</code> 的环境下，在 <code>wireshark</code>目录下有个 <code>tshark.exe</code> ，比如我的在 <code>D:\Program Files\Wireshark\tshark.exe</code></p>
 <p><img alt="Windows-tshark" src="../figure/Windows-tshark.png" /></p>
 <p>调用 <code>cmd</code> ，定位到当前目录下，输入如下命令即可：</p>
-<div class="codehilite"><pre><span></span>tshark.exe -r example.pcap -T fields -e usb.capdata //如果想导入usbdata.txt文件中，后面加上参数：&gt;usbdata.txt
-</pre></div>
+<div class="codehilite"><pre><span></span><code>tshark.exe -r example.pcap -T fields -e usb.capdata //如果想导入usbdata.txt文件中，后面加上参数：&gt;usbdata.txt
+</code></pre></div>
 
 <p>有关 <code>tshark</code> 命令的详细使用参考 <code>wireshark</code> 官方文档：<a href="https://www.wireshark.org/docs/man-pages/tshark.html">https://www.wireshark.org/docs/man-pages/tshark.html</a></p>
 <p>运行命令并查看 <code>usbdata.txt</code> 发现数据包长度为八个字节</p>
@@ -4860,7 +4860,7 @@ gpasswd -a <span class="nv">$USER</span> usbmon
 <p><code>usb keyboard</code> 的映射表 根据这个映射表将第三个字节取出来，对应对照表得到解码：</p>
 <p><img alt="keyboard_pro" src="../figure/keyboard_pro.png" /></p>
 <p>我们写出如下脚本：</p>
-<div class="codehilite"><pre><span></span><span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span> <span class="mh">0x04</span><span class="p">:</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>  <span class="mh">0x05</span><span class="p">:</span><span class="s2">&quot;B&quot;</span><span class="p">,</span>  <span class="mh">0x06</span><span class="p">:</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="mh">0x07</span><span class="p">:</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">:</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="mh">0x09</span><span class="p">:</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="mh">0x0A</span><span class="p">:</span><span class="s2">&quot;G&quot;</span><span class="p">,</span>  <span class="mh">0x0B</span><span class="p">:</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="mh">0x0C</span><span class="p">:</span><span class="s2">&quot;I&quot;</span><span class="p">,</span>  <span class="mh">0x0D</span><span class="p">:</span><span class="s2">&quot;J&quot;</span><span class="p">,</span> <span class="mh">0x0E</span><span class="p">:</span><span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="mh">0x0F</span><span class="p">:</span><span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="mh">0x10</span><span class="p">:</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="mh">0x11</span><span class="p">:</span><span class="s2">&quot;N&quot;</span><span class="p">,</span><span class="mh">0x12</span><span class="p">:</span><span class="s2">&quot;O&quot;</span><span class="p">,</span>  <span class="mh">0x13</span><span class="p">:</span><span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mh">0x14</span><span class="p">:</span><span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="mh">0x15</span><span class="p">:</span><span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="mh">0x16</span><span class="p">:</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="mh">0x17</span><span class="p">:</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="mh">0x18</span><span class="p">:</span><span class="s2">&quot;U&quot;</span><span class="p">,</span><span class="mh">0x19</span><span class="p">:</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="mh">0x1A</span><span class="p">:</span><span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">:</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="mh">0x1C</span><span class="p">:</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="mh">0x1D</span><span class="p">:</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="mh">0x1E</span><span class="p">:</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="mh">0x1F</span><span class="p">:</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">:</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="mh">0x21</span><span class="p">:</span><span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="mh">0x22</span><span class="p">:</span><span class="s2">&quot;5&quot;</span><span class="p">,</span>  <span class="mh">0x23</span><span class="p">:</span><span class="s2">&quot;6&quot;</span><span class="p">,</span> <span class="mh">0x24</span><span class="p">:</span><span class="s2">&quot;7&quot;</span><span class="p">,</span> <span class="mh">0x25</span><span class="p">:</span><span class="s2">&quot;8&quot;</span><span class="p">,</span> <span class="mh">0x26</span><span class="p">:</span><span class="s2">&quot;9&quot;</span><span class="p">,</span> <span class="mh">0x27</span><span class="p">:</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="mh">0x28</span><span class="p">:</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="mh">0x2a</span><span class="p">:</span><span class="s2">&quot;[DEL]&quot;</span><span class="p">,</span>  <span class="mh">0X2B</span><span class="p">:</span><span class="s2">&quot;    &quot;</span><span class="p">,</span> <span class="mh">0x2C</span><span class="p">:</span><span class="s2">&quot; &quot;</span><span class="p">,</span>  <span class="mh">0x2D</span><span class="p">:</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="mh">0x2E</span><span class="p">:</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="mh">0x2F</span><span class="p">:</span><span class="s2">&quot;[&quot;</span><span class="p">,</span>  <span class="mh">0x30</span><span class="p">:</span><span class="s2">&quot;]&quot;</span><span class="p">,</span>  <span class="mh">0x31</span><span class="p">:</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mh">0x32</span><span class="p">:</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="mh">0x33</span><span class="p">:</span><span class="s2">&quot;;&quot;</span><span class="p">,</span>  <span class="mh">0x34</span><span class="p">:</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="mh">0x36</span><span class="p">:</span><span class="s2">&quot;,&quot;</span><span class="p">,</span>  <span class="mh">0x37</span><span class="p">:</span><span class="s2">&quot;.&quot;</span> <span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span> <span class="mh">0x04</span><span class="p">:</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>  <span class="mh">0x05</span><span class="p">:</span><span class="s2">&quot;B&quot;</span><span class="p">,</span>  <span class="mh">0x06</span><span class="p">:</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="mh">0x07</span><span class="p">:</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">:</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="mh">0x09</span><span class="p">:</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="mh">0x0A</span><span class="p">:</span><span class="s2">&quot;G&quot;</span><span class="p">,</span>  <span class="mh">0x0B</span><span class="p">:</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="mh">0x0C</span><span class="p">:</span><span class="s2">&quot;I&quot;</span><span class="p">,</span>  <span class="mh">0x0D</span><span class="p">:</span><span class="s2">&quot;J&quot;</span><span class="p">,</span> <span class="mh">0x0E</span><span class="p">:</span><span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="mh">0x0F</span><span class="p">:</span><span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="mh">0x10</span><span class="p">:</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="mh">0x11</span><span class="p">:</span><span class="s2">&quot;N&quot;</span><span class="p">,</span><span class="mh">0x12</span><span class="p">:</span><span class="s2">&quot;O&quot;</span><span class="p">,</span>  <span class="mh">0x13</span><span class="p">:</span><span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mh">0x14</span><span class="p">:</span><span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="mh">0x15</span><span class="p">:</span><span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="mh">0x16</span><span class="p">:</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="mh">0x17</span><span class="p">:</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="mh">0x18</span><span class="p">:</span><span class="s2">&quot;U&quot;</span><span class="p">,</span><span class="mh">0x19</span><span class="p">:</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="mh">0x1A</span><span class="p">:</span><span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">:</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="mh">0x1C</span><span class="p">:</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="mh">0x1D</span><span class="p">:</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="mh">0x1E</span><span class="p">:</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="mh">0x1F</span><span class="p">:</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">:</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="mh">0x21</span><span class="p">:</span><span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="mh">0x22</span><span class="p">:</span><span class="s2">&quot;5&quot;</span><span class="p">,</span>  <span class="mh">0x23</span><span class="p">:</span><span class="s2">&quot;6&quot;</span><span class="p">,</span> <span class="mh">0x24</span><span class="p">:</span><span class="s2">&quot;7&quot;</span><span class="p">,</span> <span class="mh">0x25</span><span class="p">:</span><span class="s2">&quot;8&quot;</span><span class="p">,</span> <span class="mh">0x26</span><span class="p">:</span><span class="s2">&quot;9&quot;</span><span class="p">,</span> <span class="mh">0x27</span><span class="p">:</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="mh">0x28</span><span class="p">:</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="mh">0x2a</span><span class="p">:</span><span class="s2">&quot;[DEL]&quot;</span><span class="p">,</span>  <span class="mh">0X2B</span><span class="p">:</span><span class="s2">&quot;    &quot;</span><span class="p">,</span> <span class="mh">0x2C</span><span class="p">:</span><span class="s2">&quot; &quot;</span><span class="p">,</span>  <span class="mh">0x2D</span><span class="p">:</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="mh">0x2E</span><span class="p">:</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="mh">0x2F</span><span class="p">:</span><span class="s2">&quot;[&quot;</span><span class="p">,</span>  <span class="mh">0x30</span><span class="p">:</span><span class="s2">&quot;]&quot;</span><span class="p">,</span>  <span class="mh">0x31</span><span class="p">:</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mh">0x32</span><span class="p">:</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="mh">0x33</span><span class="p">:</span><span class="s2">&quot;;&quot;</span><span class="p">,</span>  <span class="mh">0x34</span><span class="p">:</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="mh">0x36</span><span class="p">:</span><span class="s2">&quot;,&quot;</span><span class="p">,</span>  <span class="mh">0x37</span><span class="p">:</span><span class="s2">&quot;.&quot;</span> <span class="p">}</span>
 <span class="n">nums</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">keys</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;usbdata.txt&#39;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
@@ -4878,12 +4878,12 @@ gpasswd -a <span class="nv">$USER</span> usbmon
     <span class="k">else</span><span class="p">:</span>
         <span class="n">output</span> <span class="o">+=</span> <span class="s1">&#39;[unknown]&#39;</span>
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;output :n&#39;</span> <span class="o">+</span> <span class="n">output</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>结果如下：</p>
 <p><img alt="usb-solved" src="../figure/usb-solved.png" /></p>
 <p>我们把前面的整合成脚本，得：</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -4937,12 +4937,12 @@ gpasswd -a <span class="nv">$USER</span> usbmon
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>效果如下：</p>
 <p><img alt="example-solved" src="../figure/example-solved.png" /></p>
 <p>另外贴上一份鼠标流量数据包转换脚本：</p>
-<div class="codehilite"><pre><span></span><span class="n">nums</span> <span class="o">=</span> <span class="p">[]</span> 
+<div class="codehilite"><pre><span></span><code><span class="n">nums</span> <span class="o">=</span> <span class="p">[]</span> 
 <span class="n">keys</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;usbdata.txt&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> 
 <span class="n">posx</span> <span class="o">=</span> <span class="mi">0</span> 
 <span class="n">posy</span> <span class="o">=</span> <span class="mi">0</span> 
@@ -4961,10 +4961,10 @@ gpasswd -a <span class="nv">$USER</span> usbmon
 <span class="k">if</span> <span class="n">btn_flag</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">:</span> 
     <span class="nb">print</span> <span class="n">posx</span> <span class="p">,</span> <span class="n">posy</span> 
 <span class="n">keys</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>键盘流量数据包转换脚本如下：</p>
-<div class="codehilite"><pre><span></span><span class="n">nums</span><span class="o">=</span><span class="p">[</span><span class="mh">0x66</span><span class="p">,</span><span class="mh">0x30</span><span class="p">,</span><span class="mh">0x39</span><span class="p">,</span><span class="mh">0x65</span><span class="p">,</span><span class="mh">0x35</span><span class="p">,</span><span class="mh">0x34</span><span class="p">,</span><span class="mh">0x63</span><span class="p">,</span><span class="mh">0x31</span><span class="p">,</span><span class="mh">0x62</span><span class="p">,</span><span class="mh">0x61</span><span class="p">,</span><span class="mh">0x64</span><span class="p">,</span><span class="mh">0x32</span><span class="p">,</span><span class="mh">0x78</span><span class="p">,</span><span class="mh">0x33</span><span class="p">,</span><span class="mh">0x38</span><span class="p">,</span><span class="mh">0x6d</span><span class="p">,</span><span class="mh">0x76</span><span class="p">,</span><span class="mh">0x79</span><span class="p">,</span><span class="mh">0x67</span><span class="p">,</span><span class="mh">0x37</span><span class="p">,</span><span class="mh">0x77</span><span class="p">,</span><span class="mh">0x7a</span><span class="p">,</span><span class="mh">0x6c</span><span class="p">,</span><span class="mh">0x73</span><span class="p">,</span><span class="mh">0x75</span><span class="p">,</span><span class="mh">0x68</span><span class="p">,</span><span class="mh">0x6b</span><span class="p">,</span><span class="mh">0x69</span><span class="p">,</span><span class="mh">0x6a</span><span class="p">,</span><span class="mh">0x6e</span><span class="p">,</span><span class="mh">0x6f</span><span class="p">,</span><span class="mh">0x70</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code><span class="n">nums</span><span class="o">=</span><span class="p">[</span><span class="mh">0x66</span><span class="p">,</span><span class="mh">0x30</span><span class="p">,</span><span class="mh">0x39</span><span class="p">,</span><span class="mh">0x65</span><span class="p">,</span><span class="mh">0x35</span><span class="p">,</span><span class="mh">0x34</span><span class="p">,</span><span class="mh">0x63</span><span class="p">,</span><span class="mh">0x31</span><span class="p">,</span><span class="mh">0x62</span><span class="p">,</span><span class="mh">0x61</span><span class="p">,</span><span class="mh">0x64</span><span class="p">,</span><span class="mh">0x32</span><span class="p">,</span><span class="mh">0x78</span><span class="p">,</span><span class="mh">0x33</span><span class="p">,</span><span class="mh">0x38</span><span class="p">,</span><span class="mh">0x6d</span><span class="p">,</span><span class="mh">0x76</span><span class="p">,</span><span class="mh">0x79</span><span class="p">,</span><span class="mh">0x67</span><span class="p">,</span><span class="mh">0x37</span><span class="p">,</span><span class="mh">0x77</span><span class="p">,</span><span class="mh">0x7a</span><span class="p">,</span><span class="mh">0x6c</span><span class="p">,</span><span class="mh">0x73</span><span class="p">,</span><span class="mh">0x75</span><span class="p">,</span><span class="mh">0x68</span><span class="p">,</span><span class="mh">0x6b</span><span class="p">,</span><span class="mh">0x69</span><span class="p">,</span><span class="mh">0x6a</span><span class="p">,</span><span class="mh">0x6e</span><span class="p">,</span><span class="mh">0x6f</span><span class="p">,</span><span class="mh">0x70</span><span class="p">]</span>
 <span class="n">s</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
 <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">nums</span><span class="p">:</span>
     <span class="n">s</span><span class="o">+=</span><span class="nb">chr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -4979,17 +4979,17 @@ gpasswd -a <span class="nv">$USER</span> usbmon
     <span class="k">else</span><span class="p">:</span>
         <span class="n">output</span> <span class="o">+=</span> <span class="s1">&#39;[unknown]&#39;</span>
 <span class="nb">print</span> <span class="s1">&#39;output :</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">output</span>
-</pre></div>
+</code></pre></div>
 
 <p>那么对于 <code>xman</code> 三期夏令营排位赛的这道题，我们可以模仿尝试如上这个例子：</p>
 <p>首先我们通过 <code>tshark</code> 将 <code>usb.capdata</code> 全部导出：</p>
-<div class="codehilite"><pre><span></span>tshark -r task_AutoKey.pcapng -T fields -e usb.capdata //如果想导入usbdata.txt文件中，后面加上参数：&gt;usbdata.txt
-</pre></div>
+<div class="codehilite"><pre><span></span><code>tshark -r task_AutoKey.pcapng -T fields -e usb.capdata //如果想导入usbdata.txt文件中，后面加上参数：&gt;usbdata.txt
+</code></pre></div>
 
 <p>结果如下：</p>
 <p><img alt="tshark-task_AutoKey" src="../figure/tshark-task_AutoKey.png" /></p>
 <p>我们用上面的 <code>python</code> 脚本将第三个字节取出来，对应对照表得到解码：</p>
-<div class="codehilite"><pre><span></span><span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span> <span class="mh">0x04</span><span class="p">:</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>  <span class="mh">0x05</span><span class="p">:</span><span class="s2">&quot;B&quot;</span><span class="p">,</span>  <span class="mh">0x06</span><span class="p">:</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="mh">0x07</span><span class="p">:</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">:</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="mh">0x09</span><span class="p">:</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="mh">0x0A</span><span class="p">:</span><span class="s2">&quot;G&quot;</span><span class="p">,</span>  <span class="mh">0x0B</span><span class="p">:</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="mh">0x0C</span><span class="p">:</span><span class="s2">&quot;I&quot;</span><span class="p">,</span>  <span class="mh">0x0D</span><span class="p">:</span><span class="s2">&quot;J&quot;</span><span class="p">,</span> <span class="mh">0x0E</span><span class="p">:</span><span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="mh">0x0F</span><span class="p">:</span><span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="mh">0x10</span><span class="p">:</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="mh">0x11</span><span class="p">:</span><span class="s2">&quot;N&quot;</span><span class="p">,</span><span class="mh">0x12</span><span class="p">:</span><span class="s2">&quot;O&quot;</span><span class="p">,</span>  <span class="mh">0x13</span><span class="p">:</span><span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mh">0x14</span><span class="p">:</span><span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="mh">0x15</span><span class="p">:</span><span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="mh">0x16</span><span class="p">:</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="mh">0x17</span><span class="p">:</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="mh">0x18</span><span class="p">:</span><span class="s2">&quot;U&quot;</span><span class="p">,</span><span class="mh">0x19</span><span class="p">:</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="mh">0x1A</span><span class="p">:</span><span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">:</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="mh">0x1C</span><span class="p">:</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="mh">0x1D</span><span class="p">:</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="mh">0x1E</span><span class="p">:</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="mh">0x1F</span><span class="p">:</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">:</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="mh">0x21</span><span class="p">:</span><span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="mh">0x22</span><span class="p">:</span><span class="s2">&quot;5&quot;</span><span class="p">,</span>  <span class="mh">0x23</span><span class="p">:</span><span class="s2">&quot;6&quot;</span><span class="p">,</span> <span class="mh">0x24</span><span class="p">:</span><span class="s2">&quot;7&quot;</span><span class="p">,</span> <span class="mh">0x25</span><span class="p">:</span><span class="s2">&quot;8&quot;</span><span class="p">,</span> <span class="mh">0x26</span><span class="p">:</span><span class="s2">&quot;9&quot;</span><span class="p">,</span> <span class="mh">0x27</span><span class="p">:</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="mh">0x28</span><span class="p">:</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="mh">0x2a</span><span class="p">:</span><span class="s2">&quot;[DEL]&quot;</span><span class="p">,</span>  <span class="mh">0X2B</span><span class="p">:</span><span class="s2">&quot;    &quot;</span><span class="p">,</span> <span class="mh">0x2C</span><span class="p">:</span><span class="s2">&quot; &quot;</span><span class="p">,</span>  <span class="mh">0x2D</span><span class="p">:</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="mh">0x2E</span><span class="p">:</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="mh">0x2F</span><span class="p">:</span><span class="s2">&quot;[&quot;</span><span class="p">,</span>  <span class="mh">0x30</span><span class="p">:</span><span class="s2">&quot;]&quot;</span><span class="p">,</span>  <span class="mh">0x31</span><span class="p">:</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mh">0x32</span><span class="p">:</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="mh">0x33</span><span class="p">:</span><span class="s2">&quot;;&quot;</span><span class="p">,</span>  <span class="mh">0x34</span><span class="p">:</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="mh">0x36</span><span class="p">:</span><span class="s2">&quot;,&quot;</span><span class="p">,</span>  <span class="mh">0x37</span><span class="p">:</span><span class="s2">&quot;.&quot;</span> <span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span> <span class="mh">0x04</span><span class="p">:</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>  <span class="mh">0x05</span><span class="p">:</span><span class="s2">&quot;B&quot;</span><span class="p">,</span>  <span class="mh">0x06</span><span class="p">:</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="mh">0x07</span><span class="p">:</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">:</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="mh">0x09</span><span class="p">:</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="mh">0x0A</span><span class="p">:</span><span class="s2">&quot;G&quot;</span><span class="p">,</span>  <span class="mh">0x0B</span><span class="p">:</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="mh">0x0C</span><span class="p">:</span><span class="s2">&quot;I&quot;</span><span class="p">,</span>  <span class="mh">0x0D</span><span class="p">:</span><span class="s2">&quot;J&quot;</span><span class="p">,</span> <span class="mh">0x0E</span><span class="p">:</span><span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="mh">0x0F</span><span class="p">:</span><span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="mh">0x10</span><span class="p">:</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="mh">0x11</span><span class="p">:</span><span class="s2">&quot;N&quot;</span><span class="p">,</span><span class="mh">0x12</span><span class="p">:</span><span class="s2">&quot;O&quot;</span><span class="p">,</span>  <span class="mh">0x13</span><span class="p">:</span><span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mh">0x14</span><span class="p">:</span><span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="mh">0x15</span><span class="p">:</span><span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="mh">0x16</span><span class="p">:</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="mh">0x17</span><span class="p">:</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="mh">0x18</span><span class="p">:</span><span class="s2">&quot;U&quot;</span><span class="p">,</span><span class="mh">0x19</span><span class="p">:</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="mh">0x1A</span><span class="p">:</span><span class="s2">&quot;W&quot;</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">:</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="mh">0x1C</span><span class="p">:</span><span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="mh">0x1D</span><span class="p">:</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="mh">0x1E</span><span class="p">:</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="mh">0x1F</span><span class="p">:</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">:</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="mh">0x21</span><span class="p">:</span><span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="mh">0x22</span><span class="p">:</span><span class="s2">&quot;5&quot;</span><span class="p">,</span>  <span class="mh">0x23</span><span class="p">:</span><span class="s2">&quot;6&quot;</span><span class="p">,</span> <span class="mh">0x24</span><span class="p">:</span><span class="s2">&quot;7&quot;</span><span class="p">,</span> <span class="mh">0x25</span><span class="p">:</span><span class="s2">&quot;8&quot;</span><span class="p">,</span> <span class="mh">0x26</span><span class="p">:</span><span class="s2">&quot;9&quot;</span><span class="p">,</span> <span class="mh">0x27</span><span class="p">:</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="mh">0x28</span><span class="p">:</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="mh">0x2a</span><span class="p">:</span><span class="s2">&quot;[DEL]&quot;</span><span class="p">,</span>  <span class="mh">0X2B</span><span class="p">:</span><span class="s2">&quot;    &quot;</span><span class="p">,</span> <span class="mh">0x2C</span><span class="p">:</span><span class="s2">&quot; &quot;</span><span class="p">,</span>  <span class="mh">0x2D</span><span class="p">:</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="mh">0x2E</span><span class="p">:</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="mh">0x2F</span><span class="p">:</span><span class="s2">&quot;[&quot;</span><span class="p">,</span>  <span class="mh">0x30</span><span class="p">:</span><span class="s2">&quot;]&quot;</span><span class="p">,</span>  <span class="mh">0x31</span><span class="p">:</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mh">0x32</span><span class="p">:</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="mh">0x33</span><span class="p">:</span><span class="s2">&quot;;&quot;</span><span class="p">,</span>  <span class="mh">0x34</span><span class="p">:</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="mh">0x36</span><span class="p">:</span><span class="s2">&quot;,&quot;</span><span class="p">,</span>  <span class="mh">0x37</span><span class="p">:</span><span class="s2">&quot;.&quot;</span> <span class="p">}</span>
 <span class="n">nums</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">keys</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;usbdata.txt&#39;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
@@ -5007,17 +5007,17 @@ gpasswd -a <span class="nv">$USER</span> usbmon
     <span class="k">else</span><span class="p">:</span>
         <span class="n">output</span> <span class="o">+=</span> <span class="s1">&#39;[unknown]&#39;</span>
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;output :n&#39;</span> <span class="o">+</span> <span class="n">output</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>运行结果如下：</p>
 <p><img alt="task_AutoKey-solved" src="../figure/task_AutoKey-solved.png" /></p>
-<div class="codehilite"><pre><span></span>output :n<span class="o">[</span>unknown<span class="o">]</span>A<span class="o">[</span>unknown<span class="o">]</span>UTOKEY<span class="s1">&#39;&#39;</span>.DECIPHER<span class="s1">&#39;[unknown]MPLRVFFCZEYOUJFJKYBXGZVDGQAURKXZOLKOLVTUFBLRNJESQITWAHXNSIJXPNMPLSHCJBTYHZEALOGVIAAISSPLFHLFSWFEHJNCRWHTINSMAMBVEXO[DEL]PZE[DEL]IZ&#39;</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>output :n<span class="o">[</span>unknown<span class="o">]</span>A<span class="o">[</span>unknown<span class="o">]</span>UTOKEY<span class="s1">&#39;&#39;</span>.DECIPHER<span class="s1">&#39;[unknown]MPLRVFFCZEYOUJFJKYBXGZVDGQAURKXZOLKOLVTUFBLRNJESQITWAHXNSIJXPNMPLSHCJBTYHZEALOGVIAAISSPLFHLFSWFEHJNCRWHTINSMAMBVEXO[DEL]PZE[DEL]IZ&#39;</span>
+</code></pre></div>
 
 <p>我们可以看出这是自动密匙解码，现在的问题是在我们不知道密钥的情况下应该如何解码呢？</p>
 <p>我找到了如下这篇关于如何爆破密匙：<a href="http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-autokey-cipher/">http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-autokey-cipher/</a></p>
 <p>爆破脚本如下：</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">ngram_score</span> <span class="kn">import</span> <span class="n">ngram_score</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">ngram_score</span> <span class="kn">import</span> <span class="n">ngram_score</span>
 <span class="kn">from</span> <span class="nn">pycipher</span> <span class="kn">import</span> <span class="n">Autokey</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">permutations</span>
@@ -5081,16 +5081,16 @@ gpasswd -a <span class="nv">$USER</span> usbmon
             <span class="n">bestkey</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">bestscore</span> <span class="o">=</span> <span class="n">score</span>       
     <span class="nb">print</span> <span class="n">bestscore</span><span class="p">,</span><span class="s1">&#39;autokey, klen&#39;</span><span class="p">,</span><span class="n">KLEN</span><span class="p">,</span><span class="s1">&#39;:&quot;&#39;</span><span class="o">+</span><span class="n">bestkey</span><span class="o">+</span><span class="s1">&#39;&quot;,&#39;</span><span class="p">,</span><span class="n">Autokey</span><span class="p">(</span><span class="n">bestkey</span><span class="p">)</span><span class="o">.</span><span class="n">decipher</span><span class="p">(</span><span class="n">ctext</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>跑出来的结果如下：</p>
 <p><img alt="usbpwn" src="../figure/usbpwn.png" /></p>
 <p>我们看到了 <code>flag</code> 的字样，整理可得如下：</p>
-<div class="codehilite"><pre><span></span>-674.914569565 autokey, klen <span class="m">8</span> :<span class="s2">&quot;FLAGHERE&quot;</span>, HELLOBOYSANDGIRLSYOUARESOSMARTTHATYOUCANFINDTHEFLAGTHATIHIDEINTHEKEYBOARDPACKAGEFLAGISJHAWLZKEWXHNCDHSLWBAQJTUQZDXZQPF
-</pre></div>
+<div class="codehilite"><pre><span></span><code>-674.914569565 autokey, klen <span class="m">8</span> :<span class="s2">&quot;FLAGHERE&quot;</span>, HELLOBOYSANDGIRLSYOUARESOSMARTTHATYOUCANFINDTHEFLAGTHATIHIDEINTHEKEYBOARDPACKAGEFLAGISJHAWLZKEWXHNCDHSLWBAQJTUQZDXZQPF
+</code></pre></div>
 
 <p>我们把字段进行分割看：</p>
-<div class="codehilite"><pre><span></span>HELLO
+<div class="codehilite"><pre><span></span><code>HELLO
 BOYS
 AND
 GIRLS
@@ -5115,7 +5115,7 @@ PACKAGE
 FLAG
 IS
 JHAWLZKEWXHNCDHSLWBAQJTUQZDXZQPF
-</pre></div>
+</code></pre></div>
 
 <p>最后的 <code>flag</code> 就是 <code>flag{JHAWLZKEWXHNCDHSLWBAQJTUQZDXZQPF}</code> </p>
 <h3 id="_3">参考文献<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
@@ -5228,7 +5228,7 @@ JHAWLZKEWXHNCDHSLWBAQJTUQZDXZQPF
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5243,7 +5243,7 @@ JHAWLZKEWXHNCDHSLWBAQJTUQZDXZQPF
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

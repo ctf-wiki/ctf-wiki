@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4804,15 +4804,15 @@
 <h2 id="2018-0ctf-finals-baby-kernel">2018 0CTF Finals Baby Kernel<a class="headerlink" href="#2018-0ctf-finals-baby-kernel" title="Permanent link">&para;</a></h2>
 <h3 id="_2">题目分析<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <p>首先用 IDA 对驱动文件进行分析，可见 flag 是硬编码在驱动文件中的。</p>
-<div class="codehilite"><pre><span></span><span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">80</span> <span class="n">flag</span>            <span class="n">dq</span> <span class="n">offset</span> <span class="n">aFlagThisWillBe</span>
+<div class="codehilite"><pre><span></span><code><span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">80</span> <span class="n">flag</span>            <span class="n">dq</span> <span class="n">offset</span> <span class="n">aFlagThisWillBe</span>
 <span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">80</span>                                         <span class="p">;</span> <span class="n">DATA</span> <span class="nl">XREF</span><span class="p">:</span> <span class="n">baby_ioctl</span><span class="o">+</span><span class="mi">2</span><span class="n">A</span><span class="err">↑</span><span class="n">r</span>
 <span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">80</span>                                         <span class="p">;</span> <span class="n">baby_ioctl</span><span class="o">+</span><span class="n">DB</span><span class="err">↑</span><span class="n">r</span> <span class="p">...</span>
 <span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">80</span>                                         <span class="p">;</span> <span class="s">&quot;flag{THIS_WILL_BE_YOUR_FLAG_1234}&quot;</span>
 <span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">88</span>                 <span class="n">align</span> <span class="mi">20</span><span class="n">h</span>
-</pre></div>
+</code></pre></div>
 
 <p>驱动主要注册了一个 <code>baby_ioctl</code>  函数，其中包含两个功能。当 ioctl 中 cmd 参数为 0x6666 时，驱动将输出flag 的加载地址。当 ioctl 中 cmd 参数为 0x1337 时，首先进行三个校验，接着对用户输入的内容与硬编码的 flag 进行逐字节比较，当一致时通过 <code>printk</code> 将 flag 输出出来。</p>
-<div class="codehilite"><pre><span></span><span class="kt">signed</span> <span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">baby_ioctl</span><span class="p">(</span><span class="kr">__int64</span> <span class="n">a1</span><span class="p">,</span> <span class="n">attr</span> <span class="o">*</span><span class="n">a2</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">signed</span> <span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">baby_ioctl</span><span class="p">(</span><span class="kr">__int64</span> <span class="n">a1</span><span class="p">,</span> <span class="n">attr</span> <span class="o">*</span><span class="n">a2</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">attr</span> <span class="o">*</span><span class="n">v2</span><span class="p">;</span> <span class="c1">// rdx</span>
   <span class="kt">signed</span> <span class="kr">__int64</span> <span class="n">result</span><span class="p">;</span> <span class="c1">// rax</span>
@@ -4848,14 +4848,14 @@
   <span class="p">}</span>
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>而分析其检查函数，其中 <code>_chk_range_not_ok</code> 为检查指针及长度范围是否指向用户空间。通过对驱动文件功能的分析，可以得到用户输入的数据结构体如下：</p>
-<div class="codehilite"><pre><span></span>00000000 attr            struc ; (sizeof=0x10, mappedto_3)
+<div class="codehilite"><pre><span></span><code>00000000 attr            struc ; (sizeof=0x10, mappedto_3)
 00000000 flag_str        dq ?
 00000008 flag_len        dq ?
 00000010 attr            ends
-</pre></div>
+</code></pre></div>
 
 <p>其检查内容为：</p>
 <ol>
@@ -4872,7 +4872,7 @@
 <p>然后，构造符合 <code>cmd=0x1337</code> 功能的数据结构，其中 <code>flag_len</code> 可以从硬编码中直接获取为 33， <code>flag_str</code> 指向一个用户空间地址。</p>
 <p>最后，创建一个恶意线程，不断的将 <code>flag_str</code> 所指向的用户态地址修改为 flag 的内核地址以制造竞争条件，从而使其通过驱动中的逐字节比较检查，输出 flag 内容。</p>
 <h3 id="exploit">Exploit<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><span class="c1">// gcc -static exp.c -lpthread -o exp</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// gcc -static exp.c -lpthread -o exp</span>
 <span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
 <span class="kt">char</span> <span class="o">*</span><span class="nf">strstr</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">haystack</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">needle</span><span class="p">);</span>
 <span class="cp">#define _GNU_SOURCE         </span><span class="cm">/* See feature_test_macros(7) */</span><span class="cp"></span>
@@ -4949,18 +4949,18 @@
     <span class="n">system</span><span class="p">(</span><span class="s">&quot;dmesg | grep flag&quot;</span><span class="p">);</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="_4">其他<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>此题在环境配置时，有几点需要注意。</p>
 <p>首先， 需关闭 <code>dmesg_restrict</code> ，否则无法查看 <code>printk</code> 信息，具体操作是在启动脚本中加入：</p>
-<div class="codehilite"><pre><span></span><span class="nb">echo</span> <span class="m">0</span> &gt; /proc/sys/kernel/dmesg_restrict
-</pre></div>
+<div class="codehilite"><pre><span></span><code><span class="nb">echo</span> <span class="m">0</span> &gt; /proc/sys/kernel/dmesg_restrict
+</code></pre></div>
 
 <p>其次，配置 QEMU 启动参数时， 不要开启 <code>SMAP</code> 保护，否则在内核中直接访问用户态数据会引起 <code>kerne panic</code> 。</p>
 <p>还有，配置 QEMU 启动参数时，需要配置为非单核单线程启动，否则无法触发题目中的竞争条件。具体操作是在启动参数中增加其内核数选项，如：</p>
-<div class="codehilite"><pre><span></span>-smp <span class="m">2</span>,cores<span class="o">=</span><span class="m">2</span>,threads<span class="o">=</span><span class="m">1</span>  <span class="se">\</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>-smp <span class="m">2</span>,cores<span class="o">=</span><span class="m">2</span>,threads<span class="o">=</span><span class="m">1</span>  <span class="se">\</span>
+</code></pre></div>
 
 <blockquote>
 <p>在启动后，可通过 <code>/proc/cpuinfo</code> 查看当前运行的内核数及超线程数。</p>
@@ -5075,7 +5075,7 @@
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5090,7 +5090,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

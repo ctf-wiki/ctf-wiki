@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4830,7 +4830,7 @@ $$</p>
 <h2 id="2017-hitcon-secret-server">2017 HITCON Secret Server<a class="headerlink" href="#2017-hitcon-secret-server" title="Permanent link">&para;</a></h2>
 <h3 id="analysis">Analysis<a class="headerlink" href="#analysis" title="Permanent link">&para;</a></h3>
 <p>The encryption used in the program is AES CBC, which uses padding similar to PKCS5.</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
 
     <span class="n">pad_length</span> <span class="o">=</span> <span class="mi">16</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">%</span><span class="mi">16</span>
 
@@ -4840,7 +4840,7 @@ $$</p>
 
 <span class="k">def</span> <span class="nf">unpad</span> <span class="p">(</span><span class="n">msg</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">msg</span><span class="p">[:</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
-</pre></div>
+</code></pre></div>
 
 <p>However, in each unpad, no detection is performed, but the unpad is directly executed.</p>
 <p>Among them, it should be noted that the function that interacts with the user each time is</p>
@@ -4848,7 +4848,7 @@ $$</p>
 <li><code>send_msg</code> , accepts the user&#39;s plaintext, encrypts it with a fixed <code>2jpmLoSsOlQrqyqE</code>, and outputs the encrypted result.</li>
 <li><code>recv_msg</code> , accepts the user&#39;s IV and ciphertext, decrypts the ciphertext, and returns. There will be different actions depending on the results returned.</li>
 </ul>
-<div class="codehilite"><pre><span></span>            <span class="n">msg</span> <span class="o">=</span> <span class="n">recv_msg</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code>            <span class="n">msg</span> <span class="o">=</span> <span class="n">recv_msg</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
             <span class="k">if</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;exit-here&#39;</span><span class="p">):</span>
 
@@ -4881,7 +4881,7 @@ $$</p>
             <span class="k">else</span><span class="p">:</span>
 
                 <span class="n">send_msg</span><span class="p">(</span><span class="s1">&#39;command not found&#39;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="main-vulnerabilities">Main Vulnerabilities<a class="headerlink" href="#main-vulnerabilities" title="Permanent link">&para;</a></h3>
 <p>Here we briefly summarize the parts we have.</p>
@@ -4905,7 +4905,7 @@ $$</p>
 3. Since the beginning of the flag is <code>hitcon{</code>, there are 7 bytes in total, so we can still control the iv to make the first 7 bytes after decryption the specified byte. This allows us to execute the <code>get-md5</code> command on the decrypted message. According to the unpad operation, we can control the decrypted message exactly at the first few bytes of the message. So we can start controlling the decrypted message as <code>hitcon{x</code>, that is, only one byte after <code>hitcon{</code>. This will result in an encrypted result with a one-byte hash. Similarly, we can also get the result of the encryption with a byte hash.
 4. In this case, we can blast locally byte by byte, calculate the corresponding <code>md5</code>, and then use the arbitrary command execution mode to control the decrypted plaintext to any specified command. If the control is unsuccessful, it means that the byte is incorrect. , need to blast again; if it is correct, then you can directly execute the corresponding command.</p>
 <p>The specific code is as follows</p>
-<div class="codehilite"><pre><span></span><span class="c1">#coding=utf-8</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">#coding=utf-8</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -5123,16 +5123,16 @@ $$</p>
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>The final result is as follows</p>
-<div class="codehilite"><pre><span></span>Flag so far: Paddin9_15_ve3y_h4rd__!!<span class="o">}</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>Flag so far: Paddin9_15_ve3y_h4rd__!!<span class="o">}</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span>
+</code></pre></div>
 
 <h2 id="2017-hitcon-secret-server-revenge">2017 HITCON Secret Server Revenge<a class="headerlink" href="#2017-hitcon-secret-server-revenge" title="Permanent link">&para;</a></h2>
 <h3 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>The password of zip is the flag of &quot;Secret Server&quot;
-</pre></div>
+<div class="codehilite"><pre><span></span><code>The password of zip is the flag of &quot;Secret Server&quot;
+</code></pre></div>
 
 <h3 id="analysis_1">Analysis<a class="headerlink" href="#analysis_1" title="Permanent link">&para;</a></h3>
 <p>This program continues with the above program, but this time a simple modification</p>
@@ -5172,7 +5172,7 @@ $$</p>
 <li>So, the question is, how do you delete some extra candidate strings? Here I chose a small trick, which enumerates the padding of the token at the same time as the byte-by-byte enumeration. Since padding is fixed at 0x01, we only need to filter out all tokens that are not 0x01 at the end.</li>
 </ol>
 <p>Here, the <code>sleep</code> in the code is commented out during the test. In order to speed up the interaction. Use the code as follows</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="kn">import</span> <span class="nn">base64</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">random</span><span class="o">,</span> <span class="nn">string</span>
 
@@ -5537,21 +5537,21 @@ $$</p>
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>The effect is as follows</p>
-<div class="codehilite"><pre><span></span>...
+<div class="codehilite"><pre><span></span><code>...
 
 <span class="m">79</span>
 
 <span class="m">1</span>
 
 hitcon <span class="o">{</span>uNp @ d_M3th0D_i5_am4Z1n9!<span class="o">}</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="teaser-dragon-ctf-2018-aes-128-tsb">Teaser Dragon CTF 2018 AES-128-TSB<a class="headerlink" href="#teaser-dragon-ctf-2018-aes-128-tsb" title="Permanent link">&para;</a></h2>
 <p>This topic is still very interesting, the title is described as follows</p>
-<div class="codehilite"><pre><span></span>Haven&#39;t you ever thought that GCM mode is overcomplicated and there must be a simpler way to achieve Authenticated Encryption? Here it is!
+<div class="codehilite"><pre><span></span><code>Haven&#39;t you ever thought that GCM mode is overcomplicated and there must be a simpler way to achieve Authenticated Encryption? Here it is!
 
 
 
@@ -5560,7 +5560,7 @@ Server: aes-128-tsb.hackable.software 1337
 
 
 server.py
-</pre></div>
+</code></pre></div>
 
 <p>The attachment and the final exp are found by the ctf-challenge repository.</p>
 <p>The basic process of the topic is</p>
@@ -5573,16 +5573,16 @@ server.py
 <li>Otherwise output a string of plain text.</li>
 </ul>
 <p>In addition, we can also find that there is a problem with the unpad in the title, and the specified length can be truncated.</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">unpad</span> <span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">unpad</span> <span class="p">(</span><span class="n">msg</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">:</span>
 
         <span class="k">return</span> <span class="s1">&#39;&#39;</span>
 
     <span class="k">return</span> <span class="n">msg</span><span class="p">[:</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
-</pre></div>
+</code></pre></div>
 
 <p>In the beginning, the very straightforward idea is to enter 0 for the lengths of a and b, then you can bypass the <code>a==b</code> check to get a string of random ciphertext encrypted strings. However, it does not seem to have any effect, let&#39;s analyze the encryption process.</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">tsb_encrypt</span><span class="p">(</span><span class="n">aes</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">tsb_encrypt</span><span class="p">(</span><span class="n">aes</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 
     <span class="n">msg</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
@@ -5608,7 +5608,7 @@ server.py
         <span class="n">prev_ct</span> <span class="o">=</span> <span class="n">ct_block</span>
 
     <span class="k">return</span> <span class="n">iv</span> <span class="o">+</span> <span class="n">ct</span>
-</pre></div>
+</code></pre></div>
 
 <p>Let&#39;s assume that <span><span class="MathJax_Preview">P_0=iv, C_0=iv</span><script type="math/tex">P_0=iv, C_0=iv</script></span>, then</p>
 <p><span><span class="MathJax_Preview">C_i=C_{i-1}\oplus E(P_{i-1} \oplus P_i)</span><script type="math/tex">C_i=C_{i-1}\oplus E(P_{i-1} \oplus P_i)</script></span></p>
@@ -5619,7 +5619,7 @@ server.py
 <p>([Pirates] (<a href="https://github.com/pberba/ctf-solutions/tree/master/20180929_teaser_dragon/aes_128_tsb">https://github.com/pberba/ctf-solutions/tree/master/20180929_teaser_dragon/aes_128_tsb</a>), the picture below is clearer</p>
 <p><img alt="" src="../figure/aes-tsb-encryption.png" /></p>
 <p>Conversely, if we send <code>iv+c+iv</code> to the server, we can always bypass the <code>tsb_decrypt</code> mac check.</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">tsb_decrypt</span><span class="p">(</span><span class="n">aes</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">tsb_decrypt</span><span class="p">(</span><span class="n">aes</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 
     <span class="n">iv</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[:</span><span class="mi">16</span><span class="p">],</span> <span class="n">msg</span><span class="p">[</span><span class="mi">16</span><span class="p">:]</span>
 
@@ -5647,13 +5647,13 @@ server.py
         <span class="k">raise</span> <span class="n">CryptoError</span><span class="p">()</span>
 
 <span class="k">return</span> <span class="n">unpad</span> <span class="p">(</span><span class="n">pt</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>Then at this point, the message decrypted by the server is</p>
 <p>$ unpad (IV  oplus D (C_1  oplus IV)) $</p>
 <h3 id="get-the-last-byte-of-the-plaintext">Get the last byte of the plaintext<a class="headerlink" href="#get-the-last-byte-of-the-plaintext" title="Permanent link">&para;</a></h3>
 <p>We can consider controlling the D decrypted message as a constant value, such as all zeros, ie <code>C1=IV</code>, then we can enumerate the last byte of the IV from 0 to 255, get $IV \oplus D(C_1 \oplus IV) The last byte of $ is also 0~255. Only when it is 1~15, after the <code>unpad</code> operation, the message length is not 0. Therefore, we can count which numbers cause the length to be non-zero and enumerate as 1 and the remaining flags to 0.</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">getlast_byte</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">getlast_byte</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
 
 <span class="n">iv_pre</span> <span class="o">=</span> <span class="n">iv</span> <span class="p">[:</span> <span class="mi">15</span><span class="p">]</span>
 <span class="n">iv_last</span> <span class="o">=</span> <span class="n">words</span> <span class="p">(</span><span class="n">iv</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
@@ -5693,10 +5693,10 @@ server.py
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;possible last byte is &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">last_bytes</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">last_bytes</span>
-</pre></div>
+</code></pre></div>
 
 <p>In addition, we can get all the possible cases of the last byte at the beginning of the table, recorded in xor_byte_map.</p>
-<div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">every item is a pair [a,b]</span>
 
@@ -5730,12 +5730,12 @@ server.py
             <span class="n">b</span> <span class="o">=</span> <span class="n">j</span>
 
     <span class="n">xor_byte_map</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span>
-</pre></div>
+</code></pre></div>
 
 <p>By comparing this table, we can know what is possible with the last byte.</p>
 <h3 id="decrypt-any-encrypted-block">Decrypt any encrypted block<a class="headerlink" href="#decrypt-any-encrypted-block" title="Permanent link">&para;</a></h3>
 <p>After obtaining the last byte of the plaintext, we can use the unpad vulnerability to get the corresponding plaintext content from length 1 to length 15.</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dec_block</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">dec_block</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
 
     <span class="n">last_bytes</span> <span class="o">=</span> <span class="n">getlast_byte</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
 
@@ -5796,11 +5796,11 @@ server.py
     <span class="n">plain0</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">iv_last</span> <span class="o">^</span> <span class="n">last_byte</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">plain0</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="decrypt-the-specified-plaintext">Decrypt the specified plaintext<a class="headerlink" href="#decrypt-the-specified-plaintext" title="Permanent link">&para;</a></h3>
 <p>This is relatively simple, we hope to use this to get the ciphertext of <code>gimme_flag</code></p>
-<div class="codehilite"><pre><span></span>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;get the cipher of flag&#39;</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;get the cipher of flag&#39;</span><span class="p">)</span>
 
     <span class="n">gemmi_iv1</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">pad</span><span class="p">(</span><span class="s1">&#39;gimme_flag&#39;</span><span class="p">),</span> <span class="n">plain0</span><span class="p">)</span>
 
@@ -5813,12 +5813,12 @@ server.py
     <span class="n">send_data</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
     <span class="n">flag_len</span><span class="p">,</span> <span class="n">flag_cipher</span> <span class="o">=</span> <span class="n">recv_data</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>Where plain0 and cipher0 are the clear ciphertext pairs we obtained for AES encryption, excluding the two exclusive ORs before and after.</p>
 <h3 id="decrypt-flag">Decrypt flag<a class="headerlink" href="#decrypt-flag" title="Permanent link">&para;</a></h3>
 <p>This point is actually achieved by the function of decrypting any encrypted block, as follows</p>
-<div class="codehilite"><pre><span></span>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;the flag cipher is &#39;</span> <span class="o">+</span> <span class="n">flag_cipher</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;the flag cipher is &#39;</span> <span class="o">+</span> <span class="n">flag_cipher</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">))</span>
 
     <span class="n">flag_cipher</span> <span class="o">=</span> <span class="n">split_by</span><span class="p">(</span><span class="n">flag_cipher</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
 
@@ -5848,7 +5848,7 @@ server.py
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;now plain: &#39;</span> <span class="o">+</span> <span class="n">plain</span><span class="p">)</span>
 
     <span class="nb">print</span> <span class="n">plain</span>
-</pre></div>
+</code></pre></div>
 
 <p>Think about why the ciphertext operation after the second block will be different.</p>
 <p>The complete code references the ctf-challenge repository.</p>
@@ -5933,7 +5933,7 @@ server.py
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5948,7 +5948,7 @@ server.py
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

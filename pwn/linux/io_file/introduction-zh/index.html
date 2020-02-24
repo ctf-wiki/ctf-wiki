@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4774,7 +4774,7 @@
 <p>FILE在Linux系统的标准IO库中是用于描述文件的结构，称为文件流。
 FILE结构在程序执行fopen等函数时会进行创建，并分配在堆中。我们常定义一个指向FILE结构的指针来接收这个返回值。</p>
 <p>FILE结构定义在libio.h中，如下所示</p>
-<div class="codehilite"><pre><span></span>struct _IO_FILE {
+<div class="codehilite"><pre><span></span><code>struct _IO_FILE {
   int _flags;       /* High-order word is _IO_MAGIC; rest is flags. */
 #define _IO_file_flags _flags
 
@@ -4816,27 +4816,27 @@ FILE结构在程序执行fopen等函数时会进行创建，并分配在堆中�
   _IO_lock_t *_lock;
 #ifdef _IO_USE_OLD_IO_FILE
 };
-</pre></div>
+</code></pre></div>
 
 <p>进程中的FILE结构会通过_chain域彼此连接形成一个链表，链表头部用全局变量_IO_list_all表示，通过这个值我们可以遍历所有的FILE结构。</p>
 <p>在标准I/O库中，每个程序启动时有三个文件流是自动打开的：stdin、stdout、stderr。因此在初始状态下，_IO_list_all指向了一个有这些文件流构成的链表，但是需要注意的是这三个文件流位于libc.so的数据段。而我们使用fopen创建的文件流是分配在堆内存上的。</p>
 <p>我们可以在libc.so中找到stdin\stdout\stderr等符号，这些符号是指向FILE结构的指针，真正结构的符号是</p>
-<div class="codehilite"><pre><span></span>_IO_2_1_stderr_
+<div class="codehilite"><pre><span></span><code>_IO_2_1_stderr_
 _IO_2_1_stdout_
 _IO_2_1_stdin_
-</pre></div>
+</code></pre></div>
 
 <p>但是事实上_IO_FILE结构外包裹着另一种结构_IO_FILE_plus，其中包含了一个重要的指针vtable指向了一系列函数指针。</p>
 <p>在libc2.23版本下，32位的vtable偏移为0x94，64位偏移为0xd8</p>
-<div class="codehilite"><pre><span></span>struct _IO_FILE_plus
+<div class="codehilite"><pre><span></span><code>struct _IO_FILE_plus
 {
     _IO_FILE    file;
     IO_jump_t   *vtable;
 }
-</pre></div>
+</code></pre></div>
 
 <p>vtable是IO_jump_t类型的指针，IO_jump_t中保存了一些函数指针，在后面我们会看到在一系列标准IO函数中会调用这些函数指针</p>
-<div class="codehilite"><pre><span></span>void * funcs[] = {
+<div class="codehilite"><pre><span></span><code>void * funcs[] = {
    1 NULL, // &quot;extra word&quot;
    2 NULL, // DUMMY
    3 exit, // finish
@@ -4860,12 +4860,12 @@ _IO_2_1_stdin_
    20 NULL, // showmanyc
    21 NULL, // imbue
 };
-</pre></div>
+</code></pre></div>
 
 <h2 id="fread">fread<a class="headerlink" href="#fread" title="Permanent link">&para;</a></h2>
 <p>fread是标准IO库函数，作用是从文件流中读数据，函数原型如下</p>
-<div class="codehilite"><pre><span></span>size_t fread ( void *buffer, size_t size, size_t count, FILE *stream) ;
-</pre></div>
+<div class="codehilite"><pre><span></span><code>size_t fread ( void *buffer, size_t size, size_t count, FILE *stream) ;
+</code></pre></div>
 
 <ul>
 <li>
@@ -4885,7 +4885,7 @@ _IO_2_1_stdin_
 </li>
 </ul>
 <p>fread的代码位于/libio/iofread.c中，函数名为_IO_fread，但真正的功能实现在子函数_IO_sgetn中。</p>
-<div class="codehilite"><pre><span></span>_IO_size_t
+<div class="codehilite"><pre><span></span><code>_IO_size_t
 _IO_fread (buf, size, count, fp)
      void *buf;
      _IO_size_t size;
@@ -4896,10 +4896,10 @@ _IO_fread (buf, size, count, fp)
   bytes_read = _IO_sgetn (fp, (char *) buf, bytes_requested);
   ...
 }
-</pre></div>
+</code></pre></div>
 
 <p>在_IO_sgetn函数中会调用_IO_XSGETN，而_IO_XSGETN是_IO_FILE_plus.vtable中的函数指针，在调用这个函数时会首先取出vtable中的指针然后再进行调用。</p>
-<div class="codehilite"><pre><span></span>_IO_size_t
+<div class="codehilite"><pre><span></span><code>_IO_size_t
 _IO_sgetn (fp, data, n)
      _IO_FILE *fp;
      void *data;
@@ -4907,10 +4907,10 @@ _IO_sgetn (fp, data, n)
 {
   return _IO_XSGETN (fp, data, n);
 }
-</pre></div>
+</code></pre></div>
 
 <p>在默认情况下函数指针是指向_IO_file_xsgetn函数的，</p>
-<div class="codehilite"><pre><span></span>  if (fp-&gt;_IO_buf_base
+<div class="codehilite"><pre><span></span><code>  if (fp-&gt;_IO_buf_base
           &amp;&amp; want &lt; (size_t) (fp-&gt;_IO_buf_end - fp-&gt;_IO_buf_base))
         {
           if (__underflow (fp) == EOF)
@@ -4918,12 +4918,12 @@ _IO_sgetn (fp, data, n)
 
           continue;
         }
-</pre></div>
+</code></pre></div>
 
 <h2 id="fwrite">fwrite<a class="headerlink" href="#fwrite" title="Permanent link">&para;</a></h2>
 <p>fwrite同样是标准IO库函数，作用是向文件流写入数据，函数原型如下</p>
-<div class="codehilite"><pre><span></span>size_t fwrite(const void* buffer, size_t size, size_t count, FILE* stream);
-</pre></div>
+<div class="codehilite"><pre><span></span><code>size_t fwrite(const void* buffer, size_t size, size_t count, FILE* stream);
+</code></pre></div>
 
 <ul>
 <li>
@@ -4945,27 +4945,27 @@ _IO_sgetn (fp, data, n)
 <p>fwrite的代码位于/libio/iofwrite.c中，函数名为_IO_fwrite。
 在_IO_fwrite中主要是调用_IO_XSPUTN来实现写入的功能。</p>
 <p>根据前面对_IO_FILE_plus的介绍，可知_IO_XSPUTN位于_IO_FILE_plus的vtable中，调用这个函数需要首先取出vtable中的指针，再跳过去进行调用。</p>
-<div class="codehilite"><pre><span></span>written = _IO_sputn (fp, (const char *) buf, request);
-</pre></div>
+<div class="codehilite"><pre><span></span><code>written = _IO_sputn (fp, (const char *) buf, request);
+</code></pre></div>
 
 <p>在_IO_XSPUTN对应的默认函数_IO_new_file_xsputn中会调用同样位于vtable中的_IO_OVERFLOW</p>
-<div class="codehilite"><pre><span></span> /* Next flush the (full) buffer. */
+<div class="codehilite"><pre><span></span><code> /* Next flush the (full) buffer. */
       if (_IO_OVERFLOW (f, EOF) == EOF)
-</pre></div>
+</code></pre></div>
 
 <p>_IO_OVERFLOW默认对应的函数是_IO_new_file_overflow</p>
-<p><div class="codehilite"><pre><span></span>if (ch == EOF)
+<p><div class="codehilite"><pre><span></span><code>if (ch == EOF)
     return _IO_do_write (f, f-&gt;_IO_write_base,
              f-&gt;_IO_write_ptr - f-&gt;_IO_write_base);
   if (f-&gt;_IO_write_ptr == f-&gt;_IO_buf_end ) /* Buffer is really full */
     if (_IO_do_flush (f) == EOF)
       return EOF;
-</pre></div>
+</code></pre></div>
 在_IO_new_file_overflow内部最终会调用系统接口write函数</p>
 <h2 id="fopen">fopen<a class="headerlink" href="#fopen" title="Permanent link">&para;</a></h2>
 <p>fopen在标准IO库中用于打开文件，函数原型如下</p>
-<div class="codehilite"><pre><span></span>FILE *fopen(char *filename, *type);
-</pre></div>
+<div class="codehilite"><pre><span></span><code>FILE *fopen(char *filename, *type);
+</code></pre></div>
 
 <ul>
 <li>
@@ -4980,15 +4980,15 @@ _IO_sgetn (fp, data, n)
 </ul>
 <p>在fopen内部会创建FILE结构并进行一些初始化操作，下面来看一下这个过程</p>
 <p>首先在fopen对应的函数__fopen_internal内部会调用malloc函数，分配FILE结构的空间。因此我们可以获知FILE结构是存储在堆上的</p>
-<div class="codehilite"><pre><span></span>*new_f = (struct locked_FILE *) malloc (sizeof (struct locked_FILE));
-</pre></div>
+<div class="codehilite"><pre><span></span><code>*new_f = (struct locked_FILE *) malloc (sizeof (struct locked_FILE));
+</code></pre></div>
 
 <p>之后会为创建的FILE初始化vtable，并调用_IO_file_init进一步初始化操作
-<div class="codehilite"><pre><span></span>_IO_JUMPS (&amp;new_f-&gt;fp) = &amp;_IO_file_jumps;
+<div class="codehilite"><pre><span></span><code>_IO_JUMPS (&amp;new_f-&gt;fp) = &amp;_IO_file_jumps;
 _IO_file_init (&amp;new_f-&gt;fp);
-</pre></div></p>
+</code></pre></div></p>
 <p>在_IO_file_init函数的初始化操作中，会调用_IO_link_in把新分配的FILE链入_IO_list_all为起始的FILE链表中
-<div class="codehilite"><pre><span></span>void
+<div class="codehilite"><pre><span></span><code>void
 _IO_link_in (fp)
      struct _IO_FILE_plus *fp;
 {
@@ -5000,11 +5000,11 @@ _IO_link_in (fp)
       ++_IO_list_all_stamp;
     }
 }
-</pre></div></p>
+</code></pre></div></p>
 <p>之后__fopen_internal函数会调用_IO_file_fopen函数打开目标文件，_IO_file_fopen会根据用户传入的打开模式进行打开操作，总之最后会调用到系统接口open函数，这里不再深入。
-<div class="codehilite"><pre><span></span>if (_IO_file_fopen ((_IO_FILE *) new_f, filename, mode, is32) != NULL)
+<div class="codehilite"><pre><span></span><code>if (_IO_file_fopen ((_IO_FILE *) new_f, filename, mode, is32) != NULL)
     return __fopen_maybe_mmap (&amp;new_f-&gt;fp.file);
-</pre></div></p>
+</code></pre></div></p>
 <p>总结一下fopen的操作是</p>
 <ul>
 <li>使用malloc分配FILE结构</li>
@@ -5015,34 +5015,34 @@ _IO_link_in (fp)
 </ul>
 <h2 id="fclose">fclose<a class="headerlink" href="#fclose" title="Permanent link">&para;</a></h2>
 <p>fclose是标准IO库中用于关闭已打开文件的函数，其作用与fopen相反。</p>
-<p><div class="codehilite"><pre><span></span>int fclose(FILE *stream)
-</pre></div>
+<p><div class="codehilite"><pre><span></span><code>int fclose(FILE *stream)
+</code></pre></div>
 功能：关闭一个文件流，使用fclose就可以把缓冲区内最后剩余的数据输出到磁盘文件中，并释放文件指针和有关的缓冲区</p>
 <p>fclose首先会调用_IO_unlink_it将指定的FILE从_chain链表中脱链</p>
-<div class="codehilite"><pre><span></span>if (fp-&gt;_IO_file_flags &amp; _IO_IS_FILEBUF)
+<div class="codehilite"><pre><span></span><code>if (fp-&gt;_IO_file_flags &amp; _IO_IS_FILEBUF)
     _IO_un_link ((struct _IO_FILE_plus *) fp);
-</pre></div>
+</code></pre></div>
 
 <p>之后会调用_IO_file_close_it函数，_IO_file_close_it会调用系统接口close关闭文件</p>
-<div class="codehilite"><pre><span></span>if (fp-&gt;_IO_file_flags &amp; _IO_IS_FILEBUF)
+<div class="codehilite"><pre><span></span><code>if (fp-&gt;_IO_file_flags &amp; _IO_IS_FILEBUF)
     status = _IO_file_close_it (fp);
-</pre></div>
+</code></pre></div>
 
 <p>最后调用vtable中的_IO_FINISH，其对应的是_IO_file_finish函数，其中会调用free函数释放之前分配的FILE结构</p>
-<div class="codehilite"><pre><span></span>_IO_FINISH (fp);
-</pre></div>
+<div class="codehilite"><pre><span></span><code>_IO_FINISH (fp);
+</code></pre></div>
 
 <h2 id="printfputs">printf/puts<a class="headerlink" href="#printfputs" title="Permanent link">&para;</a></h2>
 <p>printf和puts是常用的输出函数，在printf的参数是以'\n'结束的纯字符串时，printf会被优化为puts函数并去除换行符。</p>
 <p>puts在源码中实现的函数是_IO_puts，这个函数的操作与fwrite的流程大致相同，函数内部同样会调用vtable中的_IO_sputn，结果会执行_IO_new_file_xsputn，最后会调用到系统接口write函数。</p>
 <p>printf的调用栈回溯如下，同样是通过_IO_file_xsputn实现</p>
-<div class="codehilite"><pre><span></span>vfprintf+11
+<div class="codehilite"><pre><span></span><code>vfprintf+11
 _IO_file_xsputn
 _IO_file_overflow
 funlockfile
 _IO_file_write
 write
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -5143,7 +5143,7 @@ write
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5158,7 +5158,7 @@ write
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

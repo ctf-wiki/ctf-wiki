@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4730,12 +4730,12 @@
 <p>原理类似于 RSA 加密，只是这里使用私钥进行加密，将加密后的结果作为签名。</p>
 <h2 id="2018-backdoor-awesome-mix1">2018 Backdoor Awesome mix1<a class="headerlink" href="#2018-backdoor-awesome-mix1" title="Permanent link">&para;</a></h2>
 <p>首先，可以简单分析源码，这里程序使用 PKCS1_V1.5 进行了 RSA 签名，这会对明文消息进行扩展，具体扩展规则请参考 <a href="https://www.emc.com/collateral/white-papers/h11300-pkcs-1v2-2-rsa-cryptography-standard-wp.pdf">https://www.emc.com/collateral/white-papers/h11300-pkcs-1v2-2-rsa-cryptography-standard-wp.pdf</a> 。这里给出对应扩展脚本，对应于题目中的 <code>from Util import PKCS1_pad as pad</code> </p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">PKCS1_pad</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">PKCS1_pad</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
     <span class="n">asn1</span> <span class="o">=</span> <span class="s2">&quot;3021300906052b0e03021a05000414&quot;</span>
     <span class="n">ans</span> <span class="o">=</span> <span class="n">asn1</span> <span class="o">+</span> <span class="n">data</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">((</span><span class="s1">&#39;00&#39;</span> <span class="o">+</span> <span class="s1">&#39;01&#39;</span> <span class="o">+</span> <span class="s1">&#39;ff&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">-</span> <span class="n">n</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;00&#39;</span> <span class="o">+</span> <span class="n">ans</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>程序希望我们给出 <code>n,e</code> 使得程序满足 </p>
 <p><span><span class="MathJax_Preview">h(m)^e mod \ n=pad(m)</span><script type="math/tex">h(m)^e mod \ n=pad(m)</script></span></p>
@@ -4744,7 +4744,7 @@
 <p>那么如果我们可以设置 k=1，既可以得到 n。</p>
 <p>本地部署 <code>socat TCP4-LISTEN:12345,fork EXEC:./mix1.py</code>。</p>
 <p>exp 如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="kn">import</span> <span class="n">SHA</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="kn">import</span> <span class="n">SHA</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="kn">from</span> <span class="nn">Util</span> <span class="kn">import</span> <span class="n">PKCS1_pad</span>
@@ -4776,24 +4776,24 @@
 
 
 <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>效果如下</p>
-<div class="codehilite"><pre><span></span>➜  <span class="m">2018</span>-BackdoorCTF-Awesome-mix1 git:<span class="o">(</span>master<span class="o">)</span> python exp.py
+<div class="codehilite"><pre><span></span><code>➜  <span class="m">2018</span>-BackdoorCTF-Awesome-mix1 git:<span class="o">(</span>master<span class="o">)</span> python exp.py
 <span class="o">[</span>+<span class="o">]</span> Opening connection to <span class="m">127</span>.0.0.1 on port <span class="m">12345</span>: Done
 <span class="o">[</span>*<span class="o">]</span> message: super important information <span class="k">for</span> admin only
 <span class="o">[</span>*<span class="o">]</span> signature: 721af5bd401b5f2aff8e86bf811b827cdb5877ef12202f24fa914a26f235523f80c45fdbf0d3c9fa77278828ddd8ca0551a941bd57c97dd38654692568d1357a49e7a2a284d296508602ead24c91e5aa7f517b9e48422575f0dd373d00f267a206ba164ab104c488268b5f95daf490a048407773d4b1016de8ef508bf1aa678f
 <span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
 CTF<span class="o">{</span>cryp70_5ur3_15_w13rd<span class="o">}</span>
 <span class="o">[</span>*<span class="o">]</span> Got EOF <span class="k">while</span> reading in interactive
-</pre></div>
+</code></pre></div>
 
 <h2 id="2018-backdoor-awesome-mix2">2018 Backdoor Awesome mix2<a class="headerlink" href="#2018-backdoor-awesome-mix2" title="Permanent link">&para;</a></h2>
 <p>本地部署 <code>socat TCP4-LISTEN:12345,fork EXEC:./service.py</code>。</p>
 <p>题目类似于上面的题目，唯一的区别在于对于 e 有约束，必须大于 3，所以我们不能使用 1 了。</p>
 <p><span><span class="MathJax_Preview">h(m)^e mod \ n=pad(m)</span><script type="math/tex">h(m)^e mod \ n=pad(m)</script></span></p>
 <p>这里我们已经知道 <code>h(m)，pad(m)</code>。我们只需要构造剩下的数即可，这里我们构造 n 为素数，使得 n-1是一个光滑数，这样就可以使用 pohlig_hellman 算法了。</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="kn">import</span> <span class="n">SHA</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="kn">import</span> <span class="n">SHA</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">gmpy2</span>
 <span class="kn">from</span> <span class="nn">gmpy2</span> <span class="kn">import</span> <span class="n">is_prime</span>
@@ -4928,20 +4928,20 @@ CTF<span class="o">{</span>cryp70_5ur3_15_w13rd<span class="o">}</span>
 
 
 <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>有两点需要注意</p>
 <ol>
 <li>由于 <span><span class="MathJax_Preview">g^x=y</span><script type="math/tex">g^x=y</script></span> 中的 g 和 y 都是给定的，我们新找到的 n，不一定 g 的幂次构成的群会包含 y，所以可能求解失败，所以需要多次求解。</li>
 <li>源代码中虽然 <code>n.bit_length() &lt;= 1025</code>，但是其实 n 在满足不小于 signature 的条件时，必须满足如下条件（pycrypto 源码）</li>
 </ol>
-<div class="codehilite"><pre><span></span>        <span class="n">modBits</span> <span class="o">=</span> <span class="n">Crypto</span><span class="o">.</span><span class="n">Util</span><span class="o">.</span><span class="n">number</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code>        <span class="n">modBits</span> <span class="o">=</span> <span class="n">Crypto</span><span class="o">.</span><span class="n">Util</span><span class="o">.</span><span class="n">number</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
         <span class="n">k</span> <span class="o">=</span> <span class="n">ceil_div</span><span class="p">(</span><span class="n">modBits</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span> <span class="c1"># Convert from bits to bytes</span>
 
         <span class="c1"># Step 1</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="o">!=</span> <span class="n">k</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
-</pre></div>
+</code></pre></div>
 
 <p>所以我们最好设置 n 为1024 比特位。</p>
                 
@@ -5044,7 +5044,7 @@ CTF<span class="o">{</span>cryp70_5ur3_15_w13rd<span class="o">}</span>
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5059,7 +5059,7 @@ CTF<span class="o">{</span>cryp70_5ur3_15_w13rd<span class="o">}</span>
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

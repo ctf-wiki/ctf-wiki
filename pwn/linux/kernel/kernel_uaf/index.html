@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4706,7 +4706,7 @@
 <p><a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/kernel/CISCN2017-babydriver">attachment here</a></p>
 <h4 id="analysis">Analysis<a class="headerlink" href="#analysis" title="Permanent link">&para;</a></h4>
 <p>Unzip rootfs.cpio first and see what files are there.
-<div class="codehilite"><pre><span></span>CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> mkdir core
+<div class="codehilite"><pre><span></span><code>CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> mkdir core
 
 CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> <span class="nb">cd</span> core 
 
@@ -4796,10 +4796,10 @@ core <span class="o">[</span>master●<span class="o">]</span> bat init
   <span class="m">20</span>   │
 
 ───────┴────────────────────────────────────────────────────────────
-</pre></div></p>
+</code></pre></div></p>
 <p>According to the content of init, the driver of <code>babydriver.ko</code> is loaded in 12 lines. According to the general routine of pwn, this is the vulnerable LKM. The other commands in init are common commands for linux and will not be explained.</p>
 <p>Take this driver file out.</p>
-<div class="codehilite"><pre><span></span>core <span class="o">[</span>master●<span class="o">]</span> cp ./lib/modules/4.4.72/babydriver.ko ..
+<div class="codehilite"><pre><span></span><code>core <span class="o">[</span>master●<span class="o">]</span> cp ./lib/modules/4.4.72/babydriver.ko ..
 
 core <span class="o">[</span>master ●<span class="o">]</span> <span class="nb">cd</span> ..
 CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> check ./babydriver.ko
@@ -4817,7 +4817,7 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
     NX:       NX enabled
 
 FOOT: No FOOT <span class="o">(</span>0x0<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>No PIE, no canary protection, no symbol table removed, very nice.</p>
 <p>Open the analysis with IDA. Since the symbol table is not removed, shift + F9 first looks at what structure, you can find the following structure:
@@ -4830,7 +4830,7 @@ FOOT: No FOOT <span class="o">(</span>0x0<span class="o">)</span>
 <p>00000008; babyioctl + 3C / w ...
 00000010 babydevice_t    ends</p>
 <p>00000010</p>
-<div class="codehilite"><pre><span></span>Look at the main function
+<div class="codehilite"><pre><span></span><code>Look at the main function
 
 
 **babyioctl:** Defines the 0x10001 command, you can release the device\_buf in the global variable babydev\_struct, and then reapply a block of memory according to the size passed by the user, and set device\_buf\_len.
@@ -4876,10 +4876,10 @@ v4 = v3;
   }
 
 }
-</pre></div>
+</code></pre></div>
 
 <p><strong>babyopen:</strong> Apply for a space of 0x40 bytes, the address is stored in the global variable babydev_struct.device_buf, and update babydev_struct.device_buf_len
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">babyopen</span><span class="p">(</span><span class="n">inode</span> <span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">babyopen</span><span class="p">(</span><span class="n">inode</span> <span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -4897,9 +4897,9 @@ v4 = v3;
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p><strong>babyread:</strong> First check if the length is less than babydev_struct.device_buf_len, then copy the data in babydev_struct.device_buf to the buffer, the buffer and the length are the parameters passed by the user.
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babyread</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babyread</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -4920,9 +4920,9 @@ v4 = v3;
   <span class="p">}</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p><strong>babywrite:</strong> Similar to babyread, the difference is from the buffer copy to the global variable
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babywrite</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babywrite</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -4943,9 +4943,9 @@ v4 = v3;
   <span class="p">}</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p><strong>babyrelease:</strong> free up space, nothing to say
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">babyrelease</span><span class="p">(</span><span class="n">inode</span> <span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">babyrelease</span><span class="p">(</span><span class="n">inode</span> <span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -4962,14 +4962,14 @@ v4 = v3;
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>There are also two functions, babydriver_init() and babydriver_exit(), which complete the initialization and cleanup of the <strong>/dev/babydev</strong> device respectively. Check the usage of the function and no longer analyze it.</p>
 <h4 id="ideas">Ideas<a class="headerlink" href="#ideas" title="Permanent link">&para;</a></h4>
 <p>There are no vulnerabilities such as user-space traditional overflow, but there is a UAF vulnerability caused by pseudo-conditional competition.</p>
 <p>This means that if we open both devices at the same time, the second time will overwrite the first allocated space, because babydev_struct is global. Similarly, if the first one is released, then the second one is actually released, which results in a UAF.</p>
 <p>So how do you use UAF? As mentioned before, the cred structure can be modified to grant root to root.</p>
 <p>The 4.7.22 cred structure [definition] (<a href="https://elixir.bootlin.com/linux/v4.4.72/source/include/linux/cred.h#L118">https://elixir.bootlin.com/linux/v4.4.72/source/include/linux/cred.h#L118</a>) is as follows:
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">cred</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">cred</span> <span class="p">{</span>
     <span class="n">atomic_t</span>    <span class="n">usage</span><span class="p">;</span>
 
 <span class="cp">#ifdef CONFIG_DEBUG_CREDENTIALS</span>
@@ -5041,7 +5041,7 @@ v4 = v3;
     <span class="k">struct</span> <span class="n">rcu_head</span> <span class="n">rcu</span><span class="p">;</span>        <span class="cm">/* RCU deletion hook */</span>
 
 <span class="p">};</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>Then according to the UAF&#39;s thinking, the idea is as follows:</p>
 <ol>
 <li>Turn on the device twice and change its size to the size of the cred structure via ioctl</li>
@@ -5051,7 +5051,7 @@ v4 = v3;
 <p>Need to determine the size of the cred structure, with the source code, the size is well defined. The calculation is 0xa8 (note the source code using the same kernel version).</p>
 <h4 id="exploit">Exploit<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h4>
 <p>The comments are written in the code, <a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/kernel/CISCN2017-babydriver">exploit here</a>
-<div class="codehilite"><pre><span></span><span class="n">CISCN2017_babydriver</span> <span class="p">[</span><span class="n">master</span><span class="err">●●</span><span class="p">]</span> <span class="n">cat</span> <span class="n">exploit</span><span class="p">.</span><span class="n">c</span> 
+<div class="codehilite"><pre><span></span><code><span class="n">CISCN2017_babydriver</span> <span class="p">[</span><span class="n">master</span><span class="err">●●</span><span class="p">]</span> <span class="n">cat</span> <span class="n">exploit</span><span class="p">.</span><span class="n">c</span> 
 
 <span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 
@@ -5146,9 +5146,9 @@ v4 = v3;
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <h4 id="get-root-shell">get root shell<a class="headerlink" href="#get-root-shell" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span>// statically compile the file, there is no libc in the kernel
+<div class="codehilite"><pre><span></span><code>// statically compile the file, there is no libc in the kernel
 CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> gcc exploit.c -static -o exploit
 
 CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> file exploit
@@ -5199,7 +5199,7 @@ exploit
 <span class="nv">uid</span><span class="o">=</span><span class="m">0</span><span class="o">(</span>root<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span><span class="m">0</span><span class="o">(</span>root<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span><span class="m">1000</span><span class="o">(</span>ctf<span class="o">)</span>
 
 / <span class="c1">#</span>
-</pre></div>
+</code></pre></div>
 
 <p>Of course, you can also use rop to do the next analysis.</p>
 <h2 id="reference">Reference:<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
@@ -5272,7 +5272,7 @@ exploit
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5287,7 +5287,7 @@ exploit
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

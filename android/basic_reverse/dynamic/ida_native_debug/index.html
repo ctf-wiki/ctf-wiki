@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4783,24 +4783,24 @@
 <ol>
 <li>Upload the android_server file (under ida&#39;s dbgsrv folder) and modify the permissions to make it executable</li>
 </ol>
-<div class="codehilite"><pre><span></span>adb push android_server /data/local/tmp/
+<div class="codehilite"><pre><span></span><code>adb push android_server /data/local/tmp/
 
 adb shell chmod <span class="m">755</span> /data/local/tmp/android_server
-</pre></div>
+</code></pre></div>
 
 <ol>
 <li>Open android_server, which will listen on port 23946 (running as root)</li>
 </ol>
-<div class="codehilite"><pre><span></span>Adb shell <span class="c1"># Enter adb</span>
+<div class="codehilite"><pre><span></span><code>Adb shell <span class="c1"># Enter adb</span>
 Su <span class="c1"># switch root</span>
 ./data/local/tmp/android_server <span class="c1">#Start android_server</span>
-</pre></div>
+</code></pre></div>
 
 <ol>
 <li>Establish communication between the local computer 23496 port and the mobile phone port 23946. When the PC has a client connection to port 23946, the information it sends will be forwarded to the corresponding port on the phone, and android_server will receive the corresponding data, allowing IDA to debug the program. The port of the previous tcp refers to the port of the local PC, and the latter refers to the port of the mobile phone.</li>
 </ol>
-<div class="codehilite"><pre><span></span>adb forward tcp:23946 tcp:23946
-</pre></div>
+<div class="codehilite"><pre><span></span><code>adb forward tcp:23946 tcp:23946
+</code></pre></div>
 
 <p>note:</p>
 <p>&gt; In fact, this connection establishes communication between the adb server and the adbd on the phone. So its communication is probably like this</p>
@@ -4814,10 +4814,10 @@ Su <span class="c1"># switch root</span>
 <h3 id="adding-a-program">Adding a program<a class="headerlink" href="#adding-a-program" title="Permanent link">&para;</a></h3>
 <p>Here we take the debugnativeapp in <u><a href="http://www.52pojie.cn/thread-554068-1-1.html">http://www.52pojie.cn/thread-554068-1-1.html</a></u> as an example.</p>
 <p>First, we need to put the native program on the android device and modify its permissions so that it can be executed. as follows</p>
-<div class="codehilite"><pre><span></span>adb push debugnativeapp /data/local/tmp/
+<div class="codehilite"><pre><span></span><code>adb push debugnativeapp /data/local/tmp/
 
 adb shell chmod <span class="m">755</span> /data/local/tmp/debugnativeapp
-</pre></div>
+</code></pre></div>
 
 <h3 id="start-debugging">Start debugging<a class="headerlink" href="#start-debugging" title="Permanent link">&para;</a></h3>
 <p>Select the appropriate ida according to the number of bits in the native layer program, then select Debugger-Run-RemoteArmLinux/Android debugger, the following interface</p>
@@ -4865,8 +4865,8 @@ adb shell chmod <span class="m">755</span> /data/local/tmp/debugnativeapp
 <p><strong> First, you must build a basic debugging environment. </strong></p>
 <h3 id="installer">Installer<a class="headerlink" href="#installer" title="Permanent link">&para;</a></h3>
 <p>First, we need to install the apk on the phone.</p>
-<div class="codehilite"><pre><span></span>adb install debugjniso.apk
-</pre></div>
+<div class="codehilite"><pre><span></span><code>adb install debugjniso.apk
+</code></pre></div>
 
 <h3 id="debug-mode-startup-app">Debug mode startup app<a class="headerlink" href="#debug-mode-startup-app" title="Permanent link">&para;</a></h3>
 <p>Secondly, we need to start the program in <strong> debug mode</strong>, so that IDA can easily capture the corresponding program and attach it.</p>
@@ -4893,23 +4893,23 @@ adb shell chmod <span class="m">755</span> /data/local/tmp/debugnativeapp
 <p>First, we open ddms to select the process we want to debug.</p>
 <p><img alt="" src="../figure/ddms.png" /></p>
 <p>This is actually equivalent to direct execution.</p>
-<div class="codehilite"><pre><span></span><span class="c1"># Display all user processes available for debugging on the phone</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Display all user processes available for debugging on the phone</span>
 adb jdwp
 
 <span class="c1"># Establish a connection between the xxx port of the PC and the corresponding port of the mobile phone to facilitate communication</span>
 adb forward tcp:xxx jdwp:&lt;pid&gt;
-</pre></div>
+</code></pre></div>
 
 <p>The reason why we don&#39;t use the command to execute is because we have to determine the process number of our apk ourselves, which is more troublesome.</p>
 <p>Here is a basic communication process</p>
 <p><img alt="" src="../figure/jdb-debugging.png" /></p>
 <p>At this point, our computer has established communication with the app&#39;s app virtual machine.</p>
 <p>At the same time, we need to use jdb in the java layer to attach our apk application to our computer, here we use the following command.</p>
-<div class="codehilite"><pre><span></span>jdb -connect com.sun.jdi.SocketAttach:hostname<span class="o">=</span>localhost,port<span class="o">=</span>xxx
-</pre></div>
+<div class="codehilite"><pre><span></span><code>jdb -connect com.sun.jdi.SocketAttach:hostname<span class="o">=</span>localhost,port<span class="o">=</span>xxx
+</code></pre></div>
 
 <p>Where xxx is the 8700 port we saw in ddms, the default is this. After execution</p>
-<div class="codehilite"><pre><span></span>C:<span class="se">\U</span>sers<span class="se">\i</span>romise
+<div class="codehilite"><pre><span></span><code>C:<span class="se">\U</span>sers<span class="se">\i</span>romise
 
 λ jdb.bat
 
@@ -4920,7 +4920,7 @@ Set uncaught java.lang.Throwable
 Set delayed uncaught java.lang.Throwable
 Initializing jdb...
 &gt;
-</pre></div>
+</code></pre></div>
 
 <p>Let’s take a look at our mobile phone again.</p>
 <p><img alt="" src="../figure/debug_attach_mobile.png" /></p>
@@ -4932,7 +4932,7 @@ Initializing jdb...
 <p>We then run F9 in the previous debug IDA until it is no longer running, we will see the program break at the linker</p>
 <p><img alt="" src="../figure/debug_attach_linker.png" /></p>
 <p>At this point, we <strong> click on the app&#39;s interface to set the title button </strong> (the reason to press this, because the native API is called in the function), observe the IDA again, you can see that the so library has been loaded into</p>
-<div class="codehilite"><pre><span></span>B3B05000: loaded /data/app/com.droider.debugjniso-1/oat/arm/base.odex
+<div class="codehilite"><pre><span></span><code>B3B05000: loaded /data/app/com.droider.debugjniso-1/oat/arm/base.odex
 
 B39B9000: loaded /system/lib/hw/gralloc.msm8974.so
 
@@ -4941,16 +4941,16 @@ B39B2000: loaded /system/lib/libmemalloc.so
 B39AA000: loaded /system/lib/libqdutils.so
 
 B3B00000: loaded /data/app/com.droider.debugjniso-1/lib/arm/libdebugjniso.so
-</pre></div>
+</code></pre></div>
 
 <p>At this point, we use ctrl+s to locate 0xB3B00000 at the starting address of the library. Then according to</p>
-<div class="codehilite"><pre><span></span>Absolute address = base address + relative offset
-</pre></div>
+<div class="codehilite"><pre><span></span><code>Absolute address = base address + relative offset
+</code></pre></div>
 
 <p>Get the address of the jnistring.</p>
 <h3 id="observation-results">Observation results<a class="headerlink" href="#observation-results" title="Permanent link">&para;</a></h3>
 <p>Press g, then type <code>+0xC38</code> and click ok to jump to the function</p>
-<div class="codehilite"><pre><span></span>libdebugjniso.so:B3B00C38 Java_com_droider_debugjniso_TestJniMethods_jniString
+<div class="codehilite"><pre><span></span><code>libdebugjniso.so:B3B00C38 Java_com_droider_debugjniso_TestJniMethods_jniString
 libdebugjniso.so:B3B00C38 LDR             R1, =(unk_B3B02148 - 0xB3B00C4C)
 
 libdebugjniso.so:B3B00C3C STMFD           SP!, {R4,LR}
@@ -4959,7 +4959,7 @@ libdebugjniso.so:B3B00C40 LDR R3, [R0]
 libdebugjniso.so:B3B00C44 ADD             R1, PC, R1 ; unk_B3B02148
 
 libdebugjniso.so:B3B00C48 MOV             LR, PC
-</pre></div>
+</code></pre></div>
 
 <p>We breakpoints at the beginning of this function, F2, and then execute the program again with F9. While watching the phone, we can see that the title of the app has changed to <code>Hello! Nativemethod</code>.</p>
 <p>At this point, the basic debugging steps of the so native program are over.</p>
@@ -5047,7 +5047,7 @@ libdebugjniso.so:B3B00C48 MOV             LR, PC
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5062,7 +5062,7 @@ libdebugjniso.so:B3B00C48 MOV             LR, PC
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

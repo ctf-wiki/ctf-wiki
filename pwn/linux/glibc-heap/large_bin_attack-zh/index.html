@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4717,7 +4717,7 @@
 <p>分配跟 large bin 有关的 chunk，要经过 fastbin，unsorted bin，small bin 的分配，建议在学习 large bin attack 之前搞清楚 fastbin，unsorted bin 分配的流程</p>
 <h2 id="large-bin-attack_1">通过实例学习 large bin attack 的原理<a class="headerlink" href="#large-bin-attack_1" title="Permanent link">&para;</a></h2>
 <p>这里我们拿 how2heap 中的 large bin attack 中的源码来分析</p>
-<div class="codehilite"><pre><span></span><span class="c1">// 主要漏洞在这里</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// 主要漏洞在这里</span>
 <span class="cm">/*</span>
 
 <span class="cm">    This technique is taken from</span>
@@ -4831,7 +4831,7 @@
 
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>编译完以后，注意！一定要用 glibc2.25 的 loader，改变 loader 的方法可以看这里：<a href="https://www.jianshu.com/p/1a966b62b3d4">https://www.jianshu.com/p/1a966b62b3d4</a></p>
 <p>pwngdb 走起，开始我们的分析之旅：</p>
@@ -4881,24 +4881,24 @@
 <p><img alt="" src="../figure/large_bin_attack/large_bin_attack13.png" /></p>
 <p>这个原本的意思是把从 unsorted bin 中来的 chunk 插入这个序列中，但是这里没有检查合法性。这里存在这一个利用：</p>
 <p>之前做的构造，把 fwd 的 bk_nextsize 指向了另一个地址</p>
-<div class="codehilite"><pre><span></span><span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">nextsize</span>
+<div class="codehilite"><pre><span></span><code><span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">nextsize</span>
 <span class="c1">// then</span>
 <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span><span class="o">-&gt;</span><span class="n">nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>也就是：</p>
-<div class="codehilite"><pre><span></span><span class="n">addr2</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">addr2</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
 <span class="c1">// 等价于</span>
 <span class="o">*</span><span class="p">(</span><span class="n">addr2</span><span class="o">+</span><span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>所以修改了 <code>stack_var2</code> 的值。</p>
 <p>接着还存着另外一个利用：</p>
 <p><img alt="" src="../figure/large_bin_attack/large_bin_attack14.png" /></p>
-<div class="codehilite"><pre><span></span><span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
 <span class="c1">// 等价于</span>
 <span class="o">*</span><span class="p">(</span><span class="n">addr</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>修改了 stack_var1 的值。</p>
 <p>至此利用完毕。由于最后分配的还是 small bin 中的 chunk，与 large bin 中的 chunk 也无关了。</p>
@@ -5008,7 +5008,7 @@
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5023,7 +5023,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

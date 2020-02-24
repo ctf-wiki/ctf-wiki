@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4710,7 +4710,7 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
 <p>! [ida_strings.png] (./ figure / 2016_seccon / ida_strings.png)</p>
 <p>Obviously, the string indicates that there may be various tests in the program, such as detecting the process names <code>ollydbg.exe</code>, <code>ImmunityDebugger.exe</code>, <code>idaq.exe</code> and <code>Wireshark.exe</code>. Then there are other tests. We also see I got the words <code>password is wrong</code> and <code>You password is correct</code>. I also found a string that is likely to be the flag to be decrypted. Then we will first come to the cross reference of <code>password is wrong</code> Key function.</p>
 <p>As shown below: The program uses a lot of anti-debugging techniques.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -4876,11 +4876,11 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>I wrote a note in the code that lists the 9 protection techniques used in it. Let&#39;s analyze it one by one.</p>
 <h2 id="compare-plaintext-strings">Compare plaintext strings<a class="headerlink" href="#compare-plaintext-strings" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Input password &gt;&quot;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><code><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Input password &gt;&quot;</span><span class="p">);</span>
 
 <span class="n">v3</span> <span class="o">=</span> <span class="p">(</span><span class="kt">FILE</span> <span class="o">*</span><span class="p">)</span><span class="n">sub_40223D</span><span class="p">();</span>
 
@@ -4894,11 +4894,11 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
     <span class="p">......</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Here is the output <code>Input password &amp;gt;</code>. Then use <code>fgets()</code> to get the string entered by the user, copy <code>I have a pen.</code> to the buffer of <code>v21</code>, and compare the user input with <code>strncmp</code> With the contents of <code>I have a pen.</code>, and return the comparison result to <code>v22</code>. The following will be based on <code>v22</code>, that is, according to whether the input <code>password</code> is correct, and jump.</p>
 <h2 id="isdebuggerpresent">IsDebuggerPresent()<a class="headerlink" href="#isdebuggerpresent" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">puts</span><span class="p">(</span><span class="s">&quot;Your password is correct.&quot;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><code><span class="n">puts</span><span class="p">(</span><span class="s">&quot;Your password is correct.&quot;</span><span class="p">);</span>
 
 <span class="k">if</span> <span class="p">(</span> <span class="n">IsDebuggerPresent</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span>     <span class="c1">// 2. API: IsDebuggerPresent()</span>
 <span class="p">{</span>
@@ -4908,13 +4908,13 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Obviously, if the input <code>password</code> is correct, it will output the prompt <code>Your password is correct.</code>. ??? Not surprising. Is it <code>I have a pen.</code> is our flag? No, no, of course not. This is actually a trap. Since you know <code>I have a pen.</code> then there is definitely some way to analyze the program through some reverse means. So the next part will start some anti-debugging or other means of detection (actual Such a trap can also occur in the middle).</p>
 <p>At the beginning is <code>IsDebuggerPresent()</code>, which determines if there is debugging based on the returned result. If you are not sure, you can go back and look at <a href="../isdebuggerpresent/">IsDebuggerPresent()</a></p>
 <h2 id="ntglobalflag">NtGlobalFlag<a class="headerlink" href="#ntglobalflag" title="Permanent link">&para;</a></h2>
 <p>Next is to detect the flag of the <code>NtGlobalFlag</code> field. Detect the debugger by checking if the field value of the PEB is <code>0x70</code>. If it is not clear, you can go back and look at <a href="../ntglobalflag/">NtGlobalFlag</a></p>
-<div class="codehilite"><pre><span></span><span class="n">If</span> <span class="p">(</span> <span class="n">sub_401120</span><span class="p">()</span> <span class="o">==</span> <span class="mh">0x70</span> <span class="p">)</span> <span class="c1">// 3. Check if the 0x68 offset of the PEB is 0x70. Detect NtGlobalFlag()</span>
+<div class="codehilite"><pre><span></span><code><span class="n">If</span> <span class="p">(</span> <span class="n">sub_401120</span><span class="p">()</span> <span class="o">==</span> <span class="mh">0x70</span> <span class="p">)</span> <span class="c1">// 3. Check if the 0x68 offset of the PEB is 0x70. Detect NtGlobalFlag()</span>
 <span class="p">{</span>
 
     <span class="n">puts</span><span class="p">(</span><span class="s">&quot;But detected NtGlobalFlag!&quot;</span><span class="p">);</span>
@@ -4922,21 +4922,21 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Then let&#39;s take a quick look at <code>sub_401120()</code>.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">sub_401120</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">sub_401120</span><span class="p">()</span>
 
 <span class="p">{</span>
 
   <span class="k">return</span> <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)(</span><span class="n">__readfsdword</span><span class="p">(</span><span class="mi">48</span><span class="p">)</span> <span class="o">+</span> <span class="mh">0x68</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x70</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p><code>0x68</code> is the offset value of the <code>NtGlobalFlag</code> field of the PEB. <code>0x70</code> is the three flags of <code>FLG_HEAP_ENABLE_TAIL_CHECK (0x10)</code>, <code>FLG_HEAP_ENABLE_FREE_CHECK (0x20)</code> and <code>FLG_HEAP_VALIDATE_PARAMETERS (0x40)</code></p>
 <h2 id="checkremotedebuggerpresent">CheckRemoteDebuggerPresent<a class="headerlink" href="#checkremotedebuggerpresent" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="cm">/*  BOOL WINAPI CheckRemoteDebuggerPresent(</span>
+<div class="codehilite"><pre><span></span><code><span class="cm">/*  BOOL WINAPI CheckRemoteDebuggerPresent(</span>
 
 <span class="cm"> *    _In_    HANDLE hProcess,</span>
 
@@ -4957,11 +4957,11 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Here I will list the function prototype of the <code>CheckRemoteDebuggerPresent()</code> API in the comments. If the debugger is detected, <code>pbDebuggerPresent</code> will be set to a non-zero value. Detect the debugger based on its value (<a href="../checkremotedebuggerpresent/">CheckRemoteDebuggerPresent( )</a></p>
 <h2 id="time-difference-detection">Time difference detection<a class="headerlink" href="#time-difference-detection" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">v13</span> <span class="o">=</span> <span class="n">GetTickCount</span><span class="p">();</span>
+<div class="codehilite"><pre><span></span><code><span class="n">v13</span> <span class="o">=</span> <span class="n">GetTickCount</span><span class="p">();</span>
 
 <span class="k">for</span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">100</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>    <span class="c1">// 睡眠</span>
 
@@ -4977,11 +4977,11 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p><code>GetTickCount</code> will return the number of milliseconds from start to now. The loop is <code>sleep(1)</code>, which is 100 times, that is, 100 milliseconds. If the difference between the two times is greater than 1000 milliseconds, the time difference is obviously greater than the consumed time. The time, indirectly detected debugging.</p>
 <h2 id="processmonitor">ProcessMonitor<a class="headerlink" href="#processmonitor" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">lpFileName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\\\\</span><span class="s">.</span><span class="se">\\</span><span class="s">Global</span><span class="se">\\</span><span class="s">ProcmonDebugLogger&quot;</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">lpFileName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\\\\</span><span class="s">.</span><span class="se">\\</span><span class="s">Global</span><span class="se">\\</span><span class="s">ProcmonDebugLogger&quot;</span><span class="p">;</span>
 
 <span class="k">if</span> <span class="p">(</span> <span class="n">CreateFileA</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\\\\</span><span class="s">.</span><span class="se">\\</span><span class="s">Global</span><span class="se">\\</span><span class="s">ProcmonDebugLogger&quot;</span><span class="p">,</span> <span class="mh">0x80000000</span><span class="p">,</span> <span class="mi">7u</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3u</span><span class="p">,</span> <span class="mh">0x80u</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">HANDLE</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
 
@@ -4992,12 +4992,12 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Check <code>ProcessMonitor</code> here by checking the device file <code>\\\\.\\Global\\ProcmonDebugLogger</code></p>
 <h2 id="detection-process-name">Detection process name<a class="headerlink" href="#detection-process-name" title="Permanent link">&para;</a></h2>
 <p>Here, the process is detected by executing the <code>sub_401130()</code> function, and the corresponding value is returned according to the detected different processes.</p>
-<div class="codehilite"><pre><span></span><span class="n">V11</span> <span class="o">=</span> <span class="n">sub_401130</span><span class="p">();</span> <span class="c1">// 7. API: CreateToolhelp32Snapshot() detects the process</span>
+<div class="codehilite"><pre><span></span><code><span class="n">V11</span> <span class="o">=</span> <span class="n">sub_401130</span><span class="p">();</span> <span class="c1">// 7. API: CreateToolhelp32Snapshot() detects the process</span>
 <span class="k">if</span> <span class="p">(</span> <span class="n">v11</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span>
 
 <span class="p">{</span>
@@ -5037,10 +5037,10 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Let&#39;s take a look at the <code>sub_401130()</code> function.</p>
-<div class="codehilite"><pre><span></span><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">sub_401130</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">sub_401130</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -5076,12 +5076,12 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Here the API is used: <code>CreateToolhelp32Snapshot</code> to get the current process information. It is compared in the for loop. If the specified process name is found, it returns the corresponding value directly. Then it jumps to a different branch according to the return value.</p>
 <h2 id="detecting-vmware">Detecting VMware<a class="headerlink" href="#detecting-vmware" title="Permanent link">&para;</a></h2>
 <p>Testing VMware is also detecting some features. Judging based on the results of the test.</p>
-<div class="codehilite"><pre><span></span><span class="n">If</span> <span class="p">(</span> <span class="n">sub_401240</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span> <span class="c1">// 8. Detect through the i/O port of vmware</span>
+<div class="codehilite"><pre><span></span><code><span class="n">If</span> <span class="p">(</span> <span class="n">sub_401240</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span> <span class="c1">// 8. Detect through the i/O port of vmware</span>
 <span class="p">{</span>
 
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detected VMware.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
@@ -5089,10 +5089,10 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Look at the <code>sub_401240()</code> function.</p>
-<div class="codehilite"><pre><span></span><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">sub_401240</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">sub_401240</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -5105,7 +5105,7 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
   <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>This is a &quot;backdoor&quot; I/O port for VMware, <code>0x5658 = &amp;quot;VX&amp;quot;</code>. If the program is running inside VMware, the program uses the <code>In</code> instruction to read data through the <code>0x5658</code> port, the value of the <code>EBX</code> register. Will become <code>0x564D5868</code> (<code>0x564D5868 == &amp;quot;VMXh&amp;quot;</code>)</p>
 <p>Look at the pseudo-C code decompiled by IDA is not very intuitive to reflect this, we see the assembly code is clear</p>
@@ -5121,7 +5121,7 @@ Let&#39;s analyze a 2016 anti-debugging problem for SecCon, title download link:
 <p>.text:00401292                 pop     ebx</p>
 <p>.text:00401293                 pop     ecx</p>
 <p>.text:00401294                 pop     edx</p>
-<div class="codehilite"><pre><span></span>更多阅读: [E-cards don?t like virtual environments](https://isc.sans.edu/diary/E-cards+don%3Ft+like+virtual+environments/3190)
+<div class="codehilite"><pre><span></span><code>更多阅读: [E-cards don?t like virtual environments](https://isc.sans.edu/diary/E-cards+don%3Ft+like+virtual+environments/3190)
 
 
 
@@ -5140,10 +5140,10 @@ ms_exc.registration.TryLevel = -2;
 printf(&quot;But detected Debugged.\n&quot;);
 
 exit(1);
-</pre></div>
+</code></pre></div>
 
 <p>The next paragraph, very strange is not. Here <code>v19 = 1 / 0;</code> obviously unreasonable, will produce a divide by zero exception. And the latter <code>ms_exc.registration.TryLevel = -2;</code>this is to cancel the exception , <code>TryLevel=TRYLEVEL_NONE (-2)</code> . Look at the assembly code.</p>
-<div class="codehilite"><pre><span></span>.text:004015B8                 mov     [ebp+var_88], 1
+<div class="codehilite"><pre><span></span><code>.text:004015B8                 mov     [ebp+var_88], 1
 
 .text:004015C2                 mov     [ebp+var_7C], 1
 
@@ -5162,7 +5162,7 @@ exit(1);
 .text:004015E7                 mov     [ebp+ms_exc.registration.TryLevel], 0FFFFFFFEh
 
 .text:004015EE                 jmp     short loc_40160A
-</pre></div>
+</code></pre></div>
 
 <p>After the <code>idiv [ebp+var_9C]</code> trigger exception is taken over by the exception handler handled by the program, if the breakpoint is not set at the exception handler entry, the program will easily run away.</p>
 <h2 id="get-flag">Get flag<a class="headerlink" href="#get-flag" title="Permanent link">&para;</a></h2>
@@ -5251,7 +5251,7 @@ exit(1);
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5266,7 +5266,7 @@ exit(1);
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

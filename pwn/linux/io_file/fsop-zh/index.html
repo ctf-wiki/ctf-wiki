@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4717,7 +4717,7 @@
 <h2 id="_1">介绍<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>FSOP是File Stream Oriented Programming的缩写，根据前面对FILE的介绍得知进程内所有的_IO_FILE结构会使用_chain域相互连接形成一个链表，这个链表的头部由_IO_list_all维护。</p>
 <p>FSOP的核心思想就是劫持_IO_list_all的值来伪造链表和其中的_IO_FILE项，但是单纯的伪造只是构造了数据还需要某种方法进行触发。FSOP选择的触发方法是调用_IO_flush_all_lockp，这个函数会刷新_IO_list_all链表中所有项的文件流，相当于对每个FILE调用fflush，也对应着会调用_IO_FILE_plus.vtable中的_IO_overflow。</p>
-<div class="codehilite"><pre><span></span>int
+<div class="codehilite"><pre><span></span><code>int
 _IO_flush_all_lockp (int do_lock)
 {
   ...
@@ -4733,7 +4733,7 @@ _IO_flush_all_lockp (int do_lock)
         ...
   }
 }
-</pre></div>
+</code></pre></div>
 
 <p><img alt="" src="../figure/abort_routine.001.jpeg" /></p>
 <p>而_IO_flush_all_lockp不需要攻击者手动调用，在一些情况下这个函数会被系统调用：</p>
@@ -4745,12 +4745,12 @@ _IO_flush_all_lockp (int do_lock)
 <p>之后需要用任意地址写把_IO_list_all的内容改为指向我们可控内存的指针，</p>
 <p>之后的问题是在可控内存中布置什么数据，毫无疑问的是需要布置一个我们理想函数的vtable指针。但是为了能够让我们构造的fake_FILE能够正常工作，还需要布置一些其他数据。
 这里的依据是我们前面给出的</p>
-<div class="codehilite"><pre><span></span>if (((fp-&gt;_mode &lt;= 0 &amp;&amp; fp-&gt;_IO_write_ptr &gt; fp-&gt;_IO_write_base))
+<div class="codehilite"><pre><span></span><code>if (((fp-&gt;_mode &lt;= 0 &amp;&amp; fp-&gt;_IO_write_ptr &gt; fp-&gt;_IO_write_base))
                &amp;&amp; _IO_OVERFLOW (fp, EOF) == EOF)
            {
                result = EOF;
           }
-</pre></div>
+</code></pre></div>
 
 <p>也就是</p>
 <ul>
@@ -4759,7 +4759,7 @@ _IO_flush_all_lockp (int do_lock)
 </ul>
 <p>在这里通过一个示例来验证这一点，首先我们分配一块内存用于存放伪造的vtable和_IO_FILE_plus。
 为了绕过验证，我们提前获得了_IO_write_ptr、_IO_write_base、_mode等数据域的偏移，这样可以在伪造的vtable中构造相应的数据</p>
-<div class="codehilite"><pre><span></span>#define _IO_list_all 0x7ffff7dd2520
+<div class="codehilite"><pre><span></span><code>#define _IO_list_all 0x7ffff7dd2520
 #define mode_offset 0xc0
 #define writeptr_offset 0x28
 #define writebase_offset 0x20
@@ -4785,18 +4785,18 @@ int main(void)
 
     exit(0);
 }
-</pre></div>
+</code></pre></div>
 
 <p>我们使用分配内存的前0x100个字节作为_IO_FILE，后0x100个字节作为vtable，在vtable中使用0x41414141这个地址作为伪造的_IO_overflow指针。</p>
 <p>之后，覆盖位于libc中的全局变量 _IO_list_all，把它指向我们伪造的_IO_FILE_plus。</p>
 <p>通过调用exit函数，程序会执行 _IO_flush_all_lockp，经过fflush获取_IO_list_all的值并取出作为_IO_FILE_plus调用其中的_IO_overflow</p>
-<div class="codehilite"><pre><span></span>---&gt; call _IO_overflow
+<div class="codehilite"><pre><span></span><code>---&gt; call _IO_overflow
 [#0] 0x7ffff7a89193 → Name: _IO_flush_all_lockp(do_lock=0x0)
 [#1] 0x7ffff7a8932a → Name: _IO_cleanup()
 [#2] 0x7ffff7a46f9b → Name: __run_exit_handlers(status=0x0, listp=&lt;optimized out&gt;, run_list_atexit=0x1)
 [#3] 0x7ffff7a47045 → Name: __GI_exit(status=&lt;optimized out&gt;)
 [#4] 0x4005ce → Name: main()
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -4897,7 +4897,7 @@ int main(void)
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -4912,7 +4912,7 @@ int main(void)
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

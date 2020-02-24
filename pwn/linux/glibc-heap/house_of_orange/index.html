@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4685,7 +4685,7 @@
 The principle of this operation is simply that when the top heap size of the current heap is insufficient to meet the size of the application allocation, the original top chunk will be released and placed in the unsorted bin. This can be done without the free function. Get unsorted bins.</p>
 <p>Let's take a look at the details of this process. Let's assume that the current top chunk does not meet the allocation requirements of malloc.
 First, the <code>malloc</code> call in the program will be executed into the <code>_int_malloc</code> function of libc.so. In the <code>_int_malloc</code> function, we will check whether the fastbin, small bins, unsorted bin, and large bins can meet the allocation requirements. Size issues are not met. Next, the <code>_int_malloc</code> function will attempt to use the top chunk, where the top chunk will not meet the allocation requirements, so the following branch will be executed.</p>
-<div class="codehilite"><pre><span></span>/*
+<div class="codehilite"><pre><span></span><code>/*
 Otherwise, relay to handle system-dependent cases
 */
 else {
@@ -4694,21 +4694,21 @@ else {
         alloc_perturb (p, bytes);
       return p;
 }
-</pre></div>
+</code></pre></div>
 
 <p>At this point ptmalloc can not meet the user's request for heap memory operations, you need to execute sysmalloc to apply for more space to the system.
 But for the heap there are two distribution methods of mmap and brk, we need to make the heap expand in the form of brk, then the original top chunk will be placed in the unsorted bin.</p>
 <p>In summary, we have to implement brk to extend the top chunk, but to achieve this goal we need to bypass some checks in libc.
 First, the size of malloc cannot be greater than <code>mmp_.mmap_threshold</code>
-<div class="codehilite"><pre><span></span>if ((unsigned long)(nb) &gt;= (unsigned long)(mp_.mmap_threshold) &amp;&amp; (mp_.n_mmaps &lt; mp_.n_mmaps_max))
-</pre></div></p>
+<div class="codehilite"><pre><span></span><code>if ((unsigned long)(nb) &gt;= (unsigned long)(mp_.mmap_threshold) &amp;&amp; (mp_.n_mmaps &lt; mp_.n_mmaps_max))
+</code></pre></div></p>
 <p>If the chunk size to be allocated is greater than the mmap allocation threshold, the default is 128K, and the memory block allocated by the current process using mmap() is less than the set maximum value, and the mmap() system call will be used to directly request memory from the operating system.</p>
 <p>There is a check for the top chunk size in the sysmalloc function, as follows</p>
-<div class="codehilite"><pre><span></span>assert((old_top == initial_top(av) &amp;&amp; old_size == 0) ||
+<div class="codehilite"><pre><span></span><code>assert((old_top == initial_top(av) &amp;&amp; old_size == 0) ||
      ((unsigned long) (old_size) &gt;= MINSIZE &amp;&amp;
       prev_inuse(old_top) &amp;&amp;
       ((unsigned long)old_end &amp; pagemask) == 0));
-</pre></div>
+</code></pre></div>
 
 <p>This checks the legitimacy of the top chunk. If this function is called for the first time, the top chunk may not be initialized, so the old_size may be 0.
 If the top chunk has already been initialized, then the size of the top chunk must be greater than or equal to MINSIZE, because the top chunk contains fencepost, so the top chunk must be larger than MINSIZE. Second, the top chunk must identify that the previous chunk is in the inuse state, and the end chunk's end address must be page-aligned. In addition, the top chunk removes the fencepost size must be smaller than the required chunk size, otherwise the top chunk will be used to split the chunk in the _int_malloc() function.</p>
@@ -4722,7 +4722,7 @@ If the top chunk has already been initialized, then the size of the top chunk mu
 <p>After that, the original top chunk will execute <code>_int_free</code> and smoothly enter the unsorted bin.</p>
 <h2 id="example">example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <p>Here is a sample program that simulates an overflow overlay to the size field of the top chunk. We tried to reduce the size to achieve the brk extension and put the original top chunk into the unsorted bin.</p>
-<div class="codehilite"><pre><span></span>#define fake_size 0x41
+<div class="codehilite"><pre><span></span><code>#define fake_size 0x41
 
 int main(void)
 {
@@ -4736,30 +4736,30 @@ int main(void)
 
     malloc(0x60);
 }
-</pre></div>
+</code></pre></div>
 
 <p>Here we cover the size of the top chunk as 0x41. Then apply for a heap larger than this size, which is 0x60.
 But when we execute this example, we find that this program can't be used successfully because the assert is not satisfied and throws an exception.</p>
-<div class="codehilite"><pre><span></span>[#0] 0x7ffff7a42428 → Name: __GI_raise(sig=0x6)
+<div class="codehilite"><pre><span></span><code>[#0] 0x7ffff7a42428 → Name: __GI_raise(sig=0x6)
 [#1] 0x7ffff7a4402a → Name: __GI_abort()
 [#2] 0x7ffff7a8a2e8 → Name: __malloc_assert(assertion=0x7ffff7b9e150 &quot;(old_top == initial_top (av) &amp;&amp; old_size == 0) || ((unsigned long) (old_size) &gt;= MINSIZE &amp;&amp; prev_inuse (old_top) &amp;&amp; ((unsigned long) old_end &amp; (pagesize - 1)) == 0)&quot;, file=0x7ffff7b9ab85 &quot;malloc.c&quot;, line=0x95a, function=0x7ffff7b9e998 &lt;__func__.11509&gt; &quot;sysmalloc&quot;)
 [#3] 0x7ffff7a8e426 → Name: sysmalloc (nb = 0x70, av = 0x7ffff7dd1b20 &lt;main_arena&gt; )
-</pre></div>
+</code></pre></div>
 
 <h2 id="the-correct-example">The correct example<a class="headerlink" href="#the-correct-example" title="Permanent link">&para;</a></h2>
 <p>Looking back at the conditions of the assert, we can see that the previously listed entries are satisfied except for the first one.</p>
-<div class="codehilite"><pre><span></span>1. Forged size must be aligned to the memory page
-</pre></div>
+<div class="codehilite"><pre><span></span><code>1. Forged size must be aligned to the memory page
+</code></pre></div>
 
 <p>What is alignment to a memory page? We know that modern operating systems are memory managed in units of memory pages. The size of a typical memory page is 4 kb. Then our forged size must be aligned to this size. The size of the top chunk before the overlay is 20fe1, and it is calculated that 0x602020+0x20fe0=0x623000 is aligned for 0x1000 (4kb).</p>
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021
 0x602010:   0x0000000000000000  0x0000000000000000
 0x602020:   0x0000000000000000  0x0000000000020fe1 &lt;== top chunk
 0x602030:   0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 
 <p>Therefore, our fake fake_size can be 0x0fe1, 0x1fe1, 0x2fe1, 0x3fe1, etc. for 4kb aligned size. However, 0x40 does not satisfy the alignment, so it cannot be utilized.</p>
-<div class="codehilite"><pre><span></span>#define fake_size 0x1fe1
+<div class="codehilite"><pre><span></span><code>#define fake_size 0x1fe1
 
 int main(void)
 {
@@ -4774,31 +4774,31 @@ int main(void)
 
     malloc(0x60);
 }
-</pre></div>
+</code></pre></div>
 
 <p>After the allocation, we can observe that the original heap has passed the brk extension.</p>
-<div class="codehilite"><pre><span></span>//The original heap
+<div class="codehilite"><pre><span></span><code>//The original heap
 0x0000000000602000 0x0000000000623000 0x0000000000000000 rw- [heap]
 
 //The extended heap
 0x0000000000602000 0x0000000000646000 0x0000000000000000 rw- [heap]
-</pre></div>
+</code></pre></div>
 
 <p>Our application was assigned to 0x623010 and the original heap was placed in the unsorted bin</p>
-<div class="codehilite"><pre><span></span>[+] unsorted_bins[0]: fw=0x602020, bk=0x602020
+<div class="codehilite"><pre><span></span><code>[+] unsorted_bins[0]: fw=0x602020, bk=0x602020
  →   Chunk(addr=0x602030, size=0x1fc0, flags=PREV_INUSE)
-</pre></div>
+</code></pre></div>
 
 <p>Because there is a block in the unsorted bin, we will cut this block the next time we allocate it.</p>
-<div class="codehilite"><pre><span></span> malloc(0x60);
+<div class="codehilite"><pre><span></span><code> malloc(0x60);
  0x602030
 
 [+] unsorted_bins[0]: fw=0x602090, bk=0x602090
  →   Chunk(addr=0x6020a0, size=0x1f50, flags=PREV_INUSE)
-</pre></div>
+</code></pre></div>
 
 <p>You can see that the allocated memory is cut from the unsorted bin, the memory layout is as follows</p>
-<div class="codehilite"><pre><span></span>0x602030:   0x00007ffff7dd2208  0x00007ffff7dd2208 &lt;== Unsorted bin list not cleared
+<div class="codehilite"><pre><span></span><code>0x602030:   0x00007ffff7dd2208  0x00007ffff7dd2208 &lt;== Unsorted bin list not cleared
 0x602040:   0x0000000000602020  0x0000000000602020
 0x602050:   0x0000000000000000  0x0000000000000000
 0x602060:   0x0000000000000000  0x0000000000000000
@@ -4807,7 +4807,7 @@ int main(void)
 0x602090:   0x0000000000000000  0x0000000000001f51 &lt;== cutting the remaining new unsorted bin
 0x6020a0:   0x00007ffff7dd1b78  0x00007ffff7dd1b78
 0x6020b0:   0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 
 <p>In fact, the main point of the house of orange is here, after the use of _IO_FILE knowledge, put it in the IO_FILE independent chapter to share.</p>
                 
@@ -4875,7 +4875,7 @@ int main(void)
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -4890,7 +4890,7 @@ int main(void)
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

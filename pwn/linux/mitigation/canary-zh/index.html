@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4885,16 +4885,16 @@
 <h2 id="canary_1">Canary 原理<a class="headerlink" href="#canary_1" title="Permanent link">&para;</a></h2>
 <h3 id="gcc-canary">在 GCC 中使用 Canary<a class="headerlink" href="#gcc-canary" title="Permanent link">&para;</a></h3>
 <p>可以在 GCC 中使用以下参数设置 Canary:</p>
-<div class="codehilite"><pre><span></span>-fstack-protector 启用保护，不过只为局部变量中含有数组的函数插入保护
+<div class="codehilite"><pre><span></span><code>-fstack-protector 启用保护，不过只为局部变量中含有数组的函数插入保护
 -fstack-protector-all 启用保护，为所有函数插入保护
 -fstack-protector-strong
 -fstack-protector-explicit 只对有明确 stack_protect attribute 的函数开启保护
 -fno-stack-protector 禁用保护
-</pre></div>
+</code></pre></div>
 
 <h3 id="canary_2">Canary 实现原理<a class="headerlink" href="#canary_2" title="Permanent link">&para;</a></h3>
 <p>开启 Canary 保护的 stack 结构大概如下：</p>
-<p><div class="codehilite"><pre><span></span>        High
+<p><div class="codehilite"><pre><span></span><code>        High
         Address |                 |
                 +-----------------+
                 | args            |
@@ -4908,21 +4908,21 @@
                 | 局部变量        |
         Low     |                 |
         Address
-</pre></div>
+</code></pre></div>
 当程序启用 Canary 编译后，在函数序言部分会取 fs 寄存器 0x28 处的值，存放在栈中 %ebp-0x8 的位置。
 这个操作即为向栈中插入 Canary 值，代码如下：
-<div class="codehilite"><pre><span></span><span class="nf">mov</span>    <span class="no">rax</span><span class="p">,</span> <span class="no">qword</span> <span class="no">ptr</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">0x28</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">mov</span>    <span class="no">rax</span><span class="p">,</span> <span class="no">qword</span> <span class="no">ptr</span> <span class="no">fs</span><span class="p">:[</span><span class="mi">0x28</span><span class="p">]</span>
 <span class="nf">mov</span>    <span class="no">qword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">rbp</span> <span class="p">-</span> <span class="mi">8</span><span class="p">],</span> <span class="no">rax</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>在函数返回之前，会将该值取出，并与 fs:0x28 的值进行异或。如果异或的结果为 0，说明 Canary 未被修改，函数会正常返回，这个操作即为检测是否发生栈溢出。</p>
-<div class="codehilite"><pre><span></span><span class="nf">mov</span>    <span class="no">rdx</span><span class="p">,</span><span class="no">QWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">rbp-0x8</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">mov</span>    <span class="no">rdx</span><span class="p">,</span><span class="no">QWORD</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">rbp-0x8</span><span class="p">]</span>
 <span class="nf">xor</span>    <span class="no">rdx</span><span class="p">,</span><span class="no">QWORD</span> <span class="no">PTR</span> <span class="no">fs</span><span class="p">:</span><span class="mi">0x28</span>
 <span class="nf">je</span>     <span class="mh">0x4005d7</span> <span class="p">&lt;</span><span class="no">main</span><span class="p">+</span><span class="mi">65</span><span class="p">&gt;</span>
 <span class="nf">call</span>   <span class="mh">0x400460</span> <span class="p">&lt;</span><span class="no">__stack_chk_fail@plt</span><span class="p">&gt;</span>
-</pre></div>
+</code></pre></div>
 
 <p>如果 Canary 已经被非法修改，此时程序流程会走到 <code>__stack_chk_fail</code>。<code>__stack_chk_fail</code> 也是位于 glibc 中的函数，默认情况下经过 ELF 的延迟绑定，定义如下。</p>
-<div class="codehilite"><pre><span></span><span class="n">eglibc</span><span class="o">-</span><span class="mf">2.19</span><span class="o">/</span><span class="n">debug</span><span class="o">/</span><span class="n">stack_chk_fail</span><span class="p">.</span><span class="n">c</span>
+<div class="codehilite"><pre><span></span><code><span class="n">eglibc</span><span class="o">-</span><span class="mf">2.19</span><span class="o">/</span><span class="n">debug</span><span class="o">/</span><span class="n">stack_chk_fail</span><span class="p">.</span><span class="n">c</span>
 
 <span class="kt">void</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">noreturn</span><span class="p">))</span> <span class="n">__stack_chk_fail</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 <span class="p">{</span>
@@ -4936,11 +4936,11 @@
     <span class="n">__libc_message</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">&quot;*** %s ***: %s terminated</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
                     <span class="n">msg</span><span class="p">,</span> <span class="n">__libc_argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">?:</span> <span class="s">&quot;&lt;unknown&gt;&quot;</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>这意味可以通过劫持 <code>__stack_chk_fail</code> 的 got 值劫持流程或者利用 <code>__stack_chk_fail</code> 泄漏内容(参见 stack smash)。</p>
 <p>进一步，对于 Linux 来说，fs 寄存器实际指向的是当前栈的 TLS 结构，fs:0x28 指向的正是 stack_guard。
-<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span>
+<div class="codehilite"><pre><span></span><code><span class="k">typedef</span> <span class="k">struct</span>
 <span class="p">{</span>
   <span class="kt">void</span> <span class="o">*</span><span class="n">tcb</span><span class="p">;</span>        <span class="cm">/* Pointer to the TCB.  Not necessarily the</span>
 <span class="cm">                       thread descriptor used by libpthread.  */</span>
@@ -4951,10 +4951,10 @@
   <span class="kt">uintptr_t</span> <span class="n">stack_guard</span><span class="p">;</span>
   <span class="p">...</span>
 <span class="p">}</span> <span class="n">tcbhead_t</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 如果存在溢出可以覆盖位于 TLS 中保存的 Canary 值那么就可以实现绕过保护机制。</p>
 <p>事实上，TLS 中的值由函数 security_init 进行初始化。</p>
-<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span>
+<div class="codehilite"><pre><span></span><code><span class="k">static</span> <span class="kt">void</span>
 <span class="nf">security_init</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="c1">// _dl_random的值在进入这个函数的时候就已经由kernel写入.</span>
@@ -4973,7 +4973,7 @@
 <span class="c1">//THREAD_SET_STACK_GUARD宏用于设置TLS</span>
 <span class="cp">#define THREAD_SET_STACK_GUARD(value) \</span>
 <span class="cp">  THREAD_SETMEM (THREAD_SELF, header.stack_guard, value)</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="canary_3">Canary 绕过技术<a class="headerlink" href="#canary_3" title="Permanent link">&para;</a></h2>
 <h3 id="_2">序言<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
@@ -4984,7 +4984,7 @@
 这种利用方式需要存在合适的输出函数，并且可能需要第一溢出泄露 Canary，之后再次溢出控制执行流程。</p>
 <h4 id="_3">利用示例<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h4>
 <p>存在漏洞的示例源代码如下:</p>
-<div class="codehilite"><pre><span></span><span class="c1">// ex2.c</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// ex2.c</span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
@@ -5010,12 +5010,12 @@
     <span class="n">vuln</span><span class="p">();</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>编译为 32bit 程序，开启 NX，ASLR，Canary 保护</p>
 <p>首先通过覆盖 Canary 最后一个 <code>\x00</code> 字节来打印出 4 位的 Canary
 之后，计算好偏移，将 Canary 填入到相应的溢出位置，实现 Ret 到 getshell 函数中</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -5042,14 +5042,14 @@
 <span class="n">io</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="one-by-one-canary">one-by-one 爆破 Canary<a class="headerlink" href="#one-by-one-canary" title="Permanent link">&para;</a></h3>
 <p>对于 Canary，虽然每次进程重启后的 Canary 不同(相比 GS，GS 重启后是相同的)，但是同一个进程中的不同线程的 Canary 是相同的， 并且
 通过 fork 函数创建的子进程的 Canary 也是相同的，因为 fork 函数会直接拷贝父进程的内存。我们可以利用这样的特点，彻底逐个字节将 Canary 爆破出来。
 在著名的 offset2libc 绕过 linux64bit 的所有保护的文章中，作者就是利用这样的方式爆破得到的 Canary:
 这是爆破的 Python 代码:</p>
-<div class="codehilite"><pre><span></span><span class="nb">print</span> <span class="s2">&quot;[+] Brute forcing stack canary &quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="nb">print</span> <span class="s2">&quot;[+] Brute forcing stack canary &quot;</span>
 
 <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 <span class="n">stop</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">+</span><span class="mi">8</span>
@@ -5070,7 +5070,7 @@
 
 <span class="n">canary</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">stop</span><span class="p">:</span><span class="n">start</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">)</span>
 <span class="nb">print</span> <span class="s2">&quot;   [+] SSP value is 0x</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">canary</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="__stack_chk_fail">劫持__stack_chk_fail函数<a class="headerlink" href="#__stack_chk_fail" title="Permanent link">&para;</a></h3>
 <p>已知 Canary 失败的处理逻辑会进入到 <code>__stack_chk_fail</code>ed 函数，<code>__stack_chk_fail</code>ed 函数是一个普通的延迟绑定函数，可以通过修改 GOT 表劫持这个函数。</p>
@@ -5178,7 +5178,7 @@
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5193,7 +5193,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

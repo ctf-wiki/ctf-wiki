@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4837,7 +4837,7 @@
 <li>可以使用 print_key 获取 rsa 加密的 aes 密钥</li>
 </ul>
 <p>本题目看似一个题目，实则是 3 个题目，需要分步骤解决。在此之前，我們準備好交互的函數</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_enc_key</span><span class="p">(</span><span class="n">io</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_enc_key</span><span class="p">(</span><span class="n">io</span><span class="p">):</span>
     <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;4: get encrypted keyn&quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="s2">&quot;4&quot;</span><span class="p">)</span>
     <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;here is encrypted key :)n&quot;</span><span class="p">)</span>
@@ -4862,35 +4862,35 @@
     <span class="n">io</span><span class="o">.</span><span class="n">writeline</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">))</span>
     <span class="n">io</span><span class="o">.</span><span class="n">read_until</span><span class="p">(</span><span class="s2">&quot;RSA: &quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">io</span><span class="o">.</span><span class="n">read_line</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="gcd-attack-n">GCD attack n<a class="headerlink" href="#gcd-attack-n" title="Permanent link">&para;</a></h3>
 <p>第一步我们需要把没有给出的 n 算出来，因为我们可以利用 encrypt 功能对我们输入的明文 x 进行 rsa 加密，那么可以利用整除的性质算 n</p>
-<p><div class="codehilite"><pre><span></span><span class="n">因为x</span> <span class="o">^</span> <span class="n">e</span> <span class="o">=</span> <span class="n">c</span> <span class="n">mod</span> <span class="n">n</span>
+<p><div class="codehilite"><pre><span></span><code><span class="n">因为x</span> <span class="o">^</span> <span class="n">e</span> <span class="o">=</span> <span class="n">c</span> <span class="n">mod</span> <span class="n">n</span>
 <span class="n">所以</span> <span class="n">n</span> <span class="o">|</span> <span class="n">x</span> <span class="o">^</span> <span class="n">e</span> <span class="o">-</span> <span class="n">c</span>
-</pre></div>
+</code></pre></div>
 我们可以构造足够多的 x，算出最够多的 x ^ e - c，从而计算最大公约数，得到 n。</p>
-<div class="codehilite"><pre><span></span>def get_n(io):
+<div class="codehilite"><pre><span></span><code>def get_n(io):
     rsa_c,aes_c=encrypt_io(io,long_to_bytes(2))
     n=pow(2,65537)-rsa_c
     for i in range(3,6):
         rsa_c, aes_c = encrypt_io(io, long_to_bytes(i))
         n=primefac.gcd(n,pow(i,65537)-rsa_c)
     return n
-</pre></div>
+</code></pre></div>
 
 <p>可以利用加密进行 check</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">check_n</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">check_n</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
     <span class="n">rsa_c</span><span class="p">,</span> <span class="n">aes_c</span> <span class="o">=</span> <span class="n">encrypt_io</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="s2">&quot;123&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">pow</span><span class="p">(</span><span class="n">bytes_to_long</span><span class="p">(</span><span class="s2">&quot;123&quot;</span><span class="p">),</span> <span class="n">e</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">==</span><span class="n">rsa_c</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="rsa-parity-oracle">RSA parity oracle<a class="headerlink" href="#rsa-parity-oracle" title="Permanent link">&para;</a></h3>
 <p>利用 leak 的的最后一个字节，我们可以进行选择密文攻击，使用 RSA parity oracle 回复 aes 的秘钥</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">guess_m</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">c</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">guess_m</span><span class="p">(</span><span class="n">io</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">c</span><span class="p">):</span>
     <span class="n">k</span><span class="o">=</span><span class="mi">1</span>
     <span class="n">lb</span><span class="o">=</span><span class="mi">0</span>
     <span class="n">ub</span><span class="o">=</span><span class="n">n</span>
@@ -4904,12 +4904,12 @@
         <span class="n">k</span><span class="o">+=</span><span class="mi">1</span>
     <span class="nb">print</span> <span class="n">ub</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">long_to_bytes</span><span class="p">(</span><span class="n">ub</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">ub</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="prng-predict">PRNG Predict<a class="headerlink" href="#prng-predict" title="Permanent link">&para;</a></h3>
 <p>这里我们可以解密 flag 的16字节之后的内容了，但是前16个字节没有 IV 是解密不了的。这时我们可以发现，IV 生成使用的随机数使用了 getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行 PRNG 的 predict，从而直接获取随机数</p>
 <p>这里使用了一个现成的的 java 进行 PRNG 的 Predict</p>
-<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="p">{</span>
 
    <span class="kd">static</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">state</span><span class="p">;</span>
    <span class="kd">static</span> <span class="kt">int</span> <span class="n">currentIndex</span><span class="p">;</span>
@@ -5051,10 +5051,10 @@
       <span class="p">}</span>
    <span class="p">}</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>写了一个 python 直接调用 java</p>
-<div class="codehilite"><pre><span></span>from Crypto.Util.number import long_to_bytes,bytes_to_long
+<div class="codehilite"><pre><span></span><code>from Crypto.Util.number import long_to_bytes,bytes_to_long
 
 
 
@@ -5096,11 +5096,11 @@ def get_state(io):
     state = (3, tuple(stateList + [624]), None)
     r.setstate(state)
     return r.getrandbits(128)
-</pre></div>
+</code></pre></div>
 
 <h3 id="exp">EXP<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h3>
 <p>整体攻击代码如下：</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">zio</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">zio</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">primefac</span>
 <span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="n">long_to_bytes</span><span class="p">,</span><span class="n">bytes_to_long</span>
 <span class="n">target</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;crypto.chal.ctf.westerns.tokyo&quot;</span><span class="p">,</span><span class="mi">5643</span><span class="p">)</span>
@@ -5185,12 +5185,12 @@ def get_state(io):
 <span class="nb">print</span> <span class="n">next_iv</span>
 <span class="nb">print</span> <span class="n">aeskey</span>
 <span class="n">io</span><span class="o">.</span><span class="n">interact</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="2016-asis-find-the-flag">2016 ASIS Find the flag<a class="headerlink" href="#2016-asis-find-the-flag" title="Permanent link">&para;</a></h2>
 <p>这里我们以 ASIS 2016 线上赛中 Find the flag 为例进行介绍。</p>
 <p>文件解压出来，有一个密文，一个公钥，一个 py 脚本。看一下公钥。</p>
-<div class="codehilite"><pre><span></span>➜  RSA openssl rsa -pubin -in pubkey.pem -text -modulus
+<div class="codehilite"><pre><span></span><code>➜  RSA openssl rsa -pubin -in pubkey.pem -text -modulus
 Public-Key: <span class="o">(</span><span class="m">256</span> bit<span class="o">)</span>
 Modulus:
     <span class="m">00</span>:d8:e2:4c:12:b7:b9:9e:fe:0a:9b:c0:4a:6a:3d:
@@ -5198,15 +5198,15 @@ Modulus:
     <span class="m">20</span>:61:b9
 Exponent: <span class="m">12405943493775545863</span> <span class="o">(</span>0xac2ac3e0ca0f5607<span class="o">)</span>
 <span class="nv">Modulus</span><span class="o">=</span>D8E24C12B7B99EFE0A9BC04A6A3DF58A2A944269B492B7376DF129023F2061B9
-</pre></div>
+</code></pre></div>
 
 <p>这么小的一个 <span><span class="MathJax_Preview">N</span><script type="math/tex">N</script></span>，先分解一下。</p>
-<div class="codehilite"><pre><span></span>p = 311155972145869391293781528370734636009
+<div class="codehilite"><pre><span></span><code>p = 311155972145869391293781528370734636009
 q = 315274063651866931016337573625089033553
-</pre></div>
+</code></pre></div>
 
 <p>再看给的 py 脚本。</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/python</span>
 <span class="kn">import</span> <span class="nn">gmpy</span>
 <span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
@@ -5239,12 +5239,12 @@ q = 315274063651866931016337573625089033553
 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pubkey</span><span class="o">.</span><span class="n">exportKey</span><span class="p">())</span>
 <span class="n">g</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;flag.enc&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
 <span class="n">g</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ext_rsa_encrypt</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">flag</span><span class="p">))</span>
-</pre></div>
+</code></pre></div>
 
 <p>逻辑很简单，读取 flag，重复 30 遍为密文。随机取 <span><span class="MathJax_Preview">p</span><script type="math/tex">p</script></span> 和 <span><span class="MathJax_Preview">q</span><script type="math/tex">q</script></span>，生成一个公钥，写入 <code>pubkey.pem</code>，再用脚本中的 <code>ext_rsa_encrypt</code> 函数进行加密，最后将密文写入 <code>flag.enc</code>。</p>
 <p>尝试一下解密，提示密文过长，再看加密函数，原来当加密失败时，函数会跳到异常处理，以一定算法重新取更大的 <span><span class="MathJax_Preview">p</span><script type="math/tex">p</script></span> 和 <span><span class="MathJax_Preview">q</span><script type="math/tex">q</script></span>，直到加密成功。</p>
 <p>那么我们只要也写一个相应的解密函数即可。</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/python</span>
 <span class="kn">import</span> <span class="nn">gmpy</span>
 <span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
@@ -5279,25 +5279,25 @@ q = 315274063651866931016337573625089033553
 <span class="n">msg</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 <span class="n">flag</span> <span class="o">=</span> <span class="n">ext_rsa_decrypt</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 <span class="nb">print</span> <span class="n">flag</span>
-</pre></div>
+</code></pre></div>
 
 <p>拿到 flag</p>
-<div class="codehilite"><pre><span></span>ASIS{F4ct0R__N_by_it3rat!ng!}
-</pre></div>
+<div class="codehilite"><pre><span></span><code>ASIS{F4ct0R__N_by_it3rat!ng!}
+</code></pre></div>
 
 <h2 id="sctf-rsa1">SCTF RSA1<a class="headerlink" href="#sctf-rsa1" title="Permanent link">&para;</a></h2>
 <p>这里我们以 SCTF RSA1 为例进行介绍，首先解压压缩包后，得到如下文件</p>
-<div class="codehilite"><pre><span></span>➜  level0 git:<span class="o">(</span>master<span class="o">)</span> ✗ ls -al
+<div class="codehilite"><pre><span></span><code>➜  level0 git:<span class="o">(</span>master<span class="o">)</span> ✗ ls -al
 总用量 <span class="m">4</span>
 drwxrwxrwx <span class="m">1</span> root root    <span class="m">0</span> 7月  <span class="m">30</span> <span class="m">16</span>:36 .
 drwxrwxrwx <span class="m">1</span> root root    <span class="m">0</span> 7月  <span class="m">30</span> <span class="m">16</span>:34 ..
 -rwxrwxrwx <span class="m">1</span> root root  <span class="m">349</span> 5月   <span class="m">2</span>  <span class="m">2016</span> level1.passwd.enc
 -rwxrwxrwx <span class="m">1</span> root root <span class="m">2337</span> 5月   <span class="m">6</span>  <span class="m">2016</span> level1.zip
 -rwxrwxrwx <span class="m">1</span> root root  <span class="m">451</span> 5月   <span class="m">2</span>  <span class="m">2016</span> public.key
-</pre></div>
+</code></pre></div>
 
 <p>尝试解压缩了一下 level1.zip 现需要密码。然后根据 level1.passwd.enc 可知，应该是我们需要解密这个文件才能得到对应的密码。查看公钥</p>
-<div class="codehilite"><pre><span></span>➜  level0 git:<span class="o">(</span>master<span class="o">)</span> ✗ openssl rsa -pubin -in public.key -text -modulus 
+<div class="codehilite"><pre><span></span><code>➜  level0 git:<span class="o">(</span>master<span class="o">)</span> ✗ openssl rsa -pubin -in public.key -text -modulus 
 Public-Key: <span class="o">(</span><span class="m">2048</span> bit<span class="o">)</span>
 Modulus:
     <span class="m">00</span>:94:a0:3e:6e:0e:dc:f2:74:10:52:ef:1e:ea:a8:
@@ -5330,15 +5330,15 @@ V/XXUtcxVgurCuaNrQgiqR/LbknMAUwS0qujpZflEEkZf2nZO8VTU3EAGGDMaRoG
 ZDuGlHCp2oL8VGsGI0MtsCDrthuRNV5TpuXYmoS7MEa4n2O8cAYtWdhipf1cqwZo
 gQIDAQAB
 -----END PUBLIC KEY-----
-</pre></div>
+</code></pre></div>
 
 <p>发现虽然说是 2048 位，但是显然模数没有那么长，尝试分解下，得到</p>
-<div class="codehilite"><pre><span></span>p=250527704258269
+<div class="codehilite"><pre><span></span><code>p=250527704258269
 q=74891071972884336452892671945839935839027130680745292701175368094445819328761543101567760612778187287503041052186054409602799660254304070752542327616415127619185118484301676127655806327719998855075907042722072624352495417865982621374198943186383488123852345021090112675763096388320624127451586578874243946255833495297552979177208715296225146999614483257176865867572412311362252398105201644557511678179053171328641678681062496129308882700731534684329411768904920421185529144505494827908706070460177001921614692189821267467546120600239688527687872217881231173729468019623441005792563703237475678063375349
-</pre></div>
+</code></pre></div>
 
 <p>然后就可以构造，并且解密，代码如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
 <span class="kn">import</span> <span class="nn">gmpy2</span>
 <span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
 <span class="n">p</span> <span class="o">=</span> <span class="mi">250527704258269</span>
@@ -5366,15 +5366,15 @@ q=748910719728843364528926719458399358390271306807452927011753680944458193287615
 
 <span class="c1">#getprivatekey(n, e, p, q)</span>
 <span class="n">decrypt</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>发现不对</p>
-<div class="codehilite"><pre><span></span>➜  level0 git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
+<div class="codehilite"><pre><span></span><code>➜  level0 git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
 一堆乱码。。
-</pre></div>
+</code></pre></div>
 
 <p>这时候就要考虑其他情况了，一般来说现实中实现的 RSA 都不会直接用原生的 RSA，都会加一些填充比如 OAEP，我们这里试试，修改代码</p>
-<div class="codehilite"><pre><span></span>def decrypt1<span class="o">()</span>:
+<div class="codehilite"><pre><span></span><code>def decrypt1<span class="o">()</span>:
     with open<span class="o">(</span><span class="s1">&#39;./level1.passwd.enc&#39;</span><span class="o">)</span> as f:
         <span class="nv">cipher</span> <span class="o">=</span> f.read<span class="o">()</span>
     <span class="nv">cipher</span> <span class="o">=</span> b64decode<span class="o">(</span>cipher<span class="o">)</span>
@@ -5382,15 +5382,15 @@ q=748910719728843364528926719458399358390271306807452927011753680944458193287615
         <span class="nv">key</span> <span class="o">=</span> RSA.importKey<span class="o">(</span>f<span class="o">)</span>
         <span class="nv">key</span> <span class="o">=</span> PKCS1_OAEP.new<span class="o">(</span>key<span class="o">)</span>
     print key.decrypt<span class="o">(</span>cipher<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>果然如此，得到</p>
-<div class="codehilite"><pre><span></span>➜  level0 git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
+<div class="codehilite"><pre><span></span><code>➜  level0 git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
 FaC5ori1ati0n_aTTA3k_p_tOO_sma11
-</pre></div>
+</code></pre></div>
 
 <p>得到解压密码。继续，查看 level1 中的公钥</p>
-<div class="codehilite"><pre><span></span>➜  level1 git:<span class="o">(</span>master<span class="o">)</span> ✗ openssl rsa -pubin -in public.key -text -modulus
+<div class="codehilite"><pre><span></span><code>➜  level1 git:<span class="o">(</span>master<span class="o">)</span> ✗ openssl rsa -pubin -in public.key -text -modulus
 Public-Key: <span class="o">(</span><span class="m">2048</span> bit<span class="o">)</span>
 Modulus:
     <span class="m">00</span>:c3:26:59:69:e1:ed:74:d2:e0:b4:9a:d5:6a:7c:
@@ -5423,18 +5423,18 @@ VgYNWPxBZF4G2oPQOwZCcNo4U+BUNVPO3nlKv/U75VN/bBgSZ6neN31EZV5oCng5
 PbsAIjUOo5TmlBUaPTnHUA6xZKUpo2lBQGmUsA0a6poSJ1DuHjoZtylwtG0enWE+
 fQIDAQAB
 -----END PUBLIC KEY-----
-</pre></div>
+</code></pre></div>
 
 <p>似乎还是不是很大，再次分解，然后试了 factordb 不行，试试 yafu。结果分解出来了。</p>
-<div class="codehilite"><pre><span></span><span class="nv">P309</span> <span class="o">=</span> <span class="m">156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496383</span>
+<div class="codehilite"><pre><span></span><code><span class="nv">P309</span> <span class="o">=</span> <span class="m">156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496383</span>
 
 <span class="nv">P309</span> <span class="o">=</span> <span class="m">156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496259</span>
-</pre></div>
+</code></pre></div>
 
 <p>可以发现这两个数非常相近，可能是 factordb 没有实现这类分解。</p>
 <p>继而下面的操作类似于 level0。只是这次是直接解密就好，没啥填充，试了填充反而错</p>
 <p>得到密码 <code>fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS</code>。继续下一步，查看公钥</p>
-<div class="codehilite"><pre><span></span>➜  level2 git:<span class="o">(</span>master<span class="o">)</span> ✗ openssl rsa -pubin -in public.key -text -modulus
+<div class="codehilite"><pre><span></span><code>➜  level2 git:<span class="o">(</span>master<span class="o">)</span> ✗ openssl rsa -pubin -in public.key -text -modulus
 Public-Key: <span class="o">(</span><span class="m">1025</span> bit<span class="o">)</span>
 Modulus:
     <span class="m">01</span>:ba:0c:c2:45:b4:5c:e5:b5:f5:6c:d5:ca:a5:90:
@@ -5467,10 +5467,10 @@ W7M6RxcILdUkfU+nofDVcwKBgQEAjoHdoOMZKOjuUREIx1BfYTEF0uL/m4Nx5CnC
 p2jeSgpMGqcJ1UiYyB/P+933nK6uCxX0ssfgvLoxT14Hg60Of7mCpNIB+mgpbWZ8
 <span class="nv">z1e5Sw</span><span class="o">==</span>
 -----END PUBLIC KEY-----
-</pre></div>
+</code></pre></div>
 
 <p>发现私钥 e 和 n 几乎一样大，考虑 d 比较小，使用 Wiener's Attack。得到 d，当然也可以再次验证一遍。</p>
-<div class="codehilite"><pre><span></span>➜  level2 git:<span class="o">(</span>master<span class="o">)</span> ✗ python RSAwienerHacker.py
+<div class="codehilite"><pre><span></span><code>➜  level2 git:<span class="o">(</span>master<span class="o">)</span> ✗ python RSAwienerHacker.py
 Testing Wiener Attack
 Hacked!
 <span class="o">(</span><span class="s1">&#39;hacked_d = &#39;</span>, 29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class="o">)</span>
@@ -5487,10 +5487,10 @@ Hacked!
 Hacked!
 <span class="o">(</span><span class="s1">&#39;hacked_d = &#39;</span>, 29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class="o">)</span>
 -------------------------
-</pre></div>
+</code></pre></div>
 
 <p>这时我们解密密文，解密代码如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
 <span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">PKCS1_v1_5</span><span class="p">,</span> <span class="n">PKCS1_OAEP</span>
 <span class="kn">import</span> <span class="nn">gmpy2</span>
 <span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
@@ -5517,12 +5517,12 @@ Hacked!
 
 <span class="n">getprivatekey</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
 <span class="n">decrypt</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>利用末尾的字符串 <code>wIe6ER1s_1TtA3k_e_t00_larg3</code> 解密压缩包，注意去掉 B。至此全部解密结束，得到 flag。</p>
 <h2 id="2018-wctf-rsa">2018 WCTF RSA<a class="headerlink" href="#2018-wctf-rsa" title="Permanent link">&para;</a></h2>
 <p>题目基本描述为</p>
-<div class="codehilite"><pre><span></span>Description:
+<div class="codehilite"><pre><span></span><code>Description:
 Encrypted message for user &quot;admin&quot;:
 
 &lt;&lt;&lt;320881698662242726122152659576060496538921409976895582875089953705144841691963343665651276480485795667557825130432466455684921314043200553005547236066163215094843668681362420498455007509549517213285453773102481574390864574950259479765662844102553652977000035769295606566722752949297781646289262341623549414376262470908749643200171565760656987980763971637167709961003784180963669498213369651680678149962512216448400681654410536708661206594836597126012192813519797526082082969616915806299114666037943718435644796668877715954887614703727461595073689441920573791980162741306838415524808171520369350830683150672985523901&gt;&gt;&gt;
@@ -5533,7 +5533,7 @@ n = 4839012640069462694052839372182629440212055100338241404301204069654222089427
 e = 65537
 
 Service: http://36.110.234.253
-</pre></div>
+</code></pre></div>
 
 <p>这个题目现在已经没有办法在线获取 binary 了，现在得到的 binary 是之前已经下载好的，我们当时需要登录用户的 admin 来下载对应的 generator。</p>
 <p>通过简单逆向这个 generator，我们可以发现这个程序是这么工作的</p>
@@ -5548,7 +5548,7 @@ Service: http://36.110.234.253
 </li>
 </ul>
 <p>其中，固定位置就是在找源文件 <code>generator</code> 中第二次出现 <code>ENCRYPTED</code> 的位置，然后再次偏移 32 个字节。</p>
-<div class="codehilite"><pre><span></span>    <span class="n">_ENCRYPT_STR</span> <span class="o">=</span> <span class="n">ENCRYPTED_STR</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code>    <span class="n">_ENCRYPT_STR</span> <span class="o">=</span> <span class="n">ENCRYPTED_STR</span><span class="p">;</span>
     <span class="n">v10</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
     <span class="n">ENCRYPTED_LEN</span> <span class="o">=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">ENCRYPTED_STR</span><span class="p">);</span>
     <span class="n">do</span>
@@ -5572,7 +5572,7 @@ Service: http://36.110.234.253
       <span class="n">sprintf</span><span class="p">(</span><span class="n">byte_406020</span><span class="p">,</span> <span class="s2">&quot;out.exe </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
       <span class="n">system</span><span class="p">(</span><span class="n">byte_406020</span><span class="p">);</span>
     <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>同时，我们需要确保生成的文件的校验对应的哈希值恰好为指定的值，由于文件最后是一个 exe 文件，所以我们可以认为最后的文件头就是标准的 exe 文件，因此就不需要知道原始的 license 文件，进而我们可以编写 python 脚本生成 exe。</p>
 <p>在生成的 exe 中，我们分析出程序的基本流程为</p>
@@ -5589,9 +5589,9 @@ Service: http://36.110.234.253
 <li>左右构成 1024 比特位，判断是不是素数，是素数就成功，不是素数，继续生成。</li>
 </ol>
 <p>其中生成每部分的方式相同，方式为</p>
-<div class="codehilite"><pre><span></span><span class="n">sha512</span><span class="p">(</span><span class="n">const1</span><span class="o">|</span><span class="n">const2</span><span class="o">|</span><span class="n">const3</span><span class="o">|</span><span class="n">const4</span><span class="o">|</span><span class="n">const5</span><span class="o">|</span><span class="n">const6</span><span class="o">|</span><span class="n">const7</span><span class="o">|</span><span class="n">const8</span><span class="o">|</span><span class="n">v9</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">sha512</span><span class="p">(</span><span class="n">const1</span><span class="o">|</span><span class="n">const2</span><span class="o">|</span><span class="n">const3</span><span class="o">|</span><span class="n">const4</span><span class="o">|</span><span class="n">const5</span><span class="o">|</span><span class="n">const6</span><span class="o">|</span><span class="n">const7</span><span class="o">|</span><span class="n">const8</span><span class="o">|</span><span class="n">v9</span><span class="p">)</span>
 <span class="n">v9</span><span class="o">=</span><span class="n">r</span><span class="o">%</span><span class="mi">1000000007</span>
-</pre></div>
+</code></pre></div>
 
 <p>只有 v9 会有所变化，但是它的范围却是固定的。</p>
 <p>那么，如果我们表示 p，q 为</p>
@@ -5620,7 +5620,7 @@ Service: http://36.110.234.253
 <p>类似地，我们可以计算出 a 和 c，从而我们就可以完全恢复出 p 和 q。</p>
 <p>在具体求解的过程中，在求 p 和 q 的一部分时，可以发现因为是模 <span><span class="MathJax_Preview">2^{64}</span><script type="math/tex">2^{64}</script></span>，所以可能存在碰撞（但其实就是一个是 p，另外一个是q，恰好对称。）。下面我们就求得了 b 对应的 v9。</p>
 <p><strong>注意：这里枚举出来的空间大约占用 11 个 G（包括索引），所以请选择合适的位置。</strong></p>
-<div class="codehilite"><pre><span></span>b64: 9646799660ae61bd idx_b: 683101175 idx_d: 380087137
+<div class="codehilite"><pre><span></span><code>b64: 9646799660ae61bd idx_b: 683101175 idx_d: 380087137
 search 23000000
 search 32000000
 search 2b000000
@@ -5640,10 +5640,10 @@ search 7000000
 search 16000000
 search 25000000
 search 34000000
-</pre></div>
+</code></pre></div>
 
 <p>其实，我们在真正得到 p 或者 q 的一部分后，另外一部分完全可以使用暴力枚举的方式获取，因为计算量几乎都是一样的，最后结果为</p>
-<div class="codehilite"><pre><span></span><span class="o">...</span>
+<div class="codehilite"><pre><span></span><code><span class="o">...</span>
 <span class="nb">hash</span> <span class="mi">7000000</span>
 <span class="nb">hash</span> <span class="mi">30000000</span>
 <span class="n">p</span> <span class="o">=</span> <span class="mi">13941980378318401138358022650359689981503197475898780162570451627011086685747898792021456273309867273596062609692135266568225130792940286468658349600244497842007796641075219414527752166184775338649475717002974228067471300475039847366710107240340943353277059789603253261584927112814333110145596444757506023869</span>
@@ -5668,13 +5668,13 @@ search 34000000
 <span class="ne">TypeError</span><span class="p">:</span> <span class="n">Odd</span><span class="o">-</span><span class="n">length</span> <span class="n">string</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="nb">hex</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">)</span>
 <span class="s1">&#39;flag</span><span class="si">{fa6778724ed740396fc001b198f30313}</span><span class="s1">&#39;</span>
-</pre></div>
+</code></pre></div>
 
 <p>最后我们便拿到 flag 了。</p>
 <p><strong>详细的利用代码请参见 ctf-challenge 仓库。</strong></p>
 <p>相关编译指令，需要链接相关的库。</p>
-<div class="codehilite"><pre><span></span>g++  exp2.cpp -std<span class="o">=</span>c++11 -o main2 -lgmp -lcrypto -pthread
-</pre></div>
+<div class="codehilite"><pre><span></span><code>g++  exp2.cpp -std<span class="o">=</span>c++11 -o main2 -lgmp -lcrypto -pthread
+</code></pre></div>
 
 <h2 id="_1">参考<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
@@ -5780,7 +5780,7 @@ search 34000000
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5795,7 +5795,7 @@ search 34000000
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

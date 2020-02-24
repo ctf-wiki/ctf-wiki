@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4710,7 +4710,7 @@
                 
                 <p><a href="../detect-dbg/">EN</a> | <a href="./">ZH</a>
 检测调试器的方法很多, 比如检测进程名之类. 这里我们介绍一种方法, 就是通过检测一些函数的调用情况来分析程序当前是否处于被调试状态</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">ptrace</span><span class="p">(</span><span class="n">PTRACE_TRACEME</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">printf</span><span class="p">(</span><span class="s">&quot;DEBUGGING... Bye</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
@@ -4719,7 +4719,7 @@
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>一个进程只能被一个进程ptrace, 如果你自己调用ptrace, 那么其它程序就无法通过ptrace调试或向你的程序注入代码. </p>
 <p>如果程序当前被gdb调试, 那么ptrace函数就会返回错误, 也就侧面表明了检测到了调试器的存在.</p>
@@ -4727,18 +4727,18 @@
 <p>显然ptrace只能作用于使用ptrace的调试器, 我们可以用不使用ptrace的调试器.</p>
 <p>我们也可以通过打补丁的方式将ptrace函数擦除, 更简单就是将ptrace的调用代码或是之后的校验给擦除了.</p>
 <p>如果可执行文件(实际情况下不太可能)在编译时并没有启用-s选项(-s 选项能移除所有的符号表信息和重定位信息), 那么情况会变得简单很多. 我们从这个简单的情况来分析</p>
-<div class="codehilite"><pre><span></span># objdump -t test_debug | grep ptrace
+<div class="codehilite"><pre><span></span><code># objdump -t test_debug | grep ptrace
 080482c0    F *UND*     00000075    ptrace@@GLIBC_2.0
-</pre></div>
+</code></pre></div>
 
 <p>ptrace在<code>0x080482c0</code>位置被调用</p>
-<div class="codehilite"><pre><span></span># objdump -d -M intel test_debug |grep 80482c0
+<div class="codehilite"><pre><span></span><code># objdump -d -M intel test_debug |grep 80482c0
 80482c0:    ff 25 04 96 04 08   jmp ds:0x8049604
 80483d4:    e8 e7 fe ff ff  call 80482c0 &lt;_init+0x28&gt;
-</pre></div>
+</code></pre></div>
 
 <p>那要是有启用-s选项, 该怎么处理呢? 这时我们需要使用gdb</p>
-<div class="codehilite"><pre><span></span># gdb test_debug
+<div class="codehilite"><pre><span></span><code># gdb test_debug
 gdb&gt; bp ptrace
 Breakpoint 1 at 0x80482c0
 gdb&gt; run
@@ -4752,10 +4752,10 @@ Breakpoint 1 at 0x400e02f0
 0x400e02fc &lt;ptrace+12&gt;: mov 0xc(%ebp),%ecx
 ------------------------------------------------------------------------------
 Breakpoint 1, 0x400e02f0 in ptrace () from /lib/tls/libc.so.6
-</pre></div>
+</code></pre></div>
 
 <p>我们简单地断在了ptrace处, 现在输入finish执行到当前函数返回, 回到main函数里</p>
-<div class="codehilite"><pre><span></span># gdb test_debug
+<div class="codehilite"><pre><span></span><code># gdb test_debug
 gdb&gt; finish
 00x80483d9 &lt;main+29&gt;:   add $0x10,%esp
 0x80483dc   &lt;main+32&gt;:  test %eax,%eax
@@ -4765,38 +4765,38 @@ gdb&gt; finish
 0x80483e8   &lt;main+44&gt;:  call 0x80482e0
 ------------------------------------------------------------------------------
 0x080483d9 in main ()
-</pre></div>
+</code></pre></div>
 
 <p>将函数返回结果eax修改为正确的返回结果, 就可以了</p>
-<div class="codehilite"><pre><span></span>gdb&gt; set $eax=0
+<div class="codehilite"><pre><span></span><code>gdb&gt; set $eax=0
 gdb&gt; c
 everything ok
 Program exited with code 016.
 _______________________________________________________________________________
 No registers.
 gdb&gt;
-</pre></div>
+</code></pre></div>
 
 <h2 id="2">绕过方法2<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
 <p>方法2就是编写自己的ptrace函数</p>
 <p>如前几篇所述, <code>LD_PRELOAD</code>环境变量可以将可执行文件指向我们自己的ptrace函数.</p>
 <p>我们写一个ptrace函数并生成目标文件</p>
-<div class="codehilite"><pre><span></span><span class="c1">// -- ptrace.c --</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// -- ptrace.c --</span>
 <span class="c1">// gcc -shared ptrace.c -o ptrace.so</span>
 <span class="kt">int</span> <span class="nf">ptrace</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">int</span> <span class="n">j</span><span class="p">,</span> <span class="kt">int</span> <span class="n">k</span><span class="p">,</span> <span class="kt">int</span> <span class="n">l</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot; PTRACE CALLED!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>我们接下来就可以通过设置环境变量LD_PRELOAD来使用我们自己的ptrace函数, 当然这里是可以在gdb中进行设置</p>
-<div class="codehilite"><pre><span></span>gdb&gt; set environment LD_PRELOAD ./ptrace.so
+<div class="codehilite"><pre><span></span><code>gdb&gt; set environment LD_PRELOAD ./ptrace.so
 gdb&gt; run
 PTRACE CALLED!
 Hello World!
 Program exited with code 015.
 gdb&gt;
-</pre></div>
+</code></pre></div>
 
 <p>可以看到程序无法检测到调试器了. </p>
 <blockquote>
@@ -4902,7 +4902,7 @@ gdb&gt;
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -4917,7 +4917,7 @@ gdb&gt;
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

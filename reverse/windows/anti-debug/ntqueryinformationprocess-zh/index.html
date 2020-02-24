@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4723,18 +4723,18 @@
                   <h1>NtQueryInformationProcess</h1>
                 
                 <p><a href="../ntqueryinformationprocess/">EN</a> | <a href="./">ZH</a>
-<div class="codehilite"><pre><span></span><span class="n">NTSTATUS</span> <span class="n">WINAPI</span> <span class="nf">NtQueryInformationProcess</span><span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="n">NTSTATUS</span> <span class="n">WINAPI</span> <span class="nf">NtQueryInformationProcess</span><span class="p">(</span>
   <span class="n">_In_</span>      <span class="n">HANDLE</span>           <span class="n">ProcessHandle</span><span class="p">,</span>
   <span class="n">_In_</span>      <span class="n">PROCESSINFOCLASS</span> <span class="n">ProcessInformationClass</span><span class="p">,</span>
   <span class="n">_Out_</span>     <span class="n">PVOID</span>            <span class="n">ProcessInformation</span><span class="p">,</span>
   <span class="n">_In_</span>      <span class="n">ULONG</span>            <span class="n">ProcessInformationLength</span><span class="p">,</span>
   <span class="n">_Out_opt_</span> <span class="n">PULONG</span>           <span class="n">ReturnLength</span>
 <span class="p">);</span>
-</pre></div></p>
+</code></pre></div></p>
 <h2 id="processdebugport">ProcessDebugPort<a class="headerlink" href="#processdebugport" title="Permanent link">&para;</a></h2>
 <p>未公开的<code>ntdll</code>的<code>NtQueryInformationProcess()</code>函数接受一个信息类的参数用于查询. <code>ProcessDebugPort(7)</code>是其中的一个信息类. <code>kernel32</code>的<code>CheckRemoteDebuggerPresent()</code>函数内部通过调用<code>NtQueryInformationProcess()</code>来检测调试, 而<code>NtQueryInformationProcess</code>内部则是查询<code>EPROCESS</code>结构体的<code>DebugPort</code>字段, 当进程正在被调试时, 返回值为<code>0xffffffff</code>. </p>
 <p>可以用以下32位代码在32位环境进行检测:</p>
-<div class="codehilite"><pre><span></span><span class="nf">push</span> <span class="no">eax</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">push</span> <span class="no">eax</span>
 <span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">esp</span>
 <span class="nf">push</span> <span class="mi">0</span>
 <span class="nf">push</span> <span class="mi">4</span> <span class="c">;ProcessInformationLength</span>
@@ -4745,10 +4745,10 @@
 <span class="nf">pop</span> <span class="no">eax</span>
 <span class="nf">inc</span> <span class="no">eax</span>
 <span class="nf">je</span> <span class="no">being_debugged</span>
-</pre></div>
+</code></pre></div>
 
 <p>用以下64位代码在64位环境进行检测:</p>
-<div class="codehilite"><pre><span></span><span class="nf">xor</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">xor</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
 <span class="nf">enter</span> <span class="mi">20</span><span class="no">h</span><span class="p">,</span> <span class="mi">0</span>
 <span class="nf">push</span> <span class="mi">8</span> <span class="c">;ProcessInformationLength</span>
 <span class="nf">pop</span> <span class="no">r9</span>
@@ -4761,13 +4761,13 @@
 <span class="nf">leave</span>
 <span class="nf">test</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
 <span class="nf">jne</span> <span class="no">being_debugged</span>
-</pre></div>
+</code></pre></div>
 
 <p>由于信息传自内核, 所以在用户模式下的代码没有轻松的方法阻止该函数检测调试器. </p>
 <h2 id="processdebugobjecthandle">ProcessDebugObjectHandle<a class="headerlink" href="#processdebugobjecthandle" title="Permanent link">&para;</a></h2>
 <p>Windows XP引入了<code>debug对象</code>, 当一个调试会话启动, 会同时创建一个<code>debug</code>对象以及与之关联的句柄. 我们可以使用<code>ProcessDebugObjectHandle (0x1e)</code>类来查询这个句柄的值</p>
 <p>可以用以下32位代码在32位环境进行检测:</p>
-<div class="codehilite"><pre><span></span><span class="nf">push</span> <span class="mi">0</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">push</span> <span class="mi">0</span>
 <span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">esp</span>
 <span class="nf">push</span> <span class="mi">0</span>
 <span class="nf">push</span> <span class="mi">4</span> <span class="c">;ProcessInformationLength</span>
@@ -4778,10 +4778,10 @@
 <span class="nf">pop</span> <span class="no">eax</span>
 <span class="nf">test</span> <span class="no">eax</span><span class="p">,</span> <span class="no">eax</span>
 <span class="nf">jne</span> <span class="no">being_debugged</span>
-</pre></div>
+</code></pre></div>
 
 <p>用以下64位代码在64位环境进行检测:</p>
-<div class="codehilite"><pre><span></span><span class="nf">xor</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">xor</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
 <span class="nf">enter</span> <span class="mi">20</span><span class="no">h</span><span class="p">,</span> <span class="mi">0</span>
 <span class="nf">push</span> <span class="mi">8</span> <span class="c">;ProcessInformationLength</span>
 <span class="nf">pop</span> <span class="no">r9</span>
@@ -4794,12 +4794,12 @@
 <span class="nf">leave</span>
 <span class="nf">test</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
 <span class="nf">jne</span> <span class="no">being_debugged</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="processdebugflags">ProcessDebugFlags<a class="headerlink" href="#processdebugflags" title="Permanent link">&para;</a></h2>
 <p><code>ProcessDebugFlags (0x1f)</code>类返回<code>EPROCESS</code>结构体的<code>NoDebugInherit</code>的相反数. 意思是, 当调试器存在时, 返回值为<code>0</code>, 不存在时则返回<code>1</code>. </p>
 <p>可以用以下32位代码在32位环境进行检测:</p>
-<div class="codehilite"><pre><span></span><span class="nf">push</span> <span class="no">eax</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">push</span> <span class="no">eax</span>
 <span class="nf">mov</span> <span class="no">eax</span><span class="p">,</span> <span class="no">esp</span>
 <span class="nf">push</span> <span class="mi">0</span>
 <span class="nf">push</span> <span class="mi">4</span> <span class="c">;ProcessInformationLength</span>
@@ -4810,10 +4810,10 @@
 <span class="nf">pop</span> <span class="no">eax</span>
 <span class="nf">test</span> <span class="no">eax</span><span class="p">,</span> <span class="no">eax</span>
 <span class="nf">je</span> <span class="no">being_debugged</span>
-</pre></div>
+</code></pre></div>
 
 <p>用以下64位代码在64位环境进行检测:</p>
-<div class="codehilite"><pre><span></span><span class="nf">xor</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">xor</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
 <span class="nf">enter</span> <span class="mi">20</span><span class="no">h</span><span class="p">,</span> <span class="mi">0</span>
 <span class="nf">push</span> <span class="mi">4</span> <span class="c">;ProcessInformationLength</span>
 <span class="nf">pop</span> <span class="no">r9</span>
@@ -4826,7 +4826,7 @@
 <span class="nf">leave</span>
 <span class="nf">test</span> <span class="no">ebp</span><span class="p">,</span> <span class="no">ebp</span>
 <span class="nf">je</span> <span class="no">being_debugged</span>
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -4927,7 +4927,7 @@
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -4942,7 +4942,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

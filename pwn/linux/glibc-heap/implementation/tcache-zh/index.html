@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4903,20 +4903,20 @@
 <p>这其实和 fastbin 很像，但又不一样。</p>
 <h3 id="tcache_entry">tcache_entry<a class="headerlink" href="#tcache_entry" title="Permanent link">&para;</a></h3>
 <p><a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#tcache_entry">source code</a></p>
-<div class="codehilite"><pre><span></span><span class="cm">/* We overlay this structure on the user-data portion of a chunk when</span>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* We overlay this structure on the user-data portion of a chunk when</span>
 <span class="cm">   the chunk is stored in the per-thread cache.  */</span>
 <span class="k">typedef</span> <span class="k">struct</span> <span class="n">tcache_entry</span>
 <span class="p">{</span>
   <span class="k">struct</span> <span class="n">tcache_entry</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
 <span class="p">}</span> <span class="n">tcache_entry</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p><code>tcache_entry</code> 用于链接空闲的 chunk 结构体，其中的 <code>next</code> 指针指向下一个大小相同的 chunk。</p>
 <p>需要注意的是这里的 next 指向 chunk 的 user data，而 fastbin 的 fd 指向 chunk 开头的地址。</p>
 <p>而且，tcache_entry 会复用空闲 chunk 的 user data 部分。</p>
 <h3 id="tcache_perthread_struct">tcache_perthread_struct<a class="headerlink" href="#tcache_perthread_struct" title="Permanent link">&para;</a></h3>
 <p><a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#tcache_perthread_struct">source code</a>
-<div class="codehilite"><pre><span></span><span class="cm">/* There is one of these for each thread, which contains the</span>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* There is one of these for each thread, which contains the</span>
 <span class="cm">   per-thread cache (hence &quot;tcache_perthread_struct&quot;).  Keeping</span>
 <span class="cm">   overall size low is mildly important.  Note that COUNTS and ENTRIES</span>
 <span class="cm">   are redundant (we could have just counted the linked list each</span>
@@ -4930,7 +4930,7 @@
 <span class="cp"># define TCACHE_MAX_BINS                64</span>
 
 <span class="k">static</span> <span class="n">__thread</span> <span class="n">tcache_perthread_struct</span> <span class="o">*</span><span class="n">tcache</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>每个 thread 都会维护一个 <code>tcache_prethread_struct</code>，它是整个 tcache 的管理结构，一共有 <code>TCACHE_MAX_BINS</code> 个计数器和 <code>TCACHE_MAX_BINS</code>项 tcache_entry，其中</p>
 <ul>
 <li><code>tcache_entry</code> 用单向链表的方式链接了相同大小的处于空闲状态（free 后）的 chunk，这一点上和 fastbin 很像。</li>
@@ -4959,7 +4959,7 @@
 <h3 id="__libc_malloc">__libc_malloc<a class="headerlink" href="#__libc_malloc" title="Permanent link">&para;</a></h3>
 <p>第一次 malloc 时，会进入到 <code>MAYBE_INIT_TCACHE ()</code></p>
 <p><a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#3010">source code</a>
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="o">*</span>
 <span class="nf">__libc_malloc</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="p">......</span>
@@ -4986,11 +4986,11 @@
     <span class="p">......</span>
     <span class="p">......</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <h3 id="__tcache_init">__tcache_init()<a class="headerlink" href="#__tcache_init" title="Permanent link">&para;</a></h3>
 <p>其中 <code>MAYBE_INIT_TCACHE ()</code> 在 tcache 为空（即第一次 malloc）时调用了 <code>tcache_init()</code>，直接查看 <code>tcache_init()</code></p>
 <p><a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#tcache_init">source code</a></p>
-<div class="codehilite"><pre><span></span><span class="n">tcache_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">tcache_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">mstate</span> <span class="n">ar_ptr</span><span class="p">;</span>
   <span class="kt">void</span> <span class="o">*</span><span class="n">victim</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
@@ -5017,12 +5017,12 @@
       <span class="n">memset</span> <span class="p">(</span><span class="n">tcache</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span> <span class="p">(</span><span class="n">tcache_perthread_struct</span><span class="p">));</span>
     <span class="p">}</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p><code>tcache_init()</code> 成功返回后，<code>tcache_prethread_struct</code> 就被成功建立了。</p>
 <h3 id="_4">申请内存<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>接下来将进入申请内存的步骤
-<div class="codehilite"><pre><span></span>  <span class="c1">// 从 tcache list 中获取内存</span>
+<div class="codehilite"><pre><span></span><code>  <span class="c1">// 从 tcache list 中获取内存</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">tc_idx</span> <span class="o">&lt;</span> <span class="n">mp_</span><span class="p">.</span><span class="n">tcache_bins</span> <span class="c1">// 由 size 计算的 idx 在合法范围内</span>
       <span class="cm">/*&amp;&amp; tc_idx &lt; TCACHE_MAX_BINS*/</span> <span class="cm">/* to appease gcc */</span>
       <span class="o">&amp;&amp;</span> <span class="n">tcache</span>
@@ -5040,12 +5040,12 @@
               <span class="o">&amp;</span><span class="n">main_arena</span> <span class="o">==</span> <span class="n">arena_for_chunk</span> <span class="p">(</span><span class="n">mem2chunk</span> <span class="p">(</span><span class="n">victim</span><span class="p">)));</span>
       <span class="k">return</span> <span class="n">victim</span><span class="p">;</span>
     <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 在 <code>tcache-&gt;entries</code> 不为空时，将进入 <code>tcache_get()</code> 的流程获取 chunk，否则与 tcache 机制前的流程类似，这里主要分析第一种 <code>tcache_get()</code>。这里也可以看出 tcache 的优先级很高，比 fastbin 还要高（ fastbin 的申请在没进入 tcache 的流程中）。</p>
 <h3 id="tcache_get">tcache_get()<a class="headerlink" href="#tcache_get" title="Permanent link">&para;</a></h3>
 <p>看一下 <code>tcache_get()</code></p>
 <p><a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#tcache_get">source code</a>
-<div class="codehilite"><pre><span></span><span class="cm">/* Caller must ensure that we know tc_idx is valid and there&#39;s</span>
+<div class="codehilite"><pre><span></span><code><span class="cm">/* Caller must ensure that we know tc_idx is valid and there&#39;s</span>
 <span class="cm">   available chunks to remove.  */</span>
 <span class="k">static</span> <span class="n">__always_inline</span> <span class="kt">void</span> <span class="o">*</span>
 <span class="nf">tcache_get</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">tc_idx</span><span class="p">)</span>
@@ -5057,12 +5057,12 @@
   <span class="o">--</span><span class="p">(</span><span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]);</span> <span class="c1">// 获得一个 chunk，counts 减一</span>
   <span class="k">return</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="n">e</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 <code>tcache_get()</code> 就是获得 chunk 的过程了。可以看出这个过程还是很简单的，从 <code>tcache-&gt;entries[tc_idx]</code> 中获得第一个 chunk，<code>tcache-&gt;counts</code> 减一，几乎没有任何保护。</p>
 <h3 id="__libc_free">__libc_free()<a class="headerlink" href="#__libc_free" title="Permanent link">&para;</a></h3>
 <p>看完申请，再看看有 tcache 时的释放</p>
 <p><a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#3068">source code</a>
-<div class="codehilite"><pre><span></span><span class="kt">void</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span>
 <span class="nf">__libc_free</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">mem</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="p">......</span>
@@ -5071,12 +5071,12 @@
   <span class="n">ar_ptr</span> <span class="o">=</span> <span class="n">arena_for_chunk</span> <span class="p">(</span><span class="n">p</span><span class="p">);</span>
   <span class="n">_int_free</span> <span class="p">(</span><span class="n">ar_ptr</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 <code>__libc_free()</code> 没有太多变化，<code>MAYBE_INIT_TCACHE ()</code> 在 tcache 不为空失去了作用。</p>
 <h3 id="_int_free">_int_free()<a class="headerlink" href="#_int_free" title="Permanent link">&para;</a></h3>
 <p>跟进 <code>_int_free()</code></p>
 <p><a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#4123">source code</a>
-<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span>
+<div class="codehilite"><pre><span></span><code><span class="k">static</span> <span class="kt">void</span>
 <span class="nf">_int_free</span> <span class="p">(</span><span class="n">mstate</span> <span class="n">av</span><span class="p">,</span> <span class="n">mchunkptr</span> <span class="n">p</span><span class="p">,</span> <span class="kt">int</span> <span class="n">have_lock</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="p">......</span>
@@ -5095,11 +5095,11 @@
 <span class="cp">#endif</span>
   <span class="p">......</span>
   <span class="p">......</span>
-</pre></div>
+</code></pre></div>
 判断 <code>tc_idx</code> 合法，<code>tcache-&gt;counts[tc_idx]</code> 在 7 个以内时，就进入 <code>tcache_put()</code>，传递的两个参数是要释放的 chunk 和该 chunk 对应的 size 在 tcache 中的下标。</p>
 <h3 id="tcache_put">tcache_put()<a class="headerlink" href="#tcache_put" title="Permanent link">&para;</a></h3>
 <p><a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#2907">source code</a></p>
-<p><div class="codehilite"><pre><span></span><span class="cm">/* Caller must ensure that we know tc_idx is valid and there&#39;s room</span>
+<p><div class="codehilite"><pre><span></span><code><span class="cm">/* Caller must ensure that we know tc_idx is valid and there&#39;s room</span>
 <span class="cm">   for more chunks.  */</span>
 <span class="k">static</span> <span class="n">__always_inline</span> <span class="kt">void</span>
 <span class="nf">tcache_put</span> <span class="p">(</span><span class="n">mchunkptr</span> <span class="n">chunk</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">tc_idx</span><span class="p">)</span>
@@ -5110,7 +5110,7 @@
   <span class="n">tcache</span><span class="o">-&gt;</span><span class="n">entries</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span>
   <span class="o">++</span><span class="p">(</span><span class="n">tcache</span><span class="o">-&gt;</span><span class="n">counts</span><span class="p">[</span><span class="n">tc_idx</span><span class="p">]);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 <code>tcache_puts()</code> 完成了把释放的 chunk 插入到 <code>tcache-&gt;entries[tc_idx]</code> 链表头部的操作，也几乎没有任何保护。并且 <strong>没有把 p 位置零</strong>。</p>
 <h2 id="_5">参考<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <ul>
@@ -5218,7 +5218,7 @@
       
     </div>
     
-      <script src="../../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5233,7 +5233,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

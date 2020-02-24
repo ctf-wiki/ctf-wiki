@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4808,7 +4808,7 @@
 <p><a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/kernel/CISCN2017-babydriver">attachment here</a></p>
 <h4 id="_1">分析<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h4>
 <p>先解压 rootfs.cpio 看一下有什么文件
-<div class="codehilite"><pre><span></span>CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> mkdir core
+<div class="codehilite"><pre><span></span><code>CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> mkdir core
 CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> <span class="nb">cd</span> core 
 core <span class="o">[</span>master●<span class="o">]</span> mv ../rootfs.cpio rootfs.cpio.gz
 core <span class="o">[</span>master●●<span class="o">]</span> gunzip ./rootfs.cpio.gz 
@@ -4856,10 +4856,10 @@ core <span class="o">[</span>master●<span class="o">]</span> bat init
   <span class="m">19</span>   │ poweroff -d <span class="m">0</span>  -f
   <span class="m">20</span>   │
 ───────┴────────────────────────────────────────────────────────────
-</pre></div>
+</code></pre></div>
 根据 init 的内容，12 行加载了 <code>babydriver.ko</code> 这个驱动，根据 pwn 的一般套路，这个就是有漏洞的 LKM 了。init 的其他命令都是 linux 常用的命令，就不再解释了。</p>
 <p>把这个驱动文件拿出来。</p>
-<p><div class="codehilite"><pre><span></span>core <span class="o">[</span>master●<span class="o">]</span> cp ./lib/modules/4.4.72/babydriver.ko ..
+<p><div class="codehilite"><pre><span></span><code>core <span class="o">[</span>master●<span class="o">]</span> cp ./lib/modules/4.4.72/babydriver.ko ..
 core <span class="o">[</span>master●<span class="o">]</span> <span class="nb">cd</span> ..
 CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> check ./babydriver.ko
 ./babydriver.ko: ELF <span class="m">64</span>-bit LSB relocatable, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, BuildID<span class="o">[</span>sha1<span class="o">]=</span>8ec63f63d3d3b4214950edacf9e65ad76e0e00e7, with debug_info, not stripped
@@ -4869,10 +4869,10 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class="o">(</span>0x0<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 没有开 PIE，无 canary 保护，没有去除符号表，很 nice。</p>
 <p>用 IDA 打开分析，既然没有去除符号表，shift + F9 先看一下有什么结构体，可以发现如下的结构体：
-<div class="codehilite"><pre><span></span><span class="err">00000000</span> <span class="nf">babydevice_t</span>    <span class="no">struc</span> <span class="c">; (sizeof=0x10, align=0x8, copyof_429)</span>
+<div class="codehilite"><pre><span></span><code><span class="err">00000000</span> <span class="nf">babydevice_t</span>    <span class="no">struc</span> <span class="c">; (sizeof=0x10, align=0x8, copyof_429)</span>
 <span class="err">00000000</span>                                         <span class="c">; XREF: .bss:babydev_struct/r</span>
 <span class="err">00000000</span> <span class="nf">device_buf</span>      <span class="no">dq</span> <span class="err">?</span>                    <span class="c">; XREF: babyrelease+6/r</span>
 <span class="err">00000000</span>                                         <span class="c">; babyopen+26/w ... ; offset</span>
@@ -4880,10 +4880,10 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
 <span class="err">00000008</span>                                         <span class="c">; babyioctl+3C/w ...</span>
 <span class="err">00000010</span> <span class="nf">babydevice_t</span>    <span class="no">ends</span>
 <span class="err">00000010</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>再看一下主要函数</p>
 <p><strong>babyioctl:</strong> 定义了 0x10001 的命令，可以释放全局变量 babydev_struct 中的 device_buf，再根据用户传递的 size 重新申请一块内存，并设置 device_buf_len。
-<div class="codehilite"><pre><span></span><span class="c1">// local variable allocation has failed, the output may be wrong!</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// local variable allocation has failed, the output may be wrong!</span>
 <span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babyioctl</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">command</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kr">__int64</span> <span class="n">arg</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">size_t</span> <span class="n">v3</span><span class="p">;</span> <span class="c1">// rdx</span>
@@ -4904,9 +4904,9 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
     <span class="n">printk</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\x013d</span><span class="s">efalut:arg is %ld</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">v3</span><span class="p">,</span> <span class="n">v3</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p><strong>babyopen:</strong> 申请一块空间，大小为 0x40 字节，地址存储在全局变量 babydev_struct.device_buf 上，并更新 babydev_struct.device_buf_len
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">babyopen</span><span class="p">(</span><span class="n">inode</span> <span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">babyopen</span><span class="p">(</span><span class="n">inode</span> <span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kr">__int64</span> <span class="n">v2</span><span class="p">;</span> <span class="c1">// rdx</span>
 
@@ -4916,9 +4916,9 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
   <span class="n">printk</span><span class="p">(</span><span class="s">&quot;device open</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="mh">0x24000C0LL</span><span class="p">,</span> <span class="n">v2</span><span class="p">);</span>
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p><strong>babyread:</strong> 先检查长度是否小于 babydev_struct.device_buf_len，然后把 babydev_struct.device_buf 中的数据拷贝到 buffer 中，buffer 和长度都是用户传递的参数
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babyread</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babyread</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">size_t</span> <span class="n">v4</span><span class="p">;</span> <span class="c1">// rdx</span>
 
@@ -4929,9 +4929,9 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
       <span class="n">copy_to_user</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">babydev_struct</span><span class="p">.</span><span class="n">device_buf</span><span class="p">,</span> <span class="n">v4</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p><strong>babywrite:</strong> 类似 babyread，不同的是从 buffer 拷贝到全局变量中
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babywrite</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="kr">__fastcall</span> <span class="nf">babywrite</span><span class="p">(</span><span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">loff_t</span> <span class="o">*</span><span class="n">offset</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">size_t</span> <span class="n">v4</span><span class="p">;</span> <span class="c1">// rdx</span>
 
@@ -4942,9 +4942,9 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
       <span class="n">copy_from_user</span><span class="p">(</span><span class="n">babydev_struct</span><span class="p">.</span><span class="n">device_buf</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">v4</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p><strong>babyrelease:</strong> 释放空间，没什么好说的
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">babyrelease</span><span class="p">(</span><span class="n">inode</span> <span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">babyrelease</span><span class="p">(</span><span class="n">inode</span> <span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kr">__int64</span> <span class="n">v2</span><span class="p">;</span> <span class="c1">// rdx</span>
 
@@ -4953,14 +4953,14 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
   <span class="n">printk</span><span class="p">(</span><span class="s">&quot;device release</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">filp</span><span class="p">,</span> <span class="n">v2</span><span class="p">);</span>
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>还有 babydriver_init() 和 babydriver_exit() 两个函数分别完成了 <strong>/dev/babydev</strong> 设备的初始化和清理，查一下函数的用法即可，不再分析。</p>
 <h4 id="_2">思路<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h4>
 <p>没有用户态传统的溢出等漏洞，但存在一个伪条件竞争引发的 UAF 漏洞。</p>
 <p>也就是说如果我们同时打开两个设备，第二次会覆盖第一次分配的空间，因为 babydev_struct 是全局的。同样，如果释放第一个，那么第二个其实是被是释放过得，这样就造成了一个 UAF。</p>
 <p>那么有了 UAF 要怎么用呢？之前提到了 cred 结构体，可以修改 cred 来提权到 root。</p>
 <p>其中 4.4.72 的 cred 结构体 <a href="https://elixir.bootlin.com/linux/v4.4.72/source/include/linux/cred.h#L118">定义</a> 如下：
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">cred</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">cred</span> <span class="p">{</span>
     <span class="n">atomic_t</span>    <span class="n">usage</span><span class="p">;</span>
 <span class="cp">#ifdef CONFIG_DEBUG_CREDENTIALS</span>
     <span class="n">atomic_t</span>    <span class="n">subscribers</span><span class="p">;</span>    <span class="cm">/* number of processes subscribed */</span>
@@ -4999,7 +4999,7 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
     <span class="k">struct</span> <span class="n">group_info</span> <span class="o">*</span><span class="n">group_info</span><span class="p">;</span>  <span class="cm">/* supplementary groups for euid/fsgid */</span>
     <span class="k">struct</span> <span class="n">rcu_head</span> <span class="n">rcu</span><span class="p">;</span>        <span class="cm">/* RCU deletion hook */</span>
 <span class="p">};</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>那么根据 UAF 的思想，思路如下：</p>
 <ol>
 <li>打开两次设备，通过 ioctl 更改其大小为 cred 结构体的大小</li>
@@ -5009,7 +5009,7 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
 <p>需要确定 cred 结构体的大小，有了源码，大小就很好确定了。计算一下是 0xa8（注意使用相同内核版本的源码）。</p>
 <h4 id="exploit">Exploit<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h4>
 <p>注释都写在代码里了，<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/kernel/CISCN2017-babydriver">exploit here</a>
-<div class="codehilite"><pre><span></span><span class="n">CISCN2017_babydriver</span> <span class="p">[</span><span class="n">master</span><span class="err">●●</span><span class="p">]</span> <span class="n">cat</span> <span class="n">exploit</span><span class="p">.</span><span class="n">c</span> 
+<div class="codehilite"><pre><span></span><code><span class="n">CISCN2017_babydriver</span> <span class="p">[</span><span class="n">master</span><span class="err">●●</span><span class="p">]</span> <span class="n">cat</span> <span class="n">exploit</span><span class="p">.</span><span class="n">c</span> 
 <span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
@@ -5060,9 +5060,9 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> c
 
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <h4 id="get-root-shell">get root shell<a class="headerlink" href="#get-root-shell" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span>// 静态编译文件，kernel 中没有 libc
+<div class="codehilite"><pre><span></span><code>// 静态编译文件，kernel 中没有 libc
 CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> gcc exploit.c -static -o exploit
 CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> file exploit
 exploit: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <span class="m">1</span> <span class="o">(</span>GNU/Linux<span class="o">)</span>, statically linked, <span class="k">for</span> GNU/Linux <span class="m">3</span>.2.0, BuildID<span class="o">[</span>sha1<span class="o">]=</span>90aabed5497b6922fda3d5118e4aa9cb2fa5ccc5, not stripped
@@ -5091,7 +5091,7 @@ exploit
 / <span class="c1"># id</span>
 <span class="nv">uid</span><span class="o">=</span><span class="m">0</span><span class="o">(</span>root<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span><span class="m">0</span><span class="o">(</span>root<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span><span class="m">1000</span><span class="o">(</span>ctf<span class="o">)</span>
 / <span class="c1">#</span>
-</pre></div>
+</code></pre></div>
 
 <p>当然也可以用 rop 来做，放到下一篇分析</p>
 <h2 id="reference">Reference:<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
@@ -5199,7 +5199,7 @@ exploit
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5214,7 +5214,7 @@ exploit
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

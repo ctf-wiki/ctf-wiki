@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4664,27 +4664,27 @@
 <h2 id="smep">SMEP<a class="headerlink" href="#smep" title="Permanent link">&para;</a></h2>
 <p>In order to prevent the <code>ret2usr</code> attack, the kernel developer proposed <code>smep</code> protection, smep full name <code>Supervisor Mode Execution Protection</code>, which is a protection measure of the kernel. When the CPU is in <code>ring0</code> mode, it performs <code>user space&amp;#39;. Code</code> will trigger a page fault; this protection is called <code>PXN</code> in arm.</p>
 <p>The option when starting the kernel with qemu can determine whether smep protection is enabled.
-<div class="codehilite"><pre><span></span>CISCN2017_babydriver <span class="o">[</span>master ●●<span class="o">]</span> grab smep ./boot.sh
+<div class="codehilite"><pre><span></span><code>CISCN2017_babydriver <span class="o">[</span>master ●●<span class="o">]</span> grab smep ./boot.sh
 qemu-system-x86_64 -initrd rootfs.cpio -kernel bzImage -append <span class="s1">&#39;console=ttyS0 root=/dev/ram oops=panic panic=1&#39;</span> -enable-kvm -monitor /dev/null -m 64M --nographic  -smp <span class="nv">cores</span><span class="o">=</span><span class="m">1</span>,threads<span class="o">=</span><span class="m">1</span> -cpu kvm64,+smep
-</pre></div></p>
+</code></pre></div></p>
 <p>Can also pass
-<div class="codehilite"><pre><span></span>CISCN2017_babydriver <span class="o">[</span>master ●●<span class="o">]</span> grep smep / proc / cpuinfo
+<div class="codehilite"><pre><span></span><code>CISCN2017_babydriver <span class="o">[</span>master ●●<span class="o">]</span> grep smep / proc / cpuinfo
 flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb invpcid_single pti tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap intel_pt xsaveopt dtherm ida arat pln pts
 
 ......
-</pre></div></p>
+</code></pre></div></p>
 <p>Check if the protection is turned on.</p>
 <h3 id="smep-and-cr4-registers">smep and CR4 registers<a class="headerlink" href="#smep-and-cr4-registers" title="Permanent link">&para;</a></h3>
 <p>The system judges whether to enable smep protection according to the value of the CR4 register. When the 20<sup>th</sup> bit of the CR4 register is 1, the protection is turned on; when it is 0, the protection is turned off.</p>
 <p><img alt="smep" src="../figure/smep.jpg" /></p>
 <p>For example, when
-<div class="codehilite"><pre><span></span>$ CR4 = 0x1407f0 = 000 1 0100 0000 0111 1111 0000
-</pre></div></p>
+<div class="codehilite"><pre><span></span><code>$ CR4 = 0x1407f0 = 000 1 0100 0000 0111 1111 0000
+</code></pre></div></p>
 <p>When smep protection is turned on. The CR4 register can be modified by the mov instruction, so only the need is needed.
 <code>`</code>asm
 mov cr4, 0x1407e0</p>
 <h1 id="0x1407e0-101-0-0000-0011-1111-00000">0x1407e0 = 101 0 0000 0011 1111 00000<a class="headerlink" href="#0x1407e0-101-0-0000-0011-1111-00000" title="Permanent link">&para;</a></h1>
-<div class="codehilite"><pre><span></span>You can turn off smep protection.
+<div class="codehilite"><pre><span></span><code>You can turn off smep protection.
 
 
 Searching for the gadget extracted from `vmlinux` is easy to achieve.
@@ -4807,10 +4807,10 @@ struct tty_struct {
     struct tty_port *port;
 
 } __randomize_layout;
-</pre></div>
+</code></pre></div>
 
 <p>Why should we control this structure? Because there is another interesting structure <code>tty_operations</code>, [source] (<a href="https://code.woboq.org/linux/linux/include/linux/tty_driver.h.html#tty_operations">https://code.woboq.org/linux/linux/include/linux/tty_driver.h.html#tty_operations</a>) is as follows:
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">tty_operations</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">tty_operations</span> <span class="p">{</span>
 
     <span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">lookup</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span>
 
@@ -4897,9 +4897,9 @@ struct tty_struct {
     <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">proc_show</span><span class="p">)(</span><span class="k">struct</span> <span class="n">seq_file</span> <span class="o">*</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
 
 <span class="p">}</span> <span class="n">__randomize_layout</span><span class="p">;</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>A lot of function pointers (pwn hand feng shui treasure), so I imagine constructing the structure shown in the figure below
-<div class="codehilite"><pre><span></span>fake_tty_struct  fake_tty_operations
+<div class="codehilite"><pre><span></span><code>fake_tty_struct  fake_tty_operations
 
 +---------+      +----------+
 
@@ -4922,12 +4922,12 @@ struct tty_struct {
 |......   |      |......    |
 
 +---------+      +----------+
-</pre></div></p>
+</code></pre></div></p>
 <p>Then we can jump to different evils through different operations (such as <code>write, ioctl</code>, etc.).</p>
 <p>For this topic, because smep protection is enabled, if you want ret2usr to increase the weight, you need to modify the value of cr4, and the control function pointer is not enough. You can control the function pointer to perform the stack pivot and other operations to our rop chain. Space, close smep with rop, and then proceed.</p>
 <p>&gt; This question is not given to vmlinux. You need to extract the kernel image using [extract-vmlinux] (<a href="https://github.com/torvalds/linux/blob/master/scripts/extract-vmlinux">https://github.com/torvalds/linux/blob/master/scripts/extract-vmlinux</a>).</p>
 <p>After turning off smep protection, you can use rop to do whatever you want. The final <a href="https://github.com/bash-c/pwn_repo/blob/master/CISCN2017_babydriver/uaf_tty_struct.c">exp</a> is as follows:
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 
@@ -5079,7 +5079,7 @@ struct tty_struct {
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
                 
                   
                 
@@ -5145,7 +5145,7 @@ struct tty_struct {
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5160,7 +5160,7 @@ struct tty_struct {
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

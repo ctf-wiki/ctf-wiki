@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4727,35 +4727,35 @@
 <h2 id="_1">跳到一条指令中间<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>最简单的方法就是利用<code>jmp</code>跳转到某一条指令中间执行, 也就是说真实的代码是从某条指令"之中"开始的, 但在反汇编时由于是针对整条指令而不能列出真正被运行的汇编指令代码. </p>
 <p>说起来好像很拗口, 很难懂, 我们来看一个示例吧, 给出以下的汇编代码.</p>
-<div class="codehilite"><pre><span></span>start:
+<div class="codehilite"><pre><span></span><code>start:
     jmp label+1
 label:  
     DB 0x90
     mov eax, 0xf001
-</pre></div>
+</code></pre></div>
 
 <p>这段代码<code>label</code>所在的第一条指令是<code>DB 0x90</code>. 我们来看看<code>objdump</code>对这段代码反汇编的结果:</p>
-<div class="codehilite"><pre><span></span>08048080 &lt;start&gt;:
+<div class="codehilite"><pre><span></span><code>08048080 &lt;start&gt;:
   8048080:  e9 01 00 00 00  jmp 8048086 &lt;label+0x1&gt;
 08048085 &lt;label&gt;:
   8048085:  90      nop
   8048086:  b8 01 f0 00 00  mov eax,0xf001
-</pre></div>
+</code></pre></div>
 
 <p>看起来也没什么问题, <code>DB 0x90</code>被准确地反汇编成<code>90 nop</code>. </p>
 <p>但是如果我们将<code>nop</code>指令修改为1字节以上的指令, 那么objdump就不会跟随我们的jump并正确的反汇编, 而是线性地从上往下继续汇编(线性扫描算法). 比如我将<code>DB 0x90</code>改成了<code>DB 0xE9</code>, 来看看objdump再次反汇编的结果:</p>
-<div class="codehilite"><pre><span></span>08048080 &lt;start&gt;:
+<div class="codehilite"><pre><span></span><code>08048080 &lt;start&gt;:
   8048080:  e9 01 00 00 00  jmp 8048086 &lt;label+0x1&gt;
 08048085 &lt;label&gt;:
   8048085:  e9 b8 01 f0 00  jmp 8f48242 &lt;__bss_start+0xeff1b6&gt;
-</pre></div>
+</code></pre></div>
 
 <p>对比之前的反汇编结果, 你很明显地看出来是什么情况了吧. <code>DB 0xE9</code>单纯只是一个数据, 也不会被执行, 而反汇编出的结果, 却将其视作一个指令, 之后的结果也因此而改变了.</p>
 <p>objdump<code>忽略了jmp的目的地址处的代码</code>并直接汇编jmp后的指令, 这样我们真正的代码也就被很好地"隐藏"了起来</p>
 <h2 id="_2">解决方法<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>该如何解决这个问题呢? 看起来最直接的方法就是将这个无用的<code>0xE9</code>用十六进制编辑器手动替换成<code>0x90</code>. 但是如果程序有进行文件校验, 计算checksum值, 那么这个方法就行不通了. </p>
 <p>所以更好的解决办法是使用如IDA或类似有做控制流分析的反汇编器, 对于同样有问题的程序. 反汇编结果可能如下: </p>
-<div class="codehilite"><pre><span></span>  ---- section .text ----:
+<div class="codehilite"><pre><span></span><code>  ---- section .text ----:
 08048080    E9 01 00 00 00  jmp Label_08048086
                                                 ; (08048086)
                                                 ; (near + 0x1)
@@ -4764,12 +4764,12 @@ label:
 Label_08048086:
 08048086    B8 01 F0 00 00  mov eax, 0xF001
                                                 ; xref ( 08048080 ) 
-</pre></div>
+</code></pre></div>
 
 <p>反汇编结果看上去还行</p>
 <h2 id="_3">运行时计算跳转地址<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>这种方法, 甚至可以对抗分析控制流的反汇编器. 我们可以看一个示例代码, 更好地理解:</p>
-<div class="codehilite"><pre><span></span>; ----------------------------------------------------------------------------
+<div class="codehilite"><pre><span></span><code>; ----------------------------------------------------------------------------
     call earth+1
 Return:
                     ; x instructions or random bytes here               x byte(s)
@@ -4784,11 +4784,11 @@ earth:              ; earth = Return + x
 ; Code:
                     ; !! Code Continues Here !!
 ; ----------------------------------------------------------------------------
-</pre></div>
+</code></pre></div>
 
 <p>程序通过<code>call+pop</code>来获取调用函数当时保存到栈上的返回地址, 其实就是调用函数前的<code>EIP</code>. 然后在函数返回处塞入垃圾数据. 但实际上在函数运行时已经将返回地址修改到了Code处. 因此<code>earth</code>函数返回会跳转到<code>Code</code>处继续运行，而不是<code>Return</code>处继续运行.</p>
 <p>来看一个简易的demo</p>
-<div class="codehilite"><pre><span></span>; ----------------------------------------------------------------------------
+<div class="codehilite"><pre><span></span><code>; ----------------------------------------------------------------------------
     call earth+1
 earth:  
     DB 0xE9             ; 1 &lt;--- pushed return address,
@@ -4806,20 +4806,20 @@ Code:                   ; code continues here &lt;--- pushed return address + 9
     nop
     ret
 ; ----------------------------------------------------------------------------
-</pre></div>
+</code></pre></div>
 
 <p>如果是使用objdump进行反汇编, 光是<code>call earth+1</code>就会出现问题, 如下:</p>
-<div class="codehilite"><pre><span></span>00000000 &lt;earth-0x5&gt;:
+<div class="codehilite"><pre><span></span><code>00000000 &lt;earth-0x5&gt;:
   0:    e8 01 00 00 00  call 6 &lt;earth+0x1&gt;
 00000005 &lt;earth&gt;:
   5:    e9 58 90 05 09  jmp 9059062 &lt;earth+0x905905d&gt;
   a:    00 00           add %al,(%eax)
   c:    00 50 c3        add %dl,0xffffffc3(%eax)
   f:    e9 90 90 90 c3  jmp c39090a4 &lt;earth+0xc390909f&gt;
-</pre></div>
+</code></pre></div>
 
 <p>来看一下<code>ida</code>的情况</p>
-<div class="codehilite"><pre><span></span>text:08000000   ; Segment permissions: Read/Execute
+<div class="codehilite"><pre><span></span><code>text:08000000   ; Segment permissions: Read/Execute
 .text:08000000   _text  segment para public &#39;CODE&#39; use32
 .text:08000000      assume cs:_text
 .text:08000000      ;org 8000000h
@@ -4841,7 +4841,7 @@ Code:                   ; code continues here &lt;--- pushed return address + 9
 .text:08000013
 .text:08000013
 .text:08000013      end
-</pre></div>
+</code></pre></div>
 
 <p>我们在最后的3个<code>nop</code>, 都被很好的隐藏起来. 不仅如此, 我们计算<code>EIP</code>的过程也被完美的隐藏了起来. 实际上整个反汇编的代码已经跟实际代码完全不同.</p>
 <p>如何解决这项问题? 实际上并没有能够保证<code>100%</code>准确反汇编的工具, 当反汇编器做到代码模拟执行的时候也许能做到完全正确的汇编.</p>
@@ -4950,7 +4950,7 @@ Code:                   ; code continues here &lt;--- pushed return address + 9
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -4965,7 +4965,7 @@ Code:                   ; code continues here &lt;--- pushed return address + 9
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4724,7 +4724,7 @@
 </li>
 </ul>
 <p>如下</p>
-<div class="codehilite"><pre><span></span>  <span class="n">memcpy</span><span class="p">(</span><span class="n">cipher</span><span class="p">,</span> <span class="n">plain</span><span class="p">,</span> <span class="mh">0x10uLL</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><code>  <span class="n">memcpy</span><span class="p">(</span><span class="n">cipher</span><span class="p">,</span> <span class="n">plain</span><span class="p">,</span> <span class="mh">0x10uLL</span><span class="p">);</span>
   <span class="k">for</span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0LL</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>
   <span class="p">{</span>
     <span class="n">shift_row</span><span class="p">(</span><span class="n">cipher</span><span class="p">);</span>
@@ -4742,11 +4742,11 @@
     <span class="n">cipher</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">;</span>
   <span class="p">}</span>
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>根据程序流程，我们已知程序加密的结果，而 subbytes 和 shift_row 又是可逆的，所以我们可以获取最后一轮加密后的结果。此时，我们还知道 box 对应的常数，我们只是不知道上一轮中 <code>cipher[4*j]</code> 对应的值，一共 32 位，如果我们直接爆破的话，显然不可取，因为每一轮都需要这么爆破，时间不可接受。那么有没有其它办法呢？其实有的，我们可以考虑中间相遇攻击，即首先枚举所有的 <code>cipher[4*j]</code> 与<code>cipher[4*j+1]</code> 的字节组合，一共256*256 种。在枚举剩下两个字节时，我们可以先计算出其与密文的异或值，然后去之前的组合中找，如果找到的话，我们就认为是正确的。这样复杂度瞬间降到 <span><span class="MathJax_Preview">O(2^{16})</span><script type="math/tex">O(2^{16})</script></span>。</p>
 <p>代码如下</p>
-<div class="codehilite"><pre><span></span><span class="n">encflag</span> <span class="o">=</span> <span class="p">[</span>
+<div class="codehilite"><pre><span></span><code><span class="n">encflag</span> <span class="o">=</span> <span class="p">[</span>
     <span class="mh">0x16</span><span class="p">,</span> <span class="mh">0xEA</span><span class="p">,</span> <span class="mh">0xCA</span><span class="p">,</span> <span class="mh">0xCC</span><span class="p">,</span> <span class="mh">0xDA</span><span class="p">,</span> <span class="mh">0xC8</span><span class="p">,</span> <span class="mh">0xDE</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">,</span> <span class="mh">0x16</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="mh">0xF8</span><span class="p">,</span> <span class="mh">0x84</span><span class="p">,</span>
     <span class="mh">0x69</span><span class="p">,</span> <span class="mh">0x23</span><span class="p">,</span> <span class="mh">0xB2</span><span class="p">,</span> <span class="mh">0x25</span>
 <span class="p">]</span>
@@ -4863,10 +4863,10 @@
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">solve</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>运行结果</p>
-<div class="codehilite"><pre><span></span>➜  cracemec git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
+<div class="codehilite"><pre><span></span><code>➜  cracemec git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
 <span class="m">211</span> <span class="m">3549048324</span>
 round  <span class="m">8</span>
 round  <span class="m">7</span>
@@ -4879,7 +4879,7 @@ round  <span class="m">1</span>
 round  <span class="m">0</span>
 <span class="o">[</span><span class="m">67</span>, <span class="m">73</span>, <span class="m">83</span>, <span class="m">67</span>, <span class="m">78</span>, <span class="m">98</span>, <span class="m">35</span>, <span class="m">97</span>, <span class="m">100</span>, <span class="m">102</span>, <span class="m">115</span>, <span class="m">64</span>, <span class="m">70</span>, <span class="m">122</span>, <span class="m">57</span>, <span class="m">51</span><span class="o">]</span>
 CISCNb#adfs@Fz93
-</pre></div>
+</code></pre></div>
 
 <h2 id="_10">题目<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <ul>
@@ -4990,7 +4990,7 @@ CISCNb#adfs@Fz93
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5005,7 +5005,7 @@ CISCNb#adfs@Fz93
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

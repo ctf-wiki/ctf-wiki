@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -5135,7 +5135,7 @@ g^{si} \equiv g^m \bmod p-1
 <h4 id="_15">例子<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h4>
 <p>这里以2017年国赛mailbox为例，<strong>i春秋有复现</strong>。</p>
 <p>首先，我们来分析一下程序，我们首先需要进行proof of work</p>
-<p><div class="codehilite"><pre><span></span>    <span class="n">proof</span> <span class="o">=</span> <span class="n">b64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
+<p><div class="codehilite"><pre><span></span><code>    <span class="n">proof</span> <span class="o">=</span> <span class="n">b64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
     <span class="n">req</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span>
         <span class="s2">&quot;Please provide your proof of work, a sha1 sum ending in 16 bit&#39;s set to 0, it must be of length </span><span class="si">%d</span><span class="s2"> bytes, starting with </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
         <span class="nb">len</span><span class="p">(</span><span class="n">proof</span><span class="p">)</span> <span class="o">+</span> <span class="mi">5</span><span class="p">,</span> <span class="n">proof</span><span class="p">))</span>
@@ -5148,10 +5148,10 @@ g^{si} \equiv g^m \bmod p-1
         <span class="n">req</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;Check failed&quot;</span><span class="p">)</span>
         <span class="n">req</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="k">return</span> 
-</pre></div>
+</code></pre></div>
 我们需要生成一个以proof开头的长度为proof长度加5的字符串，并且其sha1的值以16比特的0结束。</p>
 <p>这里我们直接使用如下的方式来绕过。</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">sha1</span><span class="p">(</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\0\0</span><span class="s1">&#39;</span>
 
 
@@ -5163,12 +5163,12 @@ g^{si} \equiv g^m \bmod p-1
 <span class="n">s</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">iters</span><span class="o">.</span><span class="n">mbruteforce</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;fixed&#39;</span><span class="p">)</span>
 <span class="n">test</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">s</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里使用了pwntools中的util.iters.mbruteforce，这是一个利用给定字符集合以及指定长度进行多线程爆破的函数。其中，第一个参数为爆破函数，这里是sha1，第二个参数是字符集，第三个参数是字节数，第四个参数指的是我们只尝试字节数为第三个参数指定字节数的排列，即长度是固定的。更加具体的信息请参考pwntools。</p>
 <p>绕过之后，我们继续分析程序，简单看下generate_keys函数，可以知道该函数是ElGamal生成公钥的过程，然后看了看verify函数，就是验证签名的过程。</p>
 <p>继续分析</p>
-<div class="codehilite"><pre><span></span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MSGLENGTH</span><span class="p">:</span>
+<div class="codehilite"><pre><span></span><code>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MSGLENGTH</span><span class="p">:</span>
                 <span class="n">req</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;what r u do&#39;in?&quot;</span><span class="p">)</span>
                 <span class="n">req</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="k">return</span>
@@ -5196,7 +5196,7 @@ g^{si} \equiv g^m \bmod p-1
                         <span class="k">return</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">req</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s2">&quot;You are not the Genji I knew!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>根据这三个if条件可以知道</p>
 <ul>
@@ -5207,7 +5207,7 @@ g^{si} \equiv g^m \bmod p-1
 <p>分析到这里，其实就知道了，我们就是在选择指定签名进行伪造，这里我们自然要充分利用第二个if条件，只要我们确保我们输入的消息的开头为‘test’，并且该消息与以Th3_bery_un1que1i_ChArmIng_G3nji开头的固定消息模p-1同余，我们即可以通过验证。</p>
 <p>那我们如何构造呢？既然消息的长度可以足够长，那么我们可以将'test'对应的16进制先左移得到比p-1大的数字a，然后用a对p-1取模，用a再减去余数，此时a模p-1余0了。这时再加上以Th3_bery_un1que1i_ChArmIng_G3nji开头的固定消息的值，即实现了模p-1同余。</p>
 <p>具体如下</p>
-<div class="codehilite"><pre><span></span><span class="c1"># construct the message begins with &#39;test&#39;</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># construct the message begins with &#39;test&#39;</span>
 <span class="n">target</span> <span class="o">=</span> <span class="s2">&quot;Th3_bery_un1que1i_ChArmIng_G3nji&quot;</span> <span class="o">+</span> <span class="n">test</span>
 <span class="n">part1</span> <span class="o">=</span> <span class="p">(</span><span class="n">digitalize</span><span class="p">(</span><span class="s1">&#39;test&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">51</span><span class="p">))</span> <span class="o">&lt;&lt;</span> <span class="mi">512</span><span class="p">)</span> <span class="o">//</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">victim</span> <span class="o">=</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">digitalize</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
@@ -5219,10 +5219,10 @@ g^{si} \equiv g^m \bmod p-1
         <span class="n">part1</span> <span class="o">=</span> <span class="p">(</span><span class="n">digitalize</span><span class="p">(</span><span class="s1">&#39;test&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">51</span><span class="p">))</span> <span class="o">&lt;&lt;</span> <span class="mi">512</span><span class="p">)</span> <span class="o">//</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
             <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">victim</span> <span class="o">=</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">digitalize</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>最后的脚本如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
 <span class="kn">import</span> <span class="nn">string</span>
 <span class="kn">import</span> <span class="nn">ast</span>
@@ -5279,7 +5279,7 @@ g^{si} \equiv g^m \bmod p-1
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sig</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">sig</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里还要说几个有意思的点就是</p>
 <ul>
@@ -5386,7 +5386,7 @@ g^{si} \equiv g^m \bmod p-1
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5401,7 +5401,7 @@ g^{si} \equiv g^m \bmod p-1
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

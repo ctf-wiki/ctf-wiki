@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4717,14 +4717,14 @@
 <h2 id="_2">重定位结构体<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>在 PE 文件中，所有可能需要重定位的地址都被放在一个数组中，即基址重定位表。如果装载地址改变了，就会对数组中所有的地址进行修正。基址重定位表位于节区 .reloc 内，不过找到它的正确方式是通过 <code>DataDirectory[5]</code> 即 BASE RELOCATION TABLE 项。</p>
 <p>基址重定位数据的组织方式采用按页分割的方法，即将不同页的重定位数据分开存放，每个页的重定位数据组成一个重定位数据块，所有的重定位块组成了重定位表。每个重定位块存放着 4KB 大小的重定位信息，每个重定位数据块的大小必须以 DWORD 对齐。重定位块以一个 <code>IMAGE_BASE_RELOCATION</code> 结构作为开始，其结构体如下：</p>
-<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">_IMAGE_BASE_RELOCATION</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">_IMAGE_BASE_RELOCATION</span> <span class="p">{</span>
     <span class="n">DWORD</span>    <span class="n">VirtualAddress</span><span class="p">;</span>  <span class="c1">// 重定位页的 RVA</span>
     <span class="n">DWORD</span>    <span class="n">SizeOfBlock</span><span class="p">;</span>     <span class="c1">// 重定位块的大小</span>
      <span class="n">WORD</span>    <span class="n">TypeOffset</span><span class="p">;</span>      <span class="c1">// 重定位条目的类型于偏移</span>
 
 <span class="p">}</span> <span class="n">_IMAGE_BASE_RELOCATION</span><span class="p">;</span>
 <span class="k">typedef</span> <span class="n">IMAGE_BASE_RELOCATION</span> <span class="n">UNALIGNED</span> <span class="o">*</span> <span class="n">PIMAGE_BASE_RELOCATION</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>接下来详细说明一下结构体中的成员：</p>
 <ul>
@@ -4736,22 +4736,22 @@
 </ul>
 <h2 id="_3">重定位过程<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p><strong>利用重定位表定位需要修改的地址。</strong>比如在 me.dll 中，重定位表的开头部分如下：</p>
-<div class="codehilite"><pre><span></span>RVA       Data      Description
+<div class="codehilite"><pre><span></span><code>RVA       Data      Description
 00005000  00001000  页 RVA        // page RVA = 0x1000
 00005004  00000118  重定位块大小 size   
 00005008      3013  Type|Offset   //   offset = 0x013
 ...
-</pre></div>
+</code></pre></div>
 
 <p>由 0x1000+0x013 算出待重定位的数据在文件偏移 0x1013 处，加上默认的 imagebase 就是 0x10001013。如下：</p>
-<div class="codehilite"><pre><span></span>.text:10001012 68 9C 20 00 10        push 1000209C
-</pre></div>
+<div class="codehilite"><pre><span></span><code>.text:10001012 68 9C 20 00 10        push 1000209C
+</code></pre></div>
 
 <p>即，文件偏移 0x1013 处的 1000209C 可能需要重定位。</p>
 <p><strong>修改待重定位数据</strong>程序运行后，me.dll 被加载到了 0x633C0000 处：</p>
 <p><img alt="dll 装载处" src="../figure/pe5-relocdll.png" /></p>
 <p>计算待重定位修正后的值，然后将修正的值写到待重定位地址处：</p>
-<div class="codehilite"><pre><span></span>计算待重定位数据地址：
+<div class="codehilite"><pre><span></span><code>计算待重定位数据地址：
 (0x10001013 - DefaultImageBase) + ImageBase 
 即 (0x10001013 - 0x10000000) + 0x633C0000 =&gt; 0x633C1013
 
@@ -4760,7 +4760,7 @@
 即 (0x1000209C - 0x10000000) + 0x633C0000 =&gt; 0x633C209C
 
 最后： *0x633C1013 = 0x633C209C
-</pre></div>
+</code></pre></div>
 
 <p>查看内存中实际的值：</p>
 <p><img alt="重定位后的地址" src="../figure/pe5-relocdata.png" /></p>
@@ -4867,7 +4867,7 @@
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -4882,7 +4882,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

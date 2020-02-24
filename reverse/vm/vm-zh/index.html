@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4779,16 +4779,16 @@
 <p>在这个界面中, 我们看到右两个输入框, 一个用于输入用户名Name, 另一个则用于输入密钥Key. 还有两个按钮, Go用于提交输入, 而Exit则用于退出程序.</p>
 <h2 id="_3">获取用户输入<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>那么我们就可以从这里入手. 程序想获取用户输入, 需要调用的一个API是<code>GetDlgItemTextA()</code></p>
-<div class="codehilite"><pre><span></span><span class="n">UINT</span> <span class="nf">GetDlgItemTextA</span><span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="n">UINT</span> <span class="nf">GetDlgItemTextA</span><span class="p">(</span>
   <span class="n">HWND</span>  <span class="n">hDlg</span><span class="p">,</span>
   <span class="kt">int</span>   <span class="n">nIDDlgItem</span><span class="p">,</span>
   <span class="n">LPSTR</span> <span class="n">lpString</span><span class="p">,</span>
   <span class="kt">int</span>   <span class="n">cchMax</span>
 <span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>获取的输入字符串会保存在<code>lpString</code>里. 那么我们就可以打开IDA查找有交叉引用<code>GetDlgItemTextA()</code>的地方.</p>
-<div class="codehilite"><pre><span></span><span class="nl">.text:</span><span class="err">00401142</span>                 <span class="nf">push</span>    <span class="mi">0</span><span class="no">Ch</span>             <span class="c">; cchMax</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.text:</span><span class="err">00401142</span>                 <span class="nf">push</span>    <span class="mi">0</span><span class="no">Ch</span>             <span class="c">; cchMax</span>
 <span class="nl">.text:</span><span class="err">00401144</span>                 <span class="nf">push</span>    <span class="no">offset</span> <span class="no">inputName</span> <span class="c">; lpString</span>
 <span class="nl">.text:</span><span class="err">00401149</span>                 <span class="nf">push</span>    <span class="mi">3</span><span class="no">F8h</span>            <span class="c">; nIDDlgItem</span>
 <span class="nl">.text:</span><span class="err">0040114</span><span class="nf">E</span>                 <span class="no">push</span>    <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">hWnd</span><span class="p">]</span>      <span class="c">; hDlg</span>
@@ -4801,12 +4801,12 @@
 <span class="nl">.text:</span><span class="err">0040116</span><span class="nf">A</span>                 <span class="no">mov</span>     <span class="no">var_a</span><span class="p">,</span> <span class="mi">0</span>
 <span class="nl">.text:</span><span class="err">00401171</span>                 <span class="nf">call</span>    <span class="no">process_input</span>
 <span class="nl">.text:</span><span class="err">00401176</span>                 <span class="nf">jmp</span>     <span class="no">short</span> <span class="no">locExit</span>
-</pre></div>
+</code></pre></div>
 
 <p>如上, IDA只有这里调用过<code>GetDlgItemTextA</code>并且调用了两次分别获取<code>inputName</code>和<code>inputKey</code>. 随后初始化了一个变量为0, 因为还不明白这个变量的作用, 因此先重命名为<code>var_a</code>. 之后进行了一次函数调用并jmp跳转. 因为jmp跳转位置的代码是一些退出程序的代码, 因此我们可以断定上面的这个call, 是在调用处理用户输入的函数. 因此将jmp的位置重命名为<code>locExit</code>, 函数则重命名为<code>process_input</code>. </p>
 <h2 id="_4">处理用户输入<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>我们进入<code>process_input</code>函数, 该函数仅仅对输入字符串进行了很简单的处理. </p>
-<div class="codehilite"><pre><span></span>  <span class="n">result</span> <span class="o">=</span> <span class="n">strlength</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="n">inputName</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><code>  <span class="n">result</span> <span class="o">=</span> <span class="n">strlength</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="n">inputName</span><span class="p">);</span>
   <span class="k">if</span> <span class="p">(</span> <span class="n">v1</span> <span class="o">&gt;=</span> <span class="mi">7</span> <span class="p">)</span>                                <span class="c1">// v1 = length of inputName</span>
   <span class="p">{</span>
     <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">lenOfName</span> <span class="o">=</span> <span class="n">v1</span><span class="p">;</span>
@@ -4829,10 +4829,10 @@
     <span class="p">}</span>
   <span class="p">}</span>
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>首先是这个<code>strlength()</code>函数. 函数使用<code>cld; repne scasb; not ecx; dec ecx</code>来计算字符串长度并将结果保存在<code>ecx</code>里. 是汇编基础知识就不多介绍. 所以我们将该函数重命名为<code>strlength</code></p>
-<div class="codehilite"><pre><span></span><span class="nl">.text:</span><span class="err">004011</span><span class="nf">C2</span> <span class="no">arg_0</span>           <span class="err">=</span> <span class="no">dword</span> <span class="no">ptr</span>  <span class="mi">8</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.text:</span><span class="err">004011</span><span class="nf">C2</span> <span class="no">arg_0</span>           <span class="err">=</span> <span class="no">dword</span> <span class="no">ptr</span>  <span class="mi">8</span>
 <span class="nl">.text:</span><span class="err">004011</span><span class="nf">C2</span>
 <span class="nl">.text:</span><span class="err">004011</span><span class="nf">C2</span>                 <span class="no">push</span>    <span class="no">ebp</span>
 <span class="nl">.text:</span><span class="err">004011</span><span class="nf">C3</span>                 <span class="no">mov</span>     <span class="no">ebp</span><span class="p">,</span> <span class="no">esp</span>
@@ -4847,38 +4847,38 @@
 <span class="nl">.text:</span><span class="err">004011</span><span class="nf">D4</span>                 <span class="no">leave</span>
 <span class="nl">.text:</span><span class="err">004011</span><span class="nf">D5</span>                 <span class="no">retn</span>    <span class="mi">4</span>
 <span class="nl">.text:</span><span class="err">004011</span><span class="nf">D5</span> <span class="no">strlength</span>       <span class="no">endp</span>
-</pre></div>
+</code></pre></div>
 
 <p>而在IDA生成的伪C代码处有<code>v1</code>和<code>v2</code>, 我对其进行了注解, 可以看汇编, 里面是使用<code>ecx</code>与<code>7</code>进行比较, 而<code>ecx</code>是字符串的长度, 于是我们可以知道, 这里对输入的要求是: <em>inputName 和 inputKey 的长度均不少于 7</em></p>
 <p>当<code>inputName</code>和<code>inputKey</code>长度均不少于7时, 那么就可以对输入进行简单的变换. 以下是一个循环</p>
-<div class="codehilite"><pre><span></span>      <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code>      <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
       <span class="k">do</span>
       <span class="p">{</span>
         <span class="n">inputName</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">^=</span> <span class="n">i</span><span class="p">;</span>
         <span class="o">++</span><span class="n">i</span><span class="p">;</span>
       <span class="p">}</span>
       <span class="k">while</span> <span class="p">(</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">lenOfName</span> <span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>对应的python代码即</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">obfuscate</span><span class="p">(</span><span class="n">username</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">obfuscate</span><span class="p">(</span><span class="n">username</span><span class="p">):</span>
     <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">username</span><span class="p">)):</span>
         <span class="n">s</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">username</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">^</span> <span class="n">i</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">s</span>
-</pre></div>
+</code></pre></div>
 
 <p>函数之后对一些变量进行了赋值(这些并不重要, 就忽略不讲了.) </p>
 <h2 id="seh">注册SEH<a class="headerlink" href="#seh" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="nl">.text:</span><span class="err">004012</span><span class="nf">B5</span>                 <span class="no">push</span>    <span class="no">offset</span> <span class="no">seh_handler</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.text:</span><span class="err">004012</span><span class="nf">B5</span>                 <span class="no">push</span>    <span class="no">offset</span> <span class="no">seh_handler</span>
 <span class="nl">.text:</span><span class="err">004012</span><span class="nf">BA</span>                 <span class="no">push</span>    <span class="no">large</span> <span class="no">dword</span> <span class="no">ptr</span> <span class="no">fs</span><span class="p">:</span><span class="mi">0</span>
 <span class="nl">.text:</span><span class="err">004012</span><span class="nf">C1</span>                 <span class="no">mov</span>     <span class="no">large</span> <span class="no">fs</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="no">esp</span>
 <span class="nl">.text:</span><span class="err">004012</span><span class="nf">C8</span>                 <span class="no">call</span>    <span class="no">initVM</span>
 <span class="nl">.text:</span><span class="err">004012</span><span class="nf">CD</span>                 <span class="no">int</span>     <span class="mi">3</span>               <span class="c">; Trap to Debugger</span>
-</pre></div>
+</code></pre></div>
 
 <p><code>initVM</code>完成的是一些虚拟机启动前的初始化工作(其实就是对一些寄存器和相关的部分赋初值), 我们之后来讨论. 这里我们关注的是SEH部分. 这里注册了一个SEH句柄, 异常处理函数我重命名为<code>seh_handler</code>, 并之后使用<code>int 3</code>手动触发异常. 而在<code>seh_handler</code>位置, IDA并未正确识别出对应的代码</p>
-<div class="codehilite"><pre><span></span>.text:004012D7 seh_handler     db 64h                  ; DATA XREF: process_input+7Do
+<div class="codehilite"><pre><span></span><code>.text:004012D7 seh_handler     db 64h                  ; DATA XREF: process_input+7Do
 .text:004012D8                 dd 58Fh, 0C4830000h, 13066804h, 0FF640040h, 35h, 25896400h
 .text:004012D8                 dd 0
 .text:004012F4                 dd 1B8h, 0F7C93300h, 0F7C033F1h, 0FFC483E1h, 8F64FDEBh
@@ -4888,11 +4888,11 @@
 .text:0040131C                 dd 25h, 0C033CC00h, 0C483E1F7h, 83FDEBFFh, 4035FF05h, 0D8B0200h
 .text:0040131C                 dd 4035FFh, 3000B1FFh, 58F0040h, 4031C8h, 31C83D80h, 750A0040h
 .text:0040131C                 dd 0B1FF4176h, 403000h, 31C8058Fh, 3D800040h, 4031C8h
-</pre></div>
+</code></pre></div>
 
 <p>我们可以点击相应位置按下<code>c</code>键, 将这些数据转换成代码进行识别. (我们需要按下多次c键进行转换), 得到如下代码.</p>
 <p>如下, 在<code>seh_handler</code>位置, 又用类似的方法注册了一个位于<code>401306h</code>的异常处理函数, 并通过<code>xor ecx,ecx; div ecx</code>手动触发了一个<code>除0异常</code>. 而在<code>loc_401301</code>位置, 这是一个反调试技巧, <code>jmp loc_401301+2</code>会使得<code>EIP</code>转向一条指令中间, 使得无法继续调试. 所以我们可以将<code>00401301~00401306</code>部分的代码<code>nop</code>掉, 然后在<code>00401306</code>位置创建一个新函数<code>seh_handler2</code></p>
-<div class="codehilite"><pre><span></span>seh_handler:                            ; DATA XREF: process_input+7Do
+<div class="codehilite"><pre><span></span><code>seh_handler:                            ; DATA XREF: process_input+7Do
 .text:004012D7                 pop     large dword ptr fs:0
 .text:004012DE                 add     esp, 4
 .text:004012E1                 push    401306h
@@ -4917,12 +4917,12 @@
 .text:00401325                 mov     ebx, [ecx]
 .text:00401327                 xor     eax, eax
 .text:00401329                 mul     ecx
-</pre></div>
+</code></pre></div>
 
 <p>类似的, 还有<code>401330h</code>重命名为<code>seh_handler3</code>, 而<code>40135Eh</code>是最后一个注册的异常处理函数, 我们可以推测这才是虚拟机真正的main函数, 因此我们将<code>40135Eh</code>重命名为<code>vm_main</code>. (有关SEH和反调试的部分, 可以推荐大家自己去动态调试一番弄清楚)</p>
 <h2 id="_5">恢复堆栈平衡<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>我们创建了一个<code>vm_main</code>函数(重命名后还需要创建函数, IDA才能识别), 然后按下<code>F5</code>提示失败, 失败的原因则是由于堆栈不平衡导致的.  因此我们可以点击IDA菜单项<code>Options-&gt;General</code>在右侧勾选<code>stack pointer</code>. 这样就会显示出对应的栈指针. </p>
-<div class="codehilite"><pre><span></span>.text:004017F2 000                 jmp     vm_main
+<div class="codehilite"><pre><span></span><code>.text:004017F2 000                 jmp     vm_main
 .text:004017F7     ; ---------------------------------------------------------------------------
 .text:004017F7 000                 push    0               ; uType
 .text:004017F9 004                 push    offset aError   ; &quot;Error&quot;
@@ -4940,17 +4940,17 @@
 .text:00401810 -18                 leave
 .text:00401811 -1C                 retn
 .text:00401811     vm_main         endp ; sp-analysis failed
-</pre></div>
+</code></pre></div>
 
 <p>我们来到最下显示不平衡的位置. 最上的<code>jmp vm_main</code>表明虚拟机内在执行一个循环. 而<code>MessageBoxA</code>的调用则是显示最后弹出的错误信息. 而在<code>locret_40180A</code>位置处, 经过多次leave堆栈严重不平衡, 因此我们需要手动恢复堆栈平衡. </p>
 <p>这里也很简单, 在<code>0040180A</code>位置已经堆栈平衡了(000), 因此我们只需要将这一句<code>leave</code>修改为<code>retn</code>就可以了. 如下这样</p>
-<div class="codehilite"><pre><span></span>.text:0040180A     locret_40180A:                          ; CODE XREF: vm_main+492j
+<div class="codehilite"><pre><span></span><code>.text:0040180A     locret_40180A:                          ; CODE XREF: vm_main+492j
 .text:0040180A 000                 retn
 .text:0040180B     ; ---------------------------------------------------------------------------
 .text:0040180B 004                 leave
 .text:0040180C 004                 leave
 .text:0040180D 004                 leave
-</pre></div>
+</code></pre></div>
 
 <p>然后你就可以发现<code>vm_main</code>可以F5生成伪C代码了. </p>
 <h2 id="_6">虚拟机指令分析<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
@@ -5007,7 +5007,7 @@
 </tbody>
 </table>
 <p>我们再来看分析后的<code>initVM</code>函数</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">initVM</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">initVM</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">int</span> <span class="n">result</span><span class="p">;</span> <span class="c1">// eax@1</span>
 
@@ -5023,11 +5023,11 @@
   <span class="o">++</span><span class="n">cur_index</span><span class="p">;</span>
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里有4个通用寄存器(<code>r1/r2/r3/r4</code>), 1个<code>sp</code>指针和1个<code>pc</code>指针, 标志<code>zf</code>和<code>sf</code>. 先前我们不知道的<code>var_a</code>也被重命名为<code>cur_index</code>, 指向的是<code>inputName</code>当前正在处理的字符索引. </p>
 <p>对于VM实现的多个指令我们就不再多说, 重点来看下<code>check</code>部分的操作.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">check</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__fastcall</span> <span class="nf">check</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">char</span> <span class="n">v1</span><span class="p">;</span> <span class="c1">// al@1</span>
   <span class="kt">int</span> <span class="n">result</span><span class="p">;</span> <span class="c1">// eax@4</span>
@@ -5049,23 +5049,23 @@
   <span class="p">}</span>
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>如果<code>r1</code>中的值跟<code>inputKey[cur_index]</code>相等, 那么会继续判断是否已经检查完了整个<code>inputName</code>, 如果没有出错且比对结束, 那么就会弹出<code>Good job! Now write a keygen.</code>的消息框. 否则会继续<code>initVM</code>进入下一轮循环.(出错了当然是弹出消息框提示错误了. )</p>
 <p><code>cur_index</code>会在<code>initVM</code>中自增1, 那么还记得之前在<code>process_input</code>里有执行2次<code>initVM</code>吗. 因为有执行2次<code>initVM</code>, 所以我们的<code>inputKey</code>的前2位可以是任意字符. </p>
-<div class="codehilite"><pre><span></span>      <span class="n">unk_4031CE</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code>      <span class="n">unk_4031CE</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
       <span class="n">opcode</span> <span class="o">=</span> <span class="n">vm_pc</span><span class="p">;</span>
       <span class="n">initVM</span><span class="p">();</span>
       <span class="n">initVM</span><span class="p">();</span>
       <span class="n">__debugbreak</span><span class="p">();</span>
       <span class="n">JUMPOUT</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">word_4012CE</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>故而我们分析完了整个虚拟机, 便可以开始着手编写<code>Keygen</code>. </p>
 <p>对应的<code>keygenme</code>可以点击此处下载: <a href="https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/vm/fuelvm/fuelvm_keygen.py">fuelvm_keygen.py</a></p>
-<div class="codehilite"><pre><span></span>$ python2 fuelvm_keygen.py ctf-wiki
+<div class="codehilite"><pre><span></span><code>$ python2 fuelvm_keygen.py ctf-wiki
 <span class="o">[</span>*<span class="o">]</span> Password <span class="k">for</span> user <span class="s1">&#39;ctf-wiki&#39;</span> is: 4mRC*TKJI
-</pre></div>
+</code></pre></div>
 
 <p>对应的<code>IDA数据库</code>可以点击此处下载: <a href="https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/vm/fuelvm/FuelVM.idb">FuelVM.idb</a></p>
                 
@@ -5168,7 +5168,7 @@
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5183,7 +5183,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

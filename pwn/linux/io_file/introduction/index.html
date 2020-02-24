@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4687,7 +4687,7 @@
 <p>FILE is a structure for describing files in a standard IO library of a Linux system, called a file stream.
 The FILE structure is created when the program executes functions such as fopen and is allocated in the heap. We often define a pointer to the FILE structure to receive this return value.</p>
 <p>The FILE structure is defined in libio.h as shown below</p>
-<div class="codehilite"><pre><span></span>struct _IO_FILE {
+<div class="codehilite"><pre><span></span><code>struct _IO_FILE {
   int _flags;       /* High-order word is _IO_MAGIC; rest is flags. */
 
 #define _IO_file_flags _flags
@@ -4768,29 +4768,29 @@ The FILE structure is created when the program executes functions such as fopen 
 #ifdef _IO_USE_OLD_IO_FILE
 
 };
-</pre></div>
+</code></pre></div>
 
 <p>The FILE structure in the process will be connected to each other through the _chain field to form a linked list. The linked list header is represented by the global variable _IO_list_all. Through this value, we can traverse all the FILE structures.</p>
 <p>In the standard I/O library, three file streams are automatically opened at the start of each program: stdin, stdout, stderr. So in the initial state, _IO_list_all points to a linked list of these file streams, but it should be noted that these three file streams are located in the data segment of libc.so. The file stream we created with fopen is allocated on the heap memory.</p>
 <p>We can find stdin\stdout\stderr and other symbols in libc.so, these symbols are pointers to the FILE structure, the symbol of the real structure is</p>
-<div class="codehilite"><pre><span></span>_IO_2_1_stderr_
+<div class="codehilite"><pre><span></span><code>_IO_2_1_stderr_
 _IO_2_1_stdout_
 _IO_2_1_stdin_
-</pre></div>
+</code></pre></div>
 
 <p>But in fact the _IO_FILE structure is wrapped around another structure _IO_FILE_plus, which contains an important pointer vtable pointing to a series of function pointers.</p>
 <p>In libc2.23, the 32-bit vtable offset is 0x94 and the 64-bit offset is 0xd8.</p>
-<div class="codehilite"><pre><span></span>struct _IO_FILE_plus
+<div class="codehilite"><pre><span></span><code>struct _IO_FILE_plus
 {
 
 _IO_FILE file;
     IO_jump_t   *vtable;
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>Vtable is a pointer of type IO_jump_t, and some function pointers are stored in IO_jump_t. Later we will see that these function pointers are called in a series of standard IO functions.</p>
-<div class="codehilite"><pre><span></span>void * funcs[] = {
+<div class="codehilite"><pre><span></span><code>void * funcs[] = {
 
    1 NULL, // &quot;extra word&quot;
 
@@ -4833,12 +4833,12 @@ _IO_FILE file;
    21 NULL, // imbue
 
 };
-</pre></div>
+</code></pre></div>
 
 <h2 id="fread">fread<a class="headerlink" href="#fread" title="Permanent link">&para;</a></h2>
 <p>Fread is a standard IO library function that reads data from a file stream. The function prototype is as follows</p>
-<div class="codehilite"><pre><span></span>size_t fread ( void *buffer, size_t size, size_t count, FILE *stream) ;
-</pre></div>
+<div class="codehilite"><pre><span></span><code>size_t fread ( void *buffer, size_t size, size_t count, FILE *stream) ;
+</code></pre></div>
 
 <ul>
 <li>
@@ -4858,7 +4858,7 @@ _IO_FILE file;
 </li>
 </ul>
 <p>The code for fread is located in /libio/iofread.c and the function name is _IO_fread, but the real function is implemented in the subfunction _IO_sgetn.</p>
-<div class="codehilite"><pre><span></span>_IO_size_t
+<div class="codehilite"><pre><span></span><code>_IO_size_t
 
 _IO_fread (buf, size, count, fp)
 
@@ -4878,10 +4878,10 @@ _IO_FILE * fp;
   ...
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>_IO_XSGETN is called in the _IO_sgetn function, and _IO_XSGETN is a function pointer in _IO_FILE_plus.vtable. When this function is called, the pointer in the vtable is first fetched and then called.</p>
-<div class="codehilite"><pre><span></span>_IO_size_t
+<div class="codehilite"><pre><span></span><code>_IO_size_t
 
 _IO_sgetn (fp, date, n)
 _IO_FILE * fp;
@@ -4894,10 +4894,10 @@ _IO_FILE * fp;
   return _IO_XSGETN (fp, data, n);
 
 }
-</pre></div>
+</code></pre></div>
 
 <p>By default the function pointer points to the _IO_file_xsgetn function.</p>
-<div class="codehilite"><pre><span></span>  if (fp-&gt;_IO_buf_base
+<div class="codehilite"><pre><span></span><code>  if (fp-&gt;_IO_buf_base
 
           &amp;&amp; want &lt; (size_t) (fp-&gt;_IO_buf_end - fp-&gt;_IO_buf_base))
 
@@ -4912,12 +4912,12 @@ _IO_FILE * fp;
           continue;
 
         }
-</pre></div>
+</code></pre></div>
 
 <h2 id="fwrite">fwrite<a class="headerlink" href="#fwrite" title="Permanent link">&para;</a></h2>
 <p>Fwrite is also a standard IO library function, the function is to write data to the file stream, the function prototype is as follows</p>
-<div class="codehilite"><pre><span></span>size_t fwrite(const void* buffer, size_t size, size_t count, FILE* stream);
-</pre></div>
+<div class="codehilite"><pre><span></span><code>size_t fwrite(const void* buffer, size_t size, size_t count, FILE* stream);
+</code></pre></div>
 
 <ul>
 <li>
@@ -4939,17 +4939,17 @@ _IO_FILE * fp;
 <p>The code for fwrite is located in /libio/iofwrite.c and the function name is _IO_fwrite.
 In _IO_fwrite, _IO_XSPUTN is mainly called to implement the write function.</p>
 <p>According to the introduction of _IO_FILE_plus, it can be seen that _IO_XSPUTN is located in the vtable of _IO_FILE_plus. To call this function, you need to first take out the pointer in the vtable and then jump over to make the call.</p>
-<div class="codehilite"><pre><span></span>written = _IO_sputn (fp, (const char *) buf, request);
-</pre></div>
+<div class="codehilite"><pre><span></span><code>written = _IO_sputn (fp, (const char *) buf, request);
+</code></pre></div>
 
 <p>The _IO_OVERFLOW, also located in the vtable, is called in the default function _IO_new_file_xsputn corresponding to _IO_XSPUTN.</p>
-<div class="codehilite"><pre><span></span> /* Next flush the (full) buffer. */
+<div class="codehilite"><pre><span></span><code> /* Next flush the (full) buffer. */
 
       if (_IO_OVERFLOW (f, EOF) == EOF)
-</pre></div>
+</code></pre></div>
 
 <p>The default function of _IO_OVERFLOW is _IO_new_file_overflow</p>
-<div class="codehilite"><pre><span></span>if (ch == EOF)
+<div class="codehilite"><pre><span></span><code>if (ch == EOF)
 
     return _IO_do_write (f, f-&gt;_IO_write_base,
 
@@ -4960,13 +4960,13 @@ In _IO_fwrite, _IO_XSPUTN is mainly called to implement the write function.</p>
     if (_IO_do_flush (f) == EOF)
 
       return EOF;
-</pre></div>
+</code></pre></div>
 
 <p>The system interface write function will eventually be called inside _IO_new_file_overflow.</p>
 <h2 id="fopen">fopen<a class="headerlink" href="#fopen" title="Permanent link">&para;</a></h2>
 <p>Fopen is used to open files in the standard IO library. The function prototype is as follows</p>
-<div class="codehilite"><pre><span></span>FILE *fopen(char *filename, *type);
-</pre></div>
+<div class="codehilite"><pre><span></span><code>FILE *fopen(char *filename, *type);
+</code></pre></div>
 
 <ul>
 <li>
@@ -4981,16 +4981,16 @@ In _IO_fwrite, _IO_XSPUTN is mainly called to implement the write function.</p>
 </ul>
 <p>Inside the fopen will create a FILE structure and perform some initialization operations, let&#39;s take a look at this process</p>
 <p>First, the malloc function is called inside the fopen corresponding function __fopen_internal, and the space of the FILE structure is allocated. So we can know that the FILE structure is stored on the heap.</p>
-<div class="codehilite"><pre><span></span>*new_f = (struct locked_FILE *) malloc (sizeof (struct locked_FILE));
-</pre></div>
+<div class="codehilite"><pre><span></span><code>*new_f = (struct locked_FILE *) malloc (sizeof (struct locked_FILE));
+</code></pre></div>
 
 <p>After that, the vtable will be initialized for the created FILE, and _IO_file_init will be called to further initialize the operation.
-<div class="codehilite"><pre><span></span>_IO_JUMPS (&amp;new_f-&gt;fp) = &amp;_IO_file_jumps;
+<div class="codehilite"><pre><span></span><code>_IO_JUMPS (&amp;new_f-&gt;fp) = &amp;_IO_file_jumps;
 
 _IO_file_init (&amp;new_f-&gt;fp);
-</pre></div></p>
+</code></pre></div></p>
 <p>In the initialization operation of the _IO_file_init function, _IO_link_in is called to link the newly allocated FILE into _IO_list_all as the starting FILE list.
-<div class="codehilite"><pre><span></span>void
+<div class="codehilite"><pre><span></span><code>void
 
 _IO_link_in (fp)     struct _IO_FILE_plus *fp;
 
@@ -5010,12 +5010,12 @@ fp-&amp;gt; file._chain = (_IO_FILE *) _IO_list_all;
     }
 
 }
-</pre></div></p>
+</code></pre></div></p>
 <p>After that, the __fopen_internal function will call the _IO_file_fopen function to open the target file. _IO_file_fopen will open according to the open mode passed by the user. In the end, it will call the system interface open function, which is not deepened here.
-<div class="codehilite"><pre><span></span>if (_IO_file_fopen ((_IO_FILE *) new_f, filename, mode, is32) != NULL)
+<div class="codehilite"><pre><span></span><code>if (_IO_file_fopen ((_IO_FILE *) new_f, filename, mode, is32) != NULL)
 
     return __fopen_maybe_mmap (&amp;new_f-&gt;fp.file);
-</pre></div></p>
+</code></pre></div></p>
 <p>Summarize the operation of fopen is</p>
 <ul>
 <li>Use malloc to allocate FILE structure</li>
@@ -5026,31 +5026,31 @@ fp-&amp;gt; file._chain = (_IO_FILE *) _IO_list_all;
 </ul>
 <h2 id="fclose">fclose<a class="headerlink" href="#fclose" title="Permanent link">&para;</a></h2>
 <p>Fclose is a function in the standard IO library for closing open files, which is the opposite of fopen.</p>
-<div class="codehilite"><pre><span></span>int fclose(FILE *stream)
-</pre></div>
+<div class="codehilite"><pre><span></span><code>int fclose(FILE *stream)
+</code></pre></div>
 
 <p>Function: Close a file stream, use fclose to output the last remaining data in the buffer to the disk file, and release the file pointer and related buffer</p>
 <p>Fclose will first call _IO_unlink_it to delink the specified FILE from the _chain list.</p>
-<div class="codehilite"><pre><span></span>if (fp-&gt;_IO_file_flags &amp; _IO_IS_FILEBUF)
+<div class="codehilite"><pre><span></span><code>if (fp-&gt;_IO_file_flags &amp; _IO_IS_FILEBUF)
 
 _IO_un_link ((struct _IO_FILE_plus *) fp);
-</pre></div>
+</code></pre></div>
 
 <p>After that, the _IO_file_close_it function will be called, and _IO_file_close_it will call the system interface close to close the file.</p>
-<div class="codehilite"><pre><span></span>if (fp-&gt;_IO_file_flags &amp; _IO_IS_FILEBUF)
+<div class="codehilite"><pre><span></span><code>if (fp-&gt;_IO_file_flags &amp; _IO_IS_FILEBUF)
 
     status = _IO_file_close_it (fp);
-</pre></div>
+</code></pre></div>
 
 <p>Finally, the _IO_FINISH in the vtable is called, which corresponds to the _IO_file_finish function, which will call the free function to release the previously allocated FILE structure.</p>
-<div class="codehilite"><pre><span></span>_IO_FINISH (fp);
-</pre></div>
+<div class="codehilite"><pre><span></span><code>_IO_FINISH (fp);
+</code></pre></div>
 
 <h2 id="printfputs">printf/puts<a class="headerlink" href="#printfputs" title="Permanent link">&para;</a></h2>
 <p>Printf and puts are commonly used output functions. When the printf argument is a pure string ending with &#39;\n&#39;, printf will be optimized to puts the function and remove the newline.</p>
 <p>The function that puts implements in the source code is _IO_puts. The operation of this function is roughly the same as that of fwrite. The function also calls _IO_sputn in the vtable. The result is _IO_new_file_xsputn, and finally the system interface write function is called.</p>
 <p>Printf&#39;s call stack traceback is as follows, also implemented by _IO_file_xsputn</p>
-<div class="codehilite"><pre><span></span>vfprintf+11
+<div class="codehilite"><pre><span></span><code>vfprintf+11
 
 _IO_file_xsputn
 _IO_file_overflow
@@ -5060,7 +5060,7 @@ funlockfile
 _IO_file_write
 
 write
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -5126,7 +5126,7 @@ write
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5141,7 +5141,7 @@ write
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

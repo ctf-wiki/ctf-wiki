@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4828,7 +4828,7 @@
 <p><img alt="ida_strings.png" src="../figure/2016_seccon/ida_strings.png" /></p>
 <p>显然, 字符串表明程序中可能有各种检测, 比如检测进程名<code>ollydbg.exe</code>, <code>ImmunityDebugger.exe</code>, <code>idaq.exe</code>和<code>Wireshark.exe</code>. 然后也有其他的检测. 我们也看到了字符串<code>password is wrong</code>和<code>You password is correct</code>的字样. 同时还发现了一个很有可能就是待解密的flag的字符串. 那么我们就先根据<code>password is wrong</code>的交叉引用来到关键函数处.</p>
 <p>如下所示: 程序果然使用了大量的反调试技巧.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="kr">__cdecl</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">envp</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">v23</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
   <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">v24</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x3Fu</span><span class="p">);</span>
@@ -4916,11 +4916,11 @@
   <span class="n">printf</span><span class="p">(</span><span class="s">&quot;password is wrong.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>我在代码里写了注释, 列出了其中所使用的9个保护技术部分. 我们来逐一分析一下吧.</p>
 <h2 id="_1">比较明文字符串<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Input password &gt;&quot;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><code><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Input password &gt;&quot;</span><span class="p">);</span>
 <span class="n">v3</span> <span class="o">=</span> <span class="p">(</span><span class="kt">FILE</span> <span class="o">*</span><span class="p">)</span><span class="n">sub_40223D</span><span class="p">();</span>
 <span class="n">fgets</span><span class="p">(</span><span class="o">&amp;</span><span class="n">v23</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">v3</span><span class="p">);</span>
 <span class="n">strcpy</span><span class="p">(</span><span class="n">v21</span><span class="p">,</span> <span class="s">&quot;I have a pen.&quot;</span><span class="p">);</span>
@@ -4928,39 +4928,39 @@
 <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="n">v22</span> <span class="p">)</span>  <span class="p">{</span>
     <span class="p">......</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里就是输出<code>Input password &gt;</code>. 然后用<code>fgets()</code>获取用户输入的字符串, 将<code>I have a pen.</code>复制到<code>v21</code>的缓冲区中, 然后用<code>strncmp</code>比对用户输入与<code>I have a pen.</code>的内容, 并将比较结果返回给<code>v22</code>. 以下会根据<code>v22</code>, 也就是根据输入的<code>password</code>是否正确, 而进行跳转.</p>
 <h2 id="isdebuggerpresent">IsDebuggerPresent()<a class="headerlink" href="#isdebuggerpresent" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">puts</span><span class="p">(</span><span class="s">&quot;Your password is correct.&quot;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><code><span class="n">puts</span><span class="p">(</span><span class="s">&quot;Your password is correct.&quot;</span><span class="p">);</span>
 <span class="k">if</span> <span class="p">(</span> <span class="n">IsDebuggerPresent</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span>     <span class="c1">// 2. API: IsDebuggerPresent()</span>
 <span class="p">{</span>
     <span class="n">puts</span><span class="p">(</span><span class="s">&quot;But detected debugger!&quot;</span><span class="p">);</span>
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>显然, 输入的<code>password</code>正确, 就会输出提示<code>Your password is correct.</code>. ??? 不觉得奇怪吗. 难道<code>I have a pen.</code>就是我们的flag了吗? 不不不当然不是. 这其实是一个陷阱, 既然你知道了<code>I have a pen.</code>那么就肯定有通过某种逆向手段在对程序进行分析. 所以接下来的部分就开始进行一些反调试或其他的检测手段(实际中也可以出现这样的陷阱).</p>
 <p>一开始的是<code>IsDebuggerPresent()</code>, 根据返回结果判断是否存在调试.如果不太清楚的话, 可以返回去看 <a href="../isdebuggerpresent-zh/">IsDebuggerPresent()</a> 篇</p>
 <h2 id="ntglobalflag">NtGlobalFlag<a class="headerlink" href="#ntglobalflag" title="Permanent link">&para;</a></h2>
 <p>接下来是检测<code>NtGlobalFlag</code>这个字段的标志位. 通过检测PEB的字段值是否为<code>0x70</code>来检测调试器, 如果不太清楚的话, 可以返回去看 <a href="../ntglobalflag-zh/">NtGlobalFlag</a> 篇</p>
-<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span> <span class="n">sub_401120</span><span class="p">()</span> <span class="o">==</span> <span class="mh">0x70</span> <span class="p">)</span>         <span class="c1">// 3. 检测PEB的0x68偏移处是否为0x70. 检测NtGlobalFlag()</span>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="p">(</span> <span class="n">sub_401120</span><span class="p">()</span> <span class="o">==</span> <span class="mh">0x70</span> <span class="p">)</span>         <span class="c1">// 3. 检测PEB的0x68偏移处是否为0x70. 检测NtGlobalFlag()</span>
 <span class="p">{</span>
     <span class="n">puts</span><span class="p">(</span><span class="s">&quot;But detected NtGlobalFlag!&quot;</span><span class="p">);</span>
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>那我们来简单看一下<code>sub_401120()</code>好了</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">sub_401120</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">sub_401120</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">return</span> <span class="o">*</span><span class="p">(</span><span class="n">_DWORD</span> <span class="o">*</span><span class="p">)(</span><span class="n">__readfsdword</span><span class="p">(</span><span class="mi">48</span><span class="p">)</span> <span class="o">+</span> <span class="mh">0x68</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x70</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p><code>0x68</code>是PEB的<code>NtGlobalFlag</code>字段对应偏移值. <code>0x70</code>是<code>FLG_HEAP_ENABLE_TAIL_CHECK (0x10)</code>, <code>FLG_HEAP_ENABLE_FREE_CHECK (0x20)</code> 和<code>FLG_HEAP_VALIDATE_PARAMETERS (0x40)</code>这三个标志</p>
 <h2 id="checkremotedebuggerpresent">CheckRemoteDebuggerPresent<a class="headerlink" href="#checkremotedebuggerpresent" title="Permanent link">&para;</a></h2>
-<p><div class="codehilite"><pre><span></span><span class="cm">/*  BOOL WINAPI CheckRemoteDebuggerPresent(</span>
+<p><div class="codehilite"><pre><span></span><code><span class="cm">/*  BOOL WINAPI CheckRemoteDebuggerPresent(</span>
 <span class="cm"> *    _In_    HANDLE hProcess,</span>
 <span class="cm"> *    _Inout_ PBOOL  pbDebuggerPresent</span>
 <span class="cm"> *  );</span>
@@ -4972,10 +4972,10 @@
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detected remotedebug.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 这里我顺便在注释里列出了<code>CheckRemoteDebuggerPresent()</code>这个API的函数原型. 如果检测到调试器的存在, 会将<code>pbDebuggerPresent</code>设置为一个非零值. 根据其值检测调试器(<a href="../checkremotedebuggerpresent-zh/">CheckRemoteDebuggerPresent()</a> 篇)</p>
 <h2 id="_2">时间差检测<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">v13</span> <span class="o">=</span> <span class="n">GetTickCount</span><span class="p">();</span>
+<div class="codehilite"><pre><span></span><code><span class="n">v13</span> <span class="o">=</span> <span class="n">GetTickCount</span><span class="p">();</span>
 <span class="k">for</span> <span class="p">(</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">100</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>    <span class="c1">// 睡眠</span>
     <span class="n">Sleep</span><span class="p">(</span><span class="mi">1u</span><span class="p">);</span>
 <span class="n">v16</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">;</span>
@@ -4984,22 +4984,22 @@
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detected debug.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p><code>GetTickCount</code>会返回启动到现在的毫秒数, 循环里光是<code>sleep(1)</code>就进行了100次, 也就是100毫秒. 两次得到的时间作差如果大于1000毫秒, 时差明显大于所耗的时间, 也就间接检测到了调试.</p>
 <h2 id="processmonitor">ProcessMonitor<a class="headerlink" href="#processmonitor" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">lpFileName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\\\\</span><span class="s">.</span><span class="se">\\</span><span class="s">Global</span><span class="se">\\</span><span class="s">ProcmonDebugLogger&quot;</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">lpFileName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\\\\</span><span class="s">.</span><span class="se">\\</span><span class="s">Global</span><span class="se">\\</span><span class="s">ProcmonDebugLogger&quot;</span><span class="p">;</span>
 <span class="k">if</span> <span class="p">(</span> <span class="n">CreateFileA</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\\\\</span><span class="s">.</span><span class="se">\\</span><span class="s">Global</span><span class="se">\\</span><span class="s">ProcmonDebugLogger&quot;</span><span class="p">,</span> <span class="mh">0x80000000</span><span class="p">,</span> <span class="mi">7u</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3u</span><span class="p">,</span> <span class="mh">0x80u</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">HANDLE</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detect %s.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lpFileName</span><span class="p">);</span>      <span class="c1">// 6. 检测ProcessMonitor</span>
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里通过检测设备文件<code>\\\\.\\Global\\ProcmonDebugLogger</code>来检测<code>ProcessMonitor</code></p>
 <h2 id="_3">检测进程名<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>这里通过执行<code>sub_401130()</code>函数来检测进程, 并根据检测到的不同进程, 返回相应的值.</p>
-<div class="codehilite"><pre><span></span><span class="n">v11</span> <span class="o">=</span> <span class="n">sub_401130</span><span class="p">();</span>     <span class="c1">// 7. API: CreateToolhelp32Snapshot()检测进程</span>
+<div class="codehilite"><pre><span></span><code><span class="n">v11</span> <span class="o">=</span> <span class="n">sub_401130</span><span class="p">();</span>     <span class="c1">// 7. API: CreateToolhelp32Snapshot()检测进程</span>
 <span class="k">if</span> <span class="p">(</span> <span class="n">v11</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detected Ollydbg.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
@@ -5020,10 +5020,10 @@
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detected WireShark.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>我们就来看一下<code>sub_401130()</code>函数</p>
-<div class="codehilite"><pre><span></span><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">sub_401130</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">sub_401130</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">PROCESSENTRY32</span> <span class="n">pe</span><span class="p">;</span> <span class="c1">// [sp+0h] [bp-138h]@1</span>
   <span class="n">HANDLE</span> <span class="n">hSnapshot</span><span class="p">;</span> <span class="c1">// [sp+130h] [bp-8h]@1</span>
@@ -5045,31 +5045,31 @@
   <span class="p">}</span>
   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>这里使用了API: <code>CreateToolhelp32Snapshot</code>来获取当前的进程信息. 并在for循环里依次比对. 如果找到指定的进程名, 就直接返回相应的值. 然后根据返回值跳转到不同的分支里.</p>
 <h2 id="vmware">检测VMware<a class="headerlink" href="#vmware" title="Permanent link">&para;</a></h2>
 <p>检测VMware也是检测一些特征. 根据检测的结果进行判断.</p>
-<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="p">(</span> <span class="n">sub_401240</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span>    <span class="c1">// 8. 通过vmware的I/O端口进行检测</span>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="p">(</span> <span class="n">sub_401240</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">)</span>    <span class="c1">// 8. 通过vmware的I/O端口进行检测</span>
 <span class="p">{</span>
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detected VMware.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
     <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>来看<code>sub_401240()</code>函数.</p>
-<div class="codehilite"><pre><span></span><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">sub_401240</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">sub_401240</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">unsigned</span> <span class="kr">__int32</span> <span class="n">v0</span><span class="p">;</span> <span class="c1">// eax@1</span>
 
   <span class="n">v0</span> <span class="o">=</span> <span class="n">__indword</span><span class="p">(</span><span class="mh">0x5658u</span><span class="p">);</span>
   <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>这是VMware的一个"后门"I/O端口, <code>0x5658 = "VX"</code>. 如果程序在VMware内运行, 程序使用<code>In</code>指令通过<code>0x5658</code>端口读取数据时, <code>EBX</code>寄存器的值就会变为<code>0x564D5868</code>(<code>0x564D5868 == "VMXh"</code>)</p>
 <p>看IDA反编译出的伪C代码并不很直观地体现这点, 我们看汇编代码就清楚了</p>
-<div class="codehilite"><pre><span></span><span class="nl">.text:</span><span class="err">0040127</span><span class="nf">A</span>                 <span class="no">push</span>    <span class="no">edx</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.text:</span><span class="err">0040127</span><span class="nf">A</span>                 <span class="no">push</span>    <span class="no">edx</span>
 <span class="nl">.text:</span><span class="err">0040127</span><span class="nf">B</span>                 <span class="no">push</span>    <span class="no">ecx</span>
 <span class="nl">.text:</span><span class="err">0040127</span><span class="nf">C</span>                 <span class="no">push</span>    <span class="no">ebx</span>
 <span class="nl">.text:</span><span class="err">0040127</span><span class="nf">D</span>                 <span class="no">mov</span>     <span class="no">eax</span><span class="p">,</span> <span class="mi">564</span><span class="no">D5868h</span>   <span class="err">//</span>  <span class="err">&lt;</span><span class="p">------</span>
@@ -5080,21 +5080,21 @@
 <span class="nl">.text:</span><span class="err">00401292</span>                 <span class="nf">pop</span>     <span class="no">ebx</span>
 <span class="nl">.text:</span><span class="err">00401293</span>                 <span class="nf">pop</span>     <span class="no">ecx</span>
 <span class="nl">.text:</span><span class="err">00401294</span>                 <span class="nf">pop</span>     <span class="no">edx</span>
-</pre></div>
+</code></pre></div>
 
 <p>更多阅读: <a href="https://isc.sans.edu/diary/E-cards+don%3Ft+like+virtual+environments/3190">E-cards don?t like virtual environments</a></p>
 <h2 id="seh">SEH<a class="headerlink" href="#seh" title="Permanent link">&para;</a></h2>
-<div class="codehilite"><pre><span></span><span class="n">v17</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">v17</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
 <span class="n">v20</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
 <span class="n">v12</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 <span class="n">v19</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">0</span><span class="p">;</span>    <span class="c1">// 9. SEH</span>
 <span class="n">ms_exc</span><span class="p">.</span><span class="n">registration</span><span class="p">.</span><span class="n">TryLevel</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
 <span class="n">printf</span><span class="p">(</span><span class="s">&quot;But detected Debugged.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
 <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-</pre></div>
+</code></pre></div>
 
 <p>接下来这一段, 很奇怪不是吗. 这里<code>v19 = 1 / 0;</code>明显是不合常理的, 会产生一个除零异常. 而后面的<code>ms_exc.registration.TryLevel = -2;</code>这是解除异常, <code>TryLevel=TRYLEVEL_NONE (-2)</code> . 来看汇编代码.</p>
-<div class="codehilite"><pre><span></span>.text:004015B8                 mov     [ebp+var_88], 1
+<div class="codehilite"><pre><span></span><code>.text:004015B8                 mov     [ebp+var_88], 1
 .text:004015C2                 mov     [ebp+var_7C], 1
 .text:004015C9                 mov     [ebp+var_9C], 0
 .text:004015D3                 mov     [ebp+ms_exc.registration.TryLevel], 0
@@ -5104,12 +5104,12 @@
 .text:004015E4                 mov     [ebp+var_80], eax
 .text:004015E7                 mov     [ebp+ms_exc.registration.TryLevel], 0FFFFFFFEh
 .text:004015EE                 jmp     short loc_40160A
-</pre></div>
+</code></pre></div>
 
 <p>在这里的<code>idiv [ebp+var_9C]</code>触发异常后就由程序注册的异常处理函数接管, 而如果没有在异常处理程序入口设下断点的话, 程序就容易跑飞.</p>
 <h2 id="flag">获取flag<a class="headerlink" href="#flag" title="Permanent link">&para;</a></h2>
 <p>但整个看下了. 怎么感觉关flag一点事都没有了呢? 还有没有记起之前在字符串窗口看到的疑似是那个待解密的flag的字符串? 实际上由于IDA反编译的限制, 使得反编译出的伪C代码并不正确. 比如在最后一段的<code>printf("But detected Debugged.\n");</code>这里, 我们来看具体的汇编代码.</p>
-<div class="codehilite"><pre><span></span><span class="nl">.text:</span><span class="err">00401627</span>                 <span class="nf">call</span>    <span class="no">sub_4012E0</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.text:</span><span class="err">00401627</span>                 <span class="nf">call</span>    <span class="no">sub_4012E0</span>
 <span class="nl">.text:</span><span class="err">0040162</span><span class="nf">C</span>                 <span class="no">movzx</span>   <span class="no">eax</span><span class="p">,</span> <span class="no">ax</span>
 <span class="nl">.text:</span><span class="err">0040162</span><span class="nf">F</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">var_A8</span><span class="p">],</span> <span class="no">eax</span>
 <span class="nl">.text:</span><span class="err">00401635</span>                 <span class="nf">cmp</span>     <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">var_A8</span><span class="p">],</span> <span class="mi">0</span>      <span class="err">//</span> <span class="err">&lt;</span><span class="p">------</span>
@@ -5119,7 +5119,7 @@
 <span class="nl">.text:</span><span class="err">00401648</span>                 <span class="nf">add</span>     <span class="no">esp</span><span class="p">,</span> <span class="mi">4</span>
 <span class="nl">.text:</span><span class="err">0040164</span><span class="nf">B</span>                 <span class="no">push</span>    <span class="mi">1</span>               <span class="c">; int</span>
 <span class="nl">.text:</span><span class="err">0040164</span><span class="nf">D</span>                 <span class="no">call</span>    <span class="no">_exit</span>
-</pre></div>
+</code></pre></div>
 
 <p>实际上这一段代码并没有被IDA反编译出来. 而<code>loc_401652</code>位置则是一串代码, 亮点在于使用了一个<code>MessageBoxA</code>的函数. 而且函数参数之一就是我们的待解密flag. 那么我们就可以在输入<code>I have a pen.</code>后, 在<code>if ( !v22 )</code>跳转的汇编代码部分, 将其手动改为跳转到flag解密及弹出<code>messagebox</code>的部分运行, 让程序自己帮忙解密并输出, 就可以了.</p>
 <p>操作如下图所示:</p>
@@ -5228,7 +5228,7 @@
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5243,7 +5243,7 @@
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

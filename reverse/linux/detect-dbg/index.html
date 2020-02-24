@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4655,7 +4655,7 @@
                 
                 <p><a href="./">EN</a> | <a href="../detect-dbg-zh/">ZH</a>
 There are many ways to detect the debugger, such as detecting the process name. Here we introduce a method to detect whether the program is currently being debugged by detecting the call of some functions.</p>
-<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -4672,7 +4672,7 @@ There are many ways to detect the debugger, such as detecting the process name. 
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>A process can only be ptrace by a process. If you call ptrace yourself, other programs cannot debug through ptrace or inject code into your program.</p>
 <p>If the program is currently being debugged by gdb, the ptrace function will return an error, which indicates that the debugger is detected.</p>
@@ -4680,21 +4680,21 @@ There are many ways to detect the debugger, such as detecting the process name. 
 <p>Obviously ptrace can only be used with debuggers that use ptrace, we can use debuggers that don&#39;t use ptrace.</p>
 <p>We can also erase the ptrace function by patching. The simpler is to erase the ptrace call code or the subsequent checksum.</p>
 <p>If the executable (which is unlikely in the real world) does not have the -s option enabled at compile time (the -s option removes all symbol table information and relocation information), then the situation becomes much simpler. We are from this Simple situation to analyze</p>
-<div class="codehilite"><pre><span></span># objdump -t test_debug | grep ptrace
+<div class="codehilite"><pre><span></span><code># objdump -t test_debug | grep ptrace
 
 080482c0    F *UND*     00000075    ptrace@@GLIBC_2.0
-</pre></div>
+</code></pre></div>
 
 <p>Ptrace is called at <code>0x080482c0</code></p>
-<div class="codehilite"><pre><span></span># objdump -d -M intel test_debug |grep 80482c0
+<div class="codehilite"><pre><span></span><code># objdump -d -M intel test_debug |grep 80482c0
 
 80482c0:    ff 25 04 96 04 08   jmp ds:0x8049604
 
 80483d4:    e8 e7 fe ff ff  call 80482c0 &lt;_init+0x28&gt;
-</pre></div>
+</code></pre></div>
 
 <p>If there is the -s option enabled, what should I do? At this point we need to use gdb</p>
-<div class="codehilite"><pre><span></span># gdb test_debug
+<div class="codehilite"><pre><span></span><code># gdb test_debug
 
 gdb&gt; bp ptrace
 
@@ -4720,10 +4720,10 @@ Breakpoint 1 at 0x400e02f0
 ------------------------------------------------------------------------------
 
 Breakpoint 1, 0x400e02f0 in ptrace () from /lib/tls/libc.so.6
-</pre></div>
+</code></pre></div>
 
 <p>We simply broke at ptrace, now enter finish to return to the current function, back to the main function</p>
-<div class="codehilite"><pre><span></span># gdb test_debug
+<div class="codehilite"><pre><span></span><code># gdb test_debug
 
 gdb&gt; finish
 
@@ -4741,10 +4741,10 @@ gdb&gt; finish
 ------------------------------------------------------------------------------
 
 0x080483d9 in main ()
-</pre></div>
+</code></pre></div>
 
 <p>Modify the function return result eax to the correct return result, you can</p>
-<div class="codehilite"><pre><span></span>gdb&gt; set $eax=0
+<div class="codehilite"><pre><span></span><code>gdb&gt; set $eax=0
 
 gdb&amp;gt; c
 everything ok
@@ -4756,13 +4756,13 @@ _______________________________________________________________________________
 No registers.
 
 gdb&gt;
-</pre></div>
+</code></pre></div>
 
 <h2 id="bypass-method-2">Bypass Method 2<a class="headerlink" href="#bypass-method-2" title="Permanent link">&para;</a></h2>
 <p>Method 2 is to write your own ptrace function</p>
 <p>As mentioned in the previous sections, the <code>LD_PRELOAD</code> environment variable can point the executable to our own ptrace function.</p>
 <p>We write a ptrace function and generate the target file</p>
-<div class="codehilite"><pre><span></span><span class="c1">// -- ptrace.c --</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// -- ptrace.c --</span>
 
 <span class="c1">// gcc -shared ptrace.c -o ptrace.so</span>
 
@@ -4773,10 +4773,10 @@ gdb&gt;
     <span class="n">printf</span><span class="p">(</span><span class="s">&quot; PTRACE CALLED!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>We can then use our own ptrace function by setting the environment variable LD_PRELOAD, which can be set in gdb.</p>
-<div class="codehilite"><pre><span></span>gdb&gt; set environment LD_PRELOAD ./ptrace.so
+<div class="codehilite"><pre><span></span><code>gdb&gt; set environment LD_PRELOAD ./ptrace.so
 
 gdb&gt; run
 
@@ -4787,7 +4787,7 @@ Hello World!
 Program exited with code 015.
 
 gdb&gt;
-</pre></div>
+</code></pre></div>
 
 <p>You can see that the program can&#39;t detect the debugger.</p>
 <blockquote>
@@ -4858,7 +4858,7 @@ gdb&gt;
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -4873,7 +4873,7 @@ gdb&gt;
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

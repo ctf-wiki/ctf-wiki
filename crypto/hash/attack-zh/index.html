@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4914,26 +4914,26 @@
 <h4 id="_6">分析<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
 <p>题目采用的hash算法有：<code>md5</code>，<code>sha1</code>，<code>blake</code>，<code>scrypt</code>。
 关键的代码如下：
-<div class="codehilite"><pre><span></span>    <span class="n">password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_password</span><span class="p">()</span>     <span class="c1"># from rock_you.txt</span>
+<div class="codehilite"><pre><span></span><code>    <span class="n">password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_password</span><span class="p">()</span>     <span class="c1"># from rock_you.txt</span>
     <span class="n">salt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_salt</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>     <span class="c1"># 与password的长度有关</span>
     <span class="n">hash_rounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_rounds</span><span class="p">()</span>    <span class="c1"># 生成进行hash算法的顺序</span>
     <span class="n">password_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_hash</span><span class="p">(</span><span class="n">salt</span> <span class="o">+</span> <span class="n">password</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 1. 程序首先通过从<code>rockyou.txt</code>中随机抽取一个<code>password</code>，作为加密的明文。
 2. 然后根据抽取的<code>password</code>的长度，生成一个长度为<code>128 - len(password)</code>的<code>salt</code>。
 3. 从之前列举的4种hash算法中抽取，组成32轮的哈希运算。
 4. 根据之前得到的<code>password</code>、<code>salt</code>计算出最后给我们的<code>password_hash</code>。</p>
 <p>很明显，我们不可能通过逆向hash算法来完成题目。
 我们知道所有的可能的明文，首先考虑能否通过构造彩虹表来完成穷举。但是注意到<code>generate_salt()</code>函数中，<code>salt</code>和<code>password</code>的长度组合超过了128byte的长度，并且被注释了
-<div class="codehilite"><pre><span></span>    msize = 128 # f-you hashcat :D
-</pre></div>
+<div class="codehilite"><pre><span></span><code>    msize = 128 # f-you hashcat :D
+</code></pre></div>
 so，只能无奈放弃。</p>
 <p>那这样的话，只存在一种可能，也即算法可逆。查看<code>calculate_hash()</code>函数的具体实现，可以发现如下可疑的代码：
-<div class="codehilite"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hash_rounds</span><span class="p">)):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hash_rounds</span><span class="p">)):</span>
     <span class="n">interim_salt</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">interim_salt</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="p">](</span><span class="n">interim_hash</span><span class="p">))</span>
     <span class="n">interim_hash</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">interim_hash</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">interim_salt</span><span class="p">))</span>
 <span class="n">final_hash</span> <span class="o">=</span> <span class="n">interim_salt</span> <span class="o">+</span> <span class="n">interim_hash</span>
-</pre></div>
+</code></pre></div>
 重新梳理一下我们知道的信息：
 1. hash_rounds中保存了32轮，即每轮要使用的hash函数句柄。
 2. final_hash是最后给我们的hash结果。
@@ -4952,7 +4952,7 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
 <p>这行代码里，我们已知 <span><span class="MathJax_Preview">interim\_hash_1</span><script type="math/tex">interim\_hash_1</script></span> 和 <span><span class="MathJax_Preview">interim\_salt_3</span><script type="math/tex">interim\_salt_3</script></span>，由此可以推出<span><span class="MathJax_Preview">interim\_hash_2</span><script type="math/tex">interim\_hash_2</script></span>的值，而<span><span class="MathJax_Preview">interim\_hash_2</span><script type="math/tex">interim\_hash_2</script></span>则是上一轮的<code>interim_hash</code>。
 以此方法逆推32次，则可以得到最初的<code>password</code>和<code>salt</code>。</p>
 <p>具体的解密脚本为：
-<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">hashlib</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">threading</span>
@@ -5012,9 +5012,9 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
     <span class="nb">print</span><span class="p">(</span><span class="n">in_hash</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">:])</span>
     <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
 <span class="n">main</span><span class="p">()</span>
-</pre></div></p>
+</code></pre></div></p>
 <h4 id="hash_1">原hash算法<a class="headerlink" href="#hash_1" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">hashlib</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">threading</span>
@@ -5159,7 +5159,7 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -5260,7 +5260,7 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5275,7 +5275,7 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

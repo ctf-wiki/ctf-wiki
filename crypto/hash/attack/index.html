@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4783,12 +4783,12 @@
 <h4 id="analysis">Analysis<a class="headerlink" href="#analysis" title="Permanent link">&para;</a></h4>
 <p>The hash algorithms used in the title are: <code>md5</code>, <code>sha1</code>, <code>blake</code>, <code>scrypt</code>.
 The key code is as follows:
-<div class="codehilite"><pre><span></span>    <span class="n">password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_password</span><span class="p">()</span>     <span class="c1"># from rock_you.txt</span>
+<div class="codehilite"><pre><span></span><code>    <span class="n">password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_password</span><span class="p">()</span>     <span class="c1"># from rock_you.txt</span>
 
 <span class="n">Salt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_salt</span><span class="p">(</span><span class="n">password</span><span class="p">)</span> <span class="c1"># related to the length of the password</span>
 <span class="n">Hash_rounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_rounds</span><span class="p">()</span> <span class="c1"># Generate the order in which the hash algorithm is executed</span>
     <span class="n">password_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_hash</span><span class="p">(</span><span class="n">salt</span> <span class="o">+</span> <span class="n">password</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">)</span>
-</pre></div></p>
+</code></pre></div></p>
 <ol>
 <li>The program first randomly extracts a <code>password</code> from <code>rockyou.txt</code> as the encrypted plaintext.</li>
 <li>Then generate a <code>salt</code> of length <code>128 - len(password)</code> based on the length of the extracted <code>password</code>.</li>
@@ -4797,18 +4797,18 @@ The key code is as follows:
 </ol>
 <p>Obviously, we can&#39;t complete the problem by the inverse hash algorithm.
 We know all the possible plaintexts, first considering whether we can complete the exhaustion by constructing a rainbow table. But notice that in the <code>generate_salt()</code> function, the length combination of <code>salt</code> and <code>password</code> exceeds the length of 128 bytes and is annotated.
-<div class="codehilite"><pre><span></span>    msize = 128 # f-you hashcat :D
-</pre></div></p>
+<div class="codehilite"><pre><span></span><code>    msize = 128 # f-you hashcat :D
+</code></pre></div></p>
 <p>So, can only helplessly give up.</p>
 <p>In that case, there is only one possibility, that is, the algorithm is reversible. Looking at the concrete implementation of the <code>calculate_hash()</code> function, you can find the following suspicious code:
-<div class="codehilite"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hash_rounds</span><span class="p">)):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hash_rounds</span><span class="p">)):</span>
 
     <span class="n">interim_salt</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">interim_salt</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">i</span><span class="p">](</span><span class="n">interim_hash</span><span class="p">))</span>
 
     <span class="n">interim_hash</span> <span class="o">=</span> <span class="n">xor</span><span class="p">(</span><span class="n">interim_hash</span><span class="p">,</span> <span class="n">hash_rounds</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">interim_salt</span><span class="p">))</span>
 
 <span class="n">final_hash</span> <span class="o">=</span> <span class="n">interim_salt</span> <span class="o">+</span> <span class="n">interim_hash</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>Reorganize the information we know:
 1. There are 32 rounds stored in hash_rounds, which is the hash function handle to be used in each round.
 2. final_hash is the last hash result for us.
@@ -4822,7 +4822,7 @@ We know all the possible plaintexts, first considering whether we can complete t
 <p>In this line of code, we know <span><span class="MathJax_Preview">interim\_hash_1</span><script type="math/tex">interim\_hash_1</script></span> and <span><span class="MathJax_Preview">interim\_salt_3</span><script type="math/tex">interim\_salt_3</script></span>, so we can get the value of <span><span class="MathJax_Preview">interim\_hash_2</span><script type="math/tex">interim\_hash_2</script></span>, and <span><span class="MathJax_Preview">interim\_hash_2</span><script type="math/tex">interim\_hash_2</script></span> is the last round of <code>interim_hash</code>.
 By pushing back 32 times in this way, you can get the initial <code>password</code> and <code>salt</code>.</p>
 <p>The specific decryption script is:
-<div class="codehilite"><pre><span></span><span class="kn">import</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span>
 <span class="nn">import</span> <span class="n">hashlib</span>
 
 <span class="kn">import</span> <span class="nn">socket</span>
@@ -4933,9 +4933,9 @@ By pushing back 32 times in this way, you can get the initial <code>password</co
 
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span> <span class="p">()</span>
 <span class="n">main</span><span class="p">()</span>
-</pre></div></p>
+</code></pre></div></p>
 <h4 id="original-hash-algorithm">Original hash algorithm<a class="headerlink" href="#original-hash-algorithm" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">import</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span>
 <span class="nn">import</span> <span class="n">hashlib</span>
 
 <span class="kn">import</span> <span class="nn">socket</span>
@@ -5217,7 +5217,7 @@ By pushing back 32 times in this way, you can get the initial <code>password</co
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
                 
                   
                 
@@ -5283,7 +5283,7 @@ By pushing back 32 times in this way, you can get the initial <code>password</co
       
     </div>
     
-      <script src="../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5298,7 +5298,7 @@ By pushing back 32 times in this way, you can get the initial <code>password</co
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

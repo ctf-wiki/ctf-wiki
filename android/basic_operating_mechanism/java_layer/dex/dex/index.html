@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4786,27 +4786,56 @@
 </thead>
 <tbody>
 <tr>
-<td></td>
-<td></td>
+<td>byte</td>
+<td>8-bit signed integer</td>
+</tr>
+<tr>
+<td>ubyte</td>
+<td>8-bit unsigned integer</td>
+</tr>
+<tr>
+<td>short</td>
+<td>16-bit signed integer in little endian</td>
+</tr>
+<tr>
+<td>ushort</td>
+<td>16-bit unsigned integer in little endian</td>
+</tr>
+<tr>
+<td>int</td>
+<td>32-bit signed integer in little endian</td>
+</tr>
+<tr>
+<td>uint</td>
+<td>32-bit unsigned integer in little endian</td>
+</tr>
+<tr>
+<td>Long</td>
+<td>64-bit signed integer in little endian</td>
+</tr>
+<tr>
+<td>ulong</td>
+<td>64-bit unsigned integer in little endian</td>
+</tr>
+<tr>
+<td>sleb128</td>
+<td>Signed LEB128, variable length (see below)</td>
+</tr>
+<tr>
+<td>uleb128</td>
+<td>Unsigned LEB128, variable length (see below)</td>
+</tr>
+<tr>
+<td>uleb128p1</td>
+<td>Unsigned LEB128 plus <code>1</code>, variable length (see below)</td>
 </tr>
 </tbody>
 </table>
-<p>| byte | 8-bit signed integer |
-| ubyte | 8-bit unsigned integer |
-| short | 16-bit signed integer in little endian |
-| ushort | 16-bit unsigned integer in little endian |
-| int | 32-bit signed integer in little endian |
-| uint | 32-bit unsigned integer in little endian |
-Long | 64-bit signed integer in little endian |
-| ulong | 64-bit unsigned integer in little endian |
-| sleb128 | Signed LEB128, variable length (see below) |
-| uleb128 | Unsigned LEB128, variable length (see below) |
-| uleb128p1 | Unsigned LEB128 plus <code>1</code>, variable length (see below) |</p>
 <p>The reason why the variable length data type is used is because you want to minimize the footprint of the executable file. For example, if the length of a string is 5, then we only need one byte, but we don&#39;t I would like to use <code>u1</code> directly to define the corresponding type, as this will limit all string lengths to the corresponding range.</p>
 <p>Variable-length types are actually based on the LEB128 (Little-Endian Base) type and can be used to represent 32-bit int numbers, which are chosen according to the size of the number to be represented. As shown in the figure below, the highest bit of each byte indicates whether the next byte is used, 1 means use, 0 means not used. Therefore, each byte actually has only 7 valid bits to indicate the corresponding number. If there is a variable of type LEB128 that uses 5 bytes and the highest bit of the fifth byte is 1, then there is a problem.</p>
 <p><img alt="" src="../figure/leb128.png" /></p>
 <p>The function of reading unsigned leb128 type in dalvik is as follows</p>
-<div class="codehilite"><pre><span></span><span class="n">DEX_INLINE</span> <span class="kt">int</span> <span class="nf">readUnsignedLeb128</span><span class="p">(</span><span class="k">const</span> <span class="n">u1</span><span class="o">**</span> <span class="n">pStream</span><span class="p">)</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="n">DEX_INLINE</span> <span class="kt">int</span> <span class="nf">readUnsignedLeb128</span><span class="p">(</span><span class="k">const</span> <span class="n">u1</span><span class="o">**</span> <span class="n">pStream</span><span class="p">)</span> <span class="p">{</span>
 
 <span class="k">const</span> <span class="n">u1</span> <span class="o">*</span> <span class="n">ptr</span> <span class="o">=</span> <span class="o">*</span> <span class="n">pStream</span><span class="p">;</span>
 <span class="n">Int</span> <span class="n">result</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">ptr</span><span class="o">++</span><span class="p">);</span> <span class="c1">//take the first byte</span>
@@ -4850,7 +4879,7 @@ Long | 64-bit signed integer in little endian |
     <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>For example, if we want to calculate the uleb128 value of c0 83 92 25, as follows</p>
 <ul>
@@ -4861,7 +4890,7 @@ Long | 64-bit signed integer in little endian |
 <li>The value corresponding to this byte stream is result1+result2+result3+result4 = 0x4a481c0</li>
 </ul>
 <p>The number of signed LEB128 types in dalvik is as follows</p>
-<div class="codehilite"><pre><span></span> <span class="n">DEX_INLINE</span> <span class="kt">int</span> <span class="nf">readSignedLeb128</span><span class="p">(</span><span class="k">const</span> <span class="n">u1</span><span class="o">**</span> <span class="n">pStream</span><span class="p">)</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code> <span class="n">DEX_INLINE</span> <span class="kt">int</span> <span class="nf">readSignedLeb128</span><span class="p">(</span><span class="k">const</span> <span class="n">u1</span><span class="o">**</span> <span class="n">pStream</span><span class="p">)</span> <span class="p">{</span>
 
 <span class="k">const</span> <span class="n">u1</span> <span class="o">*</span> <span class="n">ptr</span> <span class="o">=</span> <span class="o">*</span> <span class="n">pStream</span><span class="p">;</span>
 <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="o">*</span> <span class="p">(</span><span class="n">ptr</span> <span class="o">++</span><span class="p">);</span>
@@ -4918,7 +4947,7 @@ Long | 64-bit signed integer in little endian |
     <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>For example, if we want to calculate the sleb128 value of d1 c2 b3 40, the calculation process is as follows</p>
 <ul>
@@ -4955,7 +4984,7 @@ Long | 64-bit signed integer in little endian |
 </ul>
 <h3 id="dex-file-header">DEX file header<a class="headerlink" href="#dex-file-header" title="Permanent link">&para;</a></h3>
 <p>The file header of DEX mainly contains magic field, alder32 check value, SHA-1 hash value, number of string_ids and offset address, etc., which occupy 0x70 bytes, and the data structure is as follows:</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">DexHeader</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">DexHeader</span> <span class="p">{</span>
 
     <span class="n">u1</span>  <span class="n">magic</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>           <span class="cm">/* includes version number */</span>
 
@@ -4998,7 +5027,7 @@ Long | 64-bit signed integer in little endian |
     <span class="n">u4</span>  <span class="n">dataOff</span><span class="p">;</span>
 
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <p>The specific description is as follows</p>
 <table>
@@ -5011,57 +5040,144 @@ Long | 64-bit signed integer in little endian |
 </thead>
 <tbody>
 <tr>
-<td></td>
-<td></td>
-<td></td>
+<td>Magic</td>
+<td>ubyte[8] = DEX_FILE_MAGIC</td>
+<td>Identifies the DEX file, where DEX_FILE_MAGIC =&quot;dex\n035\0&quot;</td>
+</tr>
+<tr>
+<td>Checksum</td>
+<td>uint</td>
+<td>The adler32 checksum of the rest of the files except <code>magic</code> and this field, used to detect file corruption</td>
+</tr>
+<tr>
+<td>signature</td>
+<td>ubyte[20]</td>
+<td>SHA-1 signature (hash) for the contents of files other than <code>magic</code>, <code>checksum</code> and this field, used to uniquely identify the file</td>
+</tr>
+<tr>
+<td>file_size</td>
+<td>uint</td>
+<td>The size of the entire file (including the file header) in bytes</td>
+</tr>
+<tr>
+<td>header_size</td>
+<td>uint = 0x70</td>
+<td>The size of the file header, in bytes.</td>
+</tr>
+<tr>
+<td>Endian_tag</td>
+<td>uint = ENDIAN_CONSTANT</td>
+<td>Byte order mark, big endian or little endian.</td>
+</tr>
+<tr>
+<td>link_size</td>
+<td>uint</td>
+<td>If this file is not statically linked, the value is <code>0</code>, otherwise the size of the link section,</td>
+</tr>
+<tr>
+<td>link_off</td>
+<td>uint</td>
+<td>If <code>link_size == 0</code>, the value is <code>0</code>; otherwise, the offset is the offset from the beginning of the file to the <code>link_data</code> section.</td>
+</tr>
+<tr>
+<td>map_off</td>
+<td>uint</td>
+<td>The offset must be non-zero, identifying the offset from the beginning of the file to the <code>data</code> section.</td>
+</tr>
+<tr>
+<td>string_ids_size</td>
+<td>uint</td>
+<td>Number of strings in the list of string identifiers</td>
+</tr>
+<tr>
+<td>string_ids_off</td>
+<td>uint</td>
+<td>If <code>string_ids_size == 0</code> (which is undeniably a strange extreme case), the value is <code>0</code>; otherwise it represents the offset from the beginning of the file to <code>string_ids</code>.</td>
+</tr>
+<tr>
+<td>type_ids_size</td>
+<td>uint</td>
+<td>The number of elements in the type identifier list, up to 65535</td>
+</tr>
+<tr>
+<td>type_ids_off</td>
+<td>uint</td>
+<td>If <code>type_ids_size == 0</code> (which is undeniably a strange extreme case), the value is <code>0</code>; otherwise it represents the offset from the beginning of the file to the beginning of the <code>type_ids</code> section.</td>
+</tr>
+<tr>
+<td>proto_ids_size</td>
+<td>uint</td>
+<td>Prototype (method) The number of elements in the list of identifiers, up to 65535</td>
+</tr>
+<tr>
+<td>proto_ids_off</td>
+<td>uint</td>
+<td>If <code>proto_ids_size == 0</code> (which is undeniably a strange extreme case), the value is <code>0</code>; otherwise the offset represents the offset from the beginning of the file to the beginning of the <code>proto_ids</code> section the amount.</td>
+</tr>
+<tr>
+<td>field_ids_size</td>
+<td>uint</td>
+<td>Number of Elements in the Field Identifier List</td>
+</tr>
+<tr>
+<td>field_ids_off</td>
+<td>uint</td>
+<td>If <code>field_ids_size == 0</code>, the value is <code>0</code>; otherwise the offset represents the offset from the beginning of the file to the beginning of the <code>field_ids</code> section.</td>
+</tr>
+<tr>
+<td>method_ids_size</td>
+<td>uint</td>
+<td>Number of elements in the method identifier list</td>
+</tr>
+<tr>
+<td>method_ids_off</td>
+<td>uint</td>
+<td>If <code>method_ids_size == 0</code>, the value is <code>0</code>. The offset, on the other hand, represents the offset from the beginning of the file to the beginning of the <code>method_ids</code> section.</td>
+</tr>
+<tr>
+<td>class_defs_size</td>
+<td>uint</td>
+<td>Number of elements in the class definition list</td>
+</tr>
+<tr>
+<td>class_defs_off</td>
+<td>uint</td>
+<td>If <code>class_defs_size == 0</code> (which is undeniably a strange extreme case), the value is <code>0</code>; otherwise the offset represents the offset from the beginning of the file to the beginning of the <code>class_defs</code> section the amount.</td>
+</tr>
+<tr>
+<td>data_size</td>
+<td>uint</td>
+<td>The size of the <code>data</code> section in bytes, which must be an even multiple of sizeof(uint), indicating 8-byte alignment.</td>
+</tr>
+<tr>
+<td>data_off</td>
+<td>uint</td>
+<td>The offset from the beginning of the file to the beginning of the <code>data</code> section.</td>
 </tr>
 </tbody>
 </table>
-<p>Magic | ubyte[8] = DEX_FILE_MAGIC | Identifies the DEX file, where DEX_FILE_MAGIC =&quot;dex\n035\0&quot; |
-Checksum | uint | The adler32 checksum of the rest of the files except <code>magic</code> and this field, used to detect file corruption |
-| signature | ubyte[20] | SHA-1 signature (hash) for the contents of files other than <code>magic</code>, <code>checksum</code> and this field, used to uniquely identify the file |
-| file_size | uint | The size of the entire file (including the file header) in bytes |
-| header_size | uint = 0x70 | The size of the file header, in bytes. |
-Endian_tag | uint = ENDIAN_CONSTANT | Byte order mark, big endian or little endian. |
-| link_size | uint | If this file is not statically linked, the value is <code>0</code>, otherwise the size of the link section, |
-| link_off | uint | If <code>link_size == 0</code>, the value is <code>0</code>; otherwise, the offset is the offset from the beginning of the file to the <code>link_data</code> section. |
-| map_off | uint | The offset must be non-zero, identifying the offset from the beginning of the file to the <code>data</code> section. |
-| string_ids_size | uint | Number of strings in the list of string identifiers |
-| string_ids_off | uint | If <code>string_ids_size == 0</code> (which is undeniably a strange extreme case), the value is <code>0</code>; otherwise it represents the offset from the beginning of the file to <code>string_ids</code>. |
-| type_ids_size | uint | The number of elements in the type identifier list, up to 65535 |
-| type_ids_off | uint | If <code>type_ids_size == 0</code> (which is undeniably a strange extreme case), the value is <code>0</code>; otherwise it represents the offset from the beginning of the file to the beginning of the <code>type_ids</code> section. |
-| proto_ids_size | uint | Prototype (method) The number of elements in the list of identifiers, up to 65535 |
-| proto_ids_off | uint | If <code>proto_ids_size == 0</code> (which is undeniably a strange extreme case), the value is <code>0</code>; otherwise the offset represents the offset from the beginning of the file to the beginning of the <code>proto_ids</code> section the amount. |
-| field_ids_size | uint | Number of Elements in the Field Identifier List |
-| field_ids_off | uint | If <code>field_ids_size == 0</code>, the value is <code>0</code>; otherwise the offset represents the offset from the beginning of the file to the beginning of the <code>field_ids</code> section. |
-| method_ids_size | uint | Number of elements in the method identifier list |
-| method_ids_off | uint | If <code>method_ids_size == 0</code>, the value is <code>0</code>. The offset, on the other hand, represents the offset from the beginning of the file to the beginning of the <code>method_ids</code> section. |
-| class_defs_size | uint | Number of elements in the class definition list |
-| class_defs_off | uint | If <code>class_defs_size == 0</code> (which is undeniably a strange extreme case), the value is <code>0</code>; otherwise the offset represents the offset from the beginning of the file to the beginning of the <code>class_defs</code> section the amount. |
-| data_size | uint | The size of the <code>data</code> section in bytes, which must be an even multiple of sizeof(uint), indicating 8-byte alignment. |
-| data_off | uint | The offset from the beginning of the file to the beginning of the <code>data</code> section. |</p>
 <h3 id="dex-index-area">DEX index area<a class="headerlink" href="#dex-index-area" title="Permanent link">&para;</a></h3>
 <h4 id="string-id">string id<a class="headerlink" href="#string-id" title="Permanent link">&para;</a></h4>
 <p>The StringIds section contains the <code>stringIdsSize</code> <code>DexStringId</code> structure, which has the following structure:</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">DexStringId</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">DexStringId</span> <span class="p">{</span>
 
 <span class="n">U4</span> <span class="n">stringDataOff</span><span class="p">;</span> <span class="cm">/* String data offset, which is the file offset of each StringData in the data area */</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <p>It can be seen that only the relative offset of each string is stored in DexStringId. In addition, each offset occupies 4 bytes, and the string portion occupies 4*stringIdsSize bytes in total.</p>
 <p>At the corresponding offset, the string is stored in the MUTF-8 format, which stores the variable of the LEB128 type we mentioned earlier, indicating the length of the string, followed by the string, followed by  End of x00, the length of the string does not contain \x00.</p>
 <h4 id="type-id">type id<a class="headerlink" href="#type-id" title="Permanent link">&para;</a></h4>
 <p>The type_ids section indexes all the types (classes, arrays, or primitive types) used in the java code. This list must be sorted by the <code>string_id</code> index and cannot be repeated.</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">DexTypeId</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">DexTypeId</span> <span class="p">{</span>
 
 <span class="n">U4</span> <span class="n">descriptorIdx</span><span class="p">;</span> <span class="cm">/* index to the list of DexStringIds*/</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="proto-id">proto Id<a class="headerlink" href="#proto-id" title="Permanent link">&para;</a></h4>
 <p>The Proto id field is mainly designed for the method prototype in java. It mainly contains the return type and parameter list of a method declaration, which is not involved in the method name. It mainly contains the following three data structures</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">DexProtoId</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">DexProtoId</span> <span class="p">{</span>
 
 <span class="n">U4</span> <span class="n">shortyIdx</span><span class="p">;</span> <span class="cm">/* return type + parameter type, shorthand, index to the list of DexStringId */</span>
 <span class="n">U4</span> <span class="n">returnTypeIdx</span><span class="p">;</span> <span class="cm">/* return type, index to the DexTypeId list */</span>
@@ -5082,31 +5198,31 @@ Endian_tag | uint = ENDIAN_CONSTANT | Byte order mark, big endian or little endi
 
 <span class="n">U2</span> <span class="n">typeIdx</span><span class="p">;</span> <span class="cm">/* parameter type, index to the list of DexTypeId, and finally point to the string index */</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="field-id">field id<a class="headerlink" href="#field-id" title="Permanent link">&para;</a></h4>
 <p>The field id area is mainly designed for the fields of each class in java, mainly related to the following data structure.</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">DexFieldId</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">DexFieldId</span> <span class="p">{</span>
 
 <span class="n">U2</span> <span class="n">classIdx</span><span class="p">;</span> <span class="cm">/* The type of the class, pointing to the index of the DexTypeId list */</span>
 <span class="n">U2</span> <span class="n">typeIdx</span><span class="p">;</span> <span class="cm">/* field type, index to the list of DexTypeIds*/</span><span class="n">U4</span> <span class="n">nameIdx</span><span class="p">;</span> <span class="cm">/* field name, index to the DexStringId list */</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="method-id">method id<a class="headerlink" href="#method-id" title="Permanent link">&para;</a></h4>
 <p>The method id area is designed directly for methods in java. It contains the class in which the method resides, the prototype of the method, and the name of the method.</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">DexMethodId</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">DexMethodId</span> <span class="p">{</span>
 
 <span class="n">U2</span> <span class="n">classIdx</span><span class="p">;</span> <span class="cm">/* The type of the class, pointing to the index of the DexTypeId list */</span>
 <span class="n">U2</span> <span class="n">protoIdx</span><span class="p">;</span> <span class="cm">/* declaration type, index to the DexProtoId list */</span>
 <span class="n">U4</span> <span class="n">nameIdx</span><span class="p">;</span> <span class="cm">/* method name, index to the DexStringId list */</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="class-def">class def<a class="headerlink" href="#class-def" title="Permanent link">&para;</a></h4>
 <p>classDefsSize indicates the size of the class def area, and classDefsOff indicates the offset of the class def area.</p>
 <p>This area is designed for classes in java and contains the following data structures. The related information is as follows</p>
-<div class="codehilite"><pre><span></span><span class="c1">// basic information about the class</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">// basic information about the class</span>
 <span class="k">struct</span> <span class="n">DexClassDef</span> <span class="p">{</span>
 
 <span class="n">U4</span> <span class="n">classIdx</span><span class="p">;</span> <span class="cm">/* The type of the class, pointing to the index of the DexTypeId list */</span>
@@ -5172,7 +5288,7 @@ Endian_tag | uint = ENDIAN_CONSTANT | Byte order mark, big endian or little endi
 <span class="n">U4</span> <span class="n">insnsSize</span><span class="p">;</span> <span class="cm">/* The number of instruction sets, in units of 2 bytes */</span>
 <span class="n">U2</span> <span class="n">insns</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span> <span class="cm">/* instruction set*/</span>
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <h4 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h4>
 <p>It can be seen that pointing in the index area is more complicated, but at the same time it is also clever. Here is the Dalvik designer in the [Google Developer Day 2008 China] (<a href="https://sites.google.com/site/developerdaychina/">https://sites.google.com/site/developerdaychina/</a>) speech. Give an example.</p>
@@ -5181,7 +5297,7 @@ Endian_tag | uint = ENDIAN_CONSTANT | Byte order mark, big endian or little endi
 <p>What is stored here is the various data mentioned before.</p>
 <h3 id="dex-map-section">DEX map section<a class="headerlink" href="#dex-map-section" title="Permanent link">&para;</a></h3>
 <p>The mapOff field in DexHeader gives the offset of the DexMapList structure in the DEX file. When the Dalvik virtual machine parses the content of the DEX file, it maps the content to the DexMapList data structure. It can be said that the structure describes the overall profile of the corresponding DEX file. The specific code is as follows</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">DexMapList</span> <span class="p">{</span>
+<div class="codehilite"><pre><span></span><code><span class="k">struct</span> <span class="n">DexMapList</span> <span class="p">{</span>
 
 <span class="n">U4</span> <span class="n">size</span><span class="p">;</span> <span class="cm">/* The number of DexMapItem, easy to parse */</span>
 <span class="n">DexMapItem</span> <span class="n">list</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span> <span class="cm">/* points to DexMapItem */</span>
@@ -5241,7 +5357,7 @@ Endian_tag | uint = ENDIAN_CONSTANT | Byte order mark, big endian or little endi
     <span class="n">kDexTypeAnnotationsDirectoryItem</span> <span class="o">=</span> <span class="mh">0x2006</span><span class="p">,</span>
 
 <span class="p">};</span>
-</pre></div>
+</code></pre></div>
 
 <h2 id="dex-instance">DEX instance<a class="headerlink" href="#dex-instance" title="Permanent link">&para;</a></h2>
 <p>Specifically, you can find an apk yourself, and then you can see the corresponding result by parsing the template of 010editor.</p>
@@ -5314,7 +5430,7 @@ Endian_tag | uint = ENDIAN_CONSTANT | Byte order mark, big endian or little endi
       
     </div>
     
-      <script src="../../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5329,7 +5445,7 @@ Endian_tag | uint = ENDIAN_CONSTANT | Byte order mark, big endian or little endi
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       

