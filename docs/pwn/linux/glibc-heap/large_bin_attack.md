@@ -473,7 +473,7 @@ In detail:
 ```c
 victim->bk_nextsize = fwd->bk_nextsize;
 // then
-victim->bk->nextsize->fd_nextsize = victim;
+victim->bk_nextsize->fd_nextsize = victim;
 ```
 
 Here `fwd->bk_nextsize` stores `&stack_var2 - 4`, so the above statements equals to:
