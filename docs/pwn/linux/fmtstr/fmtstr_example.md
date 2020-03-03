@@ -1171,7 +1171,7 @@ If the payload is modified to do this, you need to add a 12 offset to the heap. 
 Since we need to execute the move command to assign ebp to esp and also need to execute pop ebp to execute the ret instruction, we need to modify ebp to store the value of system address -4. After pop ebp, the esp happens to point to the address of the save system, and the system function can be executed by executing the ret instruction.
 
 
-We have already learned the ebp value we want to modify, and we know that the corresponding offset is 11, so we can construct the following payload to modify the corresponding value.
+We have already learned the ebp value we want to modify, and we know that the corresponding offset is 6, so we can construct the following payload to modify the corresponding value.
 
 
 ```
