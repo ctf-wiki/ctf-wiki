@@ -135,8 +135,8 @@ DESCRIPTION
 	pushq  %r11             /* pt_regs->r11 */
 	sub $(6*8), %rsp      /* pt_regs->bp, bx, r12-15 not saved */
 	```
-4. 通过汇编指令判断是否为 `x32_abi`。
 
+4. 通过汇编指令判断是否为 `x32_abi`。
 5. 通过系统调用号，跳到全局变量 `sys_call_table` 相应位置继续执行系统调用。
 
 ### kernel space to user space
