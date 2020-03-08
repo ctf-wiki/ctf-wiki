@@ -5014,7 +5014,7 @@ addr                prev                size                 status             
     <span class="n">p2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)(</span><span class="o">&amp;</span><span class="n">stack_var2</span> <span class="o">-</span> <span class="mi">4</span><span class="p">);</span>
 </code></pre></div>
 
-<p>Then we malloc a new chunk. At this time, because the fastbin is empty, the program traverses the unsorte bin. At that time, when the chunk in the unsorte bin is large bin, first determine whether the current chunk size is smaller than bck-&gt;bk. The size, which is the smallest chunk in the large bin, if it is, is added directly to the end. If not, it traverses the large bin until it finds that the size of a chunk is less than or equal to the current chunk size (the chunks of the large bin are aligned from large to small). Then insert the current chunk into the two linked lists of the large bin.</p>
+<p>Then we malloc a new chunk. At this time, because the fastbin is empty, the program traverses the unsorted bin. At that time, when the chunk in the unsorted bin is a large chunk, first determine whether the current chunk size is smaller than <code>bck-&gt;bk</code>. The size, which is the smallest chunk in the large bin, if it is, is added directly to the end. If not, it traverses the large bin until it finds that the size of a chunk is less than or equal to the current chunk size (the chunks of the large bin are aligned from large to small). Then insert the current chunk into the two linked lists of the large bin.</p>
 <p>The <code>fd_nextsize</code> in the large bin chunk points to the first chunk in the list that is smaller than itself, and <code>bk_nextsize</code> points to the first chunk larger than itself.</p>
 <p>At this time, we have only one chunk in the largebin, and the current chunk size is 0x290 is smaller than the chunk size in the largebin. First, the chunk in the unsorted bin is placed in the large bin, and then the large bin is traversed. At this time, the fwd chunk does not match the if. ((unsigned long) size == (unsigned long) chunksize_nomask (fwd))` When this condition:</p>
 <div class="codehilite"><pre><span></span><code>    <span class="p">[...]</span>
@@ -5054,6 +5054,30 @@ addr                prev                size                 status             
 </code></pre></div>
 
 <p>Fwd is now P2, victim is P3, and the two variables on the stack can be modified to <code>victim</code>.</p>
+<p>In detail:
+<div class="codehilite"><pre><span></span><code><span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span> <span class="o">=</span> <span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="p">;</span>
+<span class="c1">// then</span>
+<span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk_nextsize</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+</code></pre></div></p>
+<p>Here <code>fwd-&gt;bk_nextsize</code> stores <code>&amp;stack_var2 - 4</code>, so the above statements equals to:
+<div class="codehilite"><pre><span></span><code><span class="p">(</span><span class="o">&amp;</span><span class="n">stack_var2</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">fd_nextsize</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+<span class="c1">// equals to</span>
+<span class="o">*</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stack_var2</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">+</span> <span class="mi">4</span><span class="p">)</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+</code></pre></div>
+, modifying <code>stack_var2</code>.</p>
+<p>And then, we set <code>bck = fwd-&gt;bk</code>, and the following code will be executed:
+<div class="codehilite"><pre><span></span><code><span class="n">mark_bin</span> <span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">victim_index</span><span class="p">);</span>
+<span class="n">victim</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">bck</span><span class="p">;</span>
+<span class="n">victim</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fwd</span><span class="p">;</span>
+<span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+<span class="n">bck</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+</code></pre></div></p>
+<p>Here we have:
+<div class="codehilite"><pre><span></span><code><span class="n">fwd</span><span class="o">-&gt;</span><span class="n">bk</span> <span class="o">=</span> <span class="n">victim</span><span class="p">;</span>
+<span class="c1">// equals to</span>
+<span class="o">*</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stack_var1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">=</span> <span class="n">victim</span>
+</code></pre></div></p>
+<p>Thus modifying <code>stack_var1</code>.</p>
                 
                   
                 
