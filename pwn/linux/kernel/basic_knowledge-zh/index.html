@@ -4940,9 +4940,10 @@
 <li><strong>insmod</strong>: 讲指定模块加载到内核中</li>
 <li><strong>rmmod</strong>: 从内核中卸载指定模块</li>
 <li><strong>lsmod</strong>: 列出已经加载的模块</li>
+<li><strong>modprobe</strong>: 添加或删除模块，modprobe 在加载模块时会查找依赖关系</li>
 </ul>
 <blockquote>
-<p>大多数　kernel vulnerability 也出在 LKM 中。</p>
+<p>大多数　CTF 中的 kernel vulnerability 也出现在 LKM 中。</p>
 </blockquote>
 <h2 id="syscall">syscall<a class="headerlink" href="#syscall" title="Permanent link">&para;</a></h2>
 <p>系统调用，指的是用户空间的程序向操作系统内核请求需要更高权限的服务，比如 IO 操作或者进程间通信。系统调用提供用户程序与操作系统间的接口，部分库函数（如 scanf，puts 等 IO 相关的函数实际上是对系统调用的封装 （read 和 write)）。</p>
@@ -4990,7 +4991,7 @@ DESCRIPTION
 <li>将当前栈顶（用户空间栈顶）记录在 CPU 独占变量区域里，将 CPU 独占区域里记录的内核栈顶放入 rsp/esp。</li>
 <li>
 <p>通过 push 保存各寄存器值，具体的 <a href="http://elixir.free-electrons.com/linux/v4.12/source/arch/x86/entry/entry_64.S">代码</a> 如下:</p>
-<p><div class="codehilite"><pre><span></span><code> <span class="nf">ENTRY</span><span class="p">(</span><span class="no">entry_SYSCALL_64</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code> <span class="nf">ENTRY</span><span class="p">(</span><span class="no">entry_SYSCALL_64</span><span class="p">)</span>
  <span class="cm">/* SWAPGS_UNSAFE_STACK是一个宏，x86直接定义为swapgs指令 */</span>
  <span class="nf">SWAPGS_UNSAFE_STACK</span>
 
@@ -5018,9 +5019,12 @@ DESCRIPTION
 <span class="nf">pushq</span>  <span class="nv">%r11</span>             <span class="cm">/* pt_regs-&gt;r11 */</span>
 <span class="nf">sub</span> <span class="no">$</span><span class="p">(</span><span class="mi">6</span><span class="p">*</span><span class="mi">8</span><span class="p">),</span> <span class="nv">%rsp</span>      <span class="cm">/* pt_regs-&gt;bp, bx, r12-15 not saved */</span>
 </code></pre></div>
-4. 通过汇编指令判断是否为 x32_abi。
-5. 通过系统调用号，跳到全局变量 <code>sys_call_table</code> 相应位置继续执行系统调用。</p>
+
 </li>
+<li>
+<p>通过汇编指令判断是否为 <code>x32_abi</code>。</p>
+</li>
+<li>通过系统调用号，跳到全局变量 <code>sys_call_table</code> 相应位置继续执行系统调用。</li>
 </ol>
 <h3 id="kernel-space-to-user-space">kernel space to user space<a class="headerlink" href="#kernel-space-to-user-space" title="Permanent link">&para;</a></h3>
 <p>退出时，流程如下：</p>
@@ -5088,7 +5092,10 @@ DESCRIPTION
 <li><strong>int commit_creds(struct cred *new)</strong></li>
 <li><strong>struct cred* prepare_kernel_cred(struct task_struct* daemon)</strong></li>
 </ul>
-<p>从函数名也可以看出，执行 <code>commit_creds(prepare_kernel_cred(0))</code> 即可获得 root 权限（root 的 uid，gid 均为 0）</p>
+<p>从函数名也可以看出，执行 <code>commit_creds(prepare_kernel_cred(0))</code> 即可获得 root 权限，0 表示 以 0 号进程作为参考准备新的 credentials。</p>
+<blockquote>
+<p>更多关于 <code>prepare_kernel_cred</code> 的信息可以参考 <a href="https://elixir.bootlin.com/linux/v4.6/source/kernel/cred.c#L594">源码</a></p>
+</blockquote>
 <p>执行 <code>commit_creds(prepare_kernel_cred(0))</code> 也是最常用的提权手段，两个函数的地址都可以在 <code>/proc/kallsyms</code> 中查看（较老的内核版本中是 <code>/proc/ksyms</code>。
 <div class="codehilite"><pre><span></span><code>post sudo grep commit_creds /proc/kallsyms 
 <span class="o">[</span>sudo<span class="o">]</span> m4x 的密码：
@@ -5161,7 +5168,7 @@ CISCN2017_babydriver <span class="o">[</span>master●<span class="o">]</span> b
 </ul>
 </li>
 <li>
-<p>本地写好 exploit 后，可以通过 base64 编码等方式把编译好的二进制文件保存到远程目录下，进而拿到 flag</p>
+<p>本地写好 exploit 后，可以通过 base64 编码等方式把编译好的二进制文件保存到远程目录下，进而拿到 flag。同时可以使用 musl, uclibc 等方法减小 exploit 的体积方便传输。</p>
 </li>
 </ol>
 <h2 id="reference">Reference:<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
