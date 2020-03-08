@@ -11,7 +11,7 @@ Attacks caused by stack overflows are very common and very old. A mitigation tec
 Canary is simple and efficient in both implementation and design. It is to insert a value. At the end of the high-risk area where stack overflow occurs, when the function returns, check if the value of canary has been changed to determine whether stack/buffer overflow is occur.
 
 
-Canary and GS protection under Windows are effective means to prevent stack overflow. Its appearance largely prevents stack overflow, and since it hardly consumes system resources, it has become the standard of protection mechanism under Linux.
+Canary and GS protection under Windows are effective means to mitigate stack overflow. Its appearance largely increases the difficulty of exploiting a stack buffer overflow, and since it hardly consumes system resources, it has become the standard of protection mechanism under Linux.
 
 
 ## Canary Principle
