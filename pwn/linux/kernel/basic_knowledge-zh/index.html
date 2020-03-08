@@ -4991,32 +4991,32 @@ DESCRIPTION
 <li>
 <p>通过 push 保存各寄存器值，具体的 <a href="http://elixir.free-electrons.com/linux/v4.12/source/arch/x86/entry/entry_64.S">代码</a> 如下:</p>
 <p><div class="codehilite"><pre><span></span><code> <span class="nf">ENTRY</span><span class="p">(</span><span class="no">entry_SYSCALL_64</span><span class="p">)</span>
- <span class="err">/*</span> <span class="nf">SWAPGS_UNSAFE_STACK是一个宏</span><span class="err">，</span><span class="no">x86直接定义为swapgs指令</span> <span class="p">*</span><span class="err">/</span>
+ <span class="cm">/* SWAPGS_UNSAFE_STACK是一个宏，x86直接定义为swapgs指令 */</span>
  <span class="nf">SWAPGS_UNSAFE_STACK</span>
 
- <span class="err">/*</span> <span class="err">保存栈值，并设置内核栈</span> <span class="err">*/</span>
+ <span class="cm">/* 保存栈值，并设置内核栈 */</span>
  <span class="nf">movq</span> <span class="nv">%rsp</span><span class="p">,</span> <span class="no">PER_CPU_VAR</span><span class="p">(</span><span class="no">rsp_scratch</span><span class="p">)</span>
  <span class="nf">movq</span> <span class="no">PER_CPU_VAR</span><span class="p">(</span><span class="no">cpu_current_top_of_stack</span><span class="p">),</span> <span class="nv">%rsp</span>
 
 
-<span class="err">/*</span> <span class="err">通过</span><span class="nf">push保存寄存器值</span><span class="err">，形成一个</span><span class="no">pt_regs结构</span> <span class="p">*</span><span class="err">/</span>
-<span class="err">/*</span> <span class="nf">Construct</span> <span class="no">struct</span> <span class="no">pt_regs</span> <span class="no">on</span> <span class="no">stack</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="no">$__USER_DS</span>      <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">ss</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="no">PER_CPU_VAR</span><span class="p">(</span><span class="no">rsp_scratch</span><span class="p">)</span>  <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">sp</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%r11</span>             <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">flags</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="no">$__USER_CS</span>      <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">cs</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%rcx</span>             <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">ip</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%rax</span>             <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">orig_ax</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%rdi</span>             <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">di</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%rsi</span>             <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">si</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%rdx</span>             <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">dx</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%rcx</span> <span class="no">tuichu</span>    <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">cx</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="no">$-ENOSYS</span>        <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">ax</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%r8</span>              <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">r8</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%r9</span>              <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">r9</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%r10</span>             <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">r10</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">pushq</span>  <span class="nv">%r11</span>             <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">r11</span> <span class="p">*</span><span class="err">/</span>
-<span class="nf">sub</span> <span class="no">$</span><span class="p">(</span><span class="mi">6</span><span class="p">*</span><span class="mi">8</span><span class="p">),</span> <span class="nv">%rsp</span>      <span class="err">/</span><span class="p">*</span> <span class="no">pt_regs-</span><span class="err">&gt;</span><span class="no">bp</span><span class="p">,</span> <span class="no">bx</span><span class="p">,</span> <span class="no">r12-15</span> <span class="no">not</span> <span class="no">saved</span> <span class="p">*</span><span class="err">/</span>
+<span class="cm">/* 通过push保存寄存器值，形成一个pt_regs结构 */</span>
+<span class="cm">/* Construct struct pt_regs on stack */</span>
+<span class="nf">pushq</span>  <span class="no">$__USER_DS</span>      <span class="cm">/* pt_regs-&gt;ss */</span>
+<span class="nf">pushq</span>  <span class="no">PER_CPU_VAR</span><span class="p">(</span><span class="no">rsp_scratch</span><span class="p">)</span>  <span class="cm">/* pt_regs-&gt;sp */</span>
+<span class="nf">pushq</span>  <span class="nv">%r11</span>             <span class="cm">/* pt_regs-&gt;flags */</span>
+<span class="nf">pushq</span>  <span class="no">$__USER_CS</span>      <span class="cm">/* pt_regs-&gt;cs */</span>
+<span class="nf">pushq</span>  <span class="nv">%rcx</span>             <span class="cm">/* pt_regs-&gt;ip */</span>
+<span class="nf">pushq</span>  <span class="nv">%rax</span>             <span class="cm">/* pt_regs-&gt;orig_ax */</span>
+<span class="nf">pushq</span>  <span class="nv">%rdi</span>             <span class="cm">/* pt_regs-&gt;di */</span>
+<span class="nf">pushq</span>  <span class="nv">%rsi</span>             <span class="cm">/* pt_regs-&gt;si */</span>
+<span class="nf">pushq</span>  <span class="nv">%rdx</span>             <span class="cm">/* pt_regs-&gt;dx */</span>
+<span class="nf">pushq</span>  <span class="nv">%rcx</span> <span class="no">tuichu</span>    <span class="cm">/* pt_regs-&gt;cx */</span>
+<span class="nf">pushq</span>  <span class="no">$-ENOSYS</span>        <span class="cm">/* pt_regs-&gt;ax */</span>
+<span class="nf">pushq</span>  <span class="nv">%r8</span>              <span class="cm">/* pt_regs-&gt;r8 */</span>
+<span class="nf">pushq</span>  <span class="nv">%r9</span>              <span class="cm">/* pt_regs-&gt;r9 */</span>
+<span class="nf">pushq</span>  <span class="nv">%r10</span>             <span class="cm">/* pt_regs-&gt;r10 */</span>
+<span class="nf">pushq</span>  <span class="nv">%r11</span>             <span class="cm">/* pt_regs-&gt;r11 */</span>
+<span class="nf">sub</span> <span class="no">$</span><span class="p">(</span><span class="mi">6</span><span class="p">*</span><span class="mi">8</span><span class="p">),</span> <span class="nv">%rsp</span>      <span class="cm">/* pt_regs-&gt;bp, bx, r12-15 not saved */</span>
 </code></pre></div>
 4. 通过汇编指令判断是否为 x32_abi。
 5. 通过系统调用号，跳到全局变量 <code>sys_call_table</code> 相应位置继续执行系统调用。</p>
@@ -5032,44 +5032,44 @@ DESCRIPTION
 <p>之前提到 kernel 记录了进程的权限，更具体的，是用 cred 结构体记录的，每个进程中都有一个 cred 结构，这个结构保存了该进程的权限等信息（uid，gid 等），如果能修改某个进程的 cred，那么也就修改了这个进程的权限。</p>
 <p><a href="https://code.woboq.org/linux/linux/include/linux/cred.h.html#cred">源码</a> 如下:
 <div class="codehilite"><pre><span></span><code><span class="nf">struct</span> <span class="no">cred</span> <span class="err">{</span>
-    <span class="nf">atomic_t</span>    <span class="no">usage</span><span class="c">;</span>
-<span class="c">#ifdef CONFIG_DEBUG_CREDENTIALS</span>
-    <span class="nf">atomic_t</span>    <span class="no">subscribers</span><span class="c">;    /* number of processes subscribed */</span>
-    <span class="nf">void</span>        <span class="p">*</span><span class="no">put_addr</span><span class="c">;</span>
-    <span class="nf">unsigned</span>    <span class="no">magic</span><span class="c">;</span>
-<span class="c">#define CRED_MAGIC  0x43736564</span>
-<span class="c">#define CRED_MAGIC_DEAD 0x44656144</span>
-<span class="c">#endif</span>
-    <span class="nf">kuid_t</span>      <span class="no">uid</span><span class="c">;        /* real UID of the task */</span>
-    <span class="nf">kgid_t</span>      <span class="no">gid</span><span class="c">;        /* real GID of the task */</span>
-    <span class="nf">kuid_t</span>      <span class="no">suid</span><span class="c">;       /* saved UID of the task */</span>
-    <span class="nf">kgid_t</span>      <span class="no">sgid</span><span class="c">;       /* saved GID of the task */</span>
-    <span class="nf">kuid_t</span>      <span class="no">euid</span><span class="c">;       /* effective UID of the task */</span>
-    <span class="nf">kgid_t</span>      <span class="no">egid</span><span class="c">;       /* effective GID of the task */</span>
-    <span class="nf">kuid_t</span>      <span class="no">fsuid</span><span class="c">;      /* UID for VFS ops */</span>
-    <span class="nf">kgid_t</span>      <span class="no">fsgid</span><span class="c">;      /* GID for VFS ops */</span>
-    <span class="nf">unsigned</span>    <span class="no">securebits</span><span class="c">; /* SUID-less security management */</span>
-    <span class="nf">kernel_cap_t</span>    <span class="no">cap_inheritable</span><span class="c">; /* caps our children can inherit */</span>
-    <span class="nf">kernel_cap_t</span>    <span class="no">cap_permitted</span><span class="c">;  /* caps we&#39;re permitted */</span>
-    <span class="nf">kernel_cap_t</span>    <span class="no">cap_effective</span><span class="c">;  /* caps we can actually use */</span>
-    <span class="nf">kernel_cap_t</span>    <span class="no">cap_bset</span><span class="c">;   /* capability bounding set */</span>
-    <span class="nf">kernel_cap_t</span>    <span class="no">cap_ambient</span><span class="c">;    /* Ambient capability set */</span>
-<span class="c">#ifdef CONFIG_KEYS</span>
-    <span class="nf">unsigned</span> <span class="no">char</span>   <span class="no">jit_keyring</span><span class="c">;    /* default keyring to attach requested</span>
+    <span class="nf">atomic_t</span>    <span class="no">usage</span><span class="c1">;</span>
+<span class="c1">#ifdef CONFIG_DEBUG_CREDENTIALS</span>
+    <span class="nf">atomic_t</span>    <span class="no">subscribers</span><span class="c1">;    /* number of processes subscribed */</span>
+    <span class="nf">void</span>        <span class="p">*</span><span class="no">put_addr</span><span class="c1">;</span>
+    <span class="nf">unsigned</span>    <span class="no">magic</span><span class="c1">;</span>
+<span class="c1">#define CRED_MAGIC  0x43736564</span>
+<span class="c1">#define CRED_MAGIC_DEAD 0x44656144</span>
+<span class="c1">#endif</span>
+    <span class="nf">kuid_t</span>      <span class="no">uid</span><span class="c1">;        /* real UID of the task */</span>
+    <span class="nf">kgid_t</span>      <span class="no">gid</span><span class="c1">;        /* real GID of the task */</span>
+    <span class="nf">kuid_t</span>      <span class="no">suid</span><span class="c1">;       /* saved UID of the task */</span>
+    <span class="nf">kgid_t</span>      <span class="no">sgid</span><span class="c1">;       /* saved GID of the task */</span>
+    <span class="nf">kuid_t</span>      <span class="no">euid</span><span class="c1">;       /* effective UID of the task */</span>
+    <span class="nf">kgid_t</span>      <span class="no">egid</span><span class="c1">;       /* effective GID of the task */</span>
+    <span class="nf">kuid_t</span>      <span class="no">fsuid</span><span class="c1">;      /* UID for VFS ops */</span>
+    <span class="nf">kgid_t</span>      <span class="no">fsgid</span><span class="c1">;      /* GID for VFS ops */</span>
+    <span class="nf">unsigned</span>    <span class="no">securebits</span><span class="c1">; /* SUID-less security management */</span>
+    <span class="nf">kernel_cap_t</span>    <span class="no">cap_inheritable</span><span class="c1">; /* caps our children can inherit */</span>
+    <span class="nf">kernel_cap_t</span>    <span class="no">cap_permitted</span><span class="c1">;  /* caps we&#39;re permitted */</span>
+    <span class="nf">kernel_cap_t</span>    <span class="no">cap_effective</span><span class="c1">;  /* caps we can actually use */</span>
+    <span class="nf">kernel_cap_t</span>    <span class="no">cap_bset</span><span class="c1">;   /* capability bounding set */</span>
+    <span class="nf">kernel_cap_t</span>    <span class="no">cap_ambient</span><span class="c1">;    /* Ambient capability set */</span>
+<span class="c1">#ifdef CONFIG_KEYS</span>
+    <span class="nf">unsigned</span> <span class="no">char</span>   <span class="no">jit_keyring</span><span class="c1">;    /* default keyring to attach requested</span>
                      <span class="err">*</span> <span class="nf">keys</span> <span class="no">to</span> <span class="p">*</span><span class="err">/</span>
-    <span class="nf">struct</span> <span class="no">key</span> <span class="no">__rcu</span> <span class="p">*</span><span class="no">session_keyring</span><span class="c">; /* keyring inherited over fork */</span>
-    <span class="nf">struct</span> <span class="no">key</span>  <span class="p">*</span><span class="no">process_keyring</span><span class="c">; /* keyring private to this process */</span>
-    <span class="nf">struct</span> <span class="no">key</span>  <span class="p">*</span><span class="no">thread_keyring</span><span class="c">; /* keyring private to this thread */</span>
-    <span class="nf">struct</span> <span class="no">key</span>  <span class="p">*</span><span class="no">request_key_auth</span><span class="c">; /* assumed request_key authority */</span>
-<span class="c">#endif</span>
-<span class="c">#ifdef CONFIG_SECURITY</span>
-    <span class="nf">void</span>        <span class="p">*</span><span class="no">security</span><span class="c">;  /* subjective LSM security */</span>
-<span class="c">#endif</span>
-    <span class="nf">struct</span> <span class="no">user_struct</span> <span class="p">*</span><span class="no">user</span><span class="c">;   /* real user ID subscription */</span>
-    <span class="nf">struct</span> <span class="no">user_namespace</span> <span class="p">*</span><span class="no">user_ns</span><span class="c">; /* user_ns the caps and keyrings are relative to. */</span>
-    <span class="nf">struct</span> <span class="no">group_info</span> <span class="p">*</span><span class="no">group_info</span><span class="c">;  /* supplementary groups for euid/fsgid */</span>
-    <span class="nf">struct</span> <span class="no">rcu_head</span> <span class="no">rcu</span><span class="c">;        /* RCU deletion hook */</span>
-<span class="err">}</span> <span class="nf">__randomize_layout</span><span class="c">;</span>
+    <span class="nf">struct</span> <span class="no">key</span> <span class="no">__rcu</span> <span class="p">*</span><span class="no">session_keyring</span><span class="c1">; /* keyring inherited over fork */</span>
+    <span class="nf">struct</span> <span class="no">key</span>  <span class="p">*</span><span class="no">process_keyring</span><span class="c1">; /* keyring private to this process */</span>
+    <span class="nf">struct</span> <span class="no">key</span>  <span class="p">*</span><span class="no">thread_keyring</span><span class="c1">; /* keyring private to this thread */</span>
+    <span class="nf">struct</span> <span class="no">key</span>  <span class="p">*</span><span class="no">request_key_auth</span><span class="c1">; /* assumed request_key authority */</span>
+<span class="c1">#endif</span>
+<span class="c1">#ifdef CONFIG_SECURITY</span>
+    <span class="nf">void</span>        <span class="p">*</span><span class="no">security</span><span class="c1">;  /* subjective LSM security */</span>
+<span class="c1">#endif</span>
+    <span class="nf">struct</span> <span class="no">user_struct</span> <span class="p">*</span><span class="no">user</span><span class="c1">;   /* real user ID subscription */</span>
+    <span class="nf">struct</span> <span class="no">user_namespace</span> <span class="p">*</span><span class="no">user_ns</span><span class="c1">; /* user_ns the caps and keyrings are relative to. */</span>
+    <span class="nf">struct</span> <span class="no">group_info</span> <span class="p">*</span><span class="no">group_info</span><span class="c1">;  /* supplementary groups for euid/fsgid */</span>
+    <span class="nf">struct</span> <span class="no">rcu_head</span> <span class="no">rcu</span><span class="c1">;        /* RCU deletion hook */</span>
+<span class="err">}</span> <span class="nf">__randomize_layout</span><span class="c1">;</span>
 </code></pre></div></p>
 <h2 id="_3">内核态函数<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>相比用户态库函数，内核态的函数有了一些变化</p>

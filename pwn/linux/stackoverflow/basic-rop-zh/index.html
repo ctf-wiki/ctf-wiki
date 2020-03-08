@@ -5076,9 +5076,9 @@
 <span class="nl">.text:</span><span class="err">080485</span><span class="nf">FD</span>                 <span class="no">push</span>    <span class="no">ebp</span>
 <span class="nl">.text:</span><span class="err">080485</span><span class="nf">FE</span>                 <span class="no">mov</span>     <span class="no">ebp</span><span class="p">,</span> <span class="no">esp</span>
 <span class="nl">.text:</span><span class="err">08048600</span>                 <span class="nf">sub</span>     <span class="no">esp</span><span class="p">,</span> <span class="mi">28</span><span class="no">h</span>
-<span class="nl">.text:</span><span class="err">08048603</span>                 <span class="nf">mov</span>     <span class="no">dword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="mi">0</span> <span class="c">; timer</span>
+<span class="nl">.text:</span><span class="err">08048603</span>                 <span class="nf">mov</span>     <span class="no">dword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="mi">0</span> <span class="c1">; timer</span>
 <span class="nl">.text:</span><span class="err">0804860</span><span class="nf">A</span>                 <span class="no">call</span>    <span class="no">_time</span>
-<span class="nl">.text:</span><span class="err">0804860</span><span class="nf">F</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">eax</span>      <span class="c">; seed</span>
+<span class="nl">.text:</span><span class="err">0804860</span><span class="nf">F</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">eax</span>      <span class="c1">; seed</span>
 <span class="nl">.text:</span><span class="err">08048612</span>                 <span class="nf">call</span>    <span class="no">_srand</span>
 <span class="nl">.text:</span><span class="err">08048617</span>                 <span class="nf">call</span>    <span class="no">_rand</span>
 <span class="nl">.text:</span><span class="err">0804861</span><span class="nf">C</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">secretcode</span><span class="p">],</span> <span class="no">eax</span>
@@ -5089,14 +5089,14 @@
 <span class="nl">.text:</span><span class="err">08048632</span>                 <span class="nf">mov</span>     <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">input</span><span class="p">]</span>
 <span class="nl">.text:</span><span class="err">08048635</span>                 <span class="nf">cmp</span>     <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">ebp</span><span class="err">+</span><span class="no">secretcode</span><span class="p">]</span>
 <span class="nl">.text:</span><span class="err">08048638</span>                 <span class="nf">jnz</span>     <span class="no">short</span> <span class="no">locret_8048646</span>
-<span class="nl">.text:</span><span class="err">0804863</span><span class="nf">A</span>                 <span class="no">mov</span>     <span class="no">dword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">offset</span> <span class="no">command</span> <span class="c">; &quot;/bin/sh&quot;</span>
+<span class="nl">.text:</span><span class="err">0804863</span><span class="nf">A</span>                 <span class="no">mov</span>     <span class="no">dword</span> <span class="no">ptr</span> <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">offset</span> <span class="no">command</span> <span class="c1">; &quot;/bin/sh&quot;</span>
 <span class="nl">.text:</span><span class="err">08048641</span>                 <span class="nf">call</span>    <span class="no">_system</span>
 </code></pre></div>
 
 <p>在 secure 函数又发现了存在调用 system("/bin/sh") 的代码，那么如果我们直接控制程序返回至 0x0804863A，那么就可以得到系统的 shell 了。</p>
 <p>下面就是我们如何构造 payload 了，首先需要确定的是我们能够控制的内存的起始地址距离 main 函数的返回地址的字节数。</p>
 <div class="codehilite"><pre><span></span><code><span class="nl">.text:</span><span class="err">080486</span><span class="nf">A7</span>                 <span class="no">lea</span>     <span class="no">eax</span><span class="p">,</span> <span class="p">[</span><span class="no">esp</span><span class="err">+</span><span class="mi">1</span><span class="no">Ch</span><span class="p">]</span>
-<span class="nl">.text:</span><span class="err">080486</span><span class="nf">AB</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">eax</span>      <span class="c">; s</span>
+<span class="nl">.text:</span><span class="err">080486</span><span class="nf">AB</span>                 <span class="no">mov</span>     <span class="p">[</span><span class="no">esp</span><span class="p">],</span> <span class="no">eax</span>      <span class="c1">; s</span>
 <span class="nl">.text:</span><span class="err">080486</span><span class="nf">AE</span>                 <span class="no">call</span>    <span class="no">_gets</span>
 </code></pre></div>
 
@@ -5165,7 +5165,7 @@ Breakpoint <span class="m">1</span>, 0x080486ae in main <span class="o">()</span
 
 <p>可以看出，程序仍然是基本的栈溢出漏洞，不过这次还同时将对应的字符串复制到 buf2 处。简单查看可知 buf2 在 bss 段。</p>
 <div class="codehilite"><pre><span></span><code><span class="nl">.bss:</span><span class="err">0804</span><span class="nf">A080</span>                 <span class="no">public</span> <span class="no">buf2</span>
-<span class="nl">.bss:</span><span class="err">0804</span><span class="nf">A080</span> <span class="c">; char buf2[100]</span>
+<span class="nl">.bss:</span><span class="err">0804</span><span class="nf">A080</span> <span class="c1">; char buf2[100]</span>
 </code></pre></div>
 
 <p>这时，我们简单的调试下程序，看看这一个 bss 段是否可执行。</p>
@@ -5392,7 +5392,7 @@ Strings <span class="nv">information</span>
 </code></pre></div>
 
 <p>确实存在，再次查找一下是否有 system 函数存在。经在 ida 中查找，确实也存在。</p>
-<div class="codehilite"><pre><span></span><code><span class="nl">.plt:</span><span class="err">08048460</span> <span class="c">; [00000006 BYTES: COLLAPSED FUNCTION _system. PRESS CTRL-NUMPAD+ TO EXPAND]</span>
+<div class="codehilite"><pre><span></span><code><span class="nl">.plt:</span><span class="err">08048460</span> <span class="c1">; [00000006 BYTES: COLLAPSED FUNCTION _system. PRESS CTRL-NUMPAD+ TO EXPAND]</span>
 </code></pre></div>
 
 <p>那么，我们直接返回该处，即执行 system 函数。相应的 payload 如下</p>
