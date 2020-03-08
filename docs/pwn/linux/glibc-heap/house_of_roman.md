@@ -112,7 +112,7 @@ void free_chunk()
 
 
 
-### First step
+### Step 1
 
 
 First fake a chunk, the size of the chunk is 0x61. Then we use partial overwrite to point the FD to the forged chunk (of course, we can also do this with UAF).
@@ -211,7 +211,7 @@ libc : 0x7ffff7a23d28 ("malloc_hook")
 At this time our FD is already near the malloc hook and is not ready for blasting.
 
 
-### 第二步
+### Step 2
 
 
 We only need to release the fix by releasing a chunk of size 0x71.
@@ -221,7 +221,7 @@ We only need to release the fix by releasing a chunk of size 0x71.
 
 
 
-### third step
+### Step 3
 
 
 Take advantage of unsortebin's attacking techniques and use the editing function to write onegadet.
@@ -231,7 +231,7 @@ Take advantage of unsortebin's attacking techniques and use the editing function
 
 
 
-##分析exp
+## Exp Analysis
 
 
 
@@ -417,7 +417,7 @@ free(18)
 
 
 
-## link
+## Link
 
 
 
