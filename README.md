@@ -77,7 +77,7 @@ Secondly, CTF Wiki has two sister projects.
 
 We welcome to write content for the wiki and share what you have learned. 
 
-**Before you decide to contribute content, please read [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/wiki/Contributing-Guide)**.
+**Before you decide to contribute content, please read [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/wiki/Contribution-Guide)**.
 
 Thank you to all the people who have already contributed to CTF Wiki.
 
