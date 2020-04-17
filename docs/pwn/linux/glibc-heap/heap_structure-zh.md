@@ -404,7 +404,7 @@ mem指向用户得到的内存的起始位置。
 mchunkptr bins[ NBINS * 2 - 2 ];
 ```
 
-一个bin相当于一个chunk链表，我们把每个链表的头节点chunk作为bins数组，但是由于这个头节点作为bin表头，其prev_size 与 size 字段是没有任何实际作用的，因此我们在存储头节点chunk的时候仅仅只需要存储头节点chunk的fd和bk即可，而其中的prev_size 与 size 字段被重用为另一个bin的头节点的fd与bk，这样可以节省空间，并提高可用性。因此**我们仅仅只需要mchunkptr类型的指针数组就足够存储这些头节点**，那prev_size 与 size 字段到底是怎么重用的呢的呢？这里我们以32位系统为例
+一个bin相当于一个chunk链表，我们把每个链表的头节点chunk作为bins数组，但是由于这个头节点作为bin表头，其prev_size 与 size 字段是没有任何实际作用的，因此我们在存储头节点chunk的时候仅仅只需要存储头节点chunk的fd和bk即可，而其中的prev_size 与 size 字段被重用为另一个bin的头节点的fd与bk，这样可以节省空间，并提高可用性。因此**我们仅仅只需要mchunkptr类型的指针数组就足够存储这些头节点**，那prev_size 与 size 字段到底是怎么重用的呢？这里我们以32位系统为例
 
 | 含义    | bin1的fd/bin2的prev_size | bin1的bk/bin2的size | bin2的fd/bin3的prev_size | bin2的bk/bin3的size |
 | ----- | ---------------------- | ----------------- | ---------------------- | ----------------- |
