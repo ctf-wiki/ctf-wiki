@@ -1,7 +1,4 @@
 [EN](./des.md) | [ZH](./des-zh.md)
----
-typora-root-url: ../../
----
 
 # DES
 

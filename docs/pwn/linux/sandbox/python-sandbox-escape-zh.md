@@ -1,7 +1,4 @@
 [EN](./python-sandbox-escape.md) | [ZH](./python-sandbox-escape-zh.md)
----
-typora-root-url: ../../../docs
----
 
 # Python 沙盒
 所谓的 Python 沙盒，即以一定的方法模拟 Python 终端，实现用户对 Python 的使用。

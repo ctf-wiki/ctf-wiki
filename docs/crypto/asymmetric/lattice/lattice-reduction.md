@@ -1,11 +1,4 @@
 [EN](./lattice-reduction.md) | [ZH](./lattice-reduction-zh.md)
----
-
-typora-root-url: ../../../
-
----
-
-
 
 #格基规约
 

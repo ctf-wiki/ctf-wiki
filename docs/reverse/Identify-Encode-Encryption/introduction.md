@@ -1,9 +1,4 @@
 [EN](./introduction.md) | [ZH](./introduction-zh.md)
----
-
-typora-root-url: ../../../docs
-
----
 
 ## Foreword
 
@@ -405,5 +400,3 @@ Its distinctive features are:
     h3 = 0x10325476;
 
 ```
-
-
