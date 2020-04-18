@@ -1,11 +1,4 @@
 [EN](./mode.md) | [ZH](./mode-zh.md)
----
-
-typora-root-url: ../
-
----
-
-
 
 ## Problem Solving Mode - Jeopardy
 

@@ -1,11 +1,4 @@
 [EN](./heap_overview.md) | [ZH](./heap_overview-zh.md)
----
-
-typora-root-url: ../../../docs
-
----
-
-
 
 #堆 overview
 

@@ -1,7 +1,4 @@
 [EN](./fastbin_attack.md) | [ZH](./fastbin_attack-zh.md)
----
-typora-root-url: ../../../docs
----
 
 # Fastbin Attack
 

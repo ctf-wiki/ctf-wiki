@@ -1,7 +1,5 @@
 [EN](./introduction.md) | [ZH](./introduction-zh.md)
----
-typora-root-url: ../../../docs
----
+
 ## 前言
 
 在对数据进行变换的过程中，除了简单的字节操作之外，还会使用一些常用的编码加密算法，因此如果能够快速识别出对应的编码或者加密算法，就能更快的分析出整个完整的算法。CTF 逆向中通常出现的加密算法包括base64、TEA、AES、RC4、MD5等。
@@ -227,4 +225,3 @@ var int digest := h0 append h1 append h2 append h3 //(expressed as little-endian
     h2 = 0x98badcfe;
     h3 = 0x10325476;
 ```
-

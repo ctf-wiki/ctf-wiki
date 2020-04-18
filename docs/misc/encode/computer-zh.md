@@ -1,7 +1,4 @@
 [EN](./computer.md) | [ZH](./computer-zh.md)
----
-typora-root-url: ../../
----
 
 本节介绍一些计算机相关的编码。
 

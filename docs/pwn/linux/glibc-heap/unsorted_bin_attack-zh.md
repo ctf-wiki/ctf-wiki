@@ -1,7 +1,4 @@
 [EN](./unsorted_bin_attack.md) | [ZH](./unsorted_bin_attack-zh.md)
----
-typora-root-url: ../../../docs
----
 
 # Unsorted Bin Attack
 

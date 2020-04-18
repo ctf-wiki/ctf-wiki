@@ -1,11 +1,4 @@
 [EN](./introduction.md) | [ZH](./introduction-zh.md)
----
-
-typora-root-url: ../../../docs
-
----
-
-
 
 # Race Condition
 

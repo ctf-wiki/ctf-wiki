@@ -1,7 +1,4 @@
 [EN](./unlink.md) | [ZH](./unlink-zh.md)
----
-typora-root-url: ../../../docs
----
 
 # Unlink
 
