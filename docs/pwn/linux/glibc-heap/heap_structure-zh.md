@@ -410,7 +410,7 @@ mchunkptr bins[ NBINS * 2 - 2 ];
 | ----- | ---------------------- | ----------------- | ---------------------- | ----------------- |
 | bin下标 | 0                      | 1                 | 2                      | 3                 |
 
-可以看出除了第一个bin（unsorted bin）外，后面的每个bin的表头chunk会重用前面的bin表头chunk的fd与bk字段，将其视为其自身的prev_size和size字段。这里也说明了一个问题，**bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 头节点 的 prev_size 与 size 字段不能随便修改，因为这两个字段是其他其它bin表头chunk的fd和bk字段。**
+可以看出除了第一个bin（unsorted bin）外，后面的每个bin的表头chunk会重用前面的bin表头chunk的fd与bk字段，将其视为其自身的prev_size和size字段。这里也说明了一个问题，**bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 头节点 的 prev_size 与 size 字段不能随便修改，因为这两个字段是其它bin表头chunk的fd和bk字段。**
 
 数组中的 bin 依次介绍如下
 
