@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.75004596.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.97f5b1b6.min.css">
       
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.a4b61a0c.min.css">
       
@@ -5746,7 +5746,7 @@
 <span class="n">mchunkptr</span> <span class="n">bins</span><span class="p">[</span> <span class="n">NBINS</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span> <span class="p">];</span>
 </code></pre></div>
 
-<p>虽然每个 bin 的表头使用 mchunkptr 这个数据结构，但是这只是为了方便我们将每个 bin 转化为 malloc_chunk 指针。我们在使用时，会将这个指针当做一个 chunk 的 fd 或 bk 指针来操作，以便于将处于空闲的堆块链接在一起。这样可以节省空间，并提高可用性。那到底是怎么节省的呢？这里我们以32位系统为例</p>
+<p>一个bin相当于一个chunk链表，我们把每个链表的头节点chunk作为bins数组，但是由于这个头节点作为bin表头，其prev_size 与 size 字段是没有任何实际作用的，因此我们在存储头节点chunk的时候仅仅只需要存储头节点chunk的fd和bk即可，而其中的prev_size 与 size 字段被重用为另一个bin的头节点的fd与bk，这样可以节省空间，并提高可用性。因此<strong>我们仅仅只需要mchunkptr类型的指针数组就足够存储这些头节点</strong>，那prev_size 与 size 字段到底是怎么重用的呢？这里我们以32位系统为例</p>
 <table>
 <thead>
 <tr>
@@ -5767,7 +5767,7 @@
 </tr>
 </tbody>
 </table>
-<p>可以看出除了第一个bin（unsorted bin）外，后面的每个bin会共享前面的bin的字段，将其视为malloc chunk部分的prev_size和size。这里也说明了一个问题，<strong>bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 的 prev_size 与 size 字段不能随便修改，因为这两个字段是被其它bin所利用的。</strong></p>
+<p>可以看出除了第一个bin（unsorted bin）外，后面的每个bin的表头chunk会重用前面的bin表头chunk的fd与bk字段，将其视为其自身的prev_size和size字段。这里也说明了一个问题，<strong>bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 头节点 的 prev_size 与 size 字段不能随便修改，因为这两个字段是其它bin表头chunk的fd和bk字段。</strong></p>
 <p>数组中的 bin 依次介绍如下</p>
 <ol>
 <li>第一个为 unsorted bin，字如其面，这里面的 chunk 没有进行排序，存储的 chunk 比较杂。</li>
