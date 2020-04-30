@@ -1,7 +1,4 @@
 [EN](./mode.md) | [ZH](./mode-zh.md)
----
-typora-root-url: ../
----
 
 ## 解题模式 - Jeopardy
 

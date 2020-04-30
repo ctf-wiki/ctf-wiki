@@ -1,7 +1,4 @@
 [EN](./rsa_coppersmith_attack.md) | [ZH](./rsa_coppersmith_attack-zh.md)
----
-typora-root-url: ../../../
----
 
 # Coppersmith 相关攻击
 

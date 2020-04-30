@@ -1,7 +1,4 @@
 [EN](./house_of_einherjar.md) | [ZH](./house_of_einherjar-zh.md)
----
-typora-root-url: ../../../docs
----
 
 #  House Of Einherjar
 

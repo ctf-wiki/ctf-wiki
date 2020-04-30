@@ -1,8 +1,4 @@
 [EN](./elf-structure.md) | [ZH](./elf-structure-zh.md)
----
-typora-root-url: ../../../docs
----
-
 
 # ELF 文件
 

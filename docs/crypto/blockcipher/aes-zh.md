@@ -1,7 +1,4 @@
 [EN](./aes.md) | [ZH](./aes-zh.md)
----
-typora-root-url: ../../
----
 
 # AES
 
