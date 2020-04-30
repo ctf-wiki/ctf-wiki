@@ -61,17 +61,15 @@ $$
 g^{ks+dr} \equiv g^m \bmod p
 $$
 
-### 难点
-
-虽然我们知道了r,但是我们却没有办法知道其对应的k。
-
 ## 常见攻击
 
-### p太小
+### 完全破译攻击
 
-### 随机数k复用
+#### p太小或无大素因子
 
-#### 原理
+如果$p$太小我们可以直接直接用大部小步算法分解,或者如果其无大的素因子,我们可以采用$Pohling\: Hellman$算法计算离散对数即可进而求出私钥
+
+#### 随机数k复用
 
 如果签名者复用了随机数k，那么攻击者就可以轻而易举地计算出私钥。具体的原理如下：
 
@@ -105,6 +103,10 @@ $$
 
 ### 通用伪造签名
 
+#### 攻击条件
+
+如果消息$m$没有取哈希,或者消息$m$没有指定消息格式的情况下攻击成立
+
 #### 原理
 
 在攻击者知道了某个人Alice的公钥之后，他可以伪造Alice的签名信息。具体原理如下
@@ -131,7 +133,66 @@ $$
 
 ### 已知签名伪造
 
-参考pdf。
+#### 攻击条件
+
+假设攻击者知道$(r, s)$是消息$M$的签名,则攻击者可利用它来伪造其它消息的签名. 
+
+#### 原理
+
+1. 选择整数$h, i, j \in[0, p-2]$且满足$\operatorname{gcd}(h r-j s, \varphi(p))=1$
+2. 计算下式
+   $\begin{array}{l}
+   r^{\prime}=r^{h} \alpha^{i} y_{A}^{j} \bmod p \\
+   s^{\prime}=\operatorname{sr}(h r-j s)^{-1} \bmod \varphi(p) \\
+   m^{\prime}=r^{\prime}(h m+i s)(h r-j s)^{-1} \bmod \varphi(p)
+   \end{array}$
+
+可得到$(r',s')$是$m'$的有效签名
+
+证明如下:
+
+已知Alice对消息$x$的签名$(\gamma,\delta)$满足$\beta^{\gamma} \gamma^{\delta} \equiv \alpha^{x}(\bmod p)$,所以我们目的为构造出$\left(x^{\prime}, \lambda, \mu\right)$满足
+$$
+\beta^{\lambda} \lambda^{\mu} \equiv \alpha^{x'}(\bmod p)
+$$
+我们把$\lambda$表示为三个已知底$\alpha, \beta, \gamma$的形式: $\lambda=\alpha^{i} \beta^{j} \gamma^{h} \bmod p$,由条件可得
+$$
+\beta^{\gamma} \gamma^{\delta} \equiv \alpha^{x}(\bmod p) \Leftrightarrow \gamma=\left(\beta^{-\gamma} \alpha^{x}\right)^{\delta-1} \bmod p
+$$
+
+那么我们可以得到
+$$
+\lambda=\alpha^{i+x \delta^{-1} h} \beta^{j-\gamma \delta^{-1} h} \bmod p
+$$
+我们把$\lambda$的表达式代入一式中
+$$
+\begin{aligned}& \beta^{\lambda}\left(\alpha^{i+x \delta^{-1} h} \beta^{j-\gamma \delta^{-1} h}\right)^{\mu} \equiv \alpha^{x^{\prime}}(\bmod p) \\\Leftrightarrow & \beta^{\lambda+\left(j-\gamma \delta^{-1} h\right) \mu} \equiv \alpha^{x^{\prime}-\left(i+x \delta^{-1} h\right) \mu}(\bmod p)\end{aligned}
+$$
+我们令两边指数为$0$, 即:
+$$
+\left\{\begin{matrix}\lambda+\left(j-\gamma \delta^{-1} h\right) \mu \equiv 0 \bmod p-1 \\ x^{\prime}-\left(i+x \delta^{-1} h\right) \mu \equiv 0 \bmod p-1 \end{matrix}\right.
+$$
+可以得到
+$$
+\mu=\delta \lambda(h \gamma-j \delta)^{-1} \quad(\bmod p-1)  \\
+x^{\prime}=\lambda(h x+i \delta)(h \gamma-j \delta)^{-1}(\bmod p-1)
+$$
+其中
+$$
+\lambda=\alpha^{i} \beta^{j} \gamma^{h} \bmod p
+$$
+所以我们得到$(\lambda, \mu)$是 $x'$ 的有效签名
+
+此外,我们还可以借助CRT构造$m'$,原理如下
+
+1. $u=m^{\prime} m^{-1} \bmod \varphi(p), \quad s^{\prime}=s u \bmod \varphi(p)$
+2. 再计算$r^{\prime}, \quad r^{\prime} \equiv r u \bmod \varphi(p), r^{\prime} \equiv r \bmod p$
+
+显然可以使用CRT求解$r'$,注意到 $y_{A}^{r'} r'^{s^{\prime}}=y_{A}^{ru} r^{s u}=\left(y_{A}^{r} r^{s}\right)^{u}=\alpha^{m u} \equiv \alpha^{m} \bmod p$ 
+
+所以$(r',s')$是消息$m'$的有效签名
+
+抵抗措施:在验证签名时,检查$r < p$.
 
 ### 选择签名伪造
 
@@ -139,7 +200,7 @@ $$
 
 如果我们可以选择我们消息进行签名，并且可以得到签名，那么我们可以对一个新的但是我们不能够选择签名的消息伪造签名。
 
-#### 攻击原理
+#### 原理
 
 我们知道，最后验证的过程如下
 
@@ -147,7 +208,7 @@ $$
 
 那么只要我们选择一个消息m使其和我们所要伪造的消息m‘模p-1同余，然后同时使用消息m的签名即可绕过。
 
-#### 例子
+#### 题目
 
 这里以2017年国赛mailbox为例，**i春秋有复现**。
 
