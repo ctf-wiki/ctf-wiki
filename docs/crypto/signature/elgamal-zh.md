@@ -69,7 +69,7 @@ $$
 
 - p太小或无大素因子
 
-如果$p$太小我们可以直接用大部小步算法分解,或者如果其无大的素因子,我们可以采用$Pohling\: Hellman$算法计算离散对数即可进而求出私钥。
+如果$p$太小我们可以直接用大部小步算法分解, 或者如果其无大的素因子, 我们可以采用$Pohling\: Hellman$算法计算离散对数即可进而求出私钥。
 
 - 随机数k复用
 
@@ -107,7 +107,7 @@ $$
 
 #### 攻击条件
 
-如果消息$m$没有取哈希,或者消息$m$没有指定消息格式的情况下攻击成立。
+如果消息$m$没有取哈希，或者消息$m$没有指定消息格式的情况下攻击成立。
 
 #### 原理
 
@@ -137,7 +137,7 @@ $$
 
 #### 攻击条件
 
-假设攻击者知道$(r, s)$是消息$M$的签名,则攻击者可利用它来伪造其它消息的签名. 
+假设攻击者知道$(r, s)$是消息$M$的签名，则攻击者可利用它来伪造其它消息的签名。
 
 #### 原理
 
@@ -153,7 +153,7 @@ $$
 
 证明如下:
 
-已知Alice对消息$x$的签名$(\gamma,\delta)$满足$\beta^{\gamma} \gamma^{\delta} \equiv \alpha^{x}(\bmod p)$,所以我们目的为构造出$\left(x^{\prime}, \lambda, \mu\right)$满足
+已知Alice对消息$x$的签名$(\gamma,\delta)$满足$\beta^{\gamma} \gamma^{\delta} \equiv \alpha^{x}(\bmod p)$，所以我们目的为构造出$\left(x^{\prime}, \lambda, \mu\right)$满足
 $$
 \beta^{\lambda} \lambda^{\mu} \equiv \alpha^{x'}(\bmod p)
 $$
@@ -185,16 +185,16 @@ $$
 $$
 所以我们得到$(\lambda, \mu)$是 $x'$ 的有效签名。
 
-此外,我们还可以借助CRT构造$m'$,原理如下:
+此外,我们还可以借助CRT构造$m'$, 原理如下:
 
 1. $u=m^{\prime} m^{-1} \bmod \varphi(p), \quad s^{\prime}=s u \bmod \varphi(p)$
 2. 再计算$r^{\prime}, \quad r^{\prime} \equiv r u \bmod \varphi(p), r^{\prime} \equiv r \bmod p$
 
-显然可以使用CRT求解$r'$,注意到 $y_{A}^{r'} r'^{s^{\prime}}=y_{A}^{ru} r^{s u}=\left(y_{A}^{r} r^{s}\right)^{u}=\alpha^{m u} \equiv \alpha^{m} \bmod p$ 
+显然可以使用CRT求解$r'$, 注意到 $y_{A}^{r'} r'^{s^{\prime}}=y_{A}^{ru} r^{s u}=\left(y_{A}^{r} r^{s}\right)^{u}=\alpha^{m u} \equiv \alpha^{m} \bmod p$ 
 
 所以$(r',s')$是消息$m'$的有效签名。
 
-抵抗措施:在验证签名时,检查$r < p$。
+抵抗措施:在验证签名时, 检查$r < p$。
 
 ### 选择签名伪造
 
