@@ -1037,7 +1037,7 @@ Tcache 里就存放了一块 栈上的内容，我们之后只需 malloc，就�
 
 #### tcache stashing unlink attack
 
-这种攻击利用的是 tcache bin 有剩余(数量小于 `TCACHE_MAX_BINS` )时，同大小的small bin会放进tcache中(这种情况可以用  `calloc` 分配同大小堆块触发，因为 `calloc` 分配堆块时不从 tcache bin 中选取)。在获取到一个 `smallbin` 中的一个chunk后会如果 tcache 仍有足够空闲位置，会将剩余的 small bin 链入 tcache ，在这个过程中只对第一个 bin 进行了完整性检查，后面的堆块的检查缺失。，当攻击者可以写一个small bin的bk指针时，其可以在任意地址上写一个libc地址(类似 `unsorted bin attack` 的效果)。构造得当的情况下也可以分配 fake chunk 到任意地址。
+这种攻击利用的是 tcache bin 有剩余(数量小于 `TCACHE_MAX_BINS` )时，同大小的small bin会放进tcache中(这种情况可以用  `calloc` 分配同大小堆块触发，因为 `calloc` 分配堆块时不从 tcache bin 中选取)。在获取到一个 `smallbin` 中的一个chunk后会如果 tcache 仍有足够空闲位置，会将剩余的 small bin 链入 tcache ，在这个过程中只对第一个 bin 进行了完整性检查，后面的堆块的检查缺失。当攻击者可以写一个small bin的bk指针时，其可以在任意地址上写一个libc地址(类似 `unsorted bin attack` 的效果)。构造得当的情况下也可以分配 fake chunk 到任意地址。
 
 这里以 `how2heap` 中的 `tcache_stashing_unlink_attack.c` 为例。
 
