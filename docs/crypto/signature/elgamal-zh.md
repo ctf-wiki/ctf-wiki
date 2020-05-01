@@ -69,7 +69,7 @@ $$
 
 - p太小或无大素因子
 
-如果$p$太小我们可以直接直接用大部小步算法分解,或者如果其无大的素因子,我们可以采用$Pohling\: Hellman$算法计算离散对数即可进而求出私钥
+如果$p$太小我们可以直接用大部小步算法分解,或者如果其无大的素因子,我们可以采用$Pohling\: Hellman$算法计算离散对数即可进而求出私钥。
 
 - 随机数k复用
 
@@ -107,21 +107,21 @@ $$
 
 #### 攻击条件
 
-如果消息$m$没有取哈希,或者消息$m$没有指定消息格式的情况下攻击成立
+如果消息$m$没有取哈希,或者消息$m$没有指定消息格式的情况下攻击成立。
 
 #### 原理
 
-在攻击者知道了某个人Alice的公钥之后，他可以伪造Alice的签名信息。具体原理如下
+在攻击者知道了某个人Alice的公钥之后，他可以伪造Alice的签名信息。具体原理如下:
 
 这里我们假设，Alice的公钥为{p,g,y}。攻击者可以按照如下方式伪造
 
-1. 选择整数 i，j，其中$gcd(j,p-1)=1$ 。
+1. 选择整数 $i$，$j$，其中$gcd(j,p-1)=1$
 
 2. 计算签名，$r \equiv g^iy^j \bmod p$ ，$s\equiv -rj^{-1} \bmod p-1$
 
 3. 计算消息，$m\equiv si \bmod p-1$
 
-那么此时生成的签名与消息就是可以被正常通过验证，具体推导如下
+那么此时生成的签名与消息就是可以被正常通过验证，具体推导如下:
 
 $y^rr^s \equiv g^{dr}g^{is}y^{js} \equiv g^{dr}g^{djs}g^{is} \equiv g^{dr+s(i+dj)} \equiv g^{dr} g^{-rj^{-1}(i+dj)} \equiv g^{dr-dr-rij^{-1}} \equiv g^{si} \bmod p$
 
@@ -170,7 +170,7 @@ $$
 $$
 \begin{aligned}& \beta^{\lambda}\left(\alpha^{i+x \delta^{-1} h} \beta^{j-\gamma \delta^{-1} h}\right)^{\mu} \equiv \alpha^{x^{\prime}}(\bmod p) \\\Leftrightarrow & \beta^{\lambda+\left(j-\gamma \delta^{-1} h\right) \mu} \equiv \alpha^{x^{\prime}-\left(i+x \delta^{-1} h\right) \mu}(\bmod p)\end{aligned}
 $$
-我们令两边指数为$0$, 即:
+我们令两边指数为$0$, 即
 $$
 \left\{\begin{matrix}\lambda+\left(j-\gamma \delta^{-1} h\right) \mu \equiv 0 \bmod p-1 \\ x^{\prime}-\left(i+x \delta^{-1} h\right) \mu \equiv 0 \bmod p-1 \end{matrix}\right.
 $$
@@ -183,18 +183,18 @@ $$
 $$
 \lambda=\alpha^{i} \beta^{j} \gamma^{h} \bmod p
 $$
-所以我们得到$(\lambda, \mu)$是 $x'$ 的有效签名
+所以我们得到$(\lambda, \mu)$是 $x'$ 的有效签名。
 
-此外,我们还可以借助CRT构造$m'$,原理如下
+此外,我们还可以借助CRT构造$m'$,原理如下:
 
 1. $u=m^{\prime} m^{-1} \bmod \varphi(p), \quad s^{\prime}=s u \bmod \varphi(p)$
 2. 再计算$r^{\prime}, \quad r^{\prime} \equiv r u \bmod \varphi(p), r^{\prime} \equiv r \bmod p$
 
 显然可以使用CRT求解$r'$,注意到 $y_{A}^{r'} r'^{s^{\prime}}=y_{A}^{ru} r^{s u}=\left(y_{A}^{r} r^{s}\right)^{u}=\alpha^{m u} \equiv \alpha^{m} \bmod p$ 
 
-所以$(r',s')$是消息$m'$的有效签名
+所以$(r',s')$是消息$m'$的有效签名。
 
-抵抗措施:在验证签名时,检查$r < p$.
+抵抗措施:在验证签名时,检查$r < p$。
 
 ### 选择签名伪造
 
@@ -208,7 +208,7 @@ $$
 
  $g^m \equiv y^rr^s \bmod p$ 
 
-那么只要我们选择一个消息m使其和我们所要伪造的消息m‘模p-1同余，然后同时使用消息m的签名即可绕过。
+那么只要我们选择一个消息m使其和我们所要伪造的消息m模p-1同余，然后同时使用消息m的签名即可绕过。
 
 #### 题目
 
