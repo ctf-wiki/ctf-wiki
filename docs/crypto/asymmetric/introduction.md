@@ -1,2 +1,5 @@
 [EN](./introduction.md) | [ZH](./introduction-zh.md)
-In an asymmetric password, the key used by the encryptor and the decrypter is not the same, typically RSA encryption, backpack encryption, and elliptic curve encryption.
+# Introduction
+
+In asymmetric cryptography, the keys used by the encryptor and the decrypter are different. Typical examples are RSA encryption, knapsack encryption, and elliptic curve encryption.
+
