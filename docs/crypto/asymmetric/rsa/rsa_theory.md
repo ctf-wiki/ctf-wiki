@@ -25,7 +25,7 @@ At this point, $(N,e)$ is the public key and $(N,d)$ is the private key.
 
 ### Message Encryption
 
-First, you need to convert the message into a single $m$, which is less than $N$ and is $100 with the $N$. If the message is too long, you can divide the message into several segments, which is what we call block encryption, and then encrypt each part with the following formula:
+First, we need to convert the message into an integer $m$ using an agreed-upon protocol, such than $m$ is less than $N$ and $m$ is coprime to $N$. If the message is too long, we can divide the message into several segments, which is what we call block encryption, and then encrypt each part with the following formula:
 
 
 $$
@@ -34,27 +34,27 @@ $$
 
 ### Message decryption
 
-Decrypt using the key $d $.
+Use the private key $d$ to decrypt the message.
 
 $$
 c^{d}\equiv m\pmod N
 $$
 
 
-### Proof of correctness
+### Verification
 
-That is, we have to prove $m^{ed} \equiv m \bmod N$, known as $ed \equiv 1 \bmod \phi(N)$, then $ed=k\phi(N)+1$, that is needed prove
+To verify $m^{ed} \equiv m \bmod N$, we use the fact that $ed \equiv 1 \bmod \phi(N)$, then $ed=k\phi(N)+1$, it is sufficient to prove that
 
 $$
-m^{k\phi(N)+1}  \equiv m \bmod N
+m^{k\phi(N)+1} \equiv m \bmod N
 $$
 
-Here we prove in two cases
+We will prove it by considering two seperate cases
 
-In the first case, $gcd(m,N)=1$, then $m^{\phi(N)} \equiv 1 \bmod N$, so the original is true.
+In the first case, $gcd(m,N)=1$, hence $m^{\phi(N)} \equiv 1 \bmod N$, so the original claim is true.
 
 
-In the second case, $gcd(m,N)\neq 1$, then m must be a multiple of p or q, and n=m is less than N. we assume that
+In the second case, $gcd(m,N)\neq 1$, so $m$ must be a multiple of $p$ or $q$, and since $n=m$ is less than $N$, we can assume that
 
 
 $$
@@ -63,38 +63,38 @@ $$
 
 
 
-Then x must be less than q, and since q is a prime number. Then
+Where $x$ must be less than $q$. Since $q$ is a prime number,
 
 
 $$
-m ^ {\ Phi (q)} \ equiv 1 \ m bmod
-$$
-
-
-
-and then
-
-
-$$
-m ^ {k \ Phi (N)} = m {k (p-1) (q-1)} = (m ^ {\ Phi (q)}) ^ {k (p-1)} \ equiv 1 \ m bmod
+m^{\phi(q)}\equiv 1 \bmod q
 $$
 
 
 
-Then
+
+
+
+$$
+m^{k\phi(N)} = m {k(p-1)(q-1)} = (m^{\phi(q)})^{k(p-1)} \equiv 1 \bmod q
+$$
+
+
+
+
 
 
 $$
 m^{k\phi(N)+1}=m+uqm
 $$
 
-and then
+
 
 $$
 m^{k\phi(N)+1}=m+uqxp=m+uxN
 $$
 
-So the original formula was established.
+Hence it is proven to be correct.
 
 ## Basic Tools
 
@@ -128,7 +128,7 @@ So the original formula was established.
 
 
 - Generate a pem file based on a given key pair
-- According to n, e, d, p, q
+- Obtain $p$ and $q$ from $n$, $e$, $d$
 
 
 ### openssl
@@ -163,8 +163,8 @@ For more specific details, please refer to `openssl --help`.
 ### Decomposition Integer Tool
 
 
-- Website decomposition, [factor.db] (http://factordb.com/)
-- Command line decomposition, [factordb-pycli] (https://github.com/ryosan-470/factordb-pycli), borrowing the factordb database.
+- Website decomposition, [factor.db](http://factordb.com/)
+- Command line decomposition, [factordb-pycli](https://github.com/ryosan-470/factordb-pycli), borrowing the factordb database.
 - [yafu](https://sourceforge.net/projects/yafu/)
 
 
@@ -255,19 +255,15 @@ When installing, you may need to install the mfpr and mpc libraries separately.
 
 
 > p = 3487583947589437589237958723892346254777 q = 8767867843568934765983476584376578389
-
 >
-
-&gt; e = 65537
+> e = 65537
 >
-
-&gt; Find d =
+> Find d =
 >
+> Please submit `PCTF{d}`
 
-&gt; Please submit `PCTF{d}`
 
-
-Directly according to $ed\equiv 1 \pmod{\varphi (N)} $, where $\varphi (N)=\varphi (p)\varphi (q)=(p-1)(q-1)$, D.
+Using $ed\equiv 1 \pmod{\varphi(N)}$, we can obtain $d$ from $\varphi (N)=\varphi (p)\varphi (q)=(p-1)(q-1)$.
 
 
 ```python
@@ -279,7 +275,7 @@ p = 3487583947589437589237958723892346254777
 q = 8767867843568934765983476584376578389
 
 e = 65537
-Phin = (p - 1) * (q - 1)
+phin = (p - 1) * (q - 1)
 print gmpy2.invert(e, phin)
 
 ```
@@ -318,11 +314,11 @@ g = d*(p-0xdeadbeef)
 
 
 
-So, the problem should come from here, so let&#39;s start with it, let&#39;s assume that `const = 0xdeadbeef`. Then
+So, the problem should come from here, so let's start with it, let's assume that `const = 0xdeadbeef`. Then
 
 
 $$
-eg = ed*(p-const)
+eg = ed * (p-const)
 $$
 
 
@@ -331,29 +327,27 @@ Furthermore, according to RSA
 
 
 $$
-2^{eg}=2^{ed*(p-const)}=2^{p-const} \pmod n
+2^{eg}=2^{ed * (p-const)}=2^{p-const} \pmod n
 $$
 
 
 
 $$
-2^{p-const}*2^{const-1} = 2^{p-1} \pmod n
+2^{p-const} * 2^{const-1} = 2^{p-1} \pmod n
 $$
 
 
 
-and so
+So
 
 
 $$
-
-2^{p-1} = 2^{eg}*2^{const-1}+kn
-
+2^{p-1} = 2^{eg} * 2^{const-1}+kn
 $$
 
 
 
-At the same time, according to Fermat&#39;s little theorem, we know
+At the same time, according to Fermat's little theorem, we know
 
 
 $$
@@ -362,7 +356,7 @@ $$
 
 
 
-and so
+So
 
 
 $$
@@ -371,7 +365,7 @@ $$
 
 
 
-and then
+
 
 
 $$
@@ -380,7 +374,7 @@ $$
 
 
 
-and so
+
 
 
 $$
@@ -389,7 +383,7 @@ $$
 
 
 
-So the code is as follows
+Hence the code is as follows
 
 ```python
 
@@ -433,9 +427,9 @@ Now, what’s the FLAG???
 
 
 
-Our goal is basically to find Flag, then how to do it? This topic requires us to have a good number theory.
+Our goal is basically to find FLAG, but how can we find it? This question requires us to be more familiar with number theory.
 
-According to the content in the title, we can assume that p, q are both large prime numbers, then
+From the content of the question, we can assume that $p$, $q$ are both large prime numbers, so
 
 
 $p^{q-1} \equiv  1\bmod q$
@@ -445,21 +439,21 @@ Then
 
 $p^{q} \equiv p \bmod pq$
 
-Then we can know according to 3
+From 3), we know that
 
 $p^q+q^p \equiv p+q \bmod pq$
 
-And p+q is obviously smaller than pq, so we know the value of p+q.
+And $p+q$ is obviously smaller than $pq$, so we know the value of $p+q$.
 
-Further, we assume that the values corresponding to 1, 2, 3, 4, and 5 are x1 to x5, respectively.
+We let $x_1$, $x_2$, $x_3$, $x_4$, $x_5$ take the values of 1) to 5) respectively.
 
-According to 4, we can know
+From 4), we have
 
 $(p+q)^{p+q} \equiv p^{p+q}+q^{p+q} \bmod pq$
 
 
 
-And because of 1 and 2, then
+And because of 1) and 2), then
 
 $p^pp \equiv px_1\bmod pq$
 
@@ -469,7 +463,7 @@ therefore
 
 $px_1+qx_2 \equiv x_4 \bmod pq$
 
-According to the way x1 and x2 are obtained, we can know that this is also the equal sign, so we get a binary equation system and solve it directly.
+From the way $x_1$ and $x_2$ are obtained, we know that $px_1+qx_2$ is also equal to $x_4$, so we get a system of linear equations in two variables and can solve it directly.
 
 
 ```python
@@ -547,16 +541,16 @@ assert gmpy.is_prime(y)**2016 + gmpy.is_prime(x + 1)**2017 + (
 
 
 
-Since `gmpy.is_prime` either returns 1 or returns 0, we can easily try out that y is a prime number, x+1 is also a prime number, and
+Since `gmpy.is_prime` either returns 1 or returns 0, we can easily try out that $y$ is a prime number, $x+1$ is also a prime number, and
 
 
-$ (X ^ 2-1) ^ 2 \ equiv 0 \ way (2xy 1) $
+$(x^2-1)^2 \equiv 0 \bmod(2xy-1)$
 
 
-In order for the expression to be divisible, guess $x=2y$.
+In order for the expression to be divisible, we guess that $x=2y$.
 
 
-So for the following content
+So for the following code
 
 
 ```python
@@ -571,21 +565,21 @@ print 'enc =', enc
 ```
 
 
-p and q are naturally
+$p$ and $q$ are naturally
 
-$p=nextp(9y^3)$
-
-
-$q=nextp(6y^3)$
+$p=next\_prime(9y^3)$
 
 
-According to the interval of prime numbers, you can know that p and q are at most a little larger than the numbers in parentheses, and generally do not exceed 1000 here.
+$q=next\_prime(6y^3)$
+
+
+According to the interval of prime numbers, we know that $p$ and $q$ are at most a little larger than the numbers in parentheses, and generally would not exceed $1000$ here.
 
 Then
 
-$n \ geq 54y ^ 6$
+$n \geq 54y^6$
 
-So we know the upper bound of y, and the lower bound of y is actually not too far from the upper bound, we probably reduce hundreds of thousands. Furthermore, we use the binary search method to find p and q, as follows
+So we know the upper bound of $y$, and the lower bound of $y$ is actually not too far from the upper bound, we probably reduce hundreds of thousands. Hence, we use binary search to find $p$ and $q$, as follows
 
 
 ```python
