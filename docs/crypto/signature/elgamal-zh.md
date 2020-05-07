@@ -154,35 +154,63 @@ $$
 证明如下:
 
 已知Alice对消息$x$的签名$(\gamma,\delta)$满足$\beta^{\gamma} \gamma^{\delta} \equiv \alpha^{x}(\bmod p)$，所以我们目的为构造出$\left(x^{\prime}, \lambda, \mu\right)$满足
+
+
 $$
 \beta^{\lambda} \lambda^{\mu} \equiv \alpha^{x'}(\bmod p)
 $$
-我们把$\lambda$表示为三个已知底$\alpha, \beta, \gamma$的形式: $\lambda=\alpha^{i} \beta^{j} \gamma^{h} \bmod p$,由条件可得
+
+
+
+
+那么，首先我们把$\lambda$表示为三个已知底$\alpha, \beta, \gamma$的形式: $\lambda=\alpha^{i} \beta^{j} \gamma^{h} \bmod p$,由条件可得
+
+
 $$
 \beta^{\gamma} \gamma^{\delta} \equiv \alpha^{x}(\bmod p) \Leftrightarrow \gamma=\left(\beta^{-\gamma} \alpha^{x}\right)^{\delta-1} \bmod p
 $$
 
 那么我们可以得到
+
+
 $$
 \lambda=\alpha^{i+x \delta^{-1} h} \beta^{j-\gamma \delta^{-1} h} \bmod p
 $$
+
+
 我们把$\lambda$的表达式代入一式中
+
+
 $$
 \begin{aligned}& \beta^{\lambda}\left(\alpha^{i+x \delta^{-1} h} \beta^{j-\gamma \delta^{-1} h}\right)^{\mu} \equiv \alpha^{x^{\prime}}(\bmod p) \\\Leftrightarrow & \beta^{\lambda+\left(j-\gamma \delta^{-1} h\right) \mu} \equiv \alpha^{x^{\prime}-\left(i+x \delta^{-1} h\right) \mu}(\bmod p)\end{aligned}
 $$
+
+
 我们令两边指数为$0$, 即
+
+
 $$
 \left\{\begin{matrix}\lambda+\left(j-\gamma \delta^{-1} h\right) \mu \equiv 0 \bmod p-1 \\ x^{\prime}-\left(i+x \delta^{-1} h\right) \mu \equiv 0 \bmod p-1 \end{matrix}\right.
 $$
+
+
 可以得到
+
+
 $$
 \mu=\delta \lambda(h \gamma-j \delta)^{-1} \quad(\bmod p-1)  \\
 x^{\prime}=\lambda(h x+i \delta)(h \gamma-j \delta)^{-1}(\bmod p-1)
 $$
+
+
 其中
+
+
 $$
 \lambda=\alpha^{i} \beta^{j} \gamma^{h} \bmod p
 $$
+
+
 所以我们得到$(\lambda, \mu)$是 $x'$ 的有效签名。
 
 此外,我们还可以借助CRT构造$m'$, 原理如下:
