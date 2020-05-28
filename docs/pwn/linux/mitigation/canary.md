@@ -36,7 +36,6 @@ The stack structure that enables Canary protection is as follows
 ```
 
         High
-
         Address |                 |
 
                 +-----------------+
@@ -57,9 +56,11 @@ The stack structure that enables Canary protection is as follows
 
                 +-----------------+
 
-| Local variables |
+                | Local variables |
+                
+                +-----------------+
+                
         Low     |                 |
-
         Address
 
 
@@ -162,7 +163,7 @@ The sample source code for the vulnerability is as follows:
 
 
 ```C
-// ex2.c
+// canary.c
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -191,8 +192,11 @@ int main(void) {
 
 ```
 
-Compile to 32bit program, open NX, ASLR, Canary protection
+Compile as 32bit program and disable PIE protection (NX, ASLR and Canary protection are invoked by default)
 
+```bash
+$ gcc -m32 -no-pie canary.c -o canary 
+```
 
 First print out the 4-digit Canary by overwriting the last `\x00` byte of Canary
 After that, calculate the offset, fill Canary into the corresponding overflow position, and implement Ret into the getshell function.
