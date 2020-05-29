@@ -163,7 +163,7 @@ The sample source code for the vulnerability is as follows:
 
 
 ```C
-// canary.c
+// ex2.c
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -195,7 +195,7 @@ int main(void) {
 Compile as 32bit program and disable PIE protection (NX, ASLR and Canary protection are invoked by default)
 
 ```bash
-$ gcc -m32 -no-pie canary.c -o canary 
+$ gcc -m32 -no-pie ex2.c -o ex2 
 ```
 
 First print out the 4-digit Canary by overwriting the last `\x00` byte of Canary
