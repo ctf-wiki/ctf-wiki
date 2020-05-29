@@ -141,7 +141,7 @@ Canary 设计为以字节 `\x00` 结尾，本意是为了保证 Canary 可以截
 存在漏洞的示例源代码如下:
 
 ```C
-// canary.c
+// ex2.c
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -172,7 +172,7 @@ int main(void) {
 编译为 32bit 程序并关闭 PIE 保护 （默认开启 NX，ASLR，Canary 保护）
 
 ```bash
-$ gcc -m32 -no-pie canary.c -o canary
+$ gcc -m32 -no-pie ex2.c -o ex2
 ```
 
 首先通过覆盖 Canary 最后一个 `\x00` 字节来打印出 4 位的 Canary
