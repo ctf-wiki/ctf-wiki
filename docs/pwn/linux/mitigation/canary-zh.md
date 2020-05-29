@@ -42,7 +42,7 @@ Canary 与 Windows 下的 GS 保护都是缓解栈溢出攻击的有效手段，
                 +-----------------+
       rbp-8 =>  | canary value    |
                 +-----------------+
-                | 局部变量        |
+                | local variables |
         Low     |                 |
         Address
 
@@ -169,7 +169,11 @@ int main(void) {
 }
 ```
 
-编译为 32bit 程序，开启 NX，ASLR，Canary 保护
+编译为 32bit 程序并关闭 PIE 保护 （默认开启 NX，ASLR，Canary 保护）
+
+```bash
+$ gcc -m32 -no-pie ex2.c -o ex2
+```
 
 首先通过覆盖 Canary 最后一个 `\x00` 字节来打印出 4 位的 Canary
 之后，计算好偏移，将 Canary 填入到相应的溢出位置，实现 Ret 到 getshell 函数中
