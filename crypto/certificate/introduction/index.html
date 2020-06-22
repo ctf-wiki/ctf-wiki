@@ -4980,13 +4980,6 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the" class="md-nav__link">
-    THE
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#pem" class="md-nav__link">
     PEM
   </a>
@@ -4994,8 +4987,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#format-conversion" class="md-nav__link">
-    Format Conversion
+  <a href="#der" class="md-nav__link">
+    DER
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additonal-format-conversion" class="md-nav__link">
+    Additonal Format Conversion
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    Reference
   </a>
   
 </li>
@@ -5022,15 +5029,34 @@
                 
                 <p><a href="./">EN</a> | <a href="../introduction-zh/">ZH</a></p>
 <h1 id="_1">证书格式<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<h2 id="the">THE<a class="headerlink" href="#the" title="Permanent link">&para;</a></h2>
-<p>Certificates with this extension are <strong>binary encoding</strong>, of course, these certificates can also use CER or CRT as the extension.</p>
 <h2 id="pem">PEM<a class="headerlink" href="#pem" title="Permanent link">&para;</a></h2>
-<p>Certificates that use this extension are Base64 encoded, starting with a line of <code>-----BEGIN</code>.</p>
-<h2 id="format-conversion">Format Conversion<a class="headerlink" href="#format-conversion" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>openssl x509 -outform der -in certificate.pem -out certificate.der
+<p>PEM is just ASN.1 data put between headers <code>-----BEGIN</code> and <code>-----END</code>, where ASN.1 is binary data with base64 encoding. There are valid PEM examples <a href="https://en.wikipedia.org/wiki/Privacy-Enhanced_Mail">here on Wikipedia</a>.</p>
+<p>With Python 3 and the PyCryptodome library, we could easily access a PEM file and extract data from it. For example, say we want to extract the modulus <code>n</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
 
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;certificate.pem&quot;</span><span class="p">,</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">RSA</span><span class="o">.</span><span class="n">import_key</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="der">DER<a class="headerlink" href="#der" title="Permanent link">&para;</a></h2>
+<p>DER is a <strong>binary encoding</strong> method for data described by ASN.1. Certificates with the <code>.cer</code> or <code>.crt</code> extension usually contains DER formatted data, but Windows might also accept PEM formatted data.</p>
+<p>To work with a DER file, we could convert it to PEM using <code>openssl</code>:</p>
+<div class="highlight"><pre><span></span><code>openssl x509 -inform DER -in certificate.der &gt; certificate.pem
+</code></pre></div>
+
+<p>Now the problem is reduced to "how to work with a PEM file", so we could use the same Python code as the one in the PEM section.</p>
+<h2 id="additonal-format-conversion">Additonal Format Conversion<a class="headerlink" href="#additonal-format-conversion" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>openssl x509 -outform der -in certificate.pem -out certificate.der
 openssl x509 -inform der -in certificate.cer -out certificate.pem
 </code></pre></div>
+
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="https://bitsdeep.com/posts/attacking-rsa-for-fun-and-ctf-points-part-1/">Attacking RSA for fun and CTF points – part 1</a></li>
+<li><a href="https://stackoverflow.com/questions/22743415/what-are-the-differences-between-pem-cer-and-der">What are the differences between .pem, .cer and .der?</a></li>
+</ol>
                 
               
               
