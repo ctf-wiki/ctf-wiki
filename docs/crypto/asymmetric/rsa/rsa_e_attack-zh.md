@@ -190,74 +190,79 @@ $$
 
 ### 例子
 
-这里我们以 XMan 一期夏令营课堂练习（Jarvis OJ 有复现）为例，读一下公钥。
-
-```bash
-➜  Jarvis OJ-hard RSA git:(master) ✗ openssl rsa -pubin -in pubkey.pem -text -modulus 
-Public-Key: (256 bit)
-Modulus:
-    00:c2:63:6a:e5:c3:d8:e4:3f:fb:97:ab:09:02:8f:
-    1a:ac:6c:0b:f6:cd:3d:70:eb:ca:28:1b:ff:e9:7f:
-    be:30:dd
-Exponent: 2 (0x2)
-Modulus=C2636AE5C3D8E43FFB97AB09028F1AAC6C0BF6CD3D70EBCA281BFFE97FBE30DD
-writing RSA key
------BEGIN PUBLIC KEY-----
-MDowDQYJKoZIhvcNAQEBBQADKQAwJgIhAMJjauXD2OQ/+5erCQKPGqxsC/bNPXDr
-yigb/+l/vjDdAgEC
------END PUBLIC KEY-----
-```
-
-$e=2$，考虑 Rabin 算法。首先我们先分解一下 p 和 q，得到
-
-```text
-p=275127860351348928173285174381581152299
-q=319576316814478949870590164193048041239
-```
-
-编写代码
+这里我们以 XMan 一期夏令营课堂练习（Jarvis OJ Crypto: hard RSA）为例，读一下公钥：
 
 ```python
-#!/usr/bin/python
-# coding=utf-8
-import gmpy2
-import string
+#!/usr/bin/env python3
+from Crypto.Util.number import inverse, long_to_bytes, bytes_to_long
 from Crypto.PublicKey import RSA
+from factordb.factordb import FactorDB
 
-# 读取公钥参数
-with open('pubkey.pem', 'r') as f:
-    key = RSA.importKey(f)
-    N = key.n
-    e = key.e
-with open('flag.enc', 'r') as f:
-    cipher = f.read().encode('hex')
-    cipher = string.atoi(cipher, base=16)
-    # print cipher
-print "please input p"
-p = int(raw_input(), 10)
-print 'please input q'
-q = int(raw_input(), 10)
-# 计算yp和yq
-inv_p = gmpy2.invert(p, q)
-inv_q = gmpy2.invert(q, p)
+#--------data--------#
 
-# 计算mp和mq
-mp = pow(cipher, (p + 1) / 4, p)
-mq = pow(cipher, (q + 1) / 4, q)
-
-# 计算a,b,c,d
-a = (inv_p * p * mq + inv_q * q * mp) % N
-b = N - int(a)
-c = (inv_p * p * mq - inv_q * q * mp) % N
-d = N - int(c)
-
-for i in (a, b, c, d):
-    s = '%x' % i
-    if len(s) % 2 != 0:
-        s = '0' + s
-    print s.decode('hex')
+with open("pubkey.pem","r") as f1, open("flag.enc", "rb") as f2:
+	key = RSA.import_key(f1.read())
+	N = key.n
+	e = key.e
+	c = bytes_to_long(f2.read())
+	print(f"N: {N}")
+	print(f"e: {e}")
+	print(f"c: {c}")
 ```
 
-拿到 flag，`PCTF{sp3ci4l_rsa}`。
+看到$e=2$，考虑 Rabin 算法。
 
-### 题目
+补全代码：
+
+```python
+#!/usr/bin/env python3
+from Crypto.Util.number import inverse, long_to_bytes, bytes_to_long
+from Crypto.PublicKey import RSA
+from factordb.factordb import FactorDB
+
+#--------data--------#
+
+with open("pubkey.pem","r") as f1, open("flag.enc", "rb") as f2:
+	key = RSA.import_key(f1.read())
+	N = key.n
+	e = key.e
+	c = bytes_to_long(f2.read())
+	# print(f"N: {N}")
+	# print(f"e: {e}")
+	# print(f"c: {c}")
+
+#--------factordb--------#
+
+f = FactorDB(N)
+f.connect()
+factors = f.get_factor_list()
+
+p = factors[0]
+q = factors[1]
+
+#--------rabin--------#
+
+inv_p = inverse(p, q)
+inv_q = inverse(q, p)
+
+m_p = pow(c, (p + 1) // 4, p)
+m_q = pow(c, (q + 1) // 4, q)
+
+a = (inv_p * p * m_q + inv_q * q * m_p) % N
+b = N - int(a)
+c = (inv_p * p * m_q - inv_q * q * m_p) % N
+d = N - int(c)
+
+plaintext_list = [a, b, c, d]
+
+for plaintext in plaintext_list:
+    s = str(hex(plaintext))[2:]
+
+    # padding with 0
+    if len(s) % 2 != 0:
+        s = "0" + s
+    print(bytes.fromhex(s))
+```
+
+拿到 flag：`PCTF{sp3ci4l_rsa}`。
+
