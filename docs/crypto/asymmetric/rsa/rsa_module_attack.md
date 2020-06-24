@@ -1,18 +1,19 @@
 [EN](./rsa_module_attack.md) | [ZH](./rsa_module_attack-zh.md)
-## Violence breakdown N
+
+## Bruteforcing Factors of N 
 
 
-### Attack conditions
+### Attack Prerequisite
 
 
 When the number of bits in N is less than 512, p and q can be obtained using a strategy of large integer decomposition.
 
 
-### JarvisOJ - Medium RSA
+### JarvisOJ - Easy RSA
 
 
 
-Here we take JarvisOJ - Medium RSA as an example, the topic is as follows
+Here we take "JarvisOJ - Easy RSA" as an example, the topic is as follows
 
 
 &gt; Remember the veryeasy RSA? Is it not difficult? Then continue to look at this question, this question is not difficult.
@@ -27,9 +28,7 @@ It can be seen that our N is relatively small, here we directly use factordb to 
 
 
 $$
-
 322831561921859 = 13574881 \times 23781539
-
 $$
 
 
@@ -38,29 +37,18 @@ Then we simply write the program as follows
 
 
 ```python
-
 import gmpy2
-
 p = 13574881
-
 q = 23781539
-
 n = p * q
-
 e = 23
 c = 0xdc2eeeb2782c
-
-Phin = (p - 1) * (q - 1)
-d = gmpy2.invert (e, phin)
+phin = (p - 1) * (q - 1)
+d = gmpy2.invert(e, phin)
 p = gmpy2.powmod(c, d, n)
-
 tmp = hex(p)
-
 print tmp, tmp[2:].decode('hex')
-
 ```
-
-
 
 Results are as follows
 
@@ -96,9 +84,7 @@ First of all
 
 
 $$
-
 \frac{(p+q)^2}{4}-n=\frac{(p+q)^2}{4}-pq=\frac{(p-q)^2}{4}
-
 $$
 
 
@@ -349,10 +335,10 @@ Answer: One of these primes is very smooth.
 For more on some methods of decomposing the modulus N, please refer to https://en.wikipedia.org/wiki/Integer_factorization.
 
 
-## 模不素素
+## Non-coprime Moduli
 
 
-### Attack principle
+### Attack Prerequisite
 
 
 When there are two public keys, N is not mutually prime, we can obviously obtain the greatest common factor directly for these two numbers, and then directly obtain p, q, and then obtain the corresponding private key.
