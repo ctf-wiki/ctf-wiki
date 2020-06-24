@@ -5,9 +5,9 @@
 
 在 N 的比特位数小于 512 的时候，可以采用大整数分解的策略获取 p 和 q。
 
-### JarvisOJ - Medium RSA
+### JarvisOJ - Easy RSA
 
-这里我们以 JarvisOJ - Medium RSA 为例进行介绍，题目如下
+这里我们以 "JarvisOJ - Easy RSA" 为例进行介绍，题目如下
 
 > 还记得 veryeasy RSA 吗？是不是不难？那继续来看看这题吧，这题也不难。  
 > 已知一段 RSA 加密的信息为：0xdc2eeeb2782c 且已知加密所用的公钥：  
