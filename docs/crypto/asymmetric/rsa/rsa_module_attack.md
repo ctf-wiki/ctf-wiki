@@ -507,7 +507,7 @@ fo1.close()
 fo2.close()
 ```
 
-重点看这一段：
+Take a look at this part:
 
 ```python
 encrypt1 = pow(data_num,e1,N)
