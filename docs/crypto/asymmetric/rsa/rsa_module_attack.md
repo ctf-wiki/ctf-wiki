@@ -447,7 +447,7 @@ Unzip the package.
 
 ### Theory
 
-Suppose the public components of two users are $e_1$ and $e_2$, where $e_1$ and $e_2$ are coprime. If the plaintext $m$, then the ciphertext is:
+Suppose the public exponents of two users are $e_1$ and $e_2$, where $e_1$ and $e_2$ are coprime. If the plaintext $m$, then the ciphertext is:
 
 $$
 c_1 = m^{e_1}\bmod N \\
