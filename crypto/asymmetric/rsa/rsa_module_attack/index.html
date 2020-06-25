@@ -5094,43 +5094,36 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-mode-attack" class="md-nav__link">
-    Common mode attack
+  <a href="#common-modulus-attack" class="md-nav__link">
+    Common Modulus Attack
   </a>
   
-    <nav class="md-nav" aria-label="Common mode attack">
+    <nav class="md-nav" aria-label="Common Modulus Attack">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#attack-conditions_1" class="md-nav__link">
-    Attack conditions
+  <a href="#attack-prerequisite_2" class="md-nav__link">
+    Attack Prerequisite
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#attack-principle" class="md-nav__link">
-    Attack principle
+  <a href="#theory" class="md-nav__link">
+    Theory
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#xman-phase-i-summer-camp-classroom-exercise" class="md-nav__link">
-    XMan Phase I Summer Camp Classroom Exercise
+  <a href="#jarvis-oj-crypto-very-hard-rsa" class="md-nav__link">
+    Jarvis OJ Crypto - very hard RSA
   </a>
   
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#topic" class="md-nav__link">
-    topic
-  </a>
   
 </li>
       
@@ -5159,16 +5152,18 @@
                 <p><a href="./">EN</a> | <a href="../rsa_module_attack-zh/">ZH</a></p>
 <h2 id="bruteforcing-factors-of-n">Bruteforcing Factors of N<a class="headerlink" href="#bruteforcing-factors-of-n" title="Permanent link">&para;</a></h2>
 <h3 id="attack-prerequisite">Attack Prerequisite<a class="headerlink" href="#attack-prerequisite" title="Permanent link">&para;</a></h3>
-<p>When the number of bits in N is less than 512, p and q can be obtained using a strategy of large integer decomposition.</p>
+<ol>
+<li>N is efficiently small (less than 512 bits, for example).</li>
+</ol>
 <h3 id="jarvisoj-easy-rsa">JarvisOJ - Easy RSA<a class="headerlink" href="#jarvisoj-easy-rsa" title="Permanent link">&para;</a></h3>
-<p>Here we take "JarvisOJ - Easy RSA" as an example, the topic is as follows</p>
+<p>Here we take "JarvisOJ - Easy RSA" as an example, the challenge description is the following:</p>
 <p>&gt; Remember the veryeasy RSA? Is it not difficult? Then continue to look at this question, this question is not difficult.
 &gt; Known piece of RSA encrypted information is: 0xdc2eeeb2782c and the public key used for encryption is known:
 &gt; N = 322831561921859 and = 23
 &gt; Please decrypt the plaintext, please convert the number into ascii code submission when submitting
 &gt; For example, if the plaintext you solved is 0x6162, please submit the string ab
 &gt; Submit format: <code>PCTF{clear text string}</code></p>
-<p>It can be seen that our N is relatively small, here we directly use factordb to decompose, you can get</p>
+<p>We can see that our N is small. Here we can query the factors of N manually from <a href="http://factordb.com/">factordb</a>:</p>
 <div>
 <div class="MathJax_Preview">
 322831561921859 = 13574881 \times 23781539
@@ -5177,26 +5172,38 @@
 322831561921859 = 13574881 \times 23781539
 </script>
 </div>
-<p>Then we simply write the program as follows</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">gmpy2</span>
-<span class="n">p</span> <span class="o">=</span> <span class="mi">13574881</span>
-<span class="n">q</span> <span class="o">=</span> <span class="mi">23781539</span>
-<span class="n">n</span> <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="n">q</span>
+<p>But a better solution is to utilize <a href="https://github.com/ryosan-470/factordb-python">factordb-python</a> for factoring automation:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="n">inverse</span><span class="p">,</span> <span class="n">long_to_bytes</span>
+<span class="kn">from</span> <span class="nn">factordb.factordb</span> <span class="kn">import</span> <span class="n">FactorDB</span>
+
+<span class="c1">#--------data--------#</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="mi">322831561921859</span>
 <span class="n">e</span> <span class="o">=</span> <span class="mi">23</span>
-<span class="n">c</span> <span class="o">=</span> <span class="mh">0xdc2eeeb2782c</span>
-<span class="n">phin</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">q</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">d</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">phin</span><span class="p">)</span>
-<span class="n">p</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-<span class="n">tmp</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
-<span class="nb">print</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">)</span>
+<span class="n">c</span> <span class="o">=</span> <span class="s2">&quot;0xdc2eeeb2782c&quot;</span>
+<span class="n">c</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+
+<span class="c1">#--------factordb--------#</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="n">FactorDB</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">f</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="n">factors</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_factor_list</span><span class="p">()</span>
+
+<span class="c1">#--------rsa--------#</span>
+
+<span class="n">phi</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">for</span> <span class="n">factor</span> <span class="ow">in</span> <span class="n">factors</span><span class="p">:</span>
+    <span class="n">phi</span> <span class="o">*=</span> <span class="n">factor</span> <span class="o">-</span> <span class="mi">1</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">inverse</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span>
+<span class="n">m</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+<span class="n">flag</span> <span class="o">=</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
 </code></pre></div>
 
-<p>Results are as follows</p>
-<div class="highlight"><pre><span></span><code>➜  Jarvis OJ-Basic-easyRSA git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
-
-0x3613559 3a5Y
-</code></pre></div>
-
+<p>Run the script and grab your flag.</p>
 <h2 id="p-q-improper-decomposition-n">p &amp; q Improper decomposition N<a class="headerlink" href="#p-q-improper-decomposition-n" title="Permanent link">&para;</a></h2>
 <h3 id="attack-conditions">Attack conditions<a class="headerlink" href="#attack-conditions" title="Permanent link">&para;</a></h3>
 <p>We can also attack when p and q are not selected properly in RSA.</p>
@@ -5450,118 +5457,119 @@ sH1R3_PRlME_1N_rsA_iS_4ulnEra5le
 </code></pre></div>
 
 <p>Unzip the package.</p>
-<h2 id="common-mode-attack">Common mode attack<a class="headerlink" href="#common-mode-attack" title="Permanent link">&para;</a></h2>
-<h3 id="attack-conditions_1">Attack conditions<a class="headerlink" href="#attack-conditions_1" title="Permanent link">&para;</a></h3>
-<p>When two users use the same modulus N and different private keys, there is a common mode attack when encrypting the same plaintext message.</p>
-<h3 id="attack-principle">Attack principle<a class="headerlink" href="#attack-principle" title="Permanent link">&para;</a></h3>
-<p>Let the public keys of the two users be <span><span class="MathJax_Preview">e_1</span><script type="math/tex">e_1</script></span> and <span><span class="MathJax_Preview">e_2</span><script type="math/tex">e_2</script></span>, respectively, and they are mutually prime. The plain text message is <span><span class="MathJax_Preview">m</span><script type="math/tex">m</script></span> and the ciphertext is:</p>
-<p>$$</p>
-<p>c_1 = m ^ {} e_1  N \ way
-c_2 = m ^ {} e_2  N way
-$$</p>
-<p>When the attacker intercepts <span><span class="MathJax_Preview">c_1</span><script type="math/tex">c_1</script></span> and <span><span class="MathJax_Preview">c_2</span><script type="math/tex">c_2</script></span>, the plaintext can be recovered. Use the extended Euclidean algorithm to find the two integers <span><span class="MathJax_Preview">r</span><script type="math/tex">r</script></span> and <span><span class="MathJax_Preview">s</span><script type="math/tex">s</script></span> of <span><span class="MathJax_Preview">re_1+se_2=1\bmod n</span><script type="math/tex">re_1+se_2=1\bmod n</script></span>, which gives you:</p>
-<p>$$</p>
-<p>\begin{align*}</p>
-<p>c_{1}<sup>{r}c_{2}</sup>{s} &amp;\equiv m<sup>{re_1}m</sup>{se_2}\bmod n\</p>
-<p>&amp;\equiv m^{(re_1+se_2)} \bmod n\</p>
-<p>&amp;\equiv m\bmod n</p>
-<p>\end{align*}</p>
-<p>$$</p>
-<h3 id="xman-phase-i-summer-camp-classroom-exercise">XMan Phase I Summer Camp Classroom Exercise<a class="headerlink" href="#xman-phase-i-summer-camp-classroom-exercise" title="Permanent link">&para;</a></h3>
-<p>Description of the topic:</p>
-<div class="highlight"><pre><span></span><code>{6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249,773}
+<h2 id="common-modulus-attack">Common Modulus Attack<a class="headerlink" href="#common-modulus-attack" title="Permanent link">&para;</a></h2>
+<h3 id="attack-prerequisite_2">Attack Prerequisite<a class="headerlink" href="#attack-prerequisite_2" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Same modulus N is used multiple times to encrypt the same plaintext m (only e is different for each encryption).</li>
+<li>e1 and e2 are coprime.</li>
+</ol>
+<h3 id="theory">Theory<a class="headerlink" href="#theory" title="Permanent link">&para;</a></h3>
+<p>Suppose the public exponents of two users are <span><span class="MathJax_Preview">e_1</span><script type="math/tex">e_1</script></span> and <span><span class="MathJax_Preview">e_2</span><script type="math/tex">e_2</script></span>, where <span><span class="MathJax_Preview">e_1</span><script type="math/tex">e_1</script></span> and <span><span class="MathJax_Preview">e_2</span><script type="math/tex">e_2</script></span> are coprime. If the plaintext <span><span class="MathJax_Preview">m</span><script type="math/tex">m</script></span>, then the ciphertext is:</p>
+<div>
+<div class="MathJax_Preview">
+c_1 = m^{e_1}\bmod N \\
+c_2 = m^{e_2}\bmod N
+</div>
+<script type="math/tex; mode=display">
+c_1 = m^{e_1}\bmod N \\
+c_2 = m^{e_2}\bmod N
+</script>
+</div>
+<p>Attack could recover the plaintext if he/she obtained <span><span class="MathJax_Preview">c_1</span><script type="math/tex">c_1</script></span> and <span><span class="MathJax_Preview">c_2</span><script type="math/tex">c_2</script></span>. Compute the two coefficients <span><span class="MathJax_Preview">r</span><script type="math/tex">r</script></span> and <span><span class="MathJax_Preview">s</span><script type="math/tex">s</script></span> of <span><span class="MathJax_Preview">re_1+se_2=1\bmod n</span><script type="math/tex">re_1+se_2=1\bmod n</script></span> using extended Euclidean Algorithm, we have:</p>
+<div>
+<div class="MathJax_Preview">
+\begin{align*}
+c_{1}^{r}c_{2}^{s} &amp;\equiv m^{re_1}m^{se_2}\bmod n\\
+&amp;\equiv m^{(re_1+se_2)} \bmod n\\
+&amp;\equiv m\bmod n
+\end{align*}
+</div>
+<script type="math/tex; mode=display">
+\begin{align*}
+c_{1}^{r}c_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\
+&\equiv m^{(re_1+se_2)} \bmod n\\
+&\equiv m\bmod n
+\end{align*}
+</script>
+</div>
+<h3 id="jarvis-oj-crypto-very-hard-rsa">Jarvis OJ Crypto - very hard RSA<a class="headerlink" href="#jarvis-oj-crypto-very-hard-rsa" title="Permanent link">&para;</a></h3>
+<p>Check out the given source code:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="mh">0x00b0bee5e3e9e5a7e8d00b493355c618fc8c7d7d03b82e409951c182f398dee3104580e7ba70d383ae5311475656e8a964d380cb157f48c951adfa65db0b122ca40e42fa709189b719a4f0d746e2f6069baf11cebd650f14b93c977352fd13b1eea6d6e1da775502abff89d3a8b3615fd0db49b88a976bc20568489284e181f6f11e270891c8ef80017bad238e363039a458470f1749101bc29949d3a4f4038d463938851579c7525a69984f15b5667f34209b70eb261136947fa123e549dfff00601883afd936fe411e006e4e93d1a00b0fea541bbfc8c5186cb6220503a94b2413110d640c77ea54ba3220fc8f4cc6ce77151e29b3e06578c478bd1bebe04589ef9a197f6f806db8b3ecd826cad24f5324ccdec6e8fead2c2150068602c8dcdc59402ccac9424b790048ccdd9327068095efa010b7f196c74ba8c37b128f9e1411751633f78b7b9e56f71f77a1b4daad3fc54b5e7ef935d9a72fb176759765522b4bbc02e314d5c06b64d5054b7b096c601236e6ccf45b5e611c805d335dbab0c35d226cc208d8ce4736ba39a0354426fae006c7fe52d5267dcfb9c3884f51fddfdf4a9794bcfe0e1557113749e6c8ef421dba263aff68739ce00ed80fd0022ef92d3488f76deb62bdef7bea6026f22a1d25aa2a92d124414a8021fe0c174b9803e6bb5fad75e186a946a17280770f1243f4387446ccceb2222a965cc30b3929</span><span class="n">L</span>
+
+<span class="k">def</span> <span class="nf">pad_even</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">%</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span>
+
+<span class="n">e1</span> <span class="o">=</span> <span class="mi">17</span>
+<span class="n">e2</span> <span class="o">=</span> <span class="mi">65537</span>
 
 
-
-{6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249,839}
-
-
-
-message1 = 3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
+<span class="n">fi</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;flag.txt&#39;</span><span class="p">,</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+<span class="n">fo1</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;flag.enc1&#39;</span><span class="p">,</span><span class="s1">&#39;wb&#39;</span><span class="p">)</span>
+<span class="n">fo2</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;flag.enc2&#39;</span><span class="p">,</span><span class="s1">&#39;wb&#39;</span><span class="p">)</span>
 
 
-message2 = 5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
+<span class="n">data</span> <span class="o">=</span> <span class="n">fi</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="n">fi</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">while</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">&lt;</span><span class="mi">512</span><span class="o">-</span><span class="mi">11</span><span class="p">):</span>
+    <span class="n">data</span>  <span class="o">=</span>  <span class="nb">chr</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">255</span><span class="p">))</span><span class="o">+</span><span class="n">data</span>
+
+<span class="n">data_num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">),</span><span class="mi">16</span><span class="p">)</span>
+
+<span class="n">encrypt1</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">data_num</span><span class="p">,</span><span class="n">e1</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
+<span class="n">encrypt2</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">data_num</span><span class="p">,</span><span class="n">e2</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
+
+
+<span class="n">fo1</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pad_even</span><span class="p">(</span><span class="nb">format</span><span class="p">(</span><span class="n">encrypt1</span><span class="p">,</span><span class="s1">&#39;x&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">))</span>
+<span class="n">fo2</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pad_even</span><span class="p">(</span><span class="nb">format</span><span class="p">(</span><span class="n">encrypt2</span><span class="p">,</span><span class="s1">&#39;x&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">))</span>
+
+<span class="n">fo1</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">fo2</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div>
 
-<p>&gt; Source: XMan Summer Camp Class Exercise</p>
-<p>It can be seen that the N of the two public keys are the same, and the e of the two are mutually prime. Write a script to run:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">gmpy2</span>
-
-<span class="n">n</span> <span class="o">=</span> <span class="mi">6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249</span>
-
-<span class="n">e1</span> <span class="o">=</span> <span class="mi">773</span>
-
-
-<span class="n">e2</span> <span class="o">=</span> <span class="mi">839</span>
-
-
-
-<span class="n">message1</span> <span class="o">=</span> <span class="mi">3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349</span>
-
-
-<span class="n">message2</span> <span class="o">=</span> <span class="mi">5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535</span>
-<span class="c1"># s &amp; t</span>
-
-<span class="n">gcd</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">gcdext</span><span class="p">(</span><span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span>
-
-<span class="k">if</span> <span class="n">s</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-
-    <span class="n">s</span> <span class="o">=</span> <span class="o">-</span><span class="n">s</span>
-
-    <span class="n">message1</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">message1</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-
-<span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-
-    <span class="n">t</span> <span class="o">=</span> <span class="o">-</span><span class="n">t</span>
-
-    <span class="n">message2</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">message2</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-
-<span class="n">plain</span> <span class="o">=</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">message1</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">gmpy2</span><span class="o">.</span><span class="n">powmod</span><span class="p">(</span><span class="n">message2</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">%</span> <span class="n">n</span>
-
-<span class="nb">print</span> <span class="n">plain</span>
+<p>Take a look at this part:</p>
+<div class="highlight"><pre><span></span><code><span class="n">encrypt1</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">data_num</span><span class="p">,</span><span class="n">e1</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
+<span class="n">encrypt2</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">data_num</span><span class="p">,</span><span class="n">e2</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
 </code></pre></div>
 
-<p>get</p>
-<div class="highlight"><pre><span></span><code>➜  Xman-1-class-exercise git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
+<p>We can see that the same modulus N is used twice, and e1 and e2 are coprime. Proceed with common modulus attack:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="n">long_to_bytes</span><span class="p">,</span> <span class="n">bytes_to_long</span>
+<span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="n">gcdex</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">exit</span>
 
-<span class="m">1021089710312311910410111011910111610410511010710511610511511211111511510598108101125</span>
+<span class="c1">#--------data--------#</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="mh">0x00b0bee5e3e9e5a7e8d00b493355c618fc8c7d7d03b82e409951c182f398dee3104580e7ba70d383ae5311475656e8a964d380cb157f48c951adfa65db0b122ca40e42fa709189b719a4f0d746e2f6069baf11cebd650f14b93c977352fd13b1eea6d6e1da775502abff89d3a8b3615fd0db49b88a976bc20568489284e181f6f11e270891c8ef80017bad238e363039a458470f1749101bc29949d3a4f4038d463938851579c7525a69984f15b5667f34209b70eb261136947fa123e549dfff00601883afd936fe411e006e4e93d1a00b0fea541bbfc8c5186cb6220503a94b2413110d640c77ea54ba3220fc8f4cc6ce77151e29b3e06578c478bd1bebe04589ef9a197f6f806db8b3ecd826cad24f5324ccdec6e8fead2c2150068602c8dcdc59402ccac9424b790048ccdd9327068095efa010b7f196c74ba8c37b128f9e1411751633f78b7b9e56f71f77a1b4daad3fc54b5e7ef935d9a72fb176759765522b4bbc02e314d5c06b64d5054b7b096c601236e6ccf45b5e611c805d335dbab0c35d226cc208d8ce4736ba39a0354426fae006c7fe52d5267dcfb9c3884f51fddfdf4a9794bcfe0e1557113749e6c8ef421dba263aff68739ce00ed80fd0022ef92d3488f76deb62bdef7bea6026f22a1d25aa2a92d124414a8021fe0c174b9803e6bb5fad75e186a946a17280770f1243f4387446ccceb2222a965cc30b3929</span>
+<span class="n">e1</span> <span class="o">=</span> <span class="mi">17</span>
+<span class="n">e2</span> <span class="o">=</span> <span class="mi">65537</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;flag.enc1&quot;</span><span class="p">,</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f1</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;flag.enc2&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f2</span><span class="p">:</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">f1</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">c2</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">f2</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+<span class="c1">#--------common modulus--------#</span>
+
+<span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">gcd</span> <span class="o">=</span> <span class="n">gcdex</span><span class="p">(</span><span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span>
+<span class="n">r</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+<span class="n">s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+<span class="c1"># test if e1 and e2 are coprime</span>
+<span class="k">if</span> <span class="n">gcd</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;e1 and e2 must be coprime&quot;</span><span class="p">)</span>
+    <span class="n">exit</span><span class="p">()</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="nb">pow</span><span class="p">(</span><span class="n">c1</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="n">c2</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span> <span class="o">%</span> <span class="n">N</span>
+<span class="n">flag</span> <span class="o">=</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
 </code></pre></div>
 
-<p>At this time, you need to consider how the plaintext was converted to this number, which is generally a hexadecimal conversion, ASCII character conversion, or Base64 decryption. This should be an ASCII character conversion, and then we use the following code to get the flag</p>
-<div class="highlight"><pre><span></span><code><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-
-<span class="n">flag</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-
-<span class="n">plain</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">plain</span><span class="p">)</span>
-
-<span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">plain</span><span class="p">):</span>
-
-    <span class="k">if</span> <span class="n">plain</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span>
-
-        <span class="n">flag</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">plain</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]))</span>
-
-        <span class="n">i</span> <span class="o">+=</span> <span class="mi">3</span>
-
-    <span class="k">else</span><span class="p">:</span>
-
-        <span class="n">flag</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">plain</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]))</span>
-
-        <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
-
-<span class="nb">print</span> <span class="n">flag</span>
-</code></pre></div>
-
-<p>The reason why 1 is used to determine whether it is three-bit length is because the flag is usually a plain text character, and the number starting with 1 is 1 or 2, which is generally an invisible character.</p>
-<p>flag</p>
-<div class="highlight"><pre><span></span><code>➜  Xman-1-class-exercise git:<span class="o">(</span>master<span class="o">)</span> ✗ python exp.py
-
-flag<span class="o">{</span>whenwethinkitispossible<span class="o">}</span>
-</code></pre></div>
-
-<h2 id="topic">topic<a class="headerlink" href="#topic" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Jarvis OJ very hard RSA</li>
-</ul>
+<p>Run the script and grab your flag.</p>
                 
               
               
