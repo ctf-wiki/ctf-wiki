@@ -1,13 +1,15 @@
 [EN](./rsa_module_attack.md) | [ZH](./rsa_module_attack-zh.md)
+
+
 ## 暴力分解 N
 
 ### 攻击条件
 
 在 N 的比特位数小于 512 的时候，可以采用大整数分解的策略获取 p 和 q。
 
-### JarvisOJ - Easy RSA
+### Jarvis OJ Crypto - Easy RSA
 
-这里我们以 "JarvisOJ - Easy RSA" 为例进行介绍，题目如下
+这里我们以 "Jarvis OJ Crypto - Easy RSA" 为例进行介绍，题目如下
 
 > 还记得 veryeasy RSA 吗？是不是不难？那继续来看看这题吧，这题也不难。  
 > 已知一段 RSA 加密的信息为：0xdc2eeeb2782c 且已知加密所用的公钥：  
@@ -16,34 +18,47 @@
 > 比如你解出的明文是 0x6162，那么请提交字符串 ab  
 > 提交格式：`PCTF{明文字符串}`
 
-可以看出，我们的 N 比较小，这里我们直接使用 factordb 进行分解，可以得到
+可以看出，我们的 N 比较小，这里我们直接使用 [factordb](http://factordb.com/) 手动分解因数，可以得到：
 
 $$
 322831561921859 = 13574881 \times 23781539
 $$
 
-进而我们简单编写程序如下
+一种更好的方法是用 [factordb-python](https://github.com/ryosan-470/factordb-python) 进行因数分解的自动化：
 
 ```python
-import gmpy2
-p = 13574881
-q = 23781539
-n = p * q
+#!/usr/bin/env python3
+from Crypto.Util.number import inverse, long_to_bytes
+from factordb.factordb import FactorDB
+
+#--------data--------#
+
+N = 322831561921859
 e = 23
-c = 0xdc2eeeb2782c
-phin = (p - 1) * (q - 1)
-d = gmpy2.invert(e, phin)
-p = gmpy2.powmod(c, d, n)
-tmp = hex(p)
-print tmp, tmp[2:].decode('hex')
+c = "0xdc2eeeb2782c"
+c = int(c, 16)
+
+#--------factordb--------#
+
+f = FactorDB(N)
+f.connect()
+factors = f.get_factor_list()
+
+#--------rsa--------#
+
+phi = 1
+for factor in factors:
+	phi *= factor - 1
+
+d = inverse(e, phi)
+m = pow(c, d, N)
+flag = long_to_bytes(m).decode()
+
+print(flag)
 ```
 
-结果如下
+运行程序得到 flag。
 
-```shell
-➜  Jarvis OJ-Basic-easyRSA git:(master) ✗ python exp.py
-0x33613559 3a5Y
-```
 
 ## p & q 不当分解 N
 
@@ -262,18 +277,19 @@ sH1R3_PRlME_1N_rsA_iS_4ulnEra5le
 
 ### 攻击条件
 
-当两个用户使用相同的模数 N、不同的私钥时，加密同一明文消息时即存在共模攻击。
+1. 同一个模数 N 被重复使用于加密同一段明文 m （只有每次加密的 e 不同）。
+2. 公钥指数 e1 与 e2 互素。
 
 ### 攻击原理
 
-设两个用户的公钥分别为 $e_1$ 和 $e_2$，且两者互质。明文消息为 $m$，密文分别为：
+设两个用户的公钥指数分别为 $e_1$ 和 $e_2$，且两者互素。如果明文消息为 $m$，那么密文分别为：
 
 $$
 c_1 = m^{e_1}\bmod N \\
 c_2 = m^{e_2}\bmod N
 $$
 
-当攻击者截获 $c_1$ 和 $c_2$ 后，就可以恢复出明文。用扩展欧几里得算法求出 $re_1+se_2=1\bmod n$ 的两个整数 $r$ 和 $s$，由此可得：
+攻击者截获 $c_1$ 和 $c_2$ 后就可以恢复出明文。用扩展欧几里得算法求出 $re_1+se_2=1\bmod n$ 的两个整数 $r$ 和 $s$，由此可得：
 
 $$
 \begin{align*}
@@ -283,78 +299,89 @@ c_{1}^{r}c_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\
 \end{align*}
 $$
 
-### XMan 一期夏令营课堂练习
+### Jarvis OJ Crypto - very hard RSA
 
-题目描述：
-
-```
-{6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249,773}
-
-{6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249,839}
-
-message1=3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
-
-message2=5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
-```
-
-> 题目来源：XMan 一期夏令营课堂练习 
-
-可以看出两个公钥的 N 是一样的，并且两者的 e 互素。写一个脚本跑一下：
+查看源码：
 
 ```python
-import gmpy2
-n = 6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249
-e1 = 773
+#!/usr/bin/env python
 
-e2 = 839
+import random
 
-message1 = 3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
+N = 0x00b0bee5e3e9e5a7e8d00b493355c618fc8c7d7d03b82e409951c182f398dee3104580e7ba70d383ae5311475656e8a964d380cb157f48c951adfa65db0b122ca40e42fa709189b719a4f0d746e2f6069baf11cebd650f14b93c977352fd13b1eea6d6e1da775502abff89d3a8b3615fd0db49b88a976bc20568489284e181f6f11e270891c8ef80017bad238e363039a458470f1749101bc29949d3a4f4038d463938851579c7525a69984f15b5667f34209b70eb261136947fa123e549dfff00601883afd936fe411e006e4e93d1a00b0fea541bbfc8c5186cb6220503a94b2413110d640c77ea54ba3220fc8f4cc6ce77151e29b3e06578c478bd1bebe04589ef9a197f6f806db8b3ecd826cad24f5324ccdec6e8fead2c2150068602c8dcdc59402ccac9424b790048ccdd9327068095efa010b7f196c74ba8c37b128f9e1411751633f78b7b9e56f71f77a1b4daad3fc54b5e7ef935d9a72fb176759765522b4bbc02e314d5c06b64d5054b7b096c601236e6ccf45b5e611c805d335dbab0c35d226cc208d8ce4736ba39a0354426fae006c7fe52d5267dcfb9c3884f51fddfdf4a9794bcfe0e1557113749e6c8ef421dba263aff68739ce00ed80fd0022ef92d3488f76deb62bdef7bea6026f22a1d25aa2a92d124414a8021fe0c174b9803e6bb5fad75e186a946a17280770f1243f4387446ccceb2222a965cc30b3929L
 
-message2 = 5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
-# s & t
-gcd, s, t = gmpy2.gcdext(e1, e2)
-if s < 0:
-    s = -s
-    message1 = gmpy2.invert(message1, n)
-if t < 0:
-    t = -t
-    message2 = gmpy2.invert(message2, n)
-plain = gmpy2.powmod(message1, s, n) * gmpy2.powmod(message2, t, n) % n
-print plain
+def pad_even(x):
+	return ('', '0')[len(x)%2] + x
+
+e1 = 17
+e2 = 65537
+
+
+fi = open('flag.txt','rb')
+fo1 = open('flag.enc1','wb')
+fo2 = open('flag.enc2','wb')
+
+
+data = fi.read()
+fi.close()
+
+while (len(data)<512-11):
+	data  =  chr(random.randint(0,255))+data
+
+data_num = int(data.encode('hex'),16)
+
+encrypt1 = pow(data_num,e1,N)
+encrypt2 = pow(data_num,e2,N)
+
+
+fo1.write(pad_even(format(encrypt1,'x')).decode('hex'))
+fo2.write(pad_even(format(encrypt2,'x')).decode('hex'))
+
+fo1.close()
+fo2.close()
 ```
 
-得到
-
-```shell
-➜  Xman-1-class-exercise git:(master) ✗ python exp.py
-1021089710312311910410111011910111610410511010710511610511511211111511510598108101125
-```
-
-这时候需要考虑当时明文是如何转化为这个数字了，一般来说是 16 进制转换，ASCII 字符转换，或者 Base64 解密。这个应该是 ASCII 字符转换，进而我们使用如下代码得到 flag
+重点看这一段：
 
 ```python
-i = 0
-flag = ""
-plain = str(plain)
-while i < len(plain):
-    if plain[i] == '1':
-        flag += chr(int(plain[i:i + 3]))
-        i += 3
-    else:
-        flag += chr(int(plain[i:i + 2]))
-        i += 2
-print flag
+encrypt1 = pow(data_num,e1,N)
+encrypt2 = pow(data_num,e2,N)
 ```
 
-这里之所以使用 1 来判断是否为三位长度，是因为 flag 一般都是明文字符，而 1 开头的长度为 1 或者 2 的数字，一般都是不可见字符。
+可以看出同一个模数 N 被用于加密同一明文两次，并且两者的公钥指数 e1 与 e2 互素。进行共模攻击：
 
-flag
+```python
+#!/usr/bin/env python3
+from Crypto.Util.number import long_to_bytes, bytes_to_long
+from sympy import gcdex
+from sys import exit
 
-```shell
-➜  Xman-1-class-exercise git:(master) ✗ python exp.py
-flag{whenwethinkitispossible}
+#--------data--------#
+
+N = 0x00b0bee5e3e9e5a7e8d00b493355c618fc8c7d7d03b82e409951c182f398dee3104580e7ba70d383ae5311475656e8a964d380cb157f48c951adfa65db0b122ca40e42fa709189b719a4f0d746e2f6069baf11cebd650f14b93c977352fd13b1eea6d6e1da775502abff89d3a8b3615fd0db49b88a976bc20568489284e181f6f11e270891c8ef80017bad238e363039a458470f1749101bc29949d3a4f4038d463938851579c7525a69984f15b5667f34209b70eb261136947fa123e549dfff00601883afd936fe411e006e4e93d1a00b0fea541bbfc8c5186cb6220503a94b2413110d640c77ea54ba3220fc8f4cc6ce77151e29b3e06578c478bd1bebe04589ef9a197f6f806db8b3ecd826cad24f5324ccdec6e8fead2c2150068602c8dcdc59402ccac9424b790048ccdd9327068095efa010b7f196c74ba8c37b128f9e1411751633f78b7b9e56f71f77a1b4daad3fc54b5e7ef935d9a72fb176759765522b4bbc02e314d5c06b64d5054b7b096c601236e6ccf45b5e611c805d335dbab0c35d226cc208d8ce4736ba39a0354426fae006c7fe52d5267dcfb9c3884f51fddfdf4a9794bcfe0e1557113749e6c8ef421dba263aff68739ce00ed80fd0022ef92d3488f76deb62bdef7bea6026f22a1d25aa2a92d124414a8021fe0c174b9803e6bb5fad75e186a946a17280770f1243f4387446ccceb2222a965cc30b3929
+e1 = 17
+e2 = 65537
+
+with open("flag.enc1","rb") as f1, open("flag.enc2", "rb") as f2:
+    c1 = bytes_to_long(f1.read())
+    c2 = bytes_to_long(f2.read())
+
+#--------common modulus--------#
+
+r, s, gcd = gcdex(e1, e2)
+r = int(r)
+s = int(s)
+
+# test if e1 and e2 are coprime
+if gcd != 1:
+    print("e1 and e2 must be coprime")
+    exit()
+
+m = (pow(c1, r, N) * pow(c2, s, N)) % N
+flag = long_to_bytes(m)
+
+print(flag)
 ```
 
-## 题目
+运行程序得到 flag。
 
-- Jarvis OJ very hard RSA
