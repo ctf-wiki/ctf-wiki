@@ -1,13 +1,15 @@
 [EN](./rsa_module_attack.md) | [ZH](./rsa_module_attack-zh.md)
+
+
 ## 暴力分解 N
 
 ### 攻击条件
 
-在 N 的比特位数小于 512 的时候，可以采用大整数分解的策略获取 p 和 q。
+1. N 足够小（例如小于 512 bits）。
 
-### JarvisOJ - Easy RSA
+### Jarvis OJ Crypto - Easy RSA
 
-这里我们以 "JarvisOJ - Easy RSA" 为例进行介绍，题目如下
+这里我们以 "Jarvis OJ Crypto - Easy RSA" 为例进行介绍，题目如下
 
 > 还记得 veryeasy RSA 吗？是不是不难？那继续来看看这题吧，这题也不难。  
 > 已知一段 RSA 加密的信息为：0xdc2eeeb2782c 且已知加密所用的公钥：  
@@ -16,34 +18,47 @@
 > 比如你解出的明文是 0x6162，那么请提交字符串 ab  
 > 提交格式：`PCTF{明文字符串}`
 
-可以看出，我们的 N 比较小，这里我们直接使用 factordb 进行分解，可以得到
+可以看出，我们的 N 比较小，这里我们直接使用 [factordb](http://factordb.com/) 手动分解因数，可以得到：
 
 $$
 322831561921859 = 13574881 \times 23781539
 $$
 
-进而我们简单编写程序如下
+一种更好的方法是用 [factordb-python](https://github.com/ryosan-470/factordb-python) 进行因数分解的自动化：
 
 ```python
-import gmpy2
-p = 13574881
-q = 23781539
-n = p * q
+#!/usr/bin/env python3
+from Crypto.Util.number import inverse, long_to_bytes
+from factordb.factordb import FactorDB
+
+#--------data--------#
+
+N = 322831561921859
 e = 23
-c = 0xdc2eeeb2782c
-phin = (p - 1) * (q - 1)
-d = gmpy2.invert(e, phin)
-p = gmpy2.powmod(c, d, n)
-tmp = hex(p)
-print tmp, tmp[2:].decode('hex')
+c = "0xdc2eeeb2782c"
+c = int(c, 16)
+
+#--------factordb--------#
+
+f = FactorDB(N)
+f.connect()
+factors = f.get_factor_list()
+
+#--------rsa--------#
+
+phi = 1
+for factor in factors:
+    phi *= factor - 1
+
+d = inverse(e, phi)
+m = pow(c, d, N)
+flag = long_to_bytes(m).decode()
+
+print(flag)
 ```
 
-结果如下
+运行程序得到 flag。
 
-```shell
-➜  Jarvis OJ-Basic-easyRSA git:(master) ✗ python exp.py
-0x33613559 3a5Y
-```
 
 ## p & q 不当分解 N
 
@@ -81,10 +96,10 @@ $$
 
 ### 2017 SECCON very smooth
 
-该程序给了一个 HTTPS 加密的流量包，首先从其中拿到证书
+该程序给了一个 HTTPS 加密的流量包，首先从其中拿到证书：
 
 ```shell
-➜  2017_SECCON_verysmooth git:(master) binwalk -e s.pcap      
+$ binwalk -e s.pcap      
 
 DECIMAL       HEXADECIMAL     DESCRIPTION
 --------------------------------------------------------------------------------
@@ -92,11 +107,11 @@ DECIMAL       HEXADECIMAL     DESCRIPTION
 4038          0xFC6           Certificate in DER format (x509 v3), header length: 4, sequence length: 467
 5541          0x15A5          Certificate in DER format (x509 v3), header length: 4, sequence length: 467
 
-➜  2017_SECCON_verysmooth git:(master) ls
+$ ls
 s.pcap  _s.pcap.extracted  very_smooth.zip
 ```
 
-这里分别查看三个证书，三个模数都一样，这里只给一个例子
+这里分别查看三个证书，三个模数都一样，这里只给一个例子：
 
 ```
 ➜  _s.pcap.extracted git:(master) openssl x509 -inform DER -in FC6.crt  -pubkey -text -modulus -noout 
@@ -142,7 +157,7 @@ Certificate:
 Modulus=D546AA825CF61DE97765F464FBFE4889AD8BF2F25A2175D02C8B6F2AC0C5C27B67035AEC192B3741DD1F4D127531B07AB012EB86241C09C081499E69EF5AEAC78DC6230D475DA7EE17F02F63B6F09A2D381DF9B6928E8D9E0747FEBA248BFFDFF89CDFAF4771658919B6981C9E1428E9A53425CA2A310AA6D760833118EE0D71
 ```
 
-可以看出模数只有 1024 比特。而且，根据题目名 very smooth，应该是其中一个因子比较 smooth，这里我们利用 primefac 分别尝试 Pollard's p − 1 与 Williams's p + 1 算法，如下
+可以看出模数只有 1024 比特。而且，根据题目名 very smooth，应该是其中一个因子比较 smooth，这里我们利用 primefac 分别尝试 Pollard's p − 1 与 Williams's p + 1 算法，如下：
 
 ```shell
 ➜  _s.pcap.extracted git:(master) python -m primefac -vs -m=p+1  149767527975084886970446073530848114556615616489502613024958495602726912268566044330103850191720149622479290535294679429142532379851252608925587476670908668848275349192719279981470382501117310509432417895412013324758865071052169170753552224766744798369054498758364258656141800253652826603727552918575175830897
@@ -151,7 +166,7 @@ Modulus=D546AA825CF61DE97765F464FBFE4889AD8BF2F25A2175D02C8B6F2AC0C5C27B67035AEC
 Z309  =  P155 x P155  =  11807485231629132025602991324007150366908229752508016230400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 x 12684117323636134264468162714319298445454220244413621344524758865071052169170753552224766744798369054498758364258656141800253652826603727552918575175830897
 ```
 
-可以发现当使用 Williams's *p* + 1 算法时，就直接分解出来了。按道理这个因子是 p-1 似乎更光滑，但是却并不能使用 Pollard's p − 1 算法分解，这里进行进一步的测试
+可以发现当使用 Williams's *p* + 1 算法时，就直接分解出来了。按道理这个因子是 p-1 似乎更光滑，但是却并不能使用 Pollard's p − 1 算法分解，这里进行进一步的测试：
 
 ```shell
 ➜  _s.pcap.extracted git:(master) python -m primefac -vs 1180748523162913202560299132400715036690822975250801623040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002
@@ -167,7 +182,7 @@ Z154  =  P1^185 x P1^62 x P1^97  =  2^185 x 3^62 x 5^97
 
 可以看出，对于 p-1 确实有很多小因子，但是个数太多，这就会使得进行枚举的时候出现指数爆炸的情况，因此没有分解出来。
 
-进而根据分解出来的数构造私钥
+进而根据分解出来的数构造私钥：
 
 ```python
 from Crypto.PublicKey import RSA
@@ -211,7 +226,7 @@ Answer: One of these primes is very smooth.
 
 ### SCTF RSA2 
 
-这里我们以 SCTF rsa2 为例进行介绍。直接打开 pcap 包，发现有一堆的消息，包含 N 和 e，然后试了试不同的 N 是否互素，我试了前两个
+这里我们以 SCTF rsa2 为例进行介绍。直接打开 pcap 包，发现有一堆的消息，包含 N 和 e，然后试了试不同的 N 是否互素，我试了前两个：
 
 ```python
 import gmpy2
@@ -223,11 +238,11 @@ print gmpy2.gcd(n1, n2)
 结果发现竟然不互素。
 
 ```shell
-➜  scaf-rsa2 git:(master) ✗ python exp.py
+$ python exp.py
 122281872221091773923842091258531471948886120336284482555605167683829690073110898673260712865021244633908982705290201598907538975692920305239961645109897081011524485706755794882283892011824006117276162119331970728229108731696164377808170099285659797066904706924125871571157672409051718751812724929680249712137
 ```
 
-那么我们就可以直接来解密了，这里我们利用第一对公钥密码。代码如下
+那么我们就可以直接来解密了，这里我们利用第一对公钥密码。代码如下：
 
 ```python
 from Crypto.PublicKey import RSA
@@ -249,10 +264,10 @@ if len(plain) % 2 != 0:
 print plain.decode('hex')
 ```
 
-最后解密如下
+最后解密如下：
 
 ```shell
-➜  scaf-rsa2 git:(master) ✗ python exp.py       
+$ python exp.py       
 sH1R3_PRlME_1N_rsA_iS_4ulnEra5le
 ```
 
@@ -262,18 +277,19 @@ sH1R3_PRlME_1N_rsA_iS_4ulnEra5le
 
 ### 攻击条件
 
-当两个用户使用相同的模数 N、不同的私钥时，加密同一明文消息时即存在共模攻击。
+1. 同一个模数 N 被重复使用于加密同一段明文 m （只有每次加密的 e 不同）。
+2. 公钥指数 e1 与 e2 互素。
 
 ### 攻击原理
 
-设两个用户的公钥分别为 $e_1$ 和 $e_2$，且两者互质。明文消息为 $m$，密文分别为：
+设两个用户的公钥指数分别为 $e_1$ 和 $e_2$，且两者互素。如果明文消息为 $m$，那么密文分别为：
 
 $$
 c_1 = m^{e_1}\bmod N \\
 c_2 = m^{e_2}\bmod N
 $$
 
-当攻击者截获 $c_1$ 和 $c_2$ 后，就可以恢复出明文。用扩展欧几里得算法求出 $re_1+se_2=1\bmod n$ 的两个整数 $r$ 和 $s$，由此可得：
+攻击者截获 $c_1$ 和 $c_2$ 后就可以恢复出明文。用扩展欧几里得算法求出 $re_1+se_2=1\bmod n$ 的两个整数 $r$ 和 $s$，由此可得：
 
 $$
 \begin{align*}
@@ -302,59 +318,98 @@ message2=56728180268162933440701193325366296194571635700363052968690535322931053
 可以看出两个公钥的 N 是一样的，并且两者的 e 互素。写一个脚本跑一下：
 
 ```python
-import gmpy2
-n = 6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249
+#!/usr/bin/env python3
+from sympy import gcdex
+from sys import exit
+
+#--------data--------#
+
+N = 6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249
 e1 = 773
-
 e2 = 839
+c1 = 3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
+c2 = 5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
 
-message1 = 3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
+#--------common modulus--------#
 
-message2 = 5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
-# s & t
-gcd, s, t = gmpy2.gcdext(e1, e2)
-if s < 0:
-    s = -s
-    message1 = gmpy2.invert(message1, n)
-if t < 0:
-    t = -t
-    message2 = gmpy2.invert(message2, n)
-plain = gmpy2.powmod(message1, s, n) * gmpy2.powmod(message2, t, n) % n
-print plain
+r, s, gcd = gcdex(e1, e2)
+r = int(r)
+s = int(s)
+
+# test if e1 and e2 are coprime
+if gcd != 1:
+    print("e1 and e2 must be coprime")
+    exit()
+
+m = (pow(c1, r, N) * pow(c2, s, N)) % N
+
+# print(m)
 ```
 
-得到
+得到：
 
 ```shell
-➜  Xman-1-class-exercise git:(master) ✗ python exp.py
+$ python exp.py
 1021089710312311910410111011910111610410511010710511610511511211111511510598108101125
 ```
 
-这时候需要考虑当时明文是如何转化为这个数字了，一般来说是 16 进制转换，ASCII 字符转换，或者 Base64 解密。这个应该是 ASCII 字符转换，进而我们使用如下代码得到 flag
+这时候需要考虑当时明文是如何转化为这个数字了，一般来说是 16 进制转换，ASCII 字符转换，或者 Base64 解密。这个应该是 ASCII 字符转换，进而我们补全代码得到 flag：
 
 ```python
+#!/usr/bin/env python3
+from sympy import gcdex
+from sys import exit
+
+#--------data--------#
+
+N = 6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249
+e1 = 773
+e2 = 839
+c1 = 3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
+c2 = 5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
+
+#--------common modulus--------#
+
+r, s, gcd = gcdex(e1, e2)
+r = int(r)
+s = int(s)
+
+# test if e1 and e2 are coprime
+if gcd != 1:
+    print("e1 and e2 must be coprime")
+    exit()
+
+m = (pow(c1, r, N) * pow(c2, s, N)) % N
+
+# print(m)
+
+#--------ascii--------#
+
+m = str(m)
+
 i = 0
 flag = ""
-plain = str(plain)
-while i < len(plain):
-    if plain[i] == '1':
-        flag += chr(int(plain[i:i + 3]))
+while i < len(m):
+    if m[i] == "1":
+        flag += chr(int(m[i:i + 3]))
         i += 3
     else:
-        flag += chr(int(plain[i:i + 2]))
+        flag += chr(int(m[i:i + 2]))
         i += 2
-print flag
+
+print(flag)
 ```
 
 这里之所以使用 1 来判断是否为三位长度，是因为 flag 一般都是明文字符，而 1 开头的长度为 1 或者 2 的数字，一般都是不可见字符。
 
-flag
+得到flag：
 
 ```shell
-➜  Xman-1-class-exercise git:(master) ✗ python exp.py
+$ python exp.py
 flag{whenwethinkitispossible}
 ```
 
-## 题目
+### 题目
 
-- Jarvis OJ very hard RSA
+- Jarvis OJ Crypto - very hard RSA
+
