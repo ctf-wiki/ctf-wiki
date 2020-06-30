@@ -45,8 +45,7 @@ from factordb.factordb import FactorDB
 
 N = 322831561921859
 e = 23
-c = "0xdc2eeeb2782c"
-c = int(c, 16)
+c = 0xdc2eeeb2782c
 
 #--------factordb--------#
 
