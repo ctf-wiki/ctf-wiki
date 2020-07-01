@@ -362,7 +362,7 @@ c_{1}^{r}c_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\
 $$
 
 
-### XMan Summer Camp In-class Exercise
+### XMan Summer Camp In-class Challenge
 
 Challenge:
 
@@ -376,7 +376,7 @@ message1=34535205927234439354511515452450258642323888717216823264089150243498040
 message2=5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
 ```
 
-> credit: XMan Summer Camp In-class Exercise 
+> credit: XMan Summer Camp In-class Challenge 
 
 We can see that the modulus N is used twice and e1, e2 are coprime. Proceed with common modulus attack:
 
@@ -472,7 +472,7 @@ $ python exp.py
 flag{whenwethinkitispossible}
 ```
 
-### Extra Exercise
+### Exercise
 
 - Jarvis OJ Crypto - very hard RSA
 
