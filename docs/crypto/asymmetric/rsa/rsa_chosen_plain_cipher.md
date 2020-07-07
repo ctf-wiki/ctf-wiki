@@ -9,7 +9,7 @@ Here is an example, if we have an encryption oracle, but we don&#39;t know n and
 
 
 1. We can get n by encrypting oracle.
-2. When e is small ( $e&lt;2^{64}$), we can use the *Pollard&#39;s kangaroo algorithm* algorithm to get e. This is more obvious.
+2. When e is small ( $e<2^{64}$), we can use the *Pollard&#39;s kangaroo algorithm* algorithm to get e. This is more obvious.
 
 
 We can encrypt 2, 4, 8, and 16. Then we can know
@@ -100,11 +100,11 @@ Then
 
 
 
-- The server returns an odd number, ie $2P \bmod N$ is an odd number, indicating that 2P is greater than N, and an odd number of Ns is subtracted, and because $2P&lt;2N$, an N is subtracted, ie $\frac{N }{2} \leq P &lt; N$, we can also consider rounding down.
-- If the server returns an even number, then 2P is less than N. That is, $0\leq P &lt; \frac{N}{2}$, we can also round down.
+- The server returns an odd number, ie $2P \bmod N$ is an odd number, indicating that 2P is greater than N, and an odd number of Ns is subtracted, and because $2P<2N$, an N is subtracted, ie $\frac{N }{2} \leq P < N$, we can also consider rounding down.
+- If the server returns an even number, then 2P is less than N. That is, $0\leq P < \frac{N}{2}$, we can also round down.
 
 
-Here we use mathematical induction, which assumes that at the ith time, $\frac{xN}{2^{i}} \leq P &lt; \frac{xN+N}{2^{i}}$
+Here we use mathematical induction, which assumes that at the ith time, $\frac{xN}{2^{i}} \leq P < \frac{xN+N}{2^{i}}$
 
 
 
@@ -126,7 +126,7 @@ $0 \leq 2^{i+1}P-kN<N$
 
 
 
-$ \ frac {kN} {2 ^ {i + 1}} \ leq P &lt;\ frac {kN + N}
+$ \ frac {kN} {2 ^ {i + 1}} \ leq P <\ frac {kN + N}
 
 
 According to the result of the ith
@@ -139,8 +139,8 @@ $\frac{2xN}{2^{i+1}} \leq P < \frac{2xN+2N}{2^{i+1}}$
 Then
 
 
-- If the server returns an odd number, then k must be an odd number, k=2y+1, then $\frac{2yN+N}{2^{i+1}} \leq P &lt; \frac{2yN+2N}{2^ {i+1}}$. At the same time, since P necessarily exists, the range obtained by the i+1 and the range obtained by the i-th must have an intersection. So y must be equal to x.
-- If the server returns an even number, then k must be an even number, k=2y, where y must also be equal to x, then $\frac{2xN}{2^{i+1}} \leq P &lt; \frac{2xN+ N}{2^{i+1}}$
+- If the server returns an odd number, then k must be an odd number, k=2y+1, then $\frac{2yN+N}{2^{i+1}} \leq P < \frac{2yN+2N}{2^ {i+1}}$. At the same time, since P necessarily exists, the range obtained by the i+1 and the range obtained by the i-th must have an intersection. So y must be equal to x.
+- If the server returns an even number, then k must be an even number, k=2y, where y must also be equal to x, then $\frac{2xN}{2^{i+1}} \leq P < \frac{2xN+ N}{2^{i+1}}$
 
 
 Further we can conclude
@@ -443,7 +443,7 @@ Here
 - N is an odd number because it is multiplied by two large prime numbers.
 
 
-Since P is generally less than N, then $256P \bmod N=256P-kn, k&lt;256$. And for two different $k_1, k_2$, we have
+Since P is generally less than N, then $256P \mod N=256P-kn, k<256$. And for two different $k_1, k_2$, we have
 
 
 $256P-k_1n \not\equiv 256P-k_2n \bmod 256$
@@ -456,7 +456,7 @@ We can use the counter-evidence method to prove the above inequality. At the sam
 When the server returns the last byte b, we can know k according to the mapping table constructed above, that is, subtract k N, that is, $kN \leq 256 P \leq (k+1)N$.
 
 
-After that, we use mathematical induction to obtain the range of P, that is, assume that at the ith time, $\frac{xN}{256^{i}} \leq P &lt; \frac{xN+N}{256^{i }}$
+After that, we use mathematical induction to obtain the range of P, that is, assume that at the ith time, $\frac{xN}{256^{i}} \leq P < \frac{xN+N}{256^{i }}$
 
 
 Further, at the i+1th time, we can send
@@ -476,7 +476,7 @@ $0 \leq 256^{i+1}P-kN<N$
 
 
 
-$ \ frac {kN} {256} {i + 1}} \ leq P &lt;\ frac {kN + N}
+$ \ frac {kN} {256} {i + 1}} \ leq P <\ frac {kN + N}
 
 
 According to the result of the ith
@@ -660,10 +660,25 @@ if __name__ == "__main__":
 
 ```
 
+## RSA parity oracle variant
+### Principle
+If some parameters of the oracle will automatically change after certain time or certain amount of queries, or the disconnection or renewal of session caused by bad network condition, the dichotomy is no longer suitable for this problem. We should consider recovering the plaintext bit by bit to reduce errors.
+To recover the least 2 bit of the plaintext, consider:
 
+$\{(c(2^{-1*e_1}\mod N_1))^{d_1}\mod N_1\}\pmod2\equiv m*2^{-1}$
 
+It shows that the result is m right shifts by 1 and then modulo 2, which is just the least 2 bit of the plaintext. Notice that the $2^{-1}$ here is the inverse of 2 modulo $N_1$.
+
+Similarly,
+
+$\{(c(2^{-2*e_2}\mod N_2))^{d_2}\mod N_2\}\pmod2\equiv m*2^{-2}$
+
+$\{(c(2^{-i*e_i}\mod N_i))^{d_i}\mod N_i\}\pmod2\equiv m*2^{-i}，i=0,1,...,logm-1$
+
+So that we could recover the plaintext bit by bit. The total time complexity would be $O(logm)$.
 ## Reference
 
 - https://crypto.stackexchange.com/questions/11053/rsa-least-significant-bit-oracle-attack
 
 - https://pastebin.com/KnEUSMxp
+- https://github.com/ashutosh1206/Crypton

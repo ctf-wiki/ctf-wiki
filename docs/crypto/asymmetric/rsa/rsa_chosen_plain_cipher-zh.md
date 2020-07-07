@@ -378,7 +378,24 @@ if __name__ == "__main__":
     print long_to_hex(low - low % 256 + send('B', back)).decode('hex')
 ```
 
+## RSA parity oracle variant
+### 原理
+如果oracle的参数会在一定时间、运行周期后改变，或者网络不稳定导致会话断开、重置，二分法就不再适用了，为了减少错误，应当考虑逐位恢复。
+要恢复明文的第2低位，考虑
+
+$\{(c(2^{-1*e_1}\mod N_1))^{d_1}\mod N_1\}\pmod2\equiv m*2^{-1}$
+
+就相当于m右移了1位并模2，获得了对应第2低位的信息，而且这一步只依赖于当前的RSA参数。注意这里的$2^{-1}$是在模$N_1$下的逆元。
+类似的
+
+$\{(c(2^{-2*e_2}\mod N_2))^{d_2}\mod N_2\}\pmod2\equiv m*2^{-2}$
+
+$\{(c(2^{-i*e_i}\mod N_i))^{d_i}\mod N_i\}\pmod2\equiv m*2^{-i}，i=0,1,...,logm-1$
+
+就可以逐步恢复原文所有的位信息了。这样的时间复杂度为$O(logm)$。
+
 ## 参考
 
 - https://crypto.stackexchange.com/questions/11053/rsa-least-significant-bit-oracle-attack
 - https://pastebin.com/KnEUSMxp
+- https://github.com/ashutosh1206/Crypton
