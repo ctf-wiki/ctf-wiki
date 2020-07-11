@@ -443,7 +443,7 @@ Here
 - N is an odd number because it is multiplied by two large prime numbers.
 
 
-Since P is generally less than N, then $256P \mod N=256P-kn, k<256$. And for two different $k_1, k_2$, we have
+Since P is generally less than N, then $256P \bmod N=256P-kn, k<256$. And for two different $k_1, k_2$, we have
 
 
 $256P-k_1n \not\equiv 256P-k_2n \bmod 256$
