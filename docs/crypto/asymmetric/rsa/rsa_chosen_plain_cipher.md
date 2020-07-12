@@ -665,17 +665,90 @@ if __name__ == "__main__":
 If some parameters of the oracle will automatically change after certain time or certain amount of queries, or the disconnection or renewal of session caused by bad network condition, the dichotomy is no longer suitable for this problem. We should consider recovering the plaintext bit by bit to reduce errors.
 To recover the least 2 bit of the plaintext, consider:
 
-$\{(c(2^{-1*e_1}\mod N_1))^{d_1}\mod N_1\}\pmod2\equiv m*2^{-1}$
+$$\{(c(2^{-1*e_1}\mod N_1))^{d_1}\mod N_1\}\pmod2\equiv m*2^{-1}$$
 
-It shows that the result is m right shifts by 1 and then modulo 2, which is just the least 2 bit of the plaintext. Notice that the $2^{-1}$ here is the inverse of 2 modulo $N_1$.
+$$
+\begin{aligned}
+&m*(2^{-1}\mod N_1)\mod2\\
+&=(\displaystyle\sum_{i=0}^{logm-1}a_i*2^i)*2^{-1}\mod2\\
+&=[2(\displaystyle\sum_{i=1}^{logm-1}a_i*2^{i-1})+a_0*2^0]*2^{-1}\mod 2\\
+&=\displaystyle\sum_{i=1}^{logm-1}a_i*2^{i-1}+a_0*2^0*2^{-1}\mod2\\
+&\equiv a_1+a_0*2^0*2^{-1}\equiv y\pmod2
+\end{aligned}
+$$
+
+$$
+y-(a_0*2^0)*2^{-1}=(m*2^{-1}\mod2)-(a_0*2^0)*2^{-1}\equiv a_1\pmod2
+$$
 
 Similarly,
 
-$\{(c(2^{-2*e_2}\mod N_2))^{d_2}\mod N_2\}\pmod2\equiv m*2^{-2}$
+$$\{(c(2^{-2*e_2}\mod N_2))^{d_2}\mod N_2\}\pmod2\equiv m*2^{-2}$$
 
-$\{(c(2^{-i*e_i}\mod N_i))^{d_i}\mod N_i\}\pmod2\equiv m*2^{-i}，i=0,1,...,logm-1$
+$$
+\begin{aligned}
+&m*(2^{-2}\mod N_2)\mod2\\
+&=(\displaystyle\sum_{i=0}^{logm-1}a_i*2^i)*2^{-2}\mod2\\
+&=[2^2(\displaystyle\sum_{i=2}^{logm-1}a_i*2^{i-2})+a_1*2^1+a_0*2^0]*2^{-2}\mod 2\\
+&=\displaystyle\sum_{i=2}^{logm-1}a_i*2^{i-1}+(a_1*2^1+a_0*2^0)*2^{-2}\mod2\\
+&\equiv a_2+(a_1*2^1+a_0*2^0)*2^{-2}\equiv y\pmod2
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+    &y-(a_1*2^1+a_0*2^0)*2^{-2}\\
+    &=(m*2^{-2}\mod2)-(a_1*2^1+a_0*2^0)*2^{-2}\equiv a_2\pmod2
+\end{aligned}
+$$
+
+It shows that we could calculate the i-th bit of m according to previous i-1 bits and the decryption result of the oracle. Notice that the $2^{-1}$ here is the inverse of $2^1$ modulo $N_1$. So for the rest bits, we have
+
+$$
+\begin{aligned}
+    &\{(c(2^{-i*e_i}\mod N_i))^{d_i}\mod N_i\}\pmod2\equiv m*2^{-i}\\
+    &a_i\equiv (m*2^{-i}\mod2) -\sum_{j=0}^{i-1}a_j*2^j\pmod2,i=1,2,...,logm-1
+\end{aligned}
+$$
+
+While $2^{-i}$ is the inverse of $2^i$ modulo $N_i$.
 
 So that we could recover the plaintext bit by bit. The total time complexity would be $O(logm)$.
+
+exp:
+```python
+from Crypto.Util.number import *
+mm = bytes_to_long(b'12345678')
+l = len(bin(mm)) - 2
+
+def genkey():
+    while 1:
+        p = getPrime(128)
+        q = getPrime(128)
+        e = getPrime(32)
+        n = p * q
+        phi = (p - 1) * (q - 1)
+        if GCD(e, phi) > 1:
+            continue
+        d = inverse(e, phi)
+        return e, d, n
+
+e, d, n = genkey()
+cc = pow(mm, e, n)
+f = str(pow(cc, d, n) % 2)
+
+for i in range(1, l):
+    e, d, n = genkey()
+    cc = pow(mm, e, n)
+    ss = inverse(2**i, n)
+    cs = (cc * pow(ss, e, n)) % n
+    lb = pow(cs, d, n) % 2
+    bb = (lb - (int(f, 2) * ss % n)) % 2
+    f = str(bb) + f
+    assert(((mm >> i) % 2) == bb)
+print(long_to_bytes(int(f, 2)))
+```
+
 ## Reference
 
 - https://crypto.stackexchange.com/questions/11053/rsa-least-significant-bit-oracle-attack
