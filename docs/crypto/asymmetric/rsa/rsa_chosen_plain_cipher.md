@@ -9,7 +9,7 @@ Here is an example, if we have an encryption oracle, but we don&#39;t know n and
 
 
 1. We can get n by encrypting oracle.
-2. When e is small ( $e<2^{64}$), we can use the *Pollard&#39;s kangaroo algorithm* algorithm to get e. This is more obvious.
+2. When e is small ( $e<2^{64}$), we can use the *Pollard's kangaroo algorithm* to get e. This is more obvious.
 
 
 We can encrypt 2, 4, 8, and 16. Then we can know
