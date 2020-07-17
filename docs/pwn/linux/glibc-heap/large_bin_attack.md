@@ -413,7 +413,7 @@ Then we modify the chunk of P2 through some kind of vulnerability:
 
 
 
-Then we malloc a new chunk. At this time, because the fastbin is empty, the program traverses the unsorte bin. At that time, when the chunk in the unsorte bin is large bin, first determine whether the current chunk size is smaller than bck-&gt;bk. The size, which is the smallest chunk in the large bin, if it is, is added directly to the end. If not, it traverses the large bin until it finds that the size of a chunk is less than or equal to the current chunk size (the chunks of the large bin are aligned from large to small). Then insert the current chunk into the two linked lists of the large bin.
+Then we malloc a new chunk. At this time, because the fastbin is empty, the program traverses the unsorted bin. At that time, when the chunk in the unsorted bin is a large chunk, first determine whether the current chunk size is smaller than `bck->bk`. The size, which is the smallest chunk in the large bin, if it is, is added directly to the end. If not, it traverses the large bin until it finds that the size of a chunk is less than or equal to the current chunk size (the chunks of the large bin are aligned from large to small). Then insert the current chunk into the two linked lists of the large bin.
 
 
 The `fd_nextsize` in the large bin chunk points to the first chunk in the list that is smaller than itself, and `bk_nextsize` points to the first chunk larger than itself.
@@ -469,3 +469,35 @@ mark_bin (off, victim_index);
 
 Fwd is now P2, victim is P3, and the two variables on the stack can be modified to `victim`.
 
+In detail:
+```c
+victim->bk_nextsize = fwd->bk_nextsize;
+// then
+victim->bk_nextsize->fd_nextsize = victim;
+```
+
+Here `fwd->bk_nextsize` stores `&stack_var2 - 4`, so the above statements equals to:
+```c
+(&stack_var2 - 4)->fd_nextsize = victim;
+// equals to
+*(&stack_var2 - 4 + 4) = victim;
+```
+, modifying `stack_var2`.
+
+And then, we set `bck = fwd->bk`, and the following code will be executed:
+```c
+mark_bin (off, victim_index);
+victim->bk = bck;
+victim->fd = fwd;
+fwd->bk = victim;
+bck->fd = victim;
+```
+
+Here we have:
+```c
+fwd->bk = victim;
+// equals to
+*(&stack_var1 - 2 + 2) = victim
+```
+
+Thus modifying `stack_var1`.

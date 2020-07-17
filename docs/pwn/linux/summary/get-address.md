@@ -91,7 +91,7 @@ Regarding the address on the stack, in fact, most of the time we do not need a s
 The main consideration here is how to find related functions in Glibc.
 
 
-#### 有libc
+#### With libc
 
 
 At this time we need to consider using the same function as the base address of the function in libc. For example, we can leak the base address of libc in memory by the address of __libc_start_main.
@@ -103,7 +103,7 @@ At this time we need to consider using the same function as the base address of 
 What are the common wapper functions? (To be added).
 
 
-#### 无libc
+#### Without libc
 
 
 In fact, the solution strategy for this situation is divided into two types.

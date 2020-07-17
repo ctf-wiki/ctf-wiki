@@ -16,7 +16,7 @@ ESP定律的原理在于利用程序中堆栈平衡来快速找到OEP.
 
 示例程序可以点击此处下载: [2_esp.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/2_esp.zip)
 
-还是上一篇的示例, 入口一句`popad`, 我们按下F8执行`popad`保存寄存器状态, 我们可以在右边的寄存器窗口里发现`ESP`寄存器的值变为了红色, 也即值发生了改变.
+还是上一篇的示例, 入口一句`pushad`, 我们按下F8执行`pushad`保存寄存器状态, 我们可以在右边的寄存器窗口里发现`ESP`寄存器的值变为了红色, 也即值发生了改变.
 
 ![esp_01.png](./figure/esp_01.png)
 

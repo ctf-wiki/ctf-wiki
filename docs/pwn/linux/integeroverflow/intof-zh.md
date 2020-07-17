@@ -1,7 +1,4 @@
 [EN](./intof.md) | [ZH](./intof-zh.md)
----
-typora-root-url: ../../../docs
----
 
 # 整数溢出
 
@@ -185,5 +182,3 @@ aaaaaaaaaaaa
 ## CTF例题
 
 题目：[Pwnhub 故事的开始 calc](http://atum.li/2016/12/05/calc/)
-
-

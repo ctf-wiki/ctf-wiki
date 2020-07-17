@@ -5,7 +5,7 @@
 
 一般我们会使用 malloc 函数来申请内存块，可是当仔细看 glibc 的源码实现时，其实并没有 malloc 函数。其实该函数真正调用的是 \_\_libc_malloc 函数。为什么不直接写个 malloc 函数呢，因为有时候我们可能需要不同的名称。此外，__libc_malloc 函数只是用来简单封装 _int_malloc 函数。\_int_malloc 才是申请内存块的核心。下面我们来仔细分析一下具体的实现。
 
-该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook），这个主要用于用户自定义的堆分配函数，方便用户快速修改对分配函数并进行测试。这里需要注意的是，**用户申请的字节一旦进入申请内存函数中就变成了无符号整数**。
+该函数会首先检查是否有内存分配函数的钩子函数（__malloc_hook），这个主要用于用户自定义的堆分配函数，方便用户快速修改堆分配函数并进行测试。这里需要注意的是，**用户申请的字节一旦进入申请内存函数中就变成了无符号整数**。
 
 ```c++
 // wapper for int_malloc
@@ -248,7 +248,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
 
 ```
 
-### 大循环-遍历 unsortedbin
+### 大循环-遍历 unsorted bin
 
 **如果程序执行到了这里，那么说明 与 chunk 大小正好一致的 bin (fast bin， small bin) 中没有 chunk可以直接满足需求 ，但是 large chunk  则是在这个大循环中处理**。
 
@@ -279,7 +279,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
         int iters = 0;
 ```
 
-#### unsort bin 遍历
+#### unsorted bin 遍历
 
 先考虑 unsorted bin，再考虑 last remainder ，但是对于 small bin chunk 的请求会有所例外。
 
@@ -304,7 +304,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
 
 ##### small request
 
-如果用户的请求为 small bin chunk，那么我们首先考虑 last remainder，如果 last remainder 是 unsorted bin 中的唯一一块的话， 并且 last remainder 的大小分割够还可以作为一个 chunk ，**为什么没有等号**？
+如果用户的请求为 small bin chunk，那么我们首先考虑 last remainder，如果 last remainder 是 unsorted bin 中的唯一一块的话， 并且 last remainder 的大小分割后还可以作为一个 chunk ，**为什么没有等号**？
 
 ```c
             /*
@@ -409,7 +409,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
                     // 加速比较，应该不仅仅有这个考虑，因为链表里的 chunk 都会设置该位。
                     size |= PREV_INUSE;
                     /* if smaller than smallest, bypass loop below */
-                    // bck-bk 存储着相应 large bin 中最小的chunk。
+                    // bck->bk 存储着相应 large bin 中最小的chunk。
                     // 如果遍历的 chunk 比当前最小的还要小，那就只需要插入到链表尾部。
                     // 判断 bck->bk 是不是在 main arena。
                     assert(chunk_main_arena(bck->bk));
@@ -474,8 +474,7 @@ static void *_int_malloc(mstate av, size_t bytes) {
 while 最多迭代10000次后退出。
 
 ```c
-            //
-##define MAX_ITERS 10000
+            // #define MAX_ITERS 10000
             if (++iters >= MAX_ITERS) break;
         }
 ```
@@ -750,7 +749,7 @@ while 最多迭代10000次后退出。
             remainder_size = size - nb;
             remainder      = chunk_at_offset(victim, nb);
             av->top        = remainder;
-            // 这里设置 PREV_INUSE 是因为 top chunk 的 chunk 如果不是 fastbin，就必然会和
+            // 这里设置 PREV_INUSE 是因为 top chunk 前面的 chunk 如果不是 fastbin，就必然会和
             // top chunk 合并，所以这里设置了 PREV_INUSE。
             set_head(victim, nb | PREV_INUSE |
                                  (av != &main_arena ? NON_MAIN_ARENA : 0));
@@ -1030,7 +1029,7 @@ static struct malloc_par mp_ = {
           ((unsigned long)old_end & (pagesize - 1)) == 0));
 ```
 
-这个检查要求满足任何其中一个条件
+这个检查要求满足其中任何一个条件
 
 1. `old_top == initial_top(av) && old_size == 0`，即如果是第一次的话，堆的大小需要是 0。
 2. 新的堆，那么

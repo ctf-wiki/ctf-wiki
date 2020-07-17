@@ -404,13 +404,13 @@ mem指向用户得到的内存的起始位置。
 mchunkptr bins[ NBINS * 2 - 2 ];
 ```
 
-虽然每个 bin 的表头使用 mchunkptr 这个数据结构，但是这只是为了方便我们将每个 bin 转化为 malloc_chunk 指针。我们在使用时，会将这个指针当做一个 chunk 的 fd 或 bk 指针来操作，以便于将处于空闲的堆块链接在一起。这样可以节省空间，并提高可用性。那到底是怎么节省的呢？这里我们以32位系统为例
+一个bin相当于一个chunk链表，我们把每个链表的头节点chunk作为bins数组，但是由于这个头节点作为bin表头，其prev_size 与 size 字段是没有任何实际作用的，因此我们在存储头节点chunk的时候仅仅只需要存储头节点chunk的fd和bk即可，而其中的prev_size 与 size 字段被重用为另一个bin的头节点的fd与bk，这样可以节省空间，并提高可用性。因此**我们仅仅只需要mchunkptr类型的指针数组就足够存储这些头节点**，那prev_size 与 size 字段到底是怎么重用的呢？这里我们以32位系统为例
 
 | 含义    | bin1的fd/bin2的prev_size | bin1的bk/bin2的size | bin2的fd/bin3的prev_size | bin2的bk/bin3的size |
 | ----- | ---------------------- | ----------------- | ---------------------- | ----------------- |
 | bin下标 | 0                      | 1                 | 2                      | 3                 |
 
-可以看出除了第一个bin（unsorted bin）外，后面的每个bin会共享前面的bin的字段，将其视为malloc chunk部分的prev_size和size。这里也说明了一个问题，**bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 的 prev_size 与 size 字段不能随便修改，因为这两个字段是被其它bin所利用的。**
+可以看出除了第一个bin（unsorted bin）外，后面的每个bin的表头chunk会重用前面的bin表头chunk的fd与bk字段，将其视为其自身的prev_size和size字段。这里也说明了一个问题，**bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 头节点 的 prev_size 与 size 字段不能随便修改，因为这两个字段是其它bin表头chunk的fd和bk字段。**
 
 数组中的 bin 依次介绍如下
 
@@ -517,7 +517,7 @@ typedef struct malloc_chunk *mfastbinptr;
    The initial value comes from MORECORE_CONTIGUOUS, but is
    changed dynamically if mmap is ever used as an sbrk substitute.
  */
-// MORECODE是否返回连续的内存区域。
+// MORECORE是否返回连续的内存区域。
 // 主分配区中的MORECORE其实为sbr()，默认返回连续虚拟地址空间
 // 非主分配区使用mmap()分配大块虚拟内存，然后进行切分来模拟主分配区的行为
 // 而默认情况下mmap映射区域是不保证虚拟地址空间连续的，所以非主分配区默认分配非连续虚拟地址空间。
@@ -779,7 +779,7 @@ glibc 中对于 top chunk 的描述如下
 
 ### last remainder
 
-在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不和申请的内存大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin 也会存这一块。top chunk 分割剩下的部分不会作为last remainer.
+在用户使用 malloc 请求分配内存时，ptmalloc2 找到的 chunk 可能并不和申请的内存大小一致，这时候就将分割之后的剩余部分称之为 last remainder chunk ，unsort bin 也会存这一块。top chunk 分割剩下的部分不会作为last remainder.
 
 ## 宏观结构
 
@@ -858,7 +858,7 @@ typedef struct _heap_info
 该结构主要是描述堆的基本信息，包括
 
 - 堆对应的 arena 的地址
-- 由于一个线程申请一个堆之后，可能会使用完，之后就必须得再次申请。因此，一个可能会有多个堆。prev即记录了上一个 heap_info 的地址。这里可以看到每个堆的 heap_info 是通过单向链表进行链接的。
+- 由于一个线程申请一个堆之后，可能会使用完，之后就必须得再次申请。因此，一个线程可能会有多个堆。prev即记录了上一个 heap_info 的地址。这里可以看到每个堆的 heap_info 是通过单向链表进行链接的。
 - size 表示当前堆的大小
 - 最后一部分确保对齐（**这里负数使用的缘由是什么呢**？）
 
@@ -914,7 +914,7 @@ struct malloc_state {
 ```
 
 -   __libc_lock_define(, mutex);
-    -   该变量用于控制程序串行访问同一个分配区，当一个线程获取了分配区之后，其它线程要想访问该分配区，就必须等待该线程分配完成候才能够使用。
+    -   该变量用于控制程序串行访问同一个分配区，当一个线程获取了分配区之后，其它线程要想访问该分配区，就必须等待该线程分配完成后才能够使用。
 
 -   flags
     -   flags记录了分配区的一些标志，比如 bit0 记录了分配区是否有 fast bin chunk ，bit1 标识分配区是否能返回连续的虚拟地址空间。具体如下

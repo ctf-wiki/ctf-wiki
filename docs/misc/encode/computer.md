@@ -1,11 +1,4 @@
 [EN](./computer.md) | [ZH](./computer-zh.md)
----
-
-typora-root-url: ../../
-
----
-
-
 
 This section describes some computer related coding.
 

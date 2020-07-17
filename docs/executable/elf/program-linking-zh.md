@@ -1,8 +1,4 @@
 [EN](./program-linking.md) | [ZH](./program-linking-zh.md)
----
-typora-root-url: ../../../docs
----
-
 
 # 程序链接
 

@@ -158,12 +158,12 @@ In general, size_t is a 64-bit unsigned integer in 64 bits and a 32-bit unsigned
 The specific explanation of each field is as follows
 
 
-- **prev_size**, if the chunk&#39;s ** physically adjacent previous address chunk (the address difference between the two pointers is the previous chunk size)** is idle, then the field records the previous chunk The size (including the chunk header). Otherwise, this field can be used to store data for the physical chunk of the previous chunk. **The previous chunk here refers to the chunk ** of the lower address.
+- **prev_size**, if the chunk's ** physically adjacent previous address chunk (the address difference between the two pointers is the previous chunk size)** is idle, then the field records the previous chunk The size (including the chunk header). Otherwise, this field can be used to store data for the physical chunk of the previous chunk. **The previous chunk here refers to the chunk ** of the lower address.
 - **size** , the size of the chunk, the size must be an integer multiple of 2 * SIZE_SZ. If the requested memory size is not an integer multiple of 2 * SIZE_SZ, it will be converted to a multiple of the smallest 2 * SIZE_SZ that satisfies the size. In a 32-bit system, SIZE_SZ is 4; in a 64-bit system, SIZE_SZ is 8. The lower three bits of this field have no effect on the size of the chunk, they are represented from high to low respectively.
 - NON_MAIN_ARENA, records whether the current chunk does not belong to the main thread, 1 means not belonging, 0 means belongs.
 - IS_MAPPED, which records whether the current chunk is allocated by mmap.
 - PREV_INUSE, records whether the previous chunk is allocated. In general, the P bit of the size field of the first allocated memory block in the heap is set to 1, in order to prevent access to the previous illegal memory. When the P bit of the size of a chunk is 0, we can get the size and address of the previous chunk through the prev_size field. This also facilitates the merging between free chunks.
-- **fd, bk**. When the chunk is in the allocation state, it is the user&#39;s data starting from the fd field. When chunk is idle, it will be added to the corresponding idle management list. The meaning of the fields is as follows
+- **fd, bk**. When the chunk is in the allocation state, it is the user's data starting from the fd field. When chunk is idle, it will be added to the corresponding idle management list. The meaning of the fields is as follows
 - fd points to the next (non-physical neighbor) free chunk
 - bk points to the previous (non-physical neighbor) free chunk
 - Freed chunks can be added to the free chunk block list for unified management via fd and bk
@@ -189,7 +189,7 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
         |             Size of chunk, in bytes                     |A|M|P|
 
-mem-&gt; + - + - + - + - + - + - + - + - + - + - + + + + + + + + + + - + - + - + - + - + - + - + - + - + - + - + - + - +
+mem-> + - + - + - + - + - + - + - + - + - + - + + + + + + + + + + - + - + - + - + - + - + - + - + - + - + - + - + - +
         |             User data starts here...                          .
 
         .                                                               .
@@ -224,7 +224,7 @@ chunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 `head:' |             Size of chunk, in bytes                     |A|0|P|
 
-mem-&gt; + - + - + - + - + - + - + - + - + - + - + + + + + + + + + + - + - + - + - + - + - + - + - + - + - + - + - + - +
+mem-> + - + - + - + - + - + - + - + - + - + - + + + + + + + + + + - + - + - + - + - + - + - + - + - + - + - + - + - +
         |             Forward pointer to next chunk in list             |
 
         +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -478,7 +478,7 @@ When a chunk is in the allocated state, the prev_size field of its next physical
 ** Personally think that it is not necessary to add MALLOC_ALIGN_MASK in the first line of the request2size macro. **
 
 
-** It should be noted that the size obtained by such a calculation formula must ultimately satisfy the user&#39;s needs. **
+** It should be noted that the size obtained by such a calculation formula must ultimately satisfy the user's needs. **
 
 
 **Marker related**
@@ -735,7 +735,7 @@ mchunkptr bins[ NBINS * 2 - 2 ];
 
 
 
-Although the header of each bin uses the mchunkptr data structure, this is just for the convenience of converting each bin into a malloc_chunk pointer. When we use it, we will use this pointer as a chunk&#39;s fd or bk pointer to link together the free heap blocks. This saves space and increases usability. How is it saved? Here we take 32-bit system as an example.
+Although the header of each bin uses the mchunkptr data structure, this is just for the convenience of converting each bin into a malloc_chunk pointer. When we use it, we will use this pointer as a chunk's fd or bk pointer to link together the free heap blocks. This saves space and increases usability. How is it saved? Here we take 32-bit system as an example.
 
 
 | Meaning | bin1 fd/bin2 prev_size | bin1 bk/bin2 size | bin2 fd/bin3 prev_size | bin2 bk/bin3 size |
@@ -939,7 +939,7 @@ By default (**32-bit system is an example**), the maximum chunk size supported b
 
  */
 
-// Whether MORECODE returns a contiguous memory area.
+// Whether MORECORE returns a contiguous memory area.
 // MORECORE in the main allocation area is actually sbr(), which returns the default virtual address space by default.
 // The non-primary allocation area uses mmap() to allocate large blocks of virtual memory and then splits to simulate the behavior of the primary allocation area.
 // By default, the mmap mapping area does not guarantee that the virtual address space is continuous, so the non-primary allocation area allocates non-contiguous virtual address space by default.
@@ -1422,7 +1422,7 @@ It should be noted that the prev_inuse bit of the top chunk is always 1, otherwi
 
 
 
-When a user uses malloc to request memory allocation, the chunk found by ptmalloc2 may not match the size of the requested memory. In this case, the remaining portion after the split is called the last remainder chunk, and the unsort bin will also store the chunk. The top chunk splits the rest of the section as a last remainer.
+When a user uses malloc to request memory allocation, the chunk found by ptmalloc2 may not match the size of the requested memory. In this case, the remaining portion after the split is called the last remainder chunk, and the unsort bin will also store the chunk. The top chunk splits the rest of the section as a last remainder.
 
 
 ## Macrostructure
@@ -1455,7 +1455,7 @@ For 64 bit systems:
 
 
 
-Obviously, not every thread will have a corresponding arena. As for why the 64-bit system is set up, I don&#39;t want to understand it. In addition, because the number of cores per system is limited, when the number of threads is more than twice the number of cores (hyperthreading technology), there must be threads waiting, so there is no need to assign an arena to each thread.
+Obviously, not every thread will have a corresponding arena. As for why the 64-bit system is set up, I don't want to understand it. In addition, because the number of cores per system is limited, when the number of threads is more than twice the number of cores (hyperthreading technology), there must be threads waiting, so there is no need to assign an arena to each thread.
 
 
 #### arena Distribution Rules
@@ -1562,7 +1562,7 @@ This structure is mainly to describe the basic information of the heap, includin
 
 
 - the address of the corresponding arena of the heap
-- Since a thread requests a heap, it may be used up and must be applied again. Therefore, one may have multiple heaps. Prev records the address of the last heap_info. Here you can see that each heap&#39;s heap_info is linked through a singly linked list.
+- Since a thread requests a heap, it may be used up and must be applied again. Therefore, one thread may have multiple heaps. Prev records the address of the last heap_info. Here you can see that each heap's heap_info is linked through a singly linked list.
 - size indicates the size of the current heap
 - The last part ensures alignment (**What is the reason for the negative use here?**)
 
@@ -1574,10 +1574,10 @@ It seems that the structure should be quite important, but if we look closely at
 
 
 
-This structure is used to manage the heap and record the specific state of the memory of each arena&#39;s current application, such as whether there are free chunks, what size of free chunks, and so on. Whether it is thread arena or main arena, they all have only one malloc state structure. Since there may be more than one of the thread&#39;s arena, the malloc state structure will be in the latest application&#39;s arena.
+This structure is used to manage the heap and record the specific state of the memory of each arena's current application, such as whether there are free chunks, what size of free chunks, and so on. Whether it is thread arena or main arena, they all have only one malloc state structure. Since there may be more than one of the thread's arena, the malloc state structure will be in the latest application's arena.
 
 
-**Note that the main arena&#39;s malloc_state is not part of the heap segment, but a global variable stored in the libc.so data segment. **
+**Note that the main arena's malloc_state is not part of the heap segment, but a global variable stored in the libc.so data segment. **
 
 
 Its structure is as follows

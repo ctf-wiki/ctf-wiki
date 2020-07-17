@@ -12,10 +12,10 @@ Unlink is used to take out an element in a doubly linked list (only free chunks)
 - malloc
 
 - Get chunks from a large bin of exactly the right size.
-- ** It should be noted here that fastbin and small bin do not use unlink, which is why vulnerabilities often appear here. **
+- **It should be noted here that fastbin and small bin do not use unlink, which is why vulnerabilities often appear here.**
 - Unlink is also not used when traversing the unsorted bin in turn.
 - Take a chunk from the bin larger than the bin where the requested chunk is located.
-- Free
+- free
 
 - Backward merge, merge physical adjacent low address free chunks.
 - Forward merge, merge physical neighbor high address free chunks (except top chunk).
@@ -54,12 +54,12 @@ Since unlink is used very frequently, unlink is implemented as a macro, as follo
 
     else {                                                                      \
 
-FD-&gt; bk = BK; \
-BK-&gt; fd = FD; \
+FD->bk = BK; \
+BK->fd = FD; \
 / / The following mainly consider the modification of the nextsize doubly linked list corresponding to P
         if (!in_smallbin_range (chunksize_nomask (P))                              \
 
-// If P-&gt;fd_nextsize is NULL, it means that P is not inserted into the nextsize list.
+// If P->fd_nextsize is NULL, it means that P is not inserted into the nextsize list.
 // Then there is no need to modify the nextsize field.
 // There is no way to determine the bk_nextsize field, which may cause problems.
             && __builtin_expect (P->fd_nextsize != NULL, 0)) {                      \
@@ -82,7 +82,7 @@ P, AV); \
 // Let FD be a string of nextsize
                 if (P->fd_nextsize == P)                                      \
 
-FD-&gt; fd_nextsize = FD-&gt; bk_nextsize = FD; \
+FD->fd_nextsize = FD->bk_nextsize = FD; \
                 else {                                                              \
 
 // Otherwise we need to insert the FD into the double-linked list formed by nextsize
@@ -182,7 +182,7 @@ It seems to be normal. Let us take fd and bk as an example. The bk of the forwar
 The `malloc_printerr` function is called when an error is detected in glibc malloc.
 
 
-`` `Cpp
+```Cpp
 static void malloc_printerr(const char *str) {
 
   __libc_message(do_abort, "%s\n", str);

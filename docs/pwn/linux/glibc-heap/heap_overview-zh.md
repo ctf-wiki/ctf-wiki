@@ -1,7 +1,4 @@
 [EN](./heap_overview.md) | [ZH](./heap_overview-zh.md)
----
-typora-root-url: ../../../docs
----
 
 # 堆概述
 
@@ -193,13 +190,13 @@ malloc 会使用 [mmap](http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L12
 
 ```c++
 /* Private anonymous mapping example using mmap syscall */
-##include <stdio.h>
-##include <sys/mman.h>
-##include <sys/types.h>
-##include <sys/stat.h>
-##include <fcntl.h>
-##include <unistd.h>
-##include <stdlib.h>
+#include <stdio.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 void static inline errExit(const char* msg)
 {
@@ -280,11 +277,11 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 
 ```c++
 /* Per thread arena example. */
-##include <stdio.h>
-##include <stdlib.h>
-##include <pthread.h>
-##include <unistd.h>
-##include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 void* threadFunc(void* arg) {
         printf("Before malloc in thread 1\n");

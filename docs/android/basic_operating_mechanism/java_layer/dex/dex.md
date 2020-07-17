@@ -19,7 +19,6 @@ Before we introduce the specific structure of the DEX file, let&#39;s take a loo
 
 | Name | Description|
 | --------- | -------------------------- |
-
 | byte | 8-bit signed integer |
 | ubyte | 8-bit unsigned integer |
 | short | 16-bit signed integer in little endian |
@@ -276,7 +275,6 @@ The specific description is as follows
 
 | Name | Format | Description|
 | --------------- | ------------------------- | ---------------------------------------- |
-
 Magic | ubyte[8] = DEX_FILE_MAGIC | Identifies the DEX file, where DEX_FILE_MAGIC =&quot;dex\n035\0&quot; |
 Checksum | uint | The adler32 checksum of the rest of the files except `magic` and this field, used to detect file corruption |
 | signature | ubyte[20] | SHA-1 signature (hash) for the contents of files other than `magic`, `checksum` and this field, used to uniquely identify the file |

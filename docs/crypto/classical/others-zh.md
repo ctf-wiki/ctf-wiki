@@ -78,7 +78,7 @@ TAHCEIRPEHIESR
 
 ### 工具
 
-待补充。
+- https://www.qqxiuzi.cn/bianma/zhalanmima.php
 
 ## 曲路密码
 

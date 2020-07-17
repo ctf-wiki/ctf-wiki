@@ -10,7 +10,7 @@ Mainly refer to [Linux Kernel Exploitation] (https://github.com/ctf-wiki/ctf-wik
 The kernel is also a program that manages the data I/O requirements issued by the software, escaping these requirements into instructions, and handing them over to the CPU and other components in the computer. The kernel is the most basic part of modern operating systems.
 
 
-![](https://upload.wikimedia.org/wikipedia/commons/8/8f/Kernel_Layout.svg)
+![Kernel_Layout](./figure/Kernel_Layout.svg)
 
 
 
@@ -171,52 +171,53 @@ When a &#39;system call&#39;, `generate exception`, `peripheral generate interru
 
 
 `` `asm
-	 ENTRY(entry_SYSCALL_64)
+​	 ENTRY(entry_SYSCALL_64)
 
 /* SWAPGS_UNSAFE_STACK is a macro, x86 is directly defined as the swapgs command */
-	 SWAPGS_UNSAFE_STACK
+​	 SWAPGS_UNSAFE_STACK
 
-	
+​	
 
 /* Save the stack value and set the kernel stack */
-	 movq %rsp, PER_CPU_VAR(rsp_scratch)
+​	 movq %rsp, PER_CPU_VAR(rsp_scratch)
 
 	 movq PER_CPU_VAR(cpu_current_top_of_stack), %rsp
 
-	
 
-	
+​	
+
+​	
 
 /* Save the register value by push to form a pt_regs structure*/
-	/* Construct struct pt_regs on stack */
+​	/* Construct struct pt_regs on stack */
 
 	pushq  $__USER_DS      /* pt_regs->ss */
-
+	
 	pushq  PER_CPU_VAR(rsp_scratch)  /* pt_regs->sp */
-
+	
 	pushq  %r11             /* pt_regs->flags */
-
+	
 	pushq  $__USER_CS      /* pt_regs->cs */
-
+	
 	pushq  %rcx             /* pt_regs->ip */
-
+	
 	pushq  %rax             /* pt_regs->orig_ax */
 
 pushq% rdi / * pt_regs-&gt; at * /
 pushq% rsi / * pt_regs-&gt; and * /
-	pushq  %rdx             /* pt_regs->dx */
+​	pushq  %rdx             /* pt_regs->dx */
 Pushq %rcx tuichu /* pt_regs-&gt;cx */
-	pushq  $-ENOSYS        /* pt_regs->ax */
+​	pushq  $-ENOSYS        /* pt_regs->ax */
 
 	pushq  %r8              /* pt_regs->r8 */
 
 pushq% r9 / * pt_regs-&gt; r9 * /
-	pushq  %r10             /* pt_regs->r10 */
+​	pushq  %r10             /* pt_regs->r10 */
 
 	pushq  %r11             /* pt_regs->r11 */
-
+	
 	sub $(6*8), %rsp      /* pt_regs->bp, bx, r12-15 not saved */
-
+	
 	```
 
 4. Determine if it is x32\_abi by the assembly instruction.
@@ -239,14 +240,14 @@ As mentioned before, the kernel records the permissions of the process. More spe
 [source code] (https://code.woboq.org/linux/linux/include/linux/cred.h.html#cred) as follows:
 `` `asm
 struct cred {
-	atomic_t	usage;
+​	atomic_t	usage;
 
 #ifdef CONFIG_DEBUG_CREDENTIALS
 
 	atomic_t	subscribers;	/* number of processes subscribed */
-
+	
 	void		*put_addr;
-
+	
 	unsigned	magic;
 
 #define CRED_MAGIC	0x43736564
@@ -254,45 +255,45 @@ struct cred {
 #define CRED_MAGIC_DEAD	0x44656144
 
 #endif
-	kuid_t		uid;		/* real UID of the task */
+​	kuid_t		uid;		/* real UID of the task */
 
 	kgid_t		gid;		/* real GID of the task */
-
+	
 	kuid_t		suid;		/* saved UID of the task */
-
+	
 	kgid_t		sgid;		/* saved GID of the task */
-
+	
 	kuid_t		euid;		/* effective UID of the task */
-
+	
 	kgid_t		egid;		/* effective GID of the task */
 
 but_t fsuid; / * UID for VFS ops * /
-	kgid_t		fsgid;		/* GID for VFS ops */
+​	kgid_t		fsgid;		/* GID for VFS ops */
 
 	unsigned	securebits;	/* SUID-less security management */
-
+	
 	kernel_cap_t	cap_inheritable; /* caps our children can inherit */
-
+	
 	kernel_cap_t	cap_permitted;	/* caps we're permitted */
-
+	
 	kernel_cap_t	cap_effective;	/* caps we can actually use */
-
+	
 	kernel_cap_t	cap_bset;	/* capability bounding set */
-
+	
 	kernel_cap_t	cap_ambient;	/* Ambient capability set */
 
 #ifdef CONFIG_KEYS
 
 	unsigned char	jit_keyring;	/* default keyring to attach requested
-
+	
 					 * keys to */
-
+	
 	struct key __rcu *session_keyring; /* keyring inherited over fork */
-
+	
 	struct key	*process_keyring; /* keyring private to this process */
-
+	
 	struct key	*thread_keyring; /* keyring private to this thread */
-
+	
 	struct key	*request_key_auth; /* assumed request_key authority */
 
 #endif
@@ -301,12 +302,12 @@ but_t fsuid; / * UID for VFS ops * /
 	void		*security;	/* subjective LSM security */
 
 #endif
-	struct user_struct *user;	/* real user ID subscription */
+​	struct user_struct *user;	/* real user ID subscription */
 
 	struct user_namespace *user_ns; /* user_ns the caps and keyrings are relative to. */
-
+	
 	struct group_info *group_info;	/* supplementary groups for euid/fsgid */
-
+	
 	struct rcu_head	rcu;		/* RCU deletion hook */
 
 } __randomize_layout;
@@ -342,7 +343,7 @@ As you can see from the function name, execute `commit_creds(prepare_kernel_cred
 
 
 Executing `commit_creds(prepare_kernel_cred(0))` is also the most commonly used method of lifting. The addresses of both functions can be viewed in `/proc/kallsyms` (the older kernel version is `/proc/ksyms`.
-```bash
+​```bash
 
 post sudo grep commit_creds /proc/kallsyms 
 
@@ -396,56 +397,56 @@ Generally given the following three documents
 
 
 such as:
-	
+​	
 
 	```bash
 
 CISCN2017_babydriver [master]] ls
 babydriver.tar
 CISCN2017_babydriver [master ●] x baby driver.tar
-	boot.sh
+​	boot.sh
 
 	bzImage
-
+	
 	rootfs.cpio
 
 CISCN2017_babydriver [master]] ls
-	babydriver.tar  boot.sh  bzImage  rootfs.cpio
+​	babydriver.tar  boot.sh  bzImage  rootfs.cpio
 
 	CISCN2017_babydriver [master●] file bzImage
-
+	
 	bzImage: Linux kernel x86 boot executable bzImage, version 4.4.72 (atum@ubuntu) #1 SMP Thu Jun 15 19:52:50 PDT 2017, RO-rootFS, swap_dev 0x6, Normal VGA
-
+	
 	CISCN2017_babydriver [master●] file rootfs.cpio
-
+	
 	rootfs.cpio: gzip compressed data, last modified: Tue Jul  4 08:39:15 2017, max compression, from Unix, original size 2844672
 	CISCN2017_babydriver [master●] file boot.sh
-
+	
 	boot.sh: Bourne-Again shell script, ASCII text executable
 
 CISCN2017_babydriver [master ●] bat boot.sh
-	───────┬─────────────────────────────────────────────────────────────────────────────────
+​	───────┬─────────────────────────────────────────────────────────────────────────────────
 
 	       │ File: boot.sh
-
+	
 	───────┼─────────────────────────────────────────────────────────────────────────────────
-
+	
 	   1   │ #!/bin/bash
-
+	
 	   2   │ 
-
+	
 	   3   │ qemu-system-x86_64 -initrd rootfs.cpio -kernel bzImage -append 'console=ttyS0 ro
-
+	
 	       │ ot=/dev/ram oops=panic panic=1' -enable-kvm -monitor /dev/null -m 64M --nographi
-
+	
 	       │ c  -smp cores=1,threads=1 -cpu kvm64,+smep
-
+	
 	───────┴─────────────────────────────────────────────────────────────────────────────────
-
+	
 	```
 
 Explain the parameters that qemu starts:
-	
+​	
 
 - -initrd rootfs.cpio, using rootfs.cpio as the kernel-initiated file system
 - -kernel bzImage, using bzImage as the kernel image

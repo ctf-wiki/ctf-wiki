@@ -6,7 +6,7 @@
 ## Kernel
 kernel 也是一个程序，用来管理软件发出的数据 I/O 要求，将这些要求转义为指令，交给 CPU 和计算机中的其他组件处理，kernel 是现代操作系统最基本的部分。
 
-![](https://upload.wikimedia.org/wikipedia/commons/8/8f/Kernel_Layout.svg)
+![Kernel_Layout](./figure/Kernel_Layout.svg)
 
 kernel 最主要的功能有两点：
 
@@ -47,8 +47,9 @@ LKMs 的文件格式和用户态的可执行程序相同，Linux 下为 ELF，Wi
 - **insmod**: 讲指定模块加载到内核中
 - **rmmod**: 从内核中卸载指定模块
 - **lsmod**: 列出已经加载的模块
+- **modprobe**: 添加或删除模块，modprobe 在加载模块时会查找依赖关系
 
-> 大多数　kernel vulnerability 也出在 LKM 中。
+> 大多数　CTF 中的 kernel vulnerability 也出现在 LKM 中。
 
 
 ## syscall
@@ -56,7 +57,7 @@ LKMs 的文件格式和用户态的可执行程序相同，Linux 下为 ELF，Wi
 
 > 在 */usr/include/x86_64-linux-gnu/asm/unistd_64.h* 和 */usr/include/x86_64-linux-gnu/asm/unistd_32.h* 分别可以查看 64 位和 32 位的系统调用号。
 
-> 同时推荐一个很好用的网站 [Linux Syscall Reference](https://syscalls.kernelgrok.com)，可以查阅 32 位系统调用对应的寄存器含义以及源码。欢迎师傅们推荐 64 位类似功能的网站。
+> 同时推荐一个很好用的网站 [Linux Syscall Reference](https://syscalls.kernelgrok.com)，可以查阅 32 位系统调用对应的寄存器含义以及源码。64位系统调用可以查看 [Linux Syscall64 Reference](https://syscalls64.paolostivanin.com/)
 
 ## ioctl
 直接查看 man 手册
@@ -134,7 +135,8 @@ DESCRIPTION
 	pushq  %r11             /* pt_regs->r11 */
 	sub $(6*8), %rsp      /* pt_regs->bp, bx, r12-15 not saved */
 	```
-4. 通过汇编指令判断是否为 x32\_abi。
+
+4. 通过汇编指令判断是否为 `x32_abi`。
 5. 通过系统调用号，跳到全局变量 `sys_call_table` 相应位置继续执行系统调用。
 
 ### kernel space to user space
@@ -204,7 +206,9 @@ struct cred {
 - **int commit_creds(struct cred *new)**
 - **struct cred\* prepare_kernel_cred(struct task_struct\* daemon)**
 
-从函数名也可以看出，执行 `commit_creds(prepare_kernel_cred(0))` 即可获得 root 权限（root 的 uid，gid 均为 0）
+从函数名也可以看出，执行 `commit_creds(prepare_kernel_cred(0))` 即可获得 root 权限，0 表示 以 0 号进程作为参考准备新的 credentials。
+
+> 更多关于 `prepare_kernel_cred` 的信息可以参考 [源码](https://elixir.bootlin.com/linux/v4.6/source/kernel/cred.c#L594)
 
 执行 `commit_creds(prepare_kernel_cred(0))` 也是最常用的提权手段，两个函数的地址都可以在 `/proc/kallsyms` 中查看（较老的内核版本中是 `/proc/ksyms`。
 ```bash
@@ -274,7 +278,7 @@ ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
 	- -m 64M，设置虚拟 RAM 为 64M，默认为 128M
 	其他的选项可以通过 --help 查看。
 
-4. 本地写好 exploit 后，可以通过 base64 编码等方式把编译好的二进制文件保存到远程目录下，进而拿到 flag
+4. 本地写好 exploit 后，可以通过 base64 编码等方式把编译好的二进制文件保存到远程目录下，进而拿到 flag。同时可以使用 musl, uclibc 等方法减小 exploit 的体积方便传输。
 
 
 ## Reference:

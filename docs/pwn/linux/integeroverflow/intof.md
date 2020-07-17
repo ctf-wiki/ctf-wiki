@@ -1,11 +1,4 @@
 [EN](./intof.md) | [ZH](./intof-zh.md)
----
-
-typora-root-url: ../../../docs
-
----
-
-
 
 # integer overflow
 
@@ -310,6 +303,3 @@ The two cases in the above example have a commonality, that is, the formal param
 
 
 Title: [Pwnhub Story&#39;s Beginning Cal] (http://atum.li/2016/12/05/calc/)
-
-
-

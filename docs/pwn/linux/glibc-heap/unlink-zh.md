@@ -1,13 +1,10 @@
 [EN](./unlink.md) | [ZH](./unlink-zh.md)
----
-typora-root-url: ../../../docs
----
 
 # Unlink
 
 ## 原理
 
-我们在利用 unlink 所造成的漏洞时，其实就是对进行 unlink chunk 进行内存布局，然后借助 unlink 操作来达成修改指针的效果。
+我们在利用 unlink 所造成的漏洞时，其实就是对 chunk 进行内存布局，然后借助 unlink 操作来达成修改指针的效果。
 
 我们先来简单回顾一下 unlink 的目的与过程，其目的是把一个双向链表中的空闲块拿出来（例如 free 时和目前物理相邻的 free chunk 进行合并）。其基本的过程如下
 
@@ -365,7 +362,7 @@ Last Remainder: 0
 - 利用 unlink 修改 global[2] 为 &global[2]-0x18。
 - 利用编辑功能修改 global[0] 为 free@got 地址，同时修改 global[1] 为puts@got 地址，global[2] 为 atoi@got 地址。
 - 修改 `free@got` 为 `puts@plt` 的地址，从而当再次调用 `free` 函数时，即可直接调用 puts 函数。这样就可以泄漏函数内容。
-- free global[2]，即泄漏 puts@got 内容，从而知道 system 函数地址以及 libc 中 /bin/sh 地址。
+- free global[1]，即泄漏 puts@got 内容，从而知道 system 函数地址以及 libc 中 /bin/sh 地址。
 - 修改 `atoi@got` 为 system 函数地址，再次调用时，输入 /bin/sh 地址即可。
 
 代码如下

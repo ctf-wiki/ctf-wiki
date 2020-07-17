@@ -1,18 +1,19 @@
 [EN](./rsa_module_attack.md) | [ZH](./rsa_module_attack-zh.md)
-## Violence breakdown N
+
+## Bruteforcing Factors of N 
 
 
-### Attack conditions
+### Attack Prerequisite
 
 
-When the number of bits in N is less than 512, p and q can be obtained using a strategy of large integer decomposition.
+1. N is efficiently small (less than 512 bits, for example).
 
 
-### JarvisOJ - Medium RSA
+### JarvisOJ - Easy RSA
 
 
 
-Here we take JarvisOJ - Medium RSA as an example, the topic is as follows
+Here we take "JarvisOJ - Easy RSA" as an example, the challenge description is the following:
 
 
 &gt; Remember the veryeasy RSA? Is it not difficult? Then continue to look at this question, this question is not difficult.
@@ -23,55 +24,49 @@ Here we take JarvisOJ - Medium RSA as an example, the topic is as follows
 &gt; Submit format: `PCTF{clear text string}`
 
 
-It can be seen that our N is relatively small, here we directly use factordb to decompose, you can get
+We can see that our N is small. Here we can query the factors of N manually from [factordb](http://factordb.com/):
 
 
 $$
-
 322831561921859 = 13574881 \times 23781539
-
 $$
 
 
 
-Then we simply write the program as follows
+But a better solution is to utilize [factordb-python](https://github.com/ryosan-470/factordb-python) for factoring automation:
 
 
 ```python
+#!/usr/bin/env python3
+from Crypto.Util.number import inverse, long_to_bytes
+from factordb.factordb import FactorDB
 
-import gmpy2
+#--------data--------#
 
-p = 13574881
-
-q = 23781539
-
-n = p * q
-
+N = 322831561921859
 e = 23
 c = 0xdc2eeeb2782c
 
-Phin = (p - 1) * (q - 1)
-d = gmpy2.invert (e, phin)
-p = gmpy2.powmod(c, d, n)
+#--------factordb--------#
 
-tmp = hex(p)
+f = FactorDB(N)
+f.connect()
+factors = f.get_factor_list()
 
-print tmp, tmp[2:].decode('hex')
+#--------rsa--------#
 
+phi = 1
+for factor in factors:
+    phi *= factor - 1
+
+d = inverse(e, phi)
+m = pow(c, d, N)
+flag = long_to_bytes(m).decode()
+
+print(flag)
 ```
 
-
-
-Results are as follows
-
-
-```shell
-
-➜  Jarvis OJ-Basic-easyRSA git:(master) ✗ python exp.py
-
-0x3613559 3a5Y
-```
-
+Run the script and grab your flag.
 
 
 ## p &amp; q Improper decomposition N
@@ -96,9 +91,7 @@ First of all
 
 
 $$
-
 \frac{(p+q)^2}{4}-n=\frac{(p+q)^2}{4}-pq=\frac{(p-q)^2}{4}
-
 $$
 
 
@@ -349,10 +342,10 @@ Answer: One of these primes is very smooth.
 For more on some methods of decomposing the modulus N, please refer to https://en.wikipedia.org/wiki/Integer_factorization.
 
 
-## 模不素素
+## Non-coprime Moduli
 
 
-### Attack principle
+### Attack Prerequisite
 
 
 When there are two public keys, N is not mutually prime, we can obviously obtain the greatest common factor directly for these two numbers, and then directly obtain p, q, and then obtain the corresponding private key.
@@ -442,181 +435,118 @@ sH1R3_PRlME_1N_rsA_iS_4ulnEra5le
 Unzip the package.
 
 
-## Common mode attack
+## Common Modulus Attack
 
 
-### Attack conditions
+### Attack Prerequisite
 
 
-When two users use the same modulus N and different private keys, there is a common mode attack when encrypting the same plaintext message.
+1. Same modulus N is used multiple times to encrypt the same plaintext m (only e is different for each encryption).
+2. e1 and e2 are coprime.
 
+### Theory
 
-### Attack principle
-
-
-Let the public keys of the two users be $e_1$ and $e_2$, respectively, and they are mutually prime. The plain text message is $m$ and the ciphertext is:
-
+Suppose the public exponents of two users are $e_1$ and $e_2$, where $e_1$ and $e_2$ are coprime. If the plaintext $m$, then the ciphertext is:
 
 $$
-
-c_1 = m ^ {} e_1 \ N \\ way
-c_2 = m ^ {} e_2 \ N way
+c_1 = m^{e_1}\bmod N \\
+c_2 = m^{e_2}\bmod N
 $$
 
-
-
-When the attacker intercepts $c_1$ and $c_2$, the plaintext can be recovered. Use the extended Euclidean algorithm to find the two integers $r$ and $s$ of $re_1+se_2=1\bmod n$, which gives you:
-
+Attack could recover the plaintext if he/she obtained $c_1$ and $c_2$. Compute the two coefficients $r$ and $s$ of $re_1+se_2=1\bmod n$ using extended Euclidean Algorithm, we have:
 
 $$
-
 \begin{align*}
-
 c_{1}^{r}c_{2}^{s} &\equiv m^{re_1}m^{se_2}\bmod n\\
-
 &\equiv m^{(re_1+se_2)} \bmod n\\
-
 &\equiv m\bmod n
-
 \end{align*}
-
 $$
 
 
+### Jarvis OJ Crypto - very hard RSA
 
-### XMan Phase I Summer Camp Classroom Exercise
-
-
-Description of the topic:
-
-
-```
-
-{6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249,773}
-
-
-
-{6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249,839}
-
-
-
-message1 = 3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
-
-
-message2 = 5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
-```
-
-
-
-&gt; Source: XMan Summer Camp Class Exercise
-
-
-It can be seen that the N of the two public keys are the same, and the e of the two are mutually prime. Write a script to run:
-
+Check out the given source code:
 
 ```python
+#!/usr/bin/env python
 
-import gmpy2
+import random
 
-n = 6266565720726907265997241358331585417095726146341989755538017122981360742813498401533594757088796536341941659691259323065631249
+N = 0x00b0bee5e3e9e5a7e8d00b493355c618fc8c7d7d03b82e409951c182f398dee3104580e7ba70d383ae5311475656e8a964d380cb157f48c951adfa65db0b122ca40e42fa709189b719a4f0d746e2f6069baf11cebd650f14b93c977352fd13b1eea6d6e1da775502abff89d3a8b3615fd0db49b88a976bc20568489284e181f6f11e270891c8ef80017bad238e363039a458470f1749101bc29949d3a4f4038d463938851579c7525a69984f15b5667f34209b70eb261136947fa123e549dfff00601883afd936fe411e006e4e93d1a00b0fea541bbfc8c5186cb6220503a94b2413110d640c77ea54ba3220fc8f4cc6ce77151e29b3e06578c478bd1bebe04589ef9a197f6f806db8b3ecd826cad24f5324ccdec6e8fead2c2150068602c8dcdc59402ccac9424b790048ccdd9327068095efa010b7f196c74ba8c37b128f9e1411751633f78b7b9e56f71f77a1b4daad3fc54b5e7ef935d9a72fb176759765522b4bbc02e314d5c06b64d5054b7b096c601236e6ccf45b5e611c805d335dbab0c35d226cc208d8ce4736ba39a0354426fae006c7fe52d5267dcfb9c3884f51fddfdf4a9794bcfe0e1557113749e6c8ef421dba263aff68739ce00ed80fd0022ef92d3488f76deb62bdef7bea6026f22a1d25aa2a92d124414a8021fe0c174b9803e6bb5fad75e186a946a17280770f1243f4387446ccceb2222a965cc30b3929L
 
-e1 = 773
+def pad_even(x):
+    return ('', '0')[len(x)%2] + x
 
-
-e2 = 839
-
-
-
-message1 = 3453520592723443935451151545245025864232388871721682326408915024349804062041976702364728660682912396903968193981131553111537349
+e1 = 17
+e2 = 65537
 
 
-message2 = 5672818026816293344070119332536629619457163570036305296869053532293105379690793386019065754465292867769521736414170803238309535
-# s & t
+fi = open('flag.txt','rb')
+fo1 = open('flag.enc1','wb')
+fo2 = open('flag.enc2','wb')
 
-gcd, s, t = gmpy2.gcdext(e1, e2)
 
-if s < 0:
+data = fi.read()
+fi.close()
 
-    s = -s
+while (len(data)<512-11):
+    data  =  chr(random.randint(0,255))+data
 
-    message1 = gmpy2.invert(message1, n)
+data_num = int(data.encode('hex'),16)
 
-if t < 0:
+encrypt1 = pow(data_num,e1,N)
+encrypt2 = pow(data_num,e2,N)
 
-    t = -t
 
-    message2 = gmpy2.invert(message2, n)
+fo1.write(pad_even(format(encrypt1,'x')).decode('hex'))
+fo2.write(pad_even(format(encrypt2,'x')).decode('hex'))
 
-plain = gmpy2.powmod(message1, s, n) * gmpy2.powmod(message2, t, n) % n
-
-print plain
-
+fo1.close()
+fo2.close()
 ```
 
-
-
-get
-
-
-```shell
-
-➜  Xman-1-class-exercise git:(master) ✗ python exp.py
-
-1021089710312311910410111011910111610410511010710511610511511211111511510598108101125
-
-```
-
-
-
-At this time, you need to consider how the plaintext was converted to this number, which is generally a hexadecimal conversion, ASCII character conversion, or Base64 decryption. This should be an ASCII character conversion, and then we use the following code to get the flag
-
+Take a look at this part:
 
 ```python
-
-i = 0
-
-flag = ""
-
-plain = str(plain)
-
-while i < len(plain):
-
-    if plain[i] == '1':
-
-        flag += chr(int(plain[i:i + 3]))
-
-        i += 3
-
-    else:
-
-        flag += chr(int(plain[i:i + 2]))
-
-        i += 2
-
-print flag
-
+encrypt1 = pow(data_num,e1,N)
+encrypt2 = pow(data_num,e2,N)
 ```
 
+We can see that the same modulus N is used twice, and e1 and e2 are coprime. Proceed with common modulus attack:
 
+```python
+#!/usr/bin/env python3
+from Crypto.Util.number import long_to_bytes, bytes_to_long
+from sympy import gcdex
+from sys import exit
 
-The reason why 1 is used to determine whether it is three-bit length is because the flag is usually a plain text character, and the number starting with 1 is 1 or 2, which is generally an invisible character.
+#--------data--------#
 
+N = 0x00b0bee5e3e9e5a7e8d00b493355c618fc8c7d7d03b82e409951c182f398dee3104580e7ba70d383ae5311475656e8a964d380cb157f48c951adfa65db0b122ca40e42fa709189b719a4f0d746e2f6069baf11cebd650f14b93c977352fd13b1eea6d6e1da775502abff89d3a8b3615fd0db49b88a976bc20568489284e181f6f11e270891c8ef80017bad238e363039a458470f1749101bc29949d3a4f4038d463938851579c7525a69984f15b5667f34209b70eb261136947fa123e549dfff00601883afd936fe411e006e4e93d1a00b0fea541bbfc8c5186cb6220503a94b2413110d640c77ea54ba3220fc8f4cc6ce77151e29b3e06578c478bd1bebe04589ef9a197f6f806db8b3ecd826cad24f5324ccdec6e8fead2c2150068602c8dcdc59402ccac9424b790048ccdd9327068095efa010b7f196c74ba8c37b128f9e1411751633f78b7b9e56f71f77a1b4daad3fc54b5e7ef935d9a72fb176759765522b4bbc02e314d5c06b64d5054b7b096c601236e6ccf45b5e611c805d335dbab0c35d226cc208d8ce4736ba39a0354426fae006c7fe52d5267dcfb9c3884f51fddfdf4a9794bcfe0e1557113749e6c8ef421dba263aff68739ce00ed80fd0022ef92d3488f76deb62bdef7bea6026f22a1d25aa2a92d124414a8021fe0c174b9803e6bb5fad75e186a946a17280770f1243f4387446ccceb2222a965cc30b3929
+e1 = 17
+e2 = 65537
 
-flag
+with open("flag.enc1","rb") as f1, open("flag.enc2", "rb") as f2:
+    c1 = bytes_to_long(f1.read())
+    c2 = bytes_to_long(f2.read())
 
+#--------common modulus--------#
 
+r, s, gcd = gcdex(e1, e2)
+r = int(r)
+s = int(s)
 
-```shell
+# test if e1 and e2 are coprime
+if gcd != 1:
+    print("e1 and e2 must be coprime")
+    exit()
 
-➜  Xman-1-class-exercise git:(master) ✗ python exp.py
+m = (pow(c1, r, N) * pow(c2, s, N)) % N
+flag = long_to_bytes(m)
 
-flag{whenwethinkitispossible}
-
+print(flag)
 ```
 
+Run the script and grab your flag.
 
-
-## topic
-
-
-- Jarvis OJ very hard RSA

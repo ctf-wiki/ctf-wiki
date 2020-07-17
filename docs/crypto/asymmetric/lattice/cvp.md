@@ -93,7 +93,7 @@ The definition of HNP is as follows:
 Given the prime $p$, many $t \in \mathbb{F}_p$ and each corresponding $MSB_{l,p}(\alpha t)$, find the corresponding $\alpha$.
 
 
-* $MSB_{l,p}(x)$ means any integer $u that satisfies $\lvert (x \mod p) - u \rvert \le \frac{p}{2^{l+1}}$ $, which is approximately $1$ most significant digits of $x \mod p$.
+* $MSB_{l,p}(x)$ means any integer $u that satisfies $\lvert (x \mod p) - u \rvert \le \frac{p}{2^{l+1}}$ $, which is approximately $l$ most significant digits of $x \mod p$.
 
 
 According to the description in Reference 3, when $l \approx \log^{\frac{1}{2}}{p}$, the following algorithm can solve HNP:
