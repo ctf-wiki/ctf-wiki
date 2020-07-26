@@ -199,3 +199,44 @@ docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
     })
   })
 </script>
+
+<style>
+button[data-md-color-accent]> code {
+    background-color: var(--md-code-bg-color);
+    color: var(--md-accent-fg-color);
+  }
+button[data-md-color-primary] > code {
+    background-color: var(--md-code-bg-color);
+    color: var(--md-primary-fg-color);
+  }
+button[data-md-color-primary='white'] > code {
+    background-color: var(--md-primary-bg-color);
+    color: var(--md-primary-fg-color);
+  }
+button[data-md-color-accent],button[data-md-color-primary],button[data-md-color-scheme]{
+    width: 8.4rem;
+    margin-bottom: .4rem;
+    padding: 2.4rem .4rem .4rem;
+    transition: background-color .25s,opacity .25s;
+    border-radius: .2rem;
+    color: #fff;
+    font-size: .8rem;
+    text-align: left;
+    cursor: pointer;
+}
+button[data-md-color-accent]{
+  background-color: var(--md-accent-fg-color);
+}
+button[data-md-color-primary]{
+  background-color: var(--md-primary-fg-color);
+}
+button[data-md-color-scheme='default']{
+  background-color: hsla(0, 0%, 100%, 1);
+}
+button[data-md-color-scheme='slate']{
+  background-color: var(--md-default-bg-color);
+}
+button[data-md-color-accent]:hover, button[data-md-color-primary]:hover {
+    opacity: .75;
+}
+</style>
