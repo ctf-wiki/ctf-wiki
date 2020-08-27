@@ -11,7 +11,15 @@ $a_{i+n}=\sum\limits_{j=1}^{n}c_ja_{i+n-j}$
 
 既然线性空间是一个线性变换，我们可以得知这个线性变换为
 
-$$ \left[ \begin{matrix} 0   & 0      & \cdots & 0 & c_n     \\ 1   & 0      & \cdots & 0 & c_{n-1}  \\ 0   & 1      & \cdots & 0 & c_{n-2}\\\vdots & \vdots & \ddots & \vdots \\ 0   & 0      & \cdots & 1 & c_1     \\ \end{matrix} \right] $$
+$$ \begin{align*}
+&\left[
+  a_{i+1},a_{i+2},a_{i+3}, ...,a_{i+n}
+\right]\\\\=&\left[
+  a_{i},a_{i+1},a_{i+2}, ...,a_{i+n-1}
+\right]\left[ \begin{matrix} 0   & 0      & \cdots & 0 & c_n     \\ 1   & 0      & \cdots & 0 & c_{n-1}  \\ 0   & 1      & \cdots & 0 & c_{n-2}\\\vdots & \vdots & \ddots & \vdots \\ 0   & 0      & \cdots & 1 & c_1     \\ \end{matrix} \right]\\\\=&\left[
+  a_{0},a_{1},a_{2}, ...,a_{n-1}
+\right]\left[ \begin{matrix} 0   & 0      & \cdots & 0 & c_n     \\ 1   & 0      & \cdots & 0 & c_{n-1}  \\ 0   & 1      & \cdots & 0 & c_{n-2}\\\vdots & \vdots & \ddots & \vdots \\ 0   & 0      & \cdots & 1 & c_1     \\ \end{matrix} \right]^{i+1}
+\end{align*} $$
 
 进而，我们可以求得其特征多项式为
 
