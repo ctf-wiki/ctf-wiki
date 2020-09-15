@@ -15,7 +15,7 @@ The intermediate ROP mainly uses some clever Gadgets.
 In 64-bit programs, the first six arguments to a function are passed through registers, but most of the time, it&#39;s hard to find the gadgets for each register. At this time, we can take advantage of the gadgets in __libc_csu_init under x64. This function is used to initialize libc, and the general program will call the libc function, so this function will exist. Let&#39;s take a look at this function first (of course, there are some differences between different versions of this function)
 
 
-`` `asm
+```asm
 .text:00000000004005C0 ; void _libc_csu_init(void)
 
 .text:00000000004005C0                 public __libc_csu_init
