@@ -188,7 +188,7 @@ The integer decomposition library contains many algorithms for integer decomposi
 
 
 
-When installing, you may need to install the mfpr and mpc libraries separately.
+When installing, you may need to install the mpfr and mpc libraries separately.
 
 
 - `gmpy2.iroot(a, b)`, similar to `gmpy.root(a,b)`
