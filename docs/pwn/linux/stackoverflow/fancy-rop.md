@@ -1,6 +1,6 @@
 [EN](./fancy-rop.md) | [ZH](./fancy-rop-zh.md)
 
-# 花式栈溢技巧
+# 花式栈溢出技巧
 
 
 ## stack pivoting
