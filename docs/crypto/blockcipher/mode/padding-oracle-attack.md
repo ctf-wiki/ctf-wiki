@@ -40,9 +40,7 @@ Here we review the CBC
 
 
 $$
-
 C_i=E_K(P_i \oplus C_{i-1})\\
-
 IV = C_0
 $$
 
@@ -52,9 +50,7 @@ $$
 
 
 $$
-
 P_{i}=D_{K}(C_{i})\oplus C_{i-1}\\ C_{0}=IV
-
 $$
 
 
@@ -63,9 +59,9 @@ We mainly focus on decryption, we don&#39;t know IV and key here. Here we assume
 
 
 Suppose we intercepted ciphertext Y to obtain the last byte of ciphertext Y as an example for analysis. In order to obtain the content of Y, we first need to forge a piece of ciphertext F so that the last byte of the plaintext corresponding to Y can be modified. This is because if we construct the ciphertext `F|Y`, then the decryption Y is specifically
-$$
 
-P = D_K (Y) \ oplus F
+$$
+P = D_K (Y) \oplus F
 $$
 
 So modify the last byte of ciphertext F, $F_{n}$, to modify the last byte of the plaintext corresponding to Y. The process of getting the last byte of P is given below.
@@ -99,66 +95,41 @@ The encryption used in the program is AES CBC, which uses padding similar to PKC
 ```python
 
 def pad(msg):
-
     pad_length = 16-len(msg)%16
-
     return msg+chr(pad_length)*pad_length
-
-
 
 def unpad (msg):
     return msg[:-ord(msg[-1])]
-
 ```
 
 
 
 However, in each unpad, no detection is performed, but the unpad is directly executed.
 
-
 Among them, it should be noted that the function that interacts with the user each time is
-
 
 - `send_msg` , accepts the user&#39;s plaintext, encrypts it with a fixed `2jpmLoSsOlQrqyqE`, and outputs the encrypted result.
 - `recv_msg` , accepts the user&#39;s IV and ciphertext, decrypts the ciphertext, and returns. There will be different actions depending on the results returned.
 
 
 ```python
-
             msg = recv_msg().strip()
-
             if msg.startswith('exit-here'):
-
                 exit(0)
-
             elif msg.startswith('get-flag'):
-
                 send_msg(flag)
-
             elif msg.startswith('get-md5'):
-
                 send_msg(MD5.new(msg[7:]).digest())
-
             elif msg.startswith('get-time'):
-
                 send_msg(str(time.time()))
-
             elif msg.startswith('get-sha1'):
-
                 send_msg(SHA.new(msg[8:]).digest())
-
             elif msg.startswith('get-sha256'):
-
                 send_msg(SHA256.new(msg[10:]).digest())
-
             elif msg.startswith('get-hmac'):
-
                 send_msg(HMAC.new(msg[8:]).digest())
-
             else:
-
                 send_msg('command not found')
-
 ```
 
 
@@ -177,10 +148,9 @@ Here we briefly summarize the parts we have.
 
 
 First of all, since we know the result of the `Welcome!!` encryption, we can also control the IV in recv_msg, then according to the decryption process
+
 $$
-
 P_{i}=D_{K}(C_{i})\oplus C_{i-1}\\ C_{0}=IV
-
 $$
 
 If we enter the encrypted result of `Welcome!!` into recv_msg, the result of direct decryption is `(Welcome!!+&#39;\x07&#39;*7) xor iv`, if we ** properly control the decryption process In the iv** passed, then we can control the decrypted result. In other words, we can execute any of the commands described above**. Thus, we can also know the result of the `flag` decryption.
@@ -202,269 +172,147 @@ Bypass proof of work
 
 The specific code is as follows
 
-
 ```python
-
 #coding=utf-8
-
 from pwn import *
-
 import base64, time, random, string
-
 from Crypto.Cipher import AES
-
 from Crypto.Hash import SHA256, MD5
-
 #context.log_level = 'debug'
-
 if args['REMOTE']:
-
     p = remote('52.193.157.19', 9999)
-
 else:
-
     p = remote('127.0.0.1', 7777)
 
 
-
-
-
 def strxor(str1, str2):
-
     return ''.join([chr(ord(c1) ^ ord(c2)) for c1, c2 in zip(str1, str2)])
 
 
-
-
-
 def pad(msg):
-
     pad_length = 16 - len(msg) % 16
-
     return msg + chr(pad_length) * pad_length
 
 
-
-
-
-def unpad (msg):
-Return msg[:-ord(msg[-1])] # Remove the pad
-
-
+def unpad(msg):
+    return msg[:-ord(msg[-1])]  # remove pad
 
 
 def flipplain(oldplain, newplain, iv):
-
     """flip oldplain to new plain, return proper iv"""
-
     return strxor(strxor(oldplain, newplain), iv)
 
 
-
-
-
 def bypassproof():
-
     p.recvuntil('SHA256(XXXX+')
-
     lastdata = p.recvuntil(')', drop=True)
-
     p.recvuntil(' == ')
-
     digest = p.recvuntil('\nGive me XXXX:', drop=True)
 
-
-
     def proof(s):
-
         return SHA256.new(s + lastdata).hexdigest() == digest
 
-
-
-data = pwnlib.util.iters.mbruteforce (
+    data = pwnlib.util.iters.mbruteforce(
         proof, string.ascii_letters + string.digits, 4, method='fixed')
-
     p.sendline(data)
-
     p.recvuntil('Done!\n')
-
-
-
 
 
 iv_encrypt = '2jpmLoSsOlQrqyqE'
 
 
-
-
-
 def getmd5enc(i, cipher_flag, cipher_welcome):
-
     """return encrypt( md5( flag[7:7+i] ) )"""
-
     ## keep iv[7:] do not change, so decrypt won't change
-
-new_iv = flipplain (&quot;hitcon {&quot;. bright (16, &quot;x00&quot;), &quot;get-md5&quot; .light (
+    new_iv = flipplain("hitcon{".ljust(16, '\x00'), "get-md5".ljust(
         16, '\x00'), iv_encrypt)
-
     payload = new_iv + cipher_flag
-
     ## calculate the proper last byte number
-
     last_byte_iv = flipplain(
-
         pad("Welcome!!"),
-
         "a" * 15 + chr(len(cipher_flag) + 16 + 16 - (7 + i + 1)), iv_encrypt)
-
     payload += last_byte_iv + cipher_welcome
-
     p.sendline(base64.b64encode(payload))
-
     return p.recvuntil("\n", drop=True)
 
 
-
-
-
 def main():
-
     bypassproof()
 
-
-
     # result of encrypted Welcome!!
-
     cipher = p.recvuntil('\n', drop=True)
-
     cipher_welcome = base64.b64decode(cipher)[16:]
-
     log.info("cipher welcome is : " + cipher_welcome)
 
-
-
     # execute get-flag
-
     get_flag_iv = flipplain(pad("Welcome!!"), pad("get-flag"), iv_encrypt)
-
     payload = base64.b64encode(get_flag_iv + cipher_welcome)
-
     p.sendline(payload)
-
     cipher = p.recvuntil('\n', drop=True)
-
     cipher_flag = base64.b64decode(cipher)[16:]
-
     flaglen = len(cipher_flag)
-
     log.info("cipher flag is : " + cipher_flag)
 
-
-
     # get command not found cipher
-
     p.sendline(base64.b64encode(iv_encrypt + cipher_welcome))
-
     cipher_notfound = p.recvuntil('\n', drop=True)
 
-
-
     flag = ""
-
     # brute force for every byte of flag
-
     for i in range(flaglen - 7):
-
         md5_indexi = getmd5enc(i, cipher_flag, cipher_welcome)
-
-md5_indexi = base64.b64decode (md5_indexi) [16:]
+        md5_indexi = base64.b64decode(md5_indexi)[16:]
         log.info("get encrypt(md5(flag[7:7+i])): " + md5_indexi)
-
         for guess in range(256):
-
             # locally compute md5 hash
-
             guess_md5 = MD5.new(flag + chr(guess)).digest()
-
             # try to null out the md5 plaintext and execute a command
-
             payload = flipplain(guess_md5, 'get-time'.ljust(16, '\x01'),
-
                                 iv_encrypt)
-
             payload += md5_indexi
-
             p.sendline(base64.b64encode(payload))
-
             res = p.recvuntil("\n", drop=True)
-
             # if we receive the block for 'command not found', the hash was wrong
-
             if res == cipher_notfound:
-
                 print 'Guess {} is wrong.'.format(guess)
-
             # otherwise we correctly guessed the hash and the command was executed
-
             else:
-
                 print 'Found!'
-
                 flag += chr(guess)
-
                 print 'Flag so far:', flag
-
                 break
 
 
-
-
-
 if __name__ == "__main__":
-
     main()
 
-
-
 ```
-
 
 
 The final result is as follows
 
 
 ```Shell
-
 Flag so far: Paddin9_15_ve3y_h4rd__!!}\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10\x10
-
 ```
 
 
 
 ## 2017 HITCON Secret Server Revenge
 
-
-
 ### Description
 
 ```
-
 The password of zip is the flag of "Secret Server"
-
 ```
-
-
 
 ### Analysis
 
-
 This program continues with the above program, but this time a simple modification
-
 
 - The iv of the encryption algorithm is unknown, but can be derived from the message encrypted by Welcome.
 - The program has a 56-byte token.
 - The program can perform up to 340 operations, so the above blasting is naturally not feasible
-
 
 The general process of the program is as follows
 
@@ -473,12 +321,9 @@ After proof of work
 2. Send &quot;Welcome!!&quot; encrypted message
 3. In 340 operations, you need to guess the value of the token and then automatically output the flag.
 
-
 ### Vulnerability
 
-
 Of course, the loopholes in the previous topic still exist in this topic, namely
-
 
 1. Execute the given command arbitrarily
 2. Length truncation
@@ -518,390 +363,205 @@ The specific use ideas are as follows
 
 Here, the `sleep` in the code is commented out during the test. In order to speed up the interaction. Use the code as follows
 
-
 ```python
-
 from pwn import *
-
 import base64, time, random, string
-
 from Crypto.Cipher import AES
-
 from Crypto.Hash import SHA256, MD5
-
 #context.log_level = 'debug'
-
-
 
 p = remote('127.0.0.1', 7777)
 
 
-
-
-
 def strxor(str1, str2):
-
     return ''.join([chr(ord(c1) ^ ord(c2)) for c1, c2 in zip(str1, str2)])
 
 
-
-
-
 def pad(msg):
-
     pad_length = 16 - len(msg) % 16
-
     return msg + chr(pad_length) * pad_length
 
 
-
-
-
-def unpad (msg):
+def unpad(msg):
     return msg[:-ord(msg[-1])]  # remove pad
 
 
-
-
-
 def flipplain(oldplain, newplain, iv):
-
     """flip oldplain to new plain, return proper iv"""
-
     return strxor(strxor(oldplain, newplain), iv)
 
 
-
-
-
 def bypassproof():
-
     p.recvuntil('SHA256(XXXX+')
-
     lastdata = p.recvuntil(')', drop=True)
-
     p.recvuntil(' == ')
-
     digest = p.recvuntil('\nGive me XXXX:', drop=True)
 
-
-
     def proof(s):
-
         return SHA256.new(s + lastdata).hexdigest() == digest
 
-
-
-data = pwnlib.util.iters.mbruteforce (
+    data = pwnlib.util.iters.mbruteforce(
         proof, string.ascii_letters + string.digits, 4, method='fixed')
-
     p.sendline(data)
 
 
-
-
-
 def sendmsg(iv, cipher):
-
     payload = iv + cipher
-
     payload = base64.b64encode(payload)
-
     p.sendline(payload)
 
 
-
-
-
 def recvmsg():
-
     data = p.recvuntil("\n", drop=True)
-
     data = base64.b64decode(data)
-
     return data[:16], data[16:]
 
 
-
-
-
 def getmd5enc(i, cipher_token, cipher_welcome, iv):
-
     """return encrypt( md5( token[:i+1] ) )"""
-
     ## keep iv[7:] do not change, so decrypt msg[7:] won't change
-
-get_md5_iv = flipplain (&quot;token:&quot; .lit (16, &quot;x00&quot;), &quot;get-md5&quot;.
+    get_md5_iv = flipplain("token: ".ljust(16, '\x00'), "get-md5".ljust(
         16, '\x00'), iv)
-
     payload = cipher_token
-
     ## calculate the proper last byte number
-
     last_byte_iv = flipplain(
-
         pad("Welcome!!"),
-
         "a" * 15 + chr(len(cipher_token) + 16 + 16 - (7 + i + 1)), iv)
-
     payload += last_byte_iv + cipher_welcome
-
     sendmsg(get_md5_iv, payload)
-
     return recvmsg()
 
 
-
-
-
 def get_md5_token_indexi(iv_encrypt, cipher_welcome, cipher_token):
-
     md5_token_idxi = []
-
     for i in range(len(cipher_token) - 7):
-
         log.info("idx i: {}".format(i))
-
         _, md5_indexi = getmd5enc(i, cipher_token, cipher_welcome, iv_encrypt)
-
-assert (only (md5_indexi) == 32)        # remove the last 16 byte for padding
-
+        assert (len(md5_indexi) == 32)
+        # remove the last 16 byte for padding
         md5_token_idxi.append(md5_indexi[:16])
-
     return md5_token_idxi
 
 
-
-
-
 def doin(unpadcipher, md5map, candidates, flag):
-
     if unpadcipher in md5map:
-
         lastbyte = md5map[unpadcipher]
-
     else:
-
         lastbyte = 0
-
     if flag == 0:
-
         lastbyte ^= 0x80
-
     newcandidates = []
-
     for x in candidates:
-
         for c in range(256):
-
             if MD5.new(x + chr(c)).digest()[-1] == chr(lastbyte):
-
                 newcandidates.append(x + chr(c))
-
     candidates = newcandidates
-
     print candidates
-
     return candidates
 
 
-
-
-
 def main():
-
     bypassproof()
 
-
-
     # result of encrypted Welcome!!
-
     iv_encrypt, cipher_welcome = recvmsg()
-
     log.info("cipher welcome is : " + cipher_welcome)
 
-
-
     # execute get-token
-
     get_token_iv = flipplain(pad("Welcome!!"), pad("get-token"), iv_encrypt)
-
     sendmsg(get_token_iv, cipher_welcome)
-
     _, cipher_token = recvmsg()
-
-token_len = only (cipher_token)
+    token_len = len(cipher_token)
     log.info("cipher token is : " + cipher_token)
 
-
-
     # get command not found cipher
-
     sendmsg(iv_encrypt, cipher_welcome)
-
     _, cipher_notfound = recvmsg()
 
-
-
     # get encrypted(token[:i+1]),57 times
-
     md5_token_idx_list = get_md5_token_indexi(iv_encrypt, cipher_welcome,
-
                                               cipher_token)
-
     # get md5map for each unpadsize, 209-17 times
-
     # when upadsize>208, it will unpad ciphertoken
-
     # then we can reuse
-
-md5map = dict ()
+    md5map = dict()
     for unpadsize in range(17, 209):
-
         log.info("get unpad size {} cipher".format(unpadsize))
-
-get_md5_iv = flipplain (&quot;token:&quot; .lit (16, &quot;x00&quot;), &quot;get-md5&quot;.
+        get_md5_iv = flipplain("token: ".ljust(16, '\x00'), "get-md5".ljust(
             16, '\x00'), iv_encrypt)
-
         ## padding 16*11 bytes
-
         padding = 16 * 11 * "a"
-
         ## calculate the proper last byte number, only change the last byte
-
         ## set last_byte_iv = iv_encrypted[:15] | proper byte
-
         last_byte_iv = flipplain(
-
             pad("Welcome!!"),
-
             pad("Welcome!!")[:15] + chr(unpadsize), iv_encrypt)
-
         cipher = cipher_token + padding + last_byte_iv + cipher_welcome
-
         sendmsg(get_md5_iv, cipher)
-
         _, unpadcipher = recvmsg()
-
         md5map[unpadcipher] = unpadsize
 
-
-
     # reuse encrypted(token[:i+1])
-
     for i in range(209, 256):
-
         target = md5_token_idx_list[56 - (i - 209)]
-
         md5map[target] = i
 
-
-
     candidates = [""]
-
     # get the byte token[i], only 56 byte
-
     for i in range(token_len - 7):
-
         log.info("get token[{}]".format(i))
-
-get_md5_iv = flipplain (&quot;token:&quot; .lit (16, &quot;x00&quot;), &quot;get-md5&quot;.
+        get_md5_iv = flipplain("token: ".ljust(16, '\x00'), "get-md5".ljust(
             16, '\x00'), iv_encrypt)
-
         ## padding 16*11 bytes
-
         padding = 16 * 11 * "a"
-
         cipher = cipher_token + padding + iv_encrypt + md5_token_idx_list[i]
-
         sendmsg(get_md5_iv, cipher)
-
         _, unpadcipher = recvmsg()
-
         # already in or md5[token[:i]][-1]='\x00'
-
         if unpadcipher in md5map or unpadcipher == cipher_notfound:
-
             candidates = doin(unpadcipher, md5map, candidates, 1)
-
         else:
-
-log.info (&quot;unpad size 1-16&quot;)
+            log.info("unpad size 1-16")
             # flip most significant bit of last byte to move it in a good range
-
             cipher = cipher[:-17] + strxor(cipher[-17], '\x80') + cipher[-16:]
-
             sendmsg(get_md5_iv, cipher)
-
             _, unpadcipher = recvmsg()
-
             if unpadcipher in md5map or unpadcipher == cipher_notfound:
-
                 candidates = doin(unpadcipher, md5map, candidates, 0)
-
             else:
-
                 log.info('oh my god,,,, it must be in...')
-
                 exit()
-
     print len(candidates)
-
     # padding 0x01
-
     candidates = filter(lambda x: x[-1] == chr(0x01), candidates)
-
     # only 56 bytes
-
     candidates = [x[:-1] for x in candidates]
-
     print len(candidates)
-
     assert (len(candidates[0]) == 56)
 
-
-
     # check-token
-
     check_token_iv = flipplain(
-
         pad("Welcome!!"), pad("check-token"), iv_encrypt)
-
     sendmsg(check_token_iv, cipher_welcome)
-
     p.recvuntil("Give me the token!\n")
-
     p.sendline(base64.b64encode(candidates[0]))
-
     print p.recv()
-
-
 
     p.interactive()
 
 
-
-
-
 if __name__ == "__main__":
-
     main()
-
 ```
-
 
 
 The effect is as follows
 
 
 ```shell
-
 ...
-
 79
-
 1
-
 hitcon {uNp @ d_M3th0D_i5_am4Z1n9!}
 ```
 
@@ -914,17 +574,11 @@ This topic is still very interesting, the title is described as follows
 
 
 ```
-
 Haven't you ever thought that GCM mode is overcomplicated and there must be a simpler way to achieve Authenticated Encryption? Here it is!
-
-
 
 Server: aes-128-tsb.hackable.software 1337
 
-
-
 server.py
-
 ```
 
 
@@ -950,11 +604,8 @@ In addition, we can also find that there is a problem with the unpad in the titl
 
 def unpad (msg):
     if not msg:
-
         return ''
-
     return msg[:-ord(msg[-1])]
-
 ```
 
 
@@ -963,34 +614,20 @@ In the beginning, the very straightforward idea is to enter 0 for the lengths of
 
 
 ```python
-
 def tsb_encrypt(aes, msg):
-
     msg = pad(msg)
-
     iv = get_random_bytes(16)
-
-prev_pt = iv
+    prev_pt = iv
     prev_ct = iv
-
     ct = ''
-
     for block in split_by(msg, 16) + [iv]:
-
         ct_block = xor(block, prev_pt)
-
         ct_block = aes.encrypt(ct_block)
-
         ct_block = xor(ct_block, prev_ct)
-
         ct += ct_block
-
         prev_pt = block
-
         prev_ct = ct_block
-
     return iv + ct
-
 ```
 
 
@@ -1005,10 +642,10 @@ Let&#39;s assume that $P_0=iv, C_0=iv$, then
 So, assuming the message length is 16, similar to the length of the `gimme_flag` padding we want to get, then
 
 
-$ C_1 = IV \ oplus E (IV \ oplus P_1) $
+$C_1 = IV \oplus E (IV \oplus P_1)$
 
 
- $C_2=C_1 \oplus E(P_1 \oplus IV)$
+$C_2=C_1 \oplus E(P_1 \oplus IV)$
 
 
 
@@ -1026,43 +663,29 @@ Conversely, if we send `iv+c+iv` to the server, we can always bypass the `tsb_de
 
 
 ```python
-
 def tsb_decrypt(aes, msg):
-
     iv, msg = msg[:16], msg[16:]
-
-prev_pt = iv
+    prev_pt = iv
     prev_ct = iv
-
-pt = &#39;&#39;
+    pt = ''
     for block in split_by(msg, 16):
-
         pt_block = xor(block, prev_ct)
-
         pt_block = aes.decrypt(pt_block)
-
         pt_block = xor(pt_block, prev_pt)
-
         pt += pt_block
-
         prev_pt = pt_block
-
         prev_ct = block
-
-pt, mac = pt [: - 16], pt [-16:]
+    pt, mac = pt[:-16], pt[-16:]
     if mac != iv:
-
         raise CryptoError()
-
-return unpad (pt)
+    return unpad(pt)
 ```
-
 
 
 Then at this point, the message decrypted by the server is
 
 
-$ unpad (IV \ oplus D (C_1 \ oplus IV)) $
+$unpad (IV \oplus D (C_1 \oplus IV))$
 
 
 ### Get the last byte of the plaintext
@@ -1070,96 +693,54 @@ $ unpad (IV \ oplus D (C_1 \ oplus IV)) $
 
 We can consider controlling the D decrypted message as a constant value, such as all zeros, ie `C1=IV`, then we can enumerate the last byte of the IV from 0 to 255, get $IV \oplus D(C_1 \oplus IV) The last byte of $ is also 0~255. Only when it is 1~15, after the `unpad` operation, the message length is not 0. Therefore, we can count which numbers cause the length to be non-zero and enumerate as 1 and the remaining flags to 0.
 
-
 ```python
-
 def getlast_byte(iv, block):
-
-iv_pre = iv [: 15]
-iv_last = words (iv [-1])
+    iv_pre = iv[:15]
+    iv_last = ord(iv[-1])
     tmp = []
-
     print('get last byte')
-
     for i in range(256):
-
         send_data('')
-
-iv = iv_pre + chr (i)
+        iv = iv_pre + chr(i)
         tmpblock = block[:15] + chr(i ^ ord(block[-1]) ^ iv_last)
-
         payload = iv + tmpblock + iv
-
         send_data(payload)
-
         length, data = recv_data()
-
         if 'Looks' in data:
-
             tmp.append(1)
-
         else:
-
             tmp.append(0)
-
     last_bytes = []
-
     for i in range(256):
-
         if tmp == xor_byte_map[i][0]:
-
             last_bytes.append(xor_byte_map[i][1])
-
     print('possible last byte is ' + str(last_bytes))
-
     return last_bytes
-
 ```
-
 
 
 In addition, we can get all the possible cases of the last byte at the beginning of the table, recorded in xor_byte_map.
 
-
 ```python
-
 """
-
 every item is a pair [a,b]
-
 a is the xor list
-
 b is the idx which is zero when xored
-
 """
 xor_byte_map = []
-
 for i in range(256):
-
     a = []
-
     b = 0
-
     for j in range(256):
-
         tmp = i ^ j
-
         if tmp > 0 and tmp <= 15:
-
             a.append(1)
-
         else:
-
             a.append(0)
-
         if tmp == 0:
-
             b = j
-
     xor_byte_map.append([a, b])
-
 ```
-
 
 
 By comparing this table, we can know what is possible with the last byte.
@@ -1172,71 +753,41 @@ After obtaining the last byte of the plaintext, we can use the unpad vulnerabili
 
 
 ```python
-
 def dec_block(iv, block):
-
     last_bytes = getlast_byte(iv, block)
 
-
-
-iv_pre = iv [: 15]
-iv_last = words (iv [-1])
+    iv_pre = iv[:15]
+    iv_last = ord(iv[-1])
     print('try to get plain')
-
-plain0 = &#39;&#39;
+    plain0 = ''
     for last_byte in last_bytes:
-
-plain0 = &#39;&#39;
+        plain0 = ''
         for i in range(15):
-
             print 'idx:', i
-
-tag = false
+            tag = False
             for j in range(256):
-
                 send_data(plain0 + chr(j))
-
                 pad_size = 15 - i
-
                 iv = iv_pre + chr(pad_size ^ last_byte)
-
                 tmpblock = block[:15] + chr(
-
                     pad_size ^ last_byte ^ ord(block[-1]) ^ iv_last
-
                 )
-
                 payload = iv + tmpblock + iv
-
                 send_data(payload)
-
                 length, data = recv_data()
-
                 if 'Looks' not in data:
-
                     # success
-
-plain0 + = chr (j)
+                    plain0 += chr(j)
                     tag = True
-
                     break
-
             if not tag:
-
                 break
-
         # means the last byte is ok
-
         if plain0 != '':
-
             break
-
     plain0 += chr(iv_last ^ last_byte)
-
     return plain0
-
 ```
-
 
 
 ### Decrypt the specified plaintext
@@ -1244,26 +795,15 @@ plain0 + = chr (j)
 
 This is relatively simple, we hope to use this to get the ciphertext of `gimme_flag`
 
-
 ```python
-
     print('get the cipher of flag')
-
     gemmi_iv1 = xor(pad('gimme_flag'), plain0)
-
     gemmi_c1 = xor(gemmi_iv1, cipher0)
-
     payload = gemmi_iv1 + gemmi_c1 + gemmi_iv1
-
     send_data('gimme_flag')
-
     send_data(payload)
-
     flag_len, flag_cipher = recv_data()
-
 ```
-
-
 
 Where plain0 and cipher0 are the clear ciphertext pairs we obtained for AES encryption, excluding the two exclusive ORs before and after.
 
@@ -1273,42 +813,24 @@ Where plain0 and cipher0 are the clear ciphertext pairs we obtained for AES encr
 
 This point is actually achieved by the function of decrypting any encrypted block, as follows
 
-
 ```python
-
     print('the flag cipher is ' + flag_cipher.encode('hex'))
-
     flag_cipher = split_by(flag_cipher, 16)
 
-
-
     print('decrypt the blocks one by one')
-
     plain = ''
-
     for i in range(len(flag_cipher) - 1):
-
         print('block: ' + str(i))
-
         if i == 0:
-
             plain += dec_block(flag_cipher[i], flag_cipher[i + 1])
-
         else:
-
-iv = plain [-16:]
+            iv = plain[-16:]
             cipher = xor(xor(iv, flag_cipher[i + 1]), flag_cipher[i])
-
             plain += dec_block(iv, cipher)
-
             pass
-
         print('now plain: ' + plain)
-
     print plain
-
 ```
-
 
 
 Think about why the ciphertext operation after the second block will be different.
@@ -1322,9 +844,6 @@ The complete code references the ctf-challenge repository.
 
 - [Packet Encryption Mode] (https://en.wikipedia.org/wiki/%E5%88%86%E7%BB%84%E5%AF%86%E7%A0%81%E5%B7%A5% E4%BD%9C%E6%A8%A1%E5%BC%8F)
 - https://en.wikipedia.org/wiki/Padding_oracle_attack
-
 - http://netifera.com/research/poet/PaddingOraclesEverywhereEkoparty2010.pdf
-
 - https://ctftime.org/writeup/7975
-
 - https://ctftime.org/writeup/7974
