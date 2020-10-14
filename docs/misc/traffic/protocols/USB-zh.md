@@ -1,7 +1,7 @@
 [EN](./USB.md) | [ZH](./USB-zh.md)
 ### USB
 
-**USB详述**: [http://www.usb.org/developers/hidpage/Hut1_12v2.pdf](http://www.usb.org/developers/hidpage/Hut1_12v2.pdf)
+**USB详述**: [https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf](https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf)
 
 - 鼠标协议
 
@@ -146,7 +146,7 @@ tshark.exe -r example.pcap -T fields -e usb.capdata //如果想导入usbdata.txt
 
 鼠标数据包的数据长度为 `4` 个字节，第一个字节代表按键，当取 `0x00` 时，代表没有按键、为0x01时，代表按左键，为 `0x02` 时，代表当前按键为右键。第二个字节可以看成是一个 `signed byte` 类型，其最高位为符号位，当这个值为正时，代表鼠标水平右移多少像素，为负时，代表水平左移多少像素。第三个字节与第二字节类似，代表垂直上下移动的偏移。
 
-我翻阅了大量的 `USB` 协议的文档，在这里我们可以找到这个值与具体键位的对应关系：<http://www.usb.org/developers/hidpage/Hut1_12v2.pdf>
+我翻阅了大量的 `USB` 协议的文档，在这里我们可以找到这个值与具体键位的对应关系：<https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf>
 
 `usb keyboard` 的映射表 根据这个映射表将第三个字节取出来，对应对照表得到解码：
 
@@ -449,7 +449,7 @@ JHAWLZKEWXHNCDHSLWBAQJTUQZDXZQPF
 - https://www.cnblogs.com/ECJTUACM-873284962/p/9473808.html
 - https://blog.csdn.net/songze_lee/article/details/77658094
 - https://wiki.wireshark.org/USB
-- http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+- https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
 - https://www.wireshark.org/docs/man-pages/tshark.html
 - http://www.practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-autokey-cipher/
 - https://hackfun.org/2017/02/22/CTF%E4%B8%AD%E9%82%A3%E4%BA%9B%E8%84%91%E6%B4%9E%E5%A4%A7%E5%BC%80%E7%9A%84%E7%BC%96%E7%A0%81%E5%92%8C%E5%8A%A0%E5%AF%86/
