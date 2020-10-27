@@ -53,7 +53,7 @@ LKMs 的文件格式和用户态的可执行程序相同，Linux 下为 ELF，Wi
 
 
 ## syscall
-系统调用，指的是用户空间的程序向操作系统内核请求需要更高权限的服务，比如 IO 操作或者进程间通信。系统调用提供用户程序与操作系统间的接口，部分库函数（如 scanf，puts 等 IO 相关的函数实际上是对系统调用的封装 （read 和 write)）。
+系统调用，指的是用户空间的程序向操作系统内核请求需要更高权限的服务，比如 IO 操作或者进程间通信。系统调用提供用户程序与操作系统间的接口，部分库函数（如 scanf，puts 等 IO 相关的函数实际上是对系统调用的封装（read 和 write））。
 
 > 在 */usr/include/x86_64-linux-gnu/asm/unistd_64.h* 和 */usr/include/x86_64-linux-gnu/asm/unistd_32.h* 分别可以查看 64 位和 32 位的系统调用号。
 
@@ -210,7 +210,7 @@ struct cred {
 
 > 更多关于 `prepare_kernel_cred` 的信息可以参考 [源码](https://elixir.bootlin.com/linux/v4.6/source/kernel/cred.c#L594)
 
-执行 `commit_creds(prepare_kernel_cred(0))` 也是最常用的提权手段，两个函数的地址都可以在 `/proc/kallsyms` 中查看（较老的内核版本中是 `/proc/ksyms`。
+执行 `commit_creds(prepare_kernel_cred(0))` 也是最常用的提权手段，两个函数的地址都可以在 `/proc/kallsyms` 中查看（较老的内核版本中是 `/proc/ksyms`）。
 ```bash
 post sudo grep commit_creds /proc/kallsyms 
 [sudo] m4x 的密码：
@@ -229,7 +229,7 @@ ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
 
 > canary, dep, PIE, RELRO 等保护与用户态原理和作用相同
 
-- smep: Supervisor Mode Execution Protection，当处理器处于 `ring0` 模式，执行 `用户空间` 的代码会触发页错误。（在 arm 中该保护称为 `PXN`)
+- smep: Supervisor Mode Execution Protection，当处理器处于 `ring0` 模式，执行 `用户空间` 的代码会触发页错误。（在 arm 中该保护称为 `PXN`）
 
 - smap: Superivisor Mode Access Protection，类似于 smep，通常是在访问数据时。
 

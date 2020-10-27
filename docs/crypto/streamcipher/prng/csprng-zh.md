@@ -3,7 +3,7 @@
 
 ## 介绍
 
-密码学安全伪随机数生成器（cryptographically secure pseudo-random number generator，CSPRNG），也称为密码学伪随机数生成器（cryptographic pseudo-random number generator，CPRNG)，是一种特殊的伪随机数生成器。它需要满足满足一些必要的特性，以便于适合于密码学应用。
+密码学安全伪随机数生成器（cryptographically secure pseudo-random number generator，CSPRNG），也称为密码学伪随机数生成器（cryptographic pseudo-random number generator，CPRNG），是一种特殊的伪随机数生成器。它需要满足满足一些必要的特性，以便于适合于密码学应用。
 
 密码学的很多方面都需要随机数
 

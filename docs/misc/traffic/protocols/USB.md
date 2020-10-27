@@ -3,7 +3,7 @@
 
 
 
-**USB Details**: [http://www.usb.org/developers/hidpage/Hut1_12v2.pdf] (http://www.usb.org/developers/hidpage/Hut1_12v2.pdf)
+**USB Details**: [https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf](https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf)
 
 
 - Mouse protocol
@@ -246,7 +246,7 @@ The data length of the keyboard packet is `8` bytes, the keystroke information i
 The data length of the mouse data packet is `4` bytes. The first byte represents the button. When the value is 0x00, it means there is no button. When it is 0x01, it means the left button. When it is `0x02`, it represents the current The button is the right button. The second byte can be thought of as a `signed byte` type, with the highest bit being the sign bit. When this value is positive, it represents how many pixels the mouse is horizontally shifted to the right. When it is negative, it represents how many pixels are horizontally shifted to the left. The third byte is similar to the second byte and represents the offset of the vertical up and down movement.
 
 
-I looked through a lot of documentation for the `USB` protocol, where we can find the correspondence between this value and the specific key: <http://www.usb.org/developers/hidpage/Hut1_12v2.pdf>
+I looked through a lot of documentation for the `USB` protocol, where we can find the correspondence between this value and the specific key: <https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf>
 
 
 The mapping table of `usb keyboard` takes the third byte according to this mapping table, and the corresponding comparison table is decoded:
@@ -814,7 +814,7 @@ The last `flag` is `flag{JHAWLZKEWXHNCDHSLWBAQJTUQZDXZQPF}`
 
 - https://wiki.wireshark.org/USB
 
-- http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+- https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
 
 - https://www.wireshark.org/docs/man-pages/tshark.html
 

@@ -133,7 +133,7 @@ $$
 
 #### gmpy2
 
-安装时，可能会需要自己另行安装 mfpr 与 mpc 库。
+安装时，可能会需要自己另行安装 mpfr 与 mpc 库。
 
 - `gmpy2.iroot(a, b)`，类似于 `gmpy.root(a,b)`
 

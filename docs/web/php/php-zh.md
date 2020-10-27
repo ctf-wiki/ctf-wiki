@@ -740,7 +740,7 @@ python GitHacker.py http://www.openssl.org/.git/
 
 Mac OS 中会包含有 `.DS_Store` 文件，包含文件名等信息。
 
-[利用工具 ds＿store＿exp](https://github.com/lijiejie/ds_store_exp)
+[利用工具 ds\_store\_exp](https://github.com/lijiejie/ds_store_exp)
 
 ```shell
 python ds_store_exp.py http://hd.zj.qq.com/themes/galaxyw/.DS_Store

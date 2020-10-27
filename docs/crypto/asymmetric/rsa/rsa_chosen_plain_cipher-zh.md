@@ -378,7 +378,97 @@ if __name__ == "__main__":
     print long_to_hex(low - low % 256 + send('B', back)).decode('hex')
 ```
 
+## RSA parity oracle variant
+### 原理
+如果oracle的参数会在一定时间、运行周期后改变，或者网络不稳定导致会话断开、重置，二分法就不再适用了，为了减少错误，应当考虑逐位恢复。
+要恢复明文的第2低位，考虑
+
+$$\{(c(2^{-1*e_1}\mod N_1))^{d_1}\mod N_1\}\pmod2\equiv m*2^{-1}$$
+
+$$
+\begin{aligned}
+&m*(2^{-1}\mod N_1)\mod2\\
+&=(\displaystyle\sum_{i=0}^{logm-1}a_i*2^i)*2^{-1}\mod2\\
+&=[2(\displaystyle\sum_{i=1}^{logm-1}a_i*2^{i-1})+a_0*2^0]*2^{-1}\mod 2\\
+&=\displaystyle\sum_{i=1}^{logm-1}a_i*2^{i-1}+a_0*2^0*2^{-1}\mod2\\
+&\equiv a_1+a_0*2^0*2^{-1}\equiv y\pmod2
+\end{aligned}
+$$
+
+$$
+y-(a_0*2^0)*2^{-1}=(m*2^{-1}\mod2)-(a_0*2^0)*2^{-1}\equiv a_1\pmod2
+$$
+
+类似的
+
+$$\{(c(2^{-2*e_2}\mod N_2))^{d_2}\mod N_2\}\pmod2\equiv m*2^{-2}$$
+
+$$
+\begin{aligned}
+&m*(2^{-2}\mod N_2)\mod2\\
+&=(\displaystyle\sum_{i=0}^{logm-1}a_i*2^i)*2^{-2}\mod2\\
+&=[2^2(\displaystyle\sum_{i=2}^{logm-1}a_i*2^{i-2})+a_1*2^1+a_0*2^0]*2^{-2}\mod 2\\
+&=\displaystyle\sum_{i=2}^{logm-1}a_i*2^{i-1}+(a_1*2^1+a_0*2^0)*2^{-2}\mod2\\
+&\equiv a_2+(a_1*2^1+a_0*2^0)*2^{-2}\equiv y\pmod2
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+    &y-(a_1*2^1+a_0*2^0)*2^{-2}\\
+    &=(m*2^{-2}\mod2)-(a_1*2^1+a_0*2^0)*2^{-2}\equiv a_2\pmod2
+\end{aligned}
+$$
+
+我们就可以使用前i-1位与oracle的结果来得到第i位。注意这里的$2^{-1}$是$2^1$模$N_1$的逆元。所以对剩下的位，有
+
+$$
+\begin{aligned}
+    &\{(c(2^{-i*e_i}\mod N_i))^{d_i}\mod N_i\}\pmod2\equiv m*2^{-i}\\
+    &a_i\equiv (m*2^{-i}\mod2) -\sum_{j=0}^{i-1}a_j*2^j\pmod2,i=1,2,...,logm-1
+\end{aligned}
+$$
+
+其中$2^{-i}$是$2^i$模$N_i$的逆元。
+
+就可以逐步恢复原文所有的位信息了。这样的时间复杂度为$O(logm)$。
+
+exp:
+```python
+from Crypto.Util.number import *
+mm = bytes_to_long(b'12345678')
+l = len(bin(mm)) - 2
+
+def genkey():
+    while 1:
+        p = getPrime(128)
+        q = getPrime(128)
+        e = getPrime(32)
+        n = p * q
+        phi = (p - 1) * (q - 1)
+        if GCD(e, phi) > 1:
+            continue
+        d = inverse(e, phi)
+        return e, d, n
+
+e, d, n = genkey()
+cc = pow(mm, e, n)
+f = str(pow(cc, d, n) % 2)
+
+for i in range(1, l):
+    e, d, n = genkey()
+    cc = pow(mm, e, n)
+    ss = inverse(2**i, n)
+    cs = (cc * pow(ss, e, n)) % n
+    lb = pow(cs, d, n) % 2
+    bb = (lb - (int(f, 2) * ss % n)) % 2
+    f = str(bb) + f
+    assert(((mm >> i) % 2) == bb)
+print(long_to_bytes(int(f, 2)))
+```
+
 ## 参考
 
 - https://crypto.stackexchange.com/questions/11053/rsa-least-significant-bit-oracle-attack
 - https://pastebin.com/KnEUSMxp
+- https://github.com/ashutosh1206/Crypton

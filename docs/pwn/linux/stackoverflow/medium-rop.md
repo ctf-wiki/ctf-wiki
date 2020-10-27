@@ -15,7 +15,7 @@ The intermediate ROP mainly uses some clever Gadgets.
 In 64-bit programs, the first six arguments to a function are passed through registers, but most of the time, it&#39;s hard to find the gadgets for each register. At this time, we can take advantage of the gadgets in __libc_csu_init under x64. This function is used to initialize libc, and the general program will call the libc function, so this function will exist. Let&#39;s take a look at this function first (of course, there are some differences between different versions of this function)
 
 
-`` `asm
+```asm
 .text:00000000004005C0 ; void _libc_csu_init(void)
 
 .text:00000000004005C0                 public __libc_csu_init
@@ -107,7 +107,7 @@ Here we can use the following points
 - From 0x000000000040060D to 0x0000000000400614, we can control the relationship between rbx and rbp as rbx+1 = rbp, so we will not execute loc_400600, and we can continue to execute the following assembler. Here we can simply set rbx=0, rbp=1.
 
 
-###example
+### Example
 
 
 Here we take the steamed rice step by step to learn the level5 of the linux linux_x64 article as an example. First check the security of the program
@@ -359,7 +359,7 @@ Need to say that in the above libc_csu_init we mainly use the following register
 In fact, the tail of libc_csu_init can control other registers by offset. Among them, 0x000000000040061A is the normal starting address, ** can see that we can control the rbp register at 0x000000000040061f, and can control the rsi register at 0x0000000000400621. ** And if you want to understand this part in depth, you need to have a more thorough understanding of each field in the assembly instructions. as follows.
 
 
-`` `asm
+```asm
 gef➤  x/5i 0x000000000040061A
 
    0x40061a <__libc_csu_init+90>:	pop    rbx
@@ -571,7 +571,7 @@ It should be noted that the attack condition 2 indicates that the program itself
 The simplest way to execute the write function is to construct a system call.
 
 
-`` `asm
+```asm
 pop rdi; right # socket
 pop rsi; ret # buffer
 pop rdx; ret # length
@@ -611,7 +611,7 @@ We can get the address of the write through the plt table.
 It should be noted that rdx is just a variable we use to output the length of the program byte, as long as it is not 0. Generally speaking, the rdx in the program will not be zero. But in order to better control the program output, we still try to control this value. But in the program
 
 
-`` `asm
+```asm
 pop rdx; ret
 
 ```
@@ -827,7 +827,7 @@ At this point, the attacker can already control the output function, so the atta
 ### Examples
 
 
-Here we take [HCTF2016&#39;s issuer missing] (https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/brop/hctf2016-brop) as an example. The basic idea is as follows
+Here we take [HCTF2016&#39;s issuer missing](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/brop/hctf2016-brop) as an example. The basic idea is as follows
 
 
 #### Determine stack overflow length
@@ -1189,7 +1189,7 @@ with open('code', 'wb') as f:
 Finally, we write the leaked content to a file. It should be noted that if the leak is &quot;&quot;, then we have encountered &#39;\x00&#39;, because puts is the output string, the string is terminated with &#39;\x00&#39;. Then use ida to open the binary mode, first change the base address of the program to 0x400000 in edit-&gt;segments-&gt;rebase program, and then find the offset 0x560, as follows
 
 
-`` `asm
+```asm
 seg000: 0000000000400560 db 0FFh
 seg000: 0000000000400561 pcs 25h; %
 seg000: 0000000000400562 db 0B2h;
@@ -1204,7 +1204,7 @@ seg000: 0000000000400565 db 0
 Then press c to convert the data here into assembly instructions as follows
 
 
-`` `asm
+```asm
 seg000: 0000000000400560; -------------------------------------------------- -------------------------
 seg000: 0000000000400560 jmp qword for cs: 601018h
 seg000: 0000000000400566; -------------------------------------------------- -------------------------

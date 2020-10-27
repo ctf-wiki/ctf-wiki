@@ -26,6 +26,11 @@ window.addEventListener('load', function() {
     if (a){
         document.body.setAttribute('data-md-color-accent',a);
     }
+    var s = localStorage.getItem('data-md-color-scheme');
+    if (s) {
+        document.body.setAttribute('data-md-color-scheme', s);
+    }
+
 }, false);
 
 //添加空格

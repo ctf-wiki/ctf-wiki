@@ -1,5 +1,6 @@
 [EN](./fancy-rop.md) | [ZH](./fancy-rop-zh.md)
-#花式溢溢技巧
+
+# 花式栈溢出技巧
 
 
 ## stack pivoting
@@ -26,7 +27,7 @@ In addition, there are several requirements for using socket pivoting.
 - You can control the sp pointer. In general, the control stack pointer will use ROP, and the common control stack pointers are usually gadgets.
 
 
-`` `asm
+```asm
 pop rsp/esp
 
 ```
@@ -36,7 +37,7 @@ pop rsp/esp
 Of course, there will be some other postures. For example, gadgets in libc_csu_init, we can get the control rsp pointer by offset. The above is normal, the bottom is offset.
 
 
-`` `asm
+```asm
 gef➤  x/7i 0x000000000040061a
 
 0x40061a <__libc_csu_init+90>:	pop    rbx
@@ -77,7 +78,7 @@ In addition, there are more advanced fake frames.
 - heap. But this requires us to be able to reveal the heap address.
 
 
-###example
+### example
 
 
 #### Example 1
@@ -198,7 +199,7 @@ Then the last part of our payload changes how to set esp, you can know
 So the last step we need to execute is
 
 
-`` `asm
+```asm
 sub esp,0x28
 
 jmp esp
@@ -746,7 +747,7 @@ It can be seen that the program is 64-bit, mainly enabling Canary protection and
 
 
 
-####分析程序
+#### 分析程序
 
 
 Ida look
@@ -860,7 +861,7 @@ But if we directly use the stack overflow to output the contents of the address 
 We download the breakpoint from the memset function and read the corresponding content as follows
 
 
-`` `asm
+```asm
 gef➤  c
 
 Continuing.
@@ -964,7 +965,7 @@ Next, we determine the offset of the string read by argv[0].
 First break the breakpoint at the main function entry, as follows
 
 
-`` `asm
+```asm
 gef➤  b *0x00000000004006D0
 
 Breakpoint 1 at 0x4006d0
@@ -1034,7 +1035,7 @@ It can be seen that 0x00007fffffffe00b points to the program name, which is natu
 Also, according to the assembly code
 
 
-`` `asm
+```asm
 .text:00000000004007E0                 push    rbp
 
 .text:00000000004007E1                 mov     esi, offset aHelloWhatSYour ; "Hello!\nWhat's your name? "
@@ -1064,7 +1065,7 @@ Also, according to the assembly code
 We can make sure that the starting address of the string we read is actually the rsp before calling `__IO_gets`, so we put the breakpoint at the call, as follows
 
 
-`` `asm
+```asm
 gef➤  b *0x000000000040080E
 
 Breakpoint 2 at 0x40080e
@@ -1232,7 +1233,7 @@ babypie: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically lin
 ```
 
 64-bit dynamically linked file with PIE protection and stack overflow protection enabled
-####分析程序
+#### 分析程序
 Looking at IDA, it is easy to find the vulnerability point. There are obvious stack overflow vulnerabilities in both inputs. It should be noted that before the input, the program clears the stack space, so we cannot pass the print stack. Information comes to the base of leak binary or libc
 ```C
 
@@ -1270,7 +1271,7 @@ __int64 sub_960 ()
 
 
 Also found that the program gives a function that can directly get the shell
-`` `asm
+```asm
 .text:0000000000000A3E getshell        proc near
 
 .text:0000000000000A3E ; __unwind { .text:0000000000000A3E                 push    rbp
@@ -1303,7 +1304,7 @@ There is an output immediately after the first read, and read does not add \0 to
 In order to control the return address for the second overflow, we choose leak canary. It can be calculated that the length of the first read is 0x30 - 0x8 + 1 (+ 1 is to cover the value of the lowest bit of canary is non-zero, printf uses % s, when the end of \0 is encountered, when the canary low is over non-zero, canary can be printed by printf)
 
 
-`` `asm
+```asm
 Breakpoint 1, 0x0000557c8443aa08 in ?? ()
 
 LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
@@ -1402,7 +1403,7 @@ Canary In the rbp - 0x8 position, it can be seen that the lower bit of the canar
 With canary, you can overwrite the return address with the second stack overflow, and control the return address to the getshell function. Let&#39;s first look at the return address when there is no overflow.
 
 
-`` `asm
+```asm
 0x000055dc43694a1e in ?? ()
 
 LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
@@ -1620,7 +1621,7 @@ It is better that the program does not have a canary. Naturally, we can easily c
 We know the basic execution flow of the program through the basic execution flow (executable part) of ELF. At the same time, we find that there are two function return addresses on the stack.
 
 
-`` `asm
+```asm
 pwndbg> stack 25
 
 00:0000│ rsp  0x7fffffffe398 —▸ 0x7ffff7a2d830 (__libc_start_main+240) ◂— mov    edi, eax
@@ -1993,7 +1994,3 @@ $ ls
 exp.py  gets
 
 ```
-
-
-
-### Title
