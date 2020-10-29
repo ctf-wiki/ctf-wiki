@@ -27,6 +27,7 @@ $ sudo ln -s /usr/mipsel-linux-gnu /etc/qemu-binfmt/mipsel
 ![image-20201028011257573](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028011258.png)
 在看该函数里的 read， a2 为读取的 size 大小，将被赋值为 0x38，buf 为位于 $sp + 0x18 的位置，明显的一个栈溢出漏洞，且能覆盖返回地址。
 通过计算，可以计算出 padding 为 36
+
 ```
 60 - 0x18 = 36 
 ```
@@ -116,8 +117,8 @@ p.interactive()
 找 gadget 我们可以使用 mipsrop.py 这个 ida 插件进行。
 
 由于 mips 流水指令集的特点，存在 cache incoherency 的特性，需要调用 sleep 或者其他函数将数据区刷新到当前指令区中去，才能正常执行 shellcode。为了找到更多的 gadget，以及这是一个 demo ，所有我们在 libc 里查找
-### 1. 调用 sleep 函数
-  调用 sleep 函数之前，我们需要先找到对 a0 进行设置的 gadget
+#### 1. 调用 sleep 函数
+调用 sleep 函数之前，我们需要先找到对 a0 进行设置的 gadget
 ```
 Python>mipsrop.find("li $a0, 1")
 ----------------------------------------------------------------------------------------------------------------
@@ -140,8 +141,6 @@ Python>mipsrop.find("li $a0, 1")
 ----------------------------------------------------------------------------------------------------------------
 Found 14 matching gadgets
 ```
-
-
 
 例如我们这里选择了  0x00E2660 处的 gadget
 
@@ -214,7 +213,7 @@ Python>mipsrop.find("mov $t9, $s3")
 .text:00094A14                 addiu   $sp, 0x38
 ```
 通过这个 gadget 我们先跳到 s3 的寄存器执行 sleep ，再通过控制的 ra 寄存器进行下一步操作
-### 2. jmp shellcode
+#### 2. jmp shellcode
 
   下一步就是跳到 shellcode ，要跳到shellcode 我们先需要获得栈地址
 
