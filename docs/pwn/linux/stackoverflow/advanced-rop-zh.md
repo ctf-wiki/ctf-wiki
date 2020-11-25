@@ -55,7 +55,7 @@
     -   stage 2 测试控制程序执行dl_resolve函数，并且相应参数指向正常write函数的plt时的执行效果。
     -   stage 3 测试控制程序执行dl_resolve函数，并且相应参数指向伪造的write函数的plt时的执行效果。
 2.  利用roputils中已经集成好的工具来实现攻击，从而获取shell。
-3.  利用pwntools中集成好的模块实现共计，从而获取shell。
+3.  利用pwntools中集成好的模块实现攻击，从而获取shell。
 
 #### 正常攻击
 
