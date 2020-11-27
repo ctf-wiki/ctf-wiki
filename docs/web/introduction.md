@@ -69,7 +69,7 @@ Due to the appearance of clickjacking, there is a way of anti-frame nesting, bec
 The following code is the most common example of preventing frame nesting:
 
 
-`` `js
+```js
 if(top.location!=location)
 
     top.location=self.location;
