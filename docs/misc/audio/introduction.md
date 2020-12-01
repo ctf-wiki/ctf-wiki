@@ -149,7 +149,7 @@ Similar to the LSB steganography in image steganography, there is also a corresp
 &gt; 2015 Guangdong Strong Net Cup - Little Apple
 
 
-Just use `slienteye`.
+Just use `silenteye`.
 
 
 ![](./figure/2.jpg)
