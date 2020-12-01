@@ -88,7 +88,7 @@ Base64 && Base32 后得到 flag。
 
 > 2015 广东省强网杯 - Little Apple
 
-直接使用 `slienteye` 即可。
+直接使用 `silenteye` 即可。
 
 ![](./figure/2.jpg)
 
