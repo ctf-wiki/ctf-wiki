@@ -1,0 +1,5079 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="CTF Wiki">
+      
+      
+      
+        <link rel="canonical" href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/advanced-rop/ret2vdso/">
+      
+      
+        <meta name="author" content="CTF Wiki Team">
+      
+      <link rel="shortcut icon" href="../../../../..">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.6">
+    
+    
+      
+        <title>Ret2vdso - CTF Wiki</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.19753c6b.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.196e0c26.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#ffffff">
+        
+      
+    
+    
+    
+      
+        
+        <link href="https://gstatic.loli.net" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Sans:300,400,400i,700%7CSource+Code+Pro&display=fallback">
+        <style>body,input{font-family:"Noto Sans",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Source Code Pro",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../../../../_static/css/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="preference" data-md-color-primary="white" data-md-color-accent="red">
+      
+        <script>matchMedia("(prefers-color-scheme: dark)").matches&&document.body.setAttribute("data-md-color-scheme","slate")</script>
+      
+  
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ret2vdso" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-header-nav__button md-logo" aria-label="CTF Wiki">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            CTF Wiki
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              Ret2vdso
+            
+          </span>
+        </div>
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 GitHub 仓库" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ctf-wiki/ctf-wiki
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../.." class="md-tabs__link">
+        Introduction
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../../misc/introduction-zh/" class="md-tabs__link">
+        Misc
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../../crypto/introduction-zh/" class="md-tabs__link">
+        Crypto
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../../web/introduction-zh/" class="md-tabs__link">
+        Web
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../../assembly/x86-x64/readme-zh/" class="md-tabs__link">
+        Assembly
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../../executable/elf/structure/basic-info-zh/" class="md-tabs__link">
+        Executable
+      </a>
+    </li>
+  
+
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../../reverse/introduction-zh/" class="md-tabs__link">
+        Reverse Engineering
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+    
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../readme-zh/" class="md-tabs__link">
+        Pwn
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../../android/basic_develop/basic_develop-zh/" class="md-tabs__link">
+        Android
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+      
+      <a href="../../../../../ics/ctfs-zh/" class="md-tabs__link">
+        ICS
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://ctf-wiki.github.io/ctf-wiki/" title="CTF Wiki" class="md-nav__button md-logo" aria-label="CTF Wiki">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+
+    </a>
+    CTF Wiki
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/ctf-wiki/ctf-wiki/" title="前往 GitHub 仓库" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ctf-wiki/ctf-wiki
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1" >
+    <label class="md-nav__link" for="nav-1">
+      Introduction
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Introduction" data-md-level="1">
+      <label class="md-nav__title" for="nav-1">
+        <span class="md-nav__icon md-icon"></span>
+        Introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../.." class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../introduction/history-zh/" class="md-nav__link">
+      CTF History
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../introduction/mode-zh/" class="md-nav__link">
+      Introduction to CTF Competition Form
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../introduction/content-zh/" class="md-nav__link">
+      CTF Contest Content
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../introduction/experience-zh/" class="md-nav__link">
+      Offline Attack and Defense Experience Summary
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../introduction/cgc-zh/" class="md-nav__link">
+      CGC Super Challenge
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../introduction/resources-zh/" class="md-nav__link">
+      Learning Resources
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" >
+    <label class="md-nav__link" for="nav-2">
+      Misc
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Misc" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        <span class="md-nav__icon md-icon"></span>
+        Misc
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/introduction-zh/" class="md-nav__link">
+      Miscellaneous Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/recon-zh/" class="md-nav__link">
+      Information Gathering Technology
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-3" type="checkbox" id="nav-2-3" >
+    <label class="md-nav__link" for="nav-2-3">
+      Code Analysis
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Code Analysis" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-3">
+        <span class="md-nav__icon md-icon"></span>
+        Code Analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/encode/communication-zh/" class="md-nav__link">
+      Commonly Used Coding in the Communication Field
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/encode/computer-zh/" class="md-nav__link">
+      Computer Related Coding
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/encode/modern-zh/" class="md-nav__link">
+      Commonly Used Encodings in the Real World
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/prefix-zh/" class="md-nav__link">
+      Forensic Steganography
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-5" type="checkbox" id="nav-2-5" >
+    <label class="md-nav__link" for="nav-2-5">
+      Image Analysis
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Image Analysis" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-5">
+        <span class="md-nav__icon md-icon"></span>
+        Image Analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/picture/introduction-zh/" class="md-nav__link">
+      Introduction to Image Analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/picture/png-zh/" class="md-nav__link">
+      PNG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/picture/jpg-zh/" class="md-nav__link">
+      JPG
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/picture/gif-zh/" class="md-nav__link">
+      GIF
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-6" type="checkbox" id="nav-2-6" >
+    <label class="md-nav__link" for="nav-2-6">
+      Traffic Packet Analysis
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Traffic Packet Analysis" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-6">
+        <span class="md-nav__icon md-icon"></span>
+        Traffic Packet Analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/introduction-zh/" class="md-nav__link">
+      Introduction to Traffic Packet Analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/fix-zh/" class="md-nav__link">
+      PCAP File Repairing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-6-3" type="checkbox" id="nav-2-6-3" >
+    <label class="md-nav__link" for="nav-2-6-3">
+      Protocol Analysis
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Protocol Analysis" data-md-level="3">
+      <label class="md-nav__title" for="nav-2-6-3">
+        <span class="md-nav__icon md-icon"></span>
+        Protocol Analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/protocols/README-zh/" class="md-nav__link">
+      Overview of Protocol Analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/protocols/Wireshark-zh/" class="md-nav__link">
+      Wireshark
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/protocols/HTTP-zh/" class="md-nav__link">
+      HTTP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/protocols/HTTPS-zh/" class="md-nav__link">
+      HTTPS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/protocols/FTP-zh/" class="md-nav__link">
+      FTP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/protocols/DNS-zh/" class="md-nav__link">
+      DNS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/protocols/WIFI-zh/" class="md-nav__link">
+      WIFI
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/protocols/USB-zh/" class="md-nav__link">
+      USB
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/traffic/data-zh/" class="md-nav__link">
+      Data Extraction
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-7" type="checkbox" id="nav-2-7" >
+    <label class="md-nav__link" for="nav-2-7">
+      Compressed Package Analysis
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Compressed Package Analysis" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-7">
+        <span class="md-nav__icon md-icon"></span>
+        Compressed Package Analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/archive/zip-zh/" class="md-nav__link">
+      ZIP Format
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/archive/rar-zh/" class="md-nav__link">
+      RAR Format
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/audio/introduction-zh/" class="md-nav__link">
+      Audio Steganography
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-9" type="checkbox" id="nav-2-9" >
+    <label class="md-nav__link" for="nav-2-9">
+      Disk Memory Analysis
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Disk Memory Analysis" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-9">
+        <span class="md-nav__icon md-icon"></span>
+        Disk Memory Analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/disk-memory/introduction-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/disk-memory/problem-zh/" class="md-nav__link">
+      Title
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2-10" type="checkbox" id="nav-2-10" >
+    <label class="md-nav__link" for="nav-2-10">
+      Other
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Other" data-md-level="2">
+      <label class="md-nav__title" for="nav-2-10">
+        <span class="md-nav__icon md-icon"></span>
+        Other
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../misc/other/pyc-zh/" class="md-nav__link">
+      pyc File
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" >
+    <label class="md-nav__link" for="nav-3">
+      Crypto
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Crypto" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        <span class="md-nav__icon md-icon"></span>
+        Crypto
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/introduction-zh/" class="md-nav__link">
+      Introduction to Cryptography
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-2" type="checkbox" id="nav-3-2" >
+    <label class="md-nav__link" for="nav-3-2">
+      Basic Mathematics
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Basic Mathematics" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-2">
+        <span class="md-nav__icon md-icon"></span>
+        Basic Mathematics
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/basic/introduction-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-3" type="checkbox" id="nav-3-3" >
+    <label class="md-nav__link" for="nav-3-3">
+      Classical Cryptography
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Classical Cryptography" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-3">
+        <span class="md-nav__icon md-icon"></span>
+        Classical Cryptography
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/classical/introduction-zh/" class="md-nav__link">
+      Introduction to Classical Cryptography
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/classical/monoalphabetic-zh/" class="md-nav__link">
+      Single table Substitution Cipher
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/classical/polyalphabetic-zh/" class="md-nav__link">
+      Multi-table Substitution Cipher
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/classical/others-zh/" class="md-nav__link">
+      Other Types of Cipher
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/classical/summary-zh/" class="md-nav__link">
+      Summary
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-4" type="checkbox" id="nav-3-4" >
+    <label class="md-nav__link" for="nav-3-4">
+      Stream Cipher
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Stream Cipher" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-4">
+        <span class="md-nav__icon md-icon"></span>
+        Stream Cipher
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/intro-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-4-2" type="checkbox" id="nav-3-4-2" >
+    <label class="md-nav__link" for="nav-3-4-2">
+      Pseudo Random Number Generator
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Pseudo Random Number Generator" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-2">
+        <span class="md-nav__icon md-icon"></span>
+        Pseudo Random Number Generator
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/prng/intro-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/prng/csprng-zh/" class="md-nav__link">
+      Cryptographic Security Pseudo-random Number Generator
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/prng/problem-zh/" class="md-nav__link">
+      Challenge Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-4-3" type="checkbox" id="nav-3-4-3" >
+    <label class="md-nav__link" for="nav-3-4-3">
+      Linear Congruence Generator
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Linear Congruence Generator" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-3">
+        <span class="md-nav__icon md-icon"></span>
+        Linear Congruence Generator
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/lcg/intro-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/lcg/challenge-zh/" class="md-nav__link">
+      Example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-4-4" type="checkbox" id="nav-3-4-4" >
+    <label class="md-nav__link" for="nav-3-4-4">
+      Feedback Shift Register
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Feedback Shift Register" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-4">
+        <span class="md-nav__icon md-icon"></span>
+        Feedback Shift Register
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/fsr/intro-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/fsr/lfsr-zh/" class="md-nav__link">
+      Linear Feedback Shift Register
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/fsr/nfsr-zh/" class="md-nav__link">
+      Nonlinear Feedback Shift Register
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-4-5" type="checkbox" id="nav-3-4-5" >
+    <label class="md-nav__link" for="nav-3-4-5">
+      Special Stream Cipher
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Special Stream Cipher" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-4-5">
+        <span class="md-nav__icon md-icon"></span>
+        Special Stream Cipher
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/streamcipher/special/rc4-zh/" class="md-nav__link">
+      RC4
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-5" type="checkbox" id="nav-3-5" >
+    <label class="md-nav__link" for="nav-3-5">
+      Block Cipher
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Block Cipher" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-5">
+        <span class="md-nav__icon md-icon"></span>
+        Block Cipher
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/introduction-zh/" class="md-nav__link">
+      Introduction to Block Cipher
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/arx-operations-zh/" class="md-nav__link">
+      ARX
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/des-zh/" class="md-nav__link">
+      DES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/idea-zh/" class="md-nav__link">
+      IDEA
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/aes-zh/" class="md-nav__link">
+      AES
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/simon-speck-zh/" class="md-nav__link">
+      Simon and Speck
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-5-7" type="checkbox" id="nav-3-5-7" >
+    <label class="md-nav__link" for="nav-3-5-7">
+      Group Mode
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Group Mode" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-5-7">
+        <span class="md-nav__icon md-icon"></span>
+        Group Mode
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/introduction-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/padding-zh/" class="md-nav__link">
+      Padding Methods
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/ecb-zh/" class="md-nav__link">
+      ECB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/cbc-zh/" class="md-nav__link">
+      CBC
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/pcbc-zh/" class="md-nav__link">
+      PCBC
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/cfb-zh/" class="md-nav__link">
+      CFB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/ofb-zh/" class="md-nav__link">
+      OFB
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/ctr-zh/" class="md-nav__link">
+      CTR
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/blockcipher/mode/padding-oracle-attack-zh/" class="md-nav__link">
+      Padding Oracle Attack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-6" type="checkbox" id="nav-3-6" >
+    <label class="md-nav__link" for="nav-3-6">
+      Asymmetric Cryptography
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Asymmetric Cryptography" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-6">
+        <span class="md-nav__icon md-icon"></span>
+        Asymmetric Cryptography
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/introduction-zh/" class="md-nav__link">
+      Introduction to Asymmetric Cryptography
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-6-2" type="checkbox" id="nav-3-6-2" >
+    <label class="md-nav__link" for="nav-3-6-2">
+      RSA
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="RSA" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-6-2">
+        <span class="md-nav__icon md-icon"></span>
+        RSA
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_theory-zh/" class="md-nav__link">
+      RSA Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_module_attack-zh/" class="md-nav__link">
+      Modulo-related Attacks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_e_attack-zh/" class="md-nav__link">
+      Public Key Index Related Attacks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_d_attack-zh/" class="md-nav__link">
+      Private Key d Related Attacks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_coppersmith_attack-zh/" class="md-nav__link">
+      Coppersmith Related Attacks
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_chosen_plain_cipher-zh/" class="md-nav__link">
+      Chosen Plain Cipher Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_side_channel-zh/" class="md-nav__link">
+      Side Channel Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_pkcs_attack-zh/" class="md-nav__link">
+      Bleichenbacher Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/rsa/rsa_complex-zh/" class="md-nav__link">
+      Challenge Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/knapsack/knapsack-zh/" class="md-nav__link">
+      Knapsack Cipher
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-6-4" type="checkbox" id="nav-3-6-4" >
+    <label class="md-nav__link" for="nav-3-6-4">
+      Discrete Log Correlation
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Discrete Log Correlation" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-6-4">
+        <span class="md-nav__icon md-icon"></span>
+        Discrete Log Correlation
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/discrete-log/discrete-log-zh/" class="md-nav__link">
+      Discrete Logarithm
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/discrete-log/elgamal-zh/" class="md-nav__link">
+      Elgamal
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/discrete-log/ecc-zh/" class="md-nav__link">
+      ECC
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-6-5" type="checkbox" id="nav-3-6-5" >
+    <label class="md-nav__link" for="nav-3-6-5">
+      Lattice-based Cryptography
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Lattice-based Cryptography" data-md-level="3">
+      <label class="md-nav__title" for="nav-3-6-5">
+        <span class="md-nav__icon md-icon"></span>
+        Lattice-based Cryptography
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/lattice/overview-zh/" class="md-nav__link">
+      Lattice Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/lattice/introduction-zh/" class="md-nav__link">
+      Introduction to Lattices
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/lattice/lattice-reduction-zh/" class="md-nav__link">
+      Lattice-based Algorithm
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/asymmetric/lattice/cvp-zh/" class="md-nav__link">
+      CVP
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-7" type="checkbox" id="nav-3-7" >
+    <label class="md-nav__link" for="nav-3-7">
+      Hash Function
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Hash Function" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-7">
+        <span class="md-nav__icon md-icon"></span>
+        Hash Function
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/hash/introduction-zh/" class="md-nav__link">
+      Introduction to the Hash Function
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/hash/md5-zh/" class="md-nav__link">
+      MD5
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/hash/sha1-zh/" class="md-nav__link">
+      SHA1
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/hash/fnv-zh/" class="md-nav__link">
+      FNV
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/hash/attack-zh/" class="md-nav__link">
+      Hash Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/hash/complex-zh/" class="md-nav__link">
+      Challenge Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-8" type="checkbox" id="nav-3-8" >
+    <label class="md-nav__link" for="nav-3-8">
+      Digital Signature
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Digital Signature" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-8">
+        <span class="md-nav__icon md-icon"></span>
+        Digital Signature
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/signature/introduction-zh/" class="md-nav__link">
+      Introduction to Digital Signatures
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/signature/rsa-zh/" class="md-nav__link">
+      RSA Digital Signature
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/signature/elgamal-zh/" class="md-nav__link">
+      ElGamal Digital Signature
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/signature/dsa-zh/" class="md-nav__link">
+      DSA Digital Signature
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3-9" type="checkbox" id="nav-3-9" >
+    <label class="md-nav__link" for="nav-3-9">
+      Summary of Attack Techniques
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Summary of Attack Techniques" data-md-level="2">
+      <label class="md-nav__title" for="nav-3-9">
+        <span class="md-nav__icon md-icon"></span>
+        Summary of Attack Techniques
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/attack-summary/attack-mode-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/attack-summary/meet-in-the-middle-zh/" class="md-nav__link">
+      Intermediate Encounter Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/attack-summary/bit-attack-zh/" class="md-nav__link">
+      Bit attack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../crypto/certificate/introduction-zh/" class="md-nav__link">
+      Certificate Format
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" >
+    <label class="md-nav__link" for="nav-4">
+      Web
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Web" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        <span class="md-nav__icon md-icon"></span>
+        Web
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../web/introduction-zh/" class="md-nav__link">
+      Introduction to Web Applications
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../web/sqli-zh/" class="md-nav__link">
+      SQL Injection
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../web/xss-zh/" class="md-nav__link">
+      XSS Cross-site Scripting Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../web/csrf-zh/" class="md-nav__link">
+      CSRF Cross-site Request Forgery
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../web/ssrf-zh/" class="md-nav__link">
+      SSRF Server Request Forgery
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../web/php/php-zh/" class="md-nav__link">
+      PHP Code Auditing
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" >
+    <label class="md-nav__link" for="nav-5">
+      Assembly
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Assembly" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        <span class="md-nav__icon md-icon"></span>
+        Assembly
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../assembly/x86-x64/readme-zh/" class="md-nav__link">
+      x86_x64
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../assembly/mips/readme-zh/" class="md-nav__link">
+      mips
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../assembly/arm/readme-zh/" class="md-nav__link">
+      arm
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" >
+    <label class="md-nav__link" for="nav-6">
+      Executable
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Executable" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        <span class="md-nav__icon md-icon"></span>
+        Executable
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6-1" type="checkbox" id="nav-6-1" >
+    <label class="md-nav__link" for="nav-6-1">
+      ELF file
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="ELF file" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-1">
+        <span class="md-nav__icon md-icon"></span>
+        ELF file
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6-1-1" type="checkbox" id="nav-6-1-1" >
+    <label class="md-nav__link" for="nav-6-1-1">
+      Introduction of ELF File Structure
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Introduction of ELF File Structure" data-md-level="3">
+      <label class="md-nav__title" for="nav-6-1-1">
+        <span class="md-nav__icon md-icon"></span>
+        Introduction of ELF File Structure
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/structure/basic-info-zh/" class="md-nav__link">
+      ELF File Basic Structure
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/structure/sections-zh/" class="md-nav__link">
+      Sections
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/structure/code-sections-zh/" class="md-nav__link">
+      Code Sections
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/structure/data-related-sections-zh/" class="md-nav__link">
+      Data Related Sections
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/structure/symbol-table-zh/" class="md-nav__link">
+      Symbol Table Sections
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/structure/strings-sections-zh/" class="md-nav__link">
+      String Table Sections
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/structure/dynamic-sections-zh/" class="md-nav__link">
+      Dynamic Sections
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/structure/misc-sections-zh/" class="md-nav__link">
+      Misc Sections
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/program-loading-zh/" class="md-nav__link">
+      Program Loading
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6-1-3" type="checkbox" id="nav-6-1-3" >
+    <label class="md-nav__link" for="nav-6-1-3">
+      Program Linking
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Program Linking" data-md-level="3">
+      <label class="md-nav__title" for="nav-6-1-3">
+        <span class="md-nav__icon md-icon"></span>
+        Program Linking
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/linking/program-linking-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/linking/symbol-resolve-zh/" class="md-nav__link">
+      Symbol Resolve
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/elf/running-overview-zh/" class="md-nav__link">
+      Program Execution Flow
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6-2" type="checkbox" id="nav-6-2" >
+    <label class="md-nav__link" for="nav-6-2">
+      PE file
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="PE file" data-md-level="2">
+      <label class="md-nav__title" for="nav-6-2">
+        <span class="md-nav__icon md-icon"></span>
+        PE file
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/pe/pe-excutable-zh/" class="md-nav__link">
+      PE File Basic Structure
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/pe/pe-import-table-zh/" class="md-nav__link">
+      PE Import Table
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/pe/pe-export-table-zh/" class="md-nav__link">
+      PE Export Table
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../executable/pe/pe-relocation-table-zh/" class="md-nav__link">
+      PE Relocation Table
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" >
+    <label class="md-nav__link" for="nav-7">
+      Reverse Engineering
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Reverse Engineering" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        <span class="md-nav__icon md-icon"></span>
+        Reverse Engineering
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7-1" type="checkbox" id="nav-7-1" >
+    <label class="md-nav__link" for="nav-7-1">
+      Reverse Overview
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Reverse Overview" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-1">
+        <span class="md-nav__icon md-icon"></span>
+        Reverse Overview
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/introduction-zh/" class="md-nav__link">
+      Software Reverse Engineering Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/Identify-Encode-Encryption/introduction-zh/" class="md-nav__link">
+      Common Encryption Algorithms and Code Recognition
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/maze/maze-zh/" class="md-nav__link">
+      Labyrinth Problem
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/vm/vm-zh/" class="md-nav__link">
+      Virtual Machine Command Analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/unicorn/introduction-zh/" class="md-nav__link">
+      Unicorn Engine Introduction
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7-2" type="checkbox" id="nav-7-2" >
+    <label class="md-nav__link" for="nav-7-2">
+      Linux Reverse
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Linux Reverse" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-2">
+        <span class="md-nav__icon md-icon"></span>
+        Linux Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7-2-1" type="checkbox" id="nav-7-2-1" >
+    <label class="md-nav__link" for="nav-7-2-1">
+      Linux Reverse Technology
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Linux Reverse Technology" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-2-1">
+        <span class="md-nav__icon md-icon"></span>
+        Linux Reverse Technology
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/linux/ld_preload-zh/" class="md-nav__link">
+      LD_PRELOAD
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/linux/false-disasm-zh/" class="md-nav__link">
+      Incorrect Disassembly Fix
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/linux/detect-bp-zh/" class="md-nav__link">
+      Detecting Breakpoints Bypassing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/linux/detect-dbg-zh/" class="md-nav__link">
+      Detecting Debugging Bypassing
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7-3" type="checkbox" id="nav-7-3" >
+    <label class="md-nav__link" for="nav-7-3">
+      Windows Reverse
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Windows Reverse" data-md-level="2">
+      <label class="md-nav__title" for="nav-7-3">
+        <span class="md-nav__icon md-icon"></span>
+        Windows Reverse
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7-3-1" type="checkbox" id="nav-7-3-1" >
+    <label class="md-nav__link" for="nav-7-3-1">
+      Shelling Technology
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Shelling Technology" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-3-1">
+        <span class="md-nav__icon md-icon"></span>
+        Shelling Technology
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/packer-introduction-zh/" class="md-nav__link">
+      Introduction to the Protective case
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/trace-zh/" class="md-nav__link">
+      Single Step Tracking Method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/esp-zh/" class="md-nav__link">
+      ESP Law
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/direct-oep-zh/" class="md-nav__link">
+      One Step to the OEP Method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/memory-zh/" class="md-nav__link">
+      Memory Mirroring Method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/last-exception-zh/" class="md-nav__link">
+      Last Exception Method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/sfx-zh/" class="md-nav__link">
+      SFX Method
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/fix-iat-zh/" class="md-nav__link">
+      DUMP and IAT Reconstruction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/manually-fix-iat-zh/" class="md-nav__link">
+      Manually Find the IAT and Rebuild It Using ImportREC
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/unpack/unpack-dll-zh/" class="md-nav__link">
+      DLL File Unpacking
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7-3-2" type="checkbox" id="nav-7-3-2" >
+    <label class="md-nav__link" for="nav-7-3-2">
+      Anti-debugging Technology
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Anti-debugging Technology" data-md-level="3">
+      <label class="md-nav__title" for="nav-7-3-2">
+        <span class="md-nav__icon md-icon"></span>
+        Anti-debugging Technology
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/ntglobalflag-zh/" class="md-nav__link">
+      NtGlobalFlag
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/heap-flags-zh/" class="md-nav__link">
+      Heap Flags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/the-heap-zh/" class="md-nav__link">
+      The Heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/int-3-zh/" class="md-nav__link">
+      Interrupt 3
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/isdebuggerpresent-zh/" class="md-nav__link">
+      IsDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/checkremotedebuggerpresent-zh/" class="md-nav__link">
+      CheckRemoteDebuggerPresent
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/ntqueryinformationprocess-zh/" class="md-nav__link">
+      NtQueryInformationProcess
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/zwsetinformationthread-zh/" class="md-nav__link">
+      ZwSetInformationThread
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/junk-code-zh/" class="md-nav__link">
+      Flower command
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../reverse/windows/anti-debug/example-zh/" class="md-nav__link">
+      Anti-debug technical example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8" >
+    <label class="md-nav__link" for="nav-8">
+      Pwn
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Pwn" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        <span class="md-nav__icon md-icon"></span>
+        Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-1" type="checkbox" id="nav-8-1" >
+    <label class="md-nav__link" for="nav-8-1">
+      Pwn Overview
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Pwn Overview" data-md-level="2">
+      <label class="md-nav__title" for="nav-8-1">
+        <span class="md-nav__icon md-icon"></span>
+        Pwn Overview
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../readme-zh/" class="md-nav__link">
+      Readme zh
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2" type="checkbox" id="nav-8-2" >
+    <label class="md-nav__link" for="nav-8-2">
+      Linux Pwn
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Linux Pwn" data-md-level="2">
+      <label class="md-nav__title" for="nav-8-2">
+        <span class="md-nav__icon md-icon"></span>
+        Linux Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-1" type="checkbox" id="nav-8-2-1" >
+    <label class="md-nav__link" for="nav-8-2-1">
+      Security Protection Mechanism
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Security Protection Mechanism" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-1">
+        <span class="md-nav__icon md-icon"></span>
+        Security Protection Mechanism
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../mitigation/canary-zh/" class="md-nav__link">
+      Canary
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-2" type="checkbox" id="nav-8-2-2" >
+    <label class="md-nav__link" for="nav-8-2-2">
+      Stack Overflow
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Stack Overflow" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-2">
+        <span class="md-nav__icon md-icon"></span>
+        Stack Overflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stack-intro-zh/" class="md-nav__link">
+      Stack Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../stackoverflow-basic-zh/" class="md-nav__link">
+      Stack Overflow Principle
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../basic-rop-zh/" class="md-nav__link">
+      Basic ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../medium-rop-zh/" class="md-nav__link">
+      Intermediate ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-2-5" type="checkbox" id="nav-8-2-2-5" >
+    <label class="md-nav__link" for="nav-8-2-2-5">
+      Advanced ROP
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Advanced ROP" data-md-level="4">
+      <label class="md-nav__title" for="nav-8-2-2-5">
+        <span class="md-nav__icon md-icon"></span>
+        Advanced ROP
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../advanced-rop-zh/" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ret2dlresolve-zh/" class="md-nav__link">
+      ret2dlresolve
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ret2vdso-zh/" class="md-nav__link">
+      ret2vdso
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../srop-zh/" class="md-nav__link">
+      srop
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../fancy-rop-zh/" class="md-nav__link">
+      ROP Tricks
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-3" type="checkbox" id="nav-8-2-3" >
+    <label class="md-nav__link" for="nav-8-2-3">
+      Format String Vulnerability
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Format String Vulnerability" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-3">
+        <span class="md-nav__icon md-icon"></span>
+        Format String Vulnerability
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../fmtstr/fmtstr_intro-zh/" class="md-nav__link">
+      Format String Vulnerability Principle
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../fmtstr/fmtstr_exploit-zh/" class="md-nav__link">
+      Format String Exploit
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../fmtstr/fmtstr_example-zh/" class="md-nav__link">
+      Format String Vulnerability Example
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../fmtstr/fmtstr_detect-zh/" class="md-nav__link">
+      Format String Vulnerability Detection
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-4" type="checkbox" id="nav-8-2-4" >
+    <label class="md-nav__link" for="nav-8-2-4">
+      Glibc Heap Related
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Glibc Heap Related" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-4">
+        <span class="md-nav__icon md-icon"></span>
+        Glibc Heap Related
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/introduction-zh/" class="md-nav__link">
+      Introduction to Heap
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/heap_overview-zh/" class="md-nav__link">
+      Heap Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/heap_structure-zh/" class="md-nav__link">
+      Heap Related Data Structure
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-4-4" type="checkbox" id="nav-8-2-4-4" >
+    <label class="md-nav__link" for="nav-8-2-4-4">
+      In-depth Understanding of Ptmalloc2
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="In-depth Understanding of Ptmalloc2" data-md-level="4">
+      <label class="md-nav__title" for="nav-8-2-4-4">
+        <span class="md-nav__icon md-icon"></span>
+        In-depth Understanding of Ptmalloc2
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/implementation/overview-zh/" class="md-nav__link">
+      Implementation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/implementation/basic-zh/" class="md-nav__link">
+      Basic Functions in the heap implementation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/implementation/heap-init-zh/" class="md-nav__link">
+      Heap Initialization
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/implementation/malloc-zh/" class="md-nav__link">
+      Allocate Heap Memory
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/implementation/free-zh/" class="md-nav__link">
+      Free Heap Memory
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/implementation/tcache-zh/" class="md-nav__link">
+      Tcache
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/implementation/malloc_state-zh/" class="md-nav__link">
+      malloc_state
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/implementation/misc-zh/" class="md-nav__link">
+      Other
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/heapoverflow_basic-zh/" class="md-nav__link">
+      Heap Overflow
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/off_by_one-zh/" class="md-nav__link">
+      Heap-based Off-By-One
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/chunk_extend_overlapping-zh/" class="md-nav__link">
+      Chunk Extend/Overlapping
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/unlink-zh/" class="md-nav__link">
+      Unlink
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/use_after_free-zh/" class="md-nav__link">
+      Use After Free
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/fastbin_attack-zh/" class="md-nav__link">
+      Fastbin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/unsorted_bin_attack-zh/" class="md-nav__link">
+      Unsorted Bin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/large_bin_attack-zh/" class="md-nav__link">
+      Large Bin Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/tcache_attack-zh/" class="md-nav__link">
+      Tcache Attack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/house_of_einherjar-zh/" class="md-nav__link">
+      House of Einherjar
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/house_of_force-zh/" class="md-nav__link">
+      House of Force
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/house_of_lore-zh/" class="md-nav__link">
+      House of Lore
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/house_of_orange-zh/" class="md-nav__link">
+      House of Orange
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/house_of_rabbit-zh/" class="md-nav__link">
+      House of Rabbit
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../glibc-heap/house_of_roman-zh/" class="md-nav__link">
+      House of Roman
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-5" type="checkbox" id="nav-8-2-5" >
+    <label class="md-nav__link" for="nav-8-2-5">
+      IO_FILE Related
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="IO_FILE Related" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-5">
+        <span class="md-nav__icon md-icon"></span>
+        IO_FILE Related
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../io_file/introduction-zh/" class="md-nav__link">
+      FILE Structure Description
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../io_file/fake-vtable-exploit-zh/" class="md-nav__link">
+      Forged Vtable to Hijack Control Flow
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../io_file/fsop-zh/" class="md-nav__link">
+      FSOP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../io_file/exploit-in-libc2.24-zh/" class="md-nav__link">
+      Use of IO_FILE Under Glibc 2.24
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-6" type="checkbox" id="nav-8-2-6" >
+    <label class="md-nav__link" for="nav-8-2-6">
+      Race Condition
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Race Condition" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-6">
+        <span class="md-nav__icon md-icon"></span>
+        Race Condition
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../race-condition/introduction-zh/" class="md-nav__link">
+      Race Condition Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../race-condition/problem-zh/" class="md-nav__link">
+      Example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-7" type="checkbox" id="nav-8-2-7" >
+    <label class="md-nav__link" for="nav-8-2-7">
+      Integer Overflow
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Integer Overflow" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-7">
+        <span class="md-nav__icon md-icon"></span>
+        Integer Overflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../integeroverflow/intof-zh/" class="md-nav__link">
+      Introduction to The Principle of Integer Overflow
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-8" type="checkbox" id="nav-8-2-8" >
+    <label class="md-nav__link" for="nav-8-2-8">
+      Sandbox Escape
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Sandbox Escape" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-8">
+        <span class="md-nav__icon md-icon"></span>
+        Sandbox Escape
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../sandbox/python-sandbox-escape-zh/" class="md-nav__link">
+      Python Sandbox Escape
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-9" type="checkbox" id="nav-8-2-9" >
+    <label class="md-nav__link" for="nav-8-2-9">
+      Linux Kernel
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Linux Kernel" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-9">
+        <span class="md-nav__icon md-icon"></span>
+        Linux Kernel
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../kernel/environment-zh/" class="md-nav__link">
+      Environment Setup
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../kernel/basic_knowledge-zh/" class="md-nav__link">
+      Basics
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../kernel/kernel_uaf-zh/" class="md-nav__link">
+      Kernel-UAF
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../kernel/kernel_rop-zh/" class="md-nav__link">
+      Kernel-ROP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../kernel/ret2usr-zh/" class="md-nav__link">
+      ret2usr
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../kernel/bypass_smep-zh/" class="md-nav__link">
+      bypass-smep
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../kernel/double-fetch-zh/" class="md-nav__link">
+      Double Fetch
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-10" type="checkbox" id="nav-8-2-10" >
+    <label class="md-nav__link" for="nav-8-2-10">
+      arm-pwn
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="arm-pwn" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-10">
+        <span class="md-nav__icon md-icon"></span>
+        arm-pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../arm/environment-zh/" class="md-nav__link">
+      Environment Setup
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../arm/arm_rop-zh/" class="md-nav__link">
+      arm-rop
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-11" type="checkbox" id="nav-8-2-11" >
+    <label class="md-nav__link" for="nav-8-2-11">
+      mips-pwn
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="mips-pwn" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-11">
+        <span class="md-nav__icon md-icon"></span>
+        mips-pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../mips/mips_rop-zh/" class="md-nav__link">
+      mips-rop
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-2-12" type="checkbox" id="nav-8-2-12" >
+    <label class="md-nav__link" for="nav-8-2-12">
+      Summary
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Summary" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-2-12">
+        <span class="md-nav__icon md-icon"></span>
+        Summary
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../summary/get-address-zh/" class="md-nav__link">
+      Address Leaking
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../summary/hijack-control-flow-zh/" class="md-nav__link">
+      Hijack Control Flow
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../summary/get-shell-zh/" class="md-nav__link">
+      Get Shell
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-3" type="checkbox" id="nav-8-3" >
+    <label class="md-nav__link" for="nav-8-3">
+      Windows Pwn
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Windows Pwn" data-md-level="2">
+      <label class="md-nav__title" for="nav-8-3">
+        <span class="md-nav__icon md-icon"></span>
+        Windows Pwn
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../windows/readme-zh/" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8-3-2" type="checkbox" id="nav-8-3-2" >
+    <label class="md-nav__link" for="nav-8-3-2">
+      Stack Overflow
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Stack Overflow" data-md-level="3">
+      <label class="md-nav__title" for="nav-8-3-2">
+        <span class="md-nav__icon md-icon"></span>
+        Stack Overflow
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../windows/stackoverflow/stack-introduce-zh/" class="md-nav__link">
+      Stack Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../windows/stackoverflow/stackoverflow-basic-zh/" class="md-nav__link">
+      Stack Overflow Principle
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../windows/stackoverflow/shellcode-in-stack-zh/" class="md-nav__link">
+      shellcode-in-stack
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9" >
+    <label class="md-nav__link" for="nav-9">
+      Android
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Android" data-md-level="1">
+      <label class="md-nav__title" for="nav-9">
+        <span class="md-nav__icon md-icon"></span>
+        Android
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_develop/basic_develop-zh/" class="md-nav__link">
+      Android Development Basics
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9-2" type="checkbox" id="nav-9-2" >
+    <label class="md-nav__link" for="nav-9-2">
+      Android Application Operating Mechanism Brief
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Android Application Operating Mechanism Brief" data-md-level="2">
+      <label class="md-nav__title" for="nav-9-2">
+        <span class="md-nav__icon md-icon"></span>
+        Android Application Operating Mechanism Brief
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_operating_mechanism/readme-zh/" class="md-nav__link">
+      Basics
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9-2-2" type="checkbox" id="nav-9-2-2" >
+    <label class="md-nav__link" for="nav-9-2-2">
+      The Operating Mechanism of the Java Layer in Android
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="The Operating Mechanism of the Java Layer in Android" data-md-level="3">
+      <label class="md-nav__title" for="nav-9-2-2">
+        <span class="md-nav__icon md-icon"></span>
+        The Operating Mechanism of the Java Layer in Android
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_operating_mechanism/java_layer/readme-zh/" class="md-nav__link">
+      Andriod Native
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_operating_mechanism/java_layer/smali/smali-zh/" class="md-nav__link">
+      Smali Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9-2-2-3" type="checkbox" id="nav-9-2-2-3" >
+    <label class="md-nav__link" for="nav-9-2-2-3">
+      Dex and ODEX
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Dex and ODEX" data-md-level="4">
+      <label class="md-nav__title" for="nav-9-2-2-3">
+        <span class="md-nav__icon md-icon"></span>
+        Dex and ODEX
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_operating_mechanism/java_layer/dex/dex-zh/" class="md-nav__link">
+      DEX
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_operating_mechanism/java_layer/dex/odex-zh/" class="md-nav__link">
+      ODEX
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9-2-3" type="checkbox" id="nav-9-2-3" >
+    <label class="md-nav__link" for="nav-9-2-3">
+      Android Native Layer Introduction
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Android Native Layer Introduction" data-md-level="3">
+      <label class="md-nav__title" for="nav-9-2-3">
+        <span class="md-nav__icon md-icon"></span>
+        Android Native Layer Introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_operating_mechanism/native_layer/so-zh/" class="md-nav__link">
+      Android SO
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9-2-4" type="checkbox" id="nav-9-2-4" >
+    <label class="md-nav__link" for="nav-9-2-4">
+      Android Reverse Basic Introduction
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Android Reverse Basic Introduction" data-md-level="3">
+      <label class="md-nav__title" for="nav-9-2-4">
+        <span class="md-nav__icon md-icon"></span>
+        Android Reverse Basic Introduction
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_reverse/overview-zh/" class="md-nav__link">
+      Brief Description
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_reverse/android_code_location-zh/" class="md-nav__link">
+      Android Key Part Location
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9-2-4-3" type="checkbox" id="nav-9-2-4-3" >
+    <label class="md-nav__link" for="nav-9-2-4-3">
+      Android Simple Static Analysis
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Android Simple Static Analysis" data-md-level="4">
+      <label class="md-nav__title" for="nav-9-2-4-3">
+        <span class="md-nav__icon md-icon"></span>
+        Android Simple Static Analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_reverse/static/java-example-zh/" class="md-nav__link">
+      Android Java Layer Static Analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_reverse/static/so-example-zh/" class="md-nav__link">
+      Android Native Layer Static Analysis
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_reverse/static/complex-example-zh/" class="md-nav__link">
+      Android Static Analysis Hybrid Example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9-2-4-4" type="checkbox" id="nav-9-2-4-4" >
+    <label class="md-nav__link" for="nav-9-2-4-4">
+      Android Simple Dynamic Analysis
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Android Simple Dynamic Analysis" data-md-level="4">
+      <label class="md-nav__title" for="nav-9-2-4-4">
+        <span class="md-nav__icon md-icon"></span>
+        Android Simple Dynamic Analysis
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_reverse/dynamic/dynamic_debug-zh/" class="md-nav__link">
+      Dynamic Debugging
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../android/basic_reverse/dynamic/ida_native_debug-zh/" class="md-nav__link">
+      Android Dynamic Debugging SO
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10" >
+    <label class="md-nav__link" for="nav-10">
+      ICS
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="ICS" data-md-level="1">
+      <label class="md-nav__title" for="nav-10">
+        <span class="md-nav__icon md-icon"></span>
+        ICS
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../ics/ctfs-zh/" class="md-nav__link">
+      ICS_CTF Contest
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../ics/discover-zh/" class="md-nav__link">
+      ICS_CTF found
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../ics/exploit-zh/" class="md-nav__link">
+      ICS_CTF uses
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../ics/learn-zh/" class="md-nav__link">
+      ICS_CTF Learning Resources
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#vdso" class="md-nav__link">
+    VDSO介绍
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    原理
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    题目
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    参考
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/pwn/linux/stackoverflow/advanced-rop/ret2vdso.md" title="编辑此页" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <p><a href="./">EN</a> | <a href="../ret2vdso-zh/">ZH</a></p>
+<h1 id="ret2vdso">ret2VDSO<a class="headerlink" href="#ret2vdso" title="Permanent link">&para;</a></h1>
+<h2 id="vdso">VDSO介绍<a class="headerlink" href="#vdso" title="Permanent link">&para;</a></h2>
+<p>什么是VDSO(Virtual Dynamically-linked Shared Object)呢？听其名字，大概是虚拟动态链接共享对象，所以说它应该是虚拟的，与虚拟内存一致，在计算机中本身并不存在。具体来说，它是将内核态的调用映射到用户地址空间的库。那么它为什么会存在呢？这是因为有些系统调用经常被用户使用，这就会出现大量的用户态与内核态切换的开销。通过vdso，我们可以大量减少这样的开销，同时也可以使得我们的路径更好。这里路径更好指的是，我们不需要使用传统的int 0x80来进行系统调用，不同的处理器实现了不同的快速系统调用指令</p>
+<ul>
+<li>intel实现了sysenter，sysexit</li>
+<li>amd实现了syscall，sysret</li>
+</ul>
+<p>当不同的处理器架构实现了不同的指令时，自然就会出现兼容性问题，所以linux实现了vsyscall接口，在底层会根据具体的结构来进行具体操作。而vsyscall就实现在vdso中。</p>
+<p>这里，我们顺便来看一下vdso，在Linux(kernel 2.6 or upper)中执行ldd /bin/sh, 会发现有个名字叫linux-vdso.so.1(老点的版本是linux-gate.so.1)的动态文件, 而系统中却找不到它, 它就是VDSO。 例如:</p>
+<div class="highlight"><pre><span></span><code>➜  ~ ldd /bin/sh
+    linux-vdso.so.1 <span class="o">=</span>&gt;  <span class="o">(</span>0x00007ffd8ebf2000<span class="o">)</span>
+    libc.so.6 <span class="o">=</span>&gt; /lib/x86_64-linux-gnu/libc.so.6 <span class="o">(</span>0x00007f84ff2f9000<span class="o">)</span>
+    /lib64/ld-linux-x86-64.so.2 <span class="o">(</span>0x0000560cae6eb000<span class="o">)</span>
+</code></pre></div>
+<p>除了快速系统调用，glibc也提供了VDSO的支持, open(), read(), write(), gettimeofday()都可以直接使用VDSO中的实现。使得这些调用速度更快。 内核新特性在不影响glibc的情况下也可以更快的部署。</p>
+<p>这里我们以intel的处理器为例，进行简单说明。</p>
+<p>其中sysenter的参数传递方式与int 0x80一致，但是我们可能需要自己布置好 function prolog（32位为例）</p>
+<div class="highlight"><pre><span></span><code><span class="nf">push</span> <span class="no">ebp</span>
+<span class="nf">mov</span> <span class="no">ebp</span><span class="p">,</span><span class="no">esp</span>
+</code></pre></div>
+<p>此外，如果我们没有提供functtion prolog的话，我们还需要一个可以进行栈迁移的gadgets，以便于可以改变栈的位置。</p>
+<h2 id="_1">原理<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>待补充。</p>
+<h2 id="_2">题目<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Defcon 2015 Qualifier fuckup</strong></li>
+</ul>
+<h2 id="_3">参考<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="http://man7.org/linux/man-pages/man7/vdso.7.html">http://man7.org/linux/man-pages/man7/vdso.7.html</a></li>
+<li><a href="http://adam8157.info/blog/2011/10/linux-vdso/">http://adam8157.info/blog/2011/10/linux-vdso/</a></li>
+</ul>
+                
+              
+              
+                <!-- Set from config but allow override -->
+   
+
+<hr>
+<blockquote class="page-copyright">
+    <p>本页面的全部内容在 <strong>CC BY-NC-SA 4.0</strong> 协议之条款下提供，附加条款亦可能应用。</p>
+</blockquote>
+<!-- Comments Integration -->
+ 
+<h2 id="__comments">评论</h2>
+<form id="gitalk-form" onsubmit="return false;">
+    <div id="gitalk-container"></div>
+</form>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="https://cdnjs.loli.net/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js"></script>
+<script>
+    const gitalk = new Gitalk({
+        clientID: 'd78d2e8d782d95560289',
+        clientSecret: '954f1e7f8ae9b2566272a2105fe8df60b50e8e9b',
+        repo: 'comment',
+        owner: 'ctf-wiki',
+        admin: ['40huo', 'iromise'],
+        id: md5(location.pathname),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+    })
+
+    gitalk.render('gitalk-container')
+</script> 
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 - 2020 CTF Wiki Team
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../../../../assets/javascripts/vendor.fd16492e.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.7836ba4d.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../../../../..",
+          features: ['navigation.tabs'],
+          search: Object.assign({
+            worker: "../../../../../assets/javascripts/worker/search.4ac00218.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+        <script src="https://cdnjs.loli.net/ajax/libs/pangu/3.3.0/pangu.min.js"></script>
+      
+        <script src="../../../../../_static/js/extra.js"></script>
+      
+        <script src="https://cdnjs.loli.net/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+      
+        <script src="../../../../../search/main.js"></script>
+      
+    
+  </body>
+</html>
