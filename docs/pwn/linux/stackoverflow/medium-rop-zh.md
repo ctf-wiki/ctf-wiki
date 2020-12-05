@@ -1,4 +1,5 @@
 [EN](./medium-rop.md) | [ZH](./medium-rop-zh.md)
+
 # 中级ROP
 
 中级 ROP 主要是使用了一些比较巧妙的 Gadgets。
@@ -271,6 +272,14 @@ gef➤  x/5i 0x000000000040061A+9
 1. 查看溢出函返回时哪个寄存值指向溢出缓冲区空间
 2. 然后反编译二进制，查找 call reg 或者jmp reg指令，将 EIP 设置为该指令地址
 3. reg所指向的空间上注入 Shellcode (需要确保该空间是可以执行的，但通常都是栈上的)
+
+## JOP
+
+Jump-oriented programming
+
+## COP
+
+Call-oriented programming
 
 ## BROP
 

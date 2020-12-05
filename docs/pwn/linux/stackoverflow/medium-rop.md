@@ -1,4 +1,5 @@
 [EN](./medium-rop.md) | [ZH](./medium-rop-zh.md)
+
 #中级ROP
 
 
@@ -477,6 +478,13 @@ gef➤  x/5i 0x000000000040061A+9
 2. Then decompile the binary, look for the call reg or jmp reg command, and set the EIP to the instruction address.
 3. Inject the shellcode into the space pointed to by reg (you need to make sure that the space is executable, but it is usually on the stack)
 
+## JOP
+
+Jump-oriented programming
+
+## COP
+
+Call-oriented programming
 
 ## BROP
 
