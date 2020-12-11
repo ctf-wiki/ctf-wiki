@@ -112,7 +112,11 @@ $edi   : 0xf7fae000  →  0x001b1db0
 $eip   : 0x080486ae  →  <main+102> call 0x8048460 <gets@plt>
 ```
 
-可以看到 esp 为 0xffffcd40，ebp 为具体的 payload 如下 0xffffcdc8，同时 s 相对于 esp 的索引为 [esp+0x1c]，所以，s 的地址为 0xffffcd5c，所以 s 相对于 ebp 的偏移为 0x6C，所以相对于返回地址的偏移为 0x6c+4。
+可以看到 esp 为 0xffffcd40，ebp 为 0xffffcdc8，同时 s 相对于 esp 的索引为 `esp+0x1c`，因此，我们可以推断
+
+- s 的地址为 0xffffcd5c
+- s 相对于 ebp 的偏移为 0x6c
+- s 相对于返回地址的偏移为 0x6c+4
 
 最后的 payload 如下：
 
