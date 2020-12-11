@@ -113,6 +113,7 @@ $eip   : 0x080486ae  →  <main+102> call 0x8048460 <gets@plt>
 ```
 
 可以看到 esp 为 0xffffcd40，ebp 为 0xffffcdc8，同时 s 相对于 esp 的索引为 `esp+0x1c`，因此，我们可以推断
+
 - s 的地址为 0xffffcd5c
 - s 相对于 ebp 的偏移为 0x6c
 - s 相对于返回地址的偏移为 0x6c+4
