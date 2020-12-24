@@ -17,7 +17,7 @@ A typical `Double Fetch` vulnerability principle is shown in the following figur
 
 
 
-[Typical Double Fetch Schematic] (./double-fetch.png)
+[Typical Double Fetch Schematic](./double-fetch.png)
 
 
 ## 2018 0CTF Finals Baby Kernel
