@@ -39,7 +39,7 @@
 
 ## How to build？
 
-本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 [https://ctf-wiki.org/](https://ctf-wiki.org/)。
+本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 [https://ctf-wiki.org](https://ctf-wiki.org)。
 
 本项目可以直接部署在本地，具体方式如下：
 
@@ -78,7 +78,7 @@ docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 
 我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。我们期待着你的加入！
 
-**在你决定要贡献内容之前，请你务必看完  [CONTRIBUTING](https://ctf-wiki.org/contributing)**。其中包含了详细的贡献方式。 
+**在你决定要贡献内容之前，请你务必看完 [CONTRIBUTING](https://ctf-wiki.org/en/contribute/before-contributing/)**。其中包含了详细的贡献方式。 
 
 非常感谢一起完善 CTF Wiki 的小伙伴们
 
