@@ -1,4 +1,3 @@
-
 # CTF Wiki
 
 [![Build Status](https://travis-ci.org/ctf-wiki/ctf-wiki.svg?branch=master)](https://travis-ci.org/ctf-wiki/ctf-wiki)
@@ -11,11 +10,11 @@
 
 **CTF**（Capture The Flag，夺旗赛）起源于 1996 年 **DEFCON** 全球黑客大会，是网络安全爱好者之间的竞技游戏。
 
-**CTF** 竞赛涉及众多领域，内容繁杂。与此同时，安全技术的发展速度越来越快，**CTF** 题目的难度越来越高，初学者面对的门槛越来越高。而网上资料大都零散琐碎，初学者往往并不知道该如何系统性地学习 **CTF** 相关领域知识，常需要花费大量时间，苦不堪言。
+**CTF** 竞赛涉及众多领域，内容繁杂。与此同时，安全技术的发展速度越来越快，**CTF** 题目的难度越来越高，初学者面对的门槛越来越高。而网上资料大都零散琐碎，初学者往往并不知道该如何系统性地学习 **CTF** 相关领域的知识，常需要花费大量时间，苦不堪言。
 
 为了使得热爱 **CTF** 的小伙伴们更好地入门 **CTF**，2016 年 10 月份，**CTF Wiki** 在 Github 有了第一次 commit。随着内容不断完善，**CTF Wiki** 受到了越来越多安全爱好者的喜爱，也渐渐有素未谋面的小伙伴们参与其中。 
 
-作为一个自由的站点，围绕 **CTF** 近几年赛题，**CTF Wiki** 对 **CTF** 中的各个方向的知识和技术进行介绍，以便于初学者更好地学习 **CTF** 相关的知识。
+作为一个自由的站点，围绕 **CTF** 近几年赛题，**CTF Wiki** 对 **CTF** 中的各个方向的知识进行介绍，以便于初学者更好地学习 **CTF** 相关的知识。
 
 目前，**CTF Wiki** 主要包含 **CTF** 各大方向的基础知识，正在着力完善以下内容
 
@@ -24,15 +23,15 @@
 
 关于上述部分待完善内容，请参见 CTF Wiki 的 [Projects](https://github.com/ctf-wiki/ctf-wiki/projects)，详细列举了正在做的事情以及待做事项。
 
-虽然 **CTF Wiki** 基于 **CTF**，却不会局限于 **CTF**，在未来，**CTF Wiki** 将会
+虽然 **CTF Wiki** 基于 **CTF**，却不会局限于 **CTF**。在未来，**CTF Wiki** 将会
 
 - 介绍安全研究中的工具
 - 更多地与安全实战结合
 
 此外，鉴于以下两点
 
-- 技术应该以开放的方式分享。
-- 安全攻防技术在快速迭代更新，在面对新的防御技术时，旧的攻击技术随时可能失效。
+- 技术应该以开放的方式分享
+- 安全攻防技术在快速迭代更新，在面对新的防御技术时，旧的攻击技术随时可能失效
 
 因此，**CTF Wiki** 永远不会出版书籍。
 
@@ -40,7 +39,7 @@
 
 ## How to build？
 
-本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 [https://ctf-wiki.github.io/ctf-wiki/](https://ctf-wiki.github.io/ctf-wiki/)。
+本文档目前采用 [mkdocs](https://github.com/mkdocs/mkdocs) 部署在 [https://ctf-wiki.org/](https://ctf-wiki.org/)。
 
 本项目可以直接部署在本地，具体方式如下：
 
@@ -50,15 +49,17 @@ git clone https://github.com/ctf-wiki/ctf-wiki.git
 # 2. requirements
 pip install -r requirements.txt
 # generate static file in site/
-mkdocs build
-# deploy at http://127.0.0.1:8000
-mkdocs serve
+python3 scripts/docs.py build-all
+# deploy at http://127.0.0.1:8008
+python3 scripts/docs.py serve
 ```
 
 **mkdocs 本地部署的网站是动态更新的，即当你修改并保存 md 文件后，刷新页面就能随之动态更新。**
 
+> 注意：在使用 mkdocs-material 的 insiders 版本后，暂时不支持 docker 构建。
 
 如果你只是想本地浏览，并不想修改文档？试试 Docker 把！
+
 ```
 docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 ```
@@ -71,14 +72,13 @@ docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 其次，CTF Wiki 还有两个姊妹项目
 
 - CTF Wiki 中涉及的题目在 [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) 仓库中，请根据对应的分类自行寻找。
-    - 注：目前仍有部分题目在该仓库下，正在迁移中。。。（misc，web）
 - CTF Wiki 中涉及的工具会不断补充到 [ctf-tools](https://github.com/ctf-wiki/ctf-tools) 仓库中。
 
 ## How to make CTF Wiki Better？
 
 我们非常欢迎你为 Wiki 编写内容，将自己的所学所得与大家分享。我们期待着你的加入！
 
-**在你决定要贡献内容之前，请你务必看完  [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/wiki/%E4%B8%AD%E6%96%87%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97)**。其中包含了详细的贡献方式。 
+**在你决定要贡献内容之前，请你务必看完  [CONTRIBUTING](https://ctf-wiki.org/contributing)**。其中包含了详细的贡献方式。 
 
 非常感谢一起完善 CTF Wiki 的小伙伴们
 
