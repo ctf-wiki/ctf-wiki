@@ -39,7 +39,7 @@ Finally, originating from the community, as an independent organization, **CTF W
 
 ## How to build？
 
-CTF Wiki uses [mkdocs](https://github.com/mkdocs/mkdocs) to show its contents. And it is deployed at [https://ctf-wiki.github.io/ctf-wiki/](https://ctf-wiki.github.io/ctf-wiki/).
+CTF Wiki uses [mkdocs](https://github.com/mkdocs/mkdocs) to show its contents. And it is deployed at [https://ctf-wiki.org](https://ctf-wiki.org).
 
 It can also be deployed locally, with the following steps:
 
@@ -49,9 +49,9 @@ git clone https://github.com/ctf-wiki/ctf-wiki.git
 # 2. requirements
 pip install -r requirements.txt
 # generate static file in site/
-mkdocs build
-# deploy at http://127.0.0.1:8000
-mkdocs serve
+python3 scripts/docs.py build-all
+# deploy at http://127.0.0.1:8008
+python3 scripts/docs.py serve
 ```
 
 ** A local instance of mkdocs is dynamically updated, for instance when a markdown file is modified, the corresponding page will be modified too.**
@@ -78,7 +78,7 @@ Secondly, CTF Wiki has two sister projects.
 
 We welcome to write content for the wiki and share what you have learned. 
 
-**Before you decide to contribute content, please read [CONTRIBUTING](https://ctf-wiki.org/en/contributing)**.
+**Before you decide to contribute content, please read [CONTRIBUTING](https://ctf-wiki.org/en/contribute/before-contributing/)**.
 
 Thank you to all the people who have already contributed to CTF Wiki.
 
