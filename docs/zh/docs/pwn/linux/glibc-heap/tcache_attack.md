@@ -411,7 +411,7 @@ $3 = {
   entries = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x555555756260, 0x0 <repeats 56 times>}
 }
 ```
-可以看到，此时第 8 条 tcache 链上已经有了一个 chunk，从 `tcache_prethread_struct` 结构体中也能得到同样的结论 
+可以看到，此时第 8 条 tcache 链上已经有了一个 chunk，从 `tcache_perthread_struct` 结构体中也能得到同样的结论 
 
 然后修改 tcache 的 next
 ```asm
@@ -954,9 +954,9 @@ tcache_    +------------+<---------------------------+
            |            |          |          |
            +------------+          +----------+
 ```
-这样，两次 malloc 后我们就返回了 `tcache_prethread_struct` 的地址，就可以控制整个 tcache 了。
+这样，两次 malloc 后我们就返回了 `tcache_perthread_struct` 的地址，就可以控制整个 tcache 了。
 
-**因为 tcache_prethread_struct 也在堆上，因此这种方法一般只需要 partial overwrite 就可以达到目的。**
+**因为 tcache_perthread_struct 也在堆上，因此这种方法一般只需要 partial overwrite 就可以达到目的。**
 
 
 

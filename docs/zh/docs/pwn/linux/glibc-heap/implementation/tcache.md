@@ -49,7 +49,7 @@ typedef struct tcache_perthread_struct
 static __thread tcache_perthread_struct *tcache = NULL;
 ```
 
-每个 thread 都会维护一个 `tcache_prethread_struct`，它是整个 tcache 的管理结构，一共有 `TCACHE_MAX_BINS` 个计数器和 `TCACHE_MAX_BINS`项 tcache_entry，其中
+每个 thread 都会维护一个 `tcache_perthread_struct`，它是整个 tcache 的管理结构，一共有 `TCACHE_MAX_BINS` 个计数器和 `TCACHE_MAX_BINS`项 tcache_entry，其中
 
 - `tcache_entry` 用单向链表的方式链接了相同大小的处于空闲状态（free 后）的 chunk，这一点上和 fastbin 很像。
 - `counts` 记录了 `tcache_entry` 链上空闲 chunk 的数目，每条链上最多可以有 7 个 chunk。
@@ -60,7 +60,7 @@ static __thread tcache_perthread_struct *tcache = NULL;
 
 
 ## 基本工作方式
-- 第一次 malloc 时，会先 malloc 一块内存用来存放 `tcache_prethread_struct` 。
+- 第一次 malloc 时，会先 malloc 一块内存用来存放 `tcache_perthread_struct` 。
 - free 内存，且 size 小于 small bin size 时
   - tcache 之前会放到 fastbin 或者 unsorted bin 中
   - tcache 后：
@@ -124,7 +124,7 @@ tcache_init(void)
   if (tcache_shutting_down)
     return;
   arena_get (ar_ptr, bytes); // 找到可用的 arena
-  victim = _int_malloc (ar_ptr, bytes); // 申请一个 sizeof(tcache_prethread_struct) 大小的 chunk
+  victim = _int_malloc (ar_ptr, bytes); // 申请一个 sizeof(tcache_perthread_struct) 大小的 chunk
   if (!victim && ar_ptr != NULL)
     {
       ar_ptr = arena_get_retry (ar_ptr, bytes);
@@ -145,7 +145,7 @@ tcache_init(void)
 }
 ```
 
-`tcache_init()` 成功返回后，`tcache_prethread_struct` 就被成功建立了。
+`tcache_init()` 成功返回后，`tcache_perthread_struct` 就被成功建立了。
 
 ### 申请内存
 接下来将进入申请内存的步骤
