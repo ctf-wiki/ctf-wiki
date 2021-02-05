@@ -8,7 +8,7 @@ FILE结构在程序执行fopen等函数时会进行创建，并分配在堆中�
 
 FILE结构定义在libio.h中，如下所示
 
-```
+```c
 struct _IO_FILE {
   int _flags;		/* High-order word is _IO_MAGIC; rest is flags. */
 #define _IO_file_flags _flags
@@ -50,6 +50,30 @@ struct _IO_FILE {
 
   _IO_lock_t *_lock;
 #ifdef _IO_USE_OLD_IO_FILE
+};
+struct _IO_FILE_complete
+{
+  struct _IO_FILE _file;
+#endif
+#if defined _G_IO_IO_FILE_VERSION && _G_IO_IO_FILE_VERSION == 0x20001
+  _IO_off64_t _offset;
+# if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+  /* Wide character stream stuff.  */
+  struct _IO_codecvt *_codecvt;
+  struct _IO_wide_data *_wide_data;
+  struct _IO_FILE *_freeres_list;
+  void *_freeres_buf;
+# else
+  void *__pad1;
+  void *__pad2;
+  void *__pad3;
+  void *__pad4;
+
+  size_t __pad5;
+  int _mode;
+  /* Make sure we don't get into trouble again.  */
+  char _unused2[15 * sizeof (int) - 4 * sizeof (void *) - sizeof (size_t)];
+#endif
 };
 ```
 
