@@ -16,5 +16,27 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout
+        uses: actions/checkout@v2.3.1 # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Install requirements
+        run: python3.8 -m pip install -r requirements.txt
+      - name: Install Material Insiders
+        if: github.event.pull_request.head.repo.fork == false
+        run: python3.8 -m pip install git+https://${{ secrets.ACCESS_TOKEN }}@github.com/iromise/mkdocs-material-insiders.git
+      - name: Build Docs
+        run: python3.8 ./scripts/docs.py build-all
+      - name: Zip Site
+        run: bash ./scripts/zip-site.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: site-zip
+          path: ./site.zip
       - name: Triger Inner workflow
         run: echo "triger inner workflow"
