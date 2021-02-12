@@ -14,24 +14,22 @@ jobs:
   deploy-to-netlify:
     # The type of runner that the job will run on
     runs-on: ubuntu-18.04
-    # Steps represent a sequence of tasks that will be executed as part of the job
+
+   # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout
-        uses: actions/checkout@v2.3.1 # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
+      - uses: actions/checkout@v2
+      - name: Download Artifact Docs
+        uses: dawidd6/action-download-artifact@v2
         with:
-          persist-credentials: false
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-      - name: Install requirements
-        run: python3.8 -m pip install -r requirements.txt
-      - name: Install Material Insiders
-        if: github.event.pull_request.head.repo.fork == false
-        run: python3.8 -m pip install git+https://${{ secrets.ACCESS_TOKEN }}@github.com/iromise/mkdocs-material-insiders.git
-      - name: Build Docs
-        run: python3.8 ./scripts/docs.py build-all
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: preview-site-wrapper.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: site-zip
+      - name: Unzip Site
+        run: |
+          rm -rf ./site
+          unzip site.zip
+          rm -f site.zip
       - name: Deploy to Netlify
         id: netlify
         uses: nwtgck/actions-netlify@v1.1
