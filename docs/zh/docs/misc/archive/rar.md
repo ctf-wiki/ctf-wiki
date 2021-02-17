@@ -48,7 +48,7 @@ Rar压缩包的文件头为 `0x 52 61 72 21 1A 07 00`。
 | HEAD_FLAGS | 2            | Always 0x4000       |
 | HEAD_SIZE  | 2            | Block size = 0x0007 |
 
-更多详见 <http://www.forensicswiki.org/wiki/RAR>
+更多详见 <https://forensicswiki.xyz/wiki/index.php?title=RAR>
 
 ## 主要攻击
 
