@@ -258,7 +258,7 @@
 <span class=cm>    This is in malloc_state.</span>
 <span class=cm>    /* Fastbins */</span>
     <span class=n>mfastbinptr</span> <span class=n>fastbinsY</span><span class=p>[</span> <span class=n>NFASTBINS</span> <span class=p>];</span>
-<span class=err>*/</span>
+<span class=o>*/</span>
 </code></pre></div> <p>为了更加高效地利用 fast bin，glibc 采用单向链表对其中的每个 bin 进行组织，并且<strong>每个 bin 采取 LIFO 策略</strong>，最近释放的 chunk 会更早地被分配，所以会更加适合于局部性。也就是说，当用户需要的 chunk 的大小小于 fastbin 的最大大小时， ptmalloc 会首先判断 fastbin 中相应的 bin 中是否有对应大小的空闲块，如果有的话，就会直接从这个 bin 中获取 chunk。如果没有的话，ptmalloc才会做接下来的一系列操作。</p> <p>默认情况下（<strong>32位系统为例</strong>）， fastbin 中默认支持最大的 chunk 的数据空间大小为 64 字节。但是其可以支持的chunk的数据空间最大为80字节。除此之外， fastbin 最多可以支持的 bin 的个数为 10 个，从数据空间为 8 字节开始一直到 80 字节（注意这里说的是数据空间大小，也即除去 prev_size 和 size 字段部分的大小）定义如下</p> <div class=highlight><pre><span></span><code><span class=cp>#define NFASTBINS (fastbin_index(request2size(MAX_FAST_SIZE)) + 1)</span>
 
 <span class=cp>#ifndef DEFAULT_MXFAST</span>

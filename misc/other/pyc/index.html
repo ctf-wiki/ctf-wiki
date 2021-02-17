@@ -64,12 +64,12 @@ drwxr-xr-x <span class=m>2</span> python python <span class=m>4</span>.0K 11月 
     <span class=k>pass</span>
 </code></pre></div> <p>我们简单分析一下程序，如果程序运行，应该会去从模块B中调用对象D。</p> <p>我们尝试执行一下 <code>python A.py</code> ：</p> <p><img alt=import-error src=../figure/import-error.png></p> <p>报 <code>ImportError</code> 的错误，似乎是没有加载到对象 <code>D</code> ，而我们将 <code>from B import D</code> 改成 <code>import B</code> ，我们似乎就能执行成功了。</p> <p><img alt=import-success src=../figure/import-success.png></p> <p>这是怎么回事呢？这其实是跟 <code>Python</code> 内部 <code>import</code> 的机制是有关的，具体到 <code>from B import D</code> ， <code>Python</code> 内部会分成以下几个步骤：</p> <ul> <li>在 <code>sys.modules</code> 中查找符号 <code>B</code></li> <li>如果符号 <code>B</code> 存在，则获得符号 <code>B</code> 对应的 <code>module</code> 对象 <code>&lt;module B&gt;</code> 。从 <code>&lt;module B&gt;</code> 的 <code>__dict__</code> 中获得符号 <code>D</code> 对应的对象，如果 <code>D</code> 不存在，则抛出异常</li> <li>如果符号 <code>B</code> 不存在，则创建一个新的 <code>module</code> 对象 <code>&lt;module B&gt;</code> ，注意，此时 <code>module</code> 对象的 <code>__dict__</code> 为空。执行 <code>B.py</code> 中的表达式，填充 <code>&lt;module B&gt;</code> 的 <code>__dict__</code> 。从 <code>&lt;module B&gt;</code> 的 <code>__dict__</code> 中获得 <code>D</code> 对应的对象。如果 <code>D</code> 不存在，则抛出异常。</li> </ul> <p>所以，这个例子的执行顺序如下：</p> <p>1、执行 <code>A.py</code> 中的 <code>from B import D</code> </p> <blockquote> <p>注：由于是执行的 <code>python A.py</code> ，所以在 <code>sys.modules</code> 中并没有 <code>&lt;module B&gt;</code> 存在，首先为 <code>B.py</code> 创建一个 <code>module</code> 对象( <code>&lt;module B&gt;</code> )，注意，这时创建的这个 <code>module</code> 对象是空的，里边啥也没有，在 <code>Python</code> 内部创建了这个 <code>module</code> 对象之后，就会解析执行 <code>B.py</code> ，其目的是填充 <code>&lt;module B&gt;</code> 这个 <code>dict</code> 。</p> </blockquote> <p>2、执行 <code>B.py</code> 中的 <code>from A import C</code> </p> <blockquote> <p>注：在执行 <code>B.py</code> 的过程中，会碰到这一句，首先检查 <code>sys.modules</code> 这个 <code>module</code> 缓存中是否已经存在 <code>&lt;module A&gt;</code> 了，由于这时缓存还没有缓存 <code>&lt;module A&gt;</code> ，所以类似的， <code>Python</code> 内部会为 <code>A.py</code> 创建一个 <code>module</code> 对象( <code>&lt;module A&gt;</code> )，然后，同样地，执行 <code>A.py</code> 中的语句。</p> </blockquote> <p>3、再次执行 <code>A.py</code> 中的 <code>from B import D</code> </p> <blockquote> <p>注：这时，由于在第 <code>1</code> 步时，创建的 <code>&lt;module B&gt;</code> 对象已经缓存在了 <code>sys.modules</code> 中，所以直接就得到了 <code>&lt;module B&gt;</code> ，但是，注意，从整个过程来看，我们知道，这时 <code>&lt;module B&gt;</code> 还是一个空的对象，里面啥也没有，所以从这个 <code>module</code> 中获得符号 <code>D</code> 的操作就会抛出异常。如果这里只是 <code>import B</code> ，由于 <code>B</code> 这个符号在 <code>sys.modules</code> 中已经存在，所以是不会抛出异常的。</p> </blockquote> <p>我们可以从下图很清楚的看到 <code>import</code> 嵌套导入的过程：</p> <p><img alt=PyImportFlow src=../figure/PyImportFlow.png></p> <p><strong><code>Package</code> 导入</strong></p> <p>包 <code>(Package)</code> 可以看成模块的集合，只要一个文件夹下面有个 <code>__init__.py</code> 文件，那么这个文件夹就可以看做是一个包。包下面的文件夹还可以成为包(子包)。更进一步的讲，多个较小的包可以聚合成一个较大的包。通过包这种结构，我们可以很方便的进行类的管理和维护，也方便了用户的使用。比如 <code>SQLAlchemy</code> 等都是以包的形式发布给用户的。</p> <p>包和模块其实是很类似的东西，如果查看包的类型： <code>import SQLAlchemy type(SQLAlchemy)</code> ，可以看到其实也是 <code>&lt;type 'module'&gt;</code> 。 <code>import</code> 包的时候查找的路径也是 <code>sys.path</code>。</p> <p>包导入的过程和模块的基本一致，只是导入包的时候会执行此包目录下的 <strong><code>__init__.py</code></strong> ，而不是模块里面的语句了。另外，如果只是单纯的导入包，而包的 <code>__init__.py</code> 中又没有明确的其他初始化操作，那么此包下面的模块是不会自动导入的。</p> <p>假设我们有如下文件结构：</p> <div class=highlight><pre><span></span><code>.
 └── PA
-    ├── __init__.py
+    ├── <span class=gs>__init__</span>.py
     ├── PB1
-    │   ├── __init__.py
+    │   ├── <span class=gs>__init__</span>.py
     │   └── pb1_m.py
     ├── PB2
-    │   ├── __init__.py
+    │   ├── <span class=gs>__init__</span>.py
     │   └── pb2_m.py
     └── wave.py
 </code></pre></div> <p><img alt=tree src=../figure/tree.png></p> <p><code>wave.py</code> ， <code>pb1_m.py</code> ， <code>pb2_m.py</code> 文件中我们均定义了如下函数：</p> <div class=highlight><pre><span></span><code><span class=k>def</span> <span class=nf>getName</span><span class=p>():</span>
@@ -84,16 +84,16 @@ drwxr-xr-x <span class=m>2</span> python python <span class=m>4</span>.0K 11月 
 <span class=n>PA</span><span class=o>.</span><span class=n>PB2</span><span class=o>.</span><span class=n>pb2_m</span><span class=o>.</span><span class=n>getName</span><span class=p>()</span> <span class=c1>#7</span>
 </code></pre></div> <p>我们运行以后，可以看出是成功执行成功了，我们再看看目录结构：</p> <div class=highlight><pre><span></span><code>.
 ├── PA
-│   ├── __init__.py
-│   ├── __init__.pyc
+│   ├── <span class=gs>__init__</span>.py
+│   ├── <span class=gs>__init__</span>.pyc
 │   ├── PB1
-│   │   ├── __init__.py
-│   │   ├── __init__.pyc
+│   │   ├── <span class=gs>__init__</span>.py
+│   │   ├── <span class=gs>__init__</span>.pyc
 │   │   ├── pb1_m.py
 │   │   └── pb1_m.pyc
 │   ├── PB2
-│   │   ├── __init__.py
-│   │   ├── __init__.pyc
+│   │   ├── <span class=gs>__init__</span>.py
+│   │   ├── <span class=gs>__init__</span>.pyc
 │   │   ├── pb2_m.py
 │   │   └── pb2_m.pyc
 │   ├── wave.py
