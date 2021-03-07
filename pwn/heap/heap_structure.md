@@ -85,14 +85,10 @@ typedef struct _heap_info
 - 该堆前面的heap_info的地址，这里可以看到每个堆的heap_info是通过单向链表进行链接的
 - size表示当前堆的大小
 - 最后一部分确保对齐（**这里负数使用的缘由是什么呢**？）
-**解释**:此处最终目的是确保16位对齐, 已知目前已有的内容是6个指针空间, 为了确保16位对齐, 我们需要一个padding, 大小为16*x - 6 * SIZE_SZ (其中x为自然数), 
-前置知识:1. -11, -3和5, 13 四个数分别关于8取模的结果是一样的
-         2. 对同一个数多次取同一个模结果不变
-   padding
-= 16 * x - 6 * SIZE_SZ  # 我们的目的是padding的结果是一个正整数并且小于16
-= (16 * x - 6 * SIZE_SZ) % 16 # 基于前置知识2, 我们对这个数多取几次模结果不会有变化
-= (0 - 6 * SIZE_SZ ) % 16 # 基于前置知识1, 就如5关于8取模的结果和(5 + 8 * 2)关于8取模的结果是一样的, 所以+ 16*x其实也可以直接变为0
-= -6 * SIZE_SZ % 16  # 正确的运算顺序：(-6 * SIZE_SZ) % 16,当前写法也是正确的(符合符号优先级)
+
+!!! note
+
+`pad` 是为了确保分配的空间是 MALLOC_ALIGN_MASK 对齐的。在 `pad` 之前该结构体一共有 6 个 SIZE_SZ 大小的成员, 为了确保 MALLOC_ALIGN_MASK 字节对齐, 可能需要进行 pad，不妨假设该结构体的最终大小为 `MALLOC_ALIGN_MASK*x`，其中 x 为自然数，那么需要 pad 的空间为 `MALLOC_ALIGN_MASK * x - 6 * SIZE_SZ = (MALLOC_ALIGN_MASK * x - 6 * SIZE_SZ) % MALLOC_ALIGN_MASK = 0 - 6 * SIZE_SZ % MALLOC_ALIGN_MASK=-6 * SIZE_SZ % MALLOC_ALIGN_MASK`。
 
 看起来该结构应该是相当重要的，但是如果如果我们仔细看完整个malloc的实现的话，就会发现它出现的频率并不高。
 
