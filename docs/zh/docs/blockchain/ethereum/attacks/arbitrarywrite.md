@@ -1,5 +1,7 @@
 # Arbitrary Writing
 
+## 原理
+
 动态数组的任意 Storage 存储写漏洞，根据 [官方文档](https://docs.soliditylang.org/en/v0.8.1/internals/layout_in_storage.html#) 介绍，可总结如下
 
 - EVM 中，有三个地方可以存储变量，分别是 Memory、Stack 和 Storage。Memory 和 Stack 是在执行期间临时生成的存储空间，主要负责运行时的数据存储，Storage 是永久存在于区块链中的变量。
@@ -14,17 +16,17 @@
     + 如果基本类型变量不能放入某个 slot 余下的空间，它将被放入下一个 slot
     + map 和变长数组总是使用一个全新的 slot，并占用整个 slot，但对于其内部的每个变量，还是要遵从上面的规则
 
-## slot 计算规则
+### slot 计算规则
 
 首先我们分析一下各种对象结构在 EVM 中的存储和访问情况
 
-### 定长变量和结构体
+#### 定长变量和结构体
 
 Solidity 中的定长定量在定义的时候，其长度就已经被限制住了。比如定长整型（uint、uint8），地址常量（address），定长字节数组（bytes1-32）等，这类的变量在 Storage 中是尽可能打包成 32 字节的块顺序存储的。
 
 Solidity 的结构体并没有特殊的存储模型，在 Storage 中的存储可以按照定长变量规则分析。
 
-### Map 映射变量
+#### Map 映射变量
 
 在 Solidity 中，并不存储 map 的键，只存储键对应的值，值是通过键的 hash 索引来找到的。用 $slotM$ 表示 map 声明的 slot 位置，用 $key$ 表示键，用 $value$ 表示 $key$ 对应的值，用 $slotV$ 表示 $value$ 的存储位置，则
 
@@ -32,7 +34,7 @@ $slotV = keccak256(key|slotM)$
 
 $value = sload(slotV)$
 
-### 变长数组
+#### 变长数组
 
 用 $slotA$ 表示变长数组声明的位置，用 $length$ 表示变长数组的长度，用 $slotV$ 表示变长数组数据存储的位置，用 $value$ 表示变长数组某个数据的值，用 $index$ 表示 $value$ 对应的索引下标，则
 
@@ -47,17 +49,13 @@ $value = sload(slotV)$
 !!! note
     注：变长数组具体数据存放在 keccak256 哈希计算之后的一片连续存储区域，这一点与 Map 映射变量不同。
 
-## Arbitrary Writing
-
-### 简单介绍
-
 在以太坊 EVM 的设计思路中，所有的 Storage 变量共用一片大小为 2^256*32 字节的存储空间，没有各自的存储区域划分。
 
 Storage 空间即使很大也是有限大小，当变长数组长度很大时，考虑极端情况，如果长度达到 2^256，则可对任意 Storage 变量进行读写操作，这是非常可怕的。
 
-### 例子
+## 例子
 
-#### Source
+### Source
 
 ```solidity
 pragma solidity ^0.4.24;
@@ -88,7 +86,7 @@ contract ArrayTest  {
 
 这里攻击者如何才能成为 owner 呢？其中 owner 最初为 0x73048cec9010e92c298b016966bde1cc47299df5
 
-#### Analyse
+### Analyse
 
 - 数组 codex 的 slot 为 1 ，同时这也是存储数组 length 的地方，而 codex 的实际内容存储在 keccak256(bytes32(1)) 开始的位置
 
