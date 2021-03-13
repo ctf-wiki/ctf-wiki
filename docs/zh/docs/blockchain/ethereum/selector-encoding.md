@@ -2,19 +2,20 @@
 
 > 详细可查看 [官方文档](https://docs.soliditylang.org/en/v0.8.1/abi-spec.html#)
 
-> 参考博客 [Function Selector and Argument Encoding](https://hitcxy.com/2021/argument-encoding/)
+> 参考自己博客 [Function Selector and Argument Encoding](https://hitcxy.com/2021/argument-encoding/)
 
 在 Ethereum 生态系统中，ABI (Application Binary Interface，应用二进制接口) 是从区块链外部与合约进行交互以及合约与合约间进行交互的一种标准方式。数据会根据其类型按照这份手册中说明的方法进行编码。
 
 ## Function Selector
 
+### 原理
 某个函数签名的 Keccak (SHA-3) 哈希的前 4 字节，指定了要调用的函数，形如 bytes4(keccak256('balanceOf(address)')) == 0x70a08231 这种形式，0x70a08231 便是 balanceOf(address) 的 Function Selector
 
 - 基础原型即是函数名称加上由括号括起来的参数类型列表，参数类型间由一个逗号分隔开，且没有空格
 - 对于 uint 类型，要转成 uint256 进行计算，比如 ownerOf(uint256) 其 Function Selector = bytes4(keccak256('ownerOf(uint256)')) == 0x6352211e
 - 函数参数包含结构体，相当于把结构体拆分成单个参数，只不过这些参数用 `()` 扩起来，详细可看下面的例子
 
-### Example
+### 例子
 
 ```solidity
 pragma solidity >=0.4.16 <0.9.0;
@@ -52,13 +53,18 @@ contract Demo {
 ```
 
 ## Function Selector and Argument Encoding
+
+### 原理
+
 * 动态类型的数据，比如动态数组，结构体，变长字节，其编码后存储其 `offset`、`length`、`data`
     - 先把参数顺序存储：如果是定长数据类型，直接存储其 `data`，如果是变长数据类型，先存储其 `offset`
     - 顺序遍历变长数据：先存储 `offset`，对于第一个变长数据，先存储其 `offset = 0x20 * number` ( `number` 是函数参数的个数 )；对于下一个变长数据，其 `offset = offset_of_prev + 0x20 + 0x20 * number` (第一个 `0x20` 是存储前一个变长数据的长度占用的大小，`number` 是前一个变长数据的元素个数)
     - 顺序遍历变长数据：存储完 `offset` ，接着就是遍历每个变长数据，分别存储其 `length` 和 `data`
     - ( `ps:` 对于结构体这样的类型，存储的时候可把结构体内元素看成是一个新函数的参数，这样的话，对于结构体中的第一个变长数据，其 `offset = 0x20 * num` ，`num` 是结构体元素的个数 )
 
-* 针对上述的合约例子的 7 个函数，其函数调用最终编码如下
+### 例子
+
+针对上述的合约例子的 7 个函数，其函数调用最终编码如下
 
 - test1("0x112233")
 
@@ -129,7 +135,7 @@ data of first parameter: uint 定长类型，直接存储其 data
 offset of second parameter: 结构体，先存储其 offset=0x20*2 ( 2 代表函数参数的个数) 
 first data offset of second parameter: 结构体内元素可当成函数参数拆分，有三个元素，因第一个元素是 string 类型，所以先存储其 offset=0x20*3=0x60
 second data offset of second parameter: 结构体第二个元素是 string 类型，先存储其 offset=0x60+0x20+0x20=0xa0 (第一个 0x20 是存储第一个 string 的长度所占大小，第二个 0x20 是存储第一个 string 的数据所占大小)
-third data of second parameter: 结构体第三个元素是 bool 定长类型，直接存储其 data
+third data of second parameter: 结构体第三个元素是 uint 定长类型，直接存储其 data
 first data length of second parameter: 存储结构体第一个元素的 length
 first data of second parameter: 存储结构体第一个元素的 data
 second data length of second parameter: 存储结构体第二个元素的 length
@@ -327,6 +333,8 @@ g 指向字符串数组的开始，所以 g=0x20*10=140
 
 ## 例题
 
-[balsn2020 - Election](https://github.com/x9453/my-ctf-challenges/tree/master/balsn-ctf-2020/Election) 考察了关于 `ABI Encoding` 相关知识
+### balsn
+- 题目名称 Election
 
-这是两份题解 [WP1](https://x9453.github.io/2021/02/27/Balsn-CTF-2020-Election/) [WP2](https://hitcxy.com/2021/balsn2020-election/)
+!!! note
+    注：题目附件相关内容可至 [ctf-challenges](https://github.com/ctf-wiki/ctf-challenges) 仓库寻找。

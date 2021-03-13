@@ -111,7 +111,11 @@ contract.revise('357076663774356482118879088749846081199922365090741977136285053
 
 ## 题目
 
-### balsn-ctf 2019
+### xctf final 2019
 - 题目名称 Bank
-    - 题目链接 [https://github.com/x9453/my-ctf-challenges/tree/master/balsn-ctf-2019/Bank](https://github.com/x9453/my-ctf-challenges/tree/master/balsn-ctf-2019/Bank)
-    - WP 链接 [shw](https://x9453.github.io/2020/01/16/Balsn-CTF-2019-Bank/) [pikachu](https://hitcxy.com/2020/balsn2019-bank/)
+
+### balsn 2019
+- 题目名称 Bank
+
+!!! note
+    注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。

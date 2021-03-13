@@ -209,16 +209,13 @@ contract attack {
 
 ### RealWorld 2018
 - 题目名称 Acoraida Monica
-    - 题目链接 [https://gist.github.com/LiveOverflow/21c8a505ca176e5bb20bc94eb23acdf1](https://gist.github.com/LiveOverflow/21c8a505ca176e5bb20bc94eb23acdf1)
-    - WP 链接 [https://github.com/xhyumiracle/defcon27](https://github.com/xhyumiracle/defcon27)
 
 ### balsn-ctf 2019
 - 题目名称 Creativity
-    - 题目链接 [https://github.com/x9453/my-ctf-challenges/tree/master/balsn-ctf-2019/Creativity](https://github.com/x9453/my-ctf-challenges/tree/master/balsn-ctf-2019/Creativity)
-    - WP 链接 [shw](https://x9453.github.io/2020/01/04/Balsn-CTF-2019-Creativity/) [pikachu](https://hitcxy.com/2020/balsn2019-create2/)
 
 ### 第五空间 2020
 - 题目名称 SafeDelegatecall
-    - 题目链接 [https://github.com/hitcxy/challenges/tree/master/2020/%E7%AC%AC%E4%BA%94%E7%A9%BA%E9%97%B4/SafeDelegatecall](https://github.com/hitcxy/challenges/tree/master/2020/%E7%AC%AC%E4%BA%94%E7%A9%BA%E9%97%B4/SafeDelegatecall)
-    - WP 链接 [https://hitcxy.com/2020/creativityplus/](https://hitcxy.com/2020/creativityplus/)
+
+!!! note
+  注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。
 
