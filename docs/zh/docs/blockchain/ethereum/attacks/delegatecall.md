@@ -2,11 +2,13 @@
 
 > There exists a special variant of a message call, named delegatecall which is identical to a message call apart from the fact that the code at the target address is executed in the context of the calling contract and msg.sender and msg.value do not change their values.
 
-## 三种调用函数
+## 原理
+
+### 三种调用函数
 
 在 Solidity 中，call 函数簇可以实现跨合约的函数调用功能，其中包括 call、delegatecall 和 callcode 三种方式。
 
-### 调用模型
+#### 调用模型
 
 ```
 <address>.call(...) returns (bool)
@@ -18,7 +20,7 @@
 
 在函数调用的过程中，Solidity 中的内置变量 msg 会随着调用的发起而改变，msg 保存了调用方的信息包括：调用发起的地址，交易金额，被调用函数字符序列等。
 
-### 异同点
+#### 异同点
 
 * call: 调用后内置变量 msg 的值会修改为调用者，执行环境为被调用者的运行环境
 * delegatecall: 调用后内置变量 msg 的值不会修改为调用者，但执行环境为调用者的运行环境（相当于复制被调用者的代码到调用者合约）
@@ -27,15 +29,15 @@
 !!! note
     Warning: "callcode" has been deprecated in favour of "delegatecall"
 
-## Delegatecall 滥用
+### Delegatecall 滥用
 
-### 设计初衷
+#### 设计初衷
 
 * 函数原型 <address>.delegatecall(...) returns (bool)
 * 函数设计的目的是为了使用给定地址的代码，其他信息则使用当前合约（如存储、余额等）
 * 某种程度上也是为了代码的复用
 
-### 威胁分析
+#### 威胁分析
 
 参考函数原型，我们知道，delegatecall 调用有 address 和 msg.data 两个参数
 
@@ -87,7 +89,7 @@ contract.sendTransaction({data: web3.sha3("pwn()").slice(0,10)})
 
 同理，只不过额外加了 address 是可控的这个条件，不再作分析
 
-### 原因分析
+#### 原因分析
 
 ```solidity
 pragma solidity ^0.4.23;
@@ -122,7 +124,7 @@ address_a 合约中，c = 0，b = 0；address_b 合约中，b = 0，c = address_
 
 sstore 即访存指令，可以看到写入的是 1 号存储位，1号存储位 在 B 合约中即对应变量 c，在 A 合约中则对应变量 b，所以事实上调用 delegatecall 来使用 Storage 变量时依据并不是变量名，而是变量的存储位，这样的话我们就可以达到覆盖相关变量的目的。
 
-## 例题 1
+## 例子
 
 ### Source
 
@@ -203,20 +205,17 @@ contract attack {
 
 ![](./figure/result.png)
 
-## 比赛相关题目
+## 题目
 
 ### RealWorld 2018
 - 题目名称 Acoraida Monica
-    - 题目链接 [https://gist.github.com/LiveOverflow/21c8a505ca176e5bb20bc94eb23acdf1](https://gist.github.com/LiveOverflow/21c8a505ca176e5bb20bc94eb23acdf1)
-    - WP 链接 [https://github.com/xhyumiracle/defcon27](https://github.com/xhyumiracle/defcon27)
 
 ### balsn-ctf 2019
 - 题目名称 Creativity
-    - 题目链接 [https://github.com/x9453/my-ctf-challenges/tree/master/balsn-ctf-2019/Creativity](https://github.com/x9453/my-ctf-challenges/tree/master/balsn-ctf-2019/Creativity)
-    - WP 链接 [shw](https://x9453.github.io/2020/01/04/Balsn-CTF-2019-Creativity/) [pikachu](https://hitcxy.com/2020/balsn2019-create2/)
 
 ### 第五空间 2020
 - 题目名称 SafeDelegatecall
-    - 题目链接 [https://github.com/hitcxy/challenges/tree/master/2020/%E7%AC%AC%E4%BA%94%E7%A9%BA%E9%97%B4/SafeDelegatecall](https://github.com/hitcxy/challenges/tree/master/2020/%E7%AC%AC%E4%BA%94%E7%A9%BA%E9%97%B4/SafeDelegatecall)
-    - WP 链接 [https://hitcxy.com/2020/creativityplus/](https://hitcxy.com/2020/creativityplus/)
+
+!!! note
+    注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。
 
