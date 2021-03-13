@@ -13,7 +13,7 @@
 
 （有木有很简单？）
 
-如果还是不放心，可以参考这篇文章：https://www.zhihu.com/question/20070065/answer/79557687
+如果还是不放心，可以参考这篇文章：https://guides.github.com/activities/hello-world/
 
 ## 我之前用过 Github
 
