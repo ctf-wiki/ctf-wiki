@@ -1,7 +1,7 @@
 # 区块链比赛题目
 
 !!! note 
-    注：CTF 中区块链的题目并不是很多，所以搜集了绝大多数的题目，以下按照年份附上题目链接及其 WP 链接，题目列表不完整会随时更新，同一年中比赛名称不区分顺序，如果有多篇 WP，也不区分顺序。相关题目可到 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/blockchain) 仓库查找。
+    注：CTF 中区块链的题目并不是很多，所以搜集了绝大多数的题目，以下按照年份附上题目链接及其 WP 链接，题目列表不完整会随时更新，同一年中比赛名称不区分顺序，如果有多篇 WP，也不区分顺序。相关题目可到 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库查找。
 
 ## 2021
 
