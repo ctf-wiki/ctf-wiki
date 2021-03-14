@@ -18,7 +18,7 @@
 ### 高校战“疫”网络安全分享赛
 - 题目名称 OwnerMoney
 
-### rctf
+### RCTF
 - 题目名称 roiscoin
 
 ### 第五空间
@@ -36,7 +36,7 @@
 - 题目名称 EthGaMe (EGM)
 - 题目名称 EBK
 
-### balsn
+### Balsn
 - 题目名称 Election
 - 题目名称 IdleGame
 
@@ -83,7 +83,7 @@
 ### Hackergame
 - 题目名称 JCBank
 
-### xctf final
+### XCTF_final
 - 题目名称 Happy_DOuble_Eleven
 
 ### D^3CTF
@@ -97,7 +97,7 @@
 ### RealWorld
 - 题目名称 Acoraida Monica
 
-### hctf
+### HCTF
 - 题目名称 ethre
 - 题目名称 bet2loss
 - 题目名称 ez2win

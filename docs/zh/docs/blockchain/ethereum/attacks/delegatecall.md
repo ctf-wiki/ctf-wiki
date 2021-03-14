@@ -216,6 +216,9 @@ contract attack {
 ### 第五空间 2020
 - 题目名称 SafeDelegatecall
 
+### 华为鲲鹏计算
+- 题目名称 boxgame
+
 !!! note
     注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。
 
