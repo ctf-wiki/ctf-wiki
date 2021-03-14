@@ -210,13 +210,13 @@ contract attack {
 ### RealWorld 2018
 - 题目名称 Acoraida Monica
 
-### balsn-ctf 2019
+### Balsn 2019
 - 题目名称 Creativity
 
 ### 第五空间 2020
 - 题目名称 SafeDelegatecall
 
-### 华为鲲鹏计算
+### 华为鲲鹏计算 2020
 - 题目名称 boxgame
 
 !!! note
