@@ -111,11 +111,17 @@ contract.revise('357076663774356482118879088749846081199922365090741977136285053
 
 ## 题目
 
-### xctf final 2019
+### xctf_final 2019
 - 题目名称 Bank
 
 ### balsn 2019
 - 题目名称 Bank
+
+### 第一届钓鱼城杯
+- 题目名称 StrictMathematician
+
+### rctf
+- 题目名称 roiscoin
 
 !!! note
     注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。
