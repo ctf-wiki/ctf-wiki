@@ -9,7 +9,7 @@
     + Storage: 永久储存在区块链中，由于会永久保存合约状态变量，故 GAS 开销也最大
     + Stack: 存放部分局部值类型变量，几乎免费使用的内存，但有数量限制
 
-- EVM 对每一个智能合约维护了一个巨大的 key-value 的存储结构，用于持久化存储数据，我们称这片区域为 Storage。除了 map 映射变量和变长数组以外的所有类型变量，在 Storage 中是依次连续从 slot 0 开始排列的，一共有 2^256 个 slot，每个 slot 可以存储 32 字节的数据。Storage 存储结构是在合约创建的时候就确定好的，它取决于合约所声明状态变量，但是内容可以通过 Transaction 改变。
+- EVM 对每一个智能合约维护了一个巨大的 **key-value** 的存储结构，用于持久化存储数据，我们称这片区域为 Storage。除了 map 映射变量和变长数组以外的所有类型变量，在 Storage 中是依次连续从 slot 0 开始排列的，一共有 2^256 个 slot，每个 slot 可以存储 32 字节的数据。Storage 存储结构是在合约创建的时候就确定好的，它取决于合约所声明状态变量，但是内容可以通过 Transaction 改变。
 - Storage 变量大致分为 4 种类型：定长变量、结构体、map 映射变量和变长数组。如果多个变量占用的大小小于 32 字节，按照紧密打包原则，会尽可能打包到单个 slot 中，具体规则如下：
     + 在 slot 中，是按照低位对齐存储的，即大端序
     + 基本类型变量存储时仅存储它们实际所需的字节数
@@ -30,19 +30,19 @@ Solidity 的结构体并没有特殊的存储模型，在 Storage 中的存储�
 
 在 Solidity 中，并不存储 map 的键，只存储键对应的值，值是通过键的 hash 索引来找到的。用 $slotM$ 表示 map 声明的 slot 位置，用 $key$ 表示键，用 $value$ 表示 $key$ 对应的值，用 $slotV$ 表示 $value$ 的存储位置，则
 
-$slotV = keccak256(key|slotM)$
+- $slotV = keccak256(key|slotM)$
 
-$value = sload(slotV)$
+- $value = sload(slotV)$
 
 #### 变长数组
 
 用 $slotA$ 表示变长数组声明的位置，用 $length$ 表示变长数组的长度，用 $slotV$ 表示变长数组数据存储的位置，用 $value$ 表示变长数组某个数据的值，用 $index$ 表示 $value$ 对应的索引下标，则
 
-$length = sload(slotA)$
+- $length = sload(slotA)$
 
-$slotV = keccak256(slotA) + index$
+- $slotV = keccak256(slotA) + index$
 
-$value = sload(slotV)$
+- $value = sload(slotV)$
 
 变长数组在编译期间无法知道数组的长度，没办法提前预留存储空间，所以 Solidity 就用 $slotA$ 位置存储了变长数组的长度
 

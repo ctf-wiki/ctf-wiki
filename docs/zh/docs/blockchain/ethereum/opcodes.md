@@ -163,9 +163,9 @@ contract StArNDBOX{
 }
 ```
 
-可以看到题目的 StArNDBoX 函数可以获取任意地址的合约并检测该合约的每个字节是否为质数，如果通过检查则使用 delegatecall 来调用目标合约。
+可以看到题目的 `StArNDBoX` 函数可以获取任意地址的合约并检测该合约的每个字节是否为质数，如果通过检查则使用 `delegatecall` 来调用目标合约。
 
-但由于该合约中的 isPrime 函数并不是完整的质数检查函数，00 和 01 也可以通过检查，因此我们可以构造如下的字节码：
+但由于该合约中的 `isPrime` 函数并不是完整的质数检查函数，`00` 和 `01` 也可以通过检查，因此我们可以构造如下的字节码：
 
 ```
 // 0x6100016100016100016100016100016100650361000161fbfbf1
@@ -181,7 +181,7 @@ contract StArNDBOX{
 f1       | CALL
 ```
 
-来执行 address(0x0001).call.gas(0xfbfb).value(0x0065 - 0x0001) 语句，也就是将题目合约中的 balance 转到 0x1 处，从而清空 balance 满足得到 flag 的条件。
+来执行 `address(0x0001).call.gas(0xfbfb).value(0x0065 - 0x0001)` 语句，也就是将题目合约中的 balance 转到 0x1 处，从而清空 balance 满足得到 flag 的条件。
 
 
 ## 题目

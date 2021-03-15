@@ -64,8 +64,9 @@ contract Bank {
 
 绝大部分重入攻击的题目都涉及到向下溢出，可参照重入攻击的部分。不涉及重入攻击的相对较少，可以参考以下题目。
 
-### ByteCTF 2018
-- 题目名称 hf、bet
+### ByteCTF 2019
+- 题目名称 hf
+- 题目名称 bet
 
 !!! note
     注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。

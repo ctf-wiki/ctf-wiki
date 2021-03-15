@@ -16,15 +16,15 @@
 <address>.delegatecall(...) returns (bool)
 ```
 
-这些函数提供了灵活的方式与合约进行交互，并且可以接受任何长度、任何类型的参数，其传入的参数会被填充至32字节最后拼接为一个字符串序列，由 EVM 解析执行。
+这些函数提供了灵活的方式与合约进行交互，并且可以接受任何长度、任何类型的参数，其传入的参数会被填充至 32 字节最后拼接为一个字符串序列，由 EVM 解析执行。
 
-在函数调用的过程中，Solidity 中的内置变量 msg 会随着调用的发起而改变，msg 保存了调用方的信息包括：调用发起的地址，交易金额，被调用函数字符序列等。
+在函数调用的过程中，Solidity 中的内置变量 `msg` 会随着调用的发起而改变，`msg` 保存了调用方的信息包括：调用发起的地址，交易金额，被调用函数字符序列等。
 
 #### 异同点
 
-* call: 调用后内置变量 msg 的值会修改为调用者，执行环境为被调用者的运行环境
-* delegatecall: 调用后内置变量 msg 的值不会修改为调用者，但执行环境为调用者的运行环境（相当于复制被调用者的代码到调用者合约）
-* callcode: 调用后内置变量 msg 的值会修改为调用者，但执行环境为调用者的运行环境
+* call: 调用后内置变量 `msg` 的值会修改为调用者，执行环境为被调用者的运行环境
+* delegatecall: 调用后内置变量 `msg` 的值不会修改为调用者，但执行环境为调用者的运行环境（相当于复制被调用者的代码到调用者合约）
+* callcode: 调用后内置变量 `msg` 的值会修改为调用者，但执行环境为调用者的运行环境
 
 !!! note
     Warning: "callcode" has been deprecated in favour of "delegatecall"
@@ -33,15 +33,15 @@
 
 #### 设计初衷
 
-* 函数原型 <address>.delegatecall(...) returns (bool)
+* 函数原型 `<address>.delegatecall(...) returns (bool)`
 * 函数设计的目的是为了使用给定地址的代码，其他信息则使用当前合约（如存储、余额等）
 * 某种程度上也是为了代码的复用
 
 #### 威胁分析
 
-参考函数原型，我们知道，delegatecall 调用有 address 和 msg.data 两个参数
+参考函数原型，我们知道，delegatecall 调用有 `address` 和 `msg.data` 两个参数
 
-* 若 calldata 可控，则可调用 address 处任意函数
+* 若 `msg.data` 可控，则可调用 `address` 处任意函数
 
 ```solidity
 pragma solidity ^0.4.18;
@@ -79,15 +79,15 @@ contract Delegation {
 
 对于这个例子，攻击者如何成为 owner 呢？
 
-其实我们只需调用 Delegation 的假 pwn() 即可，这样就会触发 Delegation 的 fallback，这样 pwn 的函数签名哈希就会放在 msg.data[0:4] 了，这样就会只需 delegate 的 pwn() 把 owner 变成自己，如下所示即可（这就是因为 calldata 可控导致的）
+其实我们只需调用 Delegation 的假 `pwn()` 即可，这样就会触发 Delegation 的 `fallback`，这样 `pwn` 的函数签名哈希就会放在 `msg.data[0:4]` 了，这样就会只需 delegate 的 `pwn()` 把 owner 变成自己，如下所示即可（这就是因为 `msg.data` 可控导致的）
 
 ```
 contract.sendTransaction({data: web3.sha3("pwn()").slice(0,10)})
 ```
 
-* 若 calldata 和 address 都可控，则可调用任意 address 处的任意函数
+* 若 `msg.data` 和 `address` 都可控，则可调用任意 `address` 处的任意函数
 
-同理，只不过额外加了 address 是可控的这个条件，不再作分析
+同理，只不过额外加了 `address` 是可控的这个条件，不再作分析
 
 #### 原因分析
 
@@ -132,8 +132,8 @@ sstore 即访存指令，可以看到写入的是 1 号存储位，1号存储位
 
 ### Analyse
 
-- 我们调用 Preservation 的 setFirstTime 函数实际通过 delegatecall 执行了 LibraryContract 的 setTime 函数，修改了 slot 1 ，也就是修改了 timeZone1Library 变量
-- 这样，我们第一次调用 setFirstTime 将 timeZone1Library 变量修改为我们的恶意合约的地址，第二次调用 setFirstTime 就可以执行我们的任意代码了
+- 我们调用 Preservation 的 `setFirstTime` 函数实际通过 `delegatecall` 执行了 LibraryContract 的 `setTime` 函数，修改了 slot 1 ，也就是修改了 timeZone1Library 变量
+- 这样，我们第一次调用 `setFirstTime` 将 timeZone1Library 变量修改为我们的恶意合约的地址，第二次调用 `setFirstTime` 就可以执行我们的任意代码了
 
 ### Exp
 
@@ -199,7 +199,7 @@ contract attack {
 }
 ```
 
-先调用 attack1() ，再调用 attack2() 即可
+先调用 `attack1()` ，再调用 `attack2()` 即可
 
 ### Result
 
