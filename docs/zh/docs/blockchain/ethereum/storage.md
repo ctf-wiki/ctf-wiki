@@ -231,6 +231,7 @@ function cal_addr(uint p) public pure returns(bytes32 res) {
 ## 题目
 
 与以太坊的存储相关的攻击一般分为两类：
+
 - 利用以太坊上存储本质上都是公开的这一特性，任意读取声明为 `private` 的变量。
 - 结合任意写的漏洞，覆盖以太坊上的特定位置的存储
 

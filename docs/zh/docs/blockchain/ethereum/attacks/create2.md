@@ -87,6 +87,7 @@ function getAddress(address addr, bytes memory bytecode, uint salt) public view 
 ```
 
 利用该合约，我们成功地在同一个地址上先后上部署了两个不同的合约：
+
 ![第一次部署](./figure/create2_0.png)
 ![第二次部署](./figure/create2_1.png)
 
@@ -96,8 +97,8 @@ function getAddress(address addr, bytes memory bytecode, uint salt) public view 
 ### Balsn 2019
 - 题目名称 Creativity
 
-### 第五空间 2020
-- 题目名称 SafeDelegatecall
+### QWB 2020
+- 题目名称 EasyAssembly
 
 ## 参考
 
