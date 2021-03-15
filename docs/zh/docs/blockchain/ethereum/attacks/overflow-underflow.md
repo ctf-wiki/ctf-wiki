@@ -40,7 +40,7 @@ contract TokenSaleChallenge {
 }
 ```
 
-在本题中，购买单个代币需要支付 1 ether，即 `msg.value == numTokens * PRICE_PER_TOKEN`。在EVM中，货币以 wei 为单位，1 ether 实际上是 $ 10 ^ { 18 } $ wei，即 0xde0b6b3a7640000 wei。如果让这里的 `numTokens` 大一些，乘积就可能溢出。例如我们购买 $ 2 ^ { 256 } // 10 ^ { 18 } + 1 $ 个代币，乘上 $ 10 ^ { 18 } $ 后就发生了溢出，最终花费仅约 0.4 ether 就买到了大量代币。然后我们将买到的代币部分卖出，即可完成题目要求。
+在本题中，购买单个代币需要支付 1 ether，即 `msg.value == numTokens * PRICE_PER_TOKEN`。在EVM中，货币以 wei 为单位，1 ether 实际上是 $10 ^ { 18 }$ wei，即 0xde0b6b3a7640000 wei。如果让这里的 `numTokens` 大一些，乘积就可能溢出。例如我们购买 $2 ^ { 256 } // 10 ^ { 18 } + 1$ 个代币，乘上 $10 ^ { 18 }$ 后就发生了溢出，最终花费仅约 0.4 ether 就买到了大量代币。然后我们将买到的代币部分卖出，即可完成题目要求。
 
 整数下溢的一个例子是减法操作。假设有一个合约实现了如下功能：
 
@@ -62,4 +62,10 @@ contract Bank {
 
 ## 题目
 
-绝大部分重入攻击的题目都涉及到向下溢出，可参照重入攻击的部分。不涉及重入攻击的题目相对较少，包括 ByteCTF 2018 的 hf 与 bet 两题， 以及 Capture The Ether 的 Token whale、Fifty years等。
+绝大部分重入攻击的题目都涉及到向下溢出，可参照重入攻击的部分。不涉及重入攻击的相对较少，可以参考以下题目。
+
+### ByteCTF 2018
+- 题目名称 hf、bet
+
+!!! note
+    注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。

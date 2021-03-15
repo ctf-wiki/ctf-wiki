@@ -26,4 +26,11 @@ gadget 需要实现的功能因题目要求或考察点而异，比如要实现�
 
 ## 题目
 
-由于 JOP 题目构造精妙，出题也往往较为困难。有代表性的题目为 RealWorldCTF 中的两道题目：Acoraida Monica 以及 Re: Montagy。
+### RealWorldCTF Final 2018
+- 题目名称 Acoraida Monica
+
+### RealWorldCTF 3rd
+- 题目名称 Re: Montagy
+
+!!! note
+    注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。
