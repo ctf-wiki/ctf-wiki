@@ -409,7 +409,24 @@ mchunkptr bins[ NBINS * 2 - 2 ];
 | ----- | ---------------------- | ----------------- | ---------------------- | ----------------- |
 | bin下标 | 0                      | 1                 | 2                      | 3                 |
 
-可以看出除了第一个bin（unsorted bin）外，后面的每个bin的表头chunk会重用前面的bin表头chunk的fd与bk字段，将其视为其自身的prev_size和size字段。这里也说明了一个问题，**bin的下标和我们所说的第几个bin并不是一致的。同时，bin表头的 chunk 头节点 的 prev_size 与 size 字段不能随便修改，因为这两个字段是其它bin表头chunk的fd和bk字段。**
+这里使用了C语言的内存模型相关技巧：结构体实际只是一段内存空间
+
+已知目前我们有一个bins数组(如上图)，里面包含了2*n个指针, 并且每两个指针是一组的
+
+如果我们想把同一组的指针做成一个malloc_chunk结构体的一部分应该怎么办？
+
+很简单，根据malloc_chunk结构体的定义我们可以知道，fd字段是malloc_chunk的第三个字段，距离结构体的开端2个pointer的距离
+
+即假设某个malloc_chunk结构体的内存地址是0x00000010, 那么这个结构体的fd字段将会在0x00000018（32位系统中）
+
+根据这个办法我们就可以在上图的bins数组中虚构出n个malloc_chunk结构体，比如我们要把bin1的fd和bk虚构为结构体的一部分，我们可以在bin1的fd的内存位置减去两个pointer，并声称此处是一个malloc_chunk结构体，这样当别人以结构体的访问方式去访问他的fd字段和bk字段时就会访问到对应的内容。
+
+注意：如果此时访问malloc_chunk的其他(如prev_size)字段，内容将会是错误的，因为我们能看出来那些部分的内容是属于其他的bin index的。
+
+为什么要这样做？我没有很认真的看这部分源码，但是这种做法的思路一般是为了统一形式（以下内容不理解也无所谓...）
+
+根据上图的描述，我们可以看出，bin2部分存了两个pointer，pointer指向某个malloc_chunk结构体，从而形成malloc_chunk链表，但是这里的开头只是一个pointer，所以bin2的fd和bk是无法和malloc_chunk链表构成统一的形式的(因为他目前不是malloc_chunk结构体)如果我们把bin2"改造"为malloc_chunk结构体，那么这里bin2和bin2所连接的malloc_chunk链表就可以组成闭环的malloc_chunk链表了。
+**
 
 数组中的 bin 依次介绍如下
 
