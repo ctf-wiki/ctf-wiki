@@ -3,8 +3,8 @@
 ## 在线学习
 
 -   [i 春秋-专业的网络安全|信息安全在线学习培训平台](http://www.ichunqiu.com)
--   [实验吧－让实验更简单！](http://www.shiyanbar.com/)
 -   [看雪知识库](https://www.kanxue.com/chm.htm)
+-   [CTFHub](https://www.ctfhub.com/)
 
 ## 学习路线
 
@@ -13,6 +13,7 @@
 -   [安全技能树简版 by 余弦](http://evilcos.me/security_skill_tree_basic/index.html)
 -   [安全类思维导图 by phith0n](https://github.com/phith0n/Mind-Map)
 -   [信息安全从业者书单推荐](https://github.com/riusksk/secbook)
+-   [CTFHub 技能树](https://www.ctfhub.com/#/skilltree)
 
 ## 信息资讯
 
@@ -32,7 +33,7 @@
 
 -   [XCTF社区](https://www.xctf.org.cn/)
 -   [CTFtime](https://ctftime.org/)
--   [CTF Rank](https://ctfrank.org/)
+-   [CTFHub 赛事中心](https://www.ctfhub.com/#/calendar)
 
 ## CTF OJ
 
@@ -48,6 +49,7 @@
 -   [CTF Learn](https://ctflearn.com/)
 -   [Hackme CTF](https://hackme.inndy.tw/scoreboard/)
 -   [Practice CTF List](http://captf.com/practice-ctf/)
+-   [CTFHub 真题复现](https://www.ctfhub.com/#/challenge)
 
 ## CTF 工具
 
@@ -58,8 +60,10 @@
 -   [CTF工具资源库 by HBCTF team](https://ctftools.com/down/)
 -   [ctf-tools by zardus](https://github.com/zardus/ctf-tools)
 -   [The Cyber Swiss Army Knife](https://gchq.github.io/CyberChef/)
+-   [CTFHub 工具库](https://www.ctfhub.com/#/tools)
 
 ## CTF Writeup 集合
 
 -   [CTFs Writeup 集锦](https://github.com/ctfs)
 -   [CTF solution by p4 team](https://github.com/p4-team/ctf)
+-   [CTFHub Writeup](https://writeup.ctfhub.com/)
