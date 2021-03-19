@@ -93,6 +93,9 @@ XXE Injection 即 XML External Entity Injection，也就是 XML 外部实体注�
 
 Security Misconfiguration：有时候，使用默认的安全配置可能会导致应用程序容易遭受多种攻击。在已经部署的应用、WEB 服务器、数据库服务器、操作系统、代码库以及所有和应用程序相关的组件中，都应该使用现有的最佳安全配置，这一点至关重要。
 
+## 请求走私
+在HTTP协议中，存在两种Header来指定请求的结尾，分别是Content-Length以及Transfer-Encoding。在复杂的网络环境下，不同的服务器以不同的方式实现RFC标准。因此，相同的HTTP请求，不同的服务器可能会产生不同的处理结果，这样就产生了了安全风险。
+
 ## WAF
 
 Web 应用防护系统（也称：网站应用级入侵防御系统。英文：Web Application Firewall，简称：WAF）。利用国际上公认的一种说法：WEB 应用防火墙是通过执行一系列针对 HTTP/HTTPS 的安全策略来专门为 WEB 应用提供保护的一款产品。
