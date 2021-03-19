@@ -82,7 +82,7 @@ We welcome to write content for the wiki and share what you have learned.
 
 Thank you to all the people who have already contributed to CTF Wiki.
 
-<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" />
+<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" /></a>
 
 ## What can you get?
 
