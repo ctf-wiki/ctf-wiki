@@ -859,7 +859,10 @@ typedef struct _heap_info
 - 堆对应的 arena 的地址
 - 由于一个线程申请一个堆之后，可能会使用完，之后就必须得再次申请。因此，一个线程可能会有多个堆。prev即记录了上一个 heap_info 的地址。这里可以看到每个堆的 heap_info 是通过单向链表进行链接的。
 - size 表示当前堆的大小
-- 最后一部分确保对齐（**这里负数使用的缘由是什么呢**？）
+- 最后一部分确保对齐
+
+!!! note "pad 里负数的缘由是什么呢？"
+    `pad` 是为了确保分配的空间是按照 `MALLOC_ALIGN_MASK+1` (记为 `MALLOC_ALIGN_MASK_1`) 对齐的。在 `pad` 之前该结构体一共有 6 个 `SIZE_SZ` 大小的成员, 为了确保  `MALLOC_ALIGN_MASK_1` 字节对齐, 可能需要进行 `pad`，不妨假设该结构体的最终大小为 `MALLOC_ALIGN_MASK_1*x`，其中 `x` 为自然数，那么需要 `pad` 的空间为 `MALLOC_ALIGN_MASK_1 * x - 6 * SIZE_SZ = (MALLOC_ALIGN_MASK_1 * x - 6 * SIZE_SZ) % MALLOC_ALIGN_MASK_1 = 0 - 6 * SIZE_SZ % MALLOC_ALIGN_MASK_1=-6 * SIZE_SZ % MALLOC_ALIGN_MASK_1 = -6 * SIZE_SZ & MALLOC_ALIGN_MASK`。
 
 看起来该结构应该是相当重要的，但是如果如果我们仔细看完整个 malloc 的实现的话，就会发现它出现的频率并不高。
 
