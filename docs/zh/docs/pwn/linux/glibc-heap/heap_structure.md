@@ -402,33 +402,15 @@ mem指向用户得到的内存的起始位置。
 /* Normal bins packed as described above */
 mchunkptr bins[ NBINS * 2 - 2 ];
 ```
-
-一个bin相当于一个chunk链表，我们把每个链表的头节点chunk作为bins数组，但是由于这个头节点作为bin表头，其prev_size 与 size 字段是没有任何实际作用的，因此我们在存储头节点chunk的时候仅仅只需要存储头节点chunk的fd和bk即可，而其中的prev_size 与 size 字段被重用为另一个bin的头节点的fd与bk，这样可以节省空间，并提高可用性。因此**我们仅仅只需要mchunkptr类型的指针数组就足够存储这些头节点**，那prev_size 与 size 字段到底是怎么重用的呢？这里我们以32位系统为例
+`bins` 主要用于索引不同 bin 的 fd 和 bk。以 32 位系统为例，bins 前 4 项的含义如下
 
 | 含义    | bin1的fd/bin2的prev_size | bin1的bk/bin2的size | bin2的fd/bin3的prev_size | bin2的bk/bin3的size |
 | ----- | ---------------------- | ----------------- | ---------------------- | ----------------- |
 | bin下标 | 0                      | 1                 | 2                      | 3                 |
 
-这里使用了C语言的内存模型相关技巧：结构体实际只是一段内存空间
+可以看到，bin2 的 prev_size、size 和 bin1 的 fd、bk 是重合的。由于我们只会使用 fd 和 bk 来索引链表，所以该重合部分的数据其实记录的是 bin1 的 fd、bk。 也就是说，虽然后一个 bin 和前一个 bin 共用部分数据，但是其实记录的仍然是前一个 bin 的链表数据。通过这样的复用，可以节省空间。
 
-已知目前我们有一个bins数组(如上图)，里面包含了2*n个指针, 并且每两个指针是一组的
-
-如果我们想把同一组的指针做成一个malloc_chunk结构体的一部分应该怎么办？
-
-很简单，根据malloc_chunk结构体的定义我们可以知道，fd字段是malloc_chunk的第三个字段，距离结构体的开端2个pointer的距离
-
-即假设某个malloc_chunk结构体的内存地址是0x00000010, 那么这个结构体的fd字段将会在0x00000018（32位系统中）
-
-根据这个办法我们就可以在上图的bins数组中虚构出n个malloc_chunk结构体，比如我们要把bin1的fd和bk虚构为结构体的一部分，我们可以在bin1的fd的内存位置减去两个pointer，并声称此处是一个malloc_chunk结构体，这样当别人以结构体的访问方式去访问他的fd字段和bk字段时就会访问到对应的内容。
-
-注意：如果此时访问malloc_chunk的其他(如prev_size)字段，内容将会是错误的，因为我们能看出来那些部分的内容是属于其他的bin index的。
-
-为什么要这样做？我没有很认真的看这部分源码，但是这种做法的思路一般是为了统一形式（以下内容不理解也无所谓...）
-
-根据上图的描述，我们可以看出，bin2部分存了两个pointer，pointer指向某个malloc_chunk结构体，从而形成malloc_chunk链表，但是这里的开头只是一个pointer，所以bin2的fd和bk是无法和malloc_chunk链表构成统一的形式的(因为他目前不是malloc_chunk结构体)如果我们把bin2"改造"为malloc_chunk结构体，那么这里bin2和bin2所连接的malloc_chunk链表就可以组成闭环的malloc_chunk链表了。
-**
-
-数组中的 bin 依次介绍如下
+数组中的 bin 依次如下
 
 1. 第一个为 unsorted bin，字如其面，这里面的 chunk 没有进行排序，存储的 chunk 比较杂。
 2. 索引从 2 到 63 的 bin 称为 small bin，同一个 small bin 链表中的 chunk 的大小相同。两个相邻索引的 small bin 链表中的 chunk 大小相差的字节数为**2个机器字长**，即32位相差8字节，64位相差16字节。
