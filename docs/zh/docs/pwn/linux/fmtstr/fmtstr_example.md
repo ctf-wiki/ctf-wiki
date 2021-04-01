@@ -325,7 +325,7 @@ int __usercall sub_400B07@<eax>(char format@<dil>, char formata, __int64 a3, cha
     v6 = read(0, (char *)&a4 + 4, 0x14uLL);
 ```
 
-当然我们还可以发现我们读入的 username 在距离的 password 20 个字节。
+当然我们还可以发现 username 和 password 之间的距离为 20 个字节。
 
 ```C
   puts("Input your username(max lenth:20): ");
