@@ -400,9 +400,75 @@ pwndbg> checksec
 
 - Fast Bin Attack
 
-  
 
 ## 题目
+
+## Unsorted Bin Leak
+
+这其实是一个很简单很枯燥的问题，许多题中都会用到，但是我发现好像并没有文章以该方法为主角介绍该方法，也没有对其原理做出详细解释。估计是大佬们都觉得这个问题太简单了不愿意费时间来写，而回想过去，做题时总是会记得有这样一个利用方法，但是却找不到具体的利用原理。所以我就来细讲一下这个问题。
+
+`Unsorted Bin` 在管理时为循环双向链表，若 `Unsorted Bin` 中有两个 `bin`，那么该链表结构如下
+
+```mermaid
+graph LR
+A("main_arena.bins[0,1] ___") -->|"fd"|B("bin1")
+B -->|bk|A
+B -->|"fd"|C("bin2")
+C -->|"bk"|B
+C -->|"fd"|A
+```
+
+下面这张图就是上面的结构的复现
+
+<div style="text-align:center"><img src="https://www.cjovi.icu/usr/uploads/2021/02/3076927169.png
+"></div>
+
+
+我们可以看到，在该链表中必有一个节点（不准确的说，是尾节点，这个就意会一下把，毕竟循环链表实际上没有头尾）的 `fd` 指针会指向 `main_arena` 结构体内部。而 `main_arena` 是一个`struct malloc_state` 类型的全局变量，是 `ptmalloc` 管理主分配区的唯一实例。说到全局变量，立马可以想到他会被分配在 `.data` 或者 `.bss` 等段上，也就是说是编译时分配，那么如果我们有进程所使用的 `libc` 的 `.so` 文件的话，我们就可以获得 `main_arena` 与 `libc` 基地址的偏移，实现对 `ASLR` 的绕过。
+
+那么如何取得 `main_arena` 与 `libc` 基址的偏移呢？这里提供一种思路，也是许多师傅使用的方法。
+
+在 `malloc.c` 中有这样一段代码
+
+```cpp
+int
+__malloc_trim (size_t s)
+{
+  int result = 0;
+
+  if (__malloc_initialized < 0)
+    ptmalloc_init ();
+
+  mstate ar_ptr = &main_arena;//<=here!
+  do
+    {
+      __libc_lock_lock (ar_ptr->mutex);
+      result |= mtrim (ar_ptr, s);
+      __libc_lock_unlock (ar_ptr->mutex);
+
+      ar_ptr = ar_ptr->next;
+    }
+  while (ar_ptr != &main_arena);
+
+  return result;
+}
+```
+
+注意到 `mstate ar_ptr = &main_arena;` 这里对 `main_arena` 进行了访问，所以我们就可以通过 IDA 等工具分析出偏移了。
+
+<div style="text-align:center"><img src="https://www.cjovi.icu/usr/uploads/2021/02/2603976079.png
+"></div>
+
+
+比如把 `.so` 文件放到 IDA 中，找到 `malloc_trim` 函数，就可以获得偏移了。
+
+#### 利用的方法
+
+一般来说，要实现 leak，需要有 `UAF`，将一个 `chunk` 放入 `Unsorted Bin` 中后再打出其 `fd`。一般的笔记管理题都会有 `show` 的功能，对处于链表尾的节点 `show` 就可以获得 `libc` 的基地址了。
+
+特别的，`CTF` 中的利用，堆往往是刚刚初始化的，所以 `Unsorted Bin` 一般都是干净的，当里面只存在一个 `bin` 的时候，该 `bin` 的 `fd` 和 `bk` 都会指向 `main_arena` 中。
+
+另外，如果我们无法做到访问链表尾，但是可以访问链表头，那么在 32 位的环境下，对链表头进行 `printf` 等往往可以把 `fd` 和 `bk` 一起输出出来，这个时候同样可以实现有效的 leak。然而在 64 位下，由于高地址往往为 `\x00`，很多输出函数会被截断，这个时候可能就难以实现有效 leak。
 
 ### 参考文献
 
