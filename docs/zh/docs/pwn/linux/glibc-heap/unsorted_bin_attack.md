@@ -479,7 +479,7 @@ __malloc_trim (size_t s)
 main_arena_offset = ELF("libc.so.6").symbols["__malloc_hook"] + 0x10
 ```
 
-这样就可以获得 `main_arena` 与基地址的偏移了
+这样就可以获得 `main_arena` 与基地址的偏移了。
 
 ### 实现 Leak 的方法
 
