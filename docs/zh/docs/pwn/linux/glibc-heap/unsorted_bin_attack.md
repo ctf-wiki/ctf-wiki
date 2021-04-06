@@ -423,11 +423,11 @@ pwndbg> checksec
 
 `Unsorted Bin` 在管理时为循环双向链表，若 `Unsorted Bin` 中有两个 `bin`，那么该链表结构如下
 
-<div style="text-align:center"><img src="./figure/unsortedbins-struct.jpg"></div>
+![](./figure/unsortedbins-struct.jpg)
 
 下面这张图就是上面的结构的复现
 
-<div style="text-align:center"><img src="./figure/gdb-debug-state.png"></div>
+![](./figure/gdb-debug-state.png)
 
 我们可以看到，在该链表中必有一个节点（不准确的说，是尾节点，这个就意会一下把，毕竟循环链表实际上没有头尾）的 `fd` 指针会指向 `main_arena` 结构体内部。
 
@@ -467,7 +467,7 @@ __malloc_trim (size_t s)
 
 注意到 `mstate ar_ptr = &main_arena;` 这里对 `main_arena` 进行了访问，所以我们就可以通过 IDA 等工具分析出偏移了。
 
-<div style="text-align:center"><img src="./figure/malloc-trim-ida.png"></div>
+![](./figure/malloc-trim-ida.png)
 
 比如把 `.so` 文件放到 IDA 中，找到 `malloc_trim` 函数，就可以获得偏移了。
 
