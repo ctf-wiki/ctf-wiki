@@ -23,7 +23,81 @@ Unsorted Bin Attack 可以达到的效果是实现修改任意地址值为一个
 1. Unsorted Bin 在使用的过程中，采用的遍历顺序是 FIFO，**即插入的时候插入到 unsorted bin 的头部，取出的时候从链表尾获取**。
 2. 在程序 malloc 时，如果在 fastbin，small bin 中找不到对应大小的 chunk，就会尝试从 Unsorted Bin 中寻找 chunk。如果取出来的 chunk 大小刚好满足，就会直接返回给用户，否则就会把这些 chunk 分别插入到对应的 bin 中。
 
-## 原理
+## Unsorted Bin Leak
+
+在介绍 Unsorted Bin Attack 之前，我们先介绍一下如何使用 Unsorted Bin 进行 Leak。这其实是一个小 trick，许多题中都会用到。
+
+### Unsorted Bin 的结构
+
+`Unsorted Bin` 在管理时为循环双向链表，若 `Unsorted Bin` 中有两个 `bin`，那么该链表结构如下
+
+![](./figure/unsortedbins-struct.jpg)
+
+下面这张图就是上面的结构的复现
+
+![](./figure/gdb-debug-state.png)
+
+我们可以看到，在该链表中必有一个节点（不准确的说，是尾节点，这个就意会一下把，毕竟循环链表实际上没有头尾）的 `fd` 指针会指向 `main_arena` 结构体内部。
+
+### Leak 原理
+
+如果我们可以把正确的 `fd` 指针 leak 出来，就可以获得一个与 `main_arena` 有固定偏移的地址，这个偏移可以通过调试得出。而`main_arena` 是一个 `struct malloc_state` 类型的全局变量，是 `ptmalloc` 管理主分配区的唯一实例。说到全局变量，立马可以想到他会被分配在 `.data` 或者 `.bss` 等段上，那么如果我们有进程所使用的 `libc` 的 `.so` 文件的话，我们就可以获得 `main_arena` 与 `libc` 基地址的偏移，实现对 `ASLR` 的绕过。
+
+那么如何取得 `main_arena` 与 `libc` 基址的偏移呢？这里提供两种思路。
+
+#### 通过 __malloc_trim 函数得出
+
+在 `malloc.c` 中有这样一段代码
+
+```cpp
+int
+__malloc_trim (size_t s)
+{
+  int result = 0;
+
+  if (__malloc_initialized < 0)
+    ptmalloc_init ();
+
+  mstate ar_ptr = &main_arena;//<=here!
+  do
+    {
+      __libc_lock_lock (ar_ptr->mutex);
+      result |= mtrim (ar_ptr, s);
+      __libc_lock_unlock (ar_ptr->mutex);
+
+      ar_ptr = ar_ptr->next;
+    }
+  while (ar_ptr != &main_arena);
+
+  return result;
+}
+```
+
+注意到 `mstate ar_ptr = &main_arena;` 这里对 `main_arena` 进行了访问，所以我们就可以通过 IDA 等工具分析出偏移了。
+
+![](./figure/malloc-trim-ida.png)
+
+比如把 `.so` 文件放到 IDA 中，找到 `malloc_trim` 函数，就可以获得偏移了。
+
+#### 通过 __malloc_hook 直接算出
+
+比较巧合的是，`main_arena` 和 `__malloc_hook` 的地址差是 0x10，而大多数的 libc 都可以直接查出 `__malloc_hook` 的地址，这样可以大幅减小工作量。以 pwntools 为例
+
+```python
+main_arena_offset = ELF("libc.so.6").symbols["__malloc_hook"] + 0x10
+```
+
+这样就可以获得 `main_arena` 与基地址的偏移了。
+
+### 实现 Leak 的方法
+
+一般来说，要实现 leak，需要有 `UAF`，将一个 `chunk` 放入 `Unsorted Bin` 中后再打出其 `fd`。一般的笔记管理题都会有 `show` 的功能，对处于链表尾的节点 `show` 就可以获得 `libc` 的基地址了。
+
+特别的，`CTF` 中的利用，堆往往是刚刚初始化的，所以 `Unsorted Bin` 一般都是干净的，当里面只存在一个 `bin` 的时候，该 `bin` 的 `fd` 和 `bk` 都会指向 `main_arena` 中。
+
+另外，如果我们无法做到访问链表尾，但是可以访问链表头，那么在 32 位的环境下，对链表头进行 `printf` 等往往可以把 `fd` 和 `bk` 一起输出出来，这个时候同样可以实现有效的 leak。然而在 64 位下，由于高地址往往为 `\x00`，很多输出函数会被截断，这个时候可能就难以实现有效 leak。
+
+## Unsorted Bin Attack 原理
 
 在  [glibc](https://code.woboq.org/userspace/glibc/)/[malloc](https://code.woboq.org/userspace/glibc/malloc/)/[malloc.c](https://code.woboq.org/userspace/glibc/malloc/malloc.c.html) 中的 `_int_malloc ` 有这么一段代码，当将一个 unsorted bin取出的时候，会将 `bck->fd` 的位置写入本 Unsorted Bin 的位置。
 
@@ -188,6 +262,7 @@ Let's malloc again to get the chunk we just free. During this time, target shoul
 - 我们可以修改 heap 中的 global_max_fast 来使得更大的 chunk 可以被视为 fast bin，这样我们就可以去执行一些 fast bin attack了。
 
 ## HITCON Training lab14 magic heap
+
 [题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unsorted_bin_attack/hitcontraining_lab14)
 
 这里我们修改一下源程序中的 l33t 函数，以便于可以正常运行。
@@ -404,7 +479,7 @@ pwndbg> checksec
 
 ## 题目
 
-### 参考文献
+## 参考文献
 
 - http://brieflyx.me/2016/ctf-writeups/0ctf-2016-zerostorage/
 - https://github.com/HQ1995/Heap_Senior_Driver/tree/master/0ctf2016/zerostorage
