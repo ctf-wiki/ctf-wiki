@@ -158,6 +158,8 @@ DWORD 0x41424344
 
 然后通过 off-by-one 向低地址合并就可以实现 chunk overlapping 了，之后可以 leak libc_base 和 堆地址，tcache 打 __free_hook 即可。
 
+光讲原理比较难理解，建议结合题目学习，比如本文中的实例 3。
+
 ## 实例 1: Asis CTF 2016 [b00ks](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks)
 
 
