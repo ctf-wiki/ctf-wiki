@@ -19,7 +19,7 @@ off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界
 1. 溢出字节为可控制任意字节：通过修改大小造成块结构之间出现重叠，从而泄露其他块数据，或是覆盖其他块数据。也可使用 NULL 字节溢出的方法
 2. 溢出字节为 NULL 字节：在 size 为 0x100 的时候，溢出 NULL 字节可以使得 `prev_in_use` 位被清，这样前块会被认为是 free 块。（1） 这时可以选择使用 unlink 方法（见 unlink 部分）进行处理。（2） 另外，这时 `prev_size` 域就会启用，就可以伪造 `prev_size` ，从而造成块之间发生重叠。此方法的关键在于 unlink 的时候没有检查按照 `prev_size` 找到的块的大小与`prev_size` 是否一致。
 
-最新版本代码中，已加入针对 2 中后一种方法的 check ，但是在 2.28 前并没有该 check 。
+最新版本代码中，已加入针对 2 中后一种方法的 check ，但是在 2.28 及前并没有该 check 。
 
 ```
 /* consolidate backward */
@@ -129,6 +129,35 @@ strlen 是我们很熟悉的计算 ascii 字符串长度的函数，这个函数
 DWORD 0x41424344
 内存  0x44,0x43,0x42,0x41
 ```
+
+### 在 libc-2.29 之后
+由于这两行代码的加入
+```cpp
+      if (__glibc_unlikely (chunksize(p) != prevsize))
+        malloc_printerr ("corrupted size vs. prev_size while consolidating");
+```
+由于我们难以控制一个真实 chunk 的 size 字段，所以传统的 off-by-null 方法失效。但是，只需要满足被 unlink 的 chunk 和下一个 chunk 相连，所以仍然可以伪造 fake_chunk。
+
+伪造的方式就是使用 large bin 遗留的 fd_nextsize 和 bk_nextsize 指针。以 fd_nextsize 为 fake_chunk 的 fd，bk_nextsize 为 fake_chunk 的 bk，这样我们可以完全控制该 fake_chunk 的 size 字段（这个过程会破坏原 large bin chunk 的 fd 指针，但是没有关系），同时还可以控制其 fd（通过部分覆写 fd_nextsize）。通过在后面使用其他的 chunk 辅助伪造，可以通过该检测
+
+```
+  if (__glibc_unlikely (chunksize(p) != prevsize))
+    malloc_printerr ("corrupted size vs. prev_size while consolidating");
+```
+
+然后只需要通过 unlink 的检测就可以了，也就是 `fd->bk == p && bk->fd == p`
+
+如果 large bin 中仅有一个 chunk，那么该 chunk 的两个 nextsize 指针都会指向自己，如下
+
+<div style="text-align:center"><img src="https://www.cjovi.icu/usr/uploads/2021/04/3707268351.png
+"></div>
+
+
+我们可以控制 fd_nextsize 指向堆上的任意地址，可以容易地使之指向一个 fastbin + 0x10 - 0x18，而 fastbin 中的 fd 也会指向堆上的一个地址，通过部分覆写该指针也可以使该指针指向之前的 large bin + 0x10，这样就可以通过 `fd->bk == p` 的检测。
+
+由于 bk_nextsize 我们无法修改，所以 bk->fd 必然在原先的 large bin chunk 的 fd 指针处（这个 fd 被我们破坏了）。通过 fastbin 的链表特性可以做到修改这个指针且不影响其他的数据，再部分覆写之就可以通过 `bk->fd==p` 的检测了。
+
+然后通过 off-by-one 向低地址合并就可以实现 chunk overlapping 了，之后可以 leak libc_base 和 堆地址，tcache 打 __free_hook 即可。
 
 ## 实例 1: Asis CTF 2016 [b00ks](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks)
 
