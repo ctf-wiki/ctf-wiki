@@ -1,3 +1,6 @@
+# C 沙盒逃逸
+## orw
+
 有些时候 pwn 题目中为了增加难度，会使用类似 [seccomp](https://en.wikipedia.org/wiki/Seccomp) 的函数来禁用一部分系统调用，往往会把 execve 这种系统调用禁用掉，基本上拿 shell 是不可能了，但是我们 pwn 题是面向 flag 的，所以还是可以通过 orw（ open-read-write ）的方法来读出 flag 的。在栈上的 orw 和 普通 rop 其实没有什么特别大的区别，这里主要谈一谈堆利用中的白名单绕过。
 
 一般来说，开启了白名单的堆利用类题，我们会在劫持了某钩子函数如 __free_hook 或 got 表之后考虑实现 orw，这个时候我们只可以注入一个 gadget，一般来说我们希望这个 gadget 能够实现栈迁移，一种比较通用的做法是利用 setcontext 函数，其在 libc-2.29 中实现为
@@ -37,9 +40,9 @@
 
 当然其他版本也大同小异，可见在这个函数中有对 rsp 的赋值，如果我们可以控制 rdx，就可以控制 rsp 实现栈迁移了。
 
-## 例题
-### Balsn_CTF_2019-PlainText
-#### 分析
+### 例题
+#### Balsn_CTF_2019-PlainText
+##### 分析
 在 orw 之前的利用这里不再赘述，请见《Glibc Heap 利用》目录下的《堆中的 Off-By-One》中对此题的分析
 比较讨厌的是，在 libc-2.29 下，free 函数不会再将 rdi 赋值给 rdx，我们无法直接控制 rdx，仅能控制 rdi，幸好比较巧合的，在本题的 libc 中有这样一个 gadget
 
@@ -48,7 +51,7 @@
 ```
 
 通过使用这个 gadget 之后改变 rdx，ret 到 setcontext 之后就可以 rop 了（这个 chunk 无法通过 ROPgadget 找出，需要使用 ropper）。
-#### exploit
+##### exploit
 这里只给出 payload
 ```python
 ## alloc to __free_hook ##
