@@ -82,7 +82,7 @@ docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 
 非常感谢一起完善 CTF Wiki 的小伙伴们
 
-<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://opencollective.com/ctf-wiki/contributors.svg?width=890&button=false" /></a>
+<a href="https://github.com/ctf-wiki/ctf-wiki/graphs/contributors"><img src="https://contrib.rocks/image?repo=ctf-wiki/ctf-wiki" /></a>
 
 ## What can you get?
 
