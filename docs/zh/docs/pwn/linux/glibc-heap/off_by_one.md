@@ -1130,49 +1130,7 @@ add(0x28,p64(magic_gadget)) # 73
 
 因为有 chunk overlapping，所以其实挺容易控制 next 指针的，比如通过上面这样的方法就可以分配到 __free_hook 了。
 
-到这里就结束了堆上的利用，之后需要进行白名单绕过。
-我们只可以注入一个 gadget 到 __free_hook，而我们希望这个 gadget 能够实现栈迁移。一般考虑使用 setcontext 函数来进行栈迁移，其实现为
-
-```
-.text:0000000000055E00 ; __unwind {
-.text:0000000000055E00                 push    rdi
-.text:0000000000055E01                 lea     rsi, [rdi+128h] ; nset
-.text:0000000000055E08                 xor     edx, edx        ; oset
-.text:0000000000055E0A                 mov     edi, 2          ; how
-.text:0000000000055E0F                 mov     r10d, 8         ; sigsetsize
-.text:0000000000055E15                 mov     eax, 0Eh
-.text:0000000000055E1A                 syscall                 ; LINUX - sys_rt_sigprocmask
-.text:0000000000055E1C                 pop     rdx
-.text:0000000000055E1D                 cmp     rax, 0FFFFFFFFFFFFF001h
-.text:0000000000055E23                 jnb     short loc_55E80
-.text:0000000000055E25                 mov     rcx, [rdx+0E0h]
-.text:0000000000055E2C                 fldenv  byte ptr [rcx]
-.text:0000000000055E2E                 ldmxcsr dword ptr [rdx+1C0h]
-.text:0000000000055E35                 mov     rsp, [rdx+0A0h]
-.text:0000000000055E3C                 mov     rbx, [rdx+80h]
-.text:0000000000055E43                 mov     rbp, [rdx+78h]
-.text:0000000000055E47                 mov     r12, [rdx+48h]
-.text:0000000000055E4B                 mov     r13, [rdx+50h]
-.text:0000000000055E4F                 mov     r14, [rdx+58h]
-.text:0000000000055E53                 mov     r15, [rdx+60h]
-.text:0000000000055E57                 mov     rcx, [rdx+0A8h]
-.text:0000000000055E5E                 push    rcx
-.text:0000000000055E5F                 mov     rsi, [rdx+70h]
-.text:0000000000055E63                 mov     rdi, [rdx+68h]
-.text:0000000000055E67                 mov     rcx, [rdx+98h]
-.text:0000000000055E6E                 mov     r8, [rdx+28h]
-.text:0000000000055E72                 mov     r9, [rdx+30h]
-.text:0000000000055E76                 mov     rdx, [rdx+88h]
-.text:0000000000055E76 ; } // starts at 55E00
-```
-
-从偏移 `0x55E35` 开始以 rdx 为基基数对许多寄存器进行了赋值，也就是说如果控制了 rdx，那么就可以实现栈迁移。然而比较讨厌的是，rdx 我们无法直接控制，只能控制 rdi，幸好比较巧合的，在 libc 中有这样一个 gadget
-
-```
-0x12be97: mov rdx, qword ptr [rdi + 8]; mov rax, qword ptr [rdi]; mov rdi, rdx; jmp rax;
-```
-
-通过使用这个 gadget 之后改变 rdx，ret 到 setcontext 之后就可以 rop 了（这个 chunk 无法通过 ROPgadget 找出，需要使用 ropper）。
+到这里就结束了堆上的利用，之后需要进行白名单绕过，具体方法这里不再赘述，请见《沙箱逃逸》目录下的《C 沙盒逃逸》
 
 ### exp
 
