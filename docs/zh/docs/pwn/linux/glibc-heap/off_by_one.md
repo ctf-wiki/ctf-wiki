@@ -1130,8 +1130,8 @@ add(0x28,p64(magic_gadget)) # 73
 
 因为有 chunk overlapping，所以其实挺容易控制 next 指针的，比如通过上面这样的方法就可以分配到 __free_hook 了。
 
-到这里就结束了堆上的利用，之后需要进行白名单绕过,我们只可以注入一个 gadget 到 __free_hook，而我们希望这个 gadget 能够实现栈迁移
-一般考虑使用 setcontext 函数来进行栈迁移，其实现为
+到这里就结束了堆上的利用，之后需要进行白名单绕过。
+我们只可以注入一个 gadget 到 __free_hook，而我们希望这个 gadget 能够实现栈迁移。一般考虑使用 setcontext 函数来进行栈迁移，其实现为
 
 ```
 .text:0000000000055E00 ; __unwind {
@@ -1320,7 +1320,6 @@ payload += './flag\x00'
 add(len(payload) + 0x10,payload) # 74
 #gdb.attach(proc.pidof(sh)[0])
 delete(74)
-
 
 sh.interactive()
 ```
