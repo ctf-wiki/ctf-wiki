@@ -44,6 +44,7 @@
 #### Balsn_CTF_2019-PlainText
 ##### 分析
 在 orw 之前的利用这里不再赘述，请见《Glibc Heap 利用》目录下的《堆中的 Off-By-One》中对此题的分析
+
 比较讨厌的是，在 libc-2.29 下，free 函数不会再将 rdi 赋值给 rdx，我们无法直接控制 rdx，仅能控制 rdi，幸好比较巧合的，在本题的 libc 中有这样一个 gadget
 
 ```
