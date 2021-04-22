@@ -1132,7 +1132,7 @@ add(0x28,p64(magic_gadget)) # 73
 
 到这里就结束了堆上的利用，之后的白名单绕过这里不再赘述
 
-### exp
+### exploit
 ```python
 #!/usr/bin/env python
 # coding=utf-8
