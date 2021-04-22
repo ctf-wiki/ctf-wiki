@@ -149,8 +149,7 @@ DWORD 0x41424344
 
 如果 large bin 中仅有一个 chunk，那么该 chunk 的两个 nextsize 指针都会指向自己，如下
 
-<div style="text-align:center"><img src="https://www.cjovi.icu/usr/uploads/2021/04/3707268351.png
-"></div>
+![](./figure/largebin-struct.png)
 
 
 我们可以控制 fd_nextsize 指向堆上的任意地址，可以容易地使之指向一个 fastbin + 0x10 - 0x18，而 fastbin 中的 fd 也会指向堆上的一个地址，通过部分覆写该指针也可以使该指针指向之前的 large bin + 0x10，这样就可以通过 `fd->bk == p` 的检测。
