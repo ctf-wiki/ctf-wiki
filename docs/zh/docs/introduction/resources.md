@@ -67,3 +67,13 @@
 -   [CTFs Writeup 集锦](https://github.com/ctfs)
 -   [CTF solution by p4 team](https://github.com/p4-team/ctf)
 -   [CTFHub Writeup](https://writeup.ctfhub.com/)
+
+## 资源聚合
+
+-   [渗透师导航](https://www.shentoushi.top/)
+-   [安全圈](https://www.anquanquan.info/)
+-   [纳威安全导航](https://navisec.it/)
+-   [XssSafe导航](https://www.xssav.com/)
+-   [Coco413 Blog](https://www.coco413.com/navi.html)
+-   [安全导航](https://www.milw0rm.cn/nav/)
+-   [SecWeb](https://thief.one/SecWeb/)
