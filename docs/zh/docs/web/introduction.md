@@ -96,6 +96,11 @@ Security Misconfiguration：有时候，使用默认的安全配置可能会导�
 ## 请求走私
 在 HTTP 协议中，存在两种 Header 来指定请求的结尾，分别是 Content-Length 以及 Transfer-Encoding。在复杂的网络环境下，不同的服务器以不同的方式实现 RFC 标准。因此，相同的 HTTP 请求，不同的服务器可能会产生不同的处理结果，这样就产生了了安全风险。
 
+## TLS 投毒
+
+在 TLS 协议中，存在一种会话复用机制，当支持该类特性的客户端访问了恶意 TLS 服务器后，客户端会存储恶意服务器下发的 Session ，在客户端重用会话时，配合 DNS Rebinding 可以实现让客户端发送恶意 Session 至内网服务，从而达到 SSRF 攻击效果，包括可以任意写入 Memcached 等内网服务，进而配合其他漏洞造成 RCE 等危害。
+
+
 ## WAF
 
 Web 应用防护系统（也称：网站应用级入侵防御系统。英文：Web Application Firewall，简称：WAF）。利用国际上公认的一种说法：WEB 应用防火墙是通过执行一系列针对 HTTP/HTTPS 的安全策略来专门为 WEB 应用提供保护的一款产品。
