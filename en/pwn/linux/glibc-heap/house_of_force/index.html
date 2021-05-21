@@ -212,7 +212,7 @@ bcloud: ELF <span class=m>32</span>-bit LSB executable, Intel <span class=m>8038
   <span class=n>name</span> <span class=o>=</span> <span class=n>tmp</span><span class=p>;</span>
   <span class=n>strcpy</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>s</span><span class=p>);</span>
   <span class=n>info</span><span class=p>(</span><span class=n>tmp</span><span class=p>);</span>
-  <span class=k>return</span> <span class=nf>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span> <span class=o>^</span> <span class=n>v3</span><span class=p>;</span>
+  <span class=k>return</span> <span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span> <span class=o>^</span> <span class=n>v3</span><span class=p>;</span>
 <span class=p>}</span>
 </code></pre></div> <p>这里如果程序读入的名字为64个字符，那么当程序在使用info函数输出对应的字符串时，就会输出对应的tmp指针内容，也就是说<strong>泄露了堆的地址</strong>。。</p> <p>初始化组织和org的时候存在漏洞</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span> <span class=kt>int</span> <span class=n>init_org_host</span><span class=p>()</span>
 <span class=p>{</span>
@@ -235,7 +235,7 @@ bcloud: ELF <span class=m>32</span>-bit LSB executable, Intel <span class=m>8038
   <span class=n>strcpy</span><span class=p>(</span><span class=n>v4</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>v3</span><span class=p>);</span>
   <span class=n>strcpy</span><span class=p>(</span><span class=n>v2</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>s</span><span class=p>);</span>
   <span class=n>puts</span><span class=p>(</span><span class=s>&quot;OKay! Enjoy:)&quot;</span><span class=p>);</span>
-  <span class=k>return</span> <span class=nf>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span> <span class=o>^</span> <span class=n>v5</span><span class=p>;</span>
+  <span class=k>return</span> <span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span> <span class=o>^</span> <span class=n>v5</span><span class=p>;</span>
 <span class=p>}</span>
 </code></pre></div> <p>当读入组织时，给定 64 字节，会覆盖 v2 的低地址。与此同时，我们可以知道 v2 是与 top chunk 相邻的 chunk，而 v2 恰好与 org 相邻，那么由于在 32 位程序中，一般都是 32 位全部都使用，这里 v2 所存储的内容，几乎很大程度上都不是 <code>\x00</code> ，所以当执行 strcpy 函数向 v2 中拷贝内容时，很有可能会覆盖top chunk。这就是漏洞所在。</p> <h3 id=_9>利用<a class=headerlink href=#_9 title="Permanent link">&para;</a></h3> <ol> <li>利用初始化名字处的漏洞泄漏堆的基地址。。</li> <li>利用 house of force 将 top chunk 分配至全局的 0x0804B0A0 的 &amp;notesize-8 处，当再次申请内存时，便返回notesize地址处的内存，从而我们就可以控制所有note的大小以及对应的地址了。</li> <li>修改前三个 note 的大小为16，并修改其指针为 free@got，atoi@got，atoi@got</li> <li>将 free@got 修改为 puts@plt。</li> <li>泄漏 atoi 地址。</li> <li>再次修改另外一个 atoi got 项为 system 地址，从而拿到shell。</li> </ol> <p>具体脚本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;gnome-terminal&#39;</span><span class=p>,</span> <span class=s1>&#39;-x&#39;</span><span class=p>,</span> <span class=s1>&#39;sh&#39;</span><span class=p>,</span> <span class=s1>&#39;-c&#39;</span><span class=p>]</span>

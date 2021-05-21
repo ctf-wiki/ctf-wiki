@@ -13,7 +13,7 @@
 
 <span class=k>static</span> <span class=n>__thread</span> <span class=n>tcache_perthread_struct</span> <span class=o>*</span><span class=n>tcache</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
 </code></pre></div> <p>其中有两个重要的函数， <code>tcache_get()</code> 和 <code>tcache_put()</code>:</p> <div class=highlight><pre><span></span><code><span class=k>static</span> <span class=kt>void</span>
-<span class=n>tcache_put</span> <span class=p>(</span><span class=n>mchunkptr</span> <span class=n>chunk</span><span class=p>,</span> <span class=kt>size_t</span> <span class=n>tc_idx</span><span class=p>)</span>
+<span class=nf>tcache_put</span> <span class=p>(</span><span class=n>mchunkptr</span> <span class=n>chunk</span><span class=p>,</span> <span class=kt>size_t</span> <span class=n>tc_idx</span><span class=p>)</span>
 <span class=p>{</span>
   <span class=n>tcache_entry</span> <span class=o>*</span><span class=n>e</span> <span class=o>=</span> <span class=p>(</span><span class=n>tcache_entry</span> <span class=o>*</span><span class=p>)</span> <span class=n>chunk2mem</span> <span class=p>(</span><span class=n>chunk</span><span class=p>);</span>
   <span class=n>assert</span> <span class=p>(</span><span class=n>tc_idx</span> <span class=o>&lt;</span> <span class=n>TCACHE_MAX_BINS</span><span class=p>);</span>
@@ -23,7 +23,7 @@
 <span class=p>}</span>
 
 <span class=k>static</span> <span class=kt>void</span> <span class=o>*</span>
-<span class=n>tcache_get</span> <span class=p>(</span><span class=kt>size_t</span> <span class=n>tc_idx</span><span class=p>)</span>
+<span class=nf>tcache_get</span> <span class=p>(</span><span class=kt>size_t</span> <span class=n>tc_idx</span><span class=p>)</span>
 <span class=p>{</span>
   <span class=n>tcache_entry</span> <span class=o>*</span><span class=n>e</span> <span class=o>=</span> <span class=n>tcache</span><span class=o>-&gt;</span><span class=n>entries</span><span class=p>[</span><span class=n>tc_idx</span><span class=p>];</span>
   <span class=n>assert</span> <span class=p>(</span><span class=n>tc_idx</span> <span class=o>&lt;</span> <span class=n>TCACHE_MAX_BINS</span><span class=p>);</span>
@@ -101,7 +101,7 @@
       <span class=k>if</span> <span class=p>(</span><span class=n>SINGLE_THREAD_P</span><span class=p>)</span>
         <span class=o>*</span><span class=n>fb</span> <span class=o>=</span> <span class=n>victim</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>;</span>
       <span class=k>else</span>
-        <span class=nf>REMOVE_FB</span> <span class=p>(</span><span class=n>fb</span><span class=p>,</span> <span class=n>pp</span><span class=p>,</span> <span class=n>victim</span><span class=p>);</span>
+        <span class=n>REMOVE_FB</span> <span class=p>(</span><span class=n>fb</span><span class=p>,</span> <span class=n>pp</span><span class=p>,</span> <span class=n>victim</span><span class=p>);</span>
       <span class=k>if</span> <span class=p>(</span><span class=n>__glibc_likely</span> <span class=p>(</span><span class=n>victim</span> <span class=o>!=</span> <span class=nb>NULL</span><span class=p>))</span>
         <span class=p>{</span>
           <span class=kt>size_t</span> <span class=n>victim_idx</span> <span class=o>=</span> <span class=n>fastbin_index</span> <span class=p>(</span><span class=n>chunksize</span> <span class=p>(</span><span class=n>victim</span><span class=p>));</span>
@@ -146,14 +146,14 @@
         <span class=o>&amp;&amp;</span> <span class=n>mp_</span><span class=p>.</span><span class=n>tcache_unsorted_limit</span> <span class=o>&gt;</span> <span class=mi>0</span>
         <span class=o>&amp;&amp;</span> <span class=n>tcache_unsorted_count</span> <span class=o>&gt;</span> <span class=n>mp_</span><span class=p>.</span><span class=n>tcache_unsorted_limit</span><span class=p>)</span>
       <span class=p>{</span>
-        <span class=k>return</span> <span class=nf>tcache_get</span> <span class=p>(</span><span class=n>tc_idx</span><span class=p>);</span>
+        <span class=k>return</span> <span class=n>tcache_get</span> <span class=p>(</span><span class=n>tc_idx</span><span class=p>);</span>
       <span class=p>}</span>
 <span class=cp>#endif</span>
 </code></pre></div> <ul> <li>在循环处理unsorted bin内存块后，如果之前曾放入过tcache块，则会取出一个并返回。</li> </ul> <div class=highlight><pre><span></span><code><span class=cp>#if USE_TCACHE</span>
       <span class=cm>/* If all the small chunks we found ended up cached, return one now.  */</span>
       <span class=k>if</span> <span class=p>(</span><span class=n>return_cached</span><span class=p>)</span>
       <span class=p>{</span>
-        <span class=k>return</span> <span class=nf>tcache_get</span> <span class=p>(</span><span class=n>tc_idx</span><span class=p>);</span>
+        <span class=k>return</span> <span class=n>tcache_get</span> <span class=p>(</span><span class=n>tc_idx</span><span class=p>);</span>
       <span class=p>}</span>
 <span class=cp>#endif</span>
 </code></pre></div> <h3 id=0x03-pwn-tcache>0x03 Pwn Tcache<a class=headerlink href=#0x03-pwn-tcache title="Permanent link">&para;</a></h3> <h4 id=tcache-poisoning>tcache poisoning<a class=headerlink href=#tcache-poisoning title="Permanent link">&para;</a></h4> <p>通过覆盖 tcache 中的 next，不需要伪造任何 chunk 结构即可实现 malloc 到任何地址。</p> <p>以 how2heap 中的 <a href=https://github.com/shellphish/how2heap/blob/master/glibc_2.26/tcache_poisoning.c>tcache_poisoning</a> 为例</p> <p>看一下源码</p> <div class=highlight><pre><span></span><code><span class=n>glibc_2</span><span class=mf>.26</span> <span class=p>[</span><span class=n>master</span><span class=err>●</span><span class=p>]</span> <span class=n>bat</span> <span class=n>tcache_poisoning</span><span class=p>.</span><span class=n>c</span>
@@ -1427,7 +1427,7 @@ addr                prev                size                 status             
              <span class=n>f</span><span class=o>-&gt;</span><span class=n>_IO_write_ptr</span> <span class=o>-</span> <span class=n>f</span><span class=o>-&gt;</span><span class=n>_IO_write_base</span><span class=p>);</span>
 </code></pre></div> <p>进入后的部分：</p> <div class=highlight><pre><span></span><code><span class=k>static</span>
 <span class=n>_IO_size_t</span>
-<span class=n>new_do_write</span> <span class=p>(</span><span class=n>_IO_FILE</span> <span class=o>*</span><span class=n>fp</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>*</span><span class=n>data</span><span class=p>,</span> <span class=n>_IO_size_t</span> <span class=n>to_do</span><span class=p>)</span>
+<span class=nf>new_do_write</span> <span class=p>(</span><span class=n>_IO_FILE</span> <span class=o>*</span><span class=n>fp</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>*</span><span class=n>data</span><span class=p>,</span> <span class=n>_IO_size_t</span> <span class=n>to_do</span><span class=p>)</span>
 <span class=p>{</span>
   <span class=n>_IO_size_t</span> <span class=n>count</span><span class=p>;</span>
   <span class=k>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>_flags</span> <span class=o>&amp;</span> <span class=n>_IO_IS_APPENDING</span><span class=p>)</span>  <span class=cm>/* 需要满足 */</span>
@@ -1437,7 +1437,7 @@ addr                prev                size                 status             
 <span class=cm>       Instead, just indicate that offset (before and after) is</span>
 <span class=cm>       unpredictable. */</span>
     <span class=n>fp</span><span class=o>-&gt;</span><span class=n>_offset</span> <span class=o>=</span> <span class=n>_IO_pos_BAD</span><span class=p>;</span>
-  <span class=k>else</span> <span class=nf>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>_IO_read_end</span> <span class=o>!=</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>_IO_write_base</span><span class=p>)</span>
+  <span class=k>else</span> <span class=k>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>_IO_read_end</span> <span class=o>!=</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>_IO_write_base</span><span class=p>)</span>
     <span class=p>{</span>
      <span class=p>............</span>
     <span class=p>}</span>
@@ -1746,7 +1746,7 @@ gdb-peda$ x/20xg 0x00007fa8a0a40700
     <span class=n>error</span><span class=p>(</span><span class=s>&quot;io&quot;</span><span class=p>,</span> <span class=n>buf</span><span class=p>);</span>
   <span class=n>puts</span><span class=p>(</span><span class=s>&quot;Serious Punch!!!&quot;</span><span class=p>);</span>
   <span class=n>puts</span><span class=p>(</span><span class=o>&amp;</span><span class=n>unk_2128</span><span class=p>);</span>
-  <span class=k>return</span> <span class=nf>puts</span><span class=p>(</span><span class=n>buf</span><span class=p>);</span>
+  <span class=k>return</span> <span class=n>puts</span><span class=p>(</span><span class=n>buf</span><span class=p>);</span>
 <span class=p>}</span>
 </code></pre></div> Edit 和 Show 函数分别可以对堆块内容进行编辑和输出。</p> <h5 id=_13>利用思路<a class=headerlink href=#_13 title="Permanent link">&para;</a></h5> <p>由于 glibc 2.29 中新增了对于 <code>unsorted bin</code> 链表完整性检查，这使得 <code>unsorted bin attack</code> 完全失效，我们的目标是往一个地址中写入 <code>large value</code> ，这种情况下就可以选择 <code>tcache stashing unlink attack</code>。</p> <p>首先我们可以通过UAF来泄露 <code>heap</code> 和 <code>libc</code> 地址。具体方式是分配并释放多个chunk使其进入 <code>tcache</code> ，通过 <code>Show</code> 函数可以输出 <code>tcache bin</code> 的 <code>fd</code> 值来泄露堆地址。释放某个 <code>small bin size</code> 范围内的chunk七个，在第八次释放时会先把释放的堆块放入 <code>unsorted bin</code> 。通过 <code>Show</code> 函数可以泄露出 libc 地址。</p> <p>我们首先通过 <code>UAF</code> 将 <code>__malloc_hook</code> 链入 <code>tcache</code> 备用。然后分配并释放六次 <code>0x100</code> 大小的chunk进入 <code>tcache</code> 。通过 <code>unsorted bin</code> 切割得到 <code>last remainer</code> 的方式得到两个大小为 <code>0x100</code> 的chunk。再分配一个超过 0x100 的块使其进入 <code>small bin</code> 。按照释放顺序我们称之为 bin1 和 bin2 。修改 <code>bin2-&gt;bk</code> 为 <code>(heap_base+0x2f)-0x10</code> ，调用 <code>calloc(0xf0)</code> 触发 <code>small bin</code> 放入 <code>tcache</code> 的处理逻辑，由于 <code>tcache</code> 中有 6 个块，因此循环处理只会进行一次，这样也避免了 fake_chunk 因 bk 处无可写地址作为下一个块进行 unlink 时 <code>bck-&gt;fd=bin</code> 带来的内存访问错误。最终改掉 <code>heap_base+0x30</code> 的值绕过检查。</p> <h5 id=_14>利用步骤<a class=headerlink href=#_14 title="Permanent link">&para;</a></h5> <p>下面在调用 calloc 前下断点，可以看到此时 <code>tcache[0x100]</code> 有 6 个堆块，small bin 的分配顺序为 <code>0x000055555555c460-&gt;0x55555555cc80-&gt;0x000055555555901f</code> ，在 <code>calloc(0xf0)</code> 调用后， <code>0x000055555555c460</code> 会被返回给用户， <code>0x55555555cc80</code> 被链入tcache，而由于没有多余位置，跳出循环， <code>0x000055555555901f</code> 不做处理。</p> <p><div class=highlight><pre><span></span><code>gdb-peda$ heapinfo
 <span class=o>(</span>0x20<span class=o>)</span>     fastbin<span class=o>[</span><span class=m>0</span><span class=o>]</span>: 0x0
