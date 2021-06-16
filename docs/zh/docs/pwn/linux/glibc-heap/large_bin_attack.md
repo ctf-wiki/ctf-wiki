@@ -89,7 +89,7 @@ victim->bk_nextsize->fd_nextsize = victim;
 
 实现利用，也就是将本 chunk 的地址写到 `bk_nextsize + 0x20` 处。
 
-## 通过实例学习 large bin attack 的原理s
+## 通过实例学习 large bin attack 的原理
 
 这里我们拿 how2heap 中的 large bin attack 中的源码来分析
 
