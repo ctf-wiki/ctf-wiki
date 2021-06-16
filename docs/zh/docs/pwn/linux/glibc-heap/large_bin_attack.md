@@ -2,7 +2,94 @@
 
 分配跟 large bin 有关的 chunk，要经过 fastbin，unsorted bin，small bin 的分配，建议在学习 large bin attack 之前搞清楚 fastbin，unsorted bin 分配的流程。
 
-## 通过实例学习 large bin attack 的原理s
+## large bin attack
+
+这种攻击方式主要利用的是 chunk 进入 bin 中的操作，在 malloc 的时候，遍历 unsorted bin 时，对每一个 chunk，若无法 exact-fit 分配或不满足切割分配的条件，就会将该 chunk 置入相应的 bin 中，而此过程中缺乏对 largebin 的跳表指针的检测。
+
+以 2.33 版本的 libc 为例，从 4052 行开始就是对 largebin chunk 的入 bin 操作
+
+```cpp
+else
+            {
+              victim_index = largebin_index (size);
+              bck = bin_at (av, victim_index);
+              fwd = bck->fd;
+
+              /* maintain large bins in sorted order */
+              if (fwd != bck)
+                {
+                  /* Or with inuse bit to speed comparisons */
+                  size |= PREV_INUSE;
+                  /* if smaller than smallest, bypass loop below */
+                  assert (chunk_main_arena (bck->bk));
+                  if ((unsigned long) (size)
+		      < (unsigned long) chunksize_nomask (bck->bk))
+                    {
+                      fwd = bck;
+                      bck = bck->bk;
+
+                      victim->fd_nextsize = fwd->fd;
+                      victim->bk_nextsize = fwd->fd->bk_nextsize;
+                      fwd->fd->bk_nextsize = victim->bk_nextsize->fd_nextsize = victim;
+                    }
+                  else
+                    {
+                      assert (chunk_main_arena (fwd));
+                      while ((unsigned long) size < chunksize_nomask (fwd))
+                        {
+                          fwd = fwd->fd_nextsize;
+			  assert (chunk_main_arena (fwd));
+                        }
+
+                      if ((unsigned long) size
+			  == (unsigned long) chunksize_nomask (fwd))
+                        /* Always insert in the second position.  */
+                        fwd = fwd->fd;
+                      else
+                        {
+                          victim->fd_nextsize = fwd;
+                          victim->bk_nextsize = fwd->bk_nextsize;
+                          if (__glibc_unlikely (fwd->bk_nextsize->fd_nextsize != fwd))
+                            malloc_printerr ("malloc(): largebin double linked list corrupted (nextsize)");
+                          fwd->bk_nextsize = victim;
+                          victim->bk_nextsize->fd_nextsize = victim;
+                        }
+                      bck = fwd->bk;
+                      if (bck->fd != fwd)
+                        malloc_printerr ("malloc(): largebin double linked list corrupted (bk)");
+                    }
+                }
+```
+
+在 2.29 及以下的版本中，根据 unsorted chunk 的大小不同
+
+```cpp
+fwd->fd->bk_nextsize = victim->bk_nextsize->fd_nextsize = victim;
+victim->bk_nextsize->fd_nextsize = victim;
+```
+
+在 unsorted chunk 小于链表中最小的 chunk 的时候会执行前一句，反之执行后一句。
+
+由于两者大小相同的时候只会使用如下的方法插入，所以此时无法利用。
+
+```cpp
+if ((unsigned long) size
+			  == (unsigned long) chunksize_nomask (fwd))
+                        /* Always insert in the second position.  */
+                        fwd = fwd->fd;
+```
+
+所以有两种利用方法。
+
+在 2.30 版本新加入了对 largebin 跳表的完整性检查，使 unsorted chunk 大于链表中最小的 chunk 时的利用失效，必须使 unsorted chunk 小于链表中最小的 chunk，通过
+
+```cpp
+victim->bk_nextsize->fd_nextsize = victim;
+```
+
+实现利用，也就是将本 chunk 的地址写到 `bk_nextsize + 0x20` 处。
+
+## 通过实例学习 large bin attack 的原理
 
 这里我们拿 how2heap 中的 large bin attack 中的源码来分析
 
@@ -352,6 +439,8 @@ how2heap 中也说了，large bin attack 是未来更深入的利用。现在我
 
 + 可以修改一个 large bin chunk 的 data
 + 从 unsorted bin 中来的 large bin chunk 要紧跟在被构造过的 chunk 的后面
++ 通过 large bin attack 可以辅助 Tcache Stash Unlink+ 攻击
++ 可以修改 _IO_list_all 便于伪造 _IO_FILE 结构体进行 FSOP。
 
 
 
