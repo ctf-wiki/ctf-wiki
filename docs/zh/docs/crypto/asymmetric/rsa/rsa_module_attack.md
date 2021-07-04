@@ -71,14 +71,71 @@ $$
 
 ### p - 1 光滑
 
-当 p 是 N 的因数，并且 p - 1 是光滑的时候，可能可以使用 Pollard's p − 1 算法来分解 N，但是也不是完全可以成功的。
+* 光滑数(Smooth number)：指可以分解为小素数乘积的正整数
 
-!!! warning
-    原理分析待完成
+* 当$p$是$N$的因数，并且$p-1$是光滑数，可以考虑使用`Pollard's p-1`算法来分解$N$
+
+* 根据费马小定理有
+
+    $$若p\nmid a,\ 则a^{p-1}\equiv 1\pmod{p}$$
+
+    则有
+
+    $$a^{t(p-1)}\equiv 1^t \equiv 1\pmod{p}$$
+
+    即
+
+    $$a^{t(p-1)} - 1 = k*p$$
+
+* 根据`Pollard's p-1`算法：
+
+    如果$p$是一个$B-smooth\ number$，那么则存在
+
+    $$M = \prod_{q\le{B}}{q^{\lfloor\log_q{B}\rfloor}}$$
+
+    使得
+
+    $$(p-1)\mid M$$
+    
+    成立，则有
+
+    $$\gcd{(a^{M}-1, N)}$$
+    
+    如果结果不为$1$或$N$，那么就已成功分解$N$。
+
+    因为我们只关心最后的gcd结果，同时`N`只包含两个素因子，则我们不需要计算$M$，考虑$n=2,3,\dots$，令$M = n!$即可覆盖正确的$M$同时方便计算。
+
+* 在具体计算中，可以代入降幂进行计算
+
+    $$
+    a^{n!}\bmod{N}=\begin{cases}
+        (a\bmod{N})^2\mod{N}&n=2\\
+        (a^{(n-1)!}\bmod{N})^n\mod{N}&n\ge{3}
+    \end{cases}$$
+
+* Python代码实现
+
+    ```python
+    from gmpy2 import *
+    a = 2
+    n = 2
+    while True:
+        a = powmod(a, n, N)
+        res = gcd(a-1, N)
+        if res != 1 and res != N:
+            q = n // res
+            d = invert(e, (res-1)*(q-1))
+            m = powmod(c, d, N)
+            print(m)
+            break
+        n += 1
+    ```
 
 ### p + 1 光滑
 
-* 已知N的因数p是一个光滑数
+* 当$p$是$N$的因数，并且$p+1$是光滑数，可以考虑使用`Williams's p+1`算法来分解$N$
+
+* 已知$N$的因数$p$，且$p+1$是一个光滑数
 
     $$
     p = \left(\prod_{i=1}^k{q_i^{\alpha_i}}\right)+1
@@ -283,6 +340,25 @@ $$
     $$
 
     其中$t = 1, c+1, 2c+1, \dots, c[B_2/c]+1$，我们有$p\mid H_i$当$(\Delta/p)=-1$
+
+* python代码实现
+
+    ```python
+    def mlucas(v, a, n):
+        """ Helper function for williams_pp1().  Multiplies along a Lucas sequence modulo n. """
+        v1, v2 = v, (v**2 - 2) % n
+        for bit in bin(a)[3:]: v1, v2 = ((v1**2 - 2) % n, (v1*v2 - v) % n) if bit == "0" else ((v1*v2 - v) % n, (v2**2 - 2) % n)
+        return v1
+    
+    for v in count(1):
+        for p in primegen():
+            e = ilog(isqrt(n), p)
+            if e == 0: break
+            for _ in xrange(e): v = mlucas(v, p, n)
+            g = gcd(v-2, n)
+            if 1 < g < n: return g # g|n
+            if g == n: break
+    ```
 
 ### 2017 SECCON very smooth
 
