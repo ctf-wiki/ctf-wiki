@@ -69,7 +69,7 @@ void* userfaultfd_leak_handler(void* arg)
 
 定义一个 uffd_msg 类型的结构体在未来接受消息。
 
-需要一个 pollfd 类型的结构体来提供轮询的操作，其 fd 设置为传入的 arg，events 设置为 POLLIN。然后执行 `poll(&pollfd, 1, -1);` 来进行轮询，这个函数会一直进行轮询，直到出现缺页错误。
+需要一个 pollfd 类型的结构体提供给轮询操作，其 fd 设置为传入的 arg，events 设置为 POLLIN。然后执行 `poll(&pollfd, 1, -1);` 来进行轮询，这个函数会一直进行轮询，直到出现缺页错误。
 
 然后需要处理缺页
 
