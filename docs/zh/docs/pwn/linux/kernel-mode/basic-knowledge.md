@@ -282,7 +282,7 @@ ffffffffbc7f06b7 r __kstrtab_prepare_kernel_cred
 4. 本地写好 exploit 后，可以通过 base64 编码等方式把编译好的二进制文件保存到远程目录下，进而拿到 flag。同时可以使用 musl, uclibc 等方法减小 exploit 的体积方便传输。
 
 
-## Reference:
+## Reference
 https://zh.wikipedia.org/wiki/内核
 
 https://zh.wikipedia.org/wiki/分级保护域
