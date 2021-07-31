@@ -241,7 +241,7 @@ tcache_get (size_t tc_idx)
 
 通过覆盖 tcache 中的 next，不需要伪造任何 chunk 结构即可实现 malloc 到任何地址。
 
-以 how2heap 中的 [tcache_poisoning](https://github.com/shellphish/how2heap/blob/master/glibc_2.26/tcache_poisoning.c) 为例
+以 how2heap 中的 [tcache_poisoning](https://github.com/shellphish/how2heap/blob/master/glibc_2.27/tcache_poisoning.c) 为例
 
 看一下源码
 
@@ -1422,7 +1422,7 @@ null-byte-overflow 漏洞的利用方法通过溢出覆盖 prev_in_use 字节使
 但是在这个过程中需要注意 tcache 的影响。
 
 ##### 利用步骤
- 
+
 ###### 重排堆块结构，释放出 unsorted bin chunk
 
 由于本题只有 10 个可分配块数量，而整个过程中我们需要用到 3 个 unsorted bin 的 chunk ，加上 7 个 tcache 的 chunk ，所以需要进行一下重排，将一个 tcache 的 chunk 放到 3 个 unsorted bin chunk 和 top chunk 之间，否则会触发 top 的合并。
