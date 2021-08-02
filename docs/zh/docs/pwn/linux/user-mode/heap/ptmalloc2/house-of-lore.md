@@ -184,4 +184,4 @@ int main(int argc, char * argv[]){
 
 ## 参考文献
 
-- [https://github.com/shellphish/how2heap/blob/master/glibc_2.25/house_of_lore.c](https://github.com/shellphish/how2heap/blob/master/glibc_2.25/house_of_lore.c)
+- [https://github.com/shellphish/how2heap/blob/master/glibc_2.27/house_of_lore.c](https://github.com/shellphish/how2heap/blob/master/glibc_2.27/house_of_lore.c)
