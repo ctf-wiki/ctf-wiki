@@ -103,16 +103,16 @@ Invalid address 0x62616164
 Program received signal SIGSEGV
 pwndbg&gt; cyclic -l 0x62616164
 112
-</code></pre></div> 因此 padding 长度即为 112</p> <blockquote> <p>或者可以更暴力一点直接爆破栈溢出的长度</p> </blockquote> <p>至于 system 的地址，因为这个 binary 被去除了符号表，我们可以先用 <code>rizzo</code> 来恢复部分符号表（关于恢复符号表暂时可以先看参考链接，以后会逐渐介绍）。虽然 rizzo 在这个 binary 上恢复的效果不好，但很幸运，在识别出来的几个函数中刚好有 system <div class=highlight><pre><span></span><code><span class=kt>char</span> <span class=o>*</span><span class=kr>__fastcall</span> <span class=n>system</span><span class=p>(</span><span class=kt>int</span> <span class=n>a1</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=kt>char</span> <span class=o>*</span><span class=n>result</span><span class=p>;</span> <span class=c1>// r0</span>
+</code></pre></div> 因此 padding 长度即为 112</p> <blockquote> <p>或者可以更暴力一点直接爆破栈溢出的长度</p> </blockquote> <p>至于 system 的地址，因为这个 binary 被去除了符号表，我们可以先用 <code>rizzo</code> 来恢复部分符号表（关于恢复符号表暂时可以先看参考链接，以后会逐渐介绍）。虽然 rizzo 在这个 binary 上恢复的效果不好，但很幸运，在识别出来的几个函数中刚好有 system <div class=highlight><pre><span></span><code><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=kr>__fastcall</span><span class=w> </span><span class=n>system</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>a1</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=n>result</span><span class=p>;</span><span class=w> </span><span class=c1>// r0</span>
 
-  <span class=k>if</span> <span class=p>(</span> <span class=n>a1</span> <span class=p>)</span>
-    <span class=n>result</span> <span class=o>=</span> <span class=n>sub_10BA8</span><span class=p>(</span><span class=n>a1</span><span class=p>);</span>
-  <span class=k>else</span>
-    <span class=n>result</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=p>)(</span><span class=n>sub_10BA8</span><span class=p>((</span><span class=kt>int</span><span class=p>)</span><span class=s>&quot;exit 0&quot;</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=k>return</span> <span class=n>result</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=w> </span><span class=n>a1</span><span class=w> </span><span class=p>)</span><span class=w></span>
+<span class=w>    </span><span class=n>result</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>sub_10BA8</span><span class=p>(</span><span class=n>a1</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>else</span><span class=w></span>
+<span class=w>    </span><span class=n>result</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)(</span><span class=n>sub_10BA8</span><span class=p>((</span><span class=kt>int</span><span class=p>)</span><span class=s>&quot;exit 0&quot;</span><span class=p>)</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>result</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div></p> <blockquote> <p>或者可以通过搜索 /bin/sh 字符串来寻找 system 函数</p> </blockquote> <h2 id=exp>exp<a class=headerlink href=#exp title="Permanent link">&para;</a></h2> <p>所有的条件都有了，构造 system("/bin/sh") 即可 <div class=highlight><pre><span></span><code>jarvisOJ_typo [master●●] cat solve.py 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
@@ -167,21 +167,21 @@ for i in range(112, 123):
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class=o>(</span>0x400000<span class=o>)</span>
-</code></pre></div> 看一下程序逻辑 <div class=highlight><pre><span></span><code><span class=kr>__int64</span> <span class=nf>main_logic</span><span class=p>()</span>
-<span class=p>{</span>
-  <span class=n>Init</span><span class=p>();</span>
-  <span class=n>write</span><span class=p>(</span><span class=mf>1L</span><span class=n>L</span><span class=p>,</span> <span class=s>&quot;Name:&quot;</span><span class=p>,</span> <span class=mf>5L</span><span class=n>L</span><span class=p>);</span>
-  <span class=n>read</span><span class=p>(</span><span class=mf>0L</span><span class=n>L</span><span class=p>,</span> <span class=n>input</span><span class=p>,</span> <span class=mf>512L</span><span class=n>L</span><span class=p>);</span>
-  <span class=n>sub_4007F0</span><span class=p>();</span>
-  <span class=k>return</span> <span class=mf>0L</span><span class=n>L</span><span class=p>;</span>
-<span class=p>}</span>
+</code></pre></div> 看一下程序逻辑 <div class=highlight><pre><span></span><code><span class=kr>__int64</span><span class=w> </span><span class=nf>main_logic</span><span class=p>()</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=n>Init</span><span class=p>();</span><span class=w></span>
+<span class=w>  </span><span class=n>write</span><span class=p>(</span><span class=mf>1L</span><span class=n>L</span><span class=p>,</span><span class=w> </span><span class=s>&quot;Name:&quot;</span><span class=p>,</span><span class=w> </span><span class=mf>5L</span><span class=n>L</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>read</span><span class=p>(</span><span class=mf>0L</span><span class=n>L</span><span class=p>,</span><span class=w> </span><span class=n>input</span><span class=p>,</span><span class=w> </span><span class=mf>512L</span><span class=n>L</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>sub_4007F0</span><span class=p>();</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=mf>0L</span><span class=n>L</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 
-<span class=kt>void</span> <span class=nf>sub_4007F0</span><span class=p>()</span>
-<span class=p>{</span>
-  <span class=kr>__int64</span> <span class=n>v0</span><span class=p>;</span> <span class=c1>// [xsp+10h] [xbp+10h]</span>
+<span class=kt>void</span><span class=w> </span><span class=nf>sub_4007F0</span><span class=p>()</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kr>__int64</span><span class=w> </span><span class=n>v0</span><span class=p>;</span><span class=w> </span><span class=c1>// [xsp+10h] [xbp+10h]</span>
 
-  <span class=n>read</span><span class=p>(</span><span class=mf>0L</span><span class=n>L</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>v0</span><span class=p>,</span> <span class=mf>512L</span><span class=n>L</span><span class=p>);</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=n>read</span><span class=p>(</span><span class=mf>0L</span><span class=n>L</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>v0</span><span class=p>,</span><span class=w> </span><span class=mf>512L</span><span class=n>L</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> 程序的主干读取了 512 个字符到一个全局变量上，而在 <code>sub_4007F0()</code> 中，又读取了 512 个字节到栈上，需要注意的是这里直接从 <code>frame pointer + 0x10</code> 开始读取，因此即使开了 canary 保护也无所谓。</p> <h3 id=_6>思路<a class=headerlink href=#_6 title="Permanent link">&para;</a></h3> <p>理一下思路，可以直接 rop，但我们不知道远程的 libc 版本，同时也发现程序中有调用 <code>mprotect</code> 的代码段 <div class=highlight><pre><span></span><code>.text:00000000004007C8                 STP             X29, X30, [SP,#-0x10]!
 .text:00000000004007CC                 MOV             X29, SP
 .text:00000000004007D0                 MOV             W2, #0

@@ -5,126 +5,126 @@
 <span class=cm>   outside of malloc_consolidate because some optimizing compilers try</span>
 <span class=cm>   to inline it at all call points, which turns out not to be an</span>
 <span class=cm>   optimization at all. (Inlining it in malloc_consolidate is fine though.)</span>
-<span class=cm> */</span>
+<span class=cm> */</span><span class=w></span>
 
-<span class=k>static</span> <span class=kt>void</span> <span class=nf>malloc_init_state</span><span class=p>(</span><span class=n>mstate</span> <span class=n>av</span><span class=p>)</span> <span class=p>{</span>
-    <span class=kt>int</span>     <span class=n>i</span><span class=p>;</span>
-    <span class=n>mbinptr</span> <span class=n>bin</span><span class=p>;</span>
+<span class=k>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>malloc_init_state</span><span class=p>(</span><span class=n>mstate</span><span class=w> </span><span class=n>av</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>    </span><span class=kt>int</span><span class=w>     </span><span class=n>i</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=n>mbinptr</span><span class=w> </span><span class=n>bin</span><span class=p>;</span><span class=w></span>
 
-    <span class=cm>/* Establish circular links for normal bins */</span>
-    <span class=k>for</span> <span class=p>(</span><span class=n>i</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span> <span class=n>i</span> <span class=o>&lt;</span> <span class=n>NBINS</span><span class=p>;</span> <span class=o>++</span><span class=n>i</span><span class=p>)</span> <span class=p>{</span>
-        <span class=n>bin</span>     <span class=o>=</span> <span class=n>bin_at</span><span class=p>(</span><span class=n>av</span><span class=p>,</span> <span class=n>i</span><span class=p>);</span>
-        <span class=n>bin</span><span class=o>-&gt;</span><span class=n>fd</span> <span class=o>=</span> <span class=n>bin</span><span class=o>-&gt;</span><span class=n>bk</span> <span class=o>=</span> <span class=n>bin</span><span class=p>;</span>
-    <span class=p>}</span>
+<span class=w>    </span><span class=cm>/* Establish circular links for normal bins */</span><span class=w></span>
+<span class=w>    </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>1</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=n>NBINS</span><span class=p>;</span><span class=w> </span><span class=o>++</span><span class=n>i</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>        </span><span class=n>bin</span><span class=w>     </span><span class=o>=</span><span class=w> </span><span class=n>bin_at</span><span class=p>(</span><span class=n>av</span><span class=p>,</span><span class=w> </span><span class=n>i</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>bin</span><span class=o>-&gt;</span><span class=n>fd</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>bin</span><span class=o>-&gt;</span><span class=n>bk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>bin</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=p>}</span><span class=w></span>
 
 <span class=cp>#if MORECORE_CONTIGUOUS</span>
-    <span class=k>if</span> <span class=p>(</span><span class=n>av</span> <span class=o>!=</span> <span class=o>&amp;</span><span class=n>main_arena</span><span class=p>)</span>
+<span class=w>    </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>av</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=o>&amp;</span><span class=n>main_arena</span><span class=p>)</span><span class=w></span>
 <span class=cp>#endif</span>
-        <span class=n>set_noncontiguous</span><span class=p>(</span><span class=n>av</span><span class=p>);</span>
-    <span class=k>if</span> <span class=p>(</span><span class=n>av</span> <span class=o>==</span> <span class=o>&amp;</span><span class=n>main_arena</span><span class=p>)</span> <span class=n>set_max_fast</span><span class=p>(</span><span class=n>DEFAULT_MXFAST</span><span class=p>);</span>
-    <span class=c1>// 设置 flags 标记目前没有fast chunk</span>
-    <span class=n>av</span><span class=o>-&gt;</span><span class=n>flags</span> <span class=o>|=</span> <span class=n>FASTCHUNKS_BIT</span><span class=p>;</span>
-    <span class=c1>// 就是 unsorted bin</span>
-    <span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span> <span class=o>=</span> <span class=n>initial_top</span><span class=p>(</span><span class=n>av</span><span class=p>);</span>
-<span class=p>}</span>
-</code></pre></div> <h2 id=malloc_consolidate>malloc_consolidate<a class=headerlink href=#malloc_consolidate title="Permanent link">&para;</a></h2> <p>该函数主要有两个功能</p> <ol> <li>若 fastbin 未初始化，即 global_max_fast 为0，那就初始化 malloc_state。</li> <li>如果已经初始化的话，就合并 fastbin 中的 chunk。</li> </ol> <p>基本的流程如下</p> <h3 id=_1>初始<a class=headerlink href=#_1 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=k>static</span> <span class=kt>void</span> <span class=nf>malloc_consolidate</span><span class=p>(</span><span class=n>mstate</span> <span class=n>av</span><span class=p>)</span> <span class=p>{</span>
-    <span class=n>mfastbinptr</span> <span class=o>*</span><span class=n>fb</span><span class=p>;</span>             <span class=cm>/* current fastbin being consolidated */</span>
-    <span class=n>mfastbinptr</span> <span class=o>*</span><span class=n>maxfb</span><span class=p>;</span>          <span class=cm>/* last fastbin (for loop control) */</span>
-    <span class=n>mchunkptr</span>    <span class=n>p</span><span class=p>;</span>              <span class=cm>/* current chunk being consolidated */</span>
-    <span class=n>mchunkptr</span>    <span class=n>nextp</span><span class=p>;</span>          <span class=cm>/* next chunk to consolidate */</span>
-    <span class=n>mchunkptr</span>    <span class=n>unsorted_bin</span><span class=p>;</span>   <span class=cm>/* bin header */</span>
-    <span class=n>mchunkptr</span>    <span class=n>first_unsorted</span><span class=p>;</span> <span class=cm>/* chunk to link to */</span>
+<span class=w>        </span><span class=n>set_noncontiguous</span><span class=p>(</span><span class=n>av</span><span class=p>);</span><span class=w></span>
+<span class=w>    </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>av</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=o>&amp;</span><span class=n>main_arena</span><span class=p>)</span><span class=w> </span><span class=n>set_max_fast</span><span class=p>(</span><span class=n>DEFAULT_MXFAST</span><span class=p>);</span><span class=w></span>
+<span class=w>    </span><span class=c1>// 设置 flags 标记目前没有fast chunk</span>
+<span class=w>    </span><span class=n>av</span><span class=o>-&gt;</span><span class=n>flags</span><span class=w> </span><span class=o>|=</span><span class=w> </span><span class=n>FASTCHUNKS_BIT</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=c1>// 就是 unsorted bin</span>
+<span class=w>    </span><span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>initial_top</span><span class=p>(</span><span class=n>av</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
+</code></pre></div> <h2 id=malloc_consolidate>malloc_consolidate<a class=headerlink href=#malloc_consolidate title="Permanent link">&para;</a></h2> <p>该函数主要有两个功能</p> <ol> <li>若 fastbin 未初始化，即 global_max_fast 为0，那就初始化 malloc_state。</li> <li>如果已经初始化的话，就合并 fastbin 中的 chunk。</li> </ol> <p>基本的流程如下</p> <h3 id=_1>初始<a class=headerlink href=#_1 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=k>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>malloc_consolidate</span><span class=p>(</span><span class=n>mstate</span><span class=w> </span><span class=n>av</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>    </span><span class=n>mfastbinptr</span><span class=w> </span><span class=o>*</span><span class=n>fb</span><span class=p>;</span><span class=w>             </span><span class=cm>/* current fastbin being consolidated */</span><span class=w></span>
+<span class=w>    </span><span class=n>mfastbinptr</span><span class=w> </span><span class=o>*</span><span class=n>maxfb</span><span class=p>;</span><span class=w>          </span><span class=cm>/* last fastbin (for loop control) */</span><span class=w></span>
+<span class=w>    </span><span class=n>mchunkptr</span><span class=w>    </span><span class=n>p</span><span class=p>;</span><span class=w>              </span><span class=cm>/* current chunk being consolidated */</span><span class=w></span>
+<span class=w>    </span><span class=n>mchunkptr</span><span class=w>    </span><span class=n>nextp</span><span class=p>;</span><span class=w>          </span><span class=cm>/* next chunk to consolidate */</span><span class=w></span>
+<span class=w>    </span><span class=n>mchunkptr</span><span class=w>    </span><span class=n>unsorted_bin</span><span class=p>;</span><span class=w>   </span><span class=cm>/* bin header */</span><span class=w></span>
+<span class=w>    </span><span class=n>mchunkptr</span><span class=w>    </span><span class=n>first_unsorted</span><span class=p>;</span><span class=w> </span><span class=cm>/* chunk to link to */</span><span class=w></span>
 
-    <span class=cm>/* These have same use as in free() */</span>
-    <span class=n>mchunkptr</span>       <span class=n>nextchunk</span><span class=p>;</span>
-    <span class=n>INTERNAL_SIZE_T</span> <span class=n>size</span><span class=p>;</span>
-    <span class=n>INTERNAL_SIZE_T</span> <span class=n>nextsize</span><span class=p>;</span>
-    <span class=n>INTERNAL_SIZE_T</span> <span class=n>prevsize</span><span class=p>;</span>
-    <span class=kt>int</span>             <span class=n>nextinuse</span><span class=p>;</span>
-    <span class=n>mchunkptr</span>       <span class=n>bck</span><span class=p>;</span>
-    <span class=n>mchunkptr</span>       <span class=n>fwd</span><span class=p>;</span>
-</code></pre></div> <h3 id=chunk>合并 chunk<a class=headerlink href=#chunk title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>    <span class=cm>/*</span>
+<span class=w>    </span><span class=cm>/* These have same use as in free() */</span><span class=w></span>
+<span class=w>    </span><span class=n>mchunkptr</span><span class=w>       </span><span class=n>nextchunk</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=n>INTERNAL_SIZE_T</span><span class=w> </span><span class=n>size</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=n>INTERNAL_SIZE_T</span><span class=w> </span><span class=n>nextsize</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=n>INTERNAL_SIZE_T</span><span class=w> </span><span class=n>prevsize</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=kt>int</span><span class=w>             </span><span class=n>nextinuse</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=n>mchunkptr</span><span class=w>       </span><span class=n>bck</span><span class=p>;</span><span class=w></span>
+<span class=w>    </span><span class=n>mchunkptr</span><span class=w>       </span><span class=n>fwd</span><span class=p>;</span><span class=w></span>
+</code></pre></div> <h3 id=chunk>合并 chunk<a class=headerlink href=#chunk title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=w>    </span><span class=cm>/*</span>
 <span class=cm>      If max_fast is 0, we know that av hasn&#39;t</span>
 <span class=cm>      yet been initialized, in which case do so below</span>
-<span class=cm>    */</span>
-    <span class=c1>// 说明 fastbin 已经初始化</span>
-    <span class=k>if</span> <span class=p>(</span><span class=n>get_max_fast</span><span class=p>()</span> <span class=o>!=</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
-        <span class=c1>// 清空 fastbin 标记</span>
-        <span class=c1>// 因为要合并 fastbin 中的 chunk 了。</span>
-        <span class=n>clear_fastchunks</span><span class=p>(</span><span class=n>av</span><span class=p>);</span>
-        <span class=c1>//</span>
-        <span class=n>unsorted_bin</span> <span class=o>=</span> <span class=n>unsorted_chunks</span><span class=p>(</span><span class=n>av</span><span class=p>);</span>
+<span class=cm>    */</span><span class=w></span>
+<span class=w>    </span><span class=c1>// 说明 fastbin 已经初始化</span>
+<span class=w>    </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>get_max_fast</span><span class=p>()</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=mi>0</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>        </span><span class=c1>// 清空 fastbin 标记</span>
+<span class=w>        </span><span class=c1>// 因为要合并 fastbin 中的 chunk 了。</span>
+<span class=w>        </span><span class=n>clear_fastchunks</span><span class=p>(</span><span class=n>av</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=c1>//</span>
+<span class=w>        </span><span class=n>unsorted_bin</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unsorted_chunks</span><span class=p>(</span><span class=n>av</span><span class=p>);</span><span class=w></span>
 
-        <span class=cm>/*</span>
+<span class=w>        </span><span class=cm>/*</span>
 <span class=cm>          Remove each chunk from fast bin and consolidate it, placing it</span>
 <span class=cm>          then in unsorted bin. Among other reasons for doing this,</span>
 <span class=cm>          placing in unsorted bin avoids needing to calculate actual bins</span>
 <span class=cm>          until malloc is sure that chunks aren&#39;t immediately going to be</span>
 <span class=cm>          reused anyway.</span>
-<span class=cm>        */</span>
-        <span class=c1>// 按照 fd 顺序遍历 fastbin 的每一个 bin，将 bin 中的每一个 chunk 合并掉。</span>
-        <span class=n>maxfb</span> <span class=o>=</span> <span class=o>&amp;</span><span class=n>fastbin</span><span class=p>(</span><span class=n>av</span><span class=p>,</span> <span class=n>NFASTBINS</span> <span class=o>-</span> <span class=mi>1</span><span class=p>);</span>
-        <span class=n>fb</span>    <span class=o>=</span> <span class=o>&amp;</span><span class=n>fastbin</span><span class=p>(</span><span class=n>av</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-        <span class=k>do</span> <span class=p>{</span>
-            <span class=n>p</span> <span class=o>=</span> <span class=n>atomic_exchange_acq</span><span class=p>(</span><span class=n>fb</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
-            <span class=k>if</span> <span class=p>(</span><span class=n>p</span> <span class=o>!=</span> <span class=mi>0</span><span class=p>)</span> <span class=p>{</span>
-                <span class=k>do</span> <span class=p>{</span>
-                    <span class=n>check_inuse_chunk</span><span class=p>(</span><span class=n>av</span><span class=p>,</span> <span class=n>p</span><span class=p>);</span>
-                    <span class=n>nextp</span> <span class=o>=</span> <span class=n>p</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>;</span>
+<span class=cm>        */</span><span class=w></span>
+<span class=w>        </span><span class=c1>// 按照 fd 顺序遍历 fastbin 的每一个 bin，将 bin 中的每一个 chunk 合并掉。</span>
+<span class=w>        </span><span class=n>maxfb</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=o>&amp;</span><span class=n>fastbin</span><span class=p>(</span><span class=n>av</span><span class=p>,</span><span class=w> </span><span class=n>NFASTBINS</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=mi>1</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>fb</span><span class=w>    </span><span class=o>=</span><span class=w> </span><span class=o>&amp;</span><span class=n>fastbin</span><span class=p>(</span><span class=n>av</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=k>do</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>            </span><span class=n>p</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>atomic_exchange_acq</span><span class=p>(</span><span class=n>fb</span><span class=p>,</span><span class=w> </span><span class=nb>NULL</span><span class=p>);</span><span class=w></span>
+<span class=w>            </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>p</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=mi>0</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>                </span><span class=k>do</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>                    </span><span class=n>check_inuse_chunk</span><span class=p>(</span><span class=n>av</span><span class=p>,</span><span class=w> </span><span class=n>p</span><span class=p>);</span><span class=w></span>
+<span class=w>                    </span><span class=n>nextp</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>p</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>;</span><span class=w></span>
 
-                    <span class=cm>/* Slightly streamlined version of consolidation code in</span>
-<span class=cm>                     * free() */</span>
-                    <span class=n>size</span>      <span class=o>=</span> <span class=n>chunksize</span><span class=p>(</span><span class=n>p</span><span class=p>);</span>
-                    <span class=n>nextchunk</span> <span class=o>=</span> <span class=n>chunk_at_offset</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>size</span><span class=p>);</span>
-                    <span class=n>nextsize</span>  <span class=o>=</span> <span class=n>chunksize</span><span class=p>(</span><span class=n>nextchunk</span><span class=p>);</span>
+<span class=w>                    </span><span class=cm>/* Slightly streamlined version of consolidation code in</span>
+<span class=cm>                     * free() */</span><span class=w></span>
+<span class=w>                    </span><span class=n>size</span><span class=w>      </span><span class=o>=</span><span class=w> </span><span class=n>chunksize</span><span class=p>(</span><span class=n>p</span><span class=p>);</span><span class=w></span>
+<span class=w>                    </span><span class=n>nextchunk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>chunk_at_offset</span><span class=p>(</span><span class=n>p</span><span class=p>,</span><span class=w> </span><span class=n>size</span><span class=p>);</span><span class=w></span>
+<span class=w>                    </span><span class=n>nextsize</span><span class=w>  </span><span class=o>=</span><span class=w> </span><span class=n>chunksize</span><span class=p>(</span><span class=n>nextchunk</span><span class=p>);</span><span class=w></span>
 
-                    <span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>prev_inuse</span><span class=p>(</span><span class=n>p</span><span class=p>))</span> <span class=p>{</span>
-                        <span class=n>prevsize</span> <span class=o>=</span> <span class=n>prev_size</span><span class=p>(</span><span class=n>p</span><span class=p>);</span>
-                        <span class=n>size</span> <span class=o>+=</span> <span class=n>prevsize</span><span class=p>;</span>
-                        <span class=n>p</span> <span class=o>=</span> <span class=n>chunk_at_offset</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=o>-</span><span class=p>((</span><span class=kt>long</span><span class=p>)</span> <span class=n>prevsize</span><span class=p>));</span>
-                        <span class=n>unlink</span><span class=p>(</span><span class=n>av</span><span class=p>,</span> <span class=n>p</span><span class=p>,</span> <span class=n>bck</span><span class=p>,</span> <span class=n>fwd</span><span class=p>);</span>
-                    <span class=p>}</span>
+<span class=w>                    </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=o>!</span><span class=n>prev_inuse</span><span class=p>(</span><span class=n>p</span><span class=p>))</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>                        </span><span class=n>prevsize</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>prev_size</span><span class=p>(</span><span class=n>p</span><span class=p>);</span><span class=w></span>
+<span class=w>                        </span><span class=n>size</span><span class=w> </span><span class=o>+=</span><span class=w> </span><span class=n>prevsize</span><span class=p>;</span><span class=w></span>
+<span class=w>                        </span><span class=n>p</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>chunk_at_offset</span><span class=p>(</span><span class=n>p</span><span class=p>,</span><span class=w> </span><span class=o>-</span><span class=p>((</span><span class=kt>long</span><span class=p>)</span><span class=w> </span><span class=n>prevsize</span><span class=p>));</span><span class=w></span>
+<span class=w>                        </span><span class=n>unlink</span><span class=p>(</span><span class=n>av</span><span class=p>,</span><span class=w> </span><span class=n>p</span><span class=p>,</span><span class=w> </span><span class=n>bck</span><span class=p>,</span><span class=w> </span><span class=n>fwd</span><span class=p>);</span><span class=w></span>
+<span class=w>                    </span><span class=p>}</span><span class=w></span>
 
-                    <span class=k>if</span> <span class=p>(</span><span class=n>nextchunk</span> <span class=o>!=</span> <span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span><span class=p>)</span> <span class=p>{</span>
-                        <span class=c1>// 判断 nextchunk 是否是空闲的。</span>
-                        <span class=n>nextinuse</span> <span class=o>=</span> <span class=n>inuse_bit_at_offset</span><span class=p>(</span><span class=n>nextchunk</span><span class=p>,</span> <span class=n>nextsize</span><span class=p>);</span>
+<span class=w>                    </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>nextchunk</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>                        </span><span class=c1>// 判断 nextchunk 是否是空闲的。</span>
+<span class=w>                        </span><span class=n>nextinuse</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>inuse_bit_at_offset</span><span class=p>(</span><span class=n>nextchunk</span><span class=p>,</span><span class=w> </span><span class=n>nextsize</span><span class=p>);</span><span class=w></span>
 
-                        <span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>nextinuse</span><span class=p>)</span> <span class=p>{</span>
-                            <span class=n>size</span> <span class=o>+=</span> <span class=n>nextsize</span><span class=p>;</span>
-                            <span class=n>unlink</span><span class=p>(</span><span class=n>av</span><span class=p>,</span> <span class=n>nextchunk</span><span class=p>,</span> <span class=n>bck</span><span class=p>,</span> <span class=n>fwd</span><span class=p>);</span>
-                        <span class=p>}</span> <span class=k>else</span>
-                         <span class=c1>// 设置 nextchunk 的 prev inuse 为0，以表明可以合并当前 fast chunk。</span>
-                            <span class=n>clear_inuse_bit_at_offset</span><span class=p>(</span><span class=n>nextchunk</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
+<span class=w>                        </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=o>!</span><span class=n>nextinuse</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>                            </span><span class=n>size</span><span class=w> </span><span class=o>+=</span><span class=w> </span><span class=n>nextsize</span><span class=p>;</span><span class=w></span>
+<span class=w>                            </span><span class=n>unlink</span><span class=p>(</span><span class=n>av</span><span class=p>,</span><span class=w> </span><span class=n>nextchunk</span><span class=p>,</span><span class=w> </span><span class=n>bck</span><span class=p>,</span><span class=w> </span><span class=n>fwd</span><span class=p>);</span><span class=w></span>
+<span class=w>                        </span><span class=p>}</span><span class=w> </span><span class=k>else</span><span class=w></span>
+<span class=w>                         </span><span class=c1>// 设置 nextchunk 的 prev inuse 为0，以表明可以合并当前 fast chunk。</span>
+<span class=w>                            </span><span class=n>clear_inuse_bit_at_offset</span><span class=p>(</span><span class=n>nextchunk</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
 
-                        <span class=n>first_unsorted</span>     <span class=o>=</span> <span class=n>unsorted_bin</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>;</span>
-                        <span class=n>unsorted_bin</span><span class=o>-&gt;</span><span class=n>fd</span>   <span class=o>=</span> <span class=n>p</span><span class=p>;</span>
-                        <span class=n>first_unsorted</span><span class=o>-&gt;</span><span class=n>bk</span> <span class=o>=</span> <span class=n>p</span><span class=p>;</span>
+<span class=w>                        </span><span class=n>first_unsorted</span><span class=w>     </span><span class=o>=</span><span class=w> </span><span class=n>unsorted_bin</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>;</span><span class=w></span>
+<span class=w>                        </span><span class=n>unsorted_bin</span><span class=o>-&gt;</span><span class=n>fd</span><span class=w>   </span><span class=o>=</span><span class=w> </span><span class=n>p</span><span class=p>;</span><span class=w></span>
+<span class=w>                        </span><span class=n>first_unsorted</span><span class=o>-&gt;</span><span class=n>bk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>p</span><span class=p>;</span><span class=w></span>
 
-                        <span class=k>if</span> <span class=p>(</span><span class=o>!</span><span class=n>in_smallbin_range</span><span class=p>(</span><span class=n>size</span><span class=p>))</span> <span class=p>{</span>
-                            <span class=n>p</span><span class=o>-&gt;</span><span class=n>fd_nextsize</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
-                            <span class=n>p</span><span class=o>-&gt;</span><span class=n>bk_nextsize</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
-                        <span class=p>}</span>
+<span class=w>                        </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=o>!</span><span class=n>in_smallbin_range</span><span class=p>(</span><span class=n>size</span><span class=p>))</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>                            </span><span class=n>p</span><span class=o>-&gt;</span><span class=n>fd_nextsize</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=nb>NULL</span><span class=p>;</span><span class=w></span>
+<span class=w>                            </span><span class=n>p</span><span class=o>-&gt;</span><span class=n>bk_nextsize</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=nb>NULL</span><span class=p>;</span><span class=w></span>
+<span class=w>                        </span><span class=p>}</span><span class=w></span>
 
-                        <span class=n>set_head</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>size</span> <span class=o>|</span> <span class=n>PREV_INUSE</span><span class=p>);</span>
-                        <span class=n>p</span><span class=o>-&gt;</span><span class=n>bk</span> <span class=o>=</span> <span class=n>unsorted_bin</span><span class=p>;</span>
-                        <span class=n>p</span><span class=o>-&gt;</span><span class=n>fd</span> <span class=o>=</span> <span class=n>first_unsorted</span><span class=p>;</span>
-                        <span class=n>set_foot</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>size</span><span class=p>);</span>
-                    <span class=p>}</span>
+<span class=w>                        </span><span class=n>set_head</span><span class=p>(</span><span class=n>p</span><span class=p>,</span><span class=w> </span><span class=n>size</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>PREV_INUSE</span><span class=p>);</span><span class=w></span>
+<span class=w>                        </span><span class=n>p</span><span class=o>-&gt;</span><span class=n>bk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unsorted_bin</span><span class=p>;</span><span class=w></span>
+<span class=w>                        </span><span class=n>p</span><span class=o>-&gt;</span><span class=n>fd</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>first_unsorted</span><span class=p>;</span><span class=w></span>
+<span class=w>                        </span><span class=n>set_foot</span><span class=p>(</span><span class=n>p</span><span class=p>,</span><span class=w> </span><span class=n>size</span><span class=p>);</span><span class=w></span>
+<span class=w>                    </span><span class=p>}</span><span class=w></span>
 
-                    <span class=k>else</span> <span class=p>{</span>
-                        <span class=n>size</span> <span class=o>+=</span> <span class=n>nextsize</span><span class=p>;</span>
-                        <span class=n>set_head</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>size</span> <span class=o>|</span> <span class=n>PREV_INUSE</span><span class=p>);</span>
-                        <span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span> <span class=o>=</span> <span class=n>p</span><span class=p>;</span>
-                    <span class=p>}</span>
+<span class=w>                    </span><span class=k>else</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>                        </span><span class=n>size</span><span class=w> </span><span class=o>+=</span><span class=w> </span><span class=n>nextsize</span><span class=p>;</span><span class=w></span>
+<span class=w>                        </span><span class=n>set_head</span><span class=p>(</span><span class=n>p</span><span class=p>,</span><span class=w> </span><span class=n>size</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>PREV_INUSE</span><span class=p>);</span><span class=w></span>
+<span class=w>                        </span><span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>p</span><span class=p>;</span><span class=w></span>
+<span class=w>                    </span><span class=p>}</span><span class=w></span>
 
-                <span class=p>}</span> <span class=k>while</span> <span class=p>((</span><span class=n>p</span> <span class=o>=</span> <span class=n>nextp</span><span class=p>)</span> <span class=o>!=</span> <span class=mi>0</span><span class=p>);</span>
-            <span class=p>}</span>
-        <span class=p>}</span> <span class=k>while</span> <span class=p>(</span><span class=n>fb</span><span class=o>++</span> <span class=o>!=</span> <span class=n>maxfb</span><span class=p>);</span>
-</code></pre></div> <h3 id=_2>初始化<a class=headerlink href=#_2 title="Permanent link">&para;</a></h3> <p>说明 fastbin 还没有初始化。</p> <div class=highlight><pre><span></span><code>    <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
-        <span class=n>malloc_init_state</span><span class=p>(</span><span class=n>av</span><span class=p>);</span>
-        <span class=c1>// 在非调试情况下没有什么用，在调试情况下，做一些检测。</span>
-        <span class=n>check_malloc_state</span><span class=p>(</span><span class=n>av</span><span class=p>);</span>
-    <span class=p>}</span>
+<span class=w>                </span><span class=p>}</span><span class=w> </span><span class=k>while</span><span class=w> </span><span class=p>((</span><span class=n>p</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>nextp</span><span class=p>)</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>            </span><span class=p>}</span><span class=w></span>
+<span class=w>        </span><span class=p>}</span><span class=w> </span><span class=k>while</span><span class=w> </span><span class=p>(</span><span class=n>fb</span><span class=o>++</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=n>maxfb</span><span class=p>);</span><span class=w></span>
+</code></pre></div> <h3 id=_2>初始化<a class=headerlink href=#_2 title="Permanent link">&para;</a></h3> <p>说明 fastbin 还没有初始化。</p> <div class=highlight><pre><span></span><code><span class=w>    </span><span class=p>}</span><span class=w> </span><span class=k>else</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>        </span><span class=n>malloc_init_state</span><span class=p>(</span><span class=n>av</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=c1>// 在非调试情况下没有什么用，在调试情况下，做一些检测。</span>
+<span class=w>        </span><span class=n>check_malloc_state</span><span class=p>(</span><span class=n>av</span><span class=p>);</span><span class=w></span>
+<span class=w>    </span><span class=p>}</span><span class=w></span>
 </code></pre></div> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../tcache/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 上一页 </span> tcache </div> </div> </a> <a href=../misc/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 下一页 </span> 测试支持 </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2021 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../../../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../../../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script> <script>
         app = initialize({
           base: "../../../../../../..",

@@ -10,7 +10,7 @@
 <span class=cm>  of space, which will often fail. The maximum supported value of n</span>
 <span class=cm>  differs across systems, but is in all cases less than the maximum</span>
 <span class=cm>  representable value of a size_t.</span>
-<span class=cm>*/</span>
+<span class=cm>*/</span><span class=w></span>
 </code></pre></div> <p>可以看出，malloc 函数返回对应大小字节的内存块的指针。此外，该函数还对一些异常情况进行了处理</p> <ul> <li>当 n=0 时，返回当前系统允许的堆的最小内存块。</li> <li>当 n 为负数时，由于在大多数系统上，<strong>size_t 是无符号数（这一点非常重要）</strong>，所以程序就会申请很大的内存空间，但通常来说都会失败，因为系统没有那么多的内存可以分配。</li> </ul> <h3 id=free>free<a class=headerlink href=#free title="Permanent link">&para;</a></h3> <p>在 glibc 的 <a href=https://github.com/iromise/glibc/blob/master/malloc/malloc.c#L465>malloc.c</a> 中，free 的说明如下</p> <div class=highlight><pre><span></span><code><span class=cm>/*</span>
 <span class=cm>      free(void* p)</span>
 <span class=cm>      Releases the chunk of memory pointed to by p, that had been previously</span>
@@ -20,38 +20,38 @@
 <span class=cm>      Unless disabled (using mallopt), freeing very large spaces will</span>
 <span class=cm>      when possible, automatically trigger operations that give</span>
 <span class=cm>      back unused memory to the system, thus reducing program footprint.</span>
-<span class=cm>    */</span>
-</code></pre></div> <p>可以看出，free 函数会释放由 p 所指向的内存块。这个内存块有可能是通过 malloc 函数得到的，也有可能是通过相关的函数 realloc 得到的。</p> <p>此外，该函数也同样对异常情况进行了处理</p> <ul> <li><strong>当 p 为空指针时，函数不执行任何操作。</strong></li> <li>当 p 已经被释放之后，再次释放会出现乱七八糟的效果，这其实就是 <code>double free</code>。</li> <li>除了被禁用 (mallopt) 的情况下，当释放很大的内存空间时，程序会将这些内存空间还给系统，以便于减小程序所使用的内存空间。</li> </ul> <h3 id=_4>内存分配背后的系统调用<a class=headerlink href=#_4 title="Permanent link">&para;</a></h3> <p>在前面提到的函数中，无论是 malloc 函数还是 free 函数，我们动态申请和释放内存时，都经常会使用，但是它们并不是真正与系统交互的函数。这些函数背后的系统调用主要是 <a href=http://man7.org/linux/man-pages/man2/sbrk.2.html>(s)brk</a> 函数以及 <a href=http://man7.org/linux/man-pages/man2/mmap.2.html>mmap, munmap</a> 函数。</p> <p>如下图所示，我们主要考虑对堆进行申请内存块的操作。</p> <p><img alt src=../figure/brk%26mmap.png></p> <h4 id=sbrk>(s)brk<a class=headerlink href=#sbrk title="Permanent link">&para;</a></h4> <p>对于堆的操作，操作系统提供了 brk 函数，glibc 库提供了 sbrk 函数，我们可以通过增加 <a href=https://en.wikipedia.org/wiki/Sbrk>brk</a> 的大小来向操作系统申请内存。</p> <p>初始时，堆的起始地址 <a href=http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>start_brk</a> 以及堆的当前末尾 <a href=http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>brk</a> 指向同一地址。根据是否开启ASLR，两者的具体位置会有所不同</p> <ul> <li>不开启 ASLR 保护时，start_brk 以及 brk 会指向 data/bss 段的结尾。</li> <li>开启 ASLR 保护时，start_brk 以及 brk 也会指向同一位置，只是这个位置是在 data/bss 段结尾后的随机偏移处。</li> </ul> <p>具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示</p> <p><img alt src=../figure/program_virtual_address_memory_space.png></p> <p><strong>例子</strong></p> <div class=highlight><pre><span></span><code><span class=cm>/* sbrk and brk example */</span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;unistd.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;sys/types.h&gt;</span><span class=cp></span>
+<span class=cm>    */</span><span class=w></span>
+</code></pre></div> <p>可以看出，free 函数会释放由 p 所指向的内存块。这个内存块有可能是通过 malloc 函数得到的，也有可能是通过相关的函数 realloc 得到的。</p> <p>此外，该函数也同样对异常情况进行了处理</p> <ul> <li><strong>当 p 为空指针时，函数不执行任何操作。</strong></li> <li>当 p 已经被释放之后，再次释放会出现乱七八糟的效果，这其实就是 <code>double free</code>。</li> <li>除了被禁用 (mallopt) 的情况下，当释放很大的内存空间时，程序会将这些内存空间还给系统，以便于减小程序所使用的内存空间。</li> </ul> <h3 id=_4>内存分配背后的系统调用<a class=headerlink href=#_4 title="Permanent link">&para;</a></h3> <p>在前面提到的函数中，无论是 malloc 函数还是 free 函数，我们动态申请和释放内存时，都经常会使用，但是它们并不是真正与系统交互的函数。这些函数背后的系统调用主要是 <a href=http://man7.org/linux/man-pages/man2/sbrk.2.html>(s)brk</a> 函数以及 <a href=http://man7.org/linux/man-pages/man2/mmap.2.html>mmap, munmap</a> 函数。</p> <p>如下图所示，我们主要考虑对堆进行申请内存块的操作。</p> <p><img alt src=../figure/brk%26mmap.png></p> <h4 id=sbrk>(s)brk<a class=headerlink href=#sbrk title="Permanent link">&para;</a></h4> <p>对于堆的操作，操作系统提供了 brk 函数，glibc 库提供了 sbrk 函数，我们可以通过增加 <a href=https://en.wikipedia.org/wiki/Sbrk>brk</a> 的大小来向操作系统申请内存。</p> <p>初始时，堆的起始地址 <a href=http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>start_brk</a> 以及堆的当前末尾 <a href=http://elixir.free-electrons.com/linux/v3.8/source/include/linux/mm_types.h#L365>brk</a> 指向同一地址。根据是否开启ASLR，两者的具体位置会有所不同</p> <ul> <li>不开启 ASLR 保护时，start_brk 以及 brk 会指向 data/bss 段的结尾。</li> <li>开启 ASLR 保护时，start_brk 以及 brk 也会指向同一位置，只是这个位置是在 data/bss 段结尾后的随机偏移处。</li> </ul> <p>具体效果如下图（这个图片与网上流传的基本一致，这里是因为要画一张大图，所以自己单独画了下）所示</p> <p><img alt src=../figure/program_virtual_address_memory_space.png></p> <p><strong>例子</strong></p> <div class=highlight><pre><span></span><code><span class=cm>/* sbrk and brk example */</span><span class=w></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;unistd.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;sys/types.h&gt;</span><span class=cp></span>
 
-<span class=kt>int</span> <span class=nf>main</span><span class=p>()</span>
-<span class=p>{</span>
-        <span class=kt>void</span> <span class=o>*</span><span class=n>curr_brk</span><span class=p>,</span> <span class=o>*</span><span class=n>tmp_brk</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+<span class=kt>int</span><span class=w> </span><span class=nf>main</span><span class=p>()</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>        </span><span class=kt>void</span><span class=w> </span><span class=o>*</span><span class=n>curr_brk</span><span class=p>,</span><span class=w> </span><span class=o>*</span><span class=n>tmp_brk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=nb>NULL</span><span class=p>;</span><span class=w></span>
 
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Welcome to sbrk example:%d</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span> <span class=n>getpid</span><span class=p>());</span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Welcome to sbrk example:%d</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=w> </span><span class=n>getpid</span><span class=p>());</span><span class=w></span>
 
-        <span class=cm>/* sbrk(0) gives current program break location */</span>
-        <span class=n>tmp_brk</span> <span class=o>=</span> <span class=n>curr_brk</span> <span class=o>=</span> <span class=n>sbrk</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Program Break Location1:%p</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span> <span class=n>curr_brk</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
+<span class=w>        </span><span class=cm>/* sbrk(0) gives current program break location */</span><span class=w></span>
+<span class=w>        </span><span class=n>tmp_brk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>curr_brk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>sbrk</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Program Break Location1:%p</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=w> </span><span class=n>curr_brk</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
 
-        <span class=cm>/* brk(addr) increments/decrements program break location */</span>
-        <span class=n>brk</span><span class=p>(</span><span class=n>curr_brk</span><span class=o>+</span><span class=mi>4096</span><span class=p>);</span>
+<span class=w>        </span><span class=cm>/* brk(addr) increments/decrements program break location */</span><span class=w></span>
+<span class=w>        </span><span class=n>brk</span><span class=p>(</span><span class=n>curr_brk</span><span class=o>+</span><span class=mi>4096</span><span class=p>);</span><span class=w></span>
 
-        <span class=n>curr_brk</span> <span class=o>=</span> <span class=n>sbrk</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Program break Location2:%p</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span> <span class=n>curr_brk</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
+<span class=w>        </span><span class=n>curr_brk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>sbrk</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Program break Location2:%p</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=w> </span><span class=n>curr_brk</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
 
-        <span class=n>brk</span><span class=p>(</span><span class=n>tmp_brk</span><span class=p>);</span>
+<span class=w>        </span><span class=n>brk</span><span class=p>(</span><span class=n>tmp_brk</span><span class=p>);</span><span class=w></span>
 
-        <span class=n>curr_brk</span> <span class=o>=</span> <span class=n>sbrk</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Program Break Location3:%p</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span> <span class=n>curr_brk</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
+<span class=w>        </span><span class=n>curr_brk</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>sbrk</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Program Break Location3:%p</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=w> </span><span class=n>curr_brk</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
 
-        <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>        </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p>需要注意的是，在每一次执行完操作后，都执行了getchar()函数，这是为了我们方便我们查看程序真正的映射。</p> <p><strong>在第一次调用brk之前</strong></p> <p>从下面的输出可以看出，并没有出现堆。因此</p> <ul> <li>start_brk = brk = end_data = 0x804b000</li> </ul> <div class=highlight><pre><span></span><code>sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ ./sbrk
 Welcome to sbrk example:6141
 Program Break Location1:0x804b000
@@ -74,42 +74,42 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ cat /proc/6141/maps
 b7e21000-b7e22000 rw-p <span class=m>00000000</span> <span class=m>00</span>:00 <span class=m>0</span>
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
-</code></pre></div> <p>其中，关于堆的那一行</p> <ul> <li>0x0804b000 是相应堆的起始地址</li> <li>rw-p表明堆具有可读可写权限，并且属于隐私数据。</li> <li>00000000 表明文件偏移，由于这部分内容并不是从文件中映射得到的，所以为0。</li> <li>00:00 是主从(Major/mirror)的设备号，这部分内容也不是从文件中映射得到的，所以也都为0。</li> <li>0表示着Inode 号。由于这部分内容并不是从文件中映射得到的，所以为0。</li> </ul> <h4 id=mmap>mmap<a class=headerlink href=#mmap title="Permanent link">&para;</a></h4> <p>malloc 会使用 <a href="http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285">mmap</a>来创建独立的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。</p> <p><strong>例子</strong></p> <div class=highlight><pre><span></span><code><span class=cm>/* Private anonymous mapping example using mmap syscall */</span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;sys/mman.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;sys/types.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;sys/stat.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;fcntl.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;unistd.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdlib.h&gt;</span><span class=cp></span>
+</code></pre></div> <p>其中，关于堆的那一行</p> <ul> <li>0x0804b000 是相应堆的起始地址</li> <li>rw-p表明堆具有可读可写权限，并且属于隐私数据。</li> <li>00000000 表明文件偏移，由于这部分内容并不是从文件中映射得到的，所以为0。</li> <li>00:00 是主从(Major/mirror)的设备号，这部分内容也不是从文件中映射得到的，所以也都为0。</li> <li>0表示着Inode 号。由于这部分内容并不是从文件中映射得到的，所以为0。</li> </ul> <h4 id=mmap>mmap<a class=headerlink href=#mmap title="Permanent link">&para;</a></h4> <p>malloc 会使用 <a href="http://lxr.free-electrons.com/source/mm/mmap.c?v=3.8#L1285">mmap</a>来创建独立的匿名映射段。匿名映射的目的主要是可以申请以0填充的内存，并且这块内存仅被调用进程所使用。</p> <p><strong>例子</strong></p> <div class=highlight><pre><span></span><code><span class=cm>/* Private anonymous mapping example using mmap syscall */</span><span class=w></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;sys/mman.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;sys/types.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;sys/stat.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;fcntl.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;unistd.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdlib.h&gt;</span><span class=cp></span>
 
-<span class=kt>void</span> <span class=k>static</span> <span class=kr>inline</span> <span class=n>errExit</span><span class=p>(</span><span class=k>const</span> <span class=kt>char</span><span class=o>*</span> <span class=n>msg</span><span class=p>)</span>
-<span class=p>{</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;%s failed. Exiting the process</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span> <span class=n>msg</span><span class=p>);</span>
-        <span class=n>exit</span><span class=p>(</span><span class=mi>-1</span><span class=p>);</span>
-<span class=p>}</span>
+<span class=kt>void</span><span class=w> </span><span class=k>static</span><span class=w> </span><span class=kr>inline</span><span class=w> </span><span class=n>errExit</span><span class=p>(</span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=o>*</span><span class=w> </span><span class=n>msg</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;%s failed. Exiting the process</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=w> </span><span class=n>msg</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>exit</span><span class=p>(</span><span class=mi>-1</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 
-<span class=kt>int</span> <span class=n>main</span><span class=p>()</span>
-<span class=p>{</span>
-        <span class=kt>int</span> <span class=n>ret</span> <span class=o>=</span> <span class=mi>-1</span><span class=p>;</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Welcome to private anonymous mapping example::PID:%d</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span> <span class=n>getpid</span><span class=p>());</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Before mmap</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
-        <span class=kt>char</span><span class=o>*</span> <span class=n>addr</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
-        <span class=n>addr</span> <span class=o>=</span> <span class=n>mmap</span><span class=p>(</span><span class=nb>NULL</span><span class=p>,</span> <span class=p>(</span><span class=kt>size_t</span><span class=p>)</span><span class=mi>132</span><span class=o>*</span><span class=mi>1024</span><span class=p>,</span> <span class=n>PROT_READ</span><span class=o>|</span><span class=n>PROT_WRITE</span><span class=p>,</span> <span class=n>MAP_PRIVATE</span> <span class=o>|</span> <span class=n>MAP_ANONYMOUS</span><span class=p>,</span> <span class=mi>-1</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-        <span class=k>if</span> <span class=p>(</span><span class=n>addr</span> <span class=o>==</span> <span class=n>MAP_FAILED</span><span class=p>)</span>
-                <span class=n>errExit</span><span class=p>(</span><span class=s>&quot;mmap&quot;</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;After mmap</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
+<span class=kt>int</span><span class=w> </span><span class=n>main</span><span class=p>()</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>        </span><span class=kt>int</span><span class=w> </span><span class=n>ret</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>-1</span><span class=p>;</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Welcome to private anonymous mapping example::PID:%d</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=w> </span><span class=n>getpid</span><span class=p>());</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Before mmap</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
+<span class=w>        </span><span class=kt>char</span><span class=o>*</span><span class=w> </span><span class=n>addr</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=nb>NULL</span><span class=p>;</span><span class=w></span>
+<span class=w>        </span><span class=n>addr</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>mmap</span><span class=p>(</span><span class=nb>NULL</span><span class=p>,</span><span class=w> </span><span class=p>(</span><span class=kt>size_t</span><span class=p>)</span><span class=mi>132</span><span class=o>*</span><span class=mi>1024</span><span class=p>,</span><span class=w> </span><span class=n>PROT_READ</span><span class=o>|</span><span class=n>PROT_WRITE</span><span class=p>,</span><span class=w> </span><span class=n>MAP_PRIVATE</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>MAP_ANONYMOUS</span><span class=p>,</span><span class=w> </span><span class=mi>-1</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>addr</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=n>MAP_FAILED</span><span class=p>)</span><span class=w></span>
+<span class=w>                </span><span class=n>errExit</span><span class=p>(</span><span class=s>&quot;mmap&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;After mmap</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
 
-        <span class=cm>/* Unmap mapped region. */</span>
-        <span class=n>ret</span> <span class=o>=</span> <span class=n>munmap</span><span class=p>(</span><span class=n>addr</span><span class=p>,</span> <span class=p>(</span><span class=kt>size_t</span><span class=p>)</span><span class=mi>132</span><span class=o>*</span><span class=mi>1024</span><span class=p>);</span>
-        <span class=k>if</span><span class=p>(</span><span class=n>ret</span> <span class=o>==</span> <span class=mi>-1</span><span class=p>)</span>
-                <span class=n>errExit</span><span class=p>(</span><span class=s>&quot;munmap&quot;</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;After munmap</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
-        <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>        </span><span class=cm>/* Unmap mapped region. */</span><span class=w></span>
+<span class=w>        </span><span class=n>ret</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>munmap</span><span class=p>(</span><span class=n>addr</span><span class=p>,</span><span class=w> </span><span class=p>(</span><span class=kt>size_t</span><span class=p>)</span><span class=mi>132</span><span class=o>*</span><span class=mi>1024</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=k>if</span><span class=p>(</span><span class=n>ret</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=mi>-1</span><span class=p>)</span><span class=w></span>
+<span class=w>                </span><span class=n>errExit</span><span class=p>(</span><span class=s>&quot;munmap&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;After munmap</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
+<span class=w>        </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p><strong>在执行mmap之前</strong></p> <p>我们可以从下面的输出看到，目前只有.so文件的mmap段。</p> <div class=highlight><pre><span></span><code>sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$ cat /proc/6067/maps
 <span class=m>08048000</span>-08049000 r-xp <span class=m>00000000</span> <span class=m>08</span>:01 <span class=m>539691</span>     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
 <span class=m>08049000</span>-0804a000 r--p <span class=m>00000000</span> <span class=m>08</span>:01 <span class=m>539691</span>     /home/sploitfun/ptmalloc.ppt/syscalls/mmap
@@ -131,53 +131,53 @@ sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
 b7e21000-b7e22000 rw-p <span class=m>00000000</span> <span class=m>00</span>:00 <span class=m>0</span>
 ...
 sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/syscalls$
-</code></pre></div> <h3 id=_5>多线程支持<a class=headerlink href=#_5 title="Permanent link">&para;</a></h3> <p>在原来的 dlmalloc 实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问。在新的实现中，所有的线程共享多个堆。</p> <p>这里给出一个例子。</p> <div class=highlight><pre><span></span><code><span class=cm>/* Per thread arena example. */</span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdlib.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;pthread.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;unistd.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;sys/types.h&gt;</span><span class=cp></span>
+</code></pre></div> <h3 id=_5>多线程支持<a class=headerlink href=#_5 title="Permanent link">&para;</a></h3> <p>在原来的 dlmalloc 实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在glibc的ptmalloc实现中，比较好的一点就是支持了多线程的快速访问。在新的实现中，所有的线程共享多个堆。</p> <p>这里给出一个例子。</p> <div class=highlight><pre><span></span><code><span class=cm>/* Per thread arena example. */</span><span class=w></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdlib.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;pthread.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;unistd.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;sys/types.h&gt;</span><span class=cp></span>
 
-<span class=kt>void</span><span class=o>*</span> <span class=nf>threadFunc</span><span class=p>(</span><span class=kt>void</span><span class=o>*</span> <span class=n>arg</span><span class=p>)</span> <span class=p>{</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Before malloc in thread 1</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
-        <span class=kt>char</span><span class=o>*</span> <span class=n>addr</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span><span class=o>*</span><span class=p>)</span> <span class=n>malloc</span><span class=p>(</span><span class=mi>1000</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;After malloc and before free in thread 1</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
-        <span class=n>free</span><span class=p>(</span><span class=n>addr</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;After free in thread 1</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
-<span class=p>}</span>
+<span class=kt>void</span><span class=o>*</span><span class=w> </span><span class=nf>threadFunc</span><span class=p>(</span><span class=kt>void</span><span class=o>*</span><span class=w> </span><span class=n>arg</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Before malloc in thread 1</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
+<span class=w>        </span><span class=kt>char</span><span class=o>*</span><span class=w> </span><span class=n>addr</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=o>*</span><span class=p>)</span><span class=w> </span><span class=n>malloc</span><span class=p>(</span><span class=mi>1000</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;After malloc and before free in thread 1</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
+<span class=w>        </span><span class=n>free</span><span class=p>(</span><span class=n>addr</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;After free in thread 1</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 
-<span class=kt>int</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
-        <span class=n>pthread_t</span> <span class=n>t1</span><span class=p>;</span>
-        <span class=kt>void</span><span class=o>*</span> <span class=n>s</span><span class=p>;</span>
-        <span class=kt>int</span> <span class=n>ret</span><span class=p>;</span>
-        <span class=kt>char</span><span class=o>*</span> <span class=n>addr</span><span class=p>;</span>
+<span class=kt>int</span><span class=w> </span><span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>        </span><span class=n>pthread_t</span><span class=w> </span><span class=n>t1</span><span class=p>;</span><span class=w></span>
+<span class=w>        </span><span class=kt>void</span><span class=o>*</span><span class=w> </span><span class=n>s</span><span class=p>;</span><span class=w></span>
+<span class=w>        </span><span class=kt>int</span><span class=w> </span><span class=n>ret</span><span class=p>;</span><span class=w></span>
+<span class=w>        </span><span class=kt>char</span><span class=o>*</span><span class=w> </span><span class=n>addr</span><span class=p>;</span><span class=w></span>
 
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Welcome to per thread arena example::%d</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=n>getpid</span><span class=p>());</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Before malloc in main thread</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
-        <span class=n>addr</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span><span class=o>*</span><span class=p>)</span> <span class=n>malloc</span><span class=p>(</span><span class=mi>1000</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;After malloc and before free in main thread</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
-        <span class=n>free</span><span class=p>(</span><span class=n>addr</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=s>&quot;After free in main thread</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-        <span class=n>getchar</span><span class=p>();</span>
-        <span class=n>ret</span> <span class=o>=</span> <span class=n>pthread_create</span><span class=p>(</span><span class=o>&amp;</span><span class=n>t1</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>,</span> <span class=n>threadFunc</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
-        <span class=k>if</span><span class=p>(</span><span class=n>ret</span><span class=p>)</span>
-        <span class=p>{</span>
-                <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Thread creation error</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-                <span class=k>return</span> <span class=mi>-1</span><span class=p>;</span>
-        <span class=p>}</span>
-        <span class=n>ret</span> <span class=o>=</span> <span class=n>pthread_join</span><span class=p>(</span><span class=n>t1</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>s</span><span class=p>);</span>
-        <span class=k>if</span><span class=p>(</span><span class=n>ret</span><span class=p>)</span>
-        <span class=p>{</span>
-                <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Thread join error</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span>
-                <span class=k>return</span> <span class=mi>-1</span><span class=p>;</span>
-        <span class=p>}</span>
-        <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Welcome to per thread arena example::%d</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=n>getpid</span><span class=p>());</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Before malloc in main thread</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
+<span class=w>        </span><span class=n>addr</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=o>*</span><span class=p>)</span><span class=w> </span><span class=n>malloc</span><span class=p>(</span><span class=mi>1000</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;After malloc and before free in main thread</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
+<span class=w>        </span><span class=n>free</span><span class=p>(</span><span class=n>addr</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;After free in main thread</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>getchar</span><span class=p>();</span><span class=w></span>
+<span class=w>        </span><span class=n>ret</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>pthread_create</span><span class=p>(</span><span class=o>&amp;</span><span class=n>t1</span><span class=p>,</span><span class=w> </span><span class=nb>NULL</span><span class=p>,</span><span class=w> </span><span class=n>threadFunc</span><span class=p>,</span><span class=w> </span><span class=nb>NULL</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=k>if</span><span class=p>(</span><span class=n>ret</span><span class=p>)</span><span class=w></span>
+<span class=w>        </span><span class=p>{</span><span class=w></span>
+<span class=w>                </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Thread creation error</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>                </span><span class=k>return</span><span class=w> </span><span class=mi>-1</span><span class=p>;</span><span class=w></span>
+<span class=w>        </span><span class=p>}</span><span class=w></span>
+<span class=w>        </span><span class=n>ret</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>pthread_join</span><span class=p>(</span><span class=n>t1</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>s</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=k>if</span><span class=p>(</span><span class=n>ret</span><span class=p>)</span><span class=w></span>
+<span class=w>        </span><span class=p>{</span><span class=w></span>
+<span class=w>                </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Thread join error</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>                </span><span class=k>return</span><span class=w> </span><span class=mi>-1</span><span class=p>;</span><span class=w></span>
+<span class=w>        </span><span class=p>}</span><span class=w></span>
+<span class=w>        </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p><strong>第一次申请之前</strong>， 没有任何任何堆段。</p> <div class=highlight><pre><span></span><code>sploitfun@sploitfun-VirtualBox:~/ptmalloc.ppt/mthread$ ./mthread
 Welcome to per thread arena example::6501
 Before malloc <span class=k>in</span> main thread

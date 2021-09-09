@@ -23,76 +23,76 @@
 <span class=nf>xor</span>    <span class=no>rdx</span><span class=p>,</span><span class=no>QWORD</span> <span class=no>PTR</span> <span class=no>fs</span><span class=p>:</span><span class=mi>0x28</span>
 <span class=nf>je</span>     <span class=mh>0x4005d7</span> <span class=p>&lt;</span><span class=no>main</span><span class=p>+</span><span class=mi>65</span><span class=p>&gt;</span>
 <span class=nf>call</span>   <span class=mh>0x400460</span> <span class=p>&lt;</span><span class=no>__stack_chk_fail@plt</span><span class=p>&gt;</span>
-</code></pre></div> <p>如果 Canary 已经被非法修改，此时程序流程会走到 <code>__stack_chk_fail</code>。<code>__stack_chk_fail</code> 也是位于 glibc 中的函数，默认情况下经过 ELF 的延迟绑定，定义如下。</p> <div class=highlight><pre><span></span><code><span class=n>eglibc</span><span class=mf>-2.19</span><span class=o>/</span><span class=n>debug</span><span class=o>/</span><span class=n>stack_chk_fail</span><span class=p>.</span><span class=n>c</span>
+</code></pre></div> <p>如果 Canary 已经被非法修改，此时程序流程会走到 <code>__stack_chk_fail</code>。<code>__stack_chk_fail</code> 也是位于 glibc 中的函数，默认情况下经过 ELF 的延迟绑定，定义如下。</p> <div class=highlight><pre><span></span><code><span class=n>eglibc</span><span class=mf>-2.19</span><span class=o>/</span><span class=n>debug</span><span class=o>/</span><span class=n>stack_chk_fail</span><span class=p>.</span><span class=n>c</span><span class=w></span>
 
-<span class=kt>void</span> <span class=n>__attribute__</span> <span class=p>((</span><span class=k>noreturn</span><span class=p>))</span> <span class=n>__stack_chk_fail</span> <span class=p>(</span><span class=kt>void</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=n>__fortify_fail</span> <span class=p>(</span><span class=s>&quot;stack smashing detected&quot;</span><span class=p>);</span>
-<span class=p>}</span>
+<span class=kt>void</span><span class=w> </span><span class=n>__attribute__</span><span class=w> </span><span class=p>((</span><span class=k>noreturn</span><span class=p>))</span><span class=w> </span><span class=n>__stack_chk_fail</span><span class=w> </span><span class=p>(</span><span class=kt>void</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=n>__fortify_fail</span><span class=w> </span><span class=p>(</span><span class=s>&quot;stack smashing detected&quot;</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 
-<span class=kt>void</span> <span class=n>__attribute__</span> <span class=p>((</span><span class=k>noreturn</span><span class=p>))</span> <span class=n>internal_function</span> <span class=n>__fortify_fail</span> <span class=p>(</span><span class=k>const</span> <span class=kt>char</span> <span class=o>*</span><span class=n>msg</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=cm>/* The loop is added only to keep gcc happy.  */</span>
-  <span class=k>while</span> <span class=p>(</span><span class=mi>1</span><span class=p>)</span>
-    <span class=n>__libc_message</span> <span class=p>(</span><span class=mi>2</span><span class=p>,</span> <span class=s>&quot;*** %s ***: %s terminated</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span>
-                    <span class=n>msg</span><span class=p>,</span> <span class=n>__libc_argv</span><span class=p>[</span><span class=mi>0</span><span class=p>]</span> <span class=o>?:</span> <span class=s>&quot;&lt;unknown&gt;&quot;</span><span class=p>);</span>
-<span class=p>}</span>
-</code></pre></div> <p>这意味可以通过劫持 <code>__stack_chk_fail</code> 的 got 值劫持流程或者利用 <code>__stack_chk_fail</code> 泄漏内容(参见 stack smash)。</p> <p>进一步，对于 Linux 来说，fs 寄存器实际指向的是当前栈的 TLS 结构，fs:0x28 指向的正是 stack_guard。 <div class=highlight><pre><span></span><code><span class=k>typedef</span> <span class=k>struct</span>
-<span class=p>{</span>
-  <span class=kt>void</span> <span class=o>*</span><span class=n>tcb</span><span class=p>;</span>        <span class=cm>/* Pointer to the TCB.  Not necessarily the</span>
-<span class=cm>                       thread descriptor used by libpthread.  */</span>
-  <span class=n>dtv_t</span> <span class=o>*</span><span class=n>dtv</span><span class=p>;</span>
-  <span class=kt>void</span> <span class=o>*</span><span class=n>self</span><span class=p>;</span>       <span class=cm>/* Pointer to the thread descriptor.  */</span>
-  <span class=kt>int</span> <span class=n>multiple_threads</span><span class=p>;</span>
-  <span class=kt>uintptr_t</span> <span class=n>sysinfo</span><span class=p>;</span>
-  <span class=kt>uintptr_t</span> <span class=n>stack_guard</span><span class=p>;</span>
-  <span class=p>...</span>
-<span class=p>}</span> <span class=n>tcbhead_t</span><span class=p>;</span>
-</code></pre></div> 如果存在溢出可以覆盖位于 TLS 中保存的 Canary 值那么就可以实现绕过保护机制。</p> <p>事实上，TLS 中的值由函数 security_init 进行初始化。</p> <div class=highlight><pre><span></span><code><span class=k>static</span> <span class=kt>void</span>
-<span class=nf>security_init</span> <span class=p>(</span><span class=kt>void</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=c1>// _dl_random的值在进入这个函数的时候就已经由kernel写入.</span>
-  <span class=c1>// glibc直接使用了_dl_random的值并没有给赋值</span>
-  <span class=c1>// 如果不采用这种模式, glibc也可以自己产生随机数</span>
+<span class=kt>void</span><span class=w> </span><span class=n>__attribute__</span><span class=w> </span><span class=p>((</span><span class=k>noreturn</span><span class=p>))</span><span class=w> </span><span class=n>internal_function</span><span class=w> </span><span class=n>__fortify_fail</span><span class=w> </span><span class=p>(</span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=n>msg</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=cm>/* The loop is added only to keep gcc happy.  */</span><span class=w></span>
+<span class=w>  </span><span class=k>while</span><span class=w> </span><span class=p>(</span><span class=mi>1</span><span class=p>)</span><span class=w></span>
+<span class=w>    </span><span class=n>__libc_message</span><span class=w> </span><span class=p>(</span><span class=mi>2</span><span class=p>,</span><span class=w> </span><span class=s>&quot;*** %s ***: %s terminated</span><span class=se>\n</span><span class=s>&quot;</span><span class=p>,</span><span class=w></span>
+<span class=w>                    </span><span class=n>msg</span><span class=p>,</span><span class=w> </span><span class=n>__libc_argv</span><span class=p>[</span><span class=mi>0</span><span class=p>]</span><span class=w> </span><span class=o>?:</span><span class=w> </span><span class=s>&quot;&lt;unknown&gt;&quot;</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
+</code></pre></div> <p>这意味可以通过劫持 <code>__stack_chk_fail</code> 的 got 值劫持流程或者利用 <code>__stack_chk_fail</code> 泄漏内容(参见 stack smash)。</p> <p>进一步，对于 Linux 来说，fs 寄存器实际指向的是当前栈的 TLS 结构，fs:0x28 指向的正是 stack_guard。 <div class=highlight><pre><span></span><code><span class=k>typedef</span><span class=w> </span><span class=k>struct</span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>void</span><span class=w> </span><span class=o>*</span><span class=n>tcb</span><span class=p>;</span><span class=w>        </span><span class=cm>/* Pointer to the TCB.  Not necessarily the</span>
+<span class=cm>                       thread descriptor used by libpthread.  */</span><span class=w></span>
+<span class=w>  </span><span class=n>dtv_t</span><span class=w> </span><span class=o>*</span><span class=n>dtv</span><span class=p>;</span><span class=w></span>
+<span class=w>  </span><span class=kt>void</span><span class=w> </span><span class=o>*</span><span class=n>self</span><span class=p>;</span><span class=w>       </span><span class=cm>/* Pointer to the thread descriptor.  */</span><span class=w></span>
+<span class=w>  </span><span class=kt>int</span><span class=w> </span><span class=n>multiple_threads</span><span class=p>;</span><span class=w></span>
+<span class=w>  </span><span class=kt>uintptr_t</span><span class=w> </span><span class=n>sysinfo</span><span class=p>;</span><span class=w></span>
+<span class=w>  </span><span class=kt>uintptr_t</span><span class=w> </span><span class=n>stack_guard</span><span class=p>;</span><span class=w></span>
+<span class=w>  </span><span class=p>...</span><span class=w></span>
+<span class=p>}</span><span class=w> </span><span class=n>tcbhead_t</span><span class=p>;</span><span class=w></span>
+</code></pre></div> 如果存在溢出可以覆盖位于 TLS 中保存的 Canary 值那么就可以实现绕过保护机制。</p> <p>事实上，TLS 中的值由函数 security_init 进行初始化。</p> <div class=highlight><pre><span></span><code><span class=k>static</span><span class=w> </span><span class=kt>void</span><span class=w></span>
+<span class=nf>security_init</span><span class=w> </span><span class=p>(</span><span class=kt>void</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=c1>// _dl_random的值在进入这个函数的时候就已经由kernel写入.</span>
+<span class=w>  </span><span class=c1>// glibc直接使用了_dl_random的值并没有给赋值</span>
+<span class=w>  </span><span class=c1>// 如果不采用这种模式, glibc也可以自己产生随机数</span>
 
-  <span class=c1>//将_dl_random的最后一个字节设置为0x0</span>
-  <span class=kt>uintptr_t</span> <span class=n>stack_chk_guard</span> <span class=o>=</span> <span class=n>_dl_setup_stack_chk_guard</span> <span class=p>(</span><span class=n>_dl_random</span><span class=p>);</span>
+<span class=w>  </span><span class=c1>//将_dl_random的最后一个字节设置为0x0</span>
+<span class=w>  </span><span class=kt>uintptr_t</span><span class=w> </span><span class=n>stack_chk_guard</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>_dl_setup_stack_chk_guard</span><span class=w> </span><span class=p>(</span><span class=n>_dl_random</span><span class=p>);</span><span class=w></span>
 
-  <span class=c1>// 设置Canary的值到TLS中</span>
-  <span class=n>THREAD_SET_STACK_GUARD</span> <span class=p>(</span><span class=n>stack_chk_guard</span><span class=p>);</span>
+<span class=w>  </span><span class=c1>// 设置Canary的值到TLS中</span>
+<span class=w>  </span><span class=n>THREAD_SET_STACK_GUARD</span><span class=w> </span><span class=p>(</span><span class=n>stack_chk_guard</span><span class=p>);</span><span class=w></span>
 
-  <span class=n>_dl_random</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=n>_dl_random</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=nb>NULL</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 
 <span class=c1>//THREAD_SET_STACK_GUARD宏用于设置TLS</span>
 <span class=cp>#define THREAD_SET_STACK_GUARD(value) \</span>
 <span class=cp>  THREAD_SETMEM (THREAD_SELF, header.stack_guard, value)</span>
 </code></pre></div> <h2 id=canary_3>Canary 绕过技术<a class=headerlink href=#canary_3 title="Permanent link">&para;</a></h2> <h3 id=_2>序言<a class=headerlink href=#_2 title="Permanent link">&para;</a></h3> <p>Canary 是一种十分有效的解决栈溢出问题的漏洞缓解措施。但是并不意味着 Canary 就能够阻止所有的栈溢出利用，在这里给出了常见的存在 Canary 的栈溢出利用思路，请注意每种方法都有特定的环境要求。</p> <h3 id=canary_4>泄露栈中的 Canary<a class=headerlink href=#canary_4 title="Permanent link">&para;</a></h3> <p>Canary 设计为以字节 <code>\x00</code> 结尾，本意是为了保证 Canary 可以截断字符串。 泄露栈中的 Canary 的思路是覆盖 Canary 的低字节，来打印出剩余的 Canary 部分。 这种利用方式需要存在合适的输出函数，并且可能需要第一溢出泄露 Canary，之后再次溢出控制执行流程。</p> <h4 id=_3>利用示例<a class=headerlink href=#_3 title="Permanent link">&para;</a></h4> <p>存在漏洞的示例源代码如下:</p> <div class=highlight><pre><span></span><code><span class=c1>// ex2.c</span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;unistd.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdlib.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;string.h&gt;</span><span class=cp></span>
-<span class=kt>void</span> <span class=nf>getshell</span><span class=p>(</span><span class=kt>void</span><span class=p>)</span> <span class=p>{</span>
-    <span class=n>system</span><span class=p>(</span><span class=s>&quot;/bin/sh&quot;</span><span class=p>);</span>
-<span class=p>}</span>
-<span class=kt>void</span> <span class=nf>init</span><span class=p>()</span> <span class=p>{</span>
-    <span class=n>setbuf</span><span class=p>(</span><span class=n>stdin</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
-    <span class=n>setbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
-    <span class=n>setbuf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=nb>NULL</span><span class=p>);</span>
-<span class=p>}</span>
-<span class=kt>void</span> <span class=nf>vuln</span><span class=p>()</span> <span class=p>{</span>
-    <span class=kt>char</span> <span class=n>buf</span><span class=p>[</span><span class=mi>100</span><span class=p>];</span>
-    <span class=k>for</span><span class=p>(</span><span class=kt>int</span> <span class=n>i</span><span class=o>=</span><span class=mi>0</span><span class=p>;</span><span class=n>i</span><span class=o>&lt;</span><span class=mi>2</span><span class=p>;</span><span class=n>i</span><span class=o>++</span><span class=p>){</span>
-        <span class=n>read</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=n>buf</span><span class=p>,</span> <span class=mh>0x200</span><span class=p>);</span>
-        <span class=n>printf</span><span class=p>(</span><span class=n>buf</span><span class=p>);</span>
-    <span class=p>}</span>
-<span class=p>}</span>
-<span class=kt>int</span> <span class=nf>main</span><span class=p>(</span><span class=kt>void</span><span class=p>)</span> <span class=p>{</span>
-    <span class=n>init</span><span class=p>();</span>
-    <span class=n>puts</span><span class=p>(</span><span class=s>&quot;Hello Hacker!&quot;</span><span class=p>);</span>
-    <span class=n>vuln</span><span class=p>();</span>
-    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;unistd.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdlib.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;string.h&gt;</span><span class=cp></span>
+<span class=kt>void</span><span class=w> </span><span class=nf>getshell</span><span class=p>(</span><span class=kt>void</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>    </span><span class=n>system</span><span class=p>(</span><span class=s>&quot;/bin/sh&quot;</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
+<span class=kt>void</span><span class=w> </span><span class=nf>init</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>    </span><span class=n>setbuf</span><span class=p>(</span><span class=n>stdin</span><span class=p>,</span><span class=w> </span><span class=nb>NULL</span><span class=p>);</span><span class=w></span>
+<span class=w>    </span><span class=n>setbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span><span class=w> </span><span class=nb>NULL</span><span class=p>);</span><span class=w></span>
+<span class=w>    </span><span class=n>setbuf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span><span class=w> </span><span class=nb>NULL</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
+<span class=kt>void</span><span class=w> </span><span class=nf>vuln</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>    </span><span class=kt>char</span><span class=w> </span><span class=n>buf</span><span class=p>[</span><span class=mi>100</span><span class=p>];</span><span class=w></span>
+<span class=w>    </span><span class=k>for</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=o>=</span><span class=mi>0</span><span class=p>;</span><span class=n>i</span><span class=o>&lt;</span><span class=mi>2</span><span class=p>;</span><span class=n>i</span><span class=o>++</span><span class=p>){</span><span class=w></span>
+<span class=w>        </span><span class=n>read</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=n>buf</span><span class=p>,</span><span class=w> </span><span class=mh>0x200</span><span class=p>);</span><span class=w></span>
+<span class=w>        </span><span class=n>printf</span><span class=p>(</span><span class=n>buf</span><span class=p>);</span><span class=w></span>
+<span class=w>    </span><span class=p>}</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
+<span class=kt>int</span><span class=w> </span><span class=nf>main</span><span class=p>(</span><span class=kt>void</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>    </span><span class=n>init</span><span class=p>();</span><span class=w></span>
+<span class=w>    </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Hello Hacker!&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>    </span><span class=n>vuln</span><span class=p>();</span><span class=w></span>
+<span class=w>    </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p>编译为 32bit 程序并关闭 PIE 保护 （默认开启 NX，ASLR，Canary 保护）</p> <div class=highlight><pre><span></span><code>$ gcc -m32 -no-pie ex2.c -o ex2
 </code></pre></div> <p>首先通过覆盖 Canary 最后一个 <code>\x00</code> 字节来打印出 4 位的 Canary 之后，计算好偏移，将 Canary 填入到相应的溢出位置，实现 Ret 到 getshell 函数中</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 

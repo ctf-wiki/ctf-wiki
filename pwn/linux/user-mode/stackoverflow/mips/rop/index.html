@@ -4,31 +4,31 @@ $ sudo mkdir /etc/qemu-binfmt
 $ sudo ln -s /usr/mipsel-linux-gnu /etc/qemu-binfmt/mipsel
 </code></pre></div></p> <h2 id=_4>题目<a class=headerlink href=#_4 title="Permanent link">&para;</a></h2> <h3 id=1-ropemporium-ret2text>1 ropemporium ret2text<a class=headerlink href=#1-ropemporium-ret2text title="Permanent link">&para;</a></h3> <p>跟到 pwnme 函数里 <img alt=image-20201028010553089 src=https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028010554.png> 我们可以看到函数一开始，将 ra 寄存器的值，放入 $sp+60 的位置里。即返回地址位于 $sp+60 <img alt=image-20201028011257573 src=https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028011258.png> 在看该函数里的 read， a2 为读取的 size 大小，将被赋值为 0x38，buf 为位于 $sp + 0x18 的位置，明显的一个栈溢出漏洞，且能覆盖返回地址。 通过计算，可以计算出 padding 为 36</p> <p><div class=highlight><pre><span></span><code>60 - 0x18 = 36 
 </code></pre></div> 另外程序有一个 ret2win 函数 <img alt=image-20201028011734928 src=https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028011736.png> 所以该题目只需覆盖返回地址为 ret2win 函数的地址即可。所以我们可以构造如下 payload： <div class=highlight><pre><span></span><code><span class=n>pay</span> <span class=o>=</span> <span class=s1>&#39;A&#39;</span><span class=o>*</span><span class=mi>36</span> <span class=o>+</span> <span class=n>p32</span><span class=p>(</span><span class=n>ret2win_addr</span><span class=p>)</span>
-</code></pre></div> 即能 get flag <img alt=image-20201028012453672 src=https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028012455.png></p> <h3 id=2-dvrf-stack_bof_02c>2 DVRF stack_bof_02.c<a class=headerlink href=#2-dvrf-stack_bof_02c title="Permanent link">&para;</a></h3> <p>题目源码如下 <div class=highlight><pre><span></span><code><span class=cp>#include</span> <span class=cpf>&lt;string.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
-<span class=cp>#include</span> <span class=cpf>&lt;stdlib.h&gt;</span><span class=cp></span>
+</code></pre></div> 即能 get flag <img alt=image-20201028012453672 src=https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028012455.png></p> <h3 id=2-dvrf-stack_bof_02c>2 DVRF stack_bof_02.c<a class=headerlink href=#2-dvrf-stack_bof_02c title="Permanent link">&para;</a></h3> <p>题目源码如下 <div class=highlight><pre><span></span><code><span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;string.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdio.h&gt;</span><span class=cp></span>
+<span class=cp>#include</span><span class=w> </span><span class=cpf>&lt;stdlib.h&gt;</span><span class=cp></span>
 
 <span class=c1>//Simple BoF by b1ack0wl for E1550</span>
 <span class=c1>//Shellcode is Required</span>
 
 
-<span class=kt>int</span> <span class=nf>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=kt>char</span> <span class=o>**</span><span class=n>argv</span><span class=p>[]){</span>
-<span class=kt>char</span> <span class=n>buf</span><span class=p>[</span><span class=mi>500</span><span class=p>]</span> <span class=o>=</span><span class=s>&quot;</span><span class=se>\0</span><span class=s>&quot;</span><span class=p>;</span>
+<span class=kt>int</span><span class=w> </span><span class=nf>main</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>argc</span><span class=p>,</span><span class=w> </span><span class=kt>char</span><span class=w> </span><span class=o>**</span><span class=n>argv</span><span class=p>[]){</span><span class=w></span>
+<span class=kt>char</span><span class=w> </span><span class=n>buf</span><span class=p>[</span><span class=mi>500</span><span class=p>]</span><span class=w> </span><span class=o>=</span><span class=s>&quot;</span><span class=se>\0</span><span class=s>&quot;</span><span class=p>;</span><span class=w></span>
 
-<span class=k>if</span> <span class=p>(</span><span class=n>argc</span> <span class=o>&lt;</span> <span class=mi>2</span><span class=p>){</span>
-<span class=n>printf</span><span class=p>(</span><span class=s>&quot;Usage: stack_bof_01 &lt;argument&gt;</span><span class=se>\r\n</span><span class=s>-By b1ack0wl</span><span class=se>\r\n</span><span class=s>&quot;</span><span class=p>);</span>
-<span class=n>exit</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span>
-<span class=p>}</span> 
+<span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>argc</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>2</span><span class=p>){</span><span class=w></span>
+<span class=n>printf</span><span class=p>(</span><span class=s>&quot;Usage: stack_bof_01 &lt;argument&gt;</span><span class=se>\r\n</span><span class=s>-By b1ack0wl</span><span class=se>\r\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
+<span class=n>exit</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w> </span>
 
 
-<span class=n>printf</span><span class=p>(</span><span class=s>&quot;Welcome to the Second BoF exercise! You&#39;ll need Shellcode for this! ;)</span><span class=se>\r\n\r\n</span><span class=s>&quot;</span><span class=p>);</span> 
-<span class=n>strcpy</span><span class=p>(</span><span class=n>buf</span><span class=p>,</span> <span class=n>argv</span><span class=p>[</span><span class=mi>1</span><span class=p>]);</span>
+<span class=n>printf</span><span class=p>(</span><span class=s>&quot;Welcome to the Second BoF exercise! You&#39;ll need Shellcode for this! ;)</span><span class=se>\r\n\r\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w> </span>
+<span class=n>strcpy</span><span class=p>(</span><span class=n>buf</span><span class=p>,</span><span class=w> </span><span class=n>argv</span><span class=p>[</span><span class=mi>1</span><span class=p>]);</span><span class=w></span>
 
-<span class=n>printf</span><span class=p>(</span><span class=s>&quot;You entered %s </span><span class=se>\r\n</span><span class=s>&quot;</span><span class=p>,</span> <span class=n>buf</span><span class=p>);</span>
-<span class=n>printf</span><span class=p>(</span><span class=s>&quot;Try Again</span><span class=se>\r\n</span><span class=s>&quot;</span><span class=p>);</span>
+<span class=n>printf</span><span class=p>(</span><span class=s>&quot;You entered %s </span><span class=se>\r\n</span><span class=s>&quot;</span><span class=p>,</span><span class=w> </span><span class=n>buf</span><span class=p>);</span><span class=w></span>
+<span class=n>printf</span><span class=p>(</span><span class=s>&quot;Try Again</span><span class=se>\r\n</span><span class=s>&quot;</span><span class=p>);</span><span class=w></span>
 
-<span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
-<span class=p>}</span>
+<span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> 安装交叉编译工具 <div class=highlight><pre><span></span><code>sudo apt-get update
 sudo apt-get install binutils-mipsel-linux-gnu
 sudo apt-get install gcc-mipsel-linux-gnu

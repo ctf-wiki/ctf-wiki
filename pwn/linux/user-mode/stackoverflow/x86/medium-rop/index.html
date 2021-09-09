@@ -46,12 +46,12 @@
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE <span class=o>(</span>0x400000<span class=o>)</span>
-</code></pre></div> <p>程序为 64 位，开启了堆栈不可执行保护。</p> <p>其次，寻找程序的漏洞，可以看出程序中有一个简单的栈溢出</p> <div class=highlight><pre><span></span><code><span class=kt>ssize_t</span> <span class=nf>vulnerable_function</span><span class=p>()</span>
-<span class=p>{</span>
-  <span class=kt>char</span> <span class=n>buf</span><span class=p>;</span> <span class=c1>// [sp+0h] [bp-80h]@1</span>
+</code></pre></div> <p>程序为 64 位，开启了堆栈不可执行保护。</p> <p>其次，寻找程序的漏洞，可以看出程序中有一个简单的栈溢出</p> <div class=highlight><pre><span></span><code><span class=kt>ssize_t</span><span class=w> </span><span class=nf>vulnerable_function</span><span class=p>()</span><span class=w></span>
+<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=n>buf</span><span class=p>;</span><span class=w> </span><span class=c1>// [sp+0h] [bp-80h]@1</span>
 
-  <span class=k>return</span> <span class=n>read</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>buf</span><span class=p>,</span> <span class=mh>0x200uLL</span><span class=p>);</span>
-<span class=p>}</span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>read</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>buf</span><span class=p>,</span><span class=w> </span><span class=mh>0x200uLL</span><span class=p>);</span><span class=w></span>
+<span class=p>}</span><span class=w></span>
 </code></pre></div> <p>简单浏览下程序，发现程序中既没有 system 函数地址，也没有 /bin/sh 字符串，所以两者都需要我们自己去构造了。</p> <p><strong>注：这里我尝试在我本机使用 system 函数来获取 shell 失败了，应该是环境变量的问题，所以这里使用的是execve 来获取 shell。</strong></p> <p>基本利用思路如下</p> <ul> <li>利用栈溢出执行 libc_csu_gadgets 获取 write 函数地址，并使得程序重新执行 main 函数</li> <li>根据 libcsearcher 获取对应 libc 版本以及 execve 函数地址</li> <li>再次利用栈溢出执行 libc_csu_gadgets 向 bss 段写入 execve 地址以及 '/bin/sh’ 地址，并使得程序重新执行main 函数。</li> <li>再次利用栈溢出执行 libc_csu_gadgets 执行 execve('/bin/sh') 获取 shell。</li> </ul> <p>exp 如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 <span class=kn>from</span> <span class=nn>LibcSearcher</span> <span class=kn>import</span> <span class=n>LibcSearcher</span>
 
