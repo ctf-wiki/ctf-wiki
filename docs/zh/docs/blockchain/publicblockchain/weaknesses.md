@@ -45,7 +45,7 @@ Finney attack（芬尼攻击）是由Hal Finney命名的，他是第一个描述
 http://bitcointalk.org/index.php?topic=36788.msg463391#msg463391
 http://www.reddit.com/r/Bitcoin/comments/2e7bfa/vector76_double_spend_attack/cjwya6x
 
-## Block withholding Attack
+## Block withholding attack
 
 扣块攻击最简单的形式是上述的芬妮攻击，但同样存在针对[矿池](https://academy.binance.com/zh/articles/mining-pools-explained)的扣块攻击方式。
 
