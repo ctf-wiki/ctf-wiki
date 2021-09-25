@@ -1,5 +1,16 @@
 # 学习资源
 
+## 在线做题网站
+
+- [https://ethernaut.openzeppelin.com/](https://ethernaut.openzeppelin.com/)
+    + WP 链接 [https://hitcxy.com/2019/ethernaut/](https://hitcxy.com/2019/ethernaut/)
+- [https://capturetheether.com/challenges/](https://capturetheether.com/challenges/)
+    + WP 链接 [WP1 传送门](https://www.anquanke.com/post/id/153375) [WP2 传送门](https://www.anquanke.com/post/id/154104)
+- [https://blockchain-ctf.securityinnovation.com/#/](https://blockchain-ctf.securityinnovation.com/#/)
+    + WP 链接 [https://hitcxy.com/2020/securityinnovation/](https://hitcxy.com/2020/securityinnovation/)
+- [https://www.damnvulnerabledefi.xyz/](https://www.damnvulnerabledefi.xyz/) 
+    + WP 链接 [https://blog.syang.xyz/2021/03/damn-vulnerable-defi-writeup/](https://blog.syang.xyz/2021/03/damn-vulnerable-defi-writeup/)
+
 ## Books
 - 《以太坊技术详解与实战》-- 以太坊创始人、首席科学家 Vitalik Buterin 倾力推荐
 - 待补充
