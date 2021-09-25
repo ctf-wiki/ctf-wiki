@@ -14,7 +14,7 @@
 ## Blockchain Security CTF Competitions
 
 - [Paradigm CTF](https://ctf.paradigm.xyz/) - 2021
-  + [Official Challenges and Solutions:](https://github.com/paradigm-operations/paradigm-ctf-2021)
+    + [Official Challenges and Solutions](https://github.com/paradigm-operations/paradigm-ctf-2021)
 
 
 ## Blockchain Security Challenges in CTF
