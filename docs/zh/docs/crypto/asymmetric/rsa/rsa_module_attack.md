@@ -71,14 +71,294 @@ $$
 
 ### p - 1 光滑
 
-当 p 是 N 的因数，并且 p - 1 是光滑的时候，可能可以使用 Pollard's p − 1 算法来分解 N，但是也不是完全可以成功的。
+* 光滑数(Smooth number)：指可以分解为小素数乘积的正整数
 
-!!! warning
-    原理分析待完成
+* 当$p$是$N$的因数，并且$p-1$是光滑数，可以考虑使用`Pollard's p-1`算法来分解$N$
+
+* 根据费马小定理有
+
+    $$若p\nmid a,\ 则a^{p-1}\equiv 1\pmod{p}$$
+
+    则有
+
+    $$a^{t(p-1)}\equiv 1^t \equiv 1\pmod{p}$$
+
+    即
+
+    $$a^{t(p-1)} - 1 = k*p$$
+
+* 根据`Pollard's p-1`算法：
+
+    如果$p$是一个$B-smooth\ number$，那么则存在
+
+    $$M = \prod_{q\le{B}}{q^{\lfloor\log_q{B}\rfloor}}$$
+
+    使得
+
+    $$(p-1)\mid M$$
+    
+    成立，则有
+
+    $$\gcd{(a^{M}-1, N)}$$
+    
+    如果结果不为$1$或$N$，那么就已成功分解$N$。
+
+    因为我们只关心最后的gcd结果，同时`N`只包含两个素因子，则我们不需要计算$M$，考虑$n=2,3,\dots$，令$M = n!$即可覆盖正确的$M$同时方便计算。
+
+* 在具体计算中，可以代入降幂进行计算
+
+    $$
+    a^{n!}\bmod{N}=\begin{cases}
+        (a\bmod{N})^2\mod{N}&n=2\\
+        (a^{(n-1)!}\bmod{N})^n\mod{N}&n\ge{3}
+    \end{cases}$$
+
+* Python代码实现
+
+    ```python
+    from gmpy2 import *
+    a = 2
+    n = 2
+    while True:
+        a = powmod(a, n, N)
+        res = gcd(a-1, N)
+        if res != 1 and res != N:
+            q = n // res
+            d = invert(e, (res-1)*(q-1))
+            m = powmod(c, d, N)
+            print(m)
+            break
+        n += 1
+    ```
 
 ### p + 1 光滑
 
-当 p 是 n 的因数，并且 p + 1 是光滑的时候，可能可以使用 Williams's p + 1 算法来分解 N，但是也不是完全可以成功的。
+* 当$p$是$N$的因数，并且$p+1$是光滑数，可以考虑使用`Williams's p+1`算法来分解$N$
+
+* 已知$N$的因数$p$，且$p+1$是一个光滑数
+
+    $$
+    p = \left(\prod_{i=1}^k{q_i^{\alpha_i}}\right)+1
+    $$
+
+    $q_i$即第$i$个素因数且有$q_i^{\alpha_i}\le B_1$, 找到$\beta_i$使得让$q_i^{\beta_i}\le B_1$且$q_i^{\beta_i+1}> B_1$，然后令
+
+    $$
+    R = \prod_{i=1}^k{q_i^{\beta_i}}
+    $$
+
+    显然有$p-1\mid R$且当$(N, a) = 1$时有$a^{p-1}\equiv 1 \pmod{p}$，所以有$a^R\equiv 1\pmod{p}$，即
+
+    $$
+        p\mid(N, a^R-1)
+    $$
+
+* 令$P,Q$为整数，$\alpha,\beta$为方程$x^2-Px+Q=0$的根，定义如下类卢卡斯序列
+
+    $$
+    \begin{aligned}
+        U_n(P, Q) &= (\alpha^n -\beta^n)/(\alpha - \beta)\\
+        V_n(P, Q) &= \alpha^n + \beta^n
+    \end{aligned}
+    $$
+
+    同样有$\Delta = (\alpha - \beta)^2 = P^2-4Q$，则有
+
+    $$
+    \begin{cases}
+        U_{n+1} &= PU_n - QU_{n-1}\\
+        V_{n+1} &= PV_n - QV_{n-1}
+    \end{cases}\tag{2.2}
+    $$
+
+    $$
+    \begin{cases}
+        U_{2n} &= V_nU_n\\
+        V_{2n} &= V_n^2 - 2Q^n
+    \end{cases}\tag{2.3}
+    $$
+
+    $$
+    \begin{cases}
+        U_{2n-1} &= U_n^2 - QU_{n-1}^2\\
+        V_{2n-1} &= V_nV_{n-1} - PQ^{n-1}
+    \end{cases}\tag{2.4}
+    $$
+
+    $$
+    \begin{cases}
+        \Delta U_{n} &= PV_n - 2QV_{n-1}\\
+        V_{n} &= PU_n - 2QU_{n-1}
+    \end{cases}\tag{2.5}
+    $$
+
+    $$
+    \begin{cases}
+        U_{m+n} &= U_mU_{n+1} - QU_{m-1}U_n\\
+        \Delta U_{m+n} &= V_mV_{n+1} - QV_{m-1}V_n
+    \end{cases}\tag{2.6}
+    $$
+
+    $$
+    \begin{cases}
+        U_{n}(V_k(P, Q), Q^k) &= U_{nk}(P, Q)/U_k(P, Q)\\
+        V_{n}(V_k(P, Q), Q^k) &= V_n(P, Q)
+    \end{cases}\tag{2.7}
+    $$
+
+    同时我们有如果$(N, Q) = 1$且$P^{'}Q\equiv P^2-2Q\pmod{N}$，则有$P^{'}\equiv \alpha/\beta + \beta/\alpha$以及$Q^{'}\equiv \alpha/\beta + \beta/\alpha = 1$，即
+
+    $$
+    U_{2m}(P, Q)\equiv PQ^{m-1}U_m(P^{'}, 1)\pmod{N}\tag{2.8}
+    $$
+
+    根据扩展卢卡斯定理
+    >如果p是奇素数，$p\nmid Q$且勒让德符号$(\Delta/p) = \epsilon$，则
+
+    $$
+    \begin{aligned}
+    U_{(p-\epsilon)m}(P, Q) &\equiv 0\pmod{p}\\
+    V_{(p-\epsilon)m}(P, Q) &\equiv 2Q^{m(1-\epsilon)/2}\pmod{p}    
+    \end{aligned}
+    $$
+
+* `第一种情况`：已知N的因数p，且p+1是一个光滑数
+
+    $$
+    p = \left(\prod_{i=1}^k{q_i^{\alpha_i}}\right)-1
+    $$
+
+    有$p+1\mid R$，当$(Q, N)=1$且$(\Delta/p) = -1$时有$p\mid U_R(P, Q)$，即$p\mid (U_R(P, Q), N)$
+
+    为了找到$U_R(P, Q)$，`Guy`和`Conway`提出可以使用如下公式
+
+    $$
+    \begin{aligned}
+        U_{2n-1} &= U_n^2 - QU_n^2 - 1\\
+        U_{2n} &= U_n(PU_n - 2QU_{n-1})\\
+        U_{2n+1} &= PU_{2n} - QU_{2n-1}
+    \end{aligned}
+    $$
+
+    但是上述公式值太大了，不便运算，我们可以考虑如下方法
+
+    如果$p \mid U_R(P, 1)$，根据`公式2.3`有$p\mid U_{2R}(P, Q)$，所以根据`公式2.8`有$p \mid U_R(P^{'}, 1)$，设$Q=1$，则有
+
+    $$
+    V_{(p-\epsilon)m}(P, 1) \equiv 2\pmod{p}
+    $$
+
+    即，如果$p\mid U_R(P, 1)$，则$p\mid(V_R(P, 1) -2)$.
+
+    第一种情况可以归纳为：
+
+    让$R = r_1r_2r_3\cdots r_m$，同时找到$P_0$使得$(P_0^2-4, N) = 1$，定义$V_n(P) = V_n(P, 1), U_n(P) = U_n(P, 1)$且
+
+    $$
+    P_j \equiv V_{r_j}(P_{j-1})\pmod{N}(j = 1,2,3,\dots,m)
+    $$
+
+    根据`公式2.7`，有
+
+    $$
+    P_m \equiv V_R(P_0)\pmod{N}\tag{3.1}
+    $$
+
+    要计算$V_r = V_r(P)$可以用如下公式
+    
+    根据`公式2.2`，`公式2.3`，`公式2.4`有
+
+    $$
+    \begin{cases}
+        V_{2f-1}&\equiv V_fV_{f-1}-P\\
+        V_{2f}&\equiv V_f^2 - 2\\
+        V_{2f+1}&\equiv PV_f^2-V_fV_{f-1}-P\pmod(N)
+    \end{cases}
+    $$
+
+    令
+
+    $$
+    r = \sum_{i=0}^t{b_t2^{t-i}}\ \ \ \ (b_i=0,1)
+    $$
+    
+    $f_0=1, f_{k+1}=2f_k+b_{k+1}$，则$f_t=r$，同样$V_0(P) = 2, V_1(P) = P$，则最终公式为
+
+    $$
+    (V_{f_{k+1}}, V_{f_{k+1}-1}) = \begin{cases}
+    (V_{2f_k}, V_{2f_k-1})\ \ \ \ if\ b_{k+1}=0\\
+    (V_{2f_k+1}, V_{2f_k})\ \ \ \ if\ b_{k+1}=1
+    \end{cases}
+    $$
+
+* `第二种情况`：已知p+1是一个光滑数
+
+    $$
+    p = s\left(\prod_{i=1}^k{q_i^{\alpha_i}}\right)-1
+    $$
+
+    当$s$是素数，且$B_1<s\le B_2$，有$p\mid(a_m^s-1, N)，$定义$s_j$和$2d_j$
+    
+    $$
+    2d_j = s_j+1-s_j
+    $$
+    
+    如果$(\Delta/p) = -1$且$p\nmid P_m-2$，则根据`公式2.7`和`公式3.1`有$p\mid(U_s(P_m), N)$。
+
+    令$U[n] \equiv U_n(P_m), V[n]\equiv V_n(P_m)\pmod{N}$，计算$U[2d_j-1], U[2d_j], U[2d_j+1]$通过
+
+    $$U[0] = 0, U[1] = 1, U[n+1] = P_mU[n] - U[n-1]$$
+
+    计算
+
+    $$
+    T[s_i] \equiv \Delta U_{s_i}(P_m) = \Delta U_{s_iR}(P_0)/U_R(P_0)\pmod{N}
+    $$
+
+    通过`公式2.6`，`公式2.7`和`公式3.1`有
+
+    $$
+    \begin{cases}
+        T[s_1]&\equiv P_mV[s_1]-2V[s_1-1]\\
+        T[s_1-1]&\equiv 2V[s_1]-P_mV[s_1-1]\pmod{N}
+    \end{cases}
+    $$
+
+    即
+
+    $$
+    \begin{cases}
+        T[s_{i+1}]&\equiv T[s_i]U[2d_i+1]-T[s_i-1]U[2d_i]\\
+        T[s_{i+1}-1]&\equiv T[s_i]U[2d_i]-T[s_i-1]U[2d_i-1]\pmod{N}
+    \end{cases}
+    $$
+
+    计算$T[s_i], i=1,2,3\dots$，然后计算
+
+    $$
+    H_t = (\prod_{i=0}^c{T[s_{i+t}], N})
+    $$
+
+    其中$t = 1, c+1, 2c+1, \dots, c[B_2/c]+1$，我们有$p\mid H_i$当$(\Delta/p)=-1$
+
+* python代码实现
+
+    ```python
+    def mlucas(v, a, n):
+        """ Helper function for williams_pp1().  Multiplies along a Lucas sequence modulo n. """
+        v1, v2 = v, (v**2 - 2) % n
+        for bit in bin(a)[3:]: v1, v2 = ((v1**2 - 2) % n, (v1*v2 - v) % n) if bit == "0" else ((v1*v2 - v) % n, (v2**2 - 2) % n)
+        return v1
+    
+    for v in count(1):
+        for p in primegen():
+            e = ilog(isqrt(n), p)
+            if e == 0: break
+            for _ in xrange(e): v = mlucas(v, p, n)
+            g = gcd(v-2, n)
+            if 1 < g < n: return g # g|n
+            if g == n: break
+    ```
 
 ### 2017 SECCON very smooth
 

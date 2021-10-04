@@ -1,7 +1,7 @@
 Thanks for contributing to CTF Wiki!
 
-Before you submit this pull request, please read
-- [CONTRIBUTING](https://github.com/ctf-wiki/ctf-wiki/wiki/Contributing-Guide)
+**Before submitting this pull request, please read**
+- [Contribute](https://ctf-wiki.org/contribute/before-contributing/)
 - [CTF Wiki's Wiki](https://github.com/ctf-wiki/ctf-wiki/wiki)
 
-Please remove these message before PR.
+**Please remove these message before PR.**
