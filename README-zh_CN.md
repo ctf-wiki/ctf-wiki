@@ -56,12 +56,16 @@ python3 scripts/docs.py serve
 
 **mkdocs 本地部署的网站是动态更新的，即当你修改并保存 md 文件后，刷新页面就能随之动态更新。**
 
-> 注意：在使用 mkdocs-material 的 insiders 版本后，暂时不支持 docker 构建。
 
 如果你只是想本地浏览，并不想修改文档？试试 Docker 把！
 
+> 注意：在 DockerHub 上的 `ctfwiki/ctf-wiki` 为过时版本，您可使用以下命令手动构建。
+
 ```
-docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
+# docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
+git clone https://github.com/ctf-wiki/ctf-wiki.git
+docker build -t ctf-wiki .
+docker run --name ctf-wiki -d -p 4100:80 ctf-wiki
 ```
 随后即可在浏览器中访问 [http://localhost:4100/](http://localhost:4100/) 阅读 CTF Wiki 。
 
