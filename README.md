@@ -58,13 +58,8 @@ python3 scripts/docs.py serve
 
 If you just want to view it statically, try Docker!
 
-> Note: The `ctfwiki/ctf-wiki` on DockerHub is out of date, but you can manually build it using the following command
-
 ```
-# docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
-git clone https://github.com/ctf-wiki/ctf-wiki.git
-docker build -t ctf-wiki .
-docker run --name ctf-wiki -d -p 4100:80 ctf-wiki
+docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 ```
 And then access [http://localhost:4100/](http://localhost:4100/) .
 
