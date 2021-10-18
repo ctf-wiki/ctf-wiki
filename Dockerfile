@@ -1,17 +1,13 @@
-# This File is old and should be modified.
-FROM python:3.6 as build-stage
-MAINTAINER Yibai Zhang <xm1994@gmail.com>
+FROM python:3.8-alpine as build-stage
+LABEL maintainer="je5r1ta@icloud.com"
 
 ADD . /opt/ctf-wiki/
 WORKDIR /opt/ctf-wiki
-RUN pip install -r requirements.txt && ./build.sh
+RUN pip install -r requirements.txt \
+      && python scripts/docs.py build-all
 
-FROM alpine:3.8
-RUN apk add --update --no-cache \
-	lighttpd \
-    && rm -rf /var/cache/apk/*
 
-COPY --from=build-stage /opt/ctf-wiki/site /var/www/localhost/htdocs
+FROM nginx:mainline-alpine
+COPY --from=build-stage /opt/ctf-wiki/site /usr/share/nginx/html
 EXPOSE 80
-CMD ["lighttpd", "-D", "-f", "/etc/lighttpd/lighttpd.conf"]
-
+CMD ["nginx", "-g", "daemon off;"]
