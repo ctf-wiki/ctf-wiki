@@ -63,6 +63,7 @@ assert((old_top == initial_top(av) && old_size == 0) ||
 这里给出了一个示例程序，程序模拟了一个溢出覆盖到top chunk的size域。我们试图把size改小从而实现brk扩展，并把原有的top chunk放入unsorted bin中。
 
 ```
+#include <stdlib.h>
 #define fake_size 0x41
 
 int main(void)
@@ -70,7 +71,7 @@ int main(void)
     void *ptr;
     
     ptr=malloc(0x10);
-    ptr=(void *)((int)ptr+24);
+    ptr=(void *)((long long)ptr+24);
     
     *((long long*)ptr)=fake_size; // overwrite top chunk size
     
@@ -109,6 +110,7 @@ int main(void)
 因此我们伪造的fake_size可以是0x0fe1、0x1fe1、0x2fe1、0x3fe1等对4kb对齐的size。而0x40不满足对齐，因此不能实现利用。
 
 ```
+#include <stdlib.h>
 #define fake_size 0x1fe1
 
 int main(void)
@@ -116,7 +118,7 @@ int main(void)
     void *ptr;
     
     ptr=malloc(0x10);
-    ptr=(void *)((int)ptr+24);
+    ptr=(void *)((long long)ptr+24);
     
     *((long long*)ptr)=fake_size;
     
