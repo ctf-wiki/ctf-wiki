@@ -858,7 +858,7 @@ perl rip-svn.pl -v -u http://www.example.com/.svn/
 
 WEB-INF 是 Java Web 应用的安全目录，web.xml 中有文件的映射关系。
 
-WEB-INF 主要包含一下文件或目录：
+WEB-INF 主要包含以下文件或目录：
 
 - `/WEB-INF/web.xml` ：Web 应用程序配置文件，描述了 servlet 和其他的应用组件配置及命名规则。
 - `/WEB-INF/classes/` ：含了站点所有用的 class 文件，包括 servlet class 和非 servlet class，他们不能包含在 jar 文件中。
