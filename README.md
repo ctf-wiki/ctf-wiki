@@ -58,8 +58,6 @@ python3 scripts/docs.py serve
 
 If you just want to view it statically, try Docker!
 
-> Note: after using mkdocs-material-insiders, we haven't support building website with docker.
-
 ```
 docker run -d --name=ctf-wiki -p 4100:80 ctfwiki/ctf-wiki
 ```

@@ -62,7 +62,7 @@ void decrypt (uint32_t* v, uint32_t* k) {
 
 
 
-在 Tea 算法中其最主要的识别特征就是 拥有一个 image number ：0x9e3779b9 。当然，这 Tea 算法也有魔改的，感兴趣的可以看 2018 0ctf Quals milk-tea。
+在 Tea 算法中其最主要的识别特征就是 拥有一个 magic number ：0x9e3779b9 。当然，这 Tea 算法也有魔改的，感兴趣的可以看 2018 0ctf Quals milk-tea。
 
 
 

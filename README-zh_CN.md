@@ -56,7 +56,6 @@ python3 scripts/docs.py serve
 
 **mkdocs 本地部署的网站是动态更新的，即当你修改并保存 md 文件后，刷新页面就能随之动态更新。**
 
-> 注意：在使用 mkdocs-material 的 insiders 版本后，暂时不支持 docker 构建。
 
 如果你只是想本地浏览，并不想修改文档？试试 Docker 把！
 

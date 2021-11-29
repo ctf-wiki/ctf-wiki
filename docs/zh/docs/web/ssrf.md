@@ -66,7 +66,7 @@ SSRF，Server-Side Request Forgery，服务端请求伪造，是一种由攻击�
     ?>
     ```
 
-    这段代码使用 `fsockopen` 函数实现获取用户制定 URL 的数据（文件或者 HTML）。这个函数会使用 socket 跟服务器建立 TCP 连接，传输原始数据。
+    这段代码使用 `fsockopen` 函数实现获取用户指定 URL 的数据（文件或者 HTML）。这个函数会使用 socket 跟服务器建立 TCP 连接，传输原始数据。
 
 3.  `curl_exec()`
 
