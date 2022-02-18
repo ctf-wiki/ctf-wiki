@@ -144,6 +144,58 @@ void rc4_crypt(unsigned char *s, unsigned char *Data, unsigned long Len) //加�
 
 
 
+### python解密脚本
+
+```python
+import base64
+def rc4_main(key = "init_key", message = "init_message"):
+    print("RC4解密主函数调用成功")
+    print('\n')
+    s_box = rc4_init_sbox(key)
+    crypt = rc4_excrypt(message, s_box)
+    return crypt
+def rc4_init_sbox(key):
+    s_box = list(range(256))
+    print("原来的 s 盒：%s" % s_box)
+    print('\n')
+    j = 0
+    for i in range(256):
+        j = (j + s_box[i] + ord(key[i % len(key)])) % 256
+        s_box[i], s_box[j] = s_box[j], s_box[i]
+    print("混乱后的 s 盒：%s"% s_box)
+    print('\n')
+    return s_box
+def rc4_excrypt(plain, box):
+    print("调用解密程序成功。")
+    print('\n')
+    plain = base64.b64decode(plain.encode('utf-8'))
+    plain = bytes.decode(plain)
+    res = []
+    i = j = 0
+    for s in plain:
+        i = (i + 1) % 256
+        j = (j + box[i]) % 256
+        box[i], box[j] = box[j], box[i]
+        t = (box[i] + box[j]) % 256
+        k = box[t]
+        res.append(chr(ord(s) ^ k))
+    print("res用于解密字符串，解密后是：%res" %res)
+    print('\n')
+    cipher = "".join(res)
+    print("解密后的字符串是：%s" %cipher)
+    print('\n')
+    print("解密后的输出(没经过任何编码):")
+    print('\n')
+    return cipher
+a=[] #cipher
+key=""
+s=""
+for i in a:
+    s+=chr(i)
+s=str(base64.b64encode(s.encode('utf-8')), 'utf-8')
+rc4_main(key, s)
+```
+
 ## MD5
 
 **MD5消息摘要算法**（英语：MD5 Message-Digest Algorithm），一种被广泛使用的[密码散列函数](https://zh.wikipedia.org/wiki/%E5%AF%86%E7%A2%BC%E9%9B%9C%E6%B9%8A%E5%87%BD%E6%95%B8)，可以产生出一个128位（16[字节](https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82)）的散列值（hash value），用于确保信息传输完整一致。MD5由美国密码学家[罗纳德·李维斯特](https://zh.wikipedia.org/wiki/%E7%BD%97%E7%BA%B3%E5%BE%B7%C2%B7%E6%9D%8E%E7%BB%B4%E6%96%AF%E7%89%B9)（Ronald Linn Rivest）设计，于1992年公开，用以取代[MD4](https://zh.wikipedia.org/wiki/MD4)算法。这套算法的程序在 [RFC 1321](https://tools.ietf.org/html/rfc1321) 中被加以规范。
