@@ -146,6 +146,10 @@ void rc4_crypt(unsigned char *s, unsigned char *Data, unsigned long Len) //加�
 
 ### python解密脚本
 
+对应例题：《从 0 到 1》RE 篇——BabyAlgorithm
+
+[题目链接](https://buuoj.cn/challenges#[%E7%AC%AC%E4%BA%94%E7%AB%A0%20CTF%E4%B9%8BRE%E7%AB%A0]BabyAlgorithm)
+
 ```python
 import base64
 def rc4_main(key = "init_key", message = "init_message"):
