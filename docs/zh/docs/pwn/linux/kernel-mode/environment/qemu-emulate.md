@@ -41,6 +41,12 @@ make -j3
 
 #### 配置文件系统
 
+使用 busybox 创建 `_install` 目录，使用命令：
+
+```bash
+make install
+```
+
 在编译完成后，我们在 `_install` 目录下创建以下文件夹
 
 ```bash
