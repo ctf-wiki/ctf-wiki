@@ -19,72 +19,72 @@ DESCRIPTION
        An ioctl() request has encoded in it whether the argument is an in parameter or
        out  parameter, and the size of the argument argp in bytes.  Macros and defines
        used in specifying an ioctl() request are located in the file &lt;sys/ioctl.h&gt;.
-</code></pre></div> 可以看出 ioctl 也是一个系统调用，用于与设备通信。</p> <p><code>int ioctl(int fd, unsigned long request, ...)</code> 的第一个参数为打开设备 (open) 返回的 <a href=http://m4x.fun/post/play-with-file-descriptor-1/ >文件描述符</a>，第二个参数为用户程序对设备的控制命令，再后边的参数则是一些补充参数，与设备有关。</p> <blockquote> <p>使用 ioctl 进行通信的原因：</p> <p>操作系统提供了内核访问标准外部设备的系统调用，因为大多数硬件设备只能够在内核空间内直接寻址,但是当访问非标准硬件设备这些系统调用显得不合适,有时候用户模式可能需要直接访问设备。</p> <p>比如，一个系统管理员可能要修改网卡的配置。现代操作系统提供了各种各样设备的支持，有一些设备可能没有被内核设计者考虑到，如此一来提供一个这样的系统调用来使用设备就变得不可能了。 </p> <p>为了解决这个问题，内核被设计成可扩展的，可以加入一个称为设备驱动的模块，驱动的代码允许在内核空间运行而且可以对设备直接寻址。一个Ioctl接口是一个独立的系统调用，通过它用户空间可以跟设备驱动沟通。对设备驱动的请求是一个以设备和请求号码为参数的Ioctl调用，如此内核就允许用户空间访问设备驱动进而访问设备而不需要了解具体的设备细节，同时也不需要一大堆针对不同设备的系统调用。</p> </blockquote> <h2 id=_3>状态切换<a class=headerlink href=#_3 title="Permanent link">&para;</a></h2> <h3 id=user-space-to-kernel-space>user space to kernel space<a class=headerlink href=#user-space-to-kernel-space title="Permanent link">&para;</a></h3> <p>当发生 <code>系统调用</code>，<code>产生异常</code>，<code>外设产生中断</code>等事件时，会发生用户态到内核态的切换，具体的过程为：</p> <ol> <li>通过 <code>swapgs</code> 切换 GS 段寄存器，将 GS 寄存器值和一个特定位置的值进行交换，目的是保存 GS 值，同时将该位置的值作为内核执行时的 GS 值使用。</li> <li>将当前栈顶（用户空间栈顶）记录在 CPU 独占变量区域里，将 CPU 独占区域里记录的内核栈顶放入 rsp/esp。</li> <li> <p>通过 push 保存各寄存器值，具体的 <a href=http://elixir.free-electrons.com/linux/v4.12/source/arch/x86/entry/entry_64.S>代码</a> 如下:</p> <div class=highlight><pre><span></span><code> <span class=nf>ENTRY</span><span class=p>(</span><span class=no>entry_SYSCALL_64</span><span class=p>)</span>
- <span class=cm>/* SWAPGS_UNSAFE_STACK是一个宏，x86直接定义为swapgs指令 */</span>
- <span class=nf>SWAPGS_UNSAFE_STACK</span>
+</code></pre></div> 可以看出 ioctl 也是一个系统调用，用于与设备通信。</p> <p><code>int ioctl(int fd, unsigned long request, ...)</code> 的第一个参数为打开设备 (open) 返回的 <a href=http://m4x.fun/post/play-with-file-descriptor-1/ >文件描述符</a>，第二个参数为用户程序对设备的控制命令，再后边的参数则是一些补充参数，与设备有关。</p> <blockquote> <p>使用 ioctl 进行通信的原因：</p> <p>操作系统提供了内核访问标准外部设备的系统调用，因为大多数硬件设备只能够在内核空间内直接寻址,但是当访问非标准硬件设备这些系统调用显得不合适,有时候用户模式可能需要直接访问设备。</p> <p>比如，一个系统管理员可能要修改网卡的配置。现代操作系统提供了各种各样设备的支持，有一些设备可能没有被内核设计者考虑到，如此一来提供一个这样的系统调用来使用设备就变得不可能了。 </p> <p>为了解决这个问题，内核被设计成可扩展的，可以加入一个称为设备驱动的模块，驱动的代码允许在内核空间运行而且可以对设备直接寻址。一个Ioctl接口是一个独立的系统调用，通过它用户空间可以跟设备驱动沟通。对设备驱动的请求是一个以设备和请求号码为参数的Ioctl调用，如此内核就允许用户空间访问设备驱动进而访问设备而不需要了解具体的设备细节，同时也不需要一大堆针对不同设备的系统调用。</p> </blockquote> <h2 id=_3>状态切换<a class=headerlink href=#_3 title="Permanent link">&para;</a></h2> <h3 id=user-space-to-kernel-space>user space to kernel space<a class=headerlink href=#user-space-to-kernel-space title="Permanent link">&para;</a></h3> <p>当发生 <code>系统调用</code>，<code>产生异常</code>，<code>外设产生中断</code>等事件时，会发生用户态到内核态的切换，具体的过程为：</p> <ol> <li>通过 <code>swapgs</code> 切换 GS 段寄存器，将 GS 寄存器值和一个特定位置的值进行交换，目的是保存 GS 值，同时将该位置的值作为内核执行时的 GS 值使用。</li> <li>将当前栈顶（用户空间栈顶）记录在 CPU 独占变量区域里，将 CPU 独占区域里记录的内核栈顶放入 rsp/esp。</li> <li> <p>通过 push 保存各寄存器值，具体的 <a href=http://elixir.free-electrons.com/linux/v4.12/source/arch/x86/entry/entry_64.S>代码</a> 如下:</p> <div class=highlight><pre><span></span><code><span class=w> </span><span class=nf>ENTRY</span><span class=p>(</span><span class=no>entry_SYSCALL_64</span><span class=p>)</span><span class=w></span>
+<span class=w> </span><span class=cm>/* SWAPGS_UNSAFE_STACK是一个宏，x86直接定义为swapgs指令 */</span><span class=w></span>
+<span class=w> </span><span class=nf>SWAPGS_UNSAFE_STACK</span><span class=w></span>
 
- <span class=cm>/* 保存栈值，并设置内核栈 */</span>
- <span class=nf>movq</span> <span class=nv>%rsp</span><span class=p>,</span> <span class=no>PER_CPU_VAR</span><span class=p>(</span><span class=no>rsp_scratch</span><span class=p>)</span>
- <span class=nf>movq</span> <span class=no>PER_CPU_VAR</span><span class=p>(</span><span class=no>cpu_current_top_of_stack</span><span class=p>),</span> <span class=nv>%rsp</span>
+<span class=w> </span><span class=cm>/* 保存栈值，并设置内核栈 */</span><span class=w></span>
+<span class=w> </span><span class=nf>movq</span><span class=w> </span><span class=nv>%rsp</span><span class=p>,</span><span class=w> </span><span class=no>PER_CPU_VAR</span><span class=p>(</span><span class=no>rsp_scratch</span><span class=p>)</span><span class=w></span>
+<span class=w> </span><span class=nf>movq</span><span class=w> </span><span class=no>PER_CPU_VAR</span><span class=p>(</span><span class=no>cpu_current_top_of_stack</span><span class=p>),</span><span class=w> </span><span class=nv>%rsp</span><span class=w></span>
 
 
-<span class=cm>/* 通过push保存寄存器值，形成一个pt_regs结构 */</span>
-<span class=cm>/* Construct struct pt_regs on stack */</span>
-<span class=nf>pushq</span>  <span class=no>$__USER_DS</span>      <span class=cm>/* pt_regs-&gt;ss */</span>
-<span class=nf>pushq</span>  <span class=no>PER_CPU_VAR</span><span class=p>(</span><span class=no>rsp_scratch</span><span class=p>)</span>  <span class=cm>/* pt_regs-&gt;sp */</span>
-<span class=nf>pushq</span>  <span class=nv>%r11</span>             <span class=cm>/* pt_regs-&gt;flags */</span>
-<span class=nf>pushq</span>  <span class=no>$__USER_CS</span>      <span class=cm>/* pt_regs-&gt;cs */</span>
-<span class=nf>pushq</span>  <span class=nv>%rcx</span>             <span class=cm>/* pt_regs-&gt;ip */</span>
-<span class=nf>pushq</span>  <span class=nv>%rax</span>             <span class=cm>/* pt_regs-&gt;orig_ax */</span>
-<span class=nf>pushq</span>  <span class=nv>%rdi</span>             <span class=cm>/* pt_regs-&gt;di */</span>
-<span class=nf>pushq</span>  <span class=nv>%rsi</span>             <span class=cm>/* pt_regs-&gt;si */</span>
-<span class=nf>pushq</span>  <span class=nv>%rdx</span>             <span class=cm>/* pt_regs-&gt;dx */</span>
-<span class=nf>pushq</span>  <span class=nv>%rcx</span> <span class=no>tuichu</span>    <span class=cm>/* pt_regs-&gt;cx */</span>
-<span class=nf>pushq</span>  <span class=no>$-ENOSYS</span>        <span class=cm>/* pt_regs-&gt;ax */</span>
-<span class=nf>pushq</span>  <span class=nv>%r8</span>              <span class=cm>/* pt_regs-&gt;r8 */</span>
-<span class=nf>pushq</span>  <span class=nv>%r9</span>              <span class=cm>/* pt_regs-&gt;r9 */</span>
-<span class=nf>pushq</span>  <span class=nv>%r10</span>             <span class=cm>/* pt_regs-&gt;r10 */</span>
-<span class=nf>pushq</span>  <span class=nv>%r11</span>             <span class=cm>/* pt_regs-&gt;r11 */</span>
-<span class=nf>sub</span> <span class=no>$</span><span class=p>(</span><span class=mi>6</span><span class=p>*</span><span class=mi>8</span><span class=p>),</span> <span class=nv>%rsp</span>      <span class=cm>/* pt_regs-&gt;bp, bx, r12-15 not saved */</span>
-</code></pre></div> </li> <li> <p>通过汇编指令判断是否为 <code>x32_abi</code>。</p> </li> <li>通过系统调用号，跳到全局变量 <code>sys_call_table</code> 相应位置继续执行系统调用。</li> </ol> <h3 id=kernel-space-to-user-space>kernel space to user space<a class=headerlink href=#kernel-space-to-user-space title="Permanent link">&para;</a></h3> <p>退出时，流程如下：</p> <ol> <li>通过 <code>swapgs</code> 恢复 GS 值</li> <li>通过 <code>sysretq</code> 或者 <code>iretq</code> 恢复到用户控件继续执行。如果使用 <code>iretq</code> 还需要给出用户空间的一些信息（CS, eflags/rflags, esp/rsp 等）</li> </ol> <h2 id=struct-cred>struct cred<a class=headerlink href=#struct-cred title="Permanent link">&para;</a></h2> <p>之前提到 kernel 记录了进程的权限，更具体的，是用 cred 结构体记录的，每个进程中都有一个 cred 结构，这个结构保存了该进程的权限等信息（uid，gid 等），如果能修改某个进程的 cred，那么也就修改了这个进程的权限。</p> <p><a href=https://code.woboq.org/linux/linux/include/linux/cred.h.html#cred>源码</a> 如下: <div class=highlight><pre><span></span><code><span class=nf>struct</span> <span class=no>cred</span> <span class=err>{</span>
-    <span class=nf>atomic_t</span>    <span class=no>usage</span><span class=c1>;</span>
+<span class=cm>/* 通过push保存寄存器值，形成一个pt_regs结构 */</span><span class=w></span>
+<span class=cm>/* Construct struct pt_regs on stack */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=no>$__USER_DS</span><span class=w>      </span><span class=cm>/* pt_regs-&gt;ss */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=no>PER_CPU_VAR</span><span class=p>(</span><span class=no>rsp_scratch</span><span class=p>)</span><span class=w>  </span><span class=cm>/* pt_regs-&gt;sp */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%r11</span><span class=w>             </span><span class=cm>/* pt_regs-&gt;flags */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=no>$__USER_CS</span><span class=w>      </span><span class=cm>/* pt_regs-&gt;cs */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%rcx</span><span class=w>             </span><span class=cm>/* pt_regs-&gt;ip */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%rax</span><span class=w>             </span><span class=cm>/* pt_regs-&gt;orig_ax */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%rdi</span><span class=w>             </span><span class=cm>/* pt_regs-&gt;di */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%rsi</span><span class=w>             </span><span class=cm>/* pt_regs-&gt;si */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%rdx</span><span class=w>             </span><span class=cm>/* pt_regs-&gt;dx */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%rcx</span><span class=w> </span><span class=no>tuichu</span><span class=w>    </span><span class=cm>/* pt_regs-&gt;cx */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=no>$-ENOSYS</span><span class=w>        </span><span class=cm>/* pt_regs-&gt;ax */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%r8</span><span class=w>              </span><span class=cm>/* pt_regs-&gt;r8 */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%r9</span><span class=w>              </span><span class=cm>/* pt_regs-&gt;r9 */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%r10</span><span class=w>             </span><span class=cm>/* pt_regs-&gt;r10 */</span><span class=w></span>
+<span class=nf>pushq</span><span class=w>  </span><span class=nv>%r11</span><span class=w>             </span><span class=cm>/* pt_regs-&gt;r11 */</span><span class=w></span>
+<span class=nf>sub</span><span class=w> </span><span class=no>$</span><span class=p>(</span><span class=mi>6</span><span class=p>*</span><span class=mi>8</span><span class=p>),</span><span class=w> </span><span class=nv>%rsp</span><span class=w>      </span><span class=cm>/* pt_regs-&gt;bp, bx, r12-15 not saved */</span><span class=w></span>
+</code></pre></div> </li> <li> <p>通过汇编指令判断是否为 <code>x32_abi</code>。</p> </li> <li>通过系统调用号，跳到全局变量 <code>sys_call_table</code> 相应位置继续执行系统调用。</li> </ol> <h3 id=kernel-space-to-user-space>kernel space to user space<a class=headerlink href=#kernel-space-to-user-space title="Permanent link">&para;</a></h3> <p>退出时，流程如下：</p> <ol> <li>通过 <code>swapgs</code> 恢复 GS 值</li> <li>通过 <code>sysretq</code> 或者 <code>iretq</code> 恢复到用户控件继续执行。如果使用 <code>iretq</code> 还需要给出用户空间的一些信息（CS, eflags/rflags, esp/rsp 等）</li> </ol> <h2 id=struct-cred>struct cred<a class=headerlink href=#struct-cred title="Permanent link">&para;</a></h2> <p>之前提到 kernel 记录了进程的权限，更具体的，是用 cred 结构体记录的，每个进程中都有一个 cred 结构，这个结构保存了该进程的权限等信息（uid，gid 等），如果能修改某个进程的 cred，那么也就修改了这个进程的权限。</p> <p><a href=https://code.woboq.org/linux/linux/include/linux/cred.h.html#cred>源码</a> 如下: <div class=highlight><pre><span></span><code><span class=nf>struct</span><span class=w> </span><span class=no>cred</span><span class=w> </span><span class=err>{</span><span class=w></span>
+<span class=w>    </span><span class=nf>atomic_t</span><span class=w>    </span><span class=no>usage</span><span class=c1>;</span>
 <span class=c1>#ifdef CONFIG_DEBUG_CREDENTIALS</span>
-    <span class=nf>atomic_t</span>    <span class=no>subscribers</span><span class=c1>;    /* number of processes subscribed */</span>
-    <span class=nf>void</span>        <span class=p>*</span><span class=no>put_addr</span><span class=c1>;</span>
-    <span class=nf>unsigned</span>    <span class=no>magic</span><span class=c1>;</span>
+<span class=w>    </span><span class=nf>atomic_t</span><span class=w>    </span><span class=no>subscribers</span><span class=c1>;    /* number of processes subscribed */</span>
+<span class=w>    </span><span class=nf>void</span><span class=w>        </span><span class=p>*</span><span class=no>put_addr</span><span class=c1>;</span>
+<span class=w>    </span><span class=nf>unsigned</span><span class=w>    </span><span class=no>magic</span><span class=c1>;</span>
 <span class=c1>#define CRED_MAGIC  0x43736564</span>
 <span class=c1>#define CRED_MAGIC_DEAD 0x44656144</span>
 <span class=c1>#endif</span>
-    <span class=nf>kuid_t</span>      <span class=no>uid</span><span class=c1>;        /* real UID of the task */</span>
-    <span class=nf>kgid_t</span>      <span class=no>gid</span><span class=c1>;        /* real GID of the task */</span>
-    <span class=nf>kuid_t</span>      <span class=no>suid</span><span class=c1>;       /* saved UID of the task */</span>
-    <span class=nf>kgid_t</span>      <span class=no>sgid</span><span class=c1>;       /* saved GID of the task */</span>
-    <span class=nf>kuid_t</span>      <span class=no>euid</span><span class=c1>;       /* effective UID of the task */</span>
-    <span class=nf>kgid_t</span>      <span class=no>egid</span><span class=c1>;       /* effective GID of the task */</span>
-    <span class=nf>kuid_t</span>      <span class=no>fsuid</span><span class=c1>;      /* UID for VFS ops */</span>
-    <span class=nf>kgid_t</span>      <span class=no>fsgid</span><span class=c1>;      /* GID for VFS ops */</span>
-    <span class=nf>unsigned</span>    <span class=no>securebits</span><span class=c1>; /* SUID-less security management */</span>
-    <span class=nf>kernel_cap_t</span>    <span class=no>cap_inheritable</span><span class=c1>; /* caps our children can inherit */</span>
-    <span class=nf>kernel_cap_t</span>    <span class=no>cap_permitted</span><span class=c1>;  /* caps we&#39;re permitted */</span>
-    <span class=nf>kernel_cap_t</span>    <span class=no>cap_effective</span><span class=c1>;  /* caps we can actually use */</span>
-    <span class=nf>kernel_cap_t</span>    <span class=no>cap_bset</span><span class=c1>;   /* capability bounding set */</span>
-    <span class=nf>kernel_cap_t</span>    <span class=no>cap_ambient</span><span class=c1>;    /* Ambient capability set */</span>
+<span class=w>    </span><span class=nf>kuid_t</span><span class=w>      </span><span class=no>uid</span><span class=c1>;        /* real UID of the task */</span>
+<span class=w>    </span><span class=nf>kgid_t</span><span class=w>      </span><span class=no>gid</span><span class=c1>;        /* real GID of the task */</span>
+<span class=w>    </span><span class=nf>kuid_t</span><span class=w>      </span><span class=no>suid</span><span class=c1>;       /* saved UID of the task */</span>
+<span class=w>    </span><span class=nf>kgid_t</span><span class=w>      </span><span class=no>sgid</span><span class=c1>;       /* saved GID of the task */</span>
+<span class=w>    </span><span class=nf>kuid_t</span><span class=w>      </span><span class=no>euid</span><span class=c1>;       /* effective UID of the task */</span>
+<span class=w>    </span><span class=nf>kgid_t</span><span class=w>      </span><span class=no>egid</span><span class=c1>;       /* effective GID of the task */</span>
+<span class=w>    </span><span class=nf>kuid_t</span><span class=w>      </span><span class=no>fsuid</span><span class=c1>;      /* UID for VFS ops */</span>
+<span class=w>    </span><span class=nf>kgid_t</span><span class=w>      </span><span class=no>fsgid</span><span class=c1>;      /* GID for VFS ops */</span>
+<span class=w>    </span><span class=nf>unsigned</span><span class=w>    </span><span class=no>securebits</span><span class=c1>; /* SUID-less security management */</span>
+<span class=w>    </span><span class=nf>kernel_cap_t</span><span class=w>    </span><span class=no>cap_inheritable</span><span class=c1>; /* caps our children can inherit */</span>
+<span class=w>    </span><span class=nf>kernel_cap_t</span><span class=w>    </span><span class=no>cap_permitted</span><span class=c1>;  /* caps we&#39;re permitted */</span>
+<span class=w>    </span><span class=nf>kernel_cap_t</span><span class=w>    </span><span class=no>cap_effective</span><span class=c1>;  /* caps we can actually use */</span>
+<span class=w>    </span><span class=nf>kernel_cap_t</span><span class=w>    </span><span class=no>cap_bset</span><span class=c1>;   /* capability bounding set */</span>
+<span class=w>    </span><span class=nf>kernel_cap_t</span><span class=w>    </span><span class=no>cap_ambient</span><span class=c1>;    /* Ambient capability set */</span>
 <span class=c1>#ifdef CONFIG_KEYS</span>
-    <span class=nf>unsigned</span> <span class=no>char</span>   <span class=no>jit_keyring</span><span class=c1>;    /* default keyring to attach requested</span>
-                     <span class=err>*</span> <span class=nf>keys</span> <span class=no>to</span> <span class=p>*</span><span class=err>/</span>
-    <span class=nf>struct</span> <span class=no>key</span> <span class=no>__rcu</span> <span class=p>*</span><span class=no>session_keyring</span><span class=c1>; /* keyring inherited over fork */</span>
-    <span class=nf>struct</span> <span class=no>key</span>  <span class=p>*</span><span class=no>process_keyring</span><span class=c1>; /* keyring private to this process */</span>
-    <span class=nf>struct</span> <span class=no>key</span>  <span class=p>*</span><span class=no>thread_keyring</span><span class=c1>; /* keyring private to this thread */</span>
-    <span class=nf>struct</span> <span class=no>key</span>  <span class=p>*</span><span class=no>request_key_auth</span><span class=c1>; /* assumed request_key authority */</span>
+<span class=w>    </span><span class=nf>unsigned</span><span class=w> </span><span class=no>char</span><span class=w>   </span><span class=no>jit_keyring</span><span class=c1>;    /* default keyring to attach requested</span>
+<span class=w>                     </span><span class=err>*</span><span class=w> </span><span class=nf>keys</span><span class=w> </span><span class=no>to</span><span class=w> </span><span class=p>*</span><span class=err>/</span><span class=w></span>
+<span class=w>    </span><span class=nf>struct</span><span class=w> </span><span class=no>key</span><span class=w> </span><span class=no>__rcu</span><span class=w> </span><span class=p>*</span><span class=no>session_keyring</span><span class=c1>; /* keyring inherited over fork */</span>
+<span class=w>    </span><span class=nf>struct</span><span class=w> </span><span class=no>key</span><span class=w>  </span><span class=p>*</span><span class=no>process_keyring</span><span class=c1>; /* keyring private to this process */</span>
+<span class=w>    </span><span class=nf>struct</span><span class=w> </span><span class=no>key</span><span class=w>  </span><span class=p>*</span><span class=no>thread_keyring</span><span class=c1>; /* keyring private to this thread */</span>
+<span class=w>    </span><span class=nf>struct</span><span class=w> </span><span class=no>key</span><span class=w>  </span><span class=p>*</span><span class=no>request_key_auth</span><span class=c1>; /* assumed request_key authority */</span>
 <span class=c1>#endif</span>
 <span class=c1>#ifdef CONFIG_SECURITY</span>
-    <span class=nf>void</span>        <span class=p>*</span><span class=no>security</span><span class=c1>;  /* subjective LSM security */</span>
+<span class=w>    </span><span class=nf>void</span><span class=w>        </span><span class=p>*</span><span class=no>security</span><span class=c1>;  /* subjective LSM security */</span>
 <span class=c1>#endif</span>
-    <span class=nf>struct</span> <span class=no>user_struct</span> <span class=p>*</span><span class=no>user</span><span class=c1>;   /* real user ID subscription */</span>
-    <span class=nf>struct</span> <span class=no>user_namespace</span> <span class=p>*</span><span class=no>user_ns</span><span class=c1>; /* user_ns the caps and keyrings are relative to. */</span>
-    <span class=nf>struct</span> <span class=no>group_info</span> <span class=p>*</span><span class=no>group_info</span><span class=c1>;  /* supplementary groups for euid/fsgid */</span>
-    <span class=nf>struct</span> <span class=no>rcu_head</span> <span class=no>rcu</span><span class=c1>;        /* RCU deletion hook */</span>
-<span class=err>}</span> <span class=nf>__randomize_layout</span><span class=c1>;</span>
+<span class=w>    </span><span class=nf>struct</span><span class=w> </span><span class=no>user_struct</span><span class=w> </span><span class=p>*</span><span class=no>user</span><span class=c1>;   /* real user ID subscription */</span>
+<span class=w>    </span><span class=nf>struct</span><span class=w> </span><span class=no>user_namespace</span><span class=w> </span><span class=p>*</span><span class=no>user_ns</span><span class=c1>; /* user_ns the caps and keyrings are relative to. */</span>
+<span class=w>    </span><span class=nf>struct</span><span class=w> </span><span class=no>group_info</span><span class=w> </span><span class=p>*</span><span class=no>group_info</span><span class=c1>;  /* supplementary groups for euid/fsgid */</span>
+<span class=w>    </span><span class=nf>struct</span><span class=w> </span><span class=no>rcu_head</span><span class=w> </span><span class=no>rcu</span><span class=c1>;        /* RCU deletion hook */</span>
+<span class=err>}</span><span class=w> </span><span class=nf>__randomize_layout</span><span class=c1>;</span>
 </code></pre></div></p> <h2 id=_4>内核态函数<a class=headerlink href=#_4 title="Permanent link">&para;</a></h2> <p>相比用户态库函数，内核态的函数有了一些变化</p> <ul> <li>printf() -&gt; <strong>printk()</strong>，但需要注意的是 printk() 不一定会把内容显示到终端上，但一定在内核缓冲区里，可以通过 <code>dmesg</code> 查看效果</li> <li>memcpy() -&gt; <strong>copy_from_user()/copy_to_user()</strong><ul> <li>copy_from_user() 实现了将用户空间的数据传送到内核空间</li> <li>copy_to_user() 实现了将内核空间的数据传送到用户空间</li> </ul> </li> <li>malloc() -&gt; <strong>kmalloc()</strong>，内核态的内存分配函数，和 malloc() 相似，但使用的是 <code>slab/slub 分配器</code></li> <li>free() -&gt; <strong>kfree()</strong>，同 kmalloc()</li> </ul> <p>另外要注意的是，<code>kernel 管理进程，因此 kernel 也记录了进程的权限</code>。kernel 中有两个可以方便的改变权限的函数：</p> <ul> <li><strong>int commit_creds(struct cred *new)</strong></li> <li><strong>struct cred* prepare_kernel_cred(struct task_struct* daemon)</strong></li> </ul> <p>从函数名也可以看出，执行 <code>commit_creds(prepare_kernel_cred(0))</code> 即可获得 root 权限，0 表示 以 0 号进程作为参考准备新的 credentials。</p> <blockquote> <p>更多关于 <code>prepare_kernel_cred</code> 的信息可以参考 <a href=https://elixir.bootlin.com/linux/v4.6/source/kernel/cred.c#L594>源码</a></p> </blockquote> <p>执行 <code>commit_creds(prepare_kernel_cred(0))</code> 也是最常用的提权手段，两个函数的地址都可以在 <code>/proc/kallsyms</code> 中查看（较老的内核版本中是 <code>/proc/ksyms</code>）。 <div class=highlight><pre><span></span><code>post sudo grep commit_creds /proc/kallsyms 
 <span class=o>[</span>sudo<span class=o>]</span> m4x 的密码：
 ffffffffbb6af9e0 T commit_creds

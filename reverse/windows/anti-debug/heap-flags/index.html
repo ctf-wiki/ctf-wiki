@@ -10,159 +10,159 @@
 </code></pre></div> <p>而对于<code>ForgeFlags</code>字段, 正常情况则会设置以下标志:</p> <div class=highlight><pre><span></span><code><span class=n>HEAP_TAIL_CHECKING_ENABLED</span><span class=w> </span><span class=p>(</span><span class=mh>0x20</span><span class=p>)</span><span class=w></span>
 <span class=n>HEAP_FREE_CHECKING_ENABLED</span><span class=w> </span><span class=p>(</span><span class=mh>0x40</span><span class=p>)</span><span class=w></span>
 <span class=n>HEAP_VALIDATE_PARAMETERS_ENABLED</span><span class=w> </span><span class=p>(</span><span class=mh>0x40000000</span><span class=p>)</span><span class=w></span>
-</code></pre></div> <p>因为<code>NtGlobalFlag</code>标志的关系, <code>heap</code>也会设置一些标志位</p> <ul> <li>如果在<code>NtGlobalFlag</code>字段中有设置<code>FLG_HEAP_ENABLE_TAIL_CHECK</code>标志, 那么在<code>heap</code>字段中就会设置<code>HEAP_TAIL_CHECKING_ENABLED</code>标志. </li> <li>如果在<code>NtGlobalFlag</code>字段中有设置<code>FLG_HEAP_ENABLE_FREE_CHECK</code>标志, 那么在<code>heap</code>字段中就会设置<code>FLG_HEAP_ENABLE_FREE_CHECK</code>标志.</li> <li>如果在<code>NtGlobalFlag</code>字段中有设置<code>FLG_HEAP_VALIDATE_PARAMETERS</code>标志, 那么在<code>heap</code>字段中就会设置<code>HEAP_VALIDATE_PARAMETERS_ENABLED</code>标志(在<code>Windows NT</code>和<code>Windows 2000</code>中还会设置<code>HEAP_CREATE_ALIGN_16 (0x10000)</code>标志).</li> </ul> <p><code>heap flags</code>同样也如上节的<code>NtGlobalFlag</code>那样, 不过它受到注册表<code>HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\&lt;filename&gt;</code>位置的<code>PageHeapFlags"</code>键的控制. </p> <h2 id=heap>获取heap位置<a class=headerlink href=#heap title="Permanent link">&para;</a></h2> <p>有多种方法能获知<code>heap</code>的位置, 方法之一就是<code>kernel32</code>的<code>GetProcessHeap()</code>函数, 当然也可以用以下的32位汇编代码来检测32位环境(实际上就有一些壳避免使用该api函数, 直接查询PEB):</p> <div class=highlight><pre><span></span><code><span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-</code></pre></div> <p>或使用以下64位代码来检测64位环境</p> <div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=mi>60</span><span class=no>h</span>
-<span class=nf>pop</span> <span class=no>rsi</span>
-<span class=nl>gs:</span><span class=nf>lodsq</span> <span class=c1>;Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>rax</span><span class=err>+</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-</code></pre></div> <p>或使用以下32位代码检测64位环境</p> <div class=highlight><pre><span></span><code><span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
+</code></pre></div> <p>因为<code>NtGlobalFlag</code>标志的关系, <code>heap</code>也会设置一些标志位</p> <ul> <li>如果在<code>NtGlobalFlag</code>字段中有设置<code>FLG_HEAP_ENABLE_TAIL_CHECK</code>标志, 那么在<code>heap</code>字段中就会设置<code>HEAP_TAIL_CHECKING_ENABLED</code>标志. </li> <li>如果在<code>NtGlobalFlag</code>字段中有设置<code>FLG_HEAP_ENABLE_FREE_CHECK</code>标志, 那么在<code>heap</code>字段中就会设置<code>FLG_HEAP_ENABLE_FREE_CHECK</code>标志.</li> <li>如果在<code>NtGlobalFlag</code>字段中有设置<code>FLG_HEAP_VALIDATE_PARAMETERS</code>标志, 那么在<code>heap</code>字段中就会设置<code>HEAP_VALIDATE_PARAMETERS_ENABLED</code>标志(在<code>Windows NT</code>和<code>Windows 2000</code>中还会设置<code>HEAP_CREATE_ALIGN_16 (0x10000)</code>标志).</li> </ul> <p><code>heap flags</code>同样也如上节的<code>NtGlobalFlag</code>那样, 不过它受到注册表<code>HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\&lt;filename&gt;</code>位置的<code>PageHeapFlags"</code>键的控制. </p> <h2 id=heap>获取heap位置<a class=headerlink href=#heap title="Permanent link">&para;</a></h2> <p>有多种方法能获知<code>heap</code>的位置, 方法之一就是<code>kernel32</code>的<code>GetProcessHeap()</code>函数, 当然也可以用以下的32位汇编代码来检测32位环境(实际上就有一些壳避免使用该api函数, 直接查询PEB):</p> <div class=highlight><pre><span></span><code><span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+</code></pre></div> <p>或使用以下64位代码来检测64位环境</p> <div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=mi>60</span><span class=no>h</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>rsi</span><span class=w></span>
+<span class=nl>gs:</span><span class=nf>lodsq</span><span class=w> </span><span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>rax</span><span class=err>+</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+</code></pre></div> <p>或使用以下32位代码检测64位环境</p> <div class=highlight><pre><span></span><code><span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
 <span class=c1>;64-bit Process Environment Block</span>
 <span class=c1>;follows 32-bit Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>1030</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-</code></pre></div> <p>另外一种方法则是使用<code>kernel32</code>的<code>GetProcessHeaps()</code>函数, 其实它只是简单的转给了<code>ntdll</code>的<code>RtlGetProcessHeaps()</code>函数, 这个函数会返回属于当前进程的堆的数组, 而数组的第一个堆, 就跟<code>kernel32</code>的<code>GetProcessHeap()</code>函数所返回的是一样的.</p> <p>这个过程可以用32位代码检测32位windows环境来实现:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=mi>30</span><span class=no>h</span>
-<span class=nf>pop</span> <span class=no>esi</span>
-<span class=nl>fs:</span><span class=nf>lodsd</span> <span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>1030</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+</code></pre></div> <p>另外一种方法则是使用<code>kernel32</code>的<code>GetProcessHeaps()</code>函数, 其实它只是简单的转给了<code>ntdll</code>的<code>RtlGetProcessHeaps()</code>函数, 这个函数会返回属于当前进程的堆的数组, 而数组的第一个堆, 就跟<code>kernel32</code>的<code>GetProcessHeap()</code>函数所返回的是一样的.</p> <p>这个过程可以用32位代码检测32位windows环境来实现:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=mi>30</span><span class=no>h</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>esi</span><span class=w></span>
+<span class=nl>fs:</span><span class=nf>lodsd</span><span class=w> </span><span class=c1>;Process Environment Block</span>
 <span class=c1>;get process heaps list base</span>
-<span class=nf>mov</span> <span class=no>esi</span><span class=p>,</span> <span class=p>[</span><span class=no>esi</span><span class=err>+</span><span class=no>eax</span><span class=err>+</span><span class=mi>5</span><span class=no>ch</span><span class=p>]</span>
-<span class=nf>lodsd</span>
-</code></pre></div> <p>同上, 用64位代码检测64位windows环境的代码是:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=mi>60</span><span class=no>h</span>
-<span class=nf>pop</span> <span class=no>rsi</span>
-<span class=nl>gs:</span><span class=nf>lodsq</span> <span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>esi</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>esi</span><span class=err>+</span><span class=no>eax</span><span class=err>+</span><span class=mi>5</span><span class=no>ch</span><span class=p>]</span><span class=w></span>
+<span class=nf>lodsd</span><span class=w></span>
+</code></pre></div> <p>同上, 用64位代码检测64位windows环境的代码是:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=mi>60</span><span class=no>h</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>rsi</span><span class=w></span>
+<span class=nl>gs:</span><span class=nf>lodsq</span><span class=w> </span><span class=c1>;Process Environment Block</span>
 <span class=c1>;get process heaps list base</span>
-<span class=nf>mov</span> <span class=no>esi</span><span class=p>,</span> <span class=p>[</span><span class=no>rsi</span><span class=p>*</span><span class=mi>2</span><span class=err>+</span><span class=no>rax</span><span class=err>+</span><span class=mi>20</span><span class=no>h</span><span class=p>]</span>
-<span class=nf>lodsd</span>
-</code></pre></div> <p>或使用32位代码检测64位window环境:</p> <div class=highlight><pre><span></span><code><span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>esi</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>rsi</span><span class=p>*</span><span class=mi>2</span><span class=err>+</span><span class=no>rax</span><span class=err>+</span><span class=mi>20</span><span class=no>h</span><span class=p>]</span><span class=w></span>
+<span class=nf>lodsd</span><span class=w></span>
+</code></pre></div> <p>或使用32位代码检测64位window环境:</p> <div class=highlight><pre><span></span><code><span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
 <span class=c1>;64-bit Process Environment Block</span>
 <span class=c1>;follows 32-bit Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>esi</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>10</span><span class=no>f0h</span><span class=p>]</span> <span class=c1>;get process heaps list base</span>
-<span class=nf>lodsd</span>
-</code></pre></div> <h2 id=flags>检测Flags字段<a class=headerlink href=#flags title="Permanent link">&para;</a></h2> <p>那么显然, 检测调试器我们就可以从检测那几个<code>Flags</code>和<code>ForgeFlags</code>的标志位入手. </p> <p>先看<code>Flags</code>字段的检测代码, 用32位代码检测32位windows环境, 且<code>subsystem</code>版本在<code>3.10-3.50</code>之间:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span> <span class=no>GetVersion</span>
-<span class=nf>cmp</span> <span class=no>al</span><span class=p>,</span> <span class=mi>6</span>
-<span class=nf>cmc</span>
-<span class=nf>sbb</span> <span class=no>ebx</span><span class=p>,</span> <span class=no>ebx</span>
-<span class=nf>and</span> <span class=no>ebx</span><span class=p>,</span> <span class=mi>34</span><span class=no>h</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=no>ebx</span><span class=err>+</span><span class=mi>0</span><span class=no>ch</span><span class=p>]</span> <span class=c1>;Flags</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>esi</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>10</span><span class=no>f0h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heaps list base</span>
+<span class=nf>lodsd</span><span class=w></span>
+</code></pre></div> <h2 id=flags>检测Flags字段<a class=headerlink href=#flags title="Permanent link">&para;</a></h2> <p>那么显然, 检测调试器我们就可以从检测那几个<code>Flags</code>和<code>ForgeFlags</code>的标志位入手. </p> <p>先看<code>Flags</code>字段的检测代码, 用32位代码检测32位windows环境, 且<code>subsystem</code>版本在<code>3.10-3.50</code>之间:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span><span class=w> </span><span class=no>GetVersion</span><span class=w></span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>6</span><span class=w></span>
+<span class=nf>cmc</span><span class=w></span>
+<span class=nf>sbb</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=no>ebx</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=mi>34</span><span class=no>h</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=no>ebx</span><span class=err>+</span><span class=mi>0</span><span class=no>ch</span><span class=p>]</span><span class=w> </span><span class=c1>;Flags</span>
 <span class=c1>;neither HEAP_CREATE_ALIGN_16</span>
 <span class=c1>;nor HEAP_SKIP_VALIDATION_CHECKS</span>
-<span class=nf>and</span> <span class=no>eax</span><span class=p>,</span> <span class=mi>0</span><span class=no>effeffffh</span>
+<span class=nf>and</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=no>effeffffh</span><span class=w></span>
 <span class=c1>;HEAP_GROWABLE</span>
 <span class=c1>;+ HEAP_TAIL_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
-<span class=nf>cmp</span> <span class=no>eax</span><span class=p>,</span> <span class=mi>40000062</span><span class=no>h</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>32位代码检测32位windows环境, 且<code>subsystem</code>为<code>3.51</code>及更高版本:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span> <span class=no>GetVersion</span>
-<span class=nf>cmp</span> <span class=no>al</span><span class=p>,</span> <span class=mi>6</span>
-<span class=nf>cmc</span>
-<span class=nf>sbb</span> <span class=no>ebx</span><span class=p>,</span> <span class=no>ebx</span>
-<span class=nf>and</span> <span class=no>ebx</span><span class=p>,</span> <span class=mi>34</span><span class=no>h</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=no>ebx</span><span class=err>+</span><span class=mi>0</span><span class=no>ch</span><span class=p>]</span> <span class=c1>;Flags</span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=mi>40000062</span><span class=no>h</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>32位代码检测32位windows环境, 且<code>subsystem</code>为<code>3.51</code>及更高版本:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span><span class=w> </span><span class=no>GetVersion</span><span class=w></span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>6</span><span class=w></span>
+<span class=nf>cmc</span><span class=w></span>
+<span class=nf>sbb</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=no>ebx</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=mi>34</span><span class=no>h</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=no>ebx</span><span class=err>+</span><span class=mi>0</span><span class=no>ch</span><span class=p>]</span><span class=w> </span><span class=c1>;Flags</span>
 <span class=c1>;not HEAP_SKIP_VALIDATION_CHECKS</span>
-<span class=nf>bswap</span> <span class=no>eax</span>
-<span class=nf>and</span> <span class=no>al</span><span class=p>,</span> <span class=mi>0</span><span class=no>efh</span>
+<span class=nf>bswap</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=no>efh</span><span class=w></span>
 <span class=c1>;HEAP_GROWABLE</span>
 <span class=c1>;+ HEAP_TAIL_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
 <span class=c1>;reversed by bswap</span>
-<span class=nf>cmp</span> <span class=no>eax</span><span class=p>,</span> <span class=mi>62000040</span><span class=no>h</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>64位代码检测64位windows环境(64位进程不必受<code>subsystem</code>版本困扰):</p> <div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=mi>60</span><span class=no>h</span>
-<span class=nf>pop</span> <span class=no>rsi</span>
-<span class=nl>gs:</span><span class=nf>lodsq</span> <span class=c1>;Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>ebx</span><span class=p>,</span> <span class=p>[</span><span class=no>rax</span><span class=err>+</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-<span class=nf>call</span> <span class=no>GetVersion</span>
-<span class=nf>cmp</span> <span class=no>al</span><span class=p>,</span> <span class=mi>6</span>
-<span class=nf>sbb</span> <span class=no>rax</span><span class=p>,</span> <span class=no>rax</span>
-<span class=nf>and</span> <span class=no>al</span><span class=p>,</span> <span class=mi>0</span><span class=no>a4h</span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=mi>62000040</span><span class=no>h</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>64位代码检测64位windows环境(64位进程不必受<code>subsystem</code>版本困扰):</p> <div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=mi>60</span><span class=no>h</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>rsi</span><span class=w></span>
+<span class=nl>gs:</span><span class=nf>lodsq</span><span class=w> </span><span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>rax</span><span class=err>+</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+<span class=nf>call</span><span class=w> </span><span class=no>GetVersion</span><span class=w></span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>6</span><span class=w></span>
+<span class=nf>sbb</span><span class=w> </span><span class=no>rax</span><span class=p>,</span><span class=w> </span><span class=no>rax</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=no>a4h</span><span class=w></span>
 <span class=c1>;HEAP_GROWABLE</span>
 <span class=c1>;+ HEAP_TAIL_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
-<span class=nf>cmp</span> <span class=no>d</span> <span class=p>[</span><span class=no>rbx</span><span class=err>+</span><span class=no>rax</span><span class=err>+</span><span class=mi>70</span><span class=no>h</span><span class=p>],</span> <span class=mi>40000062</span><span class=no>h</span> <span class=c1>;Flags</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>用32位代码检测64位windows环境:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=mi>30</span><span class=no>h</span>
-<span class=nf>pop</span> <span class=no>eax</span>
-<span class=nf>mov</span> <span class=no>ebx</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=no>eax</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>d</span><span class=w> </span><span class=p>[</span><span class=no>rbx</span><span class=err>+</span><span class=no>rax</span><span class=err>+</span><span class=mi>70</span><span class=no>h</span><span class=p>],</span><span class=w> </span><span class=mi>40000062</span><span class=no>h</span><span class=w> </span><span class=c1>;Flags</span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>用32位代码检测64位windows环境:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=mi>30</span><span class=no>h</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=no>eax</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
 <span class=c1>;64-bit Process Environment Block</span>
 <span class=c1>;follows 32-bit Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>ah</span><span class=p>,</span> <span class=mi>10</span><span class=no>h</span>
-<span class=nf>mov</span> <span class=no>ebx</span><span class=p>,</span> <span class=p>[</span><span class=no>ebx</span><span class=err>+</span><span class=no>eax</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-<span class=nf>call</span> <span class=no>GetVersion</span>
-<span class=nf>cmp</span> <span class=no>al</span><span class=p>,</span> <span class=mi>6</span>
-<span class=nf>sbb</span> <span class=no>eax</span><span class=p>,</span> <span class=no>eax</span>
-<span class=nf>and</span> <span class=no>al</span><span class=p>,</span> <span class=mi>0</span><span class=no>a4h</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>ah</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=no>h</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>ebx</span><span class=err>+</span><span class=no>eax</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+<span class=nf>call</span><span class=w> </span><span class=no>GetVersion</span><span class=w></span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>6</span><span class=w></span>
+<span class=nf>sbb</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=no>a4h</span><span class=w></span>
 <span class=c1>;Flags</span>
 <span class=c1>;HEAP_GROWABLE</span>
 <span class=c1>;+ HEAP_TAIL_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
-<span class=nf>cmp</span> <span class=p>[</span><span class=no>ebx</span><span class=err>+</span><span class=no>eax</span><span class=err>+</span><span class=mi>70</span><span class=no>h</span><span class=p>],</span> <span class=mi>40000062</span><span class=no>h</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>如果是直接通过<code>KUSER_SHARED_DATA</code>结构的<code>NtMajorVersion</code>字段(位于2G用户空间的<code>0x7ffe026c</code>偏移处)获取该值(在所有32位/64位版本的Windows都可以获取该值), 可以进一步混淆<code>kernel32</code>的<code>GetVersion()</code>函数调用操作.</p> <h2 id=forgeflags>检测ForgeFlags字段<a class=headerlink href=#forgeflags title="Permanent link">&para;</a></h2> <p>当然另一个方法就是检测<code>ForgeFlags</code>字段, 以下是32位代码检测32位Windows环境, <code>subsystem</code>版本在<code>3.10-3.50</code>之间:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span> <span class=no>GetVersion</span>
-<span class=nf>cmp</span> <span class=no>al</span><span class=p>,</span> <span class=mi>6</span>
-<span class=nf>cmc</span>
-<span class=nf>sbb</span> <span class=no>ebx</span><span class=p>,</span> <span class=no>ebx</span>
-<span class=nf>and</span> <span class=no>ebx</span><span class=p>,</span> <span class=mi>34</span><span class=no>h</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=no>ebx</span><span class=err>+</span><span class=mi>10</span><span class=no>h</span><span class=p>]</span> <span class=c1>;ForceFlags</span>
+<span class=nf>cmp</span><span class=w> </span><span class=p>[</span><span class=no>ebx</span><span class=err>+</span><span class=no>eax</span><span class=err>+</span><span class=mi>70</span><span class=no>h</span><span class=p>],</span><span class=w> </span><span class=mi>40000062</span><span class=no>h</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>如果是直接通过<code>KUSER_SHARED_DATA</code>结构的<code>NtMajorVersion</code>字段(位于2G用户空间的<code>0x7ffe026c</code>偏移处)获取该值(在所有32位/64位版本的Windows都可以获取该值), 可以进一步混淆<code>kernel32</code>的<code>GetVersion()</code>函数调用操作.</p> <h2 id=forgeflags>检测ForgeFlags字段<a class=headerlink href=#forgeflags title="Permanent link">&para;</a></h2> <p>当然另一个方法就是检测<code>ForgeFlags</code>字段, 以下是32位代码检测32位Windows环境, <code>subsystem</code>版本在<code>3.10-3.50</code>之间:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span><span class=w> </span><span class=no>GetVersion</span><span class=w></span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>6</span><span class=w></span>
+<span class=nf>cmc</span><span class=w></span>
+<span class=nf>sbb</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=no>ebx</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=mi>34</span><span class=no>h</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=no>ebx</span><span class=err>+</span><span class=mi>10</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;ForceFlags</span>
 <span class=c1>;not HEAP_CREATE_ALIGN_16</span>
-<span class=nf>btr</span> <span class=no>eax</span><span class=p>,</span> <span class=mi>10</span><span class=no>h</span>
+<span class=nf>btr</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=no>h</span><span class=w></span>
 <span class=c1>;HEAP_TAIL_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
-<span class=nf>cmp</span> <span class=no>eax</span><span class=p>,</span> <span class=mi>40000060</span><span class=no>h</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>32位代码检测32位windows环境, 且<code>subsystem</code>为<code>3.51</code>及更高版本:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span> <span class=no>GetVersion</span>
-<span class=nf>cmp</span> <span class=no>al</span><span class=p>,</span> <span class=mi>6</span>
-<span class=nf>cmc</span>
-<span class=nf>sbb</span> <span class=no>ebx</span><span class=p>,</span> <span class=no>ebx</span>
-<span class=nf>and</span> <span class=no>ebx</span><span class=p>,</span> <span class=mi>34</span><span class=no>h</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=mi>40000060</span><span class=no>h</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>32位代码检测32位windows环境, 且<code>subsystem</code>为<code>3.51</code>及更高版本:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span><span class=w> </span><span class=no>GetVersion</span><span class=w></span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>6</span><span class=w></span>
+<span class=nf>cmc</span><span class=w></span>
+<span class=nf>sbb</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=no>ebx</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=mi>34</span><span class=no>h</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=mi>18</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
 <span class=c1>;ForceFlags</span>
 <span class=c1>;HEAP_TAIL_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
-<span class=nf>cmp</span> <span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=no>ebx</span><span class=err>+</span><span class=mi>10</span><span class=no>h</span><span class=p>],</span> <span class=mi>40000060</span><span class=no>h</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>64位代码检测64位windows环境(64位进程不必受<code>subsystem</code>版本困扰):</p> <p><div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=mi>60</span><span class=no>h</span>
-<span class=nf>pop</span> <span class=no>rsi</span>
-<span class=nl>gs:</span><span class=nf>lodsq</span> <span class=c1>;Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>ebx</span><span class=p>,</span> <span class=p>[</span><span class=no>rax</span><span class=err>+</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-<span class=nf>call</span> <span class=no>GetVersion</span>
-<span class=nf>cmp</span> <span class=no>al</span><span class=p>,</span> <span class=mi>6</span>
-<span class=nf>sbb</span> <span class=no>rax</span><span class=p>,</span> <span class=no>rax</span>
-<span class=nf>and</span> <span class=no>al</span><span class=p>,</span> <span class=mi>0</span><span class=no>a4h</span>
+<span class=nf>cmp</span><span class=w> </span><span class=p>[</span><span class=no>eax</span><span class=err>+</span><span class=no>ebx</span><span class=err>+</span><span class=mi>10</span><span class=no>h</span><span class=p>],</span><span class=w> </span><span class=mi>40000060</span><span class=no>h</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>64位代码检测64位windows环境(64位进程不必受<code>subsystem</code>版本困扰):</p> <p><div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=mi>60</span><span class=no>h</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>rsi</span><span class=w></span>
+<span class=nl>gs:</span><span class=nf>lodsq</span><span class=w> </span><span class=c1>;Process Environment Block</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>rax</span><span class=err>+</span><span class=mi>30</span><span class=no>h</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+<span class=nf>call</span><span class=w> </span><span class=no>GetVersion</span><span class=w></span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>6</span><span class=w></span>
+<span class=nf>sbb</span><span class=w> </span><span class=no>rax</span><span class=p>,</span><span class=w> </span><span class=no>rax</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=no>a4h</span><span class=w></span>
 <span class=c1>;ForceFlags</span>
 <span class=c1>;HEAP_TAIL_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
-<span class=nf>cmp</span> <span class=no>d</span> <span class=p>[</span><span class=no>rbx</span><span class=err>+</span><span class=no>rax</span><span class=err>+</span><span class=mi>74</span><span class=no>h</span><span class=p>],</span> <span class=mi>40000060</span><span class=no>h</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> 用32位代码检测64位windows环境:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span> <span class=no>GetVersion</span>
-<span class=nf>cmp</span> <span class=no>al</span><span class=p>,</span> <span class=mi>6</span>
-<span class=nf>push</span> <span class=mi>30</span><span class=no>h</span>
-<span class=nf>pop</span> <span class=no>eax</span>
-<span class=nf>mov</span> <span class=no>ebx</span><span class=p>,</span> <span class=no>fs</span><span class=p>:[</span><span class=no>eax</span><span class=p>]</span> <span class=c1>;Process Environment Block</span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>d</span><span class=w> </span><span class=p>[</span><span class=no>rbx</span><span class=err>+</span><span class=no>rax</span><span class=err>+</span><span class=mi>74</span><span class=no>h</span><span class=p>],</span><span class=w> </span><span class=mi>40000060</span><span class=no>h</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> 用32位代码检测64位windows环境:</p> <div class=highlight><pre><span></span><code><span class=nf>call</span><span class=w> </span><span class=no>GetVersion</span><span class=w></span>
+<span class=nf>cmp</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>6</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>30</span><span class=no>h</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=no>fs</span><span class=p>:[</span><span class=no>eax</span><span class=p>]</span><span class=w> </span><span class=c1>;Process Environment Block</span>
 <span class=c1>;64-bit Process Environment Block</span>
 <span class=c1>;follows 32-bit Process Environment Block</span>
-<span class=nf>mov</span> <span class=no>ah</span><span class=p>,</span> <span class=mi>10</span><span class=no>h</span>
-<span class=nf>mov</span> <span class=no>ebx</span><span class=p>,</span> <span class=p>[</span><span class=no>ebx</span><span class=err>+</span><span class=no>eax</span><span class=p>]</span> <span class=c1>;get process heap base</span>
-<span class=nf>sbb</span> <span class=no>eax</span><span class=p>,</span> <span class=no>eax</span>
-<span class=nf>and</span> <span class=no>al</span><span class=p>,</span> <span class=mi>0</span><span class=no>a4h</span>
+<span class=nf>mov</span><span class=w> </span><span class=no>ah</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=no>h</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>ebx</span><span class=p>,</span><span class=w> </span><span class=p>[</span><span class=no>ebx</span><span class=err>+</span><span class=no>eax</span><span class=p>]</span><span class=w> </span><span class=c1>;get process heap base</span>
+<span class=nf>sbb</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>and</span><span class=w> </span><span class=no>al</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=no>a4h</span><span class=w></span>
 <span class=c1>;ForceFlags</span>
 <span class=c1>;HEAP_TAIL_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_FREE_CHECKING_ENABLED</span>
 <span class=c1>;+ HEAP_VALIDATE_PARAMETERS_ENABLED</span>
-<span class=nf>cmp</span> <span class=p>[</span><span class=no>ebx</span><span class=err>+</span><span class=no>eax</span><span class=err>+</span><span class=mi>74</span><span class=no>h</span><span class=p>],</span> <span class=mi>40000060</span><span class=no>h</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
+<span class=nf>cmp</span><span class=w> </span><span class=p>[</span><span class=no>ebx</span><span class=err>+</span><span class=no>eax</span><span class=err>+</span><span class=mi>74</span><span class=no>h</span><span class=p>],</span><span class=w> </span><span class=mi>40000060</span><span class=no>h</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
 </code></pre></div> <h2 id=_1>参考链接<a class=headerlink href=#_1 title="Permanent link">&para;</a></h2> <ul> <li><a href=http://anti-reversing.com/Downloads/Anti-Reversing/The_Ultimate_Anti-Reversing_Reference.pdf>The "Ultimate" Anti-Debugging Reference</a></li> </ul> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../ntglobalflag/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 上一页 </span> NtGlobalFlag </div> </div> </a> <a href=../the-heap/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 下一页 </span> The Heap </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2021 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script> <script>
         app = initialize({
           base: "../../../..",

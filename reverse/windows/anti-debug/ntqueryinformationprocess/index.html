@@ -5,78 +5,78 @@
 <span class=w>  </span><span class=n>_In_</span><span class=w>      </span><span class=n>ULONG</span><span class=w>            </span><span class=n>ProcessInformationLength</span><span class=p>,</span><span class=w></span>
 <span class=w>  </span><span class=n>_Out_opt_</span><span class=w> </span><span class=n>PULONG</span><span class=w>           </span><span class=n>ReturnLength</span><span class=w></span>
 <span class=p>);</span><span class=w></span>
-</code></pre></div> <h2 id=processdebugport>ProcessDebugPort<a class=headerlink href=#processdebugport title="Permanent link">&para;</a></h2> <p>未公开的<code>ntdll</code>的<code>NtQueryInformationProcess()</code>函数接受一个信息类的参数用于查询. <code>ProcessDebugPort(7)</code>是其中的一个信息类. <code>kernel32</code>的<code>CheckRemoteDebuggerPresent()</code>函数内部通过调用<code>NtQueryInformationProcess()</code>来检测调试, 而<code>NtQueryInformationProcess</code>内部则是查询<code>EPROCESS</code>结构体的<code>DebugPort</code>字段, 当进程正在被调试时, 返回值为<code>0xffffffff</code>. </p> <p>可以用以下32位代码在32位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=no>eax</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>esp</span>
-<span class=nf>push</span> <span class=mi>0</span>
-<span class=nf>push</span> <span class=mi>4</span> <span class=c1>;ProcessInformationLength</span>
-<span class=nf>push</span> <span class=no>eax</span>
-<span class=nf>push</span> <span class=mi>7</span> <span class=c1>;ProcessDebugPort</span>
-<span class=nf>push</span> <span class=mi>-1</span> <span class=c1>;GetCurrentProcess()</span>
-<span class=nf>call</span> <span class=no>NtQueryInformationProcess</span>
-<span class=nf>pop</span> <span class=no>eax</span>
-<span class=nf>inc</span> <span class=no>eax</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>用以下64位代码在64位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>xor</span> <span class=no>ebp</span><span class=p>,</span> <span class=no>ebp</span>
-<span class=nf>enter</span> <span class=mi>20</span><span class=no>h</span><span class=p>,</span> <span class=mi>0</span>
-<span class=nf>push</span> <span class=mi>8</span> <span class=c1>;ProcessInformationLength</span>
-<span class=nf>pop</span> <span class=no>r9</span>
-<span class=nf>push</span> <span class=no>rbp</span>
-<span class=nf>pop</span> <span class=no>r8</span>
-<span class=nf>push</span> <span class=mi>7</span> <span class=c1>;ProcessDebugPort</span>
-<span class=nf>pop</span> <span class=no>rdx</span>
-<span class=nf>or</span> <span class=no>rcx</span><span class=p>,</span> <span class=mi>-1</span> <span class=c1>;GetCurrentProcess()</span>
-<span class=nf>call</span> <span class=no>NtQueryInformationProcess</span>
-<span class=nf>leave</span>
-<span class=nf>test</span> <span class=no>ebp</span><span class=p>,</span> <span class=no>ebp</span>
-<span class=nf>jne</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>由于信息传自内核, 所以在用户模式下的代码没有轻松的方法阻止该函数检测调试器. </p> <h2 id=processdebugobjecthandle>ProcessDebugObjectHandle<a class=headerlink href=#processdebugobjecthandle title="Permanent link">&para;</a></h2> <p>Windows XP引入了<code>debug对象</code>, 当一个调试会话启动, 会同时创建一个<code>debug</code>对象以及与之关联的句柄. 我们可以使用<code>ProcessDebugObjectHandle (0x1e)</code>类来查询这个句柄的值</p> <p>可以用以下32位代码在32位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=mi>0</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>esp</span>
-<span class=nf>push</span> <span class=mi>0</span>
-<span class=nf>push</span> <span class=mi>4</span> <span class=c1>;ProcessInformationLength</span>
-<span class=nf>push</span> <span class=no>eax</span>
-<span class=nf>push</span> <span class=mi>1</span><span class=no>eh</span> <span class=c1>;ProcessDebugObjectHandle</span>
-<span class=nf>push</span> <span class=mi>-1</span> <span class=c1>;GetCurrentProcess()</span>
-<span class=nf>call</span> <span class=no>NtQueryInformationProcess</span>
-<span class=nf>pop</span> <span class=no>eax</span>
-<span class=nf>test</span> <span class=no>eax</span><span class=p>,</span> <span class=no>eax</span>
-<span class=nf>jne</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>用以下64位代码在64位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>xor</span> <span class=no>ebp</span><span class=p>,</span> <span class=no>ebp</span>
-<span class=nf>enter</span> <span class=mi>20</span><span class=no>h</span><span class=p>,</span> <span class=mi>0</span>
-<span class=nf>push</span> <span class=mi>8</span> <span class=c1>;ProcessInformationLength</span>
-<span class=nf>pop</span> <span class=no>r9</span>
-<span class=nf>push</span> <span class=no>rbp</span>
-<span class=nf>pop</span> <span class=no>r8</span>
-<span class=nf>push</span> <span class=mi>1</span><span class=no>eh</span> <span class=c1>;ProcessDebugObjectHandle</span>
-<span class=nf>pop</span> <span class=no>rdx</span>
-<span class=nf>or</span> <span class=no>rcx</span><span class=p>,</span> <span class=mi>-1</span> <span class=c1>;GetCurrentProcess()</span>
-<span class=nf>call</span> <span class=no>NtQueryInformationProcess</span>
-<span class=nf>leave</span>
-<span class=nf>test</span> <span class=no>ebp</span><span class=p>,</span> <span class=no>ebp</span>
-<span class=nf>jne</span> <span class=no>being_debugged</span>
-</code></pre></div> <h2 id=processdebugflags>ProcessDebugFlags<a class=headerlink href=#processdebugflags title="Permanent link">&para;</a></h2> <p><code>ProcessDebugFlags (0x1f)</code>类返回<code>EPROCESS</code>结构体的<code>NoDebugInherit</code>的相反数. 意思是, 当调试器存在时, 返回值为<code>0</code>, 不存在时则返回<code>1</code>. </p> <p>可以用以下32位代码在32位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span> <span class=no>eax</span>
-<span class=nf>mov</span> <span class=no>eax</span><span class=p>,</span> <span class=no>esp</span>
-<span class=nf>push</span> <span class=mi>0</span>
-<span class=nf>push</span> <span class=mi>4</span> <span class=c1>;ProcessInformationLength</span>
-<span class=nf>push</span> <span class=no>eax</span>
-<span class=nf>push</span> <span class=mi>1</span><span class=no>fh</span> <span class=c1>;ProcessDebugFlags</span>
-<span class=nf>push</span> <span class=mi>-1</span> <span class=c1>;GetCurrentProcess()</span>
-<span class=nf>call</span> <span class=no>NtQueryInformationProcess</span>
-<span class=nf>pop</span> <span class=no>eax</span>
-<span class=nf>test</span> <span class=no>eax</span><span class=p>,</span> <span class=no>eax</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
-</code></pre></div> <p>用以下64位代码在64位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>xor</span> <span class=no>ebp</span><span class=p>,</span> <span class=no>ebp</span>
-<span class=nf>enter</span> <span class=mi>20</span><span class=no>h</span><span class=p>,</span> <span class=mi>0</span>
-<span class=nf>push</span> <span class=mi>4</span> <span class=c1>;ProcessInformationLength</span>
-<span class=nf>pop</span> <span class=no>r9</span>
-<span class=nf>push</span> <span class=no>rbp</span>
-<span class=nf>pop</span> <span class=no>r8</span>
-<span class=nf>push</span> <span class=mi>1</span><span class=no>fh</span> <span class=c1>;ProcessDebugFlags</span>
-<span class=nf>pop</span> <span class=no>rdx</span>
-<span class=nf>or</span> <span class=no>rcx</span><span class=p>,</span> <span class=mi>-1</span> <span class=c1>;GetCurrentProcess()</span>
-<span class=nf>call</span> <span class=no>NtQueryInformationProcess</span>
-<span class=nf>leave</span>
-<span class=nf>test</span> <span class=no>ebp</span><span class=p>,</span> <span class=no>ebp</span>
-<span class=nf>je</span> <span class=no>being_debugged</span>
+</code></pre></div> <h2 id=processdebugport>ProcessDebugPort<a class=headerlink href=#processdebugport title="Permanent link">&para;</a></h2> <p>未公开的<code>ntdll</code>的<code>NtQueryInformationProcess()</code>函数接受一个信息类的参数用于查询. <code>ProcessDebugPort(7)</code>是其中的一个信息类. <code>kernel32</code>的<code>CheckRemoteDebuggerPresent()</code>函数内部通过调用<code>NtQueryInformationProcess()</code>来检测调试, 而<code>NtQueryInformationProcess</code>内部则是查询<code>EPROCESS</code>结构体的<code>DebugPort</code>字段, 当进程正在被调试时, 返回值为<code>0xffffffff</code>. </p> <p>可以用以下32位代码在32位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>esp</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>0</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>4</span><span class=w> </span><span class=c1>;ProcessInformationLength</span>
+<span class=nf>push</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>7</span><span class=w> </span><span class=c1>;ProcessDebugPort</span>
+<span class=nf>push</span><span class=w> </span><span class=mi>-1</span><span class=w> </span><span class=c1>;GetCurrentProcess()</span>
+<span class=nf>call</span><span class=w> </span><span class=no>NtQueryInformationProcess</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>inc</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>用以下64位代码在64位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>xor</span><span class=w> </span><span class=no>ebp</span><span class=p>,</span><span class=w> </span><span class=no>ebp</span><span class=w></span>
+<span class=nf>enter</span><span class=w> </span><span class=mi>20</span><span class=no>h</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>8</span><span class=w> </span><span class=c1>;ProcessInformationLength</span>
+<span class=nf>pop</span><span class=w> </span><span class=no>r9</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=no>rbp</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>r8</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>7</span><span class=w> </span><span class=c1>;ProcessDebugPort</span>
+<span class=nf>pop</span><span class=w> </span><span class=no>rdx</span><span class=w></span>
+<span class=nf>or</span><span class=w> </span><span class=no>rcx</span><span class=p>,</span><span class=w> </span><span class=mi>-1</span><span class=w> </span><span class=c1>;GetCurrentProcess()</span>
+<span class=nf>call</span><span class=w> </span><span class=no>NtQueryInformationProcess</span><span class=w></span>
+<span class=nf>leave</span><span class=w></span>
+<span class=nf>test</span><span class=w> </span><span class=no>ebp</span><span class=p>,</span><span class=w> </span><span class=no>ebp</span><span class=w></span>
+<span class=nf>jne</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>由于信息传自内核, 所以在用户模式下的代码没有轻松的方法阻止该函数检测调试器. </p> <h2 id=processdebugobjecthandle>ProcessDebugObjectHandle<a class=headerlink href=#processdebugobjecthandle title="Permanent link">&para;</a></h2> <p>Windows XP引入了<code>debug对象</code>, 当一个调试会话启动, 会同时创建一个<code>debug</code>对象以及与之关联的句柄. 我们可以使用<code>ProcessDebugObjectHandle (0x1e)</code>类来查询这个句柄的值</p> <p>可以用以下32位代码在32位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=mi>0</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>esp</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>0</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>4</span><span class=w> </span><span class=c1>;ProcessInformationLength</span>
+<span class=nf>push</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>1</span><span class=no>eh</span><span class=w> </span><span class=c1>;ProcessDebugObjectHandle</span>
+<span class=nf>push</span><span class=w> </span><span class=mi>-1</span><span class=w> </span><span class=c1>;GetCurrentProcess()</span>
+<span class=nf>call</span><span class=w> </span><span class=no>NtQueryInformationProcess</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>test</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>jne</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>用以下64位代码在64位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>xor</span><span class=w> </span><span class=no>ebp</span><span class=p>,</span><span class=w> </span><span class=no>ebp</span><span class=w></span>
+<span class=nf>enter</span><span class=w> </span><span class=mi>20</span><span class=no>h</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>8</span><span class=w> </span><span class=c1>;ProcessInformationLength</span>
+<span class=nf>pop</span><span class=w> </span><span class=no>r9</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=no>rbp</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>r8</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>1</span><span class=no>eh</span><span class=w> </span><span class=c1>;ProcessDebugObjectHandle</span>
+<span class=nf>pop</span><span class=w> </span><span class=no>rdx</span><span class=w></span>
+<span class=nf>or</span><span class=w> </span><span class=no>rcx</span><span class=p>,</span><span class=w> </span><span class=mi>-1</span><span class=w> </span><span class=c1>;GetCurrentProcess()</span>
+<span class=nf>call</span><span class=w> </span><span class=no>NtQueryInformationProcess</span><span class=w></span>
+<span class=nf>leave</span><span class=w></span>
+<span class=nf>test</span><span class=w> </span><span class=no>ebp</span><span class=p>,</span><span class=w> </span><span class=no>ebp</span><span class=w></span>
+<span class=nf>jne</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <h2 id=processdebugflags>ProcessDebugFlags<a class=headerlink href=#processdebugflags title="Permanent link">&para;</a></h2> <p><code>ProcessDebugFlags (0x1f)</code>类返回<code>EPROCESS</code>结构体的<code>NoDebugInherit</code>的相反数. 意思是, 当调试器存在时, 返回值为<code>0</code>, 不存在时则返回<code>1</code>. </p> <p>可以用以下32位代码在32位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>push</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>mov</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>esp</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>0</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>4</span><span class=w> </span><span class=c1>;ProcessInformationLength</span>
+<span class=nf>push</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>1</span><span class=no>fh</span><span class=w> </span><span class=c1>;ProcessDebugFlags</span>
+<span class=nf>push</span><span class=w> </span><span class=mi>-1</span><span class=w> </span><span class=c1>;GetCurrentProcess()</span>
+<span class=nf>call</span><span class=w> </span><span class=no>NtQueryInformationProcess</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>test</span><span class=w> </span><span class=no>eax</span><span class=p>,</span><span class=w> </span><span class=no>eax</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
+</code></pre></div> <p>用以下64位代码在64位环境进行检测:</p> <div class=highlight><pre><span></span><code><span class=nf>xor</span><span class=w> </span><span class=no>ebp</span><span class=p>,</span><span class=w> </span><span class=no>ebp</span><span class=w></span>
+<span class=nf>enter</span><span class=w> </span><span class=mi>20</span><span class=no>h</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>4</span><span class=w> </span><span class=c1>;ProcessInformationLength</span>
+<span class=nf>pop</span><span class=w> </span><span class=no>r9</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=no>rbp</span><span class=w></span>
+<span class=nf>pop</span><span class=w> </span><span class=no>r8</span><span class=w></span>
+<span class=nf>push</span><span class=w> </span><span class=mi>1</span><span class=no>fh</span><span class=w> </span><span class=c1>;ProcessDebugFlags</span>
+<span class=nf>pop</span><span class=w> </span><span class=no>rdx</span><span class=w></span>
+<span class=nf>or</span><span class=w> </span><span class=no>rcx</span><span class=p>,</span><span class=w> </span><span class=mi>-1</span><span class=w> </span><span class=c1>;GetCurrentProcess()</span>
+<span class=nf>call</span><span class=w> </span><span class=no>NtQueryInformationProcess</span><span class=w></span>
+<span class=nf>leave</span><span class=w></span>
+<span class=nf>test</span><span class=w> </span><span class=no>ebp</span><span class=p>,</span><span class=w> </span><span class=no>ebp</span><span class=w></span>
+<span class=nf>je</span><span class=w> </span><span class=no>being_debugged</span><span class=w></span>
 </code></pre></div> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../checkremotedebuggerpresent/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 上一页 </span> CheckRemoteDebuggerPresent </div> </div> </a> <a href=../zwsetinformationthread/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 下一页 </span> ZwSetInformationThread </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2021 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script> <script>
         app = initialize({
           base: "../../../..",
