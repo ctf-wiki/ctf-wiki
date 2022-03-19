@@ -123,7 +123,7 @@ $$
         a = powmod(a, n, N)
         res = gcd(a-1, N)
         if res != 1 and res != N:
-            q = n // res
+            q = N // res
             d = invert(e, (res-1)*(q-1))
             m = powmod(c, d, N)
             print(m)
