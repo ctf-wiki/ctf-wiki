@@ -337,4 +337,4 @@ g 指向字符串数组的开始，所以 g=0x20*10=140
 - 题目名称 Election
 
 !!! note
-    注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/blockchain) 仓库寻找。
+    注：题目附件相关内容可至 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库寻找。
