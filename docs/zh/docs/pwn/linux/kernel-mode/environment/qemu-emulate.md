@@ -98,7 +98,7 @@ qemu-system-x86_64 \
     -nographic \
     -kernel ./bzImage \
     -initrd  ./rootfs.img \
-    -append "root=/dev/ram rw console=ttyS0 oops=panic panic=1 kalsr" \
+    -append "root=/dev/ram rw console=ttyS0 oops=panic panic=1 kaslr" \
     -smp cores=2,threads=1 \
     -cpu kvm64
 ```
@@ -194,7 +194,7 @@ qemu-system-x86_64 \
     -nographic \
     -kernel ./bzImage \
     -initrd  ./rootfs.img \
-    -append "root=/dev/ram rw console=ttyS0 oops=panic panic=1 nokalsr" \
+    -append "root=/dev/ram rw console=ttyS0 oops=panic panic=1 nokaslr" \
     -smp cores=2,threads=1 \
     -cpu kvm64
 ```
