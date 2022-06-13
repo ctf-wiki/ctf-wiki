@@ -102,7 +102,7 @@ contract example2{
 
 ![uninitialized-storage-pointer-setvalue2](figure/uninitialized-storage-pointer-setvalue2.png)
 
-然后我们调用 attack 函数，传入的 _value 值为 2，可以从交易中发现 a 被传入的 _value值覆盖了：
+然后我们调用 attack 函数，传入的 _value 值为 2，这是因为声明的 tmp 数组也使用 slot 0，数组声明的 slot 存储着本身的长度，所以再 push 导致数组长度增加 1，所以 slot 0 位置存储着数值 2 = a(old) + 1，故 a(new) = 2：
 
 ![uninitialized-storage-pointer-attack2](figure/uninitialized-storage-pointer-attack2.png)
 
