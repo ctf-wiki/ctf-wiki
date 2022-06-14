@@ -20,7 +20,7 @@
 ## Blockchain Security Challenges in CTF
 
 !!! note 
-    注：CTF 中区块链的题目并不是很多，所以搜集了绝大多数的题目，包括智能合约与公有链相关题目，并按照年份附上题目链接及其 WP 链接，题目列表不完整会随时更新，同一年中比赛名称不区分顺序，如果有多篇 WP，也不区分顺序。相关题目可到 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库查找。
+    注：CTF 中区块链的题目并不是很多，所以搜集了绝大多数的题目，包括智能合约与公有链相关题目，并按照年份附上题目链接及其 WP 链接，题目列表不完整会随时更新，同一年中比赛名称不区分顺序，如果有多篇 WP，也不区分顺序。相关题目可到 [ctf-challenges/blockchain](https://github.com/ctf-wiki/ctf-challenges/tree/master/blockchain) 仓库查找或在 [ChainFlag](https://chainflag.org/) 靶场在线练习。
 
 ### Ethereum Smart Contract
 
