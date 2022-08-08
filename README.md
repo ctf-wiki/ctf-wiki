@@ -54,7 +54,7 @@ python3 scripts/docs.py build-all
 python3 scripts/docs.py serve
 ```
 
-** A local instance of mkdocs is dynamically updated, for instance when a markdown file is modified, the corresponding page will be modified too.**
+**A local instance of mkdocs is dynamically updated, for instance when a markdown file is modified, the corresponding page will be modified too.**
 
 If you just want to view it statically, try Docker!
 
