@@ -39,7 +39,7 @@ Rar压缩包的文件头为 `0x 52 61 72 21 1A 07 00`。
 | SALT          | 8               | present if (HEAD_FLAGS & 0x400) != 0                                                                                     |
 | EXT_TIME      | variable size   | present if (HEAD_FLAGS & 0x1000) != 0                                                                                    |
 
-每个 RAR 文件的结尾快（Terminator）都是固定的。
+每个 RAR 文件的结尾块（Terminator）都是固定的。
 
 | Field Name | Size (bytes) | Possibilities       |
 | ---------- | ------------ | ------------------- |
