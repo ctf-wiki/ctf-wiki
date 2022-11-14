@@ -110,7 +110,7 @@ SROP(Sigreturn Oriented Programming)于2014年被Vrije Universiteit Amsterdam的
     };
     ```
 
-3. signal handler返回后，内核为执行sigreturn系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的sigreturn的调用号为77，64位的系统调用号为15。
+3. signal handler返回后，内核为执行sigreturn系统调用，为该进程恢复之前保存的上下文，其中包括将所有压入的寄存器，重新pop回对应的寄存器，最后恢复进程的执行。其中，32位的sigreturn的调用号为119(0x77)，64位的系统调用号为15(0xf)。
 
 ## 攻击原理
 
@@ -294,4 +294,5 @@ sh.interactive()
 
 - [Sigreturn Oriented Programming (SROP) Attack攻击原理](http://www.freebuf.com/articles/network/87447.html)
 - [SROP by Angel Boy](https://www.slideshare.net/AngelBoy1/sigreturn-ori)
-- [系统调用](http://www.cs.utexas.edu/~bismith/test/syscalls/syscalls64_orig.html)
+- [系统调用](https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md#x86-32_bit)
+  
