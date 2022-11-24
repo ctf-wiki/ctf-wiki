@@ -57,9 +57,9 @@ canvas）虚拟画布上，而现在一般将这些图片集用于实现动画�
 
 对于需要分离的GIF文件,可以使用`convert`命令将其每一帧分割开来
 
-``` sourceCode shell
-root in ~/Desktop/tmp λ convert cake.gif cake.png
-root in ~/Desktop/tmp λ ls
+```console
+$ convert cake.gif cake.png
+$ ls
 cake-0.png  cake-1.png  cake-2.png  cake-3.png  cake.gif
 ```
 
@@ -69,7 +69,7 @@ cake-0.png  cake-1.png  cake-2.png  cake-3.png  cake.gif
 
 打开gif后，思路很清晰，分离每一帧图片后，将起合并得到完整的二维码即可
 
-``` sourceCode python
+```python
 from  PIL import Image
 
 
