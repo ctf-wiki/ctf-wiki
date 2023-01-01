@@ -52,148 +52,148 @@
         <span class=n>k</span><span class=o>+=</span><span class=mi>1</span>
     <span class=nb>print</span> <span class=n>ub</span><span class=p>,</span><span class=nb>len</span><span class=p>(</span><span class=n>long_to_bytes</span><span class=p>(</span><span class=n>ub</span><span class=p>))</span>
     <span class=k>return</span> <span class=n>ub</span>
-</code></pre></div> <h3 id=prng-predict>PRNG Predict<a class=headerlink href=#prng-predict title="Permanent link">&para;</a></h3> <p>这里我们可以解密 flag 的16字节之后的内容了，但是前16个字节没有 IV 是解密不了的。这时我们可以发现，IV 生成使用的随机数使用了 getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行 PRNG 的 predict，从而直接获取随机数</p> <p>这里使用了一个现成的的 java 进行 PRNG 的 Predict</p> <div class=highlight><pre><span></span><code><span class=kd>public</span><span class=w> </span><span class=kd>class</span> <span class=nc>Main</span><span class=w> </span><span class=p>{</span><span class=w></span>
+</code></pre></div> <h3 id=prng-predict>PRNG Predict<a class=headerlink href=#prng-predict title="Permanent link">&para;</a></h3> <p>这里我们可以解密 flag 的16字节之后的内容了，但是前16个字节没有 IV 是解密不了的。这时我们可以发现，IV 生成使用的随机数使用了 getrandbits，并且我们可以获取到足够多的随机数量，那么我们可以进行 PRNG 的 predict，从而直接获取随机数</p> <p>这里使用了一个现成的的 java 进行 PRNG 的 Predict</p> <div class=highlight><pre><span></span><code><span class=kd>public</span><span class=w> </span><span class=kd>class</span> <span class=nc>Main</span><span class=w> </span><span class=p>{</span>
 
-<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=o>[]</span><span class=w> </span><span class=n>state</span><span class=p>;</span><span class=w></span>
-<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>currentIndex</span><span class=p>;</span><span class=w></span>
-<span class=mi>40</span><span class=n>huo</span><span class=w></span>
-<span class=w>   </span><span class=kd>public</span><span class=w> </span><span class=kd>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>main</span><span class=p>(</span><span class=n>String</span><span class=o>[]</span><span class=w> </span><span class=n>args</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>      </span><span class=n>state</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=kt>int</span><span class=o>[</span><span class=mi>624</span><span class=o>]</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=n>currentIndex</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
+<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=o>[]</span><span class=w> </span><span class=n>state</span><span class=p>;</span>
+<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>currentIndex</span><span class=p>;</span>
+<span class=mi>40</span><span class=n>huo</span>
+<span class=w>   </span><span class=kd>public</span><span class=w> </span><span class=kd>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>main</span><span class=p>(</span><span class=n>String</span><span class=o>[]</span><span class=w> </span><span class=n>args</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>      </span><span class=n>state</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=kt>int</span><span class=o>[</span><span class=mi>624</span><span class=o>]</span><span class=p>;</span>
+<span class=w>      </span><span class=n>currentIndex</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span>
 
-<span class=c1>//    initialize(0);</span><span class=w></span>
+<span class=c1>//    initialize(0);</span>
 
-<span class=c1>//    for (int i = 0; i &lt; 5; i++) {</span><span class=w></span>
-<span class=c1>//       System.out.println(state[i]);</span><span class=w></span>
-<span class=c1>//    }</span><span class=w></span>
+<span class=c1>//    for (int i = 0; i &lt; 5; i++) {</span>
+<span class=c1>//       System.out.println(state[i]);</span>
+<span class=c1>//    }</span>
 
-<span class=w>      </span><span class=c1>// for (int i = 0; i &lt; 5; i++) {</span><span class=w></span>
-<span class=w>      </span><span class=c1>// System.out.println(nextNumber());</span><span class=w></span>
-<span class=w>      </span><span class=c1>// }</span><span class=w></span>
+<span class=w>      </span><span class=c1>// for (int i = 0; i &lt; 5; i++) {</span>
+<span class=w>      </span><span class=c1>// System.out.println(nextNumber());</span>
+<span class=w>      </span><span class=c1>// }</span>
 
-<span class=w>      </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>args</span><span class=p>.</span><span class=na>length</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=mi>624</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>         </span><span class=n>System</span><span class=p>.</span><span class=na>err</span><span class=p>.</span><span class=na>println</span><span class=p>(</span><span class=s>&quot;must be 624 args&quot;</span><span class=p>);</span><span class=w></span>
-<span class=w>         </span><span class=n>System</span><span class=p>.</span><span class=na>exit</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span><span class=w></span>
-<span class=w>      </span><span class=p>}</span><span class=w></span>
-<span class=w>      </span><span class=kt>int</span><span class=o>[]</span><span class=w> </span><span class=n>arr</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=kt>int</span><span class=o>[</span><span class=mi>624</span><span class=o>]</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=n>args</span><span class=p>.</span><span class=na>length</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>         </span><span class=n>arr</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>Integer</span><span class=p>.</span><span class=na>parseInt</span><span class=p>(</span><span class=n>args</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=p>);</span><span class=w></span>
-<span class=w>      </span><span class=p>}</span><span class=w></span>
+<span class=w>      </span><span class=k>if</span><span class=w> </span><span class=p>(</span><span class=n>args</span><span class=p>.</span><span class=na>length</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=mi>624</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>         </span><span class=n>System</span><span class=p>.</span><span class=na>err</span><span class=p>.</span><span class=na>println</span><span class=p>(</span><span class=s>&quot;must be 624 args&quot;</span><span class=p>);</span>
+<span class=w>         </span><span class=n>System</span><span class=p>.</span><span class=na>exit</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span>
+<span class=w>      </span><span class=p>}</span>
+<span class=w>      </span><span class=kt>int</span><span class=o>[]</span><span class=w> </span><span class=n>arr</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>new</span><span class=w> </span><span class=kt>int</span><span class=o>[</span><span class=mi>624</span><span class=o>]</span><span class=p>;</span>
+<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=n>args</span><span class=p>.</span><span class=na>length</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>         </span><span class=n>arr</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>Integer</span><span class=p>.</span><span class=na>parseInt</span><span class=p>(</span><span class=n>args</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=p>);</span>
+<span class=w>      </span><span class=p>}</span>
 
 
-<span class=w>      </span><span class=n>rev</span><span class=p>(</span><span class=n>arr</span><span class=p>);</span><span class=w></span>
+<span class=w>      </span><span class=n>rev</span><span class=p>(</span><span class=n>arr</span><span class=p>);</span>
 
-<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>6240</span><span class=n>huo4</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>         </span><span class=n>System</span><span class=p>.</span><span class=na>out</span><span class=p>.</span><span class=na>println</span><span class=p>(</span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=p>);</span><span class=w></span>
-<span class=w>      </span><span class=p>}</span><span class=w></span>
+<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>6240</span><span class=n>huo4</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>         </span><span class=n>System</span><span class=p>.</span><span class=na>out</span><span class=p>.</span><span class=na>println</span><span class=p>(</span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=p>);</span>
+<span class=w>      </span><span class=p>}</span>
 
-<span class=c1>//    System.out.println(&quot;currentIndex &quot; + currentIndex);</span><span class=w></span>
-<span class=c1>//    System.out.println(&quot;state[currentIndex] &quot; + state[currentIndex]);</span><span class=w></span>
-<span class=c1>//    System.out.println(&quot;next &quot; + nextNumber());</span><span class=w></span>
+<span class=c1>//    System.out.println(&quot;currentIndex &quot; + currentIndex);</span>
+<span class=c1>//    System.out.println(&quot;state[currentIndex] &quot; + state[currentIndex]);</span>
+<span class=c1>//    System.out.println(&quot;next &quot; + nextNumber());</span>
 
-<span class=w>      </span><span class=c1>// want -2065863258</span><span class=w></span>
-<span class=w>   </span><span class=p>}</span><span class=w></span>
+<span class=w>      </span><span class=c1>// want -2065863258</span>
+<span class=w>   </span><span class=p>}</span>
 
-<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>nextState</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>      </span><span class=c1>// Iterate through the state</span><span class=w></span>
-<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>624</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>         </span><span class=c1>// y is the first bit of the current number,</span><span class=w></span>
-<span class=w>         </span><span class=c1>// and the last 31 bits of the next number</span><span class=w></span>
-<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>y</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0x80000000</span><span class=p>)</span><span class=w></span>
-<span class=w>               </span><span class=o>+</span><span class=w> </span><span class=p>(</span><span class=n>state</span><span class=o>[</span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=mi>1</span><span class=p>)</span><span class=w> </span><span class=o>%</span><span class=w> </span><span class=mi>624</span><span class=o>]</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0x7fffffff</span><span class=p>);</span><span class=w></span>
-<span class=w>         </span><span class=c1>// first bitshift y by 1 to the right</span><span class=w></span>
-<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>next</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>y</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=mi>1</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=c1>// xor it with the 397th next number</span><span class=w></span>
-<span class=w>         </span><span class=n>next</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=n>state</span><span class=o>[</span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=mi>397</span><span class=p>)</span><span class=w> </span><span class=o>%</span><span class=w> </span><span class=mi>624</span><span class=o>]</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=c1>// if y is odd, xor with magic number</span><span class=w></span>
-<span class=w>         </span><span class=k>if</span><span class=w> </span><span class=p>((</span><span class=n>y</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mi>1L</span><span class=p>)</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=mi>1L</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>            </span><span class=n>next</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=mh>0x9908b0df</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=p>}</span><span class=w></span>
-<span class=w>         </span><span class=c1>// now we have the result</span><span class=w></span>
-<span class=w>         </span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>next</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=p>}</span><span class=w></span>
-<span class=w>   </span><span class=p>}</span><span class=w></span>
+<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>nextState</span><span class=p>()</span><span class=w> </span><span class=p>{</span>
+<span class=w>      </span><span class=c1>// Iterate through the state</span>
+<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>624</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>         </span><span class=c1>// y is the first bit of the current number,</span>
+<span class=w>         </span><span class=c1>// and the last 31 bits of the next number</span>
+<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>y</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0x80000000</span><span class=p>)</span>
+<span class=w>               </span><span class=o>+</span><span class=w> </span><span class=p>(</span><span class=n>state</span><span class=o>[</span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=mi>1</span><span class=p>)</span><span class=w> </span><span class=o>%</span><span class=w> </span><span class=mi>624</span><span class=o>]</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0x7fffffff</span><span class=p>);</span>
+<span class=w>         </span><span class=c1>// first bitshift y by 1 to the right</span>
+<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>next</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>y</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=mi>1</span><span class=p>;</span>
+<span class=w>         </span><span class=c1>// xor it with the 397th next number</span>
+<span class=w>         </span><span class=n>next</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=n>state</span><span class=o>[</span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=mi>397</span><span class=p>)</span><span class=w> </span><span class=o>%</span><span class=w> </span><span class=mi>624</span><span class=o>]</span><span class=p>;</span>
+<span class=w>         </span><span class=c1>// if y is odd, xor with magic number</span>
+<span class=w>         </span><span class=k>if</span><span class=w> </span><span class=p>((</span><span class=n>y</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mi>1L</span><span class=p>)</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=mi>1L</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>            </span><span class=n>next</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=mh>0x9908b0df</span><span class=p>;</span>
+<span class=w>         </span><span class=p>}</span>
+<span class=w>         </span><span class=c1>// now we have the result</span>
+<span class=w>         </span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>next</span><span class=p>;</span>
+<span class=w>      </span><span class=p>}</span>
+<span class=w>   </span><span class=p>}</span>
 
-<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>nextNumber</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>      </span><span class=n>currentIndex</span><span class=o>++</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>tmp</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>state</span><span class=o>[</span><span class=n>currentIndex</span><span class=o>]</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=n>tmp</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>tmp</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=mi>11</span><span class=p>);</span><span class=w></span>
-<span class=w>      </span><span class=n>tmp</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>tmp</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=mi>7</span><span class=p>)</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0x9d2c5680</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=n>tmp</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>tmp</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=mi>15</span><span class=p>)</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0xefc60000</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=n>tmp</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>tmp</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=mi>18</span><span class=p>);</span><span class=w></span>
-<span class=w>      </span><span class=k>return</span><span class=w> </span><span class=n>tmp</span><span class=p>;</span><span class=w></span>
-<span class=w>   </span><span class=p>}</span><span class=w></span>
+<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>nextNumber</span><span class=p>()</span><span class=w> </span><span class=p>{</span>
+<span class=w>      </span><span class=n>currentIndex</span><span class=o>++</span><span class=p>;</span>
+<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>tmp</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>state</span><span class=o>[</span><span class=n>currentIndex</span><span class=o>]</span><span class=p>;</span>
+<span class=w>      </span><span class=n>tmp</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>tmp</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=mi>11</span><span class=p>);</span>
+<span class=w>      </span><span class=n>tmp</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>tmp</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=mi>7</span><span class=p>)</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0x9d2c5680</span><span class=p>;</span>
+<span class=w>      </span><span class=n>tmp</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>tmp</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=mi>15</span><span class=p>)</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0xefc60000</span><span class=p>;</span>
+<span class=w>      </span><span class=n>tmp</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>tmp</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=mi>18</span><span class=p>);</span>
+<span class=w>      </span><span class=k>return</span><span class=w> </span><span class=n>tmp</span><span class=p>;</span>
+<span class=w>   </span><span class=p>}</span>
 
-<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>initialize</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>seed</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>initialize</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>seed</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
 
-<span class=w>      </span><span class=c1>// http://code.activestate.com/recipes/578056-mersenne-twister/</span><span class=w></span>
+<span class=w>      </span><span class=c1>// http://code.activestate.com/recipes/578056-mersenne-twister/</span>
 
-<span class=w>      </span><span class=c1>// global MT</span><span class=w></span>
-<span class=w>      </span><span class=c1>// global bitmask_1</span><span class=w></span>
-<span class=w>      </span><span class=c1>// MT[0] = seed</span><span class=w></span>
-<span class=w>      </span><span class=c1>// for i in xrange(1,624):</span><span class=w></span>
-<span class=w>      </span><span class=c1>// MT[i] = ((1812433253 * MT[i-1]) ^ ((MT[i-1] &gt;&gt; 30) + i)) &amp; bitmask_1</span><span class=w></span>
+<span class=w>      </span><span class=c1>// global MT</span>
+<span class=w>      </span><span class=c1>// global bitmask_1</span>
+<span class=w>      </span><span class=c1>// MT[0] = seed</span>
+<span class=w>      </span><span class=c1>// for i in xrange(1,624):</span>
+<span class=w>      </span><span class=c1>// MT[i] = ((1812433253 * MT[i-1]) ^ ((MT[i-1] &gt;&gt; 30) + i)) &amp; bitmask_1</span>
 
-<span class=w>      </span><span class=c1>// copied Python 2.7&#39;s impl (probably uint problems)</span><span class=w></span>
-<span class=w>      </span><span class=n>state</span><span class=o>[</span><span class=mi>0</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>seed</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>1</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>624</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>         </span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>((</span><span class=mi>1812433253</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=mi>1</span><span class=o>]</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=p>((</span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=mi>1</span><span class=o>]</span><span class=w> </span><span class=o>&gt;&gt;</span><span class=w> </span><span class=mi>30</span><span class=p>)</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>i</span><span class=p>))</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0xffffffff</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=p>}</span><span class=w></span>
-<span class=w>   </span><span class=p>}</span><span class=w></span>
+<span class=w>      </span><span class=c1>// copied Python 2.7&#39;s impl (probably uint problems)</span>
+<span class=w>      </span><span class=n>state</span><span class=o>[</span><span class=mi>0</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>seed</span><span class=p>;</span>
+<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>1</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>624</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>         </span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>((</span><span class=mi>1812433253</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=mi>1</span><span class=o>]</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=p>((</span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=mi>1</span><span class=o>]</span><span class=w> </span><span class=o>&gt;&gt;</span><span class=w> </span><span class=mi>30</span><span class=p>)</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>i</span><span class=p>))</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=mh>0xffffffff</span><span class=p>;</span>
+<span class=w>      </span><span class=p>}</span>
+<span class=w>   </span><span class=p>}</span>
 
-<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>unBitshiftRightXor</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>shift</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>      </span><span class=c1>// we part of the value we are up to (with a width of shift bits)</span><span class=w></span>
-<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=c1>// we accumulate the result here</span><span class=w></span>
-<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>result</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=c1>// iterate until we&#39;ve done the full 32 bits</span><span class=w></span>
-<span class=w>      </span><span class=k>while</span><span class=w> </span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>shift</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>32</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>         </span><span class=c1>// create a mask for this part</span><span class=w></span>
-<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>partMask</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=o>-</span><span class=mi>1</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=p>(</span><span class=mi>32</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=n>shift</span><span class=p>))</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=p>(</span><span class=n>shift</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>i</span><span class=p>);</span><span class=w></span>
-<span class=w>         </span><span class=c1>// obtain the part</span><span class=w></span>
-<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>part</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>value</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=n>partMask</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=c1>// unapply the xor from the next part of the integer</span><span class=w></span>
-<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=n>part</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=n>shift</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=c1>// add the part to the result</span><span class=w></span>
-<span class=w>         </span><span class=n>result</span><span class=w> </span><span class=o>|=</span><span class=w> </span><span class=n>part</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=n>i</span><span class=o>++</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=p>}</span><span class=w></span>
-<span class=w>      </span><span class=k>return</span><span class=w> </span><span class=n>result</span><span class=p>;</span><span class=w></span>
-<span class=w>   </span><span class=p>}</span><span class=w></span>
+<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>unBitshiftRightXor</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>shift</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>      </span><span class=c1>// we part of the value we are up to (with a width of shift bits)</span>
+<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span>
+<span class=w>      </span><span class=c1>// we accumulate the result here</span>
+<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>result</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span>
+<span class=w>      </span><span class=c1>// iterate until we&#39;ve done the full 32 bits</span>
+<span class=w>      </span><span class=k>while</span><span class=w> </span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>shift</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>32</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>         </span><span class=c1>// create a mask for this part</span>
+<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>partMask</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=o>-</span><span class=mi>1</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=p>(</span><span class=mi>32</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=n>shift</span><span class=p>))</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=p>(</span><span class=n>shift</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>i</span><span class=p>);</span>
+<span class=w>         </span><span class=c1>// obtain the part</span>
+<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>part</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>value</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=n>partMask</span><span class=p>;</span>
+<span class=w>         </span><span class=c1>// unapply the xor from the next part of the integer</span>
+<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=n>part</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=n>shift</span><span class=p>;</span>
+<span class=w>         </span><span class=c1>// add the part to the result</span>
+<span class=w>         </span><span class=n>result</span><span class=w> </span><span class=o>|=</span><span class=w> </span><span class=n>part</span><span class=p>;</span>
+<span class=w>         </span><span class=n>i</span><span class=o>++</span><span class=p>;</span>
+<span class=w>      </span><span class=p>}</span>
+<span class=w>      </span><span class=k>return</span><span class=w> </span><span class=n>result</span><span class=p>;</span>
+<span class=w>   </span><span class=p>}</span>
 
-<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>unBitshiftLeftXor</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>shift</span><span class=p>,</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>mask</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>      </span><span class=c1>// we part of the value we are up to (with a width of shift bits)</span><span class=w></span>
-<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=c1>// we accumulate the result here</span><span class=w></span>
-<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>result</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=c1>// iterate until we&#39;ve done the full 32 bits</span><span class=w></span>
-<span class=w>      </span><span class=k>while</span><span class=w> </span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>shift</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>32</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>         </span><span class=c1>// create a mask for this part</span><span class=w></span>
-<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>partMask</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=o>-</span><span class=mi>1</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=p>(</span><span class=mi>32</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=n>shift</span><span class=p>))</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=p>(</span><span class=n>shift</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>i</span><span class=p>);</span><span class=w></span>
-<span class=w>         </span><span class=c1>// obtain the part</span><span class=w></span>
-<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>part</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>value</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=n>partMask</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=c1>// unapply the xor from the next part of the integer</span><span class=w></span>
-<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>part</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>shift</span><span class=p>)</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=n>mask</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=c1>// add the part to the result</span><span class=w></span>
-<span class=w>         </span><span class=n>result</span><span class=w> </span><span class=o>|=</span><span class=w> </span><span class=n>part</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=n>i</span><span class=o>++</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=p>}</span><span class=w></span>
-<span class=w>      </span><span class=k>return</span><span class=w> </span><span class=n>result</span><span class=p>;</span><span class=w></span>
-<span class=w>   </span><span class=p>}</span><span class=w></span>
+<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>unBitshiftLeftXor</span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>shift</span><span class=p>,</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>mask</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>      </span><span class=c1>// we part of the value we are up to (with a width of shift bits)</span>
+<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span>
+<span class=w>      </span><span class=c1>// we accumulate the result here</span>
+<span class=w>      </span><span class=kt>int</span><span class=w> </span><span class=n>result</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span>
+<span class=w>      </span><span class=c1>// iterate until we&#39;ve done the full 32 bits</span>
+<span class=w>      </span><span class=k>while</span><span class=w> </span><span class=p>(</span><span class=n>i</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>shift</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>32</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>         </span><span class=c1>// create a mask for this part</span>
+<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>partMask</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=o>-</span><span class=mi>1</span><span class=w> </span><span class=o>&gt;&gt;&gt;</span><span class=w> </span><span class=p>(</span><span class=mi>32</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=n>shift</span><span class=p>))</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=p>(</span><span class=n>shift</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>i</span><span class=p>);</span>
+<span class=w>         </span><span class=c1>// obtain the part</span>
+<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>part</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>value</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=n>partMask</span><span class=p>;</span>
+<span class=w>         </span><span class=c1>// unapply the xor from the next part of the integer</span>
+<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>^=</span><span class=w> </span><span class=p>(</span><span class=n>part</span><span class=w> </span><span class=o>&lt;&lt;</span><span class=w> </span><span class=n>shift</span><span class=p>)</span><span class=w> </span><span class=o>&amp;</span><span class=w> </span><span class=n>mask</span><span class=p>;</span>
+<span class=w>         </span><span class=c1>// add the part to the result</span>
+<span class=w>         </span><span class=n>result</span><span class=w> </span><span class=o>|=</span><span class=w> </span><span class=n>part</span><span class=p>;</span>
+<span class=w>         </span><span class=n>i</span><span class=o>++</span><span class=p>;</span>
+<span class=w>      </span><span class=p>}</span>
+<span class=w>      </span><span class=k>return</span><span class=w> </span><span class=n>result</span><span class=p>;</span>
+<span class=w>   </span><span class=p>}</span>
 
-<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>rev</span><span class=p>(</span><span class=kt>int</span><span class=o>[]</span><span class=w> </span><span class=n>nums</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>624</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+<span class=w>   </span><span class=kd>static</span><span class=w> </span><span class=kt>void</span><span class=w> </span><span class=nf>rev</span><span class=p>(</span><span class=kt>int</span><span class=o>[]</span><span class=w> </span><span class=n>nums</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
+<span class=w>      </span><span class=k>for</span><span class=w> </span><span class=p>(</span><span class=kt>int</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=w> </span><span class=o>&lt;</span><span class=w> </span><span class=mi>624</span><span class=p>;</span><span class=w> </span><span class=n>i</span><span class=o>++</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
 
-<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>nums</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=p>;</span><span class=w></span>
-<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unBitshiftRightXor</span><span class=p>(</span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=mi>18</span><span class=p>);</span><span class=w></span>
-<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unBitshiftLeftXor</span><span class=p>(</span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=mi>15</span><span class=p>,</span><span class=w> </span><span class=mh>0xefc60000</span><span class=p>);</span><span class=w></span>
-<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unBitshiftLeftXor</span><span class=p>(</span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=mi>7</span><span class=p>,</span><span class=w> </span><span class=mh>0x9d2c5680</span><span class=p>);</span><span class=w></span>
-<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unBitshiftRightXor</span><span class=p>(</span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=mi>11</span><span class=p>);</span><span class=w></span>
+<span class=w>         </span><span class=kt>int</span><span class=w> </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>nums</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=p>;</span>
+<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unBitshiftRightXor</span><span class=p>(</span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=mi>18</span><span class=p>);</span>
+<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unBitshiftLeftXor</span><span class=p>(</span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=mi>15</span><span class=p>,</span><span class=w> </span><span class=mh>0xefc60000</span><span class=p>);</span>
+<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unBitshiftLeftXor</span><span class=p>(</span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=mi>7</span><span class=p>,</span><span class=w> </span><span class=mh>0x9d2c5680</span><span class=p>);</span>
+<span class=w>         </span><span class=n>value</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>unBitshiftRightXor</span><span class=p>(</span><span class=n>value</span><span class=p>,</span><span class=w> </span><span class=mi>11</span><span class=p>);</span>
 
-<span class=w>         </span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>value</span><span class=p>;</span><span class=w></span>
-<span class=w>      </span><span class=p>}</span><span class=w></span>
-<span class=w>   </span><span class=p>}</span><span class=w></span>
-<span class=p>}</span><span class=w></span>
+<span class=w>         </span><span class=n>state</span><span class=o>[</span><span class=n>i</span><span class=o>]</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>value</span><span class=p>;</span>
+<span class=w>      </span><span class=p>}</span>
+<span class=w>   </span><span class=p>}</span>
+<span class=p>}</span>
 </code></pre></div> <p>写了一个 python 直接调用 java</p> <div class=highlight><pre><span></span><code>from Crypto.Util.number import long_to_bytes,bytes_to_long
 
 
@@ -321,13 +321,13 @@ def get_state(io):
 <span class=nb>print</span> <span class=n>next_iv</span>
 <span class=nb>print</span> <span class=n>aeskey</span>
 <span class=n>io</span><span class=o>.</span><span class=n>interact</span><span class=p>()</span>
-</code></pre></div> <h2 id=2016-asis-find-the-flag>2016 ASIS Find the flag<a class=headerlink href=#2016-asis-find-the-flag title="Permanent link">&para;</a></h2> <p>这里我们以 ASIS 2016 线上赛中 Find the flag 为例进行介绍。</p> <p>文件解压出来，有一个密文，一个公钥，一个 py 脚本。看一下公钥。</p> <div class=highlight><pre><span></span><code>➜  RSA openssl rsa -pubin -in pubkey.pem -text -modulus
-Public-Key: <span class=o>(</span><span class=m>256</span> bit<span class=o>)</span>
+</code></pre></div> <h2 id=2016-asis-find-the-flag>2016 ASIS Find the flag<a class=headerlink href=#2016-asis-find-the-flag title="Permanent link">&para;</a></h2> <p>这里我们以 ASIS 2016 线上赛中 Find the flag 为例进行介绍。</p> <p>文件解压出来，有一个密文，一个公钥，一个 py 脚本。看一下公钥。</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>RSA<span class=w> </span>openssl<span class=w> </span>rsa<span class=w> </span>-pubin<span class=w> </span>-in<span class=w> </span>pubkey.pem<span class=w> </span>-text<span class=w> </span>-modulus
+Public-Key:<span class=w> </span><span class=o>(</span><span class=m>256</span><span class=w> </span>bit<span class=o>)</span>
 Modulus:
-    <span class=m>00</span>:d8:e2:4c:12:b7:b9:9e:fe:0a:9b:c0:4a:6a:3d:
-    f5:8a:2a:94:42:69:b4:92:b7:37:6d:f1:29:02:3f:
-    <span class=m>20</span>:61:b9
-Exponent: <span class=m>12405943493775545863</span> <span class=o>(</span>0xac2ac3e0ca0f5607<span class=o>)</span>
+<span class=w>    </span><span class=m>00</span>:d8:e2:4c:12:b7:b9:9e:fe:0a:9b:c0:4a:6a:3d:
+<span class=w>    </span>f5:8a:2a:94:42:69:b4:92:b7:37:6d:f1:29:02:3f:
+<span class=w>    </span><span class=m>20</span>:61:b9
+Exponent:<span class=w> </span><span class=m>12405943493775545863</span><span class=w> </span><span class=o>(</span>0xac2ac3e0ca0f5607<span class=o>)</span>
 <span class=nv>Modulus</span><span class=o>=</span>D8E24C12B7B99EFE0A9BC04A6A3DF58A2A944269B492B7376DF129023F2061B9
 </code></pre></div> <p>这么小的一个 <span class=arithmatex><span class=MathJax_Preview>N</span><script type=math/tex>N</script></span>，先分解一下。</p> <div class=highlight><pre><span></span><code>p = 311155972145869391293781528370734636009
 q = 315274063651866931016337573625089033553
@@ -400,38 +400,38 @@ q = 315274063651866931016337573625089033553
 <span class=n>flag</span> <span class=o>=</span> <span class=n>ext_rsa_decrypt</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>q</span><span class=p>,</span> <span class=n>e</span><span class=p>,</span> <span class=n>msg</span><span class=p>)</span>
 <span class=nb>print</span> <span class=n>flag</span>
 </code></pre></div> <p>拿到 flag</p> <div class=highlight><pre><span></span><code>ASIS{F4ct0R__N_by_it3rat!ng!}
-</code></pre></div> <h2 id=sctf-rsa1>SCTF RSA1<a class=headerlink href=#sctf-rsa1 title="Permanent link">&para;</a></h2> <p>这里我们以 SCTF RSA1 为例进行介绍，首先解压压缩包后，得到如下文件</p> <div class=highlight><pre><span></span><code>➜  level0 git:<span class=o>(</span>master<span class=o>)</span> ✗ ls -al
-总用量 <span class=m>4</span>
-drwxrwxrwx <span class=m>1</span> root root    <span class=m>0</span> 7月  <span class=m>30</span> <span class=m>16</span>:36 .
-drwxrwxrwx <span class=m>1</span> root root    <span class=m>0</span> 7月  <span class=m>30</span> <span class=m>16</span>:34 ..
--rwxrwxrwx <span class=m>1</span> root root  <span class=m>349</span> 5月   <span class=m>2</span>  <span class=m>2016</span> level1.passwd.enc
--rwxrwxrwx <span class=m>1</span> root root <span class=m>2337</span> 5月   <span class=m>6</span>  <span class=m>2016</span> level1.zip
--rwxrwxrwx <span class=m>1</span> root root  <span class=m>451</span> 5月   <span class=m>2</span>  <span class=m>2016</span> public.key
-</code></pre></div> <p>尝试解压缩了一下 level1.zip 现需要密码。然后根据 level1.passwd.enc 可知，应该是我们需要解密这个文件才能得到对应的密码。查看公钥</p> <div class=highlight><pre><span></span><code>➜  level0 git:<span class=o>(</span>master<span class=o>)</span> ✗ openssl rsa -pubin -in public.key -text -modulus 
-Public-Key: <span class=o>(</span><span class=m>2048</span> bit<span class=o>)</span>
+</code></pre></div> <h2 id=sctf-rsa1>SCTF RSA1<a class=headerlink href=#sctf-rsa1 title="Permanent link">&para;</a></h2> <p>这里我们以 SCTF RSA1 为例进行介绍，首先解压压缩包后，得到如下文件</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>level0<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>✗<span class=w> </span>ls<span class=w> </span>-al
+总用量<span class=w> </span><span class=m>4</span>
+drwxrwxrwx<span class=w> </span><span class=m>1</span><span class=w> </span>root<span class=w> </span>root<span class=w>    </span><span class=m>0</span><span class=w> </span>7月<span class=w>  </span><span class=m>30</span><span class=w> </span><span class=m>16</span>:36<span class=w> </span>.
+drwxrwxrwx<span class=w> </span><span class=m>1</span><span class=w> </span>root<span class=w> </span>root<span class=w>    </span><span class=m>0</span><span class=w> </span>7月<span class=w>  </span><span class=m>30</span><span class=w> </span><span class=m>16</span>:34<span class=w> </span>..
+-rwxrwxrwx<span class=w> </span><span class=m>1</span><span class=w> </span>root<span class=w> </span>root<span class=w>  </span><span class=m>349</span><span class=w> </span>5月<span class=w>   </span><span class=m>2</span><span class=w>  </span><span class=m>2016</span><span class=w> </span>level1.passwd.enc
+-rwxrwxrwx<span class=w> </span><span class=m>1</span><span class=w> </span>root<span class=w> </span>root<span class=w> </span><span class=m>2337</span><span class=w> </span>5月<span class=w>   </span><span class=m>6</span><span class=w>  </span><span class=m>2016</span><span class=w> </span>level1.zip
+-rwxrwxrwx<span class=w> </span><span class=m>1</span><span class=w> </span>root<span class=w> </span>root<span class=w>  </span><span class=m>451</span><span class=w> </span>5月<span class=w>   </span><span class=m>2</span><span class=w>  </span><span class=m>2016</span><span class=w> </span>public.key
+</code></pre></div> <p>尝试解压缩了一下 level1.zip 现需要密码。然后根据 level1.passwd.enc 可知，应该是我们需要解密这个文件才能得到对应的密码。查看公钥</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>level0<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>✗<span class=w> </span>openssl<span class=w> </span>rsa<span class=w> </span>-pubin<span class=w> </span>-in<span class=w> </span>public.key<span class=w> </span>-text<span class=w> </span>-modulus<span class=w> </span>
+Public-Key:<span class=w> </span><span class=o>(</span><span class=m>2048</span><span class=w> </span>bit<span class=o>)</span>
 Modulus:
-    <span class=m>00</span>:94:a0:3e:6e:0e:dc:f2:74:10:52:ef:1e:ea:a8:
-    <span class=m>89</span>:d6:f9:8d:01:11:51:db:5e:90:92:48:fd:39:0c:
-    <span class=m>70</span>:87:24:d8:98:3c:f3:33:1c:ba:c5:61:c2:ce:2c:
-    5a:f1:5e:65:b2:b2:46:91:56:b6:19:d5:d3:b2:a6:
-    bb:a3:7d:56:93:99:4d:7e:4c:2f:aa:60:7b:3e:c8:
-    fc:90:b2:00:62:4b:53:18:5b:a2:30:10:60:a8:21:
-    ab:61:57:d7:e7:cc:67:1b:4d:cd:66:4c:7d:f1:1a:
-    2a:1d:5e:50:80:c1:5e:45:12:3a:ba:4a:53:64:d8:
-    <span class=m>72</span>:1f:84:4a:ae:5c:55:02:e8:8e:56:4d:38:70:a5:
-    <span class=m>16</span>:36:d3:bc:14:3e:2f:ae:2f:31:58:ba:00:ab:ac:
-    c0:c5:ba:44:3c:29:70:56:01:6b:57:f5:d7:52:d7:
-    <span class=m>31</span>:56:0b:ab:0a:e6:8d:ad:08:22:a9:1f:cb:6e:49:
-    cc:01:4c:12:d2:ab:a3:a5:97:e5:10:49:19:7f:69:
-    d9:3b:c5:53:53:71:00:18:60:cc:69:1a:06:64:3b:
-    <span class=m>86</span>:94:70:a9:da:82:fc:54:6b:06:23:43:2d:b0:20:
-    eb:b6:1b:91:35:5e:53:a6:e5:d8:9a:84:bb:30:46:
-    b8:9f:63:bc:70:06:2d:59:d8:62:a5:fd:5c:ab:06:
-    <span class=m>68</span>:81
-Exponent: <span class=m>65537</span> <span class=o>(</span>0x10001<span class=o>)</span>
+<span class=w>    </span><span class=m>00</span>:94:a0:3e:6e:0e:dc:f2:74:10:52:ef:1e:ea:a8:
+<span class=w>    </span><span class=m>89</span>:d6:f9:8d:01:11:51:db:5e:90:92:48:fd:39:0c:
+<span class=w>    </span><span class=m>70</span>:87:24:d8:98:3c:f3:33:1c:ba:c5:61:c2:ce:2c:
+<span class=w>    </span>5a:f1:5e:65:b2:b2:46:91:56:b6:19:d5:d3:b2:a6:
+<span class=w>    </span>bb:a3:7d:56:93:99:4d:7e:4c:2f:aa:60:7b:3e:c8:
+<span class=w>    </span>fc:90:b2:00:62:4b:53:18:5b:a2:30:10:60:a8:21:
+<span class=w>    </span>ab:61:57:d7:e7:cc:67:1b:4d:cd:66:4c:7d:f1:1a:
+<span class=w>    </span>2a:1d:5e:50:80:c1:5e:45:12:3a:ba:4a:53:64:d8:
+<span class=w>    </span><span class=m>72</span>:1f:84:4a:ae:5c:55:02:e8:8e:56:4d:38:70:a5:
+<span class=w>    </span><span class=m>16</span>:36:d3:bc:14:3e:2f:ae:2f:31:58:ba:00:ab:ac:
+<span class=w>    </span>c0:c5:ba:44:3c:29:70:56:01:6b:57:f5:d7:52:d7:
+<span class=w>    </span><span class=m>31</span>:56:0b:ab:0a:e6:8d:ad:08:22:a9:1f:cb:6e:49:
+<span class=w>    </span>cc:01:4c:12:d2:ab:a3:a5:97:e5:10:49:19:7f:69:
+<span class=w>    </span>d9:3b:c5:53:53:71:00:18:60:cc:69:1a:06:64:3b:
+<span class=w>    </span><span class=m>86</span>:94:70:a9:da:82:fc:54:6b:06:23:43:2d:b0:20:
+<span class=w>    </span>eb:b6:1b:91:35:5e:53:a6:e5:d8:9a:84:bb:30:46:
+<span class=w>    </span>b8:9f:63:bc:70:06:2d:59:d8:62:a5:fd:5c:ab:06:
+<span class=w>    </span><span class=m>68</span>:81
+Exponent:<span class=w> </span><span class=m>65537</span><span class=w> </span><span class=o>(</span>0x10001<span class=o>)</span>
 <span class=nv>Modulus</span><span class=o>=</span>94A03E6E0EDCF2741052EF1EEAA889D6F98D011151DB5E909248FD390C708724D8983CF3331CBAC561C2CE2C5AF15E65B2B2469156B619D5D3B2A6BBA37D5693994D7E4C2FAA607B3EC8FC90B200624B53185BA2301060A821AB6157D7E7CC671B4DCD664C7DF11A2A1D5E5080C15E45123ABA4A5364D8721F844AAE5C5502E88E564D3870A51636D3BC143E2FAE2F3158BA00ABACC0C5BA443C297056016B57F5D752D731560BAB0AE68DAD0822A91FCB6E49CC014C12D2ABA3A597E51049197F69D93BC5535371001860CC691A06643B869470A9DA82FC546B0623432DB020EBB61B91355E53A6E5D89A84BB3046B89F63BC70062D59D862A5FD5CAB066881
-writing RSA key
------BEGIN PUBLIC KEY-----
+writing<span class=w> </span>RSA<span class=w> </span>key
+-----BEGIN<span class=w> </span>PUBLIC<span class=w> </span>KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlKA+bg7c8nQQUu8e6qiJ
 1vmNARFR216Qkkj9OQxwhyTYmDzzMxy6xWHCzixa8V5lsrJGkVa2GdXTsqa7o31W
 k5lNfkwvqmB7Psj8kLIAYktTGFuiMBBgqCGrYVfX58xnG03NZkx98RoqHV5QgMFe
@@ -439,7 +439,7 @@ RRI6ukpTZNhyH4RKrlxVAuiOVk04cKUWNtO8FD4vri8xWLoAq6zAxbpEPClwVgFr
 V/XXUtcxVgurCuaNrQgiqR/LbknMAUwS0qujpZflEEkZf2nZO8VTU3EAGGDMaRoG
 ZDuGlHCp2oL8VGsGI0MtsCDrthuRNV5TpuXYmoS7MEa4n2O8cAYtWdhipf1cqwZo
 gQIDAQAB
------END PUBLIC KEY-----
+-----END<span class=w> </span>PUBLIC<span class=w> </span>KEY-----
 </code></pre></div> <p>发现虽然说是 2048 位，但是显然模数没有那么长，尝试分解下，得到</p> <div class=highlight><pre><span></span><code>p=250527704258269
 q=74891071972884336452892671945839935839027130680745292701175368094445819328761543101567760612778187287503041052186054409602799660254304070752542327616415127619185118484301676127655806327719998855075907042722072624352495417865982621374198943186383488123852345021090112675763096388320624127451586578874243946255833495297552979177208715296225146999614483257176865867572412311362252398105201644557511678179053171328641678681062496129308882700731534684329411768904920421185529144505494827908706070460177001921614692189821267467546120600239688527687872217881231173729468019623441005792563703237475678063375349
 </code></pre></div> <p>然后就可以构造，并且解密，代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>Crypto.PublicKey</span> <span class=kn>import</span> <span class=n>RSA</span>
@@ -470,43 +470,43 @@ q=748910719728843364528926719458399358390271306807452927011753680944458193287615
 
 <span class=c1>#getprivatekey(n, e, p, q)</span>
 <span class=n>decrypt</span><span class=p>()</span>
-</code></pre></div> <p>发现不对</p> <div class=highlight><pre><span></span><code>➜  level0 git:<span class=o>(</span>master<span class=o>)</span> ✗ python exp.py
+</code></pre></div> <p>发现不对</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>level0<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>✗<span class=w> </span>python<span class=w> </span>exp.py
 一堆乱码。。
-</code></pre></div> <p>这时候就要考虑其他情况了，一般来说现实中实现的 RSA 都不会直接用原生的 RSA，都会加一些填充比如 OAEP，我们这里试试，修改代码</p> <div class=highlight><pre><span></span><code>def decrypt1<span class=o>()</span>:
-    with open<span class=o>(</span><span class=s1>&#39;./level1.passwd.enc&#39;</span><span class=o>)</span> as f:
-        <span class=nv>cipher</span> <span class=o>=</span> f.read<span class=o>()</span>
-    <span class=nv>cipher</span> <span class=o>=</span> b64decode<span class=o>(</span>cipher<span class=o>)</span>
-    with open<span class=o>(</span><span class=s1>&#39;./private.pem&#39;</span><span class=o>)</span> as f:
-        <span class=nv>key</span> <span class=o>=</span> RSA.importKey<span class=o>(</span>f<span class=o>)</span>
-        <span class=nv>key</span> <span class=o>=</span> PKCS1_OAEP.new<span class=o>(</span>key<span class=o>)</span>
-    print key.decrypt<span class=o>(</span>cipher<span class=o>)</span>
-</code></pre></div> <p>果然如此，得到</p> <div class=highlight><pre><span></span><code>➜  level0 git:<span class=o>(</span>master<span class=o>)</span> ✗ python exp.py
+</code></pre></div> <p>这时候就要考虑其他情况了，一般来说现实中实现的 RSA 都不会直接用原生的 RSA，都会加一些填充比如 OAEP，我们这里试试，修改代码</p> <div class=highlight><pre><span></span><code>def<span class=w> </span>decrypt1<span class=o>()</span>:
+<span class=w>    </span>with<span class=w> </span>open<span class=o>(</span><span class=s1>&#39;./level1.passwd.enc&#39;</span><span class=o>)</span><span class=w> </span>as<span class=w> </span>f:
+<span class=w>        </span><span class=nv>cipher</span><span class=w> </span><span class=o>=</span><span class=w> </span>f.read<span class=o>()</span>
+<span class=w>    </span><span class=nv>cipher</span><span class=w> </span><span class=o>=</span><span class=w> </span>b64decode<span class=o>(</span>cipher<span class=o>)</span>
+<span class=w>    </span>with<span class=w> </span>open<span class=o>(</span><span class=s1>&#39;./private.pem&#39;</span><span class=o>)</span><span class=w> </span>as<span class=w> </span>f:
+<span class=w>        </span><span class=nv>key</span><span class=w> </span><span class=o>=</span><span class=w> </span>RSA.importKey<span class=o>(</span>f<span class=o>)</span>
+<span class=w>        </span><span class=nv>key</span><span class=w> </span><span class=o>=</span><span class=w> </span>PKCS1_OAEP.new<span class=o>(</span>key<span class=o>)</span>
+<span class=w>    </span>print<span class=w> </span>key.decrypt<span class=o>(</span>cipher<span class=o>)</span>
+</code></pre></div> <p>果然如此，得到</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>level0<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>✗<span class=w> </span>python<span class=w> </span>exp.py
 FaC5ori1ati0n_aTTA3k_p_tOO_sma11
-</code></pre></div> <p>得到解压密码。继续，查看 level1 中的公钥</p> <div class=highlight><pre><span></span><code>➜  level1 git:<span class=o>(</span>master<span class=o>)</span> ✗ openssl rsa -pubin -in public.key -text -modulus
-Public-Key: <span class=o>(</span><span class=m>2048</span> bit<span class=o>)</span>
+</code></pre></div> <p>得到解压密码。继续，查看 level1 中的公钥</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>level1<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>✗<span class=w> </span>openssl<span class=w> </span>rsa<span class=w> </span>-pubin<span class=w> </span>-in<span class=w> </span>public.key<span class=w> </span>-text<span class=w> </span>-modulus
+Public-Key:<span class=w> </span><span class=o>(</span><span class=m>2048</span><span class=w> </span>bit<span class=o>)</span>
 Modulus:
-    <span class=m>00</span>:c3:26:59:69:e1:ed:74:d2:e0:b4:9a:d5:6a:7c:
-    2f:2a:9e:c3:71:ff:13:4b:10:37:c0:6f:56:19:34:
-    c5:cb:1f:6d:c0:e3:57:3b:47:c4:76:3e:21:a3:b0:
-    <span class=m>11</span>:11:78:d4:ee:4f:e8:99:2b:15:cb:cb:d7:73:e4:
-    f9:a6:28:20:fd:db:8c:ea:16:ed:67:c2:48:12:6e:
-    4b:01:53:4a:67:cb:22:23:3b:34:2e:af:13:ef:93:
-    <span class=m>45</span>:16:2b:00:9f:e0:4b:d1:90:c9:2c:27:9a:34:c3:
-    3f:d7:ee:40:f5:82:50:39:aa:8c:e9:c2:7b:f4:36:
-    e3:38:9d:04:50:db:a9:b7:3f:4b:2a:d6:8a:2a:5c:
-    <span class=m>87</span>:2a:eb:74:35:98:6a:9c:e4:52:cb:93:78:d2:da:
-    <span class=m>39</span>:83:f3:0c:d1:65:1e:66:9c:40:56:06:0d:58:fc:
-    <span class=m>41</span>:64:5e:06:da:83:d0:3b:06:42:70:da:38:53:e0:
-    <span class=m>54</span>:35:53:ce:de:79:4a:bf:f5:3b:e5:53:7f:6c:18:
-    <span class=m>12</span>:67:a9:de:37:7d:44:65:5e:68:0a:78:39:3d:bb:
-    <span class=m>00</span>:22:35:0e:a3:94:e6:94:15:1a:3d:39:c7:50:0e:
-    b1:64:a5:29:a3:69:41:40:69:94:b0:0d:1a:ea:9a:
-    <span class=m>12</span>:27:50:ee:1e:3a:19:b7:29:70:b4:6d:1e:9d:61:
-    3e:7d
-Exponent: <span class=m>65537</span> <span class=o>(</span>0x10001<span class=o>)</span>
+<span class=w>    </span><span class=m>00</span>:c3:26:59:69:e1:ed:74:d2:e0:b4:9a:d5:6a:7c:
+<span class=w>    </span>2f:2a:9e:c3:71:ff:13:4b:10:37:c0:6f:56:19:34:
+<span class=w>    </span>c5:cb:1f:6d:c0:e3:57:3b:47:c4:76:3e:21:a3:b0:
+<span class=w>    </span><span class=m>11</span>:11:78:d4:ee:4f:e8:99:2b:15:cb:cb:d7:73:e4:
+<span class=w>    </span>f9:a6:28:20:fd:db:8c:ea:16:ed:67:c2:48:12:6e:
+<span class=w>    </span>4b:01:53:4a:67:cb:22:23:3b:34:2e:af:13:ef:93:
+<span class=w>    </span><span class=m>45</span>:16:2b:00:9f:e0:4b:d1:90:c9:2c:27:9a:34:c3:
+<span class=w>    </span>3f:d7:ee:40:f5:82:50:39:aa:8c:e9:c2:7b:f4:36:
+<span class=w>    </span>e3:38:9d:04:50:db:a9:b7:3f:4b:2a:d6:8a:2a:5c:
+<span class=w>    </span><span class=m>87</span>:2a:eb:74:35:98:6a:9c:e4:52:cb:93:78:d2:da:
+<span class=w>    </span><span class=m>39</span>:83:f3:0c:d1:65:1e:66:9c:40:56:06:0d:58:fc:
+<span class=w>    </span><span class=m>41</span>:64:5e:06:da:83:d0:3b:06:42:70:da:38:53:e0:
+<span class=w>    </span><span class=m>54</span>:35:53:ce:de:79:4a:bf:f5:3b:e5:53:7f:6c:18:
+<span class=w>    </span><span class=m>12</span>:67:a9:de:37:7d:44:65:5e:68:0a:78:39:3d:bb:
+<span class=w>    </span><span class=m>00</span>:22:35:0e:a3:94:e6:94:15:1a:3d:39:c7:50:0e:
+<span class=w>    </span>b1:64:a5:29:a3:69:41:40:69:94:b0:0d:1a:ea:9a:
+<span class=w>    </span><span class=m>12</span>:27:50:ee:1e:3a:19:b7:29:70:b4:6d:1e:9d:61:
+<span class=w>    </span>3e:7d
+Exponent:<span class=w> </span><span class=m>65537</span><span class=w> </span><span class=o>(</span>0x10001<span class=o>)</span>
 <span class=nv>Modulus</span><span class=o>=</span>C3265969E1ED74D2E0B49AD56A7C2F2A9EC371FF134B1037C06F561934C5CB1F6DC0E3573B47C4763E21A3B0111178D4EE4FE8992B15CBCBD773E4F9A62820FDDB8CEA16ED67C248126E4B01534A67CB22233B342EAF13EF9345162B009FE04BD190C92C279A34C33FD7EE40F5825039AA8CE9C27BF436E3389D0450DBA9B73F4B2AD68A2A5C872AEB7435986A9CE452CB9378D2DA3983F30CD1651E669C4056060D58FC41645E06DA83D03B064270DA3853E0543553CEDE794ABFF53BE5537F6C181267A9DE377D44655E680A78393DBB0022350EA394E694151A3D39C7500EB164A529A36941406994B00D1AEA9A122750EE1E3A19B72970B46D1E9D613E7D
-writing RSA key
------BEGIN PUBLIC KEY-----
+writing<span class=w> </span>RSA<span class=w> </span>key
+-----BEGIN<span class=w> </span>PUBLIC<span class=w> </span>KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwyZZaeHtdNLgtJrVanwv
 Kp7Dcf8TSxA3wG9WGTTFyx9twONXO0fEdj4ho7AREXjU7k/omSsVy8vXc+T5pigg
 /duM6hbtZ8JIEm5LAVNKZ8siIzs0Lq8T75NFFisAn+BL0ZDJLCeaNMM/1+5A9YJQ
@@ -514,35 +514,35 @@ OaqM6cJ79DbjOJ0EUNuptz9LKtaKKlyHKut0NZhqnORSy5N40to5g/MM0WUeZpxA
 VgYNWPxBZF4G2oPQOwZCcNo4U+BUNVPO3nlKv/U75VN/bBgSZ6neN31EZV5oCng5
 PbsAIjUOo5TmlBUaPTnHUA6xZKUpo2lBQGmUsA0a6poSJ1DuHjoZtylwtG0enWE+
 fQIDAQAB
------END PUBLIC KEY-----
-</code></pre></div> <p>似乎还是不是很大，再次分解，然后试了 factordb 不行，试试 yafu。结果分解出来了。</p> <div class=highlight><pre><span></span><code><span class=nv>P309</span> <span class=o>=</span> <span class=m>156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496383</span>
+-----END<span class=w> </span>PUBLIC<span class=w> </span>KEY-----
+</code></pre></div> <p>似乎还是不是很大，再次分解，然后试了 factordb 不行，试试 yafu。结果分解出来了。</p> <div class=highlight><pre><span></span><code><span class=nv>P309</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=m>156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496383</span>
 
-<span class=nv>P309</span> <span class=o>=</span> <span class=m>156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496259</span>
-</code></pre></div> <p>可以发现这两个数非常相近，可能是 factordb 没有实现这类分解。</p> <p>继而下面的操作类似于 level0。只是这次是直接解密就好，没啥填充，试了填充反而错</p> <p>得到密码 <code>fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS</code>。继续下一步，查看公钥</p> <div class=highlight><pre><span></span><code>➜  level2 git:<span class=o>(</span>master<span class=o>)</span> ✗ openssl rsa -pubin -in public.key -text -modulus
-Public-Key: <span class=o>(</span><span class=m>1025</span> bit<span class=o>)</span>
+<span class=nv>P309</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=m>156956618844706820397012891168512561016172926274406409351605204875848894134762425857160007206769208250966468865321072899370821460169563046304363342283383730448855887559714662438206600780443071125634394511976108979417302078289773847706397371335621757603520669919857006339473738564640521800108990424511408496259</span>
+</code></pre></div> <p>可以发现这两个数非常相近，可能是 factordb 没有实现这类分解。</p> <p>继而下面的操作类似于 level0。只是这次是直接解密就好，没啥填充，试了填充反而错</p> <p>得到密码 <code>fA35ORI11TLoN_Att1Ck_cL0sE_PrI8e_4acTorS</code>。继续下一步，查看公钥</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>level2<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>✗<span class=w> </span>openssl<span class=w> </span>rsa<span class=w> </span>-pubin<span class=w> </span>-in<span class=w> </span>public.key<span class=w> </span>-text<span class=w> </span>-modulus
+Public-Key:<span class=w> </span><span class=o>(</span><span class=m>1025</span><span class=w> </span>bit<span class=o>)</span>
 Modulus:
-    <span class=m>01</span>:ba:0c:c2:45:b4:5c:e5:b5:f5:6c:d5:ca:a5:90:
-    c2:8d:12:3d:8a:6d:7f:b6:47:37:fb:7c:1f:5a:85:
-    8c:1e:35:13:8b:57:b2:21:4f:f4:b2:42:24:5f:33:
-    f7:2c:2c:0d:21:c2:4a:d4:c5:f5:09:94:c2:39:9d:
-    <span class=m>73</span>:e5:04:a2:66:1d:9c:4b:99:d5:38:44:ab:13:d9:
-    cd:12:a4:d0:16:79:f0:ac:75:f9:a4:ea:a8:7c:32:
-    <span class=m>16</span>:9a:17:d7:7d:80:fd:60:29:64:c7:ea:50:30:63:
-    <span class=m>76</span>:59:c7:36:5e:98:d2:ea:5b:b3:3a:47:17:08:2d:
-    d5:24:7d:4f:a7:a1:f0:d5:73
+<span class=w>    </span><span class=m>01</span>:ba:0c:c2:45:b4:5c:e5:b5:f5:6c:d5:ca:a5:90:
+<span class=w>    </span>c2:8d:12:3d:8a:6d:7f:b6:47:37:fb:7c:1f:5a:85:
+<span class=w>    </span>8c:1e:35:13:8b:57:b2:21:4f:f4:b2:42:24:5f:33:
+<span class=w>    </span>f7:2c:2c:0d:21:c2:4a:d4:c5:f5:09:94:c2:39:9d:
+<span class=w>    </span><span class=m>73</span>:e5:04:a2:66:1d:9c:4b:99:d5:38:44:ab:13:d9:
+<span class=w>    </span>cd:12:a4:d0:16:79:f0:ac:75:f9:a4:ea:a8:7c:32:
+<span class=w>    </span><span class=m>16</span>:9a:17:d7:7d:80:fd:60:29:64:c7:ea:50:30:63:
+<span class=w>    </span><span class=m>76</span>:59:c7:36:5e:98:d2:ea:5b:b3:3a:47:17:08:2d:
+<span class=w>    </span>d5:24:7d:4f:a7:a1:f0:d5:73
 Exponent:
-    <span class=m>01</span>:00:8e:81:dd:a0:e3:19:28:e8:ee:51:11:08:c7:
-    <span class=m>50</span>:5f:61:31:05:d2:e2:ff:9b:83:71:e4:29:c2:dd:
-    <span class=m>92</span>:70:65:d4:09:6d:58:c3:76:31:07:f1:d4:fc:cf:
-    2d:b3:0a:6d:02:7c:56:61:7c:be:7e:0b:7e:d9:22:
-    <span class=m>28</span>:66:9e:fb:3d:2f:2c:20:59:3c:21:ef:ff:31:00:
-    6a:fb:a7:68:de:4a:0a:4c:1a:a7:09:d5:48:98:c8:
-    1f:cf:fb:dd:f7:9c:ae:ae:0b:15:f4:b2:c7:e0:bc:
-    ba:31:4f:5e:07:83:ad:0e:7f:b9:82:a4:d2:01:fa:
-    <span class=m>68</span>:29:6d:66:7c:cf:57:b9:4b
+<span class=w>    </span><span class=m>01</span>:00:8e:81:dd:a0:e3:19:28:e8:ee:51:11:08:c7:
+<span class=w>    </span><span class=m>50</span>:5f:61:31:05:d2:e2:ff:9b:83:71:e4:29:c2:dd:
+<span class=w>    </span><span class=m>92</span>:70:65:d4:09:6d:58:c3:76:31:07:f1:d4:fc:cf:
+<span class=w>    </span>2d:b3:0a:6d:02:7c:56:61:7c:be:7e:0b:7e:d9:22:
+<span class=w>    </span><span class=m>28</span>:66:9e:fb:3d:2f:2c:20:59:3c:21:ef:ff:31:00:
+<span class=w>    </span>6a:fb:a7:68:de:4a:0a:4c:1a:a7:09:d5:48:98:c8:
+<span class=w>    </span>1f:cf:fb:dd:f7:9c:ae:ae:0b:15:f4:b2:c7:e0:bc:
+<span class=w>    </span>ba:31:4f:5e:07:83:ad:0e:7f:b9:82:a4:d2:01:fa:
+<span class=w>    </span><span class=m>68</span>:29:6d:66:7c:cf:57:b9:4b
 <span class=nv>Modulus</span><span class=o>=</span>1BA0CC245B45CE5B5F56CD5CAA590C28D123D8A6D7FB64737FB7C1F5A858C1E35138B57B2214FF4B242245F33F72C2C0D21C24AD4C5F50994C2399D73E504A2661D9C4B99D53844AB13D9CD12A4D01679F0AC75F9A4EAA87C32169A17D77D80FD602964C7EA5030637659C7365E98D2EA5BB33A4717082DD5247D4FA7A1F0D573
-writing RSA key
------BEGIN PUBLIC KEY-----
+writing<span class=w> </span>RSA<span class=w> </span>key
+-----BEGIN<span class=w> </span>PUBLIC<span class=w> </span>KEY-----
 MIIBIDANBgkqhkiG9w0BAQEFAAOCAQ0AMIIBCAKBgQG6DMJFtFzltfVs1cqlkMKN
 Ej2KbX+2Rzf7fB9ahYweNROLV7IhT/SyQiRfM/csLA0hwkrUxfUJlMI5nXPlBKJm
 HZxLmdU4RKsT2c0SpNAWefCsdfmk6qh8MhaaF9d9gP1gKWTH6lAwY3ZZxzZemNLq
@@ -550,23 +550,23 @@ W7M6RxcILdUkfU+nofDVcwKBgQEAjoHdoOMZKOjuUREIx1BfYTEF0uL/m4Nx5CnC
 3ZJwZdQJbVjDdjEH8dT8zy2zCm0CfFZhfL5+C37ZIihmnvs9LywgWTwh7/8xAGr7
 p2jeSgpMGqcJ1UiYyB/P+933nK6uCxX0ssfgvLoxT14Hg60Of7mCpNIB+mgpbWZ8
 <span class=nv>z1e5Sw</span><span class=o>==</span>
------END PUBLIC KEY-----
-</code></pre></div> <p>发现私钥 e 和 n 几乎一样大，考虑 d 比较小，使用 Wiener's Attack。得到 d，当然也可以再次验证一遍。</p> <div class=highlight><pre><span></span><code>➜  level2 git:<span class=o>(</span>master<span class=o>)</span> ✗ python RSAwienerHacker.py
-Testing Wiener Attack
+-----END<span class=w> </span>PUBLIC<span class=w> </span>KEY-----
+</code></pre></div> <p>发现私钥 e 和 n 几乎一样大，考虑 d 比较小，使用 Wiener's Attack。得到 d，当然也可以再次验证一遍。</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>level2<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>✗<span class=w> </span>python<span class=w> </span>RSAwienerHacker.py
+Testing<span class=w> </span>Wiener<span class=w> </span>Attack
 Hacked!
-<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>, 29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
+<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>,<span class=w> </span>29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
 -------------------------
 Hacked!
-<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>, 29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
+<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>,<span class=w> </span>29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
 -------------------------
 Hacked!
-<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>, 29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
+<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>,<span class=w> </span>29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
 -------------------------
 Hacked!
-<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>, 29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
+<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>,<span class=w> </span>29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
 -------------------------
 Hacked!
-<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>, 29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
+<span class=o>(</span><span class=s1>&#39;hacked_d = &#39;</span>,<span class=w> </span>29897859398360008828023114464512538800655735360280670512160838259524245332403L<span class=o>)</span>
 -------------------------
 </code></pre></div> <p>这时我们解密密文，解密代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>Crypto.PublicKey</span> <span class=kn>import</span> <span class=n>RSA</span>
 <span class=kn>from</span> <span class=nn>Crypto.Cipher</span> <span class=kn>import</span> <span class=n>PKCS1_v1_5</span><span class=p>,</span> <span class=n>PKCS1_OAEP</span>
@@ -677,8 +677,8 @@ search 34000000
 <span class=ne>TypeError</span><span class=p>:</span> <span class=n>Odd</span><span class=o>-</span><span class=n>length</span> <span class=n>string</span>
 <span class=o>&gt;&gt;&gt;</span> <span class=nb>hex</span><span class=p>(</span><span class=n>p</span><span class=p>)[</span><span class=mi>2</span><span class=p>:</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span><span class=o>.</span><span class=n>decode</span><span class=p>(</span><span class=s1>&#39;hex&#39;</span><span class=p>)</span>
 <span class=s1>&#39;flag</span><span class=si>{fa6778724ed740396fc001b198f30313}</span><span class=s1>&#39;</span>
-</code></pre></div> <p>最后我们便拿到 flag 了。</p> <p><strong>详细的利用代码请参见 ctf-challenge 仓库。</strong></p> <p>相关编译指令，需要链接相关的库。</p> <div class=highlight><pre><span></span><code>g++  exp2.cpp -std<span class=o>=</span>c++11 -o main2 -lgmp -lcrypto -pthread
-</code></pre></div> <h2 id=_1>参考<a class=headerlink href=#_1 title="Permanent link">&para;</a></h2> <ul> <li><a href=https://upbhack.de/posts/wctf-2018-writeup-rsa/ >https://upbhack.de/posts/wctf-2018-writeup-rsa/</a></li> </ul> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../rsa_pkcs_attack/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> Previous </span> Bleichenbacher's attack </div> </div> </a> <a href=../../knapsack/knapsack/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> Next </span> 背包加密 </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2022 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing"}</script> <script>
+</code></pre></div> <p>最后我们便拿到 flag 了。</p> <p><strong>详细的利用代码请参见 ctf-challenge 仓库。</strong></p> <p>相关编译指令，需要链接相关的库。</p> <div class=highlight><pre><span></span><code>g++<span class=w>  </span>exp2.cpp<span class=w> </span>-std<span class=o>=</span>c++11<span class=w> </span>-o<span class=w> </span>main2<span class=w> </span>-lgmp<span class=w> </span>-lcrypto<span class=w> </span>-pthread
+</code></pre></div> <h2 id=_1>参考<a class=headerlink href=#_1 title="Permanent link">&para;</a></h2> <ul> <li><a href=https://upbhack.de/posts/wctf-2018-writeup-rsa/ >https://upbhack.de/posts/wctf-2018-writeup-rsa/</a></li> </ul> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../rsa_pkcs_attack/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> Previous </span> Bleichenbacher's attack </div> </div> </a> <a href=../../knapsack/knapsack/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> Next </span> 背包加密 </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2023 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing"}</script> <script>
         app = initialize({
           base: "../../../..",
           features: ["navigation.tabs", "navigation.tabs.sticky", "search.suggest", "search.highlight", "search.share"],

