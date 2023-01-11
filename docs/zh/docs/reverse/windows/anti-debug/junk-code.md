@@ -4,6 +4,76 @@
 
 花指令是企图隐藏掉不想被逆向工程的代码块(或其它功能)的一种方法, 在真实代码中插入一些垃圾代码的同时还保证原有程序的正确执行, 而程序无法很好地反编译, 难以理解程序内容, 达到混淆视听的效果.
 
+花指令通常用于加大静态分析的难度。
+
+## 编写
+
+最简单的花指令使用了内联汇编的方式进行，下面以VC添加花指令的方式举例，gnu的编译器也可以采用类似的方式添加花指令，但是使用AT&T汇编：
+
+```c
+// 正常的函数代码
+int add(int a, int b){
+  int c = 0;
+  c = a + b;
+  return c;
+}
+// 添加花指令的函数代码
+int add_with_junk(int a, int b){
+	int c = 0;
+	__asm{
+		jz label;
+		jnz label;
+		_emit 0xe8;    call 指令，后面加4bytes的地址偏移，因此导致反汇编器不能正常识别
+label:
+	}
+	c = a + b;
+	return c;
+}
+
+```
+
+使用ida的反编译时，添加了花指令的函数不能正常识别，结果如下：
+
+伪代码：
+
+```asm
+// 添加了花指令
+.text:00401070 loc_401070:                             ; CODE XREF: sub_401005↑j
+.text:00401070                 push    ebp
+.text:00401071                 mov     ebp, esp
+.text:00401073                 sub     esp, 44h
+.text:00401076                 push    ebx
+.text:00401077                 push    esi
+.text:00401078                 push    edi
+.text:00401079                 lea     edi, [ebp-44h]
+.text:0040107C                 mov     ecx, 11h
+.text:00401081                 mov     eax, 0CCCCCCCCh
+.text:00401086                 rep stosd
+.text:00401088                 mov     dword ptr [ebp-4], 0
+.text:0040108F                 jz      short near ptr loc_401093+1
+.text:00401091                 jnz     short near ptr loc_401093+1
+.text:00401093
+.text:00401093 loc_401093:                             ; CODE XREF: .text:0040108F↑j
+.text:00401093                                         ; .text:00401091↑j
+.text:00401093                 call    near ptr 3485623h
+.text:00401098                 inc     ebp
+.text:00401099                 or      al, 89h
+.text:0040109B                 inc     ebp
+.text:0040109C                 cld
+.text:0040109D                 mov     eax, [ebp-4]
+.text:004010A0                 pop     edi
+.text:004010A1                 pop     esi
+.text:004010A2                 pop     ebx
+.text:004010A3                 add     esp, 44h
+.text:004010A6                 cmp     ebp, esp
+.text:004010A8                 call    __chkesp
+.text:004010AD                 mov     esp, ebp
+.text:004010AF                 pop     ebp
+.text:004010B0                 retn
+```
+
+在上面这个例子中，把混淆视听的花指令patch成nop即可修复，然后正常分析。
+
 ## 例题
 
 这里以`看雪.TSRC 2017CTF秋季赛`第二题作为讲解. 题目下载链接: [ctf2017_Fpc.exe](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/anti-debug/2017_pediy/ctf2017_Fpc.exe)
