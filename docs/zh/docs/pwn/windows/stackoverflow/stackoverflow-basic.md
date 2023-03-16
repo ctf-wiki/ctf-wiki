@@ -10,6 +10,7 @@
 
 ```c
 #include <stdio.h>
+#include <string.h>
 #define PASSWORD "666666"
 int verify_password(char *password)
 {
