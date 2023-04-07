@@ -408,6 +408,26 @@ void __attribute__ ((noreturn)) internal_function __fortify_fail (const char *ms
 
 所以说如果我们利用栈溢出覆盖 argv[0] 为我们想要输出的字符串的地址，那么在 `__fortify_fail` 函数中就会输出我们想要的信息。
 
+
+
+> 批注： 这个方法在 glibc-2.31 之后不可用了, 具体看这个部分代码 [fortify_fail.c](https://elixir.bootlin.com/glibc/glibc-2.31/source/debug/fortify_fail.c) 。
+
+```c
+#include <stdio.h>
+
+void
+__attribute__ ((noreturn))
+__fortify_fail (const char *msg)
+{
+  /* The loop is added only to keep gcc happy.  */
+  while (1)
+    __libc_message (do_abort, "*** %s ***: terminated\n", msg);
+}
+libc_hidden_def (__fortify_fail)
+```
+
+> 总结一下原因就是现在不会打印argv[0] 指针所指向的字符串
+
 ### 32C3 CTF readme
 
 这里，我们以 2015 年 32C3 CTF readme 为例进行介绍，该题目在 jarvisoj 上有复现。

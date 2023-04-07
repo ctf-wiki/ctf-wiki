@@ -2,7 +2,7 @@
 
 ## 介绍 
 
-关于栈的介绍，可以阅读 [Linux Pwn](https://ctf-wiki.github.io/ctf-wiki/pwn/linux/stackoverflow/stack-intro/) 中的介绍。
+关于栈的介绍，可以阅读 [Linux Pwn](https://ctf-wiki.org/pwn/linux/user-mode/stackoverflow/x86/stack-intro/) 中的介绍。
 
 ## 基本示例 
 
@@ -10,6 +10,7 @@
 
 ```c
 #include <stdio.h>
+#include <string.h>
 #define PASSWORD "666666"
 int verify_password(char *password)
 {
