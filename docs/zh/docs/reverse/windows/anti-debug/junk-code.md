@@ -74,6 +74,27 @@ label:
 
 在上面这个例子中，把混淆视听的花指令 patch 成 nop 即可修复，然后正常分析。
 
+值得注意的是，ida 对于栈的判定比较严格，因此 push，ret 一类的花指令会干扰反汇编器的正常运行，下面给出一个具体的例子，读者可以自己编译复现：
+
+```c++
+#include <stdio.h>
+// 使用 gcc/g++ 进行编译
+int main(){
+	__asm__(".byte 0x55;");          // push rbp   保存栈 
+	__asm__(".byte 0xe8,0,0,0,0;");  // call $5;	
+	__asm__(".byte 0x5d;");	         // pop rbp -> 获取rip的值 
+	__asm__(".byte 0x48,0x83,0xc5,0x08;"); // add rbp, 8
+	__asm__(".byte 0x55;");          // push rbp -> 相当于将call的返回值修改到下面去
+	__asm__("ret;");
+	__asm__(".byte 0xe8;");          // 这是混淆指令不执行
+	__asm__(".byte 0x5d;");          // pop rbp 还原栈		
+	printf("whoami \n");
+	return 0;
+} 
+```
+
+
+
 ## 例题
 
 这里以`看雪.TSRC 2017CTF秋季赛`第二题作为讲解. 题目下载链接: [ctf2017_Fpc.exe](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/anti-debug/2017_pediy/ctf2017_Fpc.exe)
