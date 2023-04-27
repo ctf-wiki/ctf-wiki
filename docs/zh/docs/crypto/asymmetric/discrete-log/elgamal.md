@@ -26,7 +26,7 @@ A选取随机数$r \in Z_{p-1}$ ，对明文加密$E_k(m,r)=(y_1,y_2)$ 。其中
 
 ### 解密
 
-$D_k(y_1,y_2)=y_2(y_1^k)^-1 \bmod p \equiv m(g^k)^r(g^{rk})^{-1} \equiv m \bmod p$ 。
+$D_k(y_1,y_2)=y_2(y_1^k)^{-1} \bmod p \equiv m(g^k)^r(g^{rk})^{-1} \equiv m \bmod p$ 。
 
 ### 难点
 
