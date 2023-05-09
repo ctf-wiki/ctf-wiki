@@ -6,9 +6,9 @@
 
 `GFP_KERNEL` 与 `GFP_KERNEL_ACCOUNT`  是内核中最为常见与通用的分配 flag，常规情况下他们的分配都来自同一个 `kmem_cache` ——即通用的 `kmalloc-xx`。
 
-在5.9 版本之前`GFP_KERNEL` 与 `GFP_KERNEL_ACCOUNT` 存在隔离机制，在 [这个 commit](https://github.com/torvalds/linux/commit/10befea91b61c4e2c2d1df06a2e978d182fcf792) 中取消了隔离机制，自内核版本 5.14 起，在 [这个 commit](https://github.com/torvalds/linux/commit/494c1dfe855ec1f70f89552fce5eadf4a1717552) 当中又重新引入：
+在 5.9 版本之前`GFP_KERNEL` 与 `GFP_KERNEL_ACCOUNT` 存在隔离机制，在 [这个 commit](https://github.com/torvalds/linux/commit/10befea91b61c4e2c2d1df06a2e978d182fcf792) 中取消了隔离机制，自内核版本 5.14 起，在 [这个 commit](https://github.com/torvalds/linux/commit/494c1dfe855ec1f70f89552fce5eadf4a1717552) 当中又重新引入：
 
-- 对于开启了 `CONFIG_MEMCG_KMEM` 编译选项的 kernel 而言（\默认开启），其会为使用 `GFP_KERNEL_ACCOUNT` 进行分配的通用对象**创建一组独立的 `kmem_cache` ——名为 `kmalloc-cg-*`** ，从而导致使用这两种 flag 的 object 之间的隔离.
+- 对于开启了 `CONFIG_MEMCG_KMEM` 编译选项的 kernel 而言（默认开启），其会为使用 `GFP_KERNEL_ACCOUNT` 进行分配的通用对象**创建一组独立的 `kmem_cache` ——名为 `kmalloc-cg-*`** ，从而导致使用这两种 flag 的 object 之间的隔离。
 
 ### SLAB_ACCOUNT
 
