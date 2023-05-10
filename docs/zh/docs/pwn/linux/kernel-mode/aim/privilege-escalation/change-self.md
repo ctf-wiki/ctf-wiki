@@ -125,7 +125,7 @@ comm 用来标记可执行文件的名字，位于进程的 `task_struct` 结构
 
 虽然我们确实想要修改 cred 的内容，但是不一定非得知道 cred 的具体位置，我们只需要能够修改 cred 即可。
 
-#### UAF 使用同样堆块
+#### （已过时）UAF 使用同样堆块
 
 如果我们在进程初始化时能控制 cred 结构体的位置，并且我们可以在初始化后修改该部分的内容，那么我们就可以很容易地达到提权的目的。这里给出一个典型的例子
 
@@ -134,7 +134,16 @@ comm 用来标记可执行文件的名字，位于进程的 `task_struct` 结构
 3. fork 出新进程，恰好使用刚刚释放的堆块
 4. 此时，修改 cred 结构体特定内存，从而提权
 
-非常有意思的是，在这个过程中，我们不需要任何的信息泄露。
+但是**此种方法在较新版本内核中已不再可行，我们已无法直接分配到 cred\_jar 中的 object**，这是因为 cred\_jar 在创建时设置了 `SLAB_ACCOUNT` 标记，在 `CONFIG_MEMCG_KMEM=y` 时（默认开启）**cred\_jar 不会再与相同大小的 kmalloc-192 进行合并**
+
+```c
+void __init cred_init(void)
+{
+	/* allocate a slab in which we can store credentials */
+	cred_jar = kmem_cache_create("cred_jar", sizeof(struct cred), 0,
+			SLAB_HWCACHE_ALIGN|SLAB_PANIC|SLAB_ACCOUNT, NULL);
+}
+``` 
 
 ## 修改 cred 指针
 
@@ -200,10 +209,91 @@ comm 用来标记可执行文件的名字，位于进程的 `task_struct` 结构
 
 ### 间接定位
 
-#### commit_creds(prepare_kernel_cred(0))
+#### commit_creds(&init_cred)
 
-我们还可以使用 commit_creds(prepare_kernel_cred(0)) 来进行提权，该方式会自动生成一个合法的 cred，并定位当前线程的 task_struct 的位置，然后修改它的 cred 为新的 cred。该方式比较适用于控制程序执行流后使用。
+`commit_creds()` 函数被用以将一个新的 cred 设为当前进程 task_struct 的 real_cred 与 cred 字段，因此若是我们能够劫持内核执行流调用该函数并传入一个具有 root 权限的 cred，则能直接完成对当前进程的提权工作：
+
+```c
+int commit_creds(struct cred *new)
+{
+	struct task_struct *task = current;//内核宏，用以从 percpu 段获取当前进程的 PCB
+	const struct cred *old = task->real_cred;
+
+	//...
+	rcu_assign_pointer(task->real_cred, new);
+	rcu_assign_pointer(task->cred, new);
+```
+
+在内核初始化过程当中会以 root 权限启动 `init` 进程，其 cred 结构体为**静态定义**的 `init_cred`，由此不难想到的是我们可以通过 `commit_creds(&init_cred)` 来完成提权的工作
+
+```c
+/*
+ * The initial credentials for the initial task
+ */
+struct cred init_cred = {
+	.usage			= ATOMIC_INIT(4),
+#ifdef CONFIG_DEBUG_CREDENTIALS
+	.subscribers		= ATOMIC_INIT(2),
+	.magic			= CRED_MAGIC,
+#endif
+	.uid			= GLOBAL_ROOT_UID,
+	.gid			= GLOBAL_ROOT_GID,
+	.suid			= GLOBAL_ROOT_UID,
+	.sgid			= GLOBAL_ROOT_GID,
+	.euid			= GLOBAL_ROOT_UID,
+	.egid			= GLOBAL_ROOT_GID,
+	.fsuid			= GLOBAL_ROOT_UID,
+	.fsgid			= GLOBAL_ROOT_GID,
+	.securebits		= SECUREBITS_DEFAULT,
+	.cap_inheritable	= CAP_EMPTY_SET,
+	.cap_permitted		= CAP_FULL_SET,
+	.cap_effective		= CAP_FULL_SET,
+	.cap_bset		= CAP_FULL_SET,
+	.user			= INIT_USER,
+	.user_ns		= &init_user_ns,
+	.group_info		= &init_groups,
+	.ucounts		= &init_ucounts,
+};
+```
+
+#### （已过时） commit_creds(prepare_kernel_cred(0))
+
+在内核当中提供了 `prepare_kernel_cred()` 函数用以拷贝指定进程的 cred 结构体，当我们传入的参数为 NULL 时，该函数会拷贝 `init_cred` 并返回一个有着 root 权限的 cred：
+
+```c
+struct cred *prepare_kernel_cred(struct task_struct *daemon)
+{
+	const struct cred *old;
+	struct cred *new;
+
+	new = kmem_cache_alloc(cred_jar, GFP_KERNEL);
+	if (!new)
+		return NULL;
+
+	kdebug("prepare_kernel_cred() alloc %p", new);
+
+	if (daemon)
+		old = get_task_cred(daemon);
+	else
+		old = get_cred(&init_cred);
+```
+
+我们不难想到的是若是我们可以在内核空间中调用 `commit_creds(prepare_kernel_cred(NULL))`，则也能直接完成提权的工作
 
 ![72b919b7-87bb-4312-97ea-b59fe4690b2e](figure/elevation-of-privilege.png)
 
-在整个过程中，我们并不知道 cred 指针的具体位置。
+不过自从内核版本 6.2 起，`prepare_kernel_cred(NULL)` 将**不再拷贝 init\_cred，而是将其视为一个运行时错误并返回 NULL**，这使得这种提权方法无法再应用于 6.2 及更高版本的内核：
+
+```c
+struct cred *prepare_kernel_cred(struct task_struct *daemon)
+{
+	const struct cred *old;
+	struct cred *new;
+
+	if (WARN_ON_ONCE(!daemon))
+		return NULL;
+
+	new = kmem_cache_alloc(cred_jar, GFP_KERNEL);
+	if (!new)
+		return NULL;
+```
