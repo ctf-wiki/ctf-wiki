@@ -1,16 +1,10 @@
-# 基础知识
-
-Qemu 是一款开源的虚拟机软件，支持多种不同架构的模拟（Emulation）以及配合 kvm 完成当前架构的虚拟化（Virtualization）的特性，是当前最火热的开源虚拟机软件。
-
-本文我们将介绍 QEMU 内部的相关实现。
-
-## QEMU 内存管理
+# QEMU 内存管理
 
 本节讲述 QEMU 如何管理某个特定 VM 的内存。
 
-### Guest VM 视角（GPA）
+## Guest VM 视角（GPA）
 
-#### MemoryRegion：Guest 视角的一块“内存”
+### MemoryRegion：Guest 视角的一块“内存”
 
 在 Qemu 当中使用 `MemoryRegion` 结构体类型来表示一块具体的 Guest 物理内存区域，该结构体定义于 `include/exec/memory.h` 当中：
 
@@ -177,7 +171,7 @@ struct MemoryRegionOps {
 
 > 几乎所有的 CTF QEMU Pwn 题都是自定义一个设备并定义相应的 MMIO/PMIO 操作。
 
-#### FlatView：MR 树对应的 Guest 视角物理地址空间
+### FlatView：MR 树对应的 Guest 视角物理地址空间
 
 `FlatView` 用来表示**一棵 MemoryRegion 树所表示的 Guest 地址空间**，其使用一个 `FlatRange` 结构体指针数组来存储不同 `MemoryRegion` 对应的地址信息，每个 `FlatRange` 表示单个 `MemoryRegion` 的 **Guest 视角的一块物理地址空间**以及是否只读等特性信息， `FlatRange` 之间所表示的地址范围不会重叠。
 
@@ -209,7 +203,7 @@ struct FlatView {
 };
 ```
 
-#### AddressSpace：不同类型的 Guest 地址空间
+### AddressSpace：不同类型的 Guest 地址空间
 
 `AddressSpace` 结构体用以表示 **Guest 视角不同类型的地址空间**，在 x86 下其实就只有两种：`address_space_memory` 与 `address_space_io`。
 
@@ -239,9 +233,9 @@ struct AddressSpace {
 
 ![](./figure/qemu_mm.png)
 
-### host VMM 视角（HVA）
+## host VMM 视角（HVA）
 
-#### RAMBlock：MR 对应的 Host 虚拟内存
+### RAMBlock：MR 对应的 Host 虚拟内存
 
 `RAMBlock` 结构体用来表示**单个实体 MemoryRegion 所占用的 Host 虚拟内存信息**，多个 `RAMBlock` 结构体之间构成单向链表。
 
@@ -307,16 +301,6 @@ struct RAMBlock {
 对应关系如下图所示：
 
 ![](./figure/mr_ramblock_subregion.png)
-
-## QEMU 设备模拟
-
-### QEMU PCI 设备
-
-> 待施工。
-
-## QEMU CPU 调控
-
-> 待施工。
 
 ## REFERENCE
 

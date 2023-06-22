@@ -41,7 +41,7 @@ build$ ../qemu-7.0.0/configure --enable-kvm --target-list=x86_64-softmmu --enabl
 接下来直接 `make` 即可：
 
 ```shell
-build$ make
+build$ make -j$(nproc)
 ```
 
 完成编译之后在当前目录下可以看到一个新的可执行文件 `qemu-system_x86-64`，这个就是 Qemu 的本体了。
