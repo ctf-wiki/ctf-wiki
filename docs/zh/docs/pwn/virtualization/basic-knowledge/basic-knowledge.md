@@ -88,6 +88,14 @@
 - 我们将操作系统分为两个运行模式：「用户模式（user mode）」与「特权模式（privileged mode）」，在用户模式下只能直接执行非特权指令，当执行到特权指令时便会触发异常，从而陷入特权模式对应的处理代码中。
 - Guest VM 运行在用户模式下，从而使得普通指令可以直接放在 CPU 上执行，当 Guest VM 执行到**敏感指令**时，便会**触发异常，此时由 VMM 介入并模拟其应有的行为**。
 
+![](./figure/trap-emulate.png)
+
+而由于硬件实体资源也有着不同的类型，我们将对不同类型实体资源的虚拟化技术分为如下类型：
+
+- CPU 虚拟化
+- 内存虚拟化
+- I/O 虚拟化
+
 ## REFERENCE
 
 《系统虚拟化：原理与实现》——Intel 开源软件技术中心
@@ -95,5 +103,7 @@
 [【VIRT.0x02】系统虚拟化导论](https://arttnba3.cn/2022/08/29/VURTUALIZATION-0X02-BASIC_KNOWLEDGE/)
 
 [Intel® 64 and IA-32 Architectures Software Developer's Manual Volume 3C: System Programming Guide, Part 3](https://cdrdv2.intel.com/v1/dl/getContent/671506)
+
+[重学 Docker - part1: 虚拟化技术简述](https://zhuanlan.zhihu.com/p/363922044)
 
 [Formal Requirements for Virtualizable Third Generation Architectures](https://dl.acm.org/doi/pdf/10.1145/361011.361073)
