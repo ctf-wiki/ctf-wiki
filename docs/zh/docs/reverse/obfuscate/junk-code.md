@@ -451,4 +451,5 @@ ans = ""
 for i in range(14):
     ans += chr(ord(s[i]) ^ (ord(b[i]) + 2))
 print(ans)
+# {Fam3_is_NULL}
 ```
