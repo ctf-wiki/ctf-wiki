@@ -405,7 +405,7 @@ mchunkptr bins[ NBINS * 2 - 2 ];
 
 `bins` 主要用于索引不同 bin 的 fd 和 bk。
 
-为了简化在双链接列表中的使用，每个bin的header都设置为malloc_chunk类型。这样可以避免单独处理header。但是，为了节省空间和提高局部性，只分配bin的fd/bk指针，然后使用repositioning tricks将这些指针视为一个`malloc_chunk*`的字段。
+为了简化在双链接列表中的使用，每个bin的header都设置为malloc_chunk类型。这样可以避免header类型及其特殊处理。但是，为了节省空间和提高局部性，只分配bin的fd/bk指针，然后使用repositioning tricks将这些指针视为一个`malloc_chunk*`的字段。
 
 
 以 32 位系统为例，bins 前 4 项的含义如下
