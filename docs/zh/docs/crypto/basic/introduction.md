@@ -45,11 +45,7 @@
 
 ### 交换群
 
-给定一个群 $(G,\circ)$，如若其满足交换律（Commutativity）i.e. $\forall v, u \in G,$
-
-$$ v \circ u = u \circ v, $$
-
-则称这个群是一个**交换群**或 Abel（阿贝尔）群（Abelian Group）。
+给定一个群 $(G,\circ)$，如若其满足交换律（Commutativity）i.e. $\forall v, u \in G,$ $ v \circ u = u \circ v, $ 则称这个群是一个**交换群**或 Abel（阿贝尔）群（Abelian Group）。
 
 易见，上文提到的举例中，整数加法群 $(\mathbb{Z},+)$ 是交换群，但 $m$ 阶一般线性群 $GL_m(\mathbb{R})$ 不是交换群。
 
