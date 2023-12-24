@@ -71,8 +71,16 @@ this pogram will crash...
 
 #### add_note
 
-根据程序，我们可以看出程序最多可以添加5个note。每个note有两个字段put与content，其中put会被设置为一个函数，其函数会输出 content 具体的内容。
+根据程序，我们可以看出程序最多可以添加5个note。每个note有两个字段: `void (*printnote)();` 与`char *content;`，其中`printnote`会被设置为一个函数，其函数功能为输出 `content` 具体的内容。
 
+note的结构体定义如下:
+```c
+struct note {
+  void (*printnote)();
+  char *content;
+};
+```
+add_note 函数代码如下:
 ```c++
 unsigned int add_note()
 {
@@ -180,15 +188,15 @@ unsigned int del_note()
 
 ### 利用分析
 
-我们可以看到 Use After Free 的情况确实可能会发生，那么怎么可以让它发生并且进行利用呢？需要同时注意的是，这个程序中还有一个magic函数，我们有没有可能来通过use after free 来使得这个程序执行magic函数呢？**一个很直接的想法是修改note的put字段为magic函数的地址，从而实现在执行print note 的时候执行magic函数。** 那么该怎么执行呢？                                                                         
+我们可以看到 Use After Free 的情况确实可能会发生，那么怎么可以让它发生并且进行利用呢？需要同时注意的是，这个程序中还有一个magic函数，我们有没有可能来通过use after free 来使得这个程序执行magic函数呢？**一个很直接的想法是修改note的`printnote`字段为magic函数的地址，从而实现在执行`printnote` 的时候执行magic函数。** 那么该怎么执行呢？                                                                         
 
 我们可以简单来看一下每一个note生成的具体流程
 
-1. 程序申请8字节内存用来存放note中的put以及content指针。
+1. 程序申请8字节内存用来存放note中的printnote以及content指针。
 2. 程序根据输入的size来申请指定大小的内存，然后用来存储content。
 
            +-----------------+                       
-           |   put           |                       
+           |   printnote     |                       
            +-----------------+                       
            |   content       |       size              
            +-----------------+------------------->+----------------+
@@ -197,7 +205,7 @@ unsigned int del_note()
                                                   |                |
                                                   +----------------+
 
-那么，根据我们之前在堆的实现中所学到的，显然note是一个fastbin chunk（大小为16字节）。我们的目的是希望一个note的put字段为magic的函数地址，那么我们必须想办法让某个note的put指针被覆盖为magic地址。由于程序中只有唯一的地方对put进行赋值。所以我们必须利用写real content的时候来进行覆盖。具体采用的思路如下
+那么，根据我们之前在堆的实现中所学到的，显然note是一个fastbin chunk（大小为16字节）。我们的目的是希望一个note的put字段为magic的函数地址，那么我们必须想办法让某个note的printnote指针被覆盖为magic地址。由于程序中只有唯一的地方对printnote进行赋值。所以我们必须利用写real content的时候来进行覆盖。具体采用的思路如下
 
 - 申请note0，real content size为16（大小与note大小所在的bin不一样即可）
 - 申请note1，real content size为16（大小与note大小所在的bin不一样即可）
@@ -523,7 +531,7 @@ $eflags: [carry PARITY adjust ZERO sign trap INTERRUPT direction overflow resume
  →  0x8048761 <add_note+235>   add    esp, 0x10
 ```
 
-我们来具体检验一下，看一下覆盖前的情况，可以看到该内存块的put指针已经被置为NULL了，这是由fastbin的free机制决定的。
+我们来具体检验一下，看一下覆盖前的情况，可以看到该内存块的`printnote`指针已经被置为NULL了，这是由fastbin的free机制决定的。
 
 ```asm
 gef➤  x/2xw 0x804b008

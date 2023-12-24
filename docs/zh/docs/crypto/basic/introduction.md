@@ -14,10 +14,10 @@
 
 给定一个集合 $G\neq\varnothing$ 以及其上的二元代数运算「 $\circ$ 」，如若它们满足如下性质：
 
-1. 封闭性（Closure）： $\forall v, u \in G,$ $$ v \circ u \in G; $$
-2. 结合律（Associativity）： $\forall v, u, w \in G,$ $$ (v \circ u) \circ w = v \circ (u \circ w); $$
-3. 单位元（Identity）： $\exists e \in G, \forall v \in G,$ $$ e \circ v = v; $$
-4. 逆元（Inverse，亦称反元）： $\forall v \in G, \exists v^{-1} \in G,$ $$ v^{-1} \circ v = e; $$
+1. 封闭性（Closure）： $\forall v, u \in G, \quad v \circ u \in G;$
+2. 结合律（Associativity）： $\forall v, u, w \in G, \quad (v \circ u) \circ w = v \circ (u \circ w);$
+3. 单位元（Identity）： $\exists e \in G, \forall v \in G, \quad e \circ v = v;$
+4. 逆元（Inverse，亦称反元）： $\forall v \in G, \exists v^{-1} \in G, \quad v^{-1} \circ v = e;$
 
 则称集合 $G$ 对该代数运算作成一个**群**（Group），记作 $(G,\circ)$.
 
@@ -45,7 +45,7 @@
 
 ### 交换群
 
-给定一个群 $(G,\circ)$，如若其满足交换律（Commutativity）i.e. $\forall v, u \in G,$ $$ v \circ u = u \circ v, $$ 则称这个群是一个**交换群**或阿贝尔群（Abelian Group）。
+给定一个群 $(G,\circ)$，如若其满足交换律（Commutativity）i.e. $\forall v, u \in G,$ $ v \circ u = u \circ v, $ 则称这个群是一个**交换群**或 Abel（阿贝尔）群（Abelian Group）。
 
 易见，上文提到的举例中，整数加法群 $(\mathbb{Z},+)$ 是交换群，但 $m$ 阶一般线性群 $GL_m(\mathbb{R})$ 不是交换群。
 
@@ -54,19 +54,19 @@
 给定一个集合 $R\neq\varnothing$ 以及其上的两个二元代数运算「 $+$ 」和「 $\circ$ 」，如若它们满足如下性质：
 
 1. $(R,+)$ 作成交换群；
-2. $R$ 对运算「 $\circ$ 」满足结合律： $\forall v, u, w \in R,$ $$ (v \circ w) \circ u = v \circ (w \circ u); $$
-3. 分配律（Distributivity）： $\forall v, u, w \in R,$ $$ w \circ (v + u) = w \circ v + w \circ u $$ 与 $$ (v + u) \circ w = v \circ w + u \circ w $$ 成立；
+2. $R$ 对运算「 $\circ$ 」满足结合律： $\forall v, u, w \in R,$ 皆有 $(v \circ w) \circ u = v \circ (w \circ u);$
+3. 分配律（Distributivity）： $\forall v, u, w \in R,$ 皆有 $w \circ (v + u) = w \circ v + w \circ u$ 与 $(v + u) \circ w = v \circ w + u \circ w$ 成立；
 
 则称集合 $R$ 对此二代数运算作成一个**环**（Ring），记作 $(R,+,\circ)$，并常分别称运算「$+$」和「$\circ$」为加法和乘法。
 
-* 如若环 $R$ 上的乘法存在单位元 i.e. $\exists e \in G, \forall v \in G,$ $$ e \circ v = v, $$ 则称环 $R$ 为**幺环**（Ring with identity）；
+* 如若环 $R$ 上的乘法存在单位元 i.e. $\exists e \in G, \forall v \in G,$ 皆有 $e \circ v = v,$ 则称环 $R$ 为**幺环**（Ring with identity）；
 * 如若环 $R$ 上的乘法满足交换律，则称其为**交换环**（Commutative Ring）；
 * 如若环 $R$ 中对除加法单位元外任意元素 $a \neq 0$ 皆存在乘法逆元 $a^{-1}$，则称 $R$ 为**除环**（Division Ring）；
 * 如若环 $R$ 既是交换环又是除环，那么环 $R$ 是一个**域**（Field）。
 
 > 在部分书籍中，默认环含有乘法单位元，并称不含有乘法单位元的环为**伪环**（Pseudo Ring）。
 
-在近世代数中，研究环和域的分支被分别称为**环论**（Ring Theory）和**域论**（Feild Theory）。
+在近世代数中，研究环和域的分支被分别称为**环论**（Ring Theory）和**域论**（Field Theory）。
 
 > 在部分繁体中文语境下，域和域论常被称为**体**和**体论**（繁体中文分别写作「體」和「體論」）。
 
@@ -78,7 +78,7 @@
 * $v^m = v \circ v \circ \cdots \circ v,$ 其中共有 $m$ 个 $v$ 参与代数运算；
 * $v^{-m} = \left(v^{-1}\right)^m;$
 
-元素的阶：对于任意给定的元素 $v \in G,$ 如若正整数 $m$ 满足 $$ v^m = e, $$ 则称元素 $v$ 的阶数为 $m$. 如若这样的正整数不存在，则称该元素的阶为无限。
+元素的阶：对于任意给定的元素 $v \in G,$ 如若正整数 $m$ 满足 $v^m = e,$ 则称元素 $v$ 的阶数为 $m$. 如若这样的正整数不存在，则称该元素的阶为无限。
 
 举例而言，在群 $\left(\{1,-1,+\mathrm{j},-\mathrm{j}\},\times\right)$ 中，各元素的阶如下：
 
