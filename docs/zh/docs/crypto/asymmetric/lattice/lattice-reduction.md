@@ -44,7 +44,7 @@ $\sqrt{1+\sum\limits_{i=1}^n\alpha_i^2}$
 
 那么经过 LLL 算法后，我们可以获得
 
-$||b_1|| \leq 2^{\frac{n-1}{4}} (1+\sum\limits_{i=1}^n\alpha_i^2)^{\frac{1}{2(n+1)}}$
+$||b_1|| \leq 2^{\frac{n-1}{4}} (1+\sum\limits_{i=1}^n\alpha_i^2)^{\frac{1}{2n}}$
 
 一般来说后一项在开 n 次方时趋向于1，因为 $a_i$ 都是常数，一般不会和 n 相关，所以
 
