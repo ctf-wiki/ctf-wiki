@@ -113,7 +113,7 @@ main_arena_offset = ELF("libc.so.6").symbols["__malloc_hook"] + 0x10
 
 
 
-这里我以 shellphish 的 how2heap 仓库中的 [unsorted_bin_attack.c](https://github.com/shellphish/how2heap/blob/master/unsorted_bin_attack.c) 为例进行介绍，这里我做一些简单的修改，如下
+这里我以 shellphish 的 how2heap 仓库中的 [unsorted_bin_attack.c](https://github.com/shellphish/how2heap/blob/master/glibc_2.27/unsorted_bin_attack.c) 为例进行介绍，这里我做一些简单的修改，如下
 
 ```c
 #include <stdio.h>

@@ -734,7 +734,7 @@ tcache_put (mchunkptr chunk, size_t tc_idx)
 
 因为没有任何检查，所以我们可以对同一个 chunk 多次 free，造成 cycliced list。
 
-以 how2heap 的 [tcache_dup](https://github.com/shellphish/how2heap/blob/master/glibc_2.26/tcache_dup.c) 为例分析，源码如下：
+以 how2heap 的 [tcache_dup](https://github.com/shellphish/how2heap/blob/master/glibc_2.27/tcache_dup.c) 为例分析，源码如下：
 ```C
 glibc_2.26 [master●] bat ./tcache_dup.c 
 ───────┬─────────────────────────────────────────────────────────────────────────────────
