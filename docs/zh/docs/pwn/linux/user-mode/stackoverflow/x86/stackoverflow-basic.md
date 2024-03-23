@@ -2,7 +2,7 @@
 
 ## 介绍
 
-栈溢出指的是程序向栈中某个变量中写入的字节数超过了这个变量本身所申请的字节数，因而导致与其相邻的栈中的变量的值被改变。这种问题是一种特定的缓冲区溢出漏洞，类似的还有堆溢出，bss 段溢出等溢出方式。栈溢出漏洞轻则可以使程序崩溃，重则可以使攻击者控制程序执行流程。此外，我们也不难发现，发生栈溢出的基本前提是
+栈溢出指的是程序向栈中某个变量中写入的字节数超过了这个变量本身所申请的字节数，因而导致与其相邻的栈中的变量的值被改变。这种问题是一种特定的缓冲区溢出漏洞，类似的还有堆溢出，bss 段溢出等溢出方式。栈溢出漏洞轻则可以使程序崩溃，重则可以使攻击者控制程序执行流程。此外，我们也不难发现，发生栈溢出的基本前提是：
 
 - 程序必须向栈上写入数据。
 - 写入的数据大小没有被良好地控制。
@@ -14,16 +14,26 @@
 ```C
 #include <stdio.h>
 #include <string.h>
-void success() { puts("You Hava already controlled it."); }
-void vulnerable() {
-  char s[12];
-  gets(s);
-  puts(s);
-  return;
+
+void success(void)
+{
+    puts("You Hava already controlled it.");
 }
-int main(int argc, char **argv) {
-  vulnerable();
-  return 0;
+
+void vulnerable(void)
+{
+    char s[12];
+
+    gets(s);
+    puts(s);
+
+    return;
+}
+
+int main(int argc, char **argv)
+{
+    vulnerable();
+    return 0;
 }
 ```
 
@@ -64,7 +74,7 @@ gcc 编译指令中，`-m32` 指的是生成 32 位程序； `-fno-stack-protect
 - 1，普通的 ASLR。栈基地址、mmap基地址、.so加载基地址都将被随机化，但是堆基地址没有随机化。
 - 2，增强的ASLR，在 1 的基础上，增加了堆基地址随机化。
 
-我们可以使用`echo 0 > /proc/sys/kernel/randomize_va_space`关闭 Linux 系统的 ASLR，类似的，也可以配置相应的参数。
+我们可以使用 `echo 0 > /proc/sys/kernel/randomize_va_space` 关闭 Linux 系统的 ASLR，类似的，也可以配置相应的参数。
 
 为了降低后续漏洞利用复杂度，我们这里关闭 ASLR，在编译时关闭 PIE。当然读者也可以尝试 ASLR、PIE 开关的不同组合，配合 IDA 及其动态调试功能观察程序地址变化情况（在 ASLR 关闭、PIE 开启时也可以攻击成功）。
 
