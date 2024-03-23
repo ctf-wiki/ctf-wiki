@@ -382,6 +382,8 @@ hardened usercopy 是用以在用户空间与内核空间之间拷贝数据时�
 
 需要注意的是这种保护发生在**slub allocator 刚从 buddy system 拿到新 slub 的时候，运行时 freelist 的构成仍遵循 LIFO**。
 
+![Random freelist](./figure/freelist_random.png)
+
 #### CONFIG\_INIT\_ON\_ALLOC\_DEFAULT\_ON
 
 当编译内核时开启了这个选项时，在内核进行“堆内存”分配时（包括 buddy system 和 slab allocator），**会将被分配的内存上的内容进行清零**，从而防止了利用未初始化内存进行数据泄露的情况。
