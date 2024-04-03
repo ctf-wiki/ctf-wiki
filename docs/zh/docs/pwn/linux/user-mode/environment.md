@@ -55,7 +55,7 @@ RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
 RUN groupadd arttnba3 && \
     useradd -g arttnba3 arttnba3 -m -s /bin/bash && \
     echo "arttnba3:123456" | chpasswd && \
-    echo "root:root123456" | chpasswd
+    echo "root:123456" | chpasswd
 
 # enable ssh key login
 #RUN mkdir /home/arttnba3/.ssh && \
@@ -114,19 +114,30 @@ pwnenv_ubuntu22          latest      c129ca086a72   15 seconds ago   2.81GB
 
 ### 从 Docker 镜像创建容器
 
-我们只需要通过如下命令便能基于我们刚刚创建的 Docker 镜像创建一个名为 `pwn22` 的 Docker 容器，并将容器的 `22` 端口映射到本地的 `25000` 端口：
+我们只需要运行如下命令便能基于我们刚刚创建的 Docker 镜像创建一个新的容器，方便起见你可以将其创建为一个脚本，各参数说明如下：
+
+- `-d`： 使容器在后台运行
+- `-p 25000:2222`： 容器的 `22` 端口映射到本地的 `25000` 端口
+- `--name=pwn22`： 容器名为 `pwn22`
+- `-v ~/Desktop/CTF:/CTF` ： 将本地的 `~/Desktop/CTF` 目录映射到容器中的 `/CTF` 目录，这样我们便能在容器内访问到本地文件，而无需将文件重复拷贝进容器中
+- `pwnenv_ubuntu22`：创建容器所使用的镜像
 
 ```shell
-$ docker run -d -p 25000:22 --name=pwn22 pwnenv_ubuntu22
+$ docker run \
+	-d \
+	-p 25000:22 \
+	--name=pwn22 \
+	-v ~/Desktop/CTF:/CTF \
+	pwnenv_ubuntu22
 ```
 
 之后通过如下命令便能进入到容器当中：
 
 ```shell
-$ docker exec -w ~ -e TERM=xterm-256color -u arttnba3 -it pwn22 bash
+$ docker exec -w /CTF -e TERM=xterm-256color -it pwn22 bash
 ```
 
-若是我们想要在容器与本地间进行文件传输，则可以使用 `docker cp` 命令：
+如果你不想将本地目录与容器进行共享，而是想要将所需文件拷贝一份到容器中，则可以使用 docker cp 命令：
 
 ```shell
 $ docker cp 本地源文件路径 容器名:容器内目的路径
@@ -139,33 +150,62 @@ $ docker cp 容器名:容器内源文件路径 本地目的路径
 $ ssh root@localhost -p 25000
 ```
 
-若是容器环境被我们折腾坏了，则可以直接通过 `docker rm 容器名` 进行删除（注：容器内文件会丢失），之后再重新使用 `docker run` 创建新容器即可。
+若是容器环境被我们折腾坏了，则可以直接通过 `docker rm 容器名` 进行删除，之后再重新使用 `docker run` 创建新容器即可，需要注意的是这种方式会将新拷贝进容器的文件给删除（但不会删除挂载目录）。
 
 ### 将 Docker 容器接入本地图形界面
 
 pwntools 自带的调试命令 `gdb.attach()` 需要创建新的窗口，而在容器中直接运行会失败，因此我们需要为容器接入本地的图形服务，以达成原生的运行效果（直接弹出一个新的窗口）。
 
+> 若是觉得这种办法比较麻烦，也可以选择使用 tmux 配置多窗口，只需在运行 `gdb.attach()` 命令前运行 `context.terminal = ['tmux', 'splitw', '-h']` 即可。
+
+#### For Wayland
+
 对于 Wayland 环境，在创建容器时我们需要额外附加一些参数：
 
 ```shell
-$ docker run -d -p "25000:22" \
+$ docker run \
+	-d \
+	-p "25000:22" \
 	--name=pwn22 \
+	-v ~/Desktop/CTF:/CTF \
 	-e XDG_RUNTIME_DIR=/tmp \
 	-e DISPLAY=$DISPLAY \
 	-e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
 	-v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY \
 	-e QT_QPA_PLATFORM=wayland \
-	pwnenv_ubuntu20
+	pwnenv_ubuntu22
 ```
 
 之后在运行 `gdb.attach()` 之前运行如下 python 语句之一进行配置即可，请根据自己所使用的桌面环境进行选择：
 
 ```python
 context.terminal = ['konsole', '-e', 'sh', '-c'] # for KDE
-context.terminal = ['gnome-terminal', '-e', 'sh', '-c'] #  for Gnome
+context.terminal = ['gnome-terminal', '-e', 'sh', '-c'] # for Gnome
 ```
 
-对于使用 X11 图形服务的，请参考 [Running pwnlib gdb (pwntools) feature inside Docker](https://gist.github.com/turekt/71f6950bc9f048daaeb69479845b672b) 进行配置。
+#### For X11
+
+对于使用 X11 图形服务的，在创建容器时我们则需要附加如下参数：
+
+```shell
+$ docker run \
+	-d \
+	-p "25000:22" \
+	--name=pwn22 \
+	-v ~/Desktop/CTF:/CTF \
+	-v /tmp/.X11-unix:/tmp/.X11-unix \
+	-e DISPLAY=$DISPLAY \
+	pwnenv_ubuntu22
+```
+
+之后在运行 `gdb.attach()` 之前运行如下 python 语句之一进行配置即可，请根据自己所使用的桌面环境进行选择：
+
+```python
+context.terminal = ['konsole', '-e', 'sh', '-c'] # for KDE
+context.terminal = ['gnome-terminal', '-e', 'sh', '-c'] # for Gnome
+```
+
+> 参考 [Running pwnlib gdb (pwntools) feature inside Docker](https://gist.github.com/turekt/71f6950bc9f048daaeb69479845b672b) 。
 
 ## 在本地直接搭建 CTF Pwn 做题环境
 
