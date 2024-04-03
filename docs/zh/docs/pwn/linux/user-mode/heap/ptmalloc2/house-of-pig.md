@@ -6,7 +6,7 @@ House of Pig 这种利用方法来自 XCTF-FINAL 2021 的同名题目。
 
 ## 概括
 
-House of Pig 是一个将 Tcache Statsh Unlink+ Attack 和 FSOP 结合的攻击，同时使用到了 Largebin Attack 进行辅助。主要适用于 libc 2.31及以后的新版本 libc 并且程序中仅有 calloc 时。
+House of Pig 是一个将 Tcache Stash Unlink+ Attack 和 FSOP 结合的攻击，同时使用到了 Largebin Attack 进行辅助。主要适用于 libc 2.31及以后的新版本 libc 并且程序中仅有 calloc 时。
 
 利用条件为
 
