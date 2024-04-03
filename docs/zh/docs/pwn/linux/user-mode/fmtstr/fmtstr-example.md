@@ -367,11 +367,11 @@ Input your password(max lenth:20):
 %p%p%p%p%p%p%p%p%p%p
 Register Success!!
 1.Sh0w Account Infomation!
-2.Ed1t Account Inf0mation!
+2.Ed1t Account Infomation!
 3.QUit sangebaimao:(
 >error options
 1.Sh0w Account Infomation!
-2.Ed1t Account Inf0mation!
+2.Ed1t Account Infomation!
 3.QUit sangebaimao:(
 >1
 ...
