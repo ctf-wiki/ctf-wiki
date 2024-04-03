@@ -261,15 +261,15 @@ note: If you believe this is a mistake, please contact your Python installation 
 我们可以通过如下命令创建一个新的虚拟环境（若路径不存在，则将被创建）：
 
 ```shell
-python3 -m venv /venv文件夹路径
+python3 -m venv 自定义的venv文件夹路径
 ```
 
 完成创建之后，我们便可以通过 `source` 命令进入到 venv 中，请根据你所使用的 shell 进行选择其中之一：
 
 ```shell
-source /venv文件夹路径/bin/activate         # for bash
-source /venv文件夹路径/bin/activate.fish    # for fish
-source /venv文件夹路径/bin/activate.csh     # for csh/tcsh
+source 自定义的venv文件夹路径/bin/activate         # for bash
+source 自定义的venv文件夹路径/bin/activate.fish    # for fish
+source 自定义的venv文件夹路径/bin/activate.csh     # for csh/tcsh
 ```
 
 > 你也可以选择将这条命令加入到 `~/.bashrc` 文件中，从而在打开 shell 时默认执行。
