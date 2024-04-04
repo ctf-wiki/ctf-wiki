@@ -275,7 +275,7 @@ int main(void)
 ```
 前向extend利用了smallbin的unlink机制，通过修改pre_size域可以跨越多个chunk进行合并实现overlapping。
 
-## HITCON Trainging lab13
+## HITCON Training lab13
 [题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/chunk-extend-shrink/hitcontraning_lab13)
 
 ### 基本信息
