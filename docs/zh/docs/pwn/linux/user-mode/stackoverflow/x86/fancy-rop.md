@@ -861,7 +861,7 @@ pwndbg> x/10i (0x0A3E+0x55dc43694000)
    0x55dc43694a52:	mov    rbp,rsp
    0x55dc43694a55:	sub    rsp,0x10
 ```
-可以发现, 此时的返回地址与 get shell 函数的地址只有低位的 16 bit 不同, 如果覆写低 16 bit 为 `0x?A3E`, 就有一定的几率 get shell
+可以发现, 此时的返回地址与 get shell 函数的地址只有低位的 8 bit 不同, 如果覆写低 8 bit 为 `0x?A3E`, 就有一定的几率 get shell
 
 最终的脚本如下:
 ```python
