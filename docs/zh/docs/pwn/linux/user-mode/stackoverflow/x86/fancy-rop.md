@@ -430,7 +430,7 @@ libc_hidden_def (__fortify_fail)
 
 ### 32C3 CTF readme
 
-这里，我们以 2015 年 32C3 CTF readme 为例进行介绍，该题目在 jarvisoj 上有复现。
+这里，我们以 2015 年 32C3 CTF readme 为例进行介绍，该题目在 [jarvisoj](https://www.jarvisoj.com/challenges) 上有复现。方便读者复现, binary 也可以在 [ctf-challenge ](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/stacksmashes/32c3-CTF-readme)这个仓库找到
 
 #### 确定保护
 

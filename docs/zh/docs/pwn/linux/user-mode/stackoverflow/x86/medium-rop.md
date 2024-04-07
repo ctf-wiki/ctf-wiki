@@ -61,7 +61,7 @@
 
 ### 示例
 
-这里我们以蒸米的一步一步学 ROP 之 linux_x64 篇中 level5 为例进行介绍。首先检查程序的安全保护
+这里我们以蒸米的一步一步学 ROP 之 linux_x64 篇中 [level5](https://github.com/zhengmin1989/ROP_STEP_BY_STEP/blob/master/linux_x64/level5) 为例进行介绍。首先检查程序的安全保护
 
 ```shell
 ➜  ret2__libc_csu_init git:(iromise) ✗ checksec level5
@@ -260,8 +260,8 @@ gef➤  x/5i 0x000000000040061A+9
 
 ### 参考阅读
 
-- http://wooyun.jozxing.cc/static/drops/papers-7551.html
-- http://wooyun.jozxing.cc/static/drops/binary-10638.html
+- http://drops.xmd5.com/static/drops/papers-7551.html
+- http://drops.xmd5.com/static/drops/binary-10638.html
 
 ## ret2reg
 
