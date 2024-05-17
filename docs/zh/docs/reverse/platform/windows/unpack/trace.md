@@ -11,7 +11,7 @@
 
 ## 示例
 
-示例程序可以点击此处下载: [1_trace.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/1_trace.zip)
+示例程序可以点击此处下载: [1_trace.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/1_trace.zip)
 
 单步跟踪法其实就是一步一步尽量从程序入口点往下走, 在单步的过程中注意EIP不要跑偏了, 但是对于一些比较复杂的壳而言, 单步的过程会显得异常枯燥而且容易把自己绕晕. 所以单步跟踪也常用于分析一些关键代码部分(跟静态分析相结合), 而不是完全地从头分析到尾, 这有违逆向工程的理念.
 
