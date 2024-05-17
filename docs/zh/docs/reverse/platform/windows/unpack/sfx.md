@@ -10,7 +10,7 @@
 
 ## 示例
 
-示例程序可以点击此处下载: [6_sfx.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/6_sfx.zip)
+示例程序可以点击此处下载: [6_sfx.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/6_sfx.zip)
 
 首先我们在菜单`选项->调试设置->异常标签页`中勾选所有忽略异常.
 
