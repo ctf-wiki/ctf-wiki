@@ -13,7 +13,7 @@
 
 ## 示例
 
-示例程序可以点击此处下载: [3_direct2oep.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/example/3_direct2oep.zip)
+示例程序可以点击此处下载: [3_direct2oep.zip](https://github.com/ctf-wiki/ctf-challenges/blob/master/reverse/unpack/3_direct2oep.zip)
 
 还是用的原先的notepad.exe来示例, 用`Ollydbg`打开后, 我们按下`ctrl+f`来查找指定的字符串, 像`popad`是典型的一个特征, 有部分壳它就常用`popad`来恢复状态, 所以如下图所示来搜索`popad`.
 
