@@ -56,7 +56,7 @@ static __thread tcache_perthread_struct *tcache = NULL;
 
 用图表示大概是：
 
-![](http://ww1.sinaimg.cn/large/006AWYXBly1fw87zlnrhtj30nh0ciglz.jpg)
+![](https://i0.wp.com/tvax1.sinaimg.cn/large/006AWYXBly1fw87zlnrhtj30nh0ciglz.jpg)
 
 
 ## 基本工作方式
