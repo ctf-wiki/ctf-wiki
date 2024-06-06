@@ -8,7 +8,7 @@ CTR全称为计数器模式（Counter mode），该模式由 Diffe 和 Hellman �
 
 ## 解密
 
-![](./figure/ctr_encryption.png)
+![](./figure/ctr_decryption.png)
 
 ## 题目
 
