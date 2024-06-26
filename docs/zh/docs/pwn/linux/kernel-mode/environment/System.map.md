@@ -54,14 +54,10 @@ else:
 加载前后对比
 ![System.map-load-diff](figure/System.map-load-diff.png)
 
-## 在gdb为stripped的vmlinux添加System.map
-
-
-
-
-## 参考
-https://linux.die.net/man/1/nm
 
 ## 直接修复vmlinux
 
 如果你想直接修复vmlinux，可以参考https://github.com/marin-m/vmlinux-to-elf
+
+## 参考
+https://linux.die.net/man/1/nm
