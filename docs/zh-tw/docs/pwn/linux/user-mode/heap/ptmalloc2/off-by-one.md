@@ -818,7 +818,7 @@ UAF 漏洞最簡單的方法當然是 fastbin attack 了，所以我採用了 fa
 
 ```
 +------------+
-|            |  <-- free 的 unsortedbin 或是 smallbin chunk （因爲此時 fd 和 bk 指向合法指針，才能夠進行 unlink）
+|            |  <-- free 的 unsortedbin 或是 smallbin chunk （因爲此時 fd 和 bk 指向合法指針，纔能夠進行 unlink）
 +------------+
 |     ...    |  <-- 任意 chunk
 +------------+

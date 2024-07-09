@@ -161,7 +161,7 @@ m_q &= \sqrt{c} \bmod q
 \end{align*}
 $$
 
-- 用擴展歐幾里得計算出 $y_p$ 和 $y_q$：
+- 用擴展歐幾裏得計算出 $y_p$ 和 $y_q$：
 
 $$
 y_p \cdot p + y_q \cdot q = 1

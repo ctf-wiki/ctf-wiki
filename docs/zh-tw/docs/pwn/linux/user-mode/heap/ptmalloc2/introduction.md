@@ -19,7 +19,7 @@ libumem   – Solaris
 
 這裏我們主要以 glibc 中堆的實現爲主進行介紹。如果後續有時間，會繼續介紹其它堆的實現及其利用。
 
-該部分主要參考的資料如下，文中有很多內容會和參考資料中一致，以後就不一一說明了。
+該部分主要參考的資料如下，文中有很多內容會和參考資料中一致，以後就不一一說明瞭。
 
 - [black hat heap exploitation](https://www.blackhat.com/presentations/bh-usa-07/Ferguson/Whitepaper/bh-usa-07-ferguson-WP.pdf)
 - [github heap exploition](https://heap-exploitation.dhavalkapil.com/)

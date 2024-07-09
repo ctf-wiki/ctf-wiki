@@ -19,7 +19,7 @@ ELF （Executable and Linkable Format）文件，也就是在 Linux 中的目標
 
 > 關於Link eDitor的命名，https://en.wikipedia.org/wiki/GNU_linker
 
-目標文件由彙編器和鏈接器創建，是文本程序的二進制形式，可以直接在處理器上運行。那些需要虛擬機才能夠執行的程序(Java)不屬於這一範圍。
+目標文件由彙編器和鏈接器創建，是文本程序的二進制形式，可以直接在處理器上運行。那些需要虛擬機纔能夠執行的程序(Java)不屬於這一範圍。
 
 這裏我們主要關注於 ELF 的文件格式。
 

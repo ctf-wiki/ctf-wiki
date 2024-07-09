@@ -133,7 +133,7 @@ static void malloc_printerr(const char *str) {
   }
 ```
 
-在`abort` 函數里，在 glibc 還是2.23 版本時，會 fflush stream。
+在`abort` 函數裏，在 glibc 還是2.23 版本時，會 fflush stream。
 
 ```c
   /* Flush all streams.  We cannot close them now because the user

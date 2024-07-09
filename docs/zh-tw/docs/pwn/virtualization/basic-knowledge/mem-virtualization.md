@@ -73,9 +73,9 @@ Physical memory    |    |                                               |    |  
 
 從軟件層面似乎已經是難以有更好的優化的方案了，因此硬件層面的對內存虛擬化的支持便應運而生——**EPT** 即 **Extend Page Table**，是 Intel 爲實現內存虛擬化而新增的特性，目的是爲了減少內存訪問的開銷。
 
-EPT 並不干擾 Guest VM 操作自身頁表的過程，其本質上是**額外提供了一個 Guest 物理地址空間到 Host 物理地址空間轉換的頁表**，即使用一個額外的頁表來完成 `GPA→HPA` 的轉換。
+EPT 並不幹擾 Guest VM 操作自身頁表的過程，其本質上是**額外提供了一個 Guest 物理地址空間到 Host 物理地址空間轉換的頁表**，即使用一個額外的頁表來完成 `GPA→HPA` 的轉換。
 
-EPT 方案雖然相比起影子頁表而言多了一層轉換，但是並不需要干擾 Guest 原有的頁表管理，**GVA→GPA→HPA 的過程都由硬件自動完成**，同時 Hypervisor 僅需要截獲 `EPT Violation` 異常（EPT 表項爲空），效率提高了不少。
+EPT 方案雖然相比起影子頁表而言多了一層轉換，但是並不需要幹擾 Guest 原有的頁表管理，**GVA→GPA→HPA 的過程都由硬件自動完成**，同時 Hypervisor 僅需要截獲 `EPT Violation` 異常（EPT 表項爲空），效率提高了不少。
 
 ![](./figure/ept.png)
 

@@ -142,7 +142,7 @@ Kernel: arch/x86/boot/bzImage is ready  (#1)
 - **vmlinuz**：vmlinuz 不僅包含了壓縮後的 vmlinux，還包含了 gzip 解壓縮的代碼。實際上就是 zImage 或者 bzImage 文件。該文件是 bootable 的。 bootable 是指它能夠把內核加載到內存中。對於 Linux 系統而言，該文件位於 /boot 目錄下。該目錄包含了啓動系統時所需要的文件。
 - **vmlinux**：靜態鏈接的 Linux kernel，以可執行文件的形式存在，尚未經過壓縮。該文件往往是在生成 vmlinuz 的過程中產生的。該文件適合於調試。但是該文件不是 bootable 的。
 - **vmlinux.bin**：也是靜態鏈接的 Linux kernel，只是以一個可啓動的 (bootable) 二進制文件存在。所有的符號信息和重定位信息都被刪除了。生成命令爲：`objcopy -O binary vmlinux vmlinux.bin`。
-- **uImage**：uImage 是 U-boot 專用的鏡像文件，它是在 zImage 之前加上了一個長度爲 0x40 的 tag 而構成的。這個 tag 說明了這個鏡像文件的類型、加載位置、生成時間、大小等信息。
+- **uImage**：uImage 是 U-boot 專用的鏡像文件，它是在 zImage 之前加上了一個長度爲 0x40 的 tag 而構成的。這個 tag 說明瞭這個鏡像文件的類型、加載位置、生成時間、大小等信息。
 
 ## 參考
 

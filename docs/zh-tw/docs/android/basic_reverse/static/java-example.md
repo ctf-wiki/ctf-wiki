@@ -252,7 +252,7 @@ KeyVerifier.isValidLicenceKey(editText.getText().toString(), MainActivity.this.a
 
 #### 參數3
 
-其實，參數3類似於參數2。這裏就不做說明了。
+其實，參數3類似於參數2。這裏就不做說明瞭。
 
 ### 獲取數據庫文件
 

@@ -78,7 +78,7 @@ gcc 編譯指令中，`-m32` 指的是生成 32 位程序； `-fno-stack-protect
 
 爲了降低後續漏洞利用複雜度，我們這裏關閉 ASLR，在編譯時關閉 PIE。當然讀者也可以嘗試 ASLR、PIE 開關的不同組合，配合 IDA 及其動態調試功能觀察程序地址變化情況（在 ASLR 關閉、PIE 開啓時也可以攻擊成功）。
 
-確認棧溢出和 PIE 保護關閉後，我們利用 IDA 來反編譯一下二進制程序並查看 vulnerable 函數 。可以看到
+確認棧溢出和 PIE 保護關閉後，我們利用 IDA 來反編譯一下二進製程序並查看 vulnerable 函數 。可以看到
 
 ```C
 int vulnerable()

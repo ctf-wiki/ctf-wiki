@@ -20,11 +20,11 @@ $ sudo ln -s /usr/mipsel-linux-gnu /etc/qemu-binfmt/mipsel
 ```
 ## 題目
 ### 1 ropemporium ret2text
-跟到 pwnme 函數里
+跟到 pwnme 函數裏
 ![image-20201028010553089](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028010554.png)
 我們可以看到函數一開始，將  ra 寄存器的值，放入 $sp+60 的位置裏。即返回地址位於 $sp+60
 ![image-20201028011257573](https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028011258.png)
-在看該函數里的 read， a2 爲讀取的 size 大小，將被賦值爲 0x38，buf 爲位於 $sp + 0x18 的位置，明顯的一個棧溢出漏洞，且能覆蓋返回地址。
+在看該函數裏的 read， a2 爲讀取的 size 大小，將被賦值爲 0x38，buf 爲位於 $sp + 0x18 的位置，明顯的一個棧溢出漏洞，且能覆蓋返回地址。
 通過計算，可以計算出 padding 爲 36
 
 ```

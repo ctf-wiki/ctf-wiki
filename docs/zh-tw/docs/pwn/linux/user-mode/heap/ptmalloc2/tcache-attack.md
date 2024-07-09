@@ -2218,7 +2218,7 @@ void __fastcall Delete(__int64 a1, __int64 a2)
   free(*((void **)&unk_4040 + 2 * v2));
 }
 ```
-後門函數可以調用 `malloc` 分配 `0x217` 大小的堆塊，但是要要滿足 `*(_BYTE *)(qword_4030 + 0x20) > 6` ，我們在 `main` 函數里可以看到這裏被初始化爲 `heap_base+0x10` ，對於 glibc 2.29，這個位置對應存儲的是 `tcache_perthread_struct` 的 `0x220` 大小的 `tcache_bin` 的數量，正常來說，如果我們想調用後門的功能，要讓這個 `count` 爲 7 ，然而這也就意味着 `0x217` 再分配和釋放都同 `glibc 2.23` 一樣，我們無法通過 `UAF` 改 chunk 的 `fd` 來達到任意地址寫的目的，因此我們要通過別的方式修改這個值。
+後門函數可以調用 `malloc` 分配 `0x217` 大小的堆塊，但是要要滿足 `*(_BYTE *)(qword_4030 + 0x20) > 6` ，我們在 `main` 函數裏可以看到這裏被初始化爲 `heap_base+0x10` ，對於 glibc 2.29，這個位置對應存儲的是 `tcache_perthread_struct` 的 `0x220` 大小的 `tcache_bin` 的數量，正常來說，如果我們想調用後門的功能，要讓這個 `count` 爲 7 ，然而這也就意味着 `0x217` 再分配和釋放都同 `glibc 2.23` 一樣，我們無法通過 `UAF` 改 chunk 的 `fd` 來達到任意地址寫的目的，因此我們要通過別的方式修改這個值。
 ```c
 __int64 __fastcall Magic(__int64 a1, __int64 a2)
 {

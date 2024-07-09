@@ -110,7 +110,7 @@ Emulation done. Below is the CPU context
 
 * 行號2~3: 在使用Unicorn前導入`unicorn`模塊. 樣例中使用了一些x86寄存器常量, 所以也需要導入`unicorn.x86_const`模塊
 
-* 行號6: 這是我們需要模擬的二進制機器碼, 使用十六進制表示, 代表的彙編指令是: "INC ecx" 和 "DEC edx".
+* 行號6: 這是我們需要模擬的二進制機器碼, 使用十六進製表示, 代表的彙編指令是: "INC ecx" 和 "DEC edx".
 
 * 行號9: 我們將模擬執行上述指令的所在虛擬地址
 

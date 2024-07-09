@@ -219,7 +219,7 @@ context.terminal = ['gnome-terminal', '-e', 'sh', '-c'] # for Gnome
 
 ### 獲取 IDA
 
-IDA Pro（interactive Disassembler Professional）是由 Hex-Rays 公司出品的一款交互式反彙編工具，也是軟件逆向工程當中最流行的一個靜態分析工具。通過 IDA Pro 我們可以很方便地復原二進制程序的運行邏輯，從而進一步審計出其中存在的漏洞。
+IDA Pro（interactive Disassembler Professional）是由 Hex-Rays 公司出品的一款交互式反彙編工具，也是軟件逆向工程當中最流行的一個靜態分析工具。通過 IDA Pro 我們可以很方便地復原二進製程序的運行邏輯，從而進一步審計出其中存在的漏洞。
 
 [IDA Pro](https://hex-rays.com/ida-pro/) 爲付費軟件，軟件本體與不同架構的反編譯引擎單獨進行收費，你可以根據自己的需求在 Hex-rays 的官網自行購買相應的軟件許可證以進行使用。
 
@@ -289,7 +289,7 @@ python3 -m pip install --upgrade pwntools
 
 ### 安裝 gdb
 
-GNU Debugger（GDB）是 GNU 項目開發的軟件調試器，使用 gdb 我們可以很方便地對二進制程序進行動態調試。
+GNU Debugger（GDB）是 GNU 項目開發的軟件調試器，使用 gdb 我們可以很方便地對二進製程序進行動態調試。
 
 gdb 在絕大部分 Linux 發行版上都已默認安裝，你可以在 shell 中輸入 `gdb` 命令進行確認（輸入 `q` 退出）:
 

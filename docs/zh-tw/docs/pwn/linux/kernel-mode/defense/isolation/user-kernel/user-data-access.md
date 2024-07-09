@@ -55,7 +55,7 @@ grep smap /proc/cpuinfo
 
 把 CR4 寄存器中的第 21 位置爲 0 後，我們就可以訪問用戶態的數據。一般而言，我們會使用 0x6f0 來設置 CR4，這樣 SMAP 和 SMEP 都會被關閉。
 
-內核中修改 cr4 的代碼最終會調用到 `native_write_cr4`，當我們能夠劫持控制流後，我們就可以執行內核中對應的 gadget 來修改 CR4。從另外一個維度來看，內核中存在固定的修改 cr4 的代碼，比如在 `refresh_pce` 函數、` set_tsc_mode` 等函數里都有。
+內核中修改 cr4 的代碼最終會調用到 `native_write_cr4`，當我們能夠劫持控制流後，我們就可以執行內核中對應的 gadget 來修改 CR4。從另外一個維度來看，內核中存在固定的修改 cr4 的代碼，比如在 `refresh_pce` 函數、` set_tsc_mode` 等函數裏都有。
 
 #### copy_from/to_user
 

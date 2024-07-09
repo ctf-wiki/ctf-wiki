@@ -58,7 +58,7 @@ Breakpoint 1 at 0x400e02f0
 Breakpoint 1, 0x400e02f0 in ptrace () from /lib/tls/libc.so.6
 ```
 
-我們簡單地斷在了ptrace處, 現在輸入finish執行到當前函數返回, 回到main函數里
+我們簡單地斷在了ptrace處, 現在輸入finish執行到當前函數返回, 回到main函數裏
 
 ```
 # gdb test_debug
