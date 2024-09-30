@@ -8,18 +8,23 @@ code object
 
 ## 文件结构
 
-pyc文件由三大部分组成
+一个 pyc 文件由两大部分组成：
 
-- 最开始4个字节是一个Maigc int, 标识此pyc的版本信息
+- 一、Header 部分：存放了 `.pyc` 文件的基本信息，大小为 16 字节。
+  - 最开始 4 个字节为 Magic Number，用以标识此 `.pyc` 文件的版本信息。
+  - 接下来 4 个字节为 Bit Field，具体作用参见 [PEP 552](https://peps.python.org/pep-0552/)。
+  - 接下来 4 个字节为 `.pyc` 文件产生的时间（timestamp）。
+  - 最后 4 个字节为 `.pyc` 文件的大小。
+- 二、CodeObject 部分：序列化的 PyCodeObject，其结构参见 [include/code.h](https://github.com/python/cpython/blob/master/Include/code.h)，具体的序列化方法参见 [python/marshal](https://github.com/python/cpython/blob/master/Python/marshal.c)。
 
-- 接下来四个字节还是个int,是pyc产生的时间
+> 需要注意的是，在较老版本的 Python 当中，在 `.pyc` 文件中并不存在 `Bit Field` 和 `文件大小` 这两个字段，即 Header 大小仅为 8 字节。
 
-- 序列化的 PyCodeObject,结构参照[include/code.h](https://github.com/python/cpython/blob/master/Include/code.h),序列化方法[python/marshal](https://github.com/python/cpython/blob/master/Python/marshal.c)
+![](./figure/pyc-struct.png)
 
-**pyc完整的文件解析可以参照**
-
-- [Python程序的执行原理](http://python.jobbole.com/84599/)
-- [PYC文件格式分析](http://kdr2.com/tech/python/pyc-format.html)
+> 对 `.pyc` 文件的完整解析可以参照如下资料：
+>
+> - [Python程序的执行原理](http://python.jobbole.com/84599/)
+> - [PYC文件格式分析](http://kdr2.com/tech/python/pyc-format.html)
 
 
 **关于co_code**
