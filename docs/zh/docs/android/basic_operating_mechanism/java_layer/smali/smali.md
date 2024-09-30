@@ -91,7 +91,7 @@
 
 比如说在 `java.lang.String` ，其相应的形式为`Ljava/lang/String;`
 
-> 注：所谓全名就是它的全程不仅仅是简写，比如String其实是java.lang.String。
+> 注：所谓全名就是它的全称，而不仅仅是简写，比如String其实是java.lang.String。
 
 数组类型可以表示java中的所有数组。其一般的构成形式由前向后依次分为两个部分
 
