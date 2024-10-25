@@ -27,13 +27,12 @@ int main(void)
 
 ## 搭建临时环境
 
-使用ncat
-`ncat -l 8080 --keep-open --exec ".\ret2dll.exe"`
-使用win_server
-win_server ./ret2dll.exe 8080
+使用ncat  `ncat -l 8080 --keep-open --exec ".\ret2dll.exe"`
+
+使用win_server  `win_server ./ret2dll.exe 8080`
 
 exp如下
-```
+```python
 from pwn import *
 
 context.log_level='debug'
