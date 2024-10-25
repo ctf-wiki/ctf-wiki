@@ -40,7 +40,7 @@ RUN sed -i "s/http:\/\/archive.ubuntu.com/http:\/\/mirrors.tuna.tsinghua.edu.cn/
     apt-get -y update && \
     apt-get install -y lib32z1 apt-transport-https python3 python3-pip git \
     libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev \
-    vim nano netcat openssh-server unzip make wget bison flex build-essential \
+    vim nano netcat openssh-server unzip make wget bison flex build-essential gcc-multilib\
     curl qemu qemu-system-x86 gcc gdb clang lldb tmux konsole
 
 # enable ssh login
