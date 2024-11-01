@@ -31,17 +31,20 @@ Docker 的安装请大家根据自己所使用的 Linux 发行版自行参照 [D
 我们以以下 Dockerfile 所创建的镜像作为模板，大家可以根据自己的需求自行修改：
 
 ```dockerfile
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 # pre-install softwares
 RUN sed -i "s/http:\/\/archive.ubuntu.com/http:\/\/mirrors.tuna.tsinghua.edu.cn/g" /etc/apt/sources.list && \
     apt-get -y update && \
-    apt-get install -y lib32z1 apt-transport-https python3 python3-pip git \
+    apt-get install -y lib32z1 apt-transport-https \
+    python3 python3-pip python3-venv \
     libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev \
-    vim nano netcat openssh-server unzip make wget bison flex build-essential \
-    curl qemu qemu-system-x86 gcc gdb clang lldb tmux konsole
+    vim nano netcat-openbsd openssh-server git unzip curl tmux konsole wget \
+    bison flex build-essential \
+    qemu-system-x86 qemu-user qemu-user-binfmt \
+    gcc gdb gdb-multiarch clang lldb make
 
 # enable ssh login
 RUN rm -f /etc/service/sshd/down
@@ -53,29 +56,27 @@ RUN sed -ri 's/^#?PermitRootLogin\s+.*/PermitRootLogin yes/' /etc/ssh/sshd_confi
 # enable login with password
 RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
 
-# set username and password
-RUN groupadd arttnba3 && \
-    useradd -g arttnba3 arttnba3 -m -s /bin/bash && \
-    echo "arttnba3:123456" | chpasswd && \
-    echo "root:123456" | chpasswd
+# defaultly we have a user `ubuntu` in the image
+RUN echo "ubuntu:123456" | chpasswd && \
+    echo "root:root123456" | chpasswd
 
 # enable ssh key login
-#RUN mkdir /home/arttnba3/.ssh && \
-#    echo "Your ssh key" > /home/arttnba3/.ssh/authorized_keys
+#RUN mkdir /home/ubuntu/.ssh && \
+#    echo "Your ssh key" > /home/ubuntu/.ssh/authorized_keys
 
 # keep container running
 RUN echo "#!/bin/sh\nservice ssh restart\nsleep infinity" > /root/start.sh
 RUN chmod +x /root/start.sh
 
-# enable sudo
-RUN apt-get install -y sudo && \
-       usermod -aG sudo arttnba3
+# create venv for pip
+RUN python3 -m venv /pip_venv && \
+       echo "\n\n# pip venv\nsource /pip_venv/bin/activate"
 
 # pwn-related tools
-RUN python3 -m pip config set global.index-url http://pypi.tuna.tsinghua.edu.cn/simple && \
-    python3 -m pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn && \
-    python3 -m pip install -U pip && \
-    python3 -m pip install --no-cache-dir \
+RUN /pip_venv/bin/pip config set global.index-url http://pypi.tuna.tsinghua.edu.cn/simple && \
+    /pip_venv/bin/pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn && \
+    /pip_venv/bin/pip install -U pip && \
+    /pip_venv/bin/pip install --no-cache-dir \
     pwntools \
     ropgadget \
     z3-solver \
@@ -101,15 +102,28 @@ EXPOSE 22
 在一个空白文件夹中创建一个名为 `Dockerfile` 的文件，并写入上述内容，随后运行如下指令：
 
 ```shell
-$ docker build -t pwnenv_ubuntu22 .
+$ docker build -t pwnenv_ubuntu24 .
 ```
 
-完成之后你便拥有了一个名为 `pwnenv_ubuntu22` 的带有做题环境的 Ubuntu22 镜像，可以通过 `docker images` 指令查看：
+> 注：若因网络原因无法完成镜像构建，可以选择为镜像构建配置代理，这通常只需要在 Dockerfile 当中添加如下内容：
+> 
+> ```dockerfile
+> ENV HTTP_PROXY=http://your-proxy:port
+> ENV HTTPS_PROXY=http://your-proxy:port
+> ```
+> 
+> 若你的代理服务器位于本地，也可以选择使用本地网络进行构建：
+> 
+> ```shell
+> docker build --network="host" -t pwnenv_ubuntu24 .
+> ```
+
+完成之后你便拥有了一个名为 `pwnenv_ubuntu24` 的带有做题环境的 Ubuntu24 镜像，可以通过 `docker images` 指令查看：
 
 ```shell
 $ docker images                                              
-REPOSITORY               TAG         IMAGE ID       CREATED          SIZE                                     
-pwnenv_ubuntu22          latest      c129ca086a72   15 seconds ago   2.81GB
+REPOSITORY                                       TAG       IMAGE ID       CREATED             SIZE
+pwnenv_ubuntu24                                  latest    914ea8ba3a4f   About an hour ago   3.54GB
 ```
 
 你也可以根据需求修改第一行的基镜像，从而创建基于不同 Ubuntu 发行版的 docker 镜像。
@@ -120,26 +134,30 @@ pwnenv_ubuntu22          latest      c129ca086a72   15 seconds ago   2.81GB
 
 - `-d`： 使容器在后台运行
 - `-p 25000:22`： 容器的 `22` 端口映射到本地的 `25000` 端口
-- `--name=pwn22`： 容器名为 `pwn22`
+- `--name=pwn24`： 容器名为 `pwn24`
 - `-v ~/Desktop/CTF:/CTF` ： 将本地的 `~/Desktop/CTF` 目录映射到容器中的 `/CTF` 目录，这样我们便能在容器内访问到本地文件，而无需将文件重复拷贝进容器中
-- `pwnenv_ubuntu22`：创建容器所使用的镜像
+- `pwnenv_ubuntu24`：创建容器所使用的镜像
 
 ```shell
 $ docker run \
 	-d \
 	-p 25000:22 \
-	--name=pwn22 \
+	--name=pwn24 \
 	-v ~/Desktop/CTF:/CTF \
-	pwnenv_ubuntu22
+	pwnenv_ubuntu24
 ```
 
 之后通过如下命令便能进入到容器当中：
 
 ```shell
-$ docker exec -w /CTF -e TERM=xterm-256color -it pwn22 bash
+$ docker exec -w /CTF \
+        -e TERM=xterm-256color \
+        -u ubuntu \
+        -it pwn24 \
+        bash
 ```
 
-如果你不想将本地目录与容器进行共享，而是想要将所需文件拷贝一份到容器中，则可以使用 docker cp 命令：
+如果你不想直接将本地目录与容器进行共享，而是想要将所需文件拷贝一份到容器中，则可以使用 docker cp 命令：
 
 ```shell
 $ docker cp 本地源文件路径 容器名:容器内目的路径
@@ -168,14 +186,14 @@ pwntools 自带的调试命令 `gdb.attach()` 需要创建新的窗口，而在�
 $ docker run \
 	-d \
 	-p "25000:22" \
-	--name=pwn22 \
+	--name=pwn24 \
 	-v ~/Desktop/CTF:/CTF \
 	-e XDG_RUNTIME_DIR=/tmp \
 	-e DISPLAY=$DISPLAY \
 	-e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
 	-v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY \
 	-e QT_QPA_PLATFORM=wayland \
-	pwnenv_ubuntu22
+	pwnenv_ubuntu24
 ```
 
 之后在运行 `gdb.attach()` 之前运行如下 python 语句之一进行配置即可，请根据自己所使用的桌面环境进行选择。
@@ -193,11 +211,11 @@ context.terminal = ['gnome-terminal', '-e', 'sh', '-c'] # for Gnome
 $ docker run \
 	-d \
 	-p "25000:22" \
-	--name=pwn22 \
+	--name=pwn24 \
 	-v ~/Desktop/CTF:/CTF \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
 	-e DISPLAY=$DISPLAY \
-	pwnenv_ubuntu22
+	pwnenv_ubuntu24
 ```
 
 之后在运行 `gdb.attach()` 之前运行如下 python 语句之一进行配置即可，请根据自己所使用的桌面环境进行选择。
