@@ -10,7 +10,7 @@ CTF (i.e. `Capture The Flag`) starts from the forth DEFON in 1996, which is an a
 
 At the time when CTF competitions are at the beginning stage (1996-2001), there were no clear rules, no professionally built platform or environment. Each team need to prepare their own objective (defending their own objective, while attacking opponents' objective). Most of the organizers are just enthusiastic non-professional volunteers who assist in manual scoring.
 
-Due to the lack of an automated scoring system and technical competence among judges, many scoring delays and errors, unreliable network, and improper configuration, great controversy and dissatisfaction were made at the time.
+Due to the lack of an automated scoring system and technical competence among judges, many scoring delays and errors, unreliable network, and improper configuration, such approaches have caused great controversy and dissatisfaction at the time.
 
 ## "Modern" CTF Competition
 
