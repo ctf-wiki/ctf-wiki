@@ -2,7 +2,7 @@
 
 现有的 CTF Pwn 题主要以 Linux 下的用户态 Pwn 为主，因此我们通常需要在本地拥有一个 Linux 运行环境，这通常可以通过安装 Linux 虚拟机来完成，此外你也可以在物理机上安装 Linux 操作系统。
 
-绝大多数 Linux Pwn 题目的远程环境以 [Ubuntu](https://ubuntu.com/) 为主，因此为了方便在本地调试题目，你通常需要搭建一个与题目版本相匹配的 Ubuntu 运行环境，不过 _这并不意味着你必须要使用 Ubuntu 作为你的主力操作系统_ 。你仍旧可以选择继续使用你喜欢的其他 Linux 发行版（如，Arch、Debian、openSUSE、Fedora、NixOS 等），并使用 Docker 来搭建相应的 Ubuntu 做题环境。
+绝大多数 Linux Pwn 题目的远程环境以 [Ubuntu](https://ubuntu.com/) 为主，因此为了方便在本地调试题目，你通常需要搭建一个与题目版本相匹配的 Ubuntu 运行环境，不过 _这并不意味着你必须要使用 Ubuntu 作为你的主力操作系统_ 。你仍旧可以选择继续使用你喜欢的其他 Linux 发行版（如，Gentoo、openSUSE、Debian、Fedora、Arch、NixOS 等），并使用 Docker 来搭建相应的 Ubuntu 做题环境。
 
 传统 CTF Pwn 题目通常仅需要以下工具便能完成解题：
 
@@ -36,15 +36,16 @@ FROM ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 # pre-install softwares
-RUN sed -i "s/http:\/\/archive.ubuntu.com/http:\/\/mirrors.tuna.tsinghua.edu.cn/g" /etc/apt/sources.list && \
-    apt-get -y update && \
-    apt-get install -y lib32z1 apt-transport-https \
-    python3 python3-pip python3-venv \
-    libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev \
-    vim nano netcat-openbsd openssh-server git unzip curl tmux konsole wget \
-    bison flex build-essential \
+RUN sed -i "s/http:\/\/archive.ubuntu.com/http:\/\/mirrors.tuna.tsinghua.edu.cn/g" /etc/apt/sources.list
+RUN dpkg --add-architecture i386
+RUN apt-get -y update && apt-get upgrade -y
+RUN apt-get install -y lib32z1 apt-transport-https \
+    python3 python3-pip python3-venv python3-poetry python3-dev python3-setuptools \
+    libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev libc6-dbg libc6-dbg:i386 libgcc-s1:i386 \
+    vim nano netcat-openbsd openssh-server git unzip curl tmux konsole wget sudo \
+    bison flex build-essential gcc-multilib \
     qemu-system-x86 qemu-user qemu-user-binfmt \
-    gcc gdb gdb-multiarch clang lldb make
+    gcc gdb gdbserver gdb-multiarch clang lldb make cmake
 
 # enable ssh login
 RUN rm -f /etc/service/sshd/down
@@ -58,7 +59,10 @@ RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
 
 # defaultly we have a user `ubuntu` in the image
 RUN echo "ubuntu:123456" | chpasswd && \
-    echo "root:root123456" | chpasswd
+    echo "root:123456" | chpasswd
+
+# add sudo
+RUN usermod -aG sudo ubuntu
 
 # enable ssh key login
 #RUN mkdir /home/ubuntu/.ssh && \
@@ -70,7 +74,8 @@ RUN chmod +x /root/start.sh
 
 # create venv for pip
 RUN python3 -m venv /pip_venv && \
-       echo "\n\n# pip venv\nsource /pip_venv/bin/activate"
+    chown -R ubuntu:ubuntu /pip_venv && \
+    echo "\n\n# pip venv\nsource /pip_venv/bin/activate" >> /home/ubuntu/.bashrc
 
 # pwn-related tools
 RUN /pip_venv/bin/pip config set global.index-url http://pypi.tuna.tsinghua.edu.cn/simple && \
@@ -89,7 +94,8 @@ RUN /pip_venv/bin/pip config set global.index-url http://pypi.tuna.tsinghua.edu.
     angr \
     pebble \
     r2pipe \
-    LibcSearcher
+    LibcSearcher \
+    poetry
 
 RUN git clone https://github.com/pwndbg/pwndbg && \
     cd pwndbg && chmod +x setup.sh && ./setup.sh
@@ -97,6 +103,7 @@ RUN git clone https://github.com/pwndbg/pwndbg && \
 CMD ["/root/start.sh"]
 
 EXPOSE 22
+
 ```
 
 在一个空白文件夹中创建一个名为 `Dockerfile` 的文件，并写入上述内容，随后运行如下指令：
@@ -123,7 +130,7 @@ $ docker build -t pwnenv_ubuntu24 .
 ```shell
 $ docker images                                              
 REPOSITORY                                       TAG       IMAGE ID       CREATED             SIZE
-pwnenv_ubuntu24                                  latest    914ea8ba3a4f   About an hour ago   3.54GB
+pwnenv_ubuntu24                                  latest    64f87a598f87   2 hours ago    3.6GB
 ```
 
 你也可以根据需求修改第一行的基镜像，从而创建基于不同 Ubuntu 发行版的 docker 镜像。
