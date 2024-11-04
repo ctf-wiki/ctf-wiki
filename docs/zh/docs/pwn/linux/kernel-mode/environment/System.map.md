@@ -23,7 +23,7 @@
 ## 在ida中为stripped的vmlinux添加System.map
 
 加载以下脚本，然后选择对应的System.map文件
-```
+```python
 import idaapi
 
 def load_system_map(file_path):
