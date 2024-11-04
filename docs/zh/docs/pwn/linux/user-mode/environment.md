@@ -2,7 +2,7 @@
 
 现有的 CTF Pwn 题主要以 Linux 下的用户态 Pwn 为主，因此我们通常需要在本地拥有一个 Linux 运行环境，这通常可以通过安装 Linux 虚拟机来完成，此外你也可以在物理机上安装 Linux 操作系统。
 
-绝大多数 Linux Pwn 题目的远程环境以 [Ubuntu](https://ubuntu.com/) 为主，因此为了方便在本地调试题目，你通常需要搭建一个与题目版本相匹配的 Ubuntu 运行环境，不过 _这并不意味着你必须要使用 Ubuntu 作为你的主力操作系统_ 。你仍旧可以选择继续使用你喜欢的其他 Linux 发行版（如，Arch、Debian、openSUSE、Fedora、NixOS 等），并使用 Docker 来搭建相应的 Ubuntu 做题环境。
+绝大多数 Linux Pwn 题目的远程环境以 [Ubuntu](https://ubuntu.com/) 为主，因此为了方便在本地调试题目，你通常需要搭建一个与题目版本相匹配的 Ubuntu 运行环境，不过 _这并不意味着你必须要使用 Ubuntu 作为你的主力操作系统_ 。你仍旧可以选择继续使用你喜欢的其他 Linux 发行版（如，Gentoo、openSUSE、Debian、Fedora、Arch、NixOS 等），并使用 Docker 来搭建相应的 Ubuntu 做题环境。
 
 传统 CTF Pwn 题目通常仅需要以下工具便能完成解题：
 
