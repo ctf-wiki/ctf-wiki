@@ -246,9 +246,9 @@ add-symbol-file ./your_module.ko addr_of_ko
 
 ## kgdb配置
 
-在内核提供了额外的调试工具：kgdb
-需要在编译时开启 `CONFIG_KGDB`
-然后在qemu中为kgdb提供一个输出串口，如ttyS1，并指明端口
+内核提供了专门的调试工具：KGDB（Kernel GNU Debugger）。
+使用KGDB需在编译时启用 `CONFIG_KGDB` 配置选项。
+在qemu中，可以通过指定一个串口（例如ttyS1）为KGDB提供输出。
 
 ```bash
 #!/bin/sh
@@ -266,7 +266,7 @@ qemu-system-x86_64 \
 
 这里将ttyS0指定为终端的输入输出，ttyS1指定为本地4445端口，不使用qemu虚拟机屏幕显示。
 
-然后在虚拟内部通过`echo g > /proc/sysrq-trigger`触发（也可以在 append里使用 kgdbwait参数，这会在内核启动完毕后自动触发）
+在qemu虚拟机内部通过`echo g > /proc/sysrq-trigger`触发（此外在 append里使用 kgdbwait参数，使内核在启动完毕后自动触发）。
 
 ```bash
 ~ # cat /sys/module/kgdboc/par~ # cat /sys/module/kgdboc/parameters/kgdboc
@@ -278,7 +278,7 @@ ttyS1,115200
 [    9.081034] KGDB: Entering KGDB
 ```
 
-在另一个终端使用gdb连接
+在另一个终端使用gdb连接。
 
 ```bash
 gdb vmlinux
