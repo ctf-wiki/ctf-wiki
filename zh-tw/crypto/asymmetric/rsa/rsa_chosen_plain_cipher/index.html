@@ -5,19 +5,19 @@
 <span class=nl>else</span><span class=p>:</span>
 <span class=w>    </span><span class=n>ub</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=n>lb</span><span class=o>+</span><span class=n>ub</span><span class=p>)</span><span class=o>/</span><span class=mi>2</span>
 </code></pre></div> <p>這裏雖然是整除， 即下取整，但是無所謂我們在最初時已經分析了這個問題。</p> <h3 id=2018-google-ctf-perfect-secrecy>2018 Google CTF Perfect Secrecy<a class=headerlink href=#2018-google-ctf-perfect-secrecy title="Permanent link">&para;</a></h3> <p>這裏以 2018 年 Google CTF 的題目爲例進行分析</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python3</span>
-<span class=kn>import</span> <span class=nn>sys</span>
-<span class=kn>import</span> <span class=nn>random</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>sys</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>random</span>
 
-<span class=kn>from</span> <span class=nn>cryptography.hazmat.primitives</span> <span class=kn>import</span> <span class=n>serialization</span>
-<span class=kn>from</span> <span class=nn>cryptography.hazmat.backends</span> <span class=kn>import</span> <span class=n>default_backend</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>cryptography.hazmat.primitives</span><span class=w> </span><span class=kn>import</span> <span class=n>serialization</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>cryptography.hazmat.backends</span><span class=w> </span><span class=kn>import</span> <span class=n>default_backend</span>
 
 
-<span class=k>def</span> <span class=nf>ReadPrivateKey</span><span class=p>(</span><span class=n>filename</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>ReadPrivateKey</span><span class=p>(</span><span class=n>filename</span><span class=p>):</span>
   <span class=k>return</span> <span class=n>serialization</span><span class=o>.</span><span class=n>load_pem_private_key</span><span class=p>(</span>
       <span class=nb>open</span><span class=p>(</span><span class=n>filename</span><span class=p>,</span> <span class=s1>&#39;rb&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>read</span><span class=p>(),</span> <span class=n>password</span><span class=o>=</span><span class=kc>None</span><span class=p>,</span> <span class=n>backend</span><span class=o>=</span><span class=n>default_backend</span><span class=p>())</span>
 
 
-<span class=k>def</span> <span class=nf>RsaDecrypt</span><span class=p>(</span><span class=n>private_key</span><span class=p>,</span> <span class=n>ciphertext</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>RsaDecrypt</span><span class=p>(</span><span class=n>private_key</span><span class=p>,</span> <span class=n>ciphertext</span><span class=p>):</span>
   <span class=k>assert</span> <span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>ciphertext</span><span class=p>)</span> <span class=o>&lt;=</span>
           <span class=p>(</span><span class=n>private_key</span><span class=o>.</span><span class=n>public_key</span><span class=p>()</span><span class=o>.</span><span class=n>key_size</span> <span class=o>//</span> <span class=mi>8</span><span class=p>)),</span> <span class=s1>&#39;Ciphertext too large&#39;</span>
   <span class=k>return</span> <span class=nb>pow</span><span class=p>(</span>
@@ -26,7 +26,7 @@
       <span class=n>private_key</span><span class=o>.</span><span class=n>public_key</span><span class=p>()</span><span class=o>.</span><span class=n>public_numbers</span><span class=p>()</span><span class=o>.</span><span class=n>n</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>Challenge</span><span class=p>(</span><span class=n>private_key</span><span class=p>,</span> <span class=n>reader</span><span class=p>,</span> <span class=n>writer</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>Challenge</span><span class=p>(</span><span class=n>private_key</span><span class=p>,</span> <span class=n>reader</span><span class=p>,</span> <span class=n>writer</span><span class=p>):</span>
   <span class=k>try</span><span class=p>:</span>
     <span class=n>m0</span> <span class=o>=</span> <span class=n>reader</span><span class=o>.</span><span class=n>read</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span>
     <span class=n>m1</span> <span class=o>=</span> <span class=n>reader</span><span class=o>.</span><span class=n>read</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span>
@@ -44,15 +44,15 @@
     <span class=k>return</span> <span class=mi>1</span>
 
 
-<span class=k>def</span> <span class=nf>main</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>main</span><span class=p>():</span>
   <span class=n>private_key</span> <span class=o>=</span> <span class=n>ReadPrivateKey</span><span class=p>(</span><span class=n>sys</span><span class=o>.</span><span class=n>argv</span><span class=p>[</span><span class=mi>1</span><span class=p>])</span>
   <span class=k>return</span> <span class=n>Challenge</span><span class=p>(</span><span class=n>private_key</span><span class=p>,</span> <span class=n>sys</span><span class=o>.</span><span class=n>stdin</span><span class=o>.</span><span class=n>buffer</span><span class=p>,</span> <span class=n>sys</span><span class=o>.</span><span class=n>stdout</span><span class=o>.</span><span class=n>buffer</span><span class=p>)</span>
 
 
 <span class=k>if</span> <span class=vm>__name__</span> <span class=o>==</span> <span class=s1>&#39;__main__&#39;</span><span class=p>:</span>
   <span class=n>sys</span><span class=o>.</span><span class=n>exit</span><span class=p>(</span><span class=n>main</span><span class=p>())</span>
-</code></pre></div> <p>可以看出</p> <ul> <li>我們可以給服務器兩個數，服務器會根據解密後的密文內容來決定使用哪一個。</li> <li>服務器會使用 <code>random.randint(0, 2)</code> 來生成隨機數，並輸出相關的隨機 01 字節 c。</li> </ul> <p>乍一看，似乎是完全隨機的，仔細查一下 <code>random.randint(0, 2)</code> 可以知道其生成隨機數是包括邊界的，因此其生成偶數的概率大於生成奇數的概率，那麼 c 與 p 同奇偶的概率爲 &#8532;。進而我們通過設置 m0 和 m1 就可以知道解密後的密文的最後一位是 0 還是 1 。這其實就是 RSA parity oracle。</p> <p>exp 如下</p> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>gmpy2</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>可以看出</p> <ul> <li>我們可以給服務器兩個數，服務器會根據解密後的密文內容來決定使用哪一個。</li> <li>服務器會使用 <code>random.randint(0, 2)</code> 來生成隨機數，並輸出相關的隨機 01 字節 c。</li> </ul> <p>乍一看，似乎是完全隨機的，仔細查一下 <code>random.randint(0, 2)</code> 可以知道其生成隨機數是包括邊界的，因此其生成偶數的概率大於生成奇數的概率，那麼 c 與 p 同奇偶的概率爲 &#8532;。進而我們通過設置 m0 和 m1 就可以知道解密後的密文的最後一位是 0 還是 1 。這其實就是 RSA parity oracle。</p> <p>exp 如下</p> <div class=highlight><pre><span></span><code><span class=kn>import</span><span class=w> </span><span class=nn>gmpy2</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>encflag</span> <span class=o>=</span> <span class=nb>open</span><span class=p>(</span><span class=s1>&#39;./flag.txt&#39;</span><span class=p>)</span><span class=o>.</span><span class=n>read</span><span class=p>()</span>
 <span class=n>encflag</span> <span class=o>=</span> <span class=n>encflag</span><span class=o>.</span><span class=n>encode</span><span class=p>(</span><span class=s1>&#39;hex&#39;</span><span class=p>)</span>
 <span class=n>encflag</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>encflag</span><span class=p>,</span> <span class=mi>16</span><span class=p>)</span>
@@ -64,7 +64,7 @@
 
 
 
-<span class=k>def</span> <span class=nf>guessvalue</span><span class=p>(</span><span class=n>cnt</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>guessvalue</span><span class=p>(</span><span class=n>cnt</span><span class=p>):</span>
     <span class=k>if</span> <span class=n>cnt</span><span class=p>[</span><span class=mi>0</span><span class=p>]</span> <span class=o>&gt;</span> <span class=n>cnt</span><span class=p>[</span><span class=mi>1</span><span class=p>]:</span>
         <span class=k>return</span> <span class=mi>0</span>
     <span class=k>return</span> <span class=mi>1</span>
@@ -104,9 +104,9 @@ ub = N
 <span class=n>interval</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=p>(</span><span class=n>ub</span><span class=o>-</span><span class=n>lb</span><span class=p>)</span><span class=o>/</span><span class=mi>256</span>
 <span class=n>lb</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>lb</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>interval</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=n>k</span>
 <span class=n>ub</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>lb</span><span class=w> </span><span class=o>+</span><span class=w> </span><span class=n>interval</span>
-</code></pre></div> <h3 id=2018-hitcon-lost-key>2018 HITCON lost key<a class=headerlink href=#2018-hitcon-lost-key title="Permanent link">&para;</a></h3> <p>這是一個綜合題目，首先沒有給出 n，我們可以使用選擇明文攻擊的方式獲取 n，當然我們也可以進一步獲取 e，最後利用代碼如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=kn>import</span> <span class=nn>gmpy2</span>
-<span class=kn>from</span> <span class=nn>fractions</span> <span class=kn>import</span> <span class=n>Fraction</span>
+</code></pre></div> <h3 id=2018-hitcon-lost-key>2018 HITCON lost key<a class=headerlink href=#2018-hitcon-lost-key title="Permanent link">&para;</a></h3> <p>這是一個綜合題目，首先沒有給出 n，我們可以使用選擇明文攻擊的方式獲取 n，當然我們也可以進一步獲取 e，最後利用代碼如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>gmpy2</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>fractions</span><span class=w> </span><span class=kn>import</span> <span class=n>Fraction</span>
 <span class=n>p</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./rsa.py&#39;</span><span class=p>)</span>
 <span class=c1>#p = remote(&#39;18.179.251.168&#39;, 21700)</span>
 <span class=c1>#context.log_level = &#39;debug&#39;</span>
@@ -114,13 +114,13 @@ ub = N
 <span class=n>flagcipher</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=n>p</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>,</span> <span class=n>drop</span><span class=o>=</span><span class=kc>True</span><span class=p>),</span> <span class=mi>16</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>long_to_hex</span><span class=p>(</span><span class=n>n</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>long_to_hex</span><span class=p>(</span><span class=n>n</span><span class=p>):</span>
     <span class=n>s</span> <span class=o>=</span> <span class=nb>hex</span><span class=p>(</span><span class=n>n</span><span class=p>)[</span><span class=mi>2</span><span class=p>:]</span><span class=o>.</span><span class=n>rstrip</span><span class=p>(</span><span class=s1>&#39;L&#39;</span><span class=p>)</span>
     <span class=k>if</span> <span class=nb>len</span><span class=p>(</span><span class=n>s</span><span class=p>)</span> <span class=o>%</span> <span class=mi>2</span><span class=p>:</span> <span class=n>s</span> <span class=o>=</span> <span class=s1>&#39;0&#39;</span> <span class=o>+</span> <span class=n>s</span>
     <span class=k>return</span> <span class=n>s</span>
 
 
-<span class=k>def</span> <span class=nf>send</span><span class=p>(</span><span class=n>ch</span><span class=p>,</span> <span class=n>num</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>send</span><span class=p>(</span><span class=n>ch</span><span class=p>,</span> <span class=n>num</span><span class=p>):</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s1>&#39;cmd: &#39;</span><span class=p>,</span> <span class=n>ch</span><span class=p>)</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendlineafter</span><span class=p>(</span><span class=s1>&#39;input: &#39;</span><span class=p>,</span> <span class=n>long_to_hex</span><span class=p>(</span><span class=n>num</span><span class=p>))</span>
     <span class=n>data</span> <span class=o>=</span> <span class=n>p</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
@@ -193,11 +193,11 @@ y-(a_0*2^0)*2^{-1}=(m*2^{-1}\mod2)-(a_0*2^0)*2^{-1}\equiv a_1\pmod2
     &\{(c(2^{-i*e_i}\mod N_i))^{d_i}\mod N_i\}\pmod2\equiv m*2^{-i}\\
     &a_i\equiv (m*2^{-i}\mod2) -\sum_{j=0}^{i-1}a_j*2^j\pmod2,i=1,2,...,logm-1
 \end{aligned}
-</script> </div> <p>其中<span class=arithmatex><span class=MathJax_Preview>2^{-i}</span><script type=math/tex>2^{-i}</script></span>是<span class=arithmatex><span class=MathJax_Preview>2^i</span><script type=math/tex>2^i</script></span>模<span class=arithmatex><span class=MathJax_Preview>N_i</span><script type=math/tex>N_i</script></span>的逆元。</p> <p>就可以逐步恢復原文所有的位信息了。這樣的時間複雜度爲<span class=arithmatex><span class=MathJax_Preview>O(logm)</span><script type=math/tex>O(logm)</script></span>。</p> <p>exp: <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>Crypto.Util.number</span> <span class=kn>import</span> <span class=o>*</span>
+</script> </div> <p>其中<span class=arithmatex><span class=MathJax_Preview>2^{-i}</span><script type=math/tex>2^{-i}</script></span>是<span class=arithmatex><span class=MathJax_Preview>2^i</span><script type=math/tex>2^i</script></span>模<span class=arithmatex><span class=MathJax_Preview>N_i</span><script type=math/tex>N_i</script></span>的逆元。</p> <p>就可以逐步恢復原文所有的位信息了。這樣的時間複雜度爲<span class=arithmatex><span class=MathJax_Preview>O(logm)</span><script type=math/tex>O(logm)</script></span>。</p> <p>exp: <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>Crypto.Util.number</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>mm</span> <span class=o>=</span> <span class=n>bytes_to_long</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;12345678&#39;</span><span class=p>)</span>
 <span class=n>l</span> <span class=o>=</span> <span class=nb>len</span><span class=p>(</span><span class=nb>bin</span><span class=p>(</span><span class=n>mm</span><span class=p>))</span> <span class=o>-</span> <span class=mi>2</span>
 
-<span class=k>def</span> <span class=nf>genkey</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>genkey</span><span class=p>():</span>
     <span class=k>while</span> <span class=mi>1</span><span class=p>:</span>
         <span class=n>p</span> <span class=o>=</span> <span class=n>getPrime</span><span class=p>(</span><span class=mi>128</span><span class=p>)</span>
         <span class=n>q</span> <span class=o>=</span> <span class=n>getPrime</span><span class=p>(</span><span class=mi>128</span><span class=p>)</span>

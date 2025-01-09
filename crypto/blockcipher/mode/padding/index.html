@@ -18,17 +18,17 @@ DES OUTPUT BLOCK = 9E 14 FB 96 C5 FE EB 75
 (IN HEX)           66 6f 72 20 20 20 20 20
 KEY              = 01 23 45 67 89 AB CD EF
 DES OUTPUT BLOCK = E3 FF EC E5 21 1F 35 25
-</code></pre></div> <h2 id=2018-aessss>2018 上海市大学生网络安全大赛 aessss<a class=headerlink href=#2018-aessss title="Permanent link">&para;</a></h2> <p>有时候可以针对一些使用不当的 Padding 进行攻击。这里以 2018 上海市大学生网络安全大赛的一道题目为例：</p> <p>题目脚本如下：</p> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>random</span>
-<span class=kn>import</span> <span class=nn>sys</span>
-<span class=kn>import</span> <span class=nn>string</span>
-<span class=kn>from</span> <span class=nn>hashlib</span> <span class=kn>import</span> <span class=n>sha256</span>
-<span class=kn>import</span> <span class=nn>SocketServer</span>
-<span class=kn>from</span> <span class=nn>Crypto.Cipher</span> <span class=kn>import</span> <span class=n>AES</span>
-<span class=kn>from</span> <span class=nn>secret</span> <span class=kn>import</span> <span class=n>FLAG</span><span class=p>,</span> <span class=n>IV</span><span class=p>,</span> <span class=n>KEY</span>
+</code></pre></div> <h2 id=2018-aessss>2018 上海市大学生网络安全大赛 aessss<a class=headerlink href=#2018-aessss title="Permanent link">&para;</a></h2> <p>有时候可以针对一些使用不当的 Padding 进行攻击。这里以 2018 上海市大学生网络安全大赛的一道题目为例：</p> <p>题目脚本如下：</p> <div class=highlight><pre><span></span><code><span class=kn>import</span><span class=w> </span><span class=nn>random</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>sys</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>string</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>hashlib</span><span class=w> </span><span class=kn>import</span> <span class=n>sha256</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>SocketServer</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>Crypto.Cipher</span><span class=w> </span><span class=kn>import</span> <span class=n>AES</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>secret</span><span class=w> </span><span class=kn>import</span> <span class=n>FLAG</span><span class=p>,</span> <span class=n>IV</span><span class=p>,</span> <span class=n>KEY</span>
 
 
-<span class=k>class</span> <span class=nc>Task</span><span class=p>(</span><span class=n>SocketServer</span><span class=o>.</span><span class=n>BaseRequestHandler</span><span class=p>):</span>
-    <span class=k>def</span> <span class=nf>proof_of_work</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+<span class=k>class</span><span class=w> </span><span class=nc>Task</span><span class=p>(</span><span class=n>SocketServer</span><span class=o>.</span><span class=n>BaseRequestHandler</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>proof_of_work</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
         <span class=n>proof</span> <span class=o>=</span> <span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>(</span>
             <span class=p>[</span><span class=n>random</span><span class=o>.</span><span class=n>choice</span><span class=p>(</span><span class=n>string</span><span class=o>.</span><span class=n>ascii_letters</span><span class=o>+</span><span class=n>string</span><span class=o>.</span><span class=n>digits</span><span class=p>)</span> <span class=k>for</span> <span class=n>_</span> <span class=ow>in</span> <span class=n>xrange</span><span class=p>(</span><span class=mi>20</span><span class=p>)])</span>
         <span class=c1># print proof</span>
@@ -41,14 +41,14 @@ DES OUTPUT BLOCK = E3 FF EC E5 21 1F 35 25
             <span class=k>return</span> <span class=kc>False</span>
         <span class=k>return</span> <span class=kc>True</span>
 
-    <span class=k>def</span> <span class=nf>pad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>s</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>pad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>s</span><span class=p>):</span>
         <span class=n>s</span> <span class=o>+=</span> <span class=p>(</span><span class=mi>256</span> <span class=o>-</span> <span class=nb>len</span><span class=p>(</span><span class=n>s</span><span class=p>))</span> <span class=o>*</span> <span class=nb>chr</span><span class=p>(</span><span class=mi>256</span> <span class=o>-</span> <span class=nb>len</span><span class=p>(</span><span class=n>s</span><span class=p>))</span>
         <span class=n>ret</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;</span><span class=se>\x00</span><span class=s1>&#39;</span> <span class=k>for</span> <span class=n>_</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>256</span><span class=p>)]</span>
         <span class=k>for</span> <span class=n>index</span><span class=p>,</span> <span class=n>pos</span> <span class=ow>in</span> <span class=nb>enumerate</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>s_box</span><span class=p>):</span>
             <span class=n>ret</span><span class=p>[</span><span class=n>pos</span><span class=p>]</span> <span class=o>=</span> <span class=n>s</span><span class=p>[</span><span class=n>index</span><span class=p>]</span>
         <span class=k>return</span> <span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>ret</span><span class=p>)</span>
 
-    <span class=k>def</span> <span class=nf>unpad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>s</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>unpad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>s</span><span class=p>):</span>
         <span class=n>ret</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;</span><span class=se>\x00</span><span class=s1>&#39;</span> <span class=k>for</span> <span class=n>_</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>256</span><span class=p>)]</span>
         <span class=k>for</span> <span class=n>index</span><span class=p>,</span> <span class=n>pos</span> <span class=ow>in</span> <span class=nb>enumerate</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>invs_box</span><span class=p>):</span>
             <span class=n>ret</span><span class=p>[</span><span class=n>pos</span><span class=p>]</span> <span class=o>=</span> <span class=n>s</span><span class=p>[</span><span class=n>index</span><span class=p>]</span>
@@ -92,11 +92,11 @@ DES OUTPUT BLOCK = E3 FF EC E5 21 1F 35 25
         <span class=mh>0x17</span><span class=p>,</span> <span class=mh>0x2B</span><span class=p>,</span> <span class=mh>0x04</span><span class=p>,</span> <span class=mh>0x7E</span><span class=p>,</span> <span class=mh>0xBA</span><span class=p>,</span> <span class=mh>0x77</span><span class=p>,</span> <span class=mh>0xD6</span><span class=p>,</span> <span class=mh>0x26</span><span class=p>,</span> <span class=mh>0xE1</span><span class=p>,</span> <span class=mh>0x69</span><span class=p>,</span> <span class=mh>0x14</span><span class=p>,</span> <span class=mh>0x63</span><span class=p>,</span> <span class=mh>0x55</span><span class=p>,</span> <span class=mh>0x21</span><span class=p>,</span> <span class=mh>0x0C</span><span class=p>,</span> <span class=mh>0x7D</span>
     <span class=p>]</span>
 
-    <span class=k>def</span> <span class=nf>encrypt</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>msg</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>encrypt</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>msg</span><span class=p>):</span>
         <span class=n>cipher</span> <span class=o>=</span> <span class=n>AES</span><span class=o>.</span><span class=n>new</span><span class=p>(</span><span class=n>KEY</span><span class=p>,</span> <span class=n>AES</span><span class=o>.</span><span class=n>MODE_CBC</span><span class=p>,</span> <span class=n>IV</span><span class=p>)</span>
         <span class=k>return</span> <span class=n>cipher</span><span class=o>.</span><span class=n>encrypt</span><span class=p>(</span><span class=n>msg</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>(</span><span class=s1>&#39;hex&#39;</span><span class=p>)</span>
 
-    <span class=k>def</span> <span class=nf>handle</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>handle</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
         <span class=k>if</span> <span class=ow>not</span> <span class=bp>self</span><span class=o>.</span><span class=n>proof_of_work</span><span class=p>():</span>
             <span class=k>return</span>
         <span class=bp>self</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>settimeout</span><span class=p>(</span><span class=mi>15</span><span class=p>)</span>
@@ -136,7 +136,7 @@ DES OUTPUT BLOCK = E3 FF EC E5 21 1F 35 25
                 <span class=k>return</span>
 
 
-<span class=k>class</span> <span class=nc>ThreadedServer</span><span class=p>(</span><span class=n>SocketServer</span><span class=o>.</span><span class=n>ThreadingMixIn</span><span class=p>,</span> <span class=n>SocketServer</span><span class=o>.</span><span class=n>TCPServer</span><span class=p>):</span>
+<span class=k>class</span><span class=w> </span><span class=nc>ThreadedServer</span><span class=p>(</span><span class=n>SocketServer</span><span class=o>.</span><span class=n>ThreadingMixIn</span><span class=p>,</span> <span class=n>SocketServer</span><span class=o>.</span><span class=n>TCPServer</span><span class=p>):</span>
     <span class=k>pass</span>
 
 
@@ -146,44 +146,44 @@ DES OUTPUT BLOCK = E3 FF EC E5 21 1F 35 25
     <span class=n>server</span> <span class=o>=</span> <span class=n>ThreadedServer</span><span class=p>((</span><span class=n>HOST</span><span class=p>,</span> <span class=n>PORT</span><span class=p>),</span> <span class=n>Task</span><span class=p>)</span>
     <span class=n>server</span><span class=o>.</span><span class=n>allow_reuse_address</span> <span class=o>=</span> <span class=kc>True</span>
     <span class=n>server</span><span class=o>.</span><span class=n>serve_forever</span><span class=p>()</span>
-</code></pre></div> <h3 id=_2>分析<a class=headerlink href=#_2 title="Permanent link">&para;</a></h3> <p>这个题目问题出在 padding 的时候，由于不足 256 位要进行 padding，padding 的字节也就是缺的字节数，但是如果明文够 256 字节，那么按照代码逻辑就不进行 padding： </p> <div class=highlight><pre><span></span><code><span class=k>def</span> <span class=nf>pad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>s</span><span class=p>):</span>
+</code></pre></div> <h3 id=_2>分析<a class=headerlink href=#_2 title="Permanent link">&para;</a></h3> <p>这个题目问题出在 padding 的时候，由于不足 256 位要进行 padding，padding 的字节也就是缺的字节数，但是如果明文够 256 字节，那么按照代码逻辑就不进行 padding： </p> <div class=highlight><pre><span></span><code><span class=k>def</span><span class=w> </span><span class=nf>pad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>s</span><span class=p>):</span>
         <span class=n>s</span> <span class=o>+=</span> <span class=p>(</span><span class=mi>256</span> <span class=o>-</span> <span class=nb>len</span><span class=p>(</span><span class=n>s</span><span class=p>))</span> <span class=o>*</span> <span class=nb>chr</span><span class=p>(</span><span class=mi>256</span> <span class=o>-</span> <span class=nb>len</span><span class=p>(</span><span class=n>s</span><span class=p>))</span>
         <span class=n>ret</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;</span><span class=se>\x00</span><span class=s1>&#39;</span> <span class=k>for</span> <span class=n>_</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>256</span><span class=p>)]</span>
         <span class=k>for</span> <span class=n>index</span><span class=p>,</span> <span class=n>pos</span> <span class=ow>in</span> <span class=nb>enumerate</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>s_box</span><span class=p>):</span>
             <span class=n>ret</span><span class=p>[</span><span class=n>pos</span><span class=p>]</span> <span class=o>=</span> <span class=n>s</span><span class=p>[</span><span class=n>index</span><span class=p>]</span>
         <span class=k>return</span> <span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>ret</span><span class=p>)</span>
-</code></pre></div> <p>最大的问题出在 unpad 上，unpad 没有进行检查，仅仅通过最后一个字节来判断填充的字节数。 </p> <div class=highlight><pre><span></span><code> <span class=k>def</span> <span class=nf>unpad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>s</span><span class=p>):</span>
+</code></pre></div> <p>最大的问题出在 unpad 上，unpad 没有进行检查，仅仅通过最后一个字节来判断填充的字节数。 </p> <div class=highlight><pre><span></span><code> <span class=k>def</span><span class=w> </span><span class=nf>unpad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>s</span><span class=p>):</span>
         <span class=n>ret</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;</span><span class=se>\x00</span><span class=s1>&#39;</span> <span class=k>for</span> <span class=n>_</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=mi>256</span><span class=p>)]</span>
         <span class=k>for</span> <span class=n>index</span><span class=p>,</span> <span class=n>pos</span> <span class=ow>in</span> <span class=nb>enumerate</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>invs_box</span><span class=p>):</span>
             <span class=n>ret</span><span class=p>[</span><span class=n>pos</span><span class=p>]</span> <span class=o>=</span> <span class=n>s</span><span class=p>[</span><span class=n>index</span><span class=p>]</span>
         <span class=k>return</span> <span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=n>ret</span><span class=p>[</span><span class=mi>0</span><span class=p>:</span><span class=o>-</span><span class=nb>ord</span><span class=p>(</span><span class=n>ret</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>])])</span>
 </code></pre></div> <p>我们可以通过篡改最后一个字节来控制去掉的 padding 字节数。</p> <h3 id=_3>利用<a class=headerlink href=#_3 title="Permanent link">&para;</a></h3> <ol> <li> <p>选择 choice2，追加 <code>256-33 =223</code>字节，使当前 flag 不需要填充，追加的最后一个字节设置成 <code>chr(256-32)</code>。</p> </li> <li> <p>服务器对 flag 追加我们的信息，并进行 s 盒替换，结果赋给类中的 flag 变量。</p> </li> <li> <p>我们再次选择 choice2，这里由于我们需要追加，服务器会将类中的 flag 变量取出进行逆 S 盒替换和 unpad，这样按照这个 unpad 算法会把后面 224 字节的全部当成 padding去掉，明文剩下了真正 flag 的前32位。</p> </li> <li> <p>我们此时输入一个字符 i,那么此时加密的对象就是 <code>flag[:32]+i</code>。</p> </li> <li> <p>选择 choice1 对当前 flag 加密，控制 i 进行爆破，如果得到的密文和最初的 flag 加密的密文一样，就得到了 flag 的最后一个字节。</p> </li> <li> <p>逐字节爆破，直至获取全部的 flag。 </p> </li> </ol> <p>exp 如下：</p> <div class=highlight><pre><span></span><code><span class=c1># -*- coding: utf-8 -*-</span>
-<span class=kn>from</span> <span class=nn>hashlib</span> <span class=kn>import</span> <span class=n>sha256</span>
-<span class=kn>import</span> <span class=nn>socket</span>
-<span class=kn>import</span> <span class=nn>string</span>
-<span class=kn>import</span> <span class=nn>itertools</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>hashlib</span><span class=w> </span><span class=kn>import</span> <span class=n>sha256</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>socket</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>string</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>itertools</span>
 <span class=n>HOST</span><span class=o>=</span><span class=s1>&#39;106.75.13.64&#39;</span>
 <span class=n>PORT</span><span class=o>=</span><span class=mi>54321</span>
 <span class=n>sock</span> <span class=o>=</span> <span class=n>socket</span><span class=o>.</span><span class=n>socket</span><span class=p>(</span><span class=n>socket</span><span class=o>.</span><span class=n>AF_INET</span><span class=p>,</span> <span class=n>socket</span><span class=o>.</span><span class=n>SOCK_STREAM</span><span class=p>)</span>
 <span class=n>sock</span><span class=o>.</span><span class=n>connect</span><span class=p>((</span><span class=n>HOST</span><span class=p>,</span> <span class=n>PORT</span><span class=p>))</span>
-<span class=k>def</span> <span class=nf>brute_force</span><span class=p>(</span><span class=n>pad</span><span class=p>,</span> <span class=n>shavalue</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>brute_force</span><span class=p>(</span><span class=n>pad</span><span class=p>,</span> <span class=n>shavalue</span><span class=p>):</span>
     <span class=k>for</span> <span class=nb>str</span> <span class=ow>in</span> <span class=n>itertools</span><span class=o>.</span><span class=n>product</span><span class=p>(</span><span class=n>string</span><span class=o>.</span><span class=n>ascii_letters</span> <span class=o>+</span> <span class=n>string</span><span class=o>.</span><span class=n>digits</span><span class=p>,</span> <span class=n>repeat</span><span class=o>=</span><span class=mi>4</span><span class=p>):</span>
         <span class=nb>str</span><span class=o>=</span><span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>(</span><span class=nb>str</span><span class=p>)</span>
         <span class=k>if</span> <span class=n>sha256</span><span class=p>(</span><span class=nb>str</span> <span class=o>+</span> <span class=n>pad</span><span class=p>)</span><span class=o>.</span><span class=n>hexdigest</span><span class=p>()</span> <span class=o>==</span> <span class=n>shavalue</span><span class=p>:</span>
             <span class=nb>print</span> <span class=nb>str</span>
             <span class=k>return</span> <span class=nb>str</span>
-<span class=k>def</span> <span class=nf>choice1</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>choice1</span><span class=p>():</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=s2>&quot;1</span><span class=se>\n</span><span class=s2>&quot;</span><span class=p>)</span>
     <span class=n>result</span><span class=o>=</span><span class=n>sock</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>1024</span><span class=p>)</span><span class=o>.</span><span class=n>strip</span><span class=p>()[</span><span class=mi>30</span><span class=p>:]</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>1024</span><span class=p>)</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
     <span class=k>return</span> <span class=n>result</span>
-<span class=k>def</span> <span class=nf>choice2</span><span class=p>(</span><span class=n>pad</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>choice2</span><span class=p>(</span><span class=n>pad</span><span class=p>):</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=s2>&quot;2</span><span class=se>\n</span><span class=s2>&quot;</span><span class=p>)</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>1024</span><span class=p>)</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=n>pad</span><span class=o>+</span><span class=s2>&quot;</span><span class=se>\n</span><span class=s2>&quot;</span><span class=p>)</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>1024</span><span class=p>)</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>1024</span><span class=p>)</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
-<span class=k>def</span> <span class=nf>choice3</span><span class=p>(</span><span class=nb>str</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>choice3</span><span class=p>(</span><span class=nb>str</span><span class=p>):</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=s2>&quot;3</span><span class=se>\n</span><span class=s2>&quot;</span><span class=p>)</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>1024</span><span class=p>)</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
     <span class=n>sock</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=nb>str</span><span class=o>+</span><span class=s2>&quot;</span><span class=se>\n</span><span class=s2>&quot;</span><span class=p>)</span>

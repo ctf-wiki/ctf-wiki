@@ -91,8 +91,8 @@ smallest: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked
 <span class=nf>syscall</span>
 <span class=nf>retn</span>
 <span class=nf>start</span><span class=w> </span><span class=no>endp</span>
-</code></pre></div> <p>根据syscall的编号为0，可以知道该程序执行的指令为read(0,$rsp,400)，即向栈顶读入400个字符。毫无疑问，这个是有栈溢出的。</p> <p><strong>利用思路</strong></p> <p>由于程序中并没有sigreturn调用，所以我们得自己构造，正好这里有read函数调用，所以我们可以通过read函数读取的字节数来设置rax的值。重要思路如下</p> <ul> <li>通过控制read读取的字符数来设置RAX寄存器的值，从而执行sigreturn</li> <li>通过syscall执行execve("/bin/sh",0,0)来获取shell。</li> </ul> <p><strong>漏洞利用程序</strong></p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=kn>from</span> <span class=nn>LibcSearcher</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>根据syscall的编号为0，可以知道该程序执行的指令为read(0,$rsp,400)，即向栈顶读入400个字符。毫无疑问，这个是有栈溢出的。</p> <p><strong>利用思路</strong></p> <p>由于程序中并没有sigreturn调用，所以我们得自己构造，正好这里有read函数调用，所以我们可以通过read函数读取的字节数来设置rax的值。重要思路如下</p> <ul> <li>通过控制read读取的字符数来设置RAX寄存器的值，从而执行sigreturn</li> <li>通过syscall执行execve("/bin/sh",0,0)来获取shell。</li> </ul> <p><strong>漏洞利用程序</strong></p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>LibcSearcher</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>small</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./smallest&#39;</span><span class=p>)</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;REMOTE&#39;</span><span class=p>]:</span>
     <span class=n>sh</span> <span class=o>=</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;127.0.0.1&#39;</span><span class=p>,</span> <span class=mi>7777</span><span class=p>)</span>

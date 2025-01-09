@@ -182,14 +182,14 @@ heapcreator:<span class=w> </span>ELF<span class=w> </span><span class=m>64</spa
 </code></pre></div> <p>程序为 64 位动态链接程序，主要开启了 Canary 保护与 NX 保护。</p> <h3 id=_4>基本功能<a class=headerlink href=#_4 title="Permanent link">&para;</a></h3> <p>程序大概是一个自定义的堆分配器，每个堆主要有两个成员：大小与内容指针。主要功能如下</p> <ol> <li>创建堆，根据用户输入的长度，申请对应内存空间，并利用 read 读取指定长度内容。这里长度没有进行检测，当长度为负数时，会出现任意长度堆溢出的漏洞。当然，前提是可以进行 malloc。此外，这里读取之后并没有设置 NULL。</li> <li>编辑堆，根据指定的索引以及之前存储的堆的大小读取指定内容，但是这里读入的长度会比之前大 1，所以会<strong>存在 off by one 的漏洞</strong>。</li> <li>展示堆，输出指定索引堆的大小以及内容。</li> <li>删除堆，删除指定堆，并且将对应指针设置为了 NULL。</li> </ol> <h3 id=_5>利用<a class=headerlink href=#_5 title="Permanent link">&para;</a></h3> <p>基本利用思路如下</p> <ol> <li>利用off by one 漏洞覆盖下一个chunk 的 size 字段，从而构造伪造的 chunk 大小。</li> <li>申请伪造的 chunk 大小，从而产生 chunk overlap，进而修改关键指针。</li> </ol> <p>更加具体的还是直接看脚本吧。</p> <div class=highlight><pre><span></span><code><span class=ch>#!/usr/bin/env python</span>
 <span class=c1># -*- coding: utf-8 -*-</span>
 
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=n>r</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./heapcreator&#39;</span><span class=p>)</span>
 <span class=n>heap</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./heapcreator&#39;</span><span class=p>)</span>
 <span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./libc.so.6&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>create</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>create</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;1&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
@@ -198,7 +198,7 @@ heapcreator:<span class=w> </span>ELF<span class=w> </span><span class=m>64</spa
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>content</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>edit</span><span class=p>(</span><span class=n>idx</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>edit</span><span class=p>(</span><span class=n>idx</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;2&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
@@ -207,14 +207,14 @@ heapcreator:<span class=w> </span>ELF<span class=w> </span><span class=m>64</spa
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>content</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>show</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>show</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;3&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=nb>str</span><span class=p>(</span><span class=n>idx</span><span class=p>))</span>
 
 
-<span class=k>def</span> <span class=nf>delete</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>delete</span><span class=p>(</span><span class=n>idx</span><span class=p>):</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s2>&quot;4&quot;</span><span class=p>)</span>
     <span class=n>r</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s2>&quot;:&quot;</span><span class=p>)</span>

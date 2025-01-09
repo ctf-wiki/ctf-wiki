@@ -4,9 +4,9 @@
 00000030  cb 00 00 00 20 63 48 52  4d 00 00 87 0f 00 00 8c  |.... cHRM.......|
 00000040  0f 00 00 fd 52 00 00 81  40 00 00 7d 79 00 00 e9  |....R...@..}y...|
 ...
-</code></pre></div> <p>这里需要注意的是，文件宽度不能任意修改，需要根据 IHDR 块的 CRC 值爆破得到宽度,否则图片显示错误不能得到 flag。</p> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>os</span>
-<span class=kn>import</span> <span class=nn>binascii</span>
-<span class=kn>import</span> <span class=nn>struct</span>
+</code></pre></div> <p>这里需要注意的是，文件宽度不能任意修改，需要根据 IHDR 块的 CRC 值爆破得到宽度,否则图片显示错误不能得到 flag。</p> <div class=highlight><pre><span></span><code><span class=kn>import</span><span class=w> </span><span class=nn>os</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>binascii</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>struct</span>
 
 
 <span class=n>misc</span> <span class=o>=</span> <span class=nb>open</span><span class=p>(</span><span class=s2>&quot;misc4.png&quot;</span><span class=p>,</span><span class=s2>&quot;rb&quot;</span><span class=p>)</span><span class=o>.</span><span class=n>read</span><span class=p>()</span>
@@ -16,7 +16,7 @@
     <span class=n>crc32</span> <span class=o>=</span> <span class=n>binascii</span><span class=o>.</span><span class=n>crc32</span><span class=p>(</span><span class=n>data</span><span class=p>)</span> <span class=o>&amp;</span> <span class=mh>0xffffffff</span>
     <span class=k>if</span> <span class=n>crc32</span> <span class=o>==</span> <span class=mh>0x932f8a6b</span><span class=p>:</span>
         <span class=nb>print</span> <span class=n>i</span>
-</code></pre></div> <p>得到宽度值为 709 后，恢复图片得到 flag。</p> <p><img alt src=../figure/misc4.png></p> <h3 id=plte>PLTE<a class=headerlink href=#plte title="Permanent link">&para;</a></h3> <p>调色板数据块 PLTE（palette chunk）：它包含有与索引彩色图像（indexed-color image）相关的彩色变换数据，它仅与索引彩色图像有关，而且要放在图像数据块（image data chunk）之前。真彩色的 PNG 数据流也可以有调色板数据块，目的是便于非真彩色显示程序用它来量化图像数据，从而显示该图像。</p> <h3 id=idat>IDAT<a class=headerlink href=#idat title="Permanent link">&para;</a></h3> <p>图像数据块 IDAT（image data chunk）：它存储实际的数据，在数据流中可包含多个连续顺序的图像数据块。</p> <ul> <li>储存图像像数数据</li> <li>在数据流中可包含多个连续顺序的图像数据块</li> <li>采用 LZ77 算法的派生算法进行压缩</li> <li>可以用 zlib 解压缩</li> </ul> <p>值得注意的是，IDAT 块只有当上一个块充满时，才会继续一个新的块。</p> <p>用 <code>pngcheck</code> 去查看此 PNG 文件</p> <div class=highlight><pre><span></span><code>λ<span class=w> </span>.<span class=se>\p</span>ngcheck.exe<span class=w> </span>-v<span class=w> </span>sctf.png
+</code></pre></div> <p>得到宽度值为 709 后，恢复图片得到 flag。</p> <p><img alt src=../figure/misc4.png></p> <h3 id=plte>PLTE<a class=headerlink href=#plte title="Permanent link">&para;</a></h3> <p>调色板数据块 PLTE（palette chunk）：它包含有与索引彩色图像（indexed-color image）相关的彩色变换数据，它仅与索引彩色图像有关，而且要放在图像数据块（image data chunk）之前。真彩色的 PNG 数据流也可以有调色板数据块，目的是便于非真彩色显示程序用它来量化图像数据，从而显示该图像。</p> <h3 id=idat>IDAT<a class=headerlink href=#idat title="Permanent link">&para;</a></h3> <p>图像数据块 IDAT（image data chunk）：它存储实际的数据，在数据流中可包含多个连续顺序的图像数据块。</p> <ul> <li>储存图像像素数据</li> <li>在数据流中可包含多个连续顺序的图像数据块</li> <li>采用 LZ77 算法的派生算法进行压缩</li> <li>可以用 zlib 解压缩</li> </ul> <p>值得注意的是，IDAT 块只有当上一个块充满时，才会继续一个新的块。</p> <p>用 <code>pngcheck</code> 去查看此 PNG 文件</p> <div class=highlight><pre><span></span><code>λ<span class=w> </span>.<span class=se>\p</span>ngcheck.exe<span class=w> </span>-v<span class=w> </span>sctf.png
 File:<span class=w> </span>sctf.png<span class=w> </span><span class=o>(</span><span class=m>1421461</span><span class=w> </span>bytes<span class=o>)</span>
 <span class=w>  </span>chunk<span class=w> </span>IHDR<span class=w> </span>at<span class=w> </span>offset<span class=w> </span>0x0000c,<span class=w> </span>length<span class=w> </span><span class=m>13</span>
 <span class=w>    </span><span class=m>1000</span><span class=w> </span>x<span class=w> </span><span class=m>562</span><span class=w> </span>image,<span class=w> </span><span class=m>32</span>-bit<span class=w> </span>RGB+alpha,<span class=w> </span>non-interlaced
@@ -32,8 +32,8 @@ File:<span class=w> </span>sctf.png<span class=w> </span><span class=o>(</span><
 <span class=w>  </span>chunk<span class=w> </span>IDAT<span class=w> </span>at<span class=w> </span>offset<span class=w> </span>0x15aff7,<span class=w> </span>length<span class=w> </span><span class=m>138</span>
 <span class=w>  </span>chunk<span class=w> </span>IEND<span class=w> </span>at<span class=w> </span>offset<span class=w> </span>0x15b08d,<span class=w> </span>length<span class=w> </span><span class=m>0</span>
 No<span class=w> </span>errors<span class=w> </span>detected<span class=w> </span><span class=k>in</span><span class=w> </span>sctf.png<span class=w> </span><span class=o>(</span><span class=m>28</span><span class=w> </span>chunks,<span class=w> </span><span class=m>36</span>.8%<span class=w> </span>compression<span class=o>)</span>.
-</code></pre></div> <p>可以看到，正常的块的 length 是在 65524 的时候就满了，而倒数第二个 IDAT 块长度是 45027，最后一个长度是 138，很明显最后一个 IDAT 块是有问题的，因为他本来应该并入到倒数第二个未满的块里.</p> <p>利用 <code>python zlib</code> 解压多余 IDAT 块的内容，此时注意剔除 <strong>长度、数据块类型及末尾的CRC校验值</strong>。</p> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>zlib</span>
-<span class=kn>import</span> <span class=nn>binascii</span>
+</code></pre></div> <p>可以看到，正常的块的 length 是在 65524 的时候就满了，而倒数第二个 IDAT 块长度是 45027，最后一个长度是 138，很明显最后一个 IDAT 块是有问题的，因为他本来应该并入到倒数第二个未满的块里.</p> <p>利用 <code>python zlib</code> 解压多余 IDAT 块的内容，此时注意剔除 <strong>长度、数据块类型及末尾的CRC校验值</strong>。</p> <div class=highlight><pre><span></span><code><span class=kn>import</span><span class=w> </span><span class=nn>zlib</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>binascii</span>
 <span class=n>IDAT</span> <span class=o>=</span> <span class=s2>&quot;789...667&quot;</span><span class=o>.</span><span class=n>decode</span><span class=p>(</span><span class=s1>&#39;hex&#39;</span><span class=p>)</span>
 <span class=n>result</span> <span class=o>=</span> <span class=n>binascii</span><span class=o>.</span><span class=n>hexlify</span><span class=p>(</span><span class=n>zlib</span><span class=o>.</span><span class=n>decompress</span><span class=p>(</span><span class=n>IDAT</span><span class=p>))</span>
 <span class=nb>print</span> <span class=n>result</span>

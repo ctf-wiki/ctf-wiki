@@ -9,32 +9,32 @@
 <span class=n>final_hash</span> <span class=o>=</span> <span class=n>interim_salt</span> <span class=o>+</span> <span class=n>interim_hash</span>
 </code></pre></div> 重新梳理一下我们知道的信息： 1. hash_rounds中保存了32轮，即每轮要使用的hash函数句柄。 2. final_hash是最后给我们的hash结果。 3. hash_rounds中的内容也会在生成之后打印给我们。 4. 我们希望得到<code>interim_salt</code>和<code>interim_hash</code>在第一轮的值。 5. <code>interim_salt</code>和<code>interim_hash</code>的长度均为64byte。</p> <p>仔细观察一下<code>interim_salt</code>和<code>interim_hash</code>的计算方法，可以发现它是可逆的。</p> <div class=arithmatex> <div class=MathJax_Preview> interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3) </div> <script type="math/tex; mode=display">
 interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
-</script> </div> <p>这行代码里，我们已知 <span class=arithmatex><span class=MathJax_Preview>interim\_hash_1</span><script type=math/tex>interim\_hash_1</script></span> 和 <span class=arithmatex><span class=MathJax_Preview>interim\_salt_3</span><script type=math/tex>interim\_salt_3</script></span>，由此可以推出<span class=arithmatex><span class=MathJax_Preview>interim\_hash_2</span><script type=math/tex>interim\_hash_2</script></span>的值，而<span class=arithmatex><span class=MathJax_Preview>interim\_hash_2</span><script type=math/tex>interim\_hash_2</script></span>则是上一轮的<code>interim_hash</code>。 以此方法逆推32次，则可以得到最初的<code>password</code>和<code>salt</code>。</p> <p>具体的解密脚本为： <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>os</span>
-<span class=kn>import</span> <span class=nn>hashlib</span>
-<span class=kn>import</span> <span class=nn>socket</span>
-<span class=kn>import</span> <span class=nn>threading</span>
-<span class=kn>import</span> <span class=nn>socketserver</span>
-<span class=kn>import</span> <span class=nn>struct</span>
-<span class=kn>import</span> <span class=nn>time</span>
-<span class=kn>import</span> <span class=nn>threading</span>
+</script> </div> <p>这行代码里，我们已知 <span class=arithmatex><span class=MathJax_Preview>interim\_hash_1</span><script type=math/tex>interim\_hash_1</script></span> 和 <span class=arithmatex><span class=MathJax_Preview>interim\_salt_3</span><script type=math/tex>interim\_salt_3</script></span>，由此可以推出<span class=arithmatex><span class=MathJax_Preview>interim\_hash_2</span><script type=math/tex>interim\_hash_2</script></span>的值，而<span class=arithmatex><span class=MathJax_Preview>interim\_hash_2</span><script type=math/tex>interim\_hash_2</script></span>则是上一轮的<code>interim_hash</code>。 以此方法逆推32次，则可以得到最初的<code>password</code>和<code>salt</code>。</p> <p>具体的解密脚本为： <div class=highlight><pre><span></span><code><span class=kn>import</span><span class=w> </span><span class=nn>os</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>hashlib</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>socket</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>threading</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>socketserver</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>struct</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>time</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>threading</span>
 <span class=c1># import pyscrypt</span>
-<span class=kn>from</span> <span class=nn>base64</span> <span class=kn>import</span> <span class=n>b64encode</span><span class=p>,</span> <span class=n>b64decode</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=k>def</span> <span class=nf>md5</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>base64</span><span class=w> </span><span class=kn>import</span> <span class=n>b64encode</span><span class=p>,</span> <span class=n>b64decode</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=k>def</span><span class=w> </span><span class=nf>md5</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
     <span class=k>return</span> <span class=n>hashlib</span><span class=o>.</span><span class=n>md5</span><span class=p>(</span><span class=n>bytestring</span><span class=p>)</span><span class=o>.</span><span class=n>digest</span><span class=p>()</span>
-<span class=k>def</span> <span class=nf>sha</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>sha</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
     <span class=k>return</span> <span class=n>hashlib</span><span class=o>.</span><span class=n>sha1</span><span class=p>(</span><span class=n>bytestring</span><span class=p>)</span><span class=o>.</span><span class=n>digest</span><span class=p>()</span>
-<span class=k>def</span> <span class=nf>blake</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>blake</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
     <span class=k>return</span> <span class=n>hashlib</span><span class=o>.</span><span class=n>blake2b</span><span class=p>(</span><span class=n>bytestring</span><span class=p>)</span><span class=o>.</span><span class=n>digest</span><span class=p>()</span>
-<span class=k>def</span> <span class=nf>scrypt</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>scrypt</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
     <span class=n>l</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>bytestring</span><span class=p>)</span> <span class=o>/</span> <span class=mi>2</span><span class=p>)</span>
     <span class=n>salt</span> <span class=o>=</span> <span class=n>bytestring</span><span class=p>[:</span><span class=n>l</span><span class=p>]</span>
     <span class=n>p</span> <span class=o>=</span> <span class=n>bytestring</span><span class=p>[</span><span class=n>l</span><span class=p>:]</span>
     <span class=k>return</span> <span class=n>hashlib</span><span class=o>.</span><span class=n>scrypt</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>salt</span><span class=o>=</span><span class=n>salt</span><span class=p>,</span> <span class=n>n</span><span class=o>=</span><span class=mi>2</span><span class=o>**</span><span class=mi>16</span><span class=p>,</span> <span class=n>r</span><span class=o>=</span><span class=mi>8</span><span class=p>,</span> <span class=n>p</span><span class=o>=</span><span class=mi>1</span><span class=p>,</span> <span class=n>maxmem</span><span class=o>=</span><span class=mi>67111936</span><span class=p>)</span>
     <span class=c1># return pyscrypt.hash(p, salt, 2**16, 8, 1, dkLen=64)</span>
-<span class=k>def</span> <span class=nf>xor</span><span class=p>(</span><span class=n>s1</span><span class=p>,</span> <span class=n>s2</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>xor</span><span class=p>(</span><span class=n>s1</span><span class=p>,</span> <span class=n>s2</span><span class=p>):</span>
     <span class=k>return</span> <span class=sa>b</span><span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>([</span><span class=nb>bytes</span><span class=p>([</span><span class=n>s1</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>^</span> <span class=n>s2</span><span class=p>[</span><span class=n>i</span> <span class=o>%</span> <span class=nb>len</span><span class=p>(</span><span class=n>s2</span><span class=p>)]])</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>s1</span><span class=p>))])</span>
-<span class=k>def</span> <span class=nf>main</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>main</span><span class=p>():</span>
     <span class=c1># io = socket.socket(family=socket.AF_INET)</span>
     <span class=c1># io.connect((&#39;47.88.216.38&#39;, 20013))</span>
     <span class=n>io</span> <span class=o>=</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;47.88.216.38&#39;</span><span class=p>,</span> <span class=mi>20013</span><span class=p>)</span>
@@ -69,38 +69,38 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
     <span class=nb>print</span><span class=p>(</span><span class=n>in_hash</span><span class=p>[</span><span class=o>-</span><span class=mi>20</span><span class=p>:])</span>
     <span class=n>io</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
 <span class=n>main</span><span class=p>()</span>
-</code></pre></div></p> <h4 id=hash_1>原hash算法<a class=headerlink href=#hash_1 title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=kn>import</span> <span class=nn>os</span>
-<span class=kn>import</span> <span class=nn>hashlib</span>
-<span class=kn>import</span> <span class=nn>socket</span>
-<span class=kn>import</span> <span class=nn>threading</span>
-<span class=kn>import</span> <span class=nn>socketserver</span>
-<span class=kn>import</span> <span class=nn>struct</span>
-<span class=kn>import</span> <span class=nn>time</span>
+</code></pre></div></p> <h4 id=hash_1>原hash算法<a class=headerlink href=#hash_1 title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=kn>import</span><span class=w> </span><span class=nn>os</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>hashlib</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>socket</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>threading</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>socketserver</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>struct</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>time</span>
 
 <span class=c1># import pyscrypt</span>
 
-<span class=kn>from</span> <span class=nn>base64</span> <span class=kn>import</span> <span class=n>b64encode</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>base64</span><span class=w> </span><span class=kn>import</span> <span class=n>b64encode</span>
 
-<span class=k>def</span> <span class=nf>md5</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>md5</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
     <span class=k>return</span> <span class=n>hashlib</span><span class=o>.</span><span class=n>md5</span><span class=p>(</span><span class=n>bytestring</span><span class=p>)</span><span class=o>.</span><span class=n>digest</span><span class=p>()</span>
 
-<span class=k>def</span> <span class=nf>sha</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>sha</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
     <span class=k>return</span> <span class=n>hashlib</span><span class=o>.</span><span class=n>sha1</span><span class=p>(</span><span class=n>bytestring</span><span class=p>)</span><span class=o>.</span><span class=n>digest</span><span class=p>()</span>
 
-<span class=k>def</span> <span class=nf>blake</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>blake</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
     <span class=k>return</span> <span class=n>hashlib</span><span class=o>.</span><span class=n>blake2b</span><span class=p>(</span><span class=n>bytestring</span><span class=p>)</span><span class=o>.</span><span class=n>digest</span><span class=p>()</span>
 
-<span class=k>def</span> <span class=nf>scrypt</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>scrypt</span><span class=p>(</span><span class=n>bytestring</span><span class=p>):</span>
     <span class=n>l</span> <span class=o>=</span> <span class=nb>int</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>bytestring</span><span class=p>)</span> <span class=o>/</span> <span class=mi>2</span><span class=p>)</span>
     <span class=n>salt</span> <span class=o>=</span> <span class=n>bytestring</span><span class=p>[:</span><span class=n>l</span><span class=p>]</span>
     <span class=n>p</span> <span class=o>=</span> <span class=n>bytestring</span><span class=p>[</span><span class=n>l</span><span class=p>:]</span>
     <span class=k>return</span> <span class=n>hashlib</span><span class=o>.</span><span class=n>scrypt</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>salt</span><span class=o>=</span><span class=n>salt</span><span class=p>,</span> <span class=n>n</span><span class=o>=</span><span class=mi>2</span><span class=o>**</span><span class=mi>16</span><span class=p>,</span> <span class=n>r</span><span class=o>=</span><span class=mi>8</span><span class=p>,</span> <span class=n>p</span><span class=o>=</span><span class=mi>1</span><span class=p>,</span> <span class=n>maxmem</span><span class=o>=</span><span class=mi>67111936</span><span class=p>)</span>
     <span class=c1># return pyscrypt.hash(p, salt, 2**16, 8, 1)</span>
 
-<span class=k>def</span> <span class=nf>xor</span><span class=p>(</span><span class=n>s1</span><span class=p>,</span> <span class=n>s2</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>xor</span><span class=p>(</span><span class=n>s1</span><span class=p>,</span> <span class=n>s2</span><span class=p>):</span>
     <span class=k>return</span> <span class=sa>b</span><span class=s1>&#39;&#39;</span><span class=o>.</span><span class=n>join</span><span class=p>([</span><span class=nb>bytes</span><span class=p>([</span><span class=n>s1</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>^</span> <span class=n>s2</span><span class=p>[</span><span class=n>i</span> <span class=o>%</span> <span class=nb>len</span><span class=p>(</span><span class=n>s2</span><span class=p>)]])</span> <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>s1</span><span class=p>))])</span>
 
-<span class=k>class</span> <span class=nc>HashHandler</span><span class=p>(</span><span class=n>socketserver</span><span class=o>.</span><span class=n>BaseRequestHandler</span><span class=p>):</span>
+<span class=k>class</span><span class=w> </span><span class=nc>HashHandler</span><span class=p>(</span><span class=n>socketserver</span><span class=o>.</span><span class=n>BaseRequestHandler</span><span class=p>):</span>
 
     <span class=n>welcome_message</span> <span class=o>=</span> <span class=s2>&quot;&quot;&quot;</span>
 <span class=s2>Welcome, young wanna-be Cracker, to the Hashinator.</span>
@@ -120,7 +120,7 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
     <span class=n>timeout</span> <span class=o>=</span> <span class=mi>10</span>
     <span class=n>total_rounds</span> <span class=o>=</span> <span class=mi>32</span>
 
-    <span class=k>def</span> <span class=nf>handle</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>handle</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
         <span class=bp>self</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>sendall</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>welcome_message</span><span class=o>.</span><span class=n>format</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>timeout</span><span class=p>)</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
 
         <span class=n>password</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>generate_password</span><span class=p>()</span>     <span class=c1># from rock_you.txt</span>
@@ -150,7 +150,7 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
         <span class=bp>self</span><span class=o>.</span><span class=n>request</span><span class=o>.</span><span class=n>sendall</span><span class=p>(</span><span class=s2>&quot;Your cracking skills are bad, and you should feel bad!&quot;</span><span class=o>.</span><span class=n>encode</span><span class=p>())</span>
 
 
-    <span class=k>def</span> <span class=nf>generate_password</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>generate_password</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
         <span class=n>rand</span> <span class=o>=</span> <span class=n>struct</span><span class=o>.</span><span class=n>unpack</span><span class=p>(</span><span class=s2>&quot;I&quot;</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>urandom</span><span class=p>(</span><span class=mi>4</span><span class=p>))[</span><span class=mi>0</span><span class=p>]</span>
         <span class=n>lines</span> <span class=o>=</span> <span class=mi>14344391</span> <span class=c1># size of rockyou</span>
         <span class=n>line</span> <span class=o>=</span> <span class=n>rand</span> <span class=o>%</span> <span class=n>lines</span>
@@ -160,12 +160,12 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
             <span class=n>password</span> <span class=o>=</span> <span class=n>f</span><span class=o>.</span><span class=n>readline</span><span class=p>()</span>
         <span class=k>return</span> <span class=n>password</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
 
-    <span class=k>def</span> <span class=nf>generate_salt</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>p</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>generate_salt</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>p</span><span class=p>):</span>
         <span class=n>msize</span> <span class=o>=</span> <span class=mi>128</span> <span class=c1># f-you hashcat :D</span>
         <span class=n>salt_size</span> <span class=o>=</span> <span class=n>msize</span> <span class=o>-</span> <span class=nb>len</span><span class=p>(</span><span class=n>p</span><span class=p>)</span>
         <span class=k>return</span> <span class=n>os</span><span class=o>.</span><span class=n>urandom</span><span class=p>(</span><span class=n>salt_size</span><span class=p>)</span>
 
-    <span class=k>def</span> <span class=nf>generate_rounds</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>generate_rounds</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
         <span class=n>rand</span> <span class=o>=</span> <span class=n>struct</span><span class=o>.</span><span class=n>unpack</span><span class=p>(</span><span class=s2>&quot;Q&quot;</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>urandom</span><span class=p>(</span><span class=mi>8</span><span class=p>))[</span><span class=mi>0</span><span class=p>]</span>
         <span class=n>rounds</span> <span class=o>=</span> <span class=p>[]</span>
         <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>total_rounds</span><span class=p>):</span>
@@ -173,7 +173,7 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
             <span class=n>rand</span> <span class=o>=</span> <span class=n>rand</span> <span class=o>&gt;&gt;</span> <span class=mi>2</span>
         <span class=k>return</span> <span class=n>rounds</span>
 
-    <span class=k>def</span> <span class=nf>calculate_hash</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>payload</span><span class=p>,</span> <span class=n>hash_rounds</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>calculate_hash</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>payload</span><span class=p>,</span> <span class=n>hash_rounds</span><span class=p>):</span>
         <span class=n>interim_salt</span> <span class=o>=</span> <span class=n>payload</span><span class=p>[:</span><span class=mi>64</span><span class=p>]</span>
         <span class=n>interim_hash</span> <span class=o>=</span> <span class=n>payload</span><span class=p>[</span><span class=mi>64</span><span class=p>:]</span>
         <span class=k>for</span> <span class=n>i</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=nb>len</span><span class=p>(</span><span class=n>hash_rounds</span><span class=p>)):</span>
@@ -190,13 +190,13 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
         <span class=n>final_hash</span> <span class=o>=</span> <span class=n>interim_salt</span> <span class=o>+</span> <span class=n>interim_hash</span>
         <span class=k>return</span> <span class=n>final_hash</span>
 
-    <span class=k>def</span> <span class=nf>generate_delay</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+    <span class=k>def</span><span class=w> </span><span class=nf>generate_delay</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
         <span class=n>rand</span> <span class=o>=</span> <span class=n>struct</span><span class=o>.</span><span class=n>unpack</span><span class=p>(</span><span class=s2>&quot;I&quot;</span><span class=p>,</span> <span class=n>os</span><span class=o>.</span><span class=n>urandom</span><span class=p>(</span><span class=mi>4</span><span class=p>))[</span><span class=mi>0</span><span class=p>]</span>
         <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=n>rand</span> <span class=o>/</span> <span class=mf>1000000000.0</span><span class=p>)</span>
 
 
 
-<span class=k>class</span> <span class=nc>ThreadedTCPServer</span><span class=p>(</span><span class=n>socketserver</span><span class=o>.</span><span class=n>ThreadingMixIn</span><span class=p>,</span> <span class=n>socketserver</span><span class=o>.</span><span class=n>TCPServer</span><span class=p>):</span>
+<span class=k>class</span><span class=w> </span><span class=nc>ThreadedTCPServer</span><span class=p>(</span><span class=n>socketserver</span><span class=o>.</span><span class=n>ThreadingMixIn</span><span class=p>,</span> <span class=n>socketserver</span><span class=o>.</span><span class=n>TCPServer</span><span class=p>):</span>
     <span class=n>allow_reuse_address</span> <span class=o>=</span> <span class=kc>True</span>
 
 <span class=n>PORT</span> <span class=o>=</span> <span class=mi>1337</span>
@@ -206,7 +206,7 @@ interim\_hash_1 = interim\_hash_2 \oplus hash\_rounds[i](interim\_salt_3)
 <span class=k>with</span> <span class=nb>open</span><span class=p>(</span><span class=s2>&quot;flag.txt&quot;</span><span class=p>)</span> <span class=k>as</span> <span class=n>f</span><span class=p>:</span>
     <span class=n>flag</span> <span class=o>=</span> <span class=n>f</span><span class=o>.</span><span class=n>read</span><span class=p>()</span>
 
-<span class=k>def</span> <span class=nf>main</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>main</span><span class=p>():</span>
     <span class=n>server</span> <span class=o>=</span> <span class=n>ThreadedTCPServer</span><span class=p>((</span><span class=n>HOST</span><span class=p>,</span> <span class=n>PORT</span><span class=p>),</span> <span class=n>HashHandler</span><span class=p>)</span>
     <span class=n>server_thread</span> <span class=o>=</span> <span class=n>threading</span><span class=o>.</span><span class=n>Thread</span><span class=p>(</span><span class=n>target</span><span class=o>=</span><span class=n>server</span><span class=o>.</span><span class=n>serve_forever</span><span class=p>)</span>
     <span class=n>server_thread</span><span class=o>.</span><span class=n>start</span><span class=p>()</span>

