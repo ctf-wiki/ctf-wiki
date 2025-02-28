@@ -107,11 +107,20 @@ clean:
 - `clean:` ：和 `all` 标签传递的基本一致，不同在于最后执行的行为是 `clean` ，意味着清理编译产物。
 - `.PHONY`：“伪目标”，即相比同名文件而言优先找 Makefile 中的标签定义，这里将 `clean` 标签声明为伪目标。
 
+### 编译内核模块
+
 完成这些之后，我们便能开始编译内核模块了，我们只需要运行如下命令：
 
 ```shell
-$ make all
+$ make -j$(nproc) all
 ```
+
+如果你使用的是自行下载编译的内核源码，则在编译内核模块之前，你还需要在内核源码目录下先执行该命令：
+
+```shell
+$ make -j$(nproc) modules
+```
+
 ### 内核模块的载入与卸载
 
 我们可以通过 `insmod` 命令直接载入一个内核模块：
@@ -126,6 +135,138 @@ $ sudo insmod a3kmod.ko
 $ sudo rmmod a3kmod
 ```
 
+## 提供用户态接口
+
+接下来我们为我们的内核模块添加可供用户态应用程序交互的方式，一个比较常见的方式是我们的内核模块在载入后创建一个虚拟文件节点，用户态应用程序打开该节点后通过 `read()` 、 `write()` 、 `ioctl()` 等系统调用进行交互。
+
+本节我们简单介绍如何创建一个可供用户态交互的 procfs （ Process file system ）的文件节点。
+
+### 文件节点交互
+
+我们的文件节点支持通过 `read()` 、 `write()` 、 `ioctl()` 等系统调用进行交互，而这实际上需要我们在内核空间当中定义相应的操作函数。对于 procfs 而言，其支持的操作通过 `struct proc_ops` 这一函数表进行定义：
+
+```c
+struct proc_ops {
+	unsigned int proc_flags;
+	int	(*proc_open)(struct inode *, struct file *);
+	ssize_t	(*proc_read)(struct file *, char __user *, size_t, loff_t *);
+	ssize_t (*proc_read_iter)(struct kiocb *, struct iov_iter *);
+	ssize_t	(*proc_write)(struct file *, const char __user *, size_t, loff_t *);
+	/* mandatory unless nonseekable_open() or equivalent is used */
+	loff_t	(*proc_lseek)(struct file *, loff_t, int);
+	int	(*proc_release)(struct inode *, struct file *);
+	__poll_t (*proc_poll)(struct file *, struct poll_table_struct *);
+	long	(*proc_ioctl)(struct file *, unsigned int, unsigned long);
+#ifdef CONFIG_COMPAT
+	long	(*proc_compat_ioctl)(struct file *, unsigned int, unsigned long);
+#endif
+	int	(*proc_mmap)(struct file *, struct vm_area_struct *);
+	unsigned long (*proc_get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+} __randomize_layout;
+```
+
+这里我们简单地为 `proc_read()` 与 `proc_write()` 实现对应的函数原型，其功能为拷贝数据到用户进程以及从用户进程读取数据，并将函数指针放入我们的 `proc_ops` 中：
+
+```c
+#include <linux/proc_fs.h>
+
+#define A3KMOD_BUF_SZ 0x1000
+static char a3kmod_buf[A3KMOD_BUF_SZ] = { 0 };
+
+static ssize_t a3kmod_proc_read
+(struct file *file, char __user *ubuf, size_t size, loff_t *ppos)
+{
+    ssize_t err;
+    size_t end_loc, copied;
+
+    end_loc = size + (*ppos);
+    if (end_loc < size || (*ppos) > A3KMOD_BUF_SZ) {
+        return -EINVAL;
+    }
+
+    if (end_loc > A3KMOD_BUF_SZ) {
+        end_loc = A3KMOD_BUF_SZ;
+    }
+
+    copied = end_loc - (*ppos);
+    if (copied == 0) {
+        return 0;   // EOF
+    }
+
+    err = copy_to_user(ubuf, &a3kmod_buf[*ppos], copied);
+    if (err != 0) {
+        return err;
+    }
+
+    *ppos = end_loc;
+
+    return copied;
+}
+
+static ssize_t a3kmod_proc_write
+(struct file *file, const char __user *ubuf, size_t size, loff_t *ppos)
+{
+    ssize_t err;
+    size_t end_loc, copied;
+
+    end_loc = size + (*ppos);
+    if (end_loc < size || (*ppos) > A3KMOD_BUF_SZ) {
+        return -EINVAL;
+    }
+
+    if (end_loc > A3KMOD_BUF_SZ) {
+        end_loc = A3KMOD_BUF_SZ;
+    }
+
+    copied = end_loc - (*ppos);
+    if (copied == 0) {
+        return 0;   // EOF
+    }
+
+    err = copy_from_user(&a3kmod_buf[*ppos], ubuf, copied);
+    if (err != 0) {
+        return err;
+    }
+
+    *ppos = end_loc;
+
+    return copied;
+}
+
+static struct proc_ops a3kmod_proc_ops = {
+    .proc_read = a3kmod_proc_read,
+    .proc_write = a3kmod_proc_write,
+};
+```
+
+### 创建文件节点
+
+我们在模块初始化函数中调用 `proc_create()` 创建我们的 procfs 文件节点，各个参数分别指定了节点名、权限、父节点（为 NULL 则挂到 procfs 的根节点）、函数表，并在模块卸载时销毁该节点：
+
+```c
+static struct proc_dir_entry *a3kmod_proc_dir_entry;
+
+static __init int a3kmod_init(void)
+{
+    printk(KERN_INFO "[a3kmod:] Hello kernel world!\n");
+    a3kmod_proc_dir_entry = proc_create("a3kmod", 0666, NULL, &a3kmod_proc_ops);
+    if (IS_ERR(a3kmod_proc_dir_entry)) {
+        return PTR_ERR(a3kmod_proc_dir_entry);
+    }
+
+    return 0;
+}
+
+static __exit void a3kmod_exit(void)
+{
+    printk(KERN_INFO "[a3kmod:] Goodbye kernel world!\n");
+    proc_remove(a3kmod_proc_dir_entry);
+}
+```
+
+最后照常编译载入即可，在我们的 QEMU 环境中运行的效果如下图所示：
+
+![](./figure/test-kmod.png)
 
 ## Reference
 
