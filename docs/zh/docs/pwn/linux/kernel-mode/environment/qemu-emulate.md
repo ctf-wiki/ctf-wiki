@@ -1,175 +1,288 @@
-# Qemu 模拟环境
+# 搭建内核运行环境
 
-这一章节主要介绍如何使用 QEMU 来搭建调试分析环境。为了使用 qemu 启动和调试内核，我们需要内核、qemu、文件系统。
+QEMU 是一款开源的虚拟机软件，支持多种不同架构的模拟（Emulation）以及配合 kvm 完成当前架构的虚拟化（Virtualization）的特性，是当前最火热的开源虚拟机软件。
 
-## 准备
+这一章节主要介绍如何使用 QEMU 来搭建调试分析环境。为了使用 qemu 启动和调试内核，我们需要内核、QEMU、文件系统。
 
-### 内核
+## 获取内核镜像文件
 
-这个在之前已经编译完成了。
+我们已经在前面的章节叙述了如何从源码编译内核并获取内核镜像文件，这里不再赘述。
 
-### QEMU
+## 获取 QEMU
 
-关于 QEMU 的介绍与安装请参考 `ctf-tools`。
+QEMU 的获取同样分为两种方式：从发行版仓库进行安装以及从源码进行编译。你可以根据自己的需求进行选择。
 
-### 文件系统
+## 使用 BusyBox 搭建基本的文件系统
 
-这里我们使用 busybox 来构建一个简单的文件系统。
+[BusyBox](https://www.busybox.net/) 是一个集成了三百多个最常用 Linux 命令和工具的软件，包含了例如 ls 、cat 和 echo 等常见的命令，相比起各大发行版中常用的 [GNU core utilities](https://www.gnu.org/software/coreutils/) ，BusyBox 更加的轻量化，且更容易进行配置，因此我们将用 busybox 为我们的内核提供一个基本的用户环境。
 
-#### 下载编译 busybox
+### 下载编译 busybox
 
-##### 下载 busybox
+> 需要注意的是，在主机使用较新的内核版本的情况下，BusyBox 可能会无法完成编译，这个 Bug 早在 2024 年 1 月便有人 [提交了报告](https://lists.busybox.net/pipermail/busybox-cvs/2024-January/041752.html) ，但直到现在都尚未进行修复。
+> 
+> 如果你的 BusyBox 编译失败，考虑切换到老内核继续进行，或是选择直接下载预编译版本。
 
-```bash
-❯ wget https://busybox.net/downloads/busybox-1.32.1.tar.bz2
-❯ tar -jxf busybox-1.32.1.tar.bz2
+#### 下载 BusyBox 源码
+
+我们首先在 [busybox.net](https://busybox.net/downloads/) 下载自己想要的版本，笔者这里选用 `1.36.0` 版本：
+
+```shell
+$ wget https://busybox.net/downloads/busybox-1.36.0.tar.bz2
 ```
 
-##### 配置
+完成后进行解压：
 
-```bash
-❯ make menuconfig
+```shell
+$ tar -jxvf busybox-1.36.0.tar.bz2 
 ```
 
-在 Setttings 选中 Build static binary (no shared libs)，将 busybox 编译为静态链接的文件；在 Linux System Utilities 中取消选中 Support mounting NFS file systems on Linux < 2.6.23 (NEW)；在 Networking Utilities 中取消选中 inetd。
+#### 编译 BusyBox
 
-##### 编译
+接下来我们配置编译选项，进入到源码根目录运行如下命令进入图形化配置界面：
 
-```bash
-make -j3
+```shell
+$ make menuconfig
 ```
 
-#### 配置文件系统
+勾选 `Settings` ---> `Build static binary file (no shared lib)` 以构建不依赖于 libc 的静态编译版本，因为我们的简易内核环境中只有 BusyBox，没有额外的 libc 等运行支持。
 
-使用 busybox 创建 `_install` 目录，使用命令：
+> 可选项：在 Linux System Utilities 中取消选中 Support mounting NFS file systems on Linux < 2.6.23 (NEW)；在 Networking Utilities 中取消选中 inetd。
 
-```bash
-make install
+接下来进行编译：
+
+```shell
+$ make -j$(nproc)
+$ make install
 ```
 
-在编译完成后，我们在 `_install` 目录下创建以下文件夹
+编译完成后会生成一个 `_install` 目录，接下来我们将会用它来构建我们的文件系统
 
-```bash
-❯ mkdir -p  proc sys dev etc/init.d
+### 配置文件系统
+
+我们首先在 `_install` 目录下创建基本的文件系统结构：
+
+```shell
+$ cd _install
+$ mkdir -pv {bin,sbin,etc,proc,sys,dev,home/ctf,root,tmp,lib64,lib/x86_64-linux-gnu,usr/{bin,sbin}}
+$ touch etc/inittab
+$ mkdir etc/init.d
+$ touch etc/init.d/rcS
+$ chmod +x ./etc/init.d/rcS
 ```
 
-并创建 `init` 作为 linux 的启动脚本，内容为
+在我们创建的 `./etc/inttab` 中写入如下内容：
+
+```shell
+::sysinit:/etc/init.d/rcS
+::askfirst:/bin/ash
+::ctrlaltdel:/sbin/reboot
+::shutdown:/sbin/swapoff -a
+::shutdown:/bin/umount -a -r
+::restart:/sbin/init
+```
+
+在上面的文件中指定了系统初始化脚本，因此接下来配置 `etc/init.d/rcS`，写入如下内容，主要是挂载各种文件系统，以及设置各目录的权限，并创建一个非特权用户：
 
 ```bash
 #!/bin/sh
-echo "INIT SCRIPT"
-mkdir /tmp
+chown -R root:root /
+chmod 700 /root
+chown -R ctf:ctf /home/ctf
+
 mount -t proc none /proc
 mount -t sysfs none /sys
-mount -t devtmpfs none /dev
-mount -t debugfs none /sys/kernel/debug
-mount -t tmpfs none /tmp
-echo -e "Boot took $(cut -d' ' -f1 /proc/uptime) seconds"
-setsid /bin/cttyhack setuidgid 1000 /bin/sh
+mount -t tmpfs tmpfs /tmp
+mkdir /dev/pts
+mount -t devpts devpts /dev/pts
+
+echo 1 > /proc/sys/kernel/dmesg_restrict
+echo 1 > /proc/sys/kernel/kptr_restrict
+
+echo -e "\nBoot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
+
+cd /home/ctf
+su ctf -c sh
+
+poweroff -d 0  -f
 ```
 
-将脚本加上可执行权限，以便于执行。
-
-```bash
-❯ chmod +x init
-```
-
-之后在 `_install` 目录下打包整个文件系统
-
-```bash
-❯ find . | cpio -o --format=newc > ../rootfs.img
-5367 blocks
-```
-
-当然，我们还可以使用如下的命令重新解包文件系统
+然后为这个脚本添加可执行权限，该脚本通常用作我们自定义的环境初始化脚本：
 
 ```shell
-cpio -idmv < rootfs.img
+$ chmod +x ./etc/init.d/rcS
+```
+
+接下来我们配置用户组相关权限，在这里建立了两个用户组 `root` 和 `ctf` ，以及两个用户 `root` 和 `ctf`，并配置了一条文件系统挂载项：
+
+```shell
+$ echo "root:x:0:0:root:/root:/bin/sh" > etc/passwd
+$ echo "ctf:x:1000:1000:ctf:/home/ctf:/bin/sh" >> etc/passwd
+$ echo "root:x:0:" > etc/group
+$ echo "ctf:x:1000:" >> etc/group
+$ echo "none /dev/pts devpts gid=5,mode=620 0 0" > etc/fstab
+```
+
+### 打包文件系统
+
+#### cpio 格式
+
+我们可以在 `_install` 目录下使用如下命令打包文件系统为 cpio 格式：
+
+```shell
+$ find . | cpio -o --format=newc > ../rootfs.cpio
+```
+
+也可以这么写
+
+```shell
+$ find . | cpio -o -H newc > ../rootfs.cpio
+```
+
+> 这里的位置是笔者随便选的，也可以将之放到自己喜欢的位置。
+
+当然，我们还可以使用如下的命令重新解包文件系统：
+
+```shell
+$ cpio -idv < ./rootfs.cpio$
+```
+
+#### ext4 镜像格式
+
+这里也可以将文件系统打包为 ext4 镜像格式，首先创建空白 ext4 镜像文件，这里 `bs` 表示块大小，`count` 表示块的数量：
+
+```shell
+$ dd if=/dev/zero of=rootfs.img bs=1M count=32
+```
+
+之后将其格式化为 ext4 格式：
+
+```shell
+$ mkfs.ext4 rootfs.img 
+```
+
+挂载镜像，将文件拷贝进去即可：
+
+```shell
+$ mkdir tmp
+$ sudo mount rootfs.img ./tmp/
+$ sudo cp -rfp _install/* ./tmp/
+$ sudo chown -R root:root ./tmp/
+$ sudo chmod 700 ./tmp/root
+$ sudo chown -R 1000:1000 ./tmp/home/ctf/
+$ sudo umount ./tmp
 ```
 
 ## 启动内核
 
-这里以前面编译好的 Linux 内核、文件系统镜像为例来介绍如何启动内核。我们可以直接使用下面的脚本来启动 Linux 内核
+这里以前面编译好的 Linux 内核、文件系统镜像为例来介绍如何启动内核。我们可以直接使用下面的脚本来启动 Linux 内核：
 
 ```bash
 #!/bin/sh
 qemu-system-x86_64 \
-    -m 64M \
-    -nographic \
+    -m 128M \
     -kernel ./bzImage \
-    -initrd  ./rootfs.img \
-    -append "root=/dev/ram rw console=ttyS0 oops=panic panic=1 kaslr" \
+    -initrd  ./rootfs.cpio \
+    -monitor /dev/null \
+    -append "root=/dev/ram rdinit=/sbin/init console=ttyS0 oops=panic panic=1 loglevel=3 quiet kaslr" \
+    -cpu kvm64,+smep \
     -smp cores=2,threads=1 \
-    -cpu kvm64
+    -nographic \
+    -s
 ```
 
-启动后的效果如下
+各参数说明如下，详细说明可以参照 QEMU 的官方文档：
 
-```bash
-Boot took 2.05 seconds
-/ $ [    2.265131] tsc: Refined TSC clocksource calibration: 2399.950 MHz
-[    2.265561] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x2298086d749, max_idle_ns: 440795294037 ns
-[    2.266131] clocksource: Switched to clocksource tsc
+- `-m`：虚拟机内存大小
+- `-kernel`：内核镜像路径
+- `-initrd`：初始文件系统路径，cpio 文件系统会被载入到内存当中（initramfs）
+- `-monitor`：将监视器重定向到主机设备 `/dev/null`，这里重定向至 null 主要是防止CTF 中被人通过监视器直接拿 flag
+- `-append`：内核启动参数选项
+    - `root=/dev/ram`：该参数设定了根文件系统所在设备，因为我们使用的是 initramfs 所以文件系统位于内存中
+    - `kaslr`：开启内核地址随机化，你也可以改为 `nokaslr` 进行关闭以方便我们进行调试
+    - `rdinit`：指定初始启动进程，这里我们指定了 `/sbin/init` 作为初始进程，其会默认以 `/etc/init.d/rcS` 作为启动脚本
+    - `loglevel=3` & `quiet`：不输出log
+    - `console=ttyS0`：指定终端为 `/dev/ttyS0`，这样一启动就能进入终端界面
+- `-cpu`：设置CPU选项，在这里开启了smep保护
+- `-smp`：设置对称多处理器配置，这里设置了两个核心，每个核心一个线程
+- `-nographic`：不提供图形化界面，此时内核仅有串口输出，输出内容会被 QEMU 重定向至我们的终端
+- `-s`：相当于`-gdb tcp::1234`的简写（也可以直接这么写），后续我们可以通过gdb连接本地端口进行调试
 
-/ $
-/ $ ls
-bin      etc      linuxrc  root     sys      usr
-dev      init     proc     sbin     tmp
-```
+启动后的效果如下:
 
-在没有设置 monitor 时，我们可以使用`ctrl-a+c` 来进入 monitor，可以看到 monitor 提供了很多命令。
+![](./figure/env-pic-1.png)
 
-```bash
-/ $ QEMU 5.2.0 monitor - type 'help' for more information
-(qemu) help
-acl_add aclname match allow|deny [index] -- add a match rule to the access control list
-acl_policy aclname allow|deny -- set default access control list policy
-acl_remove aclname match -- remove a match rule from the access control list
-acl_reset aclname -- reset the access control list
-acl_show aclname -- list rules in the access control list
-...
-```
-
-在用 qemu 启动内核时，常用的选项如下
-
-- -m， 指定RAM大小，默认 384M
-- -kernel，指定内核镜像文件 bzImage 路径
-- -initrd，设置内核启动的内存文件系统
-- `-smp [cpus=]n[,cores=cores][,threads=threads][,dies=dies][,sockets=sockets][,maxcpus=maxcpus]`，指定使用到的核数。
-- -cpu，指定指定要模拟的处理器架构，可以同时开启一些保护，如
-    - +smap，开启 smap 保护
-    - +smep，开启 smep 保护
-- -nographic，表示不需要图形界面
-- -monitor，对 qemu 提供的控制台进行重定向，如果没有设置的话，可以直接进入控制台。
-- -append，附加选项
-    -  `nokaslr` 关闭随机偏移
-    -  console=ttyS0，和 `nographic` 一起使用，启动的界面就变成了当前终端。
-
-## 加载驱动
-
-当然，我们还可以加载之前编译的驱动。将生成的 ko 文件拷贝到 busybox 的 `_install` 目录下，然后对启动脚本进行修改，添加 `insmod /ko_test.ko` ，具体如下
+如果你使用了 ext4 文件镜像，则应当修改部分启动参数如下：
 
 ```bash
 #!/bin/sh
-echo "INIT SCRIPT"
-mkdir /tmp
+qemu-system-x86_64 \
+    -m 128M \
+    -kernel ./bzImage \
+    -hda  ./rootfs.img \
+    -monitor /dev/null \
+    -append "root=/dev/sda rw rdinit=/sbin/init console=ttyS0 oops=panic panic=1 loglevel=3 quiet kaslr" \
+    -cpu kvm64,+smep \
+    -smp cores=2,threads=1 \
+    -nographic \
+    -s
+```
+
+涉及改动的参数如下：
+
+- `-hda`：我们将 ext4 镜像挂载为一个真正的硬盘设备，优点在于更贴近真实环境（同时 flag 不会被在内存中泄漏），缺点在于所有对文件系统的操作都会“落盘”
+- `-append`：我们修改了 `root=/dev/sda rw` ，因为 ext4 镜像被挂载为一个 SATA 硬盘，而 Linux 中第一个 SATA 硬盘的路径为 `/dev/sda` ，因此我们将根文件系统路径指向设备路径，并给予可读写权限
+
+启动后的效果如下:
+
+![](./figure/env-pic-2.png)
+
+此外，在没有设置 monitor 时，我们可以先按一次 `CTRL + A`、再按一次 `C` 来进入 QEMU monitor，可以看到 monitor 提供了很多有用的命令。
+
+```bash
+~ $ QEMU 9.1.2 monitor - type 'help' for more information
+(qemu) help
+announce_self [interfaces] [id] -- Trigger GARP/RARP announcements
+balloon target -- request VM to change its memory allocation (in MB)
+block_job_cancel [-f] device -- stop an active background block operation (use -f
+                         if you want to abort the operation immediately
+                         instead of keep running until data is in sync)
+...
+```
+
+## 加载驱动
+
+现在我们来加载之前编译的驱动。我们只需要将生成的 ko 文件拷贝到文件系统中，然后在启动脚本中添加 `insmod` 命令即可，具体如下：
+
+```bash
+chown -R root:root /
+chmod 700 /root
+chown -R ctf:ctf /home/ctf
+
 mount -t proc none /proc
 mount -t sysfs none /sys
-mount -t devtmpfs none /dev
-mount -t debugfs none /sys/kernel/debug
-mount -t tmpfs none /tmp
-insmod /ko_test.ko
-echo -e "Boot took $(cut -d' ' -f1 /proc/uptime) seconds"
-setsid /bin/cttyhack setuidgid 1000 /bin/sh
-poweroff -f
+mount -t tmpfs tmpfs /tmp
+mkdir /dev/pts
+mount -t devpts devpts /dev/pts
+
+echo 1 > /proc/sys/kernel/dmesg_restrict
+echo 1 > /proc/sys/kernel/kptr_restrict
+
+insmod /root/a3kmod.ko
+
+echo -e "\nBoot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
+
+cd /root
+su root -c sh
+
+poweroff -d 0  -f
 ```
 
 qemu 启动内核后，我们可以使用 dmesg 查看输出，可以看到确实加载了对应的 ko。
 
-```
-[    2.019440] ko_test: loading out-of-tree module taints kernel.
-[    2.020847] ko_test: module verification failed: signature and/or required key missing - tainting kernel
-[    2.025423] This is a test ko!
+```shell
+# dmesg | grep a3kmod
+[    5.689366] a3kmod: loading out-of-tree module taints kernel.
+[    5.693217] [a3kmod:] Hello kernel world!
 ```
 
 ## 调试分析
@@ -178,52 +291,55 @@ qemu 启动内核后，我们可以使用 dmesg 查看输出，可以看到确�
 
 ### 调试建议
 
-为了方便调试，我们可以使用 root 用户启动 shell，即修改 init 脚本中对应的代码
+为了方便调试，我们可以使用 root 用户启动 shell，即修改 init 脚本中对应的代码：
 
-```shell
-- setsid /bin/cttyhack setuidgid 1000 /bin/sh
-+ setsid /bin/cttyhack setuidgid 0 /bin/sh
+```diff
+- su ctf -c sh
++ su root -c sh
 ```
 
-此外，我们还可以在启动时，指定内核关闭随机化
+此外，我们还可以在启动时，指定内核关闭随机化：
 
 ```bash
 #!/bin/sh
 qemu-system-x86_64 \
-    -m 64M \
-    -nographic \
+    -m 128M \
     -kernel ./bzImage \
-    -initrd  ./rootfs.img \
-    -append "root=/dev/ram rw console=ttyS0 oops=panic panic=1 nokaslr" \
+    -hda  ./rootfs.img \
+    -monitor /dev/null \
+    -append "root=/dev/sda rw rdinit=/sbin/init console=ttyS0 oops=panic panic=1 loglevel=3 quiet nokaslr" \
+    -cpu kvm64,+smep \
     -smp cores=2,threads=1 \
-    -cpu kvm64
+    -nographic \
+    -s
 ```
 
 ### 基本操作
 
-获取内核特定符号地址
+我们可以通过 `/proc/kallsyms` 获取特定内核符号的信息：
 
-```bash
-grep prepare_kernel_cred  /proc/kallsyms
-grep commit_creds  /proc/kallsyms
+```shell
+# cat /proc/kallsyms | grep prepare_kernel_cred
+ffffffffa66d0b90 T __pfx_prepare_kernel_cred
+ffffffffa66d0ba0 T prepare_kernel_cred
+ffffffffa8061668 r __ksymtab_prepare_kernel_cred
 ```
 
-查看装载的驱动
+通过 `lsmod` 命令可以查看装载的驱动基本信息：
 
-```bash
-lsmod
+```shell
+# lsmod
+a3kmod 16384 0 - Live 0xffffffffc008f000 (O)
 ```
 
-获取驱动加载的基地址
+通过读取 `/sys/module` 目录，我们可以获取更为详细的内核模块信息：
 
-```bash
-# method 1
-grep target_module_name /proc/modules 
-# method 2
-cat /sys/module/target_module_name/sections/.text 
+```shell
+# cat /sys/module/a3kmod/sections/.text 
+0xffffffffc008f000
+# cat /sys/module/a3kmod/sections/.data 
+0xffffffffc0091038
 ```
-
-/sys/module/ 目录下存放着加载的各个模块的信息。
 
 ### 启动调试
 
@@ -231,21 +347,29 @@ qemu 其实提供了调试内核的接口，我们可以在启动参数中添加
 
 当我们以调试模式启动内核后，我们就可以在另外一个终端内使用如下命令来连接到对应的 gdbserver，开始调试。
 
-```bash
+```shell
 gdb -q -ex "target remote localhost:1234"
 ```
 
-在启动内核后，我们可以使用 `add-symbol-file` 来添加符号信息，比如
+在启动内核后，我们可以在 gdb 中使用 `add-symbol-file` 字命令来添加符号信息，例如：
 
-```
-add-symbol-file vmlinux addr_of_vmlinux 
-add-symbol-file ./your_module.ko addr_of_ko
+```shell
+pwndbg> add-symbol-file ./test_kmod/src/a3kmod.ko -s .text 0xffffffffc008f000 -s .data 0xffffffffc0091038 -s .bss 0xffffffffc0091540
+add symbol table from file "./test_kmod/src/a3kmod.ko" at
+        .text_addr = 0xffffffffc008f000
+        .data_addr = 0xffffffffc0091038
+        .bss_addr = 0xffffffffc0091540
+Reading symbols from ./test_kmod/src/a3kmod.ko...
+warning: remote target does not support file transfer, attempting to access files from local filesystem.
+(No debugging symbols found in ./test_kmod/src/a3kmod.ko)
 ```
 
 当然，我们也可以添加源码目录信息。这些就和用户态调试没什么区别了。
 
 ## 参考
 
+- https://arttnba3.cn/2021/02/21/OS-0X01-LINUX-KERNEL-PART-II/
+- https://arttnba3.cn/2022/07/15/VIRTUALIZATION-0X00-QEMU-PART-I/
 - https://www.ibm.com/developerworks/cn/linux/l-busybox/index.html
 - https://qemu.readthedocs.io/en/latest/system/qemu-manpage.html
 - http://blog.nsfocus.net/gdb-kgdb-debug-application/

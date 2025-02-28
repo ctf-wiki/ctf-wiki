@@ -82,14 +82,14 @@ Primary key fingerprint: 647F 2865 4894 E3BD 4571  99BE 38DB BDC8 6092 693E
 
 注意到这里报了一个 WARNING，因为我们导入的公钥没有可信的签名，无法证明其确实来自于 Linus Torvalds 和 Greg Kroah-Hartman。为了消除这个问题，我们可以选择使用 TOFU 信任对应的密钥：
 
-```bash
+```shell
 $ gpg2 --tofu-policy good 38DBBDC86092693E
 gpg: Setting TOFU trust policy for new binding <key: 647F28654894E3BD457199BE38DBBDC86092693E, user id: Greg Kroah-Hartman <gregkh@kernel.org>> to good.
 ```
 
 接下来我们重新对内核签名进行验证，现在可以发现已经没有报错了，说明这份内核源码是可信的：
 
-```bash
+```shell
 $ gpg2 --trust-model tofu --verify ./linux-6.12.16.tar.sign 
 gpg: assuming signed data in './linux-6.12.16.tar'
 gpg: Signature made Sat Feb 22 00:02:55 2025 AEDT
