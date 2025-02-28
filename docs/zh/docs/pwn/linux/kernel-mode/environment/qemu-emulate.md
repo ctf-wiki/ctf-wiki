@@ -366,6 +366,55 @@ warning: remote target does not support file transfer, attempting to access file
 
 当然，我们也可以添加源码目录信息。这些就和用户态调试没什么区别了。
 
+## kgdb配置
+
+内核提供了专门的调试工具：KGDB（Kernel GNU Debugger）。
+使用KGDB需在编译时启用 `CONFIG_KGDB` 配置选项。
+在qemu中，可以通过指定一个串口（例如ttyS1）为KGDB提供输出。
+
+```bash
+#!/bin/sh
+qemu-system-x86_64 \
+    -m 64M \
+    -kernel ./bzImage \
+    -initrd  ./rootfs.img \
+    -append "root=/dev/ram rw console=ttyS0 kgdboc=ttyS1,115200 oops=panic panic=1 nokaslr" \
+    -smp cores=2,threads=1 \
+    -display none \
+    -serial stdio \
+    -serial tcp::4445,server,nowait \
+    -cpu kvm64
+```
+
+这里将ttyS0指定为终端的输入输出，ttyS1指定为本地4445端口，不使用qemu虚拟机屏幕显示。
+
+在qemu虚拟机内部通过`echo g > /proc/sysrq-trigger`触发（此外在 append里使用 kgdbwait参数，使内核在启动完毕后自动触发）。
+
+```bash
+~ # cat /sys/module/kgdboc/par~ # cat /sys/module/kgdboc/parameters/kgdboc
+ttyS1,115200
+~ # echo g > /proc/sysrq-triggerameters/kgdboc
+ttyS1,115200
+~ # echo g > /proc/sysrq-trigger
+[    9.078653] sysrq: DEBUG
+[    9.081034] KGDB: Entering KGDB
+```
+
+在另一个终端使用gdb连接。
+
+```bash
+gdb vmlinux
+Reading symbols from vmlinux...
+(gdb) target remote:4445
+Remote debugging using :4445
+warning: multi-threaded target stopped without sending a thread-id, using first non-exited thread
+[Switching to Thread 4294967294]
+kgdb_breakpoint () at kernel/debug/debug_core.c:1092
+1092            wmb(); /* Sync point after breakpoint */
+(gdb)
+```
+
+
 ## 参考
 
 - https://arttnba3.cn/2021/02/21/OS-0X01-LINUX-KERNEL-PART-II/
