@@ -254,7 +254,7 @@ IDA Pro（interactive Disassembler Professional）是由 Hex-Rays 公司出品�
 
 ### 安装 Python
 
-绝大部分 Linux 发行版目前已经自带 Python 运行环境，因此通常我们并不需要手动安装 Python。。若你的计算机上不存在 Python 运行环境，则可以根据自己所使用的发行版手动使用包管理器进行安装。
+绝大部分 Linux 发行版目前已经自带 Python 运行环境，因此通常我们并不需要手动安装 Python。若你的计算机上不存在 Python 运行环境，则可以根据自己所使用的发行版手动使用包管理器进行安装。
 
 需要注意的是，部分 Linux 发行版中 Python 版本默认为 Python2，因此你可能需要手动指定安装 Python3。
 
