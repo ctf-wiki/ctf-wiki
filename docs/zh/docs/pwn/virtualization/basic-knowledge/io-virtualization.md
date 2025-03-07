@@ -74,8 +74,8 @@ struct virtqueue_ops {
 virtqueue 核心的数据结构便是 `vring`，这是一个**环形缓冲区队列**，其由三部分组成：
 
 - 描述符表（Desc）
-- 可用描述符数组（Used）
-- 已用描述符数组（Avail）
+- 可用描述符数组（Avail）
+- 已用描述符数组（Used）
 
 ![](./figure/vring.png)
 
