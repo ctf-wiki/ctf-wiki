@@ -56,13 +56,18 @@ struct MemoryRegion {
 };
 ```
 
-在 Qemu 当中有三种类型的 MemoryRegion：
+根据[QEMU官方文档](https://www.qemu.org/docs/master/devel/memory.html#types-of-regions)中的描述，虽然众多的内存区域对象都声明为C结构体类型MemoryRegion，但是根据功能特性和应用场景的差异，这些内存区域在具体使用中可以分为八种类型的 MemoryRegion，这八种类型的内存区域基本满足了Guest常见的内存访问需求。这八种类型包括：
 
-- MemoryRegion 根：通过 `memory_region_init()` 进行初始化，其用以表示与管理由多个 sub-MemoryRegion 组成的一个内存区域，并不实际指向一块内存区域，例如 `system_memory`。
-- MemoryRegion 实体：通过 `memory_region_init_ram()` 初始化，表示具体的一块大小为 size 的内存空间，指向一块具体的内存。
-- MemoryRegion 别名：通过 `memory_region_init_alias()` 初始化，作为另一个 MemoryRegion 实体的别名而存在，不指向一块实际内存。
+- RAM MemoryRegion：通过 `memory_region_init_ram()` 初始化。代表一块具体的Host内存，这块内存区域被分配给Guest使用
+- ROM MemoryRegion：通过 `memory_region_init_rom()` 初始化。原理与RAM MR类似，但仅用于读取（相当于直接访问主机内存区域），并且禁止写操作。
+- MMIO MemoryRegion：通过 `memory_region_init_io()` 初始化。一段客户虚拟机内存，每次读或写最终都会调用QEMU代码中所注册的回调函数，用于模拟MMIO读写流程。
+- ROM device MemoryRegion：通过 `memory_region_init_rom_device()` 初始化。读操作的工作原理类似于RAM MR的直接访问内存区域，写操作则类似于MMIO MR的调用回调函数。
+- IOMMU MemoryRegion：通过 `memory_region_init_iommu()` 初始化。顾名思义，该MR类型仅用于IOMMU建模，而不用于简单的设备。访问该类MR中的地址时将进行地址转换，并将其转发到其他目标内存区域。
+- container MemoryRegion：通过 `memory_region_init()` 初始化。其并不实际指向一块内存区域，而只是包含其他MR，每个MR的偏移量不同。container MR用于将多个MR组合为一个单元以进行表示与管理。例如，PCI BAR可能由一个RAM MR和一个MMIO MR组成。
+- alias MemoryRegion：通过 `memory_region_init_alias()` 初始化。其作为另一个 MemoryRegion 实体的别名而存在，不指向一块实际内存。
+- reservation MemoryRegion：通过向 `memory_region_init_io()` 传递一个为`NULL`的回调参数来初始化。其主要用于调试，其占用的I/O空间不应该由QEMU本身处理。典型的用途是跟踪在启用KVM时由主机内核处理的地址空间部分。
 
-MR 容器与 MR 实体间构成树形结构，其中容器为根节点而实体为子节点：
+container MR 与其他 MR 间构成树形结构，其中container为根节点而实体为子节点，形式如下：
 
 ```
                             struct MemoryRegion
@@ -173,7 +178,7 @@ struct MemoryRegionOps {
 
 ### FlatView：MR 树对应的 Guest 视角物理地址空间
 
-`FlatView` 用来表示**一棵 MemoryRegion 树所表示的 Guest 地址空间**，其使用一个 `FlatRange` 结构体指针数组来存储不同 `MemoryRegion` 对应的地址信息，每个 `FlatRange` 表示单个 `MemoryRegion` 的 **Guest 视角的一块物理地址空间**以及是否只读等特性信息， `FlatRange` 之间所表示的地址范围不会重叠。
+QEMU通过树状结构的MemoryRegion管理Guest的物理地址空间，支持动态调整（如热插拔设备）。但这种嵌套、重叠的复杂结构不适合直接与KVM等内核模块交互。因此QEMU使用 `FlatView` 用来表示**一棵 MemoryRegion 树所表示的线性的 Guest 地址空间**，其将树状结构“展平”为列表，每个条目记录连续内存区域的起始地址（GPA）、大小、属性（如RAM/MMIO），消除嵌套关系，简化内核处理。例如，KVM需要明确的物理内存布局来配置EPT（Extended Page Table），`FlatView` 提供可直接映射的平坦内存描述，避免内核解析复杂树结构。`FlatView`使用一个 `FlatRange` 结构体指针数组来存储不同 `MemoryRegion` 对应的地址信息，每个 `FlatRange` 表示单个 `MemoryRegion` 的 **Guest 视角的一块线性的物理地址空间**以及是否只读等特性信息， `FlatRange` 之间所表示的地址范围不会重叠。
 
 ```c
 /* Range of memory in the global map.  Addresses are absolute. */
@@ -303,6 +308,8 @@ struct RAMBlock {
 ![](./figure/mr_ramblock_subregion.png)
 
 ## REFERENCE
+
+[QEMU官方文档](https://www.qemu.org/docs/master/devel/memory.html#types-of-regions)
 
 [understanding qemu - MemoryRegion](https://richardweiyang-2.gitbook.io/understanding_qemu/00-as/02-memoryregion)
 
