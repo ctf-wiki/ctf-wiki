@@ -25,6 +25,15 @@ Hence, we can give out two definitions:
 - `User mode(userland)`: CPU running under ring3, with context of user-mode program
 - `Kernel mode(kernelland)`: CPU running under ring0, with context of kernel-mode program
 
-## Mode switch
+## Mode switch (system call)
+
+While events like `system call`, `exception`, `interrupt` happens, the CPU will switch from user mode to kernel mode, and jump to corresponding handler functions.
+
+We mainly focus on the system call, as it's the fundamental APIs for user mode programs to communicate with the kernel. The core process is like:
+
+> Note that the CPU is running under the kernel mode after system call instructions were processing.
+
+1. CPU swaps the value of `GS` register with another value saved in kernel by `swapgs` instruction, aiming to restore it after returning to the user land.
+2. 
 
 > TBD
