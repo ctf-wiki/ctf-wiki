@@ -69,7 +69,7 @@ HAL 的目的主要是消除硬件架构间的差异，从而方便操作系统�
 
 HAL 相关代码位于 `hal.dll` 中。
 
-# 0x01. “一切皆对象”
+## “一切皆对象”
 
 类似于 *NIX 系统中一切皆文件的哲学，在 Windows NT kernel 当中同样有**一切都是一个对象**（object）的说法，文件、设备、同步机制、注册表项等**在内核中都表示为对象**，每个对象有一个 `header` 存储对象基本信息（如名字、类型、位置），以及一个 `body` 存储数据。
 
@@ -78,7 +78,7 @@ NT kernel 中的对象可以分为两类：
 - 执行体对象（Executive Objects）：执行体对外暴露的资源对象（如进程、线程、文件等），对用户态可见。
 - 内核对象（Kernel Objects）：最基本的资源对象（如物理设备等），对用户态不可见。
 
-## 一、\_OBJECT\_HEADER：对象基本信息
+### 一、\_OBJECT\_HEADER：对象基本信息
 
 在 NT kernel 中 `_OBJECT_HEADER` 结构体用来存储对象的基本信息，定义如下：
 ```powershell
@@ -141,7 +141,7 @@ kd> dt nt!_POOL_HEADER
 
 ![](https://s2.loli.net/2025/02/01/rzoqgZXxNSmsa52.png)
 
-## 二、对象管理器与命名空间
+### 二、对象管理器与命名空间
 
 NT kernel 中所有的对象通过**对象管理器**（Object Manager）进行管理，用户态对任何对象的访问都需要通过对象管理子系统，对象管理器主要负责如下任务：
 
@@ -161,7 +161,7 @@ NT kernel 中所有的对象通过**对象管理器**（Object Manager）进行�
 >
 > 也可以通过 `“Local\”` 前缀显式说明对象创建在会话命名空间中。
 
-## 三、句柄（handler）
+### 三、句柄（handler）
 
 > 有点类似于 Linux 下文件描述符的概念，但是扩展到了大部分内核对象。
 >
@@ -184,13 +184,13 @@ NT kernel 中所有的对象通过**对象管理器**（Object Manager）进行�
 
 ![](https://s2.loli.net/2025/02/01/nU3FkTsiGpPMw8Q.png)
 
-# 0x02. 内存管理
+## 内存管理
 
 内存管理是操作系统最核心的一部份之一，不可不品尝。
 
-## 一、物理内存管理
+### 一、物理内存管理
 
-### 内核地址空间布局
+#### 内核地址空间布局
 
 首先来一张 64 位 NT kernel 内存布局总览：
 
@@ -212,7 +212,7 @@ NT kernel 中所有的对象通过**对象管理器**（Object Manager）进行�
 | *nt!MmNonPagedPoolStart | *nt!MmNonPagedPoolEnd     | 512GB Max | Non-Paged Pool           | 非分页内存区域（不会被换到硬盘上）                     |
 | FFFFFFFFFFc00000       | FFFFFFFFFFFFFFFF         | 4MB       | HAL and Loader Mappings  | 硬件抽象层与加载器所用区域                             |
 
-### _MMPFN：物理页框
+#### _MMPFN：物理页框
 
 类似于 Linux kernel 中使用 `page` 结构体数组表示物理内存的方式，在 NT kernel 中使用 `_MMPFN` 结构体来表示**一张物理页**，并通过一个**结构体数组**来管理**所有的物理内存页**，数组下标即为物理页的**页帧号**（Page Frame Number，PFN），该数组即为 `PFN Database` 区域，在全局指针变量 `_MMPFN* MmPfnDatabase`  中存放着该数组的地址：
 
@@ -241,11 +241,11 @@ NT kernel 中所有的对象通过**对象管理器**（Object Manager）进行�
 
 ![image.png](https://s2.loli.net/2023/12/29/JqmC3DZRiVpMPbB.png)
 
-### 页位图
+#### 页位图
 
 > 待施工。
 
-## 二、Pool Memory（before 19H1）
+### 二、Pool Memory（before 19H1）
 
 Windows NT kernel 将页面按照不同的用途分为不同的“**池**”（Pool）来管理，并将这些页面划分为更细粒度的小对象供内核组件使用，池的总类一共有三种：
 
@@ -253,7 +253,7 @@ Windows NT kernel 将页面按照不同的用途分为不同的“**池**”（P
 - 换页池（Paged Pool）：该池中的页面在内存紧张时可能被换出到磁盘
 - 会话换页池（Session Paged Pool）：该池中的页面在内存紧张时可能被换出到磁盘，不同会话间存在隔离
 
-### 基本单位：池块（Pool Block）
+#### 基本单位：池块（Pool Block）
 
 池内存中每次内存分配的对象称为一个池块（Pool Block），类似于 ptmalloc2 中的 chunk，每个池块的数据前部有一个 header 存储如下数据：
 
@@ -278,7 +278,7 @@ Pool Chunk 的管理与 ptmalloc2 chunk 非常相似，在 NT kernel 中会复�
 
 ![](https://s2.loli.net/2025/02/03/MoOTksItJ6Wvdmr.png)
 
-### 池描述符：内核共享内存池
+#### 池描述符：内核共享内存池
 
 > 这个结构在 Windows 10 数个版本当中也经历了一定的大大小小的变化， 但比较关键的变化是从 1809 版本到 1903 （19H1）版本，自 1903 版本 NT kernel 引入了 Segment Heap 机制作为内核的动态内存分配器，因此这一小节我们主要讲 1809 及以前的仍使用池内存分配器的 64 位版本。
 
@@ -293,7 +293,7 @@ Pool Chunk 的管理与 ptmalloc2 chunk 非常相似，在 NT kernel 中会复�
 
 所有初始的内存池描述符都放在 `nt!PoolVector` 数组当中。
 
-### 核心独占内存池：Lookaside Lists
+#### 核心独占内存池：Lookaside Lists
 
 池描述符对应的内存池在所有核心间共享，核心一多效率就灾难了，因此每个核心实际上还有一个独有的内存池，存放在内核态 GS 寄存器指向的 `处理器控制区`（Process Control Region，为 `_KPCR` 结构体，类似于 Linux 下的 `.percpu` 段）当中—— Lookaside Lists 用于优先处理当前核心的池内存请求，只有当其不足以满足需求时才会向共享内存池请求内存。
 
@@ -310,9 +310,9 @@ LookasideList 一共有四类（`PP == Per Processsor`）：
 
 > PPLookasideList 和其他 LookasideList 有什么不同？笔者也不知道 ~~，静待 Windows 开源的那一天~~ ......
 
-### 内存分配基本算法
+#### 内存分配基本算法
 
-#### 1️⃣ 内存请求顺序
+##### 1. 内存请求顺序
 
 池内存的分配核心函数是 `ExAllocatePoolWithTag(POOL_TYPE PoolType,SIZE_T NumberOfBytes,ULONG Tag)` ，用户需要手动指定分配的池类型、需要的内存大小等信息，内核组件与驱动通常通过该 API 或是更上层的 Wrapper 完成内核中的内存分配请求
 
@@ -322,13 +322,13 @@ LookasideList 一共有四类（`PP == Per Processsor`）：
 - 若无可用池块，则会调用 `nt!MiAllocatePoolPages` 分配内存页，并将其分割为两块，一块返回给用户一块挂回 ListHeads 链表
 
 
-#### 2️⃣ 池块分割方法：非页对齐的块从尾部分割
+##### 2. 池块分割方法：非页对齐的块从尾部分割
 
 在分割池块时，内核首先会检查池块的地址，若与内存页大小对齐（0x1000）则从头部分割出用户所需的池块，否则从尾部分割下用户所需的池块。
 
 ![](https://s2.loli.net/2025/02/05/tNK6CdgSholBeq4.png)
 
-### 内存释放基本算法
+#### 内存释放基本算法
 
 池内存的释放核心函数是 `ExFreePoolWithTag( PVOID Entry, ULONG Tag)` ，内核组件与驱动通常通过该 API 或是更上层的 Wrapper 完成内核中的内存释放请求。
 
@@ -341,15 +341,15 @@ LookasideList 一共有四类（`PP == Per Processsor`）：
 - 检查相邻低地址、高地址 Chunk 状态，合并空闲块，需要注意这里 _不会与下一张内存页的头部 Chunk 合并_ 
 - 最后检查该 Chunk 所在 Page 是否为空闲页，若是则调用 `nt!MiFreePoolPages()` 进行回收，否则放回对应的 ListHeads 链表
 
-## 三、Segment Heap in Kernel（from 19H1）
+### 三、Segment Heap in Kernel（from 19H1）
 
 **自 NT kernel 19H1 版本起，用户态 Segment Heap 的分配逻辑被引入内核。**
 
 > 待施工。
 
-# 0x03. 系统调用
+## 系统调用
 
-## 一、系统调用路径
+### 一、系统调用路径
 
 类似于 Linux 下的系统调用，Windows 下由内核向用户态进程提供的服务称为**系统服务**（system service），所有对系统服务的调用都通过 `ntdll.dll` 来完成进入内核的过程：
 
@@ -371,9 +371,9 @@ Windows 系统调用内核层的入口被设置为 `KiSystemCall64()` 函数，�
 
 > 注：有的时候系统调用入口为 `kiSystemCall64Shadow()` 函数，不过这个函数最终会跳转到 `kiSystemCall64()` 中的 `KiSystemServiceUser` 标签。
 
-## 二、系统服务描述符表
+### 二、系统服务描述符表
 
-### SSDT 基本结构
+#### SSDT 基本结构
 
 逆向分析 `ntoskrnl.exe` 中的  `KiSystemCall64()` 函数，注意到其会引用到 `KeServiceDescriptorTable` 和 `KeServiceDescriptorTable` 这两个变量，这便是**系统服务描述符表**（System Service Descriptor Table，简称 `SSDT` ），用来存储**不同的系统调用号对应的系统调用函数**：
 
@@ -421,7 +421,7 @@ $$
 - **出于安全性考虑**，这样使得通过 SSDT 调用到的系统调用范围被限制在 SSDT 附近 4G 偏移处，驱动地址空间之间间隔至少 4GB，而 SSDT 地址又是写死在代码里的，这样可以很好地防止对 SSDT 的劫持，加大攻击难度。
 - **存储栈上参数数量**，NT kernel 很多系统调用参数都远大于 6 个，因此需要使用栈进行传参，此时这 4 bit 便用于记录不同系统调用**使用栈进行传递的参数数量**。
 
-### _Shadow SSDT：GUI程序的 SSDT_ 
+#### _Shadow SSDT：GUI程序的 SSDT_ 
 
 **影子系统服务描述符表**（Shadow System Service Descriptor Table，简称 `Shadow SSDT` ）是**GUI 程序所专用的一张 SSDT**，相比起 SSDT 而言其额外多了一张负责图形相关系统调用的子表 `W32pServiceTable` ，位于 `win32k.sys` 即 **图形子系统** 中：
 
@@ -437,9 +437,9 @@ $$
 >
 > 自 Windows 10 开始引入了这张表，当 KTHREAD 中设置了 `RestrictedGuiThread` 标志位时会用该表替代 Shadow SSDT，不过目前该表相关的资料暂时比较少（🕊）
 
-# 0x04. 进程管理
+## 进程管理
 
-## 一、NT kernel 中的进程与线程
+### 一、NT kernel 中的进程与线程
 
 在 Windows NT kernel 当中使用 `_EPROCESS` 结构体来表示一个进程，类似于 Linux 下的 `task_struct`，该结构体当中存储了 Windows 进程的所有信息，所有进程的 `_EPROCESS` 之间构成一个双向链表。
 
@@ -447,7 +447,7 @@ $$
 
 ![](https://s2.loli.net/2025/02/01/a5lbF1fgDAUErcz.png)
 
-## 二、Token：进程权限凭证
+### 二、Token：进程权限凭证
 
 正如 Linux 在 `task_struct` 当中使用 `cred` 结构体标识进程的权限，NT kernel 中使用 `_Token` 结构体标识进程的权限。
 
