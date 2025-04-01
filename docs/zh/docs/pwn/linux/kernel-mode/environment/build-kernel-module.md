@@ -24,7 +24,7 @@ main.c 的内容如下，其定义了一个初始化函数`a3kmod_init()` ，该
  * Copyright (c) 2025 arttnba3 <arttnba@gmail.com>
  * 
  * This work is licensed under the terms of the GNU GPL, version 2 or later.
- */
+**/
 
 #include <linux/kernel.h>
 #include <linux/module.h>
