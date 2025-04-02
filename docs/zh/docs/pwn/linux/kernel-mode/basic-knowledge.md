@@ -319,7 +319,7 @@ KASLR即```内核空间地址随机化```（kernel address space layout randomiz
 
 在未开启KASLR保护机制时，内核代码段的基址为 ```0xffffffff81000000``` ，direct mapping area 的基址为 `0xffff888000000000`。
 
-内核内存布局可以参考[这里](https://elixir.bootlin.com/linux/latest/source/Documentation/x86/x86_64/mm.rst)。
+内核内存布局可以参考[这里](htthttps://elixir.bootlin.com/linux/v6.3/source/Documentation/x86/x86_64/mm.rst)。
 
 #### _*FGKASLR_
 
