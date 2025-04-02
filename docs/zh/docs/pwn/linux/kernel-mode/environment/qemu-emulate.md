@@ -229,8 +229,8 @@ qemu-system-x86_64 \
 
 涉及改动的参数如下：
 
-- `-hda`：我们将 ext4 镜像挂载为一个真正的硬盘设备，优点在于更贴近真实环境（同时 flag 不会被在内存中泄漏），缺点在于所有对文件系统的操作都会“落盘”
-- `-append`：我们修改了 `root=/dev/sda rw` ，因为 ext4 镜像被挂载为一个 SATA 硬盘，而 Linux 中第一个 SATA 硬盘的路径为 `/dev/sda` ，因此我们将根文件系统路径指向设备路径，并给予可读写权限
+- `-hda`：我们将 ext4 镜像挂载为一个真正的硬盘设备，优点在于更贴近真实环境（同时 flag 不会被在内存中泄漏），缺点在于所有对文件系统的操作都会“落盘”。
+- `-append`：我们修改了 `root=/dev/sda rw` ，因为 ext4 镜像被挂载为一个 SATA 硬盘，而 Linux 中第一个 SATA 硬盘的路径为 `/dev/sda` ，因此我们将根文件系统路径指向设备路径，并给予可读写权限。
 
 启动后的效果如下:
 
@@ -351,7 +351,7 @@ qemu 其实提供了调试内核的接口，我们可以在启动参数中添加
 gdb -q -ex "target remote localhost:1234"
 ```
 
-在启动内核后，我们可以在 gdb 中使用 `add-symbol-file` 字命令来添加符号信息，例如：
+在启动内核后，我们可以在 gdb 中使用 `add-symbol-file` 字命令来添加符号信息，并使用 `-s 段名称 段地址` 格式的附加参数指定各个段在内存中的加载地址，例如：
 
 ```shell
 pwndbg> add-symbol-file ./test_kmod/src/a3kmod.ko -s .text 0xffffffffc008f000 -s .data 0xffffffffc0091038 -s .bss 0xffffffffc0091540
@@ -366,11 +366,11 @@ warning: remote target does not support file transfer, attempting to access file
 
 当然，我们也可以添加源码目录信息。这些就和用户态调试没什么区别了。
 
-## kgdb配置
+## 使用 KGDB 进行调试
 
-内核提供了专门的调试工具：KGDB（Kernel GNU Debugger）。
-使用KGDB需在编译时启用 `CONFIG_KGDB` 配置选项。
-在qemu中，可以通过指定一个串口（例如ttyS1）为KGDB提供输出。
+内核提供了专门的调试工具：KGDB（Kernel GNU Debugger），我们可以通过在编译时启用 `CONFIG_KGDB=y` 配置选项来将 KGDB 组件编译到内核当中，并使用串口等方式进行调试。
+
+在 QEMU 模拟环境中，我们可以通过指定一个串口（例如 `ttyS1` ）为 KGDB 提供输出，例如考虑如下启动脚本：
 
 ```bash
 #!/bin/sh
@@ -386,11 +386,12 @@ qemu-system-x86_64 \
     -cpu kvm64
 ```
 
-这里将ttyS0指定为终端的输入输出，ttyS1指定为本地4445端口，不使用qemu虚拟机屏幕显示。
+- 我们为内核的启动参数添加了 `console=ttyS0 kgdboc=ttyS1,` ，为将串口 `ttyS0` 指定为控制台输出，将串口 `ttyS1` 指定为 KGDB 调试端口。
+- 我们为 QEMU 启动参数添加了两个 `-serial` 参数，意为创建了两个串口，其中第一个串口指定为标准输入输出，第二个串口指定为本地4445端口。
 
-在qemu虚拟机内部通过`echo g > /proc/sysrq-trigger`触发（此外在 append里使用 kgdbwait参数，使内核在启动完毕后自动触发）。
+我们可以在qemu虚拟机内部通过执行 `echo g > /proc/sysrq-trigger` 命令触发 KGDB：
 
-```bash
+```shell
 ~ # cat /sys/module/kgdboc/par~ # cat /sys/module/kgdboc/parameters/kgdboc
 ttyS1,115200
 ~ # echo g > /proc/sysrq-triggerameters/kgdboc
@@ -400,9 +401,11 @@ ttyS1,115200
 [    9.081034] KGDB: Entering KGDB
 ```
 
+> 此外，在 append 里使用 kgdbwait参数也可以使内核在启动完毕后自动触发。
+
 在另一个终端使用gdb连接。
 
-```bash
+```shell
 gdb vmlinux
 Reading symbols from vmlinux...
 (gdb) target remote:4445
@@ -413,7 +416,6 @@ kgdb_breakpoint () at kernel/debug/debug_core.c:1092
 1092            wmb(); /* Sync point after breakpoint */
 (gdb)
 ```
-
 
 ## 参考
 
