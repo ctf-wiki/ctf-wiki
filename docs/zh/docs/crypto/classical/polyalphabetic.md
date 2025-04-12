@@ -181,7 +181,7 @@ for now_key in key:
 ```
 明文：come greatwall
 密钥：crypto
-密文：efkt zferrltzn
+密文：efkt zfgrrltzn
 ```
 ### 破解
 
