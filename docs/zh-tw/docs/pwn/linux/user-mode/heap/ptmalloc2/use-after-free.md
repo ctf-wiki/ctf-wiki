@@ -54,7 +54,7 @@ this pogram will crash...
 
 ## 例子
 
-這裏我們以 HITCON-training 中的 [lab 10 hacknote](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/use_after_free/hitcon-training-hacknote) 爲例。
+這裏我們以 HITCON-training 中的 [lab 10 hacknote](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/use_after_free/hitcon-training-hacknote) 爲例。
 
 ### 功能分析
 

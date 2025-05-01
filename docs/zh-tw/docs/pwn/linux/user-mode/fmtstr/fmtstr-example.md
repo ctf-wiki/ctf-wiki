@@ -10,7 +10,7 @@
 
 ### 例子
 
-這裏，我們以 2017 年的 UIUCTF 中 [pwn200 GoodLuck](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2017-UIUCTF-pwn200-GoodLuck) 爲例進行介紹。這裏由於只有本地環境，所以我在本地設置了一個 flag.txt 文件。
+這裏，我們以 2017 年的 UIUCTF 中 [pwn200 GoodLuck](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/fmtstr/2017-UIUCTF-pwn200-GoodLuck) 爲例進行介紹。這裏由於只有本地環境，所以我在本地設置了一個 flag.txt 文件。
 
 #### 確定保護
 
@@ -148,7 +148,7 @@ sh.interactive()
 
 ### 例子
 
-這裏我們以 2016 CCTF 中的 [pwn3](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2016-CCTF-pwn3) 爲例進行介紹。
+這裏我們以 2016 CCTF 中的 [pwn3](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/fmtstr/2016-CCTF-pwn3) 爲例進行介紹。
 
 #### 確定保護
 
@@ -291,7 +291,7 @@ sh.interactive()
 
 ### 例子
 
-這裏我們以 [三個白帽-pwnme_k0](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/三個白帽-pwnme_k0) 爲例進行分析。
+這裏我們以 [三個白帽-pwnme_k0](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/fmtstr/三個白帽-pwnme_k0) 爲例進行分析。
 
 #### 確定保護
 
@@ -482,7 +482,7 @@ sh.interactive()
 
 ### 例子
 
-這裏我們以 2015 年 CSAW 中的 [contacts](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/2015-CSAW-contacts) 爲例進行介紹。
+這裏我們以 2015 年 CSAW 中的 [contacts](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/fmtstr/2015-CSAW-contacts) 爲例進行介紹。
 
 #### 確定保護
 
@@ -840,7 +840,7 @@ io.interactive()
 
 ### 例子1-泄露棧
 
-源碼和部署文件均放在了對應的文件夾 [fmt_blind_stack](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_stack) 中。
+源碼和部署文件均放在了對應的文件夾 [fmt_blind_stack](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/fmtstr/blind_fmt_stack) 中。
 
 #### 確定程序位數
 
@@ -895,7 +895,7 @@ g}\x00\x00\x00\x00\x00\x00
 
 ### 例子2-盲打劫持got
 
-源碼以及部署文件均已經在 [blind_fmt_got](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/fmtstr/blind_fmt_got) 文件夾中。
+源碼以及部署文件均已經在 [blind_fmt_got](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/fmtstr/blind_fmt_got) 文件夾中。
 
 #### 確定程序位數
 
