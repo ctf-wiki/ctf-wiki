@@ -10,4 +10,4 @@ CTF Wiki 由三個姊妹項目構成
 
 ## 如何找題目附件
 
-我們可以在 `ctf-challenges` 倉庫下找到題目附件。以[基本 ROP](https://ctf-wiki.org/pwn/linux/user-mode/stackoverflow/x86/basic-rop/) 中的題目爲例，具體路徑如下：<https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow>。
+我們可以在 `ctf-challenges` 倉庫下找到題目附件。以[基本 ROP](https://ctf-wiki.org/pwn/linux/user-mode/stackoverflow/x86/basic-rop/) 中的題目爲例，具體路徑如下：<https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/stackoverflow>。

@@ -263,7 +263,7 @@ Let's malloc again to get the chunk we just free. During this time, target shoul
 
 ## HITCON Training lab14 magic heap
 
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unsorted_bin_attack/hitcontraining_lab14)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/unsorted_bin_attack/hitcontraining_lab14)
 
 這裏我們修改一下源程序中的 l33t 函數，以便於可以正常運行。
 
@@ -365,7 +365,7 @@ r.interactive()
 
 **注：待進一步完成。**
 
-這裏我們以 2016 年 0CTF 的 [zerostorage](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unsorted_bin_attack/zerostorage) 爲例，進行介紹。
+這裏我們以 2016 年 0CTF 的 [zerostorage](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/unsorted_bin_attack/zerostorage) 爲例，進行介紹。
 
 **這個題當時給了服務器的系統版本和內核版本，所以自己可以下一個一模一樣的進行調試，這裏我們就直接用自己的本地機器調試了。但是在目前的Ubuntu 16.04 中，由於進一步的隨機化，導致 libc 加載的位置與程序模塊加載的位置之間的相對偏移不再固定，所以 BrieflyX 的策略就無法再次使用，似乎只能用 angelboy 的策略了。**
 

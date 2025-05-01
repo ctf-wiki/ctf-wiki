@@ -160,7 +160,7 @@ DWORD 0x41424344
 
 光講原理比較難理解，建議結合題目學習，比如本文中的實例 3。
 
-## 實例 1: Asis CTF 2016 [b00ks](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks)
+## 實例 1: Asis CTF 2016 [b00ks](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/off_by_one/Asis_2016_b00ks)
 
 
 ### 題目介紹

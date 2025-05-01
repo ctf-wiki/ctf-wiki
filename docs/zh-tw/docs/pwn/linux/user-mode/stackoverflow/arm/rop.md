@@ -11,7 +11,7 @@
 除此之外，arm 的 **b/bl** 等指令實現跳轉; **pc** 寄存器相當於 x86 的 eip，保存下一條指令的地址，也是我們要控制的目標
 
 ## jarvisoj - typo
-這裏以 jarvisoj 的 typo 一題爲例進行展示，題目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/arm/jarvisOJ_typo) 下載
+這裏以 jarvisoj 的 typo 一題爲例進行展示，題目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/arm/jarvisOJ_typo) 下載
 
 ### 確定保護
 ```bash

@@ -50,7 +50,7 @@ gef➤  x/7i 0x000000000040061d
 
 #### 例1
 
-這裏我們以 [X-CTF Quals 2016 - b0verfl0w](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/stackprivot/X-CTF%20Quals%202016%20-%20b0verfl0w) 爲例進行介紹。首先，查看程序的安全保護，如下
+這裏我們以 [X-CTF Quals 2016 - b0verfl0w](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/stackoverflow/stackprivot/X-CTF%20Quals%202016%20-%20b0verfl0w) 爲例進行介紹。首先，查看程序的安全保護，如下
 
 ```shell
 ➜  X-CTF Quals 2016 - b0verfl0w git:(iromise) ✗ checksec b0verfl0w                 
@@ -142,7 +142,7 @@ sh.interactive()
 
 ### 題目
 
-- [EkoPartyCTF 2016 fuckzing-exploit-200](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/stackprivot/EkoPartyCTF%202016%20fuckzing-exploit-200)
+- [EkoPartyCTF 2016 fuckzing-exploit-200](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/stackoverflow/stackprivot/EkoPartyCTF%202016%20fuckzing-exploit-200)
 
 ## frame faking
 
@@ -237,7 +237,7 @@ ebp2|leave ret addr|arg1|arg2
 
 
 ### 2018 安恆杯 over
-以 2018 年 6 月安恆杯月賽的 over 一題爲例進行介紹, 題目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/fake_frame/over) 中找到
+以 2018 年 6 月安恆杯月賽的 over 一題爲例進行介紹, 題目可以在 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/stackoverflow/fake_frame/over) 中找到
 
 #### 文件信息
 ```bash
@@ -430,7 +430,7 @@ libc_hidden_def (__fortify_fail)
 
 ### 32C3 CTF readme
 
-這裏，我們以 2015 年 32C3 CTF readme 爲例進行介紹，該題目在 [jarvisoj](https://www.jarvisoj.com/challenges) 上有復現。方便讀者復現, binary 也可以在 [ctf-challenge ](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/stacksmashes/32c3-CTF-readme)這個倉庫找到
+這裏，我們以 2015 年 32C3 CTF readme 爲例進行介紹，該題目在 [jarvisoj](https://www.jarvisoj.com/challenges) 上有復現。方便讀者復現, binary 也可以在 [ctf-challenge ](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/stackoverflow/stacksmashes/32c3-CTF-readme)這個倉庫找到
 
 #### 確定保護
 
@@ -700,7 +700,7 @@ partial overwrite 這種技巧在很多地方都適用, 這裏先以棧上的 pa
 我們知道, 在開啓了隨機化（ASLR，PIE）後, 無論高位的地址如何變化，低 12 位的頁內偏移始終是固定的, 也就是說如果我們能更改低位的偏移, 就可以在一定程度上控制程序的執行流, 繞過 PIE 保護。
 
 ### 2018-安恆杯-babypie
-以安恆杯 2018 年 7 月月賽的 babypie 爲例分析這一種利用技巧, 題目的 binary 放在了 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/partial_overwrite) 中
+以安恆杯 2018 年 7 月月賽的 babypie 爲例分析這一種利用技巧, 題目的 binary 放在了 [ctf-challenge](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/stackoverflow/partial_overwrite) 中
 #### 確定保護
 ```bash
 babypie: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=77a11dbd367716f44ca03a81e8253e14b6758ac3, stripped

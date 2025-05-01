@@ -122,7 +122,7 @@ ptr 處的指針會變爲 ptr - 0x18。
 
 ## 2014 HITCON stkof
 
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/2014_hitcon_stkof)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/unlink/2014_hitcon_stkof)
 
 ### 基本信息
 
@@ -459,7 +459,7 @@ if __name__ == "__main__":
 ```
 
 ## 2016 ZCTF note2
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/2016_zctf_note2)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/unlink/2016_zctf_note2)
 
 ### 分析程序
 
@@ -741,7 +741,7 @@ sh.interactive()
 此時如果我們再調用 atoi ，其實調用的就是 system 函數，所以就可以拿到shell了。
 
 ## 2017 insomni'hack wheelofrobots
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/2017_insomni'hack_wheelofrobots)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/unlink/2017_insomni'hack_wheelofrobots)
 
 ### 基本信息
 
@@ -971,7 +971,7 @@ if __name__ == "__main__":
 
 
 ## note3
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/unlink/ZCTF_2016_note3)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/unlink/ZCTF_2016_note3)
 
 ### 介紹
 

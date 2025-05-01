@@ -276,7 +276,7 @@ int main(void)
 前向extend利用了smallbin的unlink機制，通過修改pre_size域可以跨越多個chunk進行合併實現overlapping。
 
 ## HITCON Training lab13
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/chunk-extend-shrink/hitcontraning_lab13)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/chunk-extend-shrink/hitcontraning_lab13)
 
 ### 基本信息
 
@@ -386,7 +386,7 @@ r.interactive()
 ```
 
 ## 2015 hacklu bookstore
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/chunk-extend-shrink/2015_hacklu_bookstore)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/chunk-extend-shrink/2015_hacklu_bookstore)
 
 ### 基本信息
 
@@ -461,5 +461,5 @@ books: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, 
 
 ## 題目
 
-- [2016 Nuit du Hack CTF Quals : night deamonic heap](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/chunk-extend-shrink/2016_NuitduHack_nightdeamonicheap)
+- [2016 Nuit du Hack CTF Quals : night deamonic heap](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/chunk-extend-shrink/2016_NuitduHack_nightdeamonicheap)
 

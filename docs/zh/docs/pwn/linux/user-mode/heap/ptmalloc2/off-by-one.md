@@ -160,7 +160,7 @@ DWORD 0x41424344
 
 光讲原理比较难理解，建议结合题目学习，比如本文中的实例 3。
 
-## 实例 1: Asis CTF 2016 [b00ks](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/off_by_one/Asis_2016_b00ks)
+## 实例 1: Asis CTF 2016 [b00ks](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/off_by_one/Asis_2016_b00ks)
 
 
 ### 题目介绍

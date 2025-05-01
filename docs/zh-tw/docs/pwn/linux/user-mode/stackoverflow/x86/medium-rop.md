@@ -508,7 +508,7 @@ payload = 'A'*length +p64(pop_rdi_ret)+p64(0x400000)+p64(addr)+p64(stop_gadget)
 
 ### 例子
 
-這裏我們以 [HCTF2016的出題人失蹤了](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/stackoverflow/brop/hctf2016-brop) 爲例。基本思路如下
+這裏我們以 [HCTF2016的出題人失蹤了](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/stackoverflow/brop/hctf2016-brop) 爲例。基本思路如下
 
 #### 確定棧溢出長度
 

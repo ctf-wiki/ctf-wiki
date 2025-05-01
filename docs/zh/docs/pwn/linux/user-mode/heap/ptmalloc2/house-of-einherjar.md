@@ -161,7 +161,7 @@ if (__builtin_expect (chunksize(P) != prev_size (next_chunk(P)), 0))      \
 
 
 ## 2016 Seccon tinypad
-[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-einherjar/2016_seccon_tinypad)
+[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/house-of-einherjar/2016_seccon_tinypad)
 
 ### 基本功能分析
 

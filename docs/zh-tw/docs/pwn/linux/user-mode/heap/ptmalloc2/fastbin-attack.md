@@ -537,7 +537,7 @@ Fastbins[idx=6, size=0x70]
 Arbitrary Alloc 在 CTF 中用地更加頻繁。我們可以利用字節錯位等方法來繞過 size 域的檢驗，實現任意地址分配 chunk，最後的效果也就相當於任意地址寫任意值。
 
 ## 2014 hack.lu oreo
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/fastbin-attack/2014_hack.lu_oreo)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/fastbin-attack/2014_hack.lu_oreo)
 
 ### 基本分析
 
@@ -686,7 +686,7 @@ if __name__ == "__main__":
 當然，該題目也可以使用 `fast bin attack` 中的其它技術來實現，可參考參考文獻中的鏈接。
 
 ## 2015 9447 CTF : Search Engine
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/fastbin-attack/2015_9447ctf_search-engine)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/fastbin-attack/2015_9447ctf_search-engine)
 
 ### 基本信息
 
@@ -1002,7 +1002,7 @@ libc.so.6  search.id0  search.id2  search.til
 當然，這裏還有一種[方法](https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/)，將 chunk 分配到棧上。
 
 ## 2017 0ctf babyheap
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/fastbin-attack/2017_0ctf_babyheap)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/fastbin-attack/2017_0ctf_babyheap)
 
 ### 基本信息
 

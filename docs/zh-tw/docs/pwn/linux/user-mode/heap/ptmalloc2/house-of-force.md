@@ -248,7 +248,7 @@ rax = 0x00007ffff7dd1b10
 其實這三點中第二點往往是最難辦的，CTF 題目中往往會給用戶分配堆塊的大小限制最小和最大值使得不能通過HOF 的方法進行利用。
 
 ## HITCON training lab 11
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/hitcontraning_lab11)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/house-of-force/hitcontraning_lab11)
 
 這裏，我們主要修改其 magic 函數爲
 
@@ -358,7 +358,7 @@ r.interactive()
 當然，這一題也可以使用 unlink 的方法來做。
 
 ## 2016 BCTF bcloud
-[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/heap/house-of-force/2016_bctf_bcloud)
+[題目鏈接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/house-of-force/2016_bctf_bcloud)
 
 ### 基本信息
 
