@@ -70,7 +70,7 @@ $ touch etc/init.d/rcS
 $ chmod +x ./etc/init.d/rcS
 ```
 
-在我们创建的 `./etc/inttab` 中写入如下内容：
+在我们创建的 `./etc/inittab` 中写入如下内容：
 
 ```shell
 ::sysinit:/etc/init.d/rcS
