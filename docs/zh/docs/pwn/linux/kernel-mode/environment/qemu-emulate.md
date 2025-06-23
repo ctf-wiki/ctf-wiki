@@ -74,14 +74,14 @@ $ chmod +x ./etc/init.d/rcS
 
 ```shell
 ::sysinit:/etc/init.d/rcS
-::askfirst:/bin/sh
+::askfirst:/bin/login
 ::ctrlaltdel:/sbin/reboot
 ::shutdown:/sbin/swapoff -a
 ::shutdown:/bin/umount -a -r
 ::restart:/sbin/init
 ```
 
-在上面的文件中指定了系统初始化脚本，因此接下来配置 `etc/init.d/rcS`，写入如下内容，主要是挂载各种文件系统，以及设置各目录的权限，并创建一个非特权用户：
+在上面的文件中指定了系统初始化脚本为 `etc/init.d/rcS`，因此接下来我们配置这个文件写入如下内容，主要是挂载各种文件系统，以及设置各目录的权限，并创建一个非特权用户：
 
 ```bash
 #!/bin/sh
@@ -124,26 +124,56 @@ $ echo "none /dev/pts devpts gid=5,mode=620 0 0" > etc/fstab
 
 ### 打包文件系统
 
-#### cpio 格式
+本节我们讲述如何打包文件系统，这里提供三种不同的格式： `qcow2` 、 `ext4` 、 `cpio`。
 
-我们可以在 `_install` 目录下使用如下命令打包文件系统为 cpio 格式：
+#### QCOW2 格式
+
+QEMU Copy-on-Write version 2 `QCOW2` 是 QEMU 的一种常用的硬盘镜像格式，我们可以使用如下命令创建一个指定大小的 QCOW2 镜像文件：
 
 ```shell
-$ find . | cpio -o --format=newc > ../rootfs.cpio
+$ qemu-img create -f qcow2 rootfs.qcow2 8M
 ```
 
-也可以这么写
+之后我们可以通过如下命令将其挂载为网络块设备：
+
+> 在此之前你可能需要手动启用如下内核模块：
+> 
+> ```shell
+> $ sudo modprobe nbd
+> ```
 
 ```shell
-$ find . | cpio -o -H newc > ../rootfs.cpio
+$ sudo qemu-nbd -c /dev/nbd0 ./rootfs.qcow2
 ```
 
-> 这里的位置是笔者随便选的，也可以将之放到自己喜欢的位置。
+然后将其格式化为自己想要的文件系统，例如最常用的 ext4：
 
-当然，我们还可以使用如下的命令重新解包文件系统：
 
 ```shell
-$ cpio -idv < ./rootfs.cpio$
+$ sudo mkfs.ext4 /dev/nbd0
+```
+
+之后就是常规的挂载：
+
+```shell
+$ sudo mount /dev/nbd0 /mnt
+```
+
+然后把前面我们构建的文件系统内容拷贝进去：
+
+```shell
+$ sudo cp -auv _install/* /mnt
+$ sudo chown -R root:root /mnt/
+$ sudo chmod 700 /mnt/root
+$ sudo chown -R 1000:1000 /mnt/home/ctf/
+```
+
+最后常规卸载并解绑 nbd 即可：
+
+```shell
+$ sudo umount /mnt
+$ sync
+$ sudo qemu-nbd -d /dev/nbd0
 ```
 
 #### ext4 镜像格式
@@ -172,6 +202,28 @@ $ sudo chown -R 1000:1000 ./tmp/home/ctf/
 $ sudo umount ./tmp
 ```
 
+#### cpio 格式
+
+我们可以在 `_install` 目录下使用如下命令打包文件系统为 cpio 格式：
+
+```shell
+$ find . | cpio -o --format=newc > ../rootfs.cpio
+```
+
+也可以这么写
+
+```shell
+$ find . | cpio -o -H newc > ../rootfs.cpio
+```
+
+> 这里的位置是笔者随便选的，也可以将之放到自己喜欢的位置。
+
+当然，我们还可以使用如下的命令重新解包文件系统：
+
+```shell
+$ cpio -idv < ./rootfs.cpio
+```
+
 ## 启动内核
 
 这里以前面编译好的 Linux 内核、文件系统镜像为例来介绍如何启动内核。我们可以直接使用下面的脚本来启动 Linux 内核：
@@ -181,33 +233,35 @@ $ sudo umount ./tmp
 qemu-system-x86_64 \
     -m 128M \
     -kernel ./bzImage \
-    -initrd  ./rootfs.cpio \
+    -hda ./rootfs.qcow2 \
     -monitor /dev/null \
-    -append "root=/dev/ram rdinit=/sbin/init console=ttyS0 oops=panic panic=1 loglevel=3 quiet kaslr" \
+    -append "root=/dev/sda rw rdinit=/sbin/init console=ttyS0 oops=panic panic=1 loglevel=3 quiet kaslr" \
     -cpu kvm64,+smep \
     -smp cores=2,threads=1 \
     -nographic \
+    -snapshot \
     -s
 ```
 
 各参数说明如下，详细说明可以参照 QEMU 的官方文档：
 
-- `-m`：虚拟机内存大小
-- `-kernel`：内核镜像路径
-- `-initrd`：初始文件系统路径，cpio 文件系统会被载入到内存当中（initramfs）
-- `-monitor`：将监视器重定向到主机设备 `/dev/null`，这里重定向至 null 主要是防止CTF 中被人通过监视器直接拿 flag
+- `-m`：虚拟机内存大小。
+- `-kernel`：内核镜像路径。
+- `-hda`：文件系统路径，我们将 qcow2 镜像挂载为一个真正的硬盘设备，优点在于更贴近真实环境。
+- `-monitor`：将监视器重定向到主机设备 `/dev/null`，这里重定向至 null 主要是防止CTF 中被人通过监视器直接拿 flag。
 - `-append`：内核启动参数选项
-    - `root=/dev/ram`：该参数设定了根文件系统所在设备，因为我们使用的是 initramfs 所以文件系统位于内存中
-    - `kaslr`：开启内核地址随机化，你也可以改为 `nokaslr` 进行关闭以方便我们进行调试
-    - `rdinit`：指定初始启动进程，这里我们指定了 `/sbin/init` 作为初始进程，其会默认以 `/etc/init.d/rcS` 作为启动脚本
-    - `loglevel=3` & `quiet`：不输出log
-    - `console=ttyS0`：指定终端为 `/dev/ttyS0`，这样一启动就能进入终端界面
-- `-cpu`：设置CPU选项，在这里开启了smep保护
-- `-smp`：设置对称多处理器配置，这里设置了两个核心，每个核心一个线程
-- `-nographic`：不提供图形化界面，此时内核仅有串口输出，输出内容会被 QEMU 重定向至我们的终端
-- `-s`：相当于`-gdb tcp::1234`的简写（也可以直接这么写），后续我们可以通过gdb连接本地端口进行调试
+    - `root=/dev/sda rw`：该参数设定了根文件系统所在设备，因为我们使用 `-hda` 将其挂载为一个 SATA 硬盘，而 Linux 中第一个 SATA 硬盘的路径为 `/dev/sda` ，因此我们将根文件系统路径指向设备路径，并通过 `rw` 标识来给予可读写权限。
+    - `kaslr`：开启内核地址随机化，你也可以改为 `nokaslr` 进行关闭以方便我们进行调试。
+    - `rdinit`：指定初始启动进程，这里我们指定了 `/sbin/init` 作为初始进程，根据我们前面的配置其会默认以 `/etc/init.d/rcS` 作为启动脚本。
+    - `loglevel=3` & `quiet`：不输出log。
+    - `console=ttyS0`：指定终端为 `/dev/ttyS0`，这样一启动就能进入终端界面。
+- `-cpu`：设置CPU选项，在这里开启了smep保护。
+- `-smp`：设置对称多处理器配置，这里设置了两个核心，每个核心一个线程。
+- `-nographic`：不提供图形化界面，此时内核仅有串口输出，输出内容会被 QEMU 重定向至我们的终端。
+- `-snapshot`：使用快照的方式启动，这样在虚拟机当中对文件系统的修改不会“落盘”。
+- `-s`：相当于`-gdb tcp::1234`的简写（也可以直接这么写），后续我们可以通过gdb连接本地端口进行调试。
 
-启动后的效果如下:
+启动后的效果如下：
 
 ![](./figure/env-pic-1.png)
 
@@ -224,19 +278,41 @@ qemu-system-x86_64 \
     -cpu kvm64,+smep \
     -smp cores=2,threads=1 \
     -nographic \
+    -snapshot \
     -s
 ```
 
 涉及改动的参数如下：
 
-- `-hda`：我们将 ext4 镜像挂载为一个真正的硬盘设备，优点在于更贴近真实环境（同时 flag 不会被在内存中泄漏），缺点在于所有对文件系统的操作都会“落盘”。
-- `-append`：我们修改了 `root=/dev/sda rw` ，因为 ext4 镜像被挂载为一个 SATA 硬盘，而 Linux 中第一个 SATA 硬盘的路径为 `/dev/sda` ，因此我们将根文件系统路径指向设备路径，并给予可读写权限。
+- `-hda`：我们将文件系统路径从 qcow2 镜像改为 ext4 镜像。
 
 启动后的效果如下:
 
 ![](./figure/env-pic-2.png)
 
-此外，在没有设置 monitor 时，我们可以先按一次 `CTRL + A`、再按一次 `C` 来进入 QEMU monitor，可以看到 monitor 提供了很多有用的命令。
+如果你使用了 cpio 文件系统，则应当修改部分启动参数如下：
+
+```bash
+#!/bin/sh
+qemu-system-x86_64 \
+    -m 128M \
+    -kernel ./bzImage \
+    -initrd  ./rootfs.cpio \
+    -monitor /dev/null \
+    -append "root=/dev/ram rdinit=/sbin/init console=ttyS0 oops=panic panic=1 loglevel=3 quiet kaslr" \
+    -cpu kvm64,+smep \
+    -smp cores=2,threads=1 \
+    -nographic \
+    -snapshot \
+    -s
+```
+
+涉及改动的参数如下：
+
+- `-initrd`：初始文件系统路径，cpio 文件系统会被载入到内存当中（initramfs）。
+- `-append`：我们修改了 `root=/dev/ram` ，因为我们使用的是 initramfs ，所以文件系统位于内存中，因此我们需要将根文件系统路径变为内存设备。
+
+此外，在没有设置 monitor 为 /dev/null 时，我们可以先按一次 `CTRL + A`、再按一次 `C` 来进入 QEMU monitor，可以看到 monitor 提供了很多有用的命令。
 
 ```bash
 ~ $ QEMU 9.1.2 monitor - type 'help' for more information
