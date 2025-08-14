@@ -30,7 +30,7 @@ ret2text 即控制程序执行程序本身已有的的代码 (即， `.text` 段
 
 其实，在栈溢出的基本原理中，我们已经介绍了这一简单的攻击。在这里，我们再给出另外一个例子，bamboofox 中介绍 ROP 时使用的 ret2text 的例子。
 
-> 点击下载: [ret2text](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2text/bamboofox-ret2text/ret2text)
+> 点击下载: [ret2text](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/linux/user-mode/stackoverflow/ret2text/bamboofox-ret2text/ret2text)
 
 首先，查看一下程序的保护机制：
 
@@ -152,7 +152,7 @@ ret2shellcode，即控制程序执行 shellcode 代码。shellcode 指的是用�
 
 这里我们以 bamboofox 中的 ret2shellcode 为例，需要注意的是，你应当在内核版本较老的环境中进行实验（如 Ubuntu 18.04 或更老版本）。由于容器环境间共享同一内核，因此这里我们无法通过 docker 完成环境搭建。
 
-> 点击下载: [ret2shellcode](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2shellcode/ret2shellcode-example/ret2shellcode)
+> 点击下载: [ret2shellcode](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/linux/user-mode/stackoverflow/ret2shellcode/ret2shellcode-example/ret2shellcode)
 
 首先检测程序开启的保护：
 
@@ -265,7 +265,7 @@ ret2syscall，即控制程序执行系统调用，获取 shell。
 
 这里我们继续以 bamboofox 中的 ret2syscall 为例。  
 
-> 点击下载: [ret2syscall](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2syscall/bamboofox-ret2syscall/rop)
+> 点击下载: [ret2syscall](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/linux/user-mode/stackoverflow/ret2syscall/bamboofox-ret2syscall/rop)
 
 首先检测程序开启的保护：
 
@@ -426,7 +426,7 @@ ret2libc 即控制函数的执行 libc 中的函数，通常是返回至某个�
 
 这里我们以 bamboofox 中 ret2libc1 为例。 
 
-> 点击下载: [ret2libc1](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc1/ret2libc1)
+> 点击下载: [ret2libc1](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/linux/user-mode/stackoverflow/ret2libc/ret2libc1/ret2libc1)
 
 首先，我们检查一下程序的安全保护：
 
@@ -493,7 +493,7 @@ sh.interactive()
 
 这里以 bamboofox 中的 ret2libc2 为例 。
 
-> 点击下载: [ret2libc2](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc2/ret2libc2)
+> 点击下载: [ret2libc2](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/linux/user-mode/stackoverflow/ret2libc/ret2libc2/ret2libc2)
 
 该题目与例 1 基本一致，只不过不再出现 /bin/sh 字符串，所以此次需要我们自己来读取字符串，所以我们需要两个 gadgets，第一个控制程序读取字符串，第二个控制程序执行 system("/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的 exp 如下：
 
@@ -520,7 +520,7 @@ sh.interactive()
 
 这里以 bamboofox 中的 ret2libc3 为例  。
 
-> 点击下载: [ret2libc3](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/stackoverflow/ret2libc/ret2libc3/ret2libc3)
+> 点击下载: [ret2libc3](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/linux/user-mode/stackoverflow/ret2libc/ret2libc3/ret2libc3)
 
 在例 2 的基础上，再次将 system 函数的地址去掉。此时，我们需要同时找到 system 函数地址与 /bin/sh 字符串的地址。首先，查看安全保护
 
@@ -621,5 +621,5 @@ sh.interactive()
 - [乌云一步一步ROP篇(蒸米)](http://wooyun.jozxing.cc/static/drops/tips-6597.html)
 - [手把手教你栈溢出从入门到放弃（上）](https://zhuanlan.zhihu.com/p/25816426)
 - [手把手教你栈溢出从入门到放弃（下）](https://zhuanlan.zhihu.com/p/25892385)
-- [ 【技术分享】现代栈溢出利用技术基础：ROP](http://bobao.360.cn/learning/detail/3694.html)
+- [【技术分享】现代栈溢出利用技术基础：ROP](http://bobao.360.cn/learning/detail/3694.html)
 
