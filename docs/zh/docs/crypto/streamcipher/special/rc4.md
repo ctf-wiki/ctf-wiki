@@ -19,7 +19,7 @@ RC4 主要包含三个流程
 ```c
 for i = 0 to 255 do
 	S[i] = i
-	T[i] = K[i mod keylen])
+	T[i] = K[i mod keylen]
 ```
 
  ![image-20180714192918699](figure/rc4_s_t.png)
