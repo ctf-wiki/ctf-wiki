@@ -255,7 +255,7 @@ sh.interactive()
 
 这里我们以通过`mprotect()`动态修改过内存页权限的 ret2shellcode 为例，需要注意的是，这样我们就可以在例如 Ubuntu-22.04 这样的现代操作系统中完成这个实验辣~。
 
-> 点击下载: [ret2shellcode](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/linux/user-mode/stackoverflow/ret2shellcode/ret2shellcode-example/ret2shellcode)
+> 点击下载: [ret2shellcode](https://github.com/ctf-wiki/ctf-challenges/raw/master/pwn/linux/user-mode/stackoverflow/ret2shellcode/ret2shellcode-new/ret2shellcode)
 
 首先检测程序开启的保护：
 
