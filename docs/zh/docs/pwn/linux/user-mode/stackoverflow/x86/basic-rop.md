@@ -209,17 +209,17 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 .bss:00000000004040A0                                         ; main+A4↑o ...
 ```
 
-这时，我们简单的调试下程序，看看这一个 bss 段是否可执行。
+这时，我们简单的调试下程序，看看这一个 bss 段是否可执行(由于是通过mprotect来修改权限的，那自然断点下在mprotect被调用后的地址啦)。
 
 ```shell
-pwndbg> b *main+150
-Breakpoint 1 at 0x4012ac
+pwndbg> b *0x401291
+Breakpoint 1 at 0x401291
 pwndbg> r
 Starting program: /home/zer0ptr/Pwn-Research/ROP/ret2shellcode/wiki/ret2shellcode
 [Thread debugging using libthread_db enabled]
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 
-Breakpoint 1, 0x00000000004012ac in main ()
+Breakpoint 1, 0x0000000000401291 in main ()
 LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
 ────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]────────────────────────────
  RAX  0
@@ -238,9 +238,12 @@ LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
  R15  0x7ffff7ffd040 (_rtld_global) —▸ 0x7ffff7ffe2e0 ◂— 0
  RBP  0x7fffffffdd40 ◂— 1
  RSP  0x7fffffffdcd0 ◂— 1
- RIP  0x4012ac (main+150) ◂— lea eax, [rip + 0xd66]
+ RIP  0x401291 (main+123) ◂— test eax, eax
 ─────────────────────────────────────[ DISASM / x86-64 / set emulate on ]─────────────────────────────────────
- ► 0x4012ac <main+150>    lea    eax, [rip + 0xd66]     EAX => 0x402018 ◂— 'No system for you this time !!!'
+ ► 0x401291 <main+123>    test   eax, eax     0 & 0     EFLAGS => 0x246 [ cf PF af ZF sf IF df of ac ]
+   0x401293 <main+125>  ✔ jns    main+149                    <main+149>
+    ↓
+   0x4012ab <main+149>    lea    rax, [rip + 0xd66]     RAX => 0x402018 ◂— 'No system for you this time !!!'
    0x4012b2 <main+156>    mov    rdi, rax               RDI => 0x402018 ◂— 'No system for you this time !!!'
    0x4012b5 <main+159>    call   puts@plt                    <puts@plt>
 
@@ -250,20 +253,17 @@ LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
    0x4012cb <main+181>    mov    rdi, rax                RDI => 0x402038 ◂— 'buf2 address: %p\n'
    0x4012ce <main+184>    mov    eax, 0                  EAX => 0
    0x4012d3 <main+189>    call   printf@plt                  <printf@plt>
-
-   0x4012d8 <main+194>    lea    rax, [rbp - 0x70]
-   0x4012dc <main+198>    mov    rdi, rax
 ──────────────────────────────────────────────────[ STACK ]───────────────────────────────────────────────────
 00:0000│ rsp 0x7fffffffdcd0 ◂— 1
 01:0008│-068 0x7fffffffdcd8 ◂— 1
 02:0010│-060 0x7fffffffdce0 —▸ 0x400040 ◂— 0x400000006
 03:0018│-058 0x7fffffffdce8 —▸ 0x7ffff7fe283c (_dl_sysdep_start+1020) ◂— mov rax, qword ptr [rsp + 0x58]
 04:0020│-050 0x7fffffffdcf0 ◂— 0x6f0
-05:0028│-048 0x7fffffffdcf8 —▸ 0x7fffffffe0d9 ◂— 0x4bcc23d3180781b3
+05:0028│-048 0x7fffffffdcf8 —▸ 0x7fffffffe0d9 ◂— 0xb0ec6c6b3dbd55d3
 06:0030│-040 0x7fffffffdd00 —▸ 0x7ffff7fc1000 ◂— jg 0x7ffff7fc1047
 07:0038│-038 0x7fffffffdd08 ◂— 0x10101000000
 ────────────────────────────────────────────────[ BACKTRACE ]─────────────────────────────────────────────────
- ► 0         0x4012ac main+150
+ ► 0         0x401291 main+123
    1   0x7ffff7c29d90 __libc_start_call_main+128
    2   0x7ffff7c29e40 __libc_start_main+128
    3         0x401155 _start+37
