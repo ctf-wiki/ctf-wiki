@@ -1,6 +1,6 @@
 # Introduction
 
-[![](https://img.shields.io/discord/1115906685450596435?style=for-the-badge&color=%237289DA&label=Discord&logo=discord&logoColor=white")](https://discord.gg/ekv7WDa9pq)  [![](https://img.shields.io/github/stars/CTF-Wiki/CTF-Wiki?style=for-the-badge&color=black&label=Stars&logo=github&logoColor=white")](https://github/stars/CTF-Wiki/CTF-Wiki/stargazers)
+[![](https://img.shields.io/discord/1115906685450596435?style=for-the-badge&color=%237289DA&label=Discord&logo=discord&logoColor=white")](https://discord.gg/ekv7WDa9pq)  [![](https://img.shields.io/github/stars/CTF-Wiki/CTF-Wiki?style=for-the-badge&color=black&label=Stars&logo=github&logoColor=white")](https://github.com/CTF-Wiki/CTF-Wiki/stargazers)
 
 Welcome to **CTF Wiki**！
 
