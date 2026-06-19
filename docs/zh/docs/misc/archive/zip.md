@@ -19,9 +19,9 @@
       | Offset | Bytes | Description                                          | 译                                      |
       | ------ | ----- | ---------------------------------------------------- | --------------------------------------- |
       | 0      | 4     | Central directory file header signature = 0x02014b50 | 核心目录文件 header标识 =（0x02014b50） |
-      | 4      | 2     | Version made by                                      | 压缩所用的 pkware 版本                  |
+      | 4      | 2     | Version made by                                      | 高字节表示创建者主机/文件系统类型，低字节表示创建所用的 pkware 软件版本                  |
       | 6      | 2     | Version needed to extract (minimum)                  | 解压所需 pkware 的最低版本              |
-      | 8      | 2     | General purpose bit flag                             | 通用位标记伪加密                        |
+      | 8      | 2     | General purpose bit flag                             | 通用位标志字段，包含加密、数据描述符、压缩选项、UTF-8 等多种语义                        |
       | 10     | 2     | Compression method                                   | 压缩方法                                |
       | 12     | 2     | File last modification time                          | 文件最后修改时间                        |
       | 14     | 2     | File last modification date                          | 文件最后修改日期                        |
@@ -41,7 +41,7 @@
 
 - `End of central directory record(EOCD)` 目录结束标识
 
-  -   目录结束标识存在于整个归档包的结尾，用于标记压缩的目录数据的结束。每个压缩文件必须有且只有一个 `EOCD` 记录。
+  -   目录结束标识存在于整个归档包的结尾，用于标记压缩的目录数据的结束。一个普通 ZIP archive 在末尾通常有一个 EOCD，用于描述中央目录；每个文件 entry 则有 Local File Header 和对应的 Central Directory Header。ZIP64 另有扩展的结束记录。
 
 更加详细参见 [官方文档](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.2.0.txt)。
 
