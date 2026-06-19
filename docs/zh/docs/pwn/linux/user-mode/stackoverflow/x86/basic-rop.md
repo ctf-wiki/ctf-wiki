@@ -647,7 +647,7 @@ Strings information
 那么，我们直接返回该处，即执行 system 函数。相应的 payload 如下：
 
 ```python
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from pwn import *
 
 sh = process('./ret2libc1')
@@ -673,7 +673,7 @@ sh.interactive()
 该题目与例 1 基本一致，只不过不再出现 /bin/sh 字符串，所以此次需要我们自己来读取字符串，所以我们需要两个 gadgets，第一个控制程序读取字符串，第二个控制程序执行 system("/bin/sh")。由于漏洞与上述一致，这里就不在多说，具体的 exp 如下：
 
 ```python
-##!/usr/bin/env python
+#!/usr/bin/env python3
 from pwn import *
 
 sh = process('./ret2libc2')
@@ -727,7 +727,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 那么我们如何得到 system 函数的地址呢？这里就主要利用了两个知识点：
 
 - system 函数属于 libc，而 libc.so 动态链接库中的函数之间相对偏移是固定的。
-- 即使程序有 ASLR 保护，也只是针对于地址中间位进行随机，最低的12位并不会发生改变。而 libc 在github上有人进行收集，如下
+- 即使程序有 ASLR 保护，也只是针对于地址中间位进行随机，最低的 12 位并不会发生改变（对齐到页框大小，12 位对应常见的 4 KB）。而 libc 在github上有人进行收集，如下
   - https://github.com/niklasb/libc-database
 
 所以如果我们知道 libc 中某个函数的地址，那么我们就可以确定该程序利用的 libc。进而我们就可以知道 system函数的地址。
@@ -751,7 +751,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 exp 如下：
 
 ```python
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from pwn import *
 
 pc = './ret2libc3'
