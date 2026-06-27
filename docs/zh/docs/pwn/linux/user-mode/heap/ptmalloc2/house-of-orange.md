@@ -2,13 +2,16 @@
 
 
 ## 介绍
+
 House of Orange与其他的House of XX利用方法不同，这种利用方法来自于Hitcon CTF 2016中的一道同名题目。由于这种利用方法在此前的CTF题目中没有出现过，因此之后出现的一系列衍生题目的利用方法我们称之为House of Orange。
 
 ## 概述
+
 House of Orange的利用比较特殊，首先需要目标漏洞是堆上的漏洞但是特殊之处在于题目中不存在free函数或其他释放堆块的函数。我们知道一般想要利用堆漏洞，需要对堆块进行malloc和free操作，但是在House of Orange利用中无法使用free函数，因此House of Orange核心就是通过漏洞利用获得free的效果。
 
 
 ## 原理
+
 如我们前面所述，House of Orange的核心在于在没有free函数的情况下得到一个释放的堆块(unsorted bin)。
 这种操作的原理简单来说是当前堆的top chunk尺寸不足以满足申请分配的大小的时候，原来的top chunk会被释放并被置入unsorted bin中，通过这一点可以在没有free函数情况下获取到unsorted bins。
 
@@ -31,10 +34,12 @@ else {
 但是对于堆来说有mmap和brk两种分配方式，我们需要让堆以brk的形式拓展，之后原有的top chunk会被置于unsorted bin中。
 
 综上，我们要实现brk拓展top chunk，但是要实现这个目的需要绕过一些libc中的check。
-首先，malloc的尺寸不能大于`mmp_.mmap_threshold`
+首先，malloc的尺寸不能大于`mp_.mmap_threshold` ：
+
 ```
 if ((unsigned long)(nb) >= (unsigned long)(mp_.mmap_threshold) && (mp_.n_mmaps < mp_.n_mmaps_max))
 ```
+
 如果所需分配的 chunk 大小大于 mmap 分配阈值，默认为 128K，并且当前进程使用 mmap()分配的内存块小于设定的最大值，将使用 mmap()系统调用直接向操作系统申请内存。
 
 在sysmalloc函数中存在对top chunk size的check，如下
@@ -45,15 +50,15 @@ assert((old_top == initial_top(av) && old_size == 0) ||
 	  prev_inuse(old_top) &&
 	  ((unsigned long)old_end & pagemask) == 0));
 ```
-这里检查了top chunk的合法性，如果第一次调用本函数，top chunk可能没有初始化，所以可能old_size为0。
-如果top chunk已经初始化了，那么top chunk的大小必须大于等于MINSIZE，因为top chunk中包含了 fencepost，所以top chunk的大小必须要大于MINSIZE。其次top chunk必须标识前一个chunk处于inuse状态，并且top chunk的结束地址必定是页对齐的。此外top chunk除去fencepost的大小必定要小于所需chunk的大小，否则在_int_malloc()函数中会使用top chunk分割出chunk。
+这里检查了 top chunk 的合法性，如果第一次调用本函数，top chunk 可能没有初始化，所以可能 old_size 为 0。
+如果 top chunk 已经初始化了，那么 top chunk 的大小必须大于等于 MINSIZE，因为 top chunk 中包含了 fencepost，所以 top chunk 的大小必须要大于等于 MINSIZE。其次 top chunk 必须标识前一个 chunk 处于 inuse 状态，并且 top chunk 的结束地址必定是页对齐的。此外 top chunk 除去 fencepost 的大小必定要小于所需 chunk 的大小，否则在 _int_malloc() 函数中会使用 top chunk 分割出 chunk。
 
 我们总结一下伪造的top chunk size的要求
 
-1. 伪造的size必须要对齐到内存页
-2. size要大于MINSIZE(0x10)
-3. size要小于之后申请的chunk size + MINSIZE(0x10)
-4. size的prev inuse位必须为1
+1. 伪造的 size 必须要对齐到内存页
+2. size 要大于 MINSIZE(32 位下通常是 0x10，64 位下通常是 0x20)
+3. size 要小于之后申请的 chunk size + MINSIZE(0x10)
+4. size 的 prev inuse 位必须为 1
 
 之后原有的top chunk就会执行`_int_free`从而顺利进入unsorted bin中。
 

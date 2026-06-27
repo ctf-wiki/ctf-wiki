@@ -1,10 +1,10 @@
-# Symbol Reslove
+# Symbol Resolution
 
 ## 基本原理
 
 链接器在处理目标文件时，需要对目标文件中的某些位置进行重定位，即将符号指向恰当的位置，确保程序正常执行。例如，当程序调用了一个函数时，相关的调用指令必须把控制流交给适当的目标执行地址。
 
-在 ELF 文件中，对于每一个需要重定位的 ELF 节都有对应的重定位表，比如说 .text 节如果需要重定位，那么其对应的重定位表为 .rel.text。
+在 ELF 文件中，对于每一个需要重定位的 ELF 节都有对应的重定位表，比如说 `.text` 节如果需要重定位，那么其对应的重定位表通常为 `.rel.text` 。
 
 举个例子，当一个程序导入某个函数时，.dynstr 就会包含对应函数名称的字符串，.dynsym 中就会包含一个具有相应名称的符号（Elf_Sym），在 .rel.plt 中就会包含一个指向这个符号的的重定位表项。即，这几者之间的引用关系是
 
@@ -55,7 +55,7 @@ _dl_runtime_resolve:
 - 以 cfi 开头的都是一些提示性信息，可以不用管。可参考
     - https://stackoverflow.com/questions/51962243/what-is-cfi-adjust-cfa-offset-and-cfi-rel-offset
     - https://sourceware.org/binutils/docs/as/CFI-directives.html
-- _CET_ENDBR  则与 Intel 的 CET 相关，标记着间接跳转的位置。如果程序中的间接跳转位置处没有这个指令，那就会出现问题。
+- _CET_ENDBR  则与 Intel 的 CET 相关，`ENDBR32`/`ENDBR64` 是 Intel CET-IBT 的合法间接分支目标标记。间接 `CALL` 或 `JMP` 执行后，处理器期望目标位置以相应 ENDBR 开始；该指令在不支持 CET 的旧处理器上按兼容 NOP 处理。
 
 因此这部分代码可以简化为
 
