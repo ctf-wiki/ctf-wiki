@@ -105,7 +105,7 @@
 密钥字母 : phqgiumeaylnofdxjkrcvstzwb
 ```
 
-a 对应 p，d 对应 h，以此类推。
+a 对应 p，b 对应 h，以此类推。
 
 ```
 明文：the quick brown fox jumps over the lazy dog
