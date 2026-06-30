@@ -99,16 +99,30 @@ if (__builtin_expect (FD->bk != P || BK->fd != P, 0))                      \
 
 **此外，其实如果我们设置next chunk 的 fd 和 bk 均为 nextchunk 的地址也是可以绕过上面的检测的。但是这样的话，并不能达到修改指针内容的效果。**
 
+同时需要注意的是，在比较新的glibc版本中，`unlink_chunk` 在针对large bins时候，有对于两个`*_nextsize`指针的检查
+
+```c
+if (!in_smallbin_range (chunksize_nomask (p)) && p->fd_nextsize != NULL)
+  {
+    if (p->fd_nextsize->bk_nextsize != p
+        || p->bk_nextsize->fd_nextsize != p)
+      malloc_printerr ("corrupted double-linked list (not small)");
+    ...
+  }
+```
+
+这意味着，当**伪造的 chunk 在 large bin 范围内**的时候，我们需要**将 `bk_next_size` 设为 NULL** 来绕过对于链表完整性的检查。
+
 ## 利用思路
 
 ### 条件
 
-1. UAF ，可修改 free 状态下 smallbin 或是 unsorted bin 的 fd 和 bk 指针
-2. 已知位置存在一个指针指向可进行 UAF 的 chunk
+1. 可进行 UAF 的 chunk；可修改 free 状态下 smallbin，large bin 或是 unsorted bin 的 fd 和 bk 指针
+2. 已知位置存在一个指针指向 可进行 UAF 的 chunk
 
 ### 效果
-
-使得已指向 UAF chunk 的指针 ptr 变为 ptr - 0x18
+ 
+使 ptr 处，原本指向 UAF chunk 的指针变为 ptr - 0x18
 
 ### 思路
 
