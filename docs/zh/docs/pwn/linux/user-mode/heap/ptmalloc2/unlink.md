@@ -118,7 +118,7 @@ if (!in_smallbin_range (chunksize_nomask (p)) && p->fd_nextsize != NULL)
 ### 条件
 
 1. 可进行 UAF 的 chunk；可修改 free 状态下 smallbin，large bin 或是 unsorted bin 的 fd 和 bk 指针
-2. 已知位置存在一个指针指向 可进行 UAF 的 chunk
+2. 已知位置存在一个指针指向可进行 UAF 的 chunk
 
 ### 效果
  
