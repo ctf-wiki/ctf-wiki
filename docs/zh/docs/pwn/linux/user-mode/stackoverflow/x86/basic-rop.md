@@ -89,7 +89,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 
 在 secure 函数又发现了存在调用 `system("/bin/sh")` 的代码，那么如果我们直接控制程序返回至 `0x0804863A` ，那么就可以得到系统的 shell 了。
 
-下面就是我们如何构造 payload 了，首先需要确定的是我们能够控制的内存的起始地址距离 main 函数的返回地址的字节数。
+下面就是我们如何构造 payload 了，首先需要确定的是我们能够控制的内存的起始地址距离 main 函数的返回地址的字节数，有时也被称为计算偏移。
 
 ```asm
 .text:080486A7                 lea     eax, [esp+1Ch]
@@ -125,6 +125,19 @@ $eip   : 0x080486ae  →  <main+102> call 0x8048460 <gets@plt>
 - s 的地址为 0xffffcd5c
 - s 相对于 ebp 的偏移为 0x6c
 - s 相对于返回地址的偏移为 0x6c+4
+
+**栈布局**:
+
+```markdown
+      高地址
+...
+[返回地址] (EBP + 4 字节)  <--- 我们的最终目标
+[Saved EBP] (4 字节)      <--- 需要被覆盖
+...                      <-- (从缓冲区到Saved EBP的填充区域)
+[esp + 0x1c]             <-- s, 缓冲区起始地址
+...
+      低地址
+```
 
 因此最后的 payload 如下：
 
