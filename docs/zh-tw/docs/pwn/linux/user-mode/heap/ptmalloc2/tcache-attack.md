@@ -2455,5 +2455,5 @@ exp()
 
 * 2018 HITCON children_tcache
 * 2018 BCTF houseOfAtum
-* 2019 HTICON Lazy House
+* 2019 HITCON Lazy House
 * 2020 XCTF no-Cov twochunk
