@@ -1285,5 +1285,5 @@ p.interactive()
 ## 參考文獻
 
 - https://www.gulshansingh.com/posts/9447-ctf-2015-search-engine-writeup/
-- http://uaf.io/exploitation/2017/03/19/0ctf-Quals-2017-BabyHeap2017.html
+- https://web.archive.org/web/20170323082243/http://uaf.io/exploitation/2017/03/19/0ctf-Quals-2017-BabyHeap2017.html
 - https://www.slideshare.net/YOKARO-MON/oreo-hacklu-ctf-2014-65771717
